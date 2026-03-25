@@ -1,0 +1,130 @@
+.text-h1 {
+  /* Headings/h1 */
+  font-family: Inter;
+  font-size: 64px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 76px; /* 118.75% */
+  letter-spacing: -2px;
+}
+
+.text-heading-2 {
+  /* Headings/h2 */
+  font-family: Inter;
+  font-size: 56px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 66px; /* 117.857% */
+  letter-spacing: -2px;
+}
+
+.text-heading-3 {
+  /* Headings/h3 */
+  font-family: Inter;
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 56px; /* 116.667% */
+  letter-spacing: -1px;
+}
+
+.text-heading-4 {
+  /* Headings/h4 */
+  font-family: Inter;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 30px; /* 125% */
+  letter-spacing: -0.5px;
+}
+
+.text-heading-5 {
+  /* Headings/h5 */
+  font-family: Inter;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 24px; /* 120% */
+  letter-spacing: -0.5px;
+}
+
+.text-heading-6 {
+  /* Headings/h6 */
+  font-family: Inter;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 22px; /* 122.222% */
+  letter-spacing: -0.5px;
+}
+
+.text-heading-7 {
+  /* Headings/h7 */
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 19px; /* 118.75% */
+  letter-spacing: -0.5px;
+}
+
+.text-heading-8 {
+  /* Headings/h8 */
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 17px; /* 121.429% */
+  letter-spacing: -0.5px;
+}
+
+.text-body-1 {
+  /* Body/b1 */
+  font-family: Inter;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 21px; /* 116.667% */
+  letter-spacing: -0.5px;
+}
+
+.text-body-2 {
+  /* Body/b2 */
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 19px; /* 118.75% */
+  letter-spacing: -0.5px;
+}
+
+.text-body-3 {
+  /* Body/b3 */
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 17px; /* 121.429% */
+  letter-spacing: -0.5px;
+}
+
+.text-body-4 {
+  /* Body/b4 */
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 14px; /* 116.667% */
+  letter-spacing: -0.5px;
+}
+
+.text-body-5 {
+  /* Body/b5 */
+  font-family: Inter;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 12px; /* 120% */
+  letter-spacing: -0.5px;
+}
+

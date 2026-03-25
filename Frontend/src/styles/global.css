@@ -1,0 +1,271 @@
+@import "tailwindcss";
+@import "./typography.css";
+
+:root {
+  /* TEXT */
+  /*fuente para el texto*/
+  --font-sans: "Inter", sans-serif;
+  /*colores para el texto*/
+  --app-text-50: #0f0f0f;
+  --app-text-100: #818181;
+  --app-text-200: #4e4e4e;
+  --app-text-300: #2a2929;
+
+  /* PRIMARY */
+  /*colores para el primary que se utiliza como base*/
+  --app-primary-100: #818181;
+  --app-primary-200: #4e4e4e;
+  --app-primary-300: #2a2929;
+  --app-primary-400: #191919;
+  --app-primary-500: #0f0f0f;
+  --app-primary-500-uniform: #0f0f0f;
+  --app-primary-0: #2a2929;
+  --app-primary-10: rgb(42 41 41 / 0.1);
+
+  /* NEUTRAL */
+  /*colores para el fondo y elementos neutrales*/
+  --app-neutral-bg: #fafaf8;
+  --app-neutral-100-uniform: #ffffff;
+  --app-neutral-100: #ffffff;
+  --app-neutral-200: #e8e8e8;
+  --app-neutral-300: #d2d2d2;
+  --app-neutral-400: #bbbbbb;
+  --app-neutral-500: #a4a4a4;
+  --app-neutral-600: #8e8e8e;
+  --app-neutral-700: #777777;
+  --app-neutral-800: #606060;
+  --app-neutral-900: #4a4a4a;
+  --app-neutral-1000: #333333;
+  --app-neutral-10: rgb(210 210 210 / 0.1);
+
+  /* STATES */
+  /*colores para los estados de error, advertencia, éxito e información*/
+  --app-danger-100: #ff2c2c;
+  --app-danger-200: #ef0000;
+  --app-danger-10: rgb(255 44 44 / 0.1);
+
+  --app-warning-100: #ffde21;
+  --app-warning-200: #e6c400;
+  --app-warning-10: rgb(255 222 33 / 0.1);
+
+  --app-success-100: #1ff467;
+  --app-success-200: #09ae41;
+  --app-success-10: rgb(31 244 102 / 0.1);
+
+  --app-info-100: #0071e3;
+  --app-info-200: #0c4091;
+  --app-info-10: rgb(0 113 227 / 0.1);
+
+  --app-accent-100: #ff9c92;
+  --app-accent-200: #ff6757;
+  --app-accent-300: #ff4431;
+  --app-accent-400: #e82b18;
+  --app-accent-500: #c61a09;
+  --app-accent-10: rgb(255 70 49 / 0.1);
+
+  /*DESING TOKENS*/
+  /*radio para los bordes*/
+  --app-radius-4: 16px;
+  --app-radius-3: 12px;
+  --app-radius-2: 8px;
+  --app-radius-1: 4px;
+  --app-radius-none: 0px;
+  --app-radius-full: 9999px;
+
+  /*STROKE*/
+  /*ancho para los bordes*/
+  --app-stroke-0: 1px;
+  --app-stroke-1: 2px;
+  --app-stroke-2: 4px;
+  --app-stroke-3: 6px;
+
+  /*GAP*/
+  /*espaciado entre elementos*/
+  --app-spacing-gap-0: 0px;
+  --app-spacing-gap-1: 4px;
+  --app-spacing-gap-2: 8px;
+  --app-spacing-gap-3: 12px;
+  --app-spacing-gap-4: 16px;
+  --app-spacing-gap-5: 20px;
+  --app-spacing-gap-6: 34px;
+  --app-spacing-gap-7: 48px;
+  --app-spacing-gap-8: 56px;
+}
+
+.dark {
+  /* TEXT */
+  /*colores para el texto*/
+  --app-text-50: #d6d6d6;
+  --app-text-100: #484848;
+  --app-text-200: #6c6c6c;
+  --app-text-300: #a0a0a0;
+
+  /* PRIMARY */
+  /*colores para el primary que se utiliza como base*/
+  --app-primary-100: #0f0f0f;
+  --app-primary-200: #191919;
+  --app-primary-300: #2a2929;
+  --app-primary-400: #4e4e4e;
+  --app-primary-500: #818181;
+  --app-primary-500-uniform: #0f0f0f;
+  --app-primary-0: #ffffff;
+  --app-primary-10: rgba(210, 210, 210, 0.1);
+
+  /* NEUTRAL */
+  /*colores para el fondo y elementos neutrales*/
+  --app-neutral-bg: #0b0b0c;
+  --app-neutral-100-uniform: #ffffff;
+  --app-neutral-100: #000000;
+  --app-neutral-200: #333333;
+  --app-neutral-300: #4a4a4a;
+  --app-neutral-400: #606060;
+  --app-neutral-500: #777777;
+  --app-neutral-600: #8e8e8e;
+  --app-neutral-700: #a4a4a4;
+  --app-neutral-800: #bbbbbb;
+  --app-neutral-900: #d2d2d2;
+  --app-neutral-1000: #e8e8e8;
+  --app-neutral-10: rgb(74 74 74 / 0.1);
+
+  /* STATES */
+  /*colores para los estados de error, advertencia, éxito e información*/
+  --app-danger-100: #ff2c2c;
+  --app-danger-200: #ef0000;
+  --app-danger-10: rgb(255 44 44 / 0.1);
+
+  --app-warning-100: #ffde21;
+  --app-warning-200: #e6c400;
+  --app-warning-10: rgb(255 222 33 / 0.1);
+
+  --app-success-100: #1ff467;
+  --app-success-200: #09ae41;
+  --app-success-10: rgb(31 244 102 / 0.1);
+
+  --app-info-100: #0071e3;
+  --app-info-200: #0c4091;
+  --app-info-10: rgb(0 113 227 / 0.1);
+
+  --app-accent-100: #ff9c92;
+  --app-accent-200: #ff6757;
+  --app-accent-300: #ff4431;
+  --app-accent-400: #e82b18;
+  --app-accent-500: #c61a09;
+  --app-accent-10: rgb(255 70 49 / 0.1);
+
+  /*DESING TOKENS*/
+
+  /*RADIUS*/
+  /*radio para los bordes*/
+  --app-radius-4: 16px;
+  --app-radius-3: 12px;
+  --app-radius-2: 8px;
+  --app-radius-1: 4px;
+  --app-radius-none: 0px;
+  --app-radius-full: 9999px;
+
+  /*STROKE*/
+  /*ancho para los bordes*/
+  --app-stroke-0: 1px;
+  --app-stroke-1: 2px;
+  --app-stroke-2: 4px;
+  --app-stroke-3: 6px;
+
+  /*GAP*/
+  /*espaciado entre elementos*/
+  --app-spacing-gap-0: 0px;
+  --app-spacing-gap-1: 4px;
+  --app-spacing-gap-2: 8px;
+  --app-spacing-gap-3: 12px;
+  --app-spacing-gap-4: 16px;
+  --app-spacing-gap-5: 20px;
+  --app-spacing-gap-6: 34px;
+  --app-spacing-gap-7: 48px;
+  --app-spacing-gap-8: 56px;
+}
+
+/* Mapear las variables de tema a variables globales para su uso en toda la aplicación */
+@theme inline {
+  /* TEXT */
+
+  /*fuente para el texto*/
+  --font-sans: var(--app-font-sans);
+  /*colores para el texto*/
+  --color-text-50: var(--app-text-50);
+  --color-text-100: var(--app-text-100);
+  --color-text-200: var(--app-text-200);
+  --color-text-300: var(--app-text-300);
+
+  /* PRIMARY */
+  --color-primary-0: var(--app-primary-0);
+  --color-primary-10: var(--app-primary-10);
+  --color-primary-100: var(--app-primary-100);
+  --color-primary-200: var(--app-primary-200);
+  --color-primary-300: var(--app-primary-300);
+  --color-primary-400: var(--app-primary-400);
+  --color-primary-500: var(--app-primary-500);
+
+  /* NEUTRAL */
+  --color-neutral-bg: var(--app-neutral-bg);
+  --color-neutral-10: var(--app-neutral-10);
+  --color-neutral-100: var(--app-neutral-100);
+  --color-neutral-200: var(--app-neutral-200);
+  --color-neutral-300: var(--app-neutral-300);
+  --color-neutral-400: var(--app-neutral-400);
+  --color-neutral-500: var(--app-neutral-500);
+  --color-neutral-600: var(--app-neutral-600);
+  --color-neutral-700: var(--app-neutral-700);
+  --color-neutral-800: var(--app-neutral-800);
+  --color-neutral-900: var(--app-neutral-900);
+  --color-neutral-1000: var(--app-neutral-1000);
+
+  /* STATES */
+  --color-danger-100: var(--app-danger-100);
+  --color-danger-200: var(--app-danger-200);
+  --color-danger-10: var(--app-danger-10);
+
+  --color-warning-100: var(--app-warning-100);
+  --color-warning-200: var(--app-warning-200);
+  --color-warning-10: var(--app-warning-10);
+
+  --color-success-100: var(--app-success-100);
+  --color-success-200: var(--app-success-200);
+  --color-success-10: var(--app-success-10);
+
+  --color-info-100: var(--app-info-100);
+  --color-info-200: var(--app-info-200);
+  --color-info-10: var(--app-info-10);
+
+  --color-accent-100: var(--app-accent-100);
+  --color-accent-200: var(--app-accent-200);
+  --color-accent-300: var(--app-accent-300);
+  --color-accent-400: var(--app-accent-400);
+  --color-accent-500: var(--app-accent-500);
+  --color-accent-10: var(--app-accent-10);
+
+  /*DESING TOKENS*/
+
+  /*RADIUS*/
+  --radius-4: var(--app-radius-4);
+  --radius-3: var(--app-radius-3);
+  --radius-2: var(--app-radius-2);
+  --radius-1: var(--app-radius-1);
+  --radius-none: var(--app-radius-none);
+  --radius-full: var(--app-radius-full);
+
+  /*STROKE*/
+  --stroke-0: var(--app-stroke-0);
+  --stroke-1: var(--app-stroke-1);
+  --stroke-2: var(--app-stroke-2);
+  --stroke-3: var(--app-stroke-3);
+
+  /*GAP*/
+  --spacing-gap-0: var(--app-spacing-gap-0);
+  --spacing-gap-1: var(--app-spacing-gap-1);
+  --spacing-gap-2: var(--app-spacing-gap-2);
+  --spacing-gap-3: var(--app-spacing-gap-3);
+  --spacing-gap-4: var(--app-spacing-gap-4);
+  --spacing-gap-5: var(--app-spacing-gap-5);
+  --spacing-gap-6: var(--app-spacing-gap-6);
+  --spacing-gap-7: var(--app-spacing-gap-7);
+  --spacing-gap-8: var(--app-spacing-gap-8);
+}
