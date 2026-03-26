@@ -1,3 +1,7 @@
+import Flag from "../components/Flag.jsx";
+import Icon from "../components/Icon.jsx";
+import { Home2, Setting2, Wallet1 } from "iconsax-react";
+
 function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-6">
@@ -11,6 +15,11 @@ function Home() {
         <p className="mt-4 text-base leading-7 text-slate-600">
           Este archivo ya esta listo.
         </p>
+        <div className="mt-6 flex items-center gap-4 text-slate-700">
+          <Icon icon={Home2} size={28} color="#2563eb" />
+          <Icon icon={Wallet1} size={28} variant="Bulk" color="#0f172a" />
+          <Flag countryCode="VE" title="Venezuela" />
+        </div>
       </section>
     </main>
   );
