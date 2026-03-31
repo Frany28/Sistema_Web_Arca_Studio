@@ -2,10 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-const repoName = 'Sistema_Web_Arca_Studio'
+const base = process.env.DEPLOY_BASE_PATH || '/'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: `/${repoName}/`,
+  base,
   plugins: [react(), tailwindcss()],
 })

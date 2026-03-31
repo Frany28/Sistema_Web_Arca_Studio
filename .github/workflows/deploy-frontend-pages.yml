@@ -37,6 +37,8 @@ jobs:
       - name: Build frontend
         run: npm run build
         working-directory: Frontend
+        env:
+          DEPLOY_BASE_PATH: /Sistema_Web_Arca_Studio/
 
       - name: Add SPA fallback
         run: cp dist/index.html dist/404.html
