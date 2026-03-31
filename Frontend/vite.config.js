@@ -7,5 +7,8 @@ const base = process.env.DEPLOY_BASE_PATH || '/'
 // https://vite.dev/config/
 export default defineConfig({
   base,
+  build: {
+    cssMinify: "esbuild",
+  },
   plugins: [react(), tailwindcss()],
 })
