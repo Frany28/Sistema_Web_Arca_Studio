@@ -1,62 +1,37 @@
+import clsx from "clsx";
 import Flag from "../components/Flag.jsx";
-import Button from "../components/ui/Button.jsx";
+import Badge from "../components/ui/Badge/Badge.jsx";
+import Button from "../components/ui/Button/Button.jsx";
+import ButtonGroupItem, {
+  ButtonGroup,
+} from "../components/ui/ButtonGroupItem/ButtonGroupItem.jsx";
+import Tag from "../components/ui/Tag/Tag.jsx";
 import ThemeToggle from "../components/ui/ThemeToggle.jsx";
-
-const sizeItems = [
-  { label: "S", props: { theme: "Primary", size: "S", type: "Solid", state: "Default", showLeftIcon: false, showRightIcon: false, children: "Aceptar" } },
-  { label: "M", props: { theme: "Primary", size: "M", type: "Solid", state: "Default", showLeftIcon: false, showRightIcon: false, children: "Aceptar" } },
-  { label: "L", props: { theme: "Primary", size: "L", type: "Solid", state: "Default", showLeftIcon: false, showRightIcon: false, children: "Aceptar" } },
-];
-
-const quickToggleItems = [
-  { label: "Left", props: { theme: "Primary", size: "S", type: "Solid", state: "Default", showRightIcon: false, children: "Button" } },
-  { label: "Label", props: { theme: "Primary", size: "S", type: "Solid", state: "Default", showLeftIcon: false, showRightIcon: false, children: "Button" } },
-  { label: "Right", props: { theme: "Primary", size: "S", type: "Solid", state: "Default", showLeftIcon: false, children: "Button" } },
-  { label: "Icon", props: { theme: "Primary", size: "S", type: "Solid", state: "Default", showText: false, showRightIcon: false, "aria-label": "Quick toggle icon" } },
-];
-
-const styleSections = [
-  {
-    title: "styles / Primary / solid",
-    active: { theme: "Primary", size: "S", type: "Solid", state: "Default" },
-    disabled: { theme: "Primary", size: "S", type: "Solid", state: "Disabled" },
-  },
-  {
-    title: "styles / Primary / outline",
-    active: { theme: "Primary", size: "S", type: "Outline", state: "Default" },
-    disabled: { theme: "Primary", size: "S", type: "Outline", state: "Disabled" },
-  },
-  {
-    title: "styles / Primary / Ghost",
-    active: { theme: "Primary", size: "S", type: "Ghost", state: "Default" },
-    disabled: { theme: "Primary", size: "S", type: "Ghost", state: "Disabled" },
-  },
-  {
-    title: "styles / Primary / Link",
-    active: { theme: "Primary", size: "S", type: "Link", state: "Default" },
-    disabled: { theme: "Primary", size: "S", type: "Link", state: "Disabled" },
-  },
-  {
-    title: "styles / Danger / solid",
-    active: { theme: "Danger", size: "S", type: "Solid", state: "Default" },
-    disabled: { theme: "Danger", size: "S", type: "Solid", state: "Disabled" },
-  },
-  {
-    title: "styles / Danger / outline",
-    active: { theme: "Danger", size: "S", type: "Outline", state: "Default" },
-    disabled: { theme: "Danger", size: "S", type: "Outline", state: "Disabled" },
-  },
-  {
-    title: "styles / info / solid",
-    active: { theme: "Info", size: "S", type: "Solid", state: "Default" },
-    disabled: { theme: "Info", size: "S", type: "Solid", state: "Disabled" },
-  },
-  {
-    title: "styles / info / outline",
-    active: { theme: "Info", size: "S", type: "Outline", state: "Default" },
-    disabled: { theme: "Info", size: "S", type: "Outline", state: "Disabled" },
-  },
-];
+import {
+  badgeMatrixSizes,
+  badgeMatrixThemes,
+  badgeMatrixVariations,
+  badgeQuickToggleItems,
+  badgeSizeItems,
+  badgeStatusItems,
+  createBadgeMatrixProps,
+} from "../components/ui/Badge/badgeShowcaseData.js";
+import {
+  buttonQuickToggleItems,
+  buttonSizeItems,
+  buttonStyleSections,
+} from "../components/ui/Button/buttonShowcaseData.js";
+import {
+  buttonGroupCountItems,
+  buttonGroupItemMainComponent,
+  buttonGroupItemQuickToggleItems,
+  buttonGroupItemStateSection,
+  buttonGroupMainComponent,
+} from "../components/ui/ButtonGroupItem/buttonGroupItemShowcaseData.js";
+import {
+  tagMainStackItems,
+  tagQuickToggleItems,
+} from "../components/ui/Tag/tagShowcaseData.js";
 
 function CatalogCard({ title, children }) {
   return (
@@ -78,31 +53,56 @@ function ExampleCell({ label, children }) {
   );
 }
 
+function ShowcasePanel({ title, children, className }) {
+  return (
+    <section
+      className={clsx(
+        "flex flex-col gap-3 rounded-[20px] bg-[var(--color-neutral-bg)] px-5 pb-[25px] shadow-[0px_1px_2px_0px_rgba(95,74,46,0.08),0px_4px_6px_0px_rgba(95,74,46,0.04),0px_24px_40px_0px_rgba(104,75,37,0.08)]",
+        className,
+      )}
+    >
+      <div className="flex flex-col items-start pb-[10px] pt-[20px]">
+        <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+          {title}
+        </span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ShowcaseSample({ label, children, className }) {
+  return (
+    <div
+      className={clsx(
+        "overflow-hidden rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-bg)]",
+        className,
+      )}
+    >
+      <div className="flex min-h-[73px] items-center justify-center p-4">
+        {children}
+      </div>
+      <div className="border-t border-[var(--color-neutral-200)] px-2 py-[6px]">
+        <span className="text-[12px] font-medium leading-5 text-[var(--color-text-300)]">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function Home() {
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] px-6 py-10 text-[var(--color-text-50)] transition-colors duration-200">
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex flex-col gap-4">
-            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--color-primary-10)] px-3 py-1 text-body-4 text-[var(--color-primary-300)]">
-              <Flag countryCode="VE" title="Venezuela" />
-              Sistema de botones ARCA
-            </span>
-            <div className="flex flex-col gap-2">
-              <h1 className="text-heading-4">Button Catalog</h1>
-              <p className="max-w-3xl text-body-3 text-[var(--color-text-200)]">
-                Ejemplos separados por bloque como en Figma: tamaños,
-                quick toggle y estilos con estados independientes.
-              </p>
-            </div>
-          </div>
           <ThemeToggle />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-2">
           <CatalogCard title="Sizes">
             <div className="flex flex-wrap gap-6">
-              {sizeItems.map((item) => (
+              {buttonSizeItems.map((item) => (
                 <ExampleCell key={item.label} label={item.label}>
                   <Button {...item.props} />
                 </ExampleCell>
@@ -112,7 +112,7 @@ function Home() {
 
           <CatalogCard title="QuiCk Toggle">
             <div className="flex flex-wrap gap-6">
-              {quickToggleItems.map((item) => (
+              {buttonQuickToggleItems.map((item) => (
                 <ExampleCell key={item.label} label={item.label}>
                   <Button {...item.props} />
                 </ExampleCell>
@@ -120,7 +120,7 @@ function Home() {
             </div>
           </CatalogCard>
 
-          {styleSections.map((section) => (
+          {buttonStyleSections.map((section) => (
             <CatalogCard key={section.title} title={section.title}>
               <div className="flex flex-wrap gap-6">
                 <ExampleCell label="Interactive">
@@ -133,6 +133,204 @@ function Home() {
             </CatalogCard>
           ))}
         </div>
+
+        <section className="grid gap-8 border-t border-[var(--color-neutral-200)] pt-8 xl:grid-cols-[310px_minmax(0,1fr)]">
+          <div className="border border-[var(--color-neutral-200)] p-[10px]">
+            <h2 className="text-heading-3 leading-[1.12] text-[var(--color-text-300)]">
+              Button group item
+            </h2>
+          </div>
+          <div className="border border-[var(--color-neutral-200)] p-4">
+            <div className="flex flex-col gap-4 rounded-[24px] bg-[var(--color-neutral-bg)] p-4">
+              <ShowcasePanel title="Main component" className="w-fit">
+                <div className="flex items-start">
+                  <ShowcaseSample
+                    label="Button group item"
+                    className="w-[120px]"
+                  >
+                    <ButtonGroupItem {...buttonGroupItemMainComponent} />
+                  </ShowcaseSample>
+                </div>
+              </ShowcasePanel>
+
+              <ShowcasePanel title="State">
+                <div className="flex flex-wrap gap-3">
+                  <ShowcaseSample label="Interactive" className="w-[119px]">
+                    <ButtonGroupItem
+                      {...buttonGroupItemStateSection.interactive}
+                      interactive
+                    />
+                  </ShowcaseSample>
+                  <ShowcaseSample label="Disabled" className="w-[119px]">
+                    <ButtonGroupItem
+                      {...buttonGroupItemStateSection.disabled}
+                    />
+                  </ShowcaseSample>
+                </div>
+              </ShowcasePanel>
+
+              <ShowcasePanel title="QuiCk Toggle" className="w-fit">
+                <div className="flex flex-wrap gap-3">
+                  {buttonGroupItemQuickToggleItems.map((item) => (
+                    <ShowcaseSample
+                      key={item.label}
+                      label={item.label}
+                      className={
+                        item.label === "Text" ? "w-[91px]" : "w-[84px]"
+                      }
+                    >
+                      <ButtonGroupItem {...item.props} />
+                    </ShowcaseSample>
+                  ))}
+                </div>
+              </ShowcasePanel>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-[var(--color-neutral-200)] pt-8 xl:grid-cols-[310px_minmax(0,1fr)]">
+          <div className="border border-[var(--color-neutral-200)] p-[10px]">
+            <h2 className="text-heading-3 leading-[1.12] text-[var(--color-text-300)]">
+              Button group
+            </h2>
+          </div>
+          <div className="border border-[var(--color-neutral-200)] p-4">
+            <div className="flex flex-col gap-4 rounded-[24px] bg-[var(--color-neutral-bg)] p-4">
+              <ShowcasePanel title="Main component" className="w-fit">
+                <div className="flex items-start">
+                  <ShowcaseSample label="Button group" className="w-[305px]">
+                    <ButtonGroup {...buttonGroupMainComponent} />
+                  </ShowcaseSample>
+                </div>
+              </ShowcasePanel>
+
+              <ShowcasePanel title="Count">
+                <div className="flex flex-wrap gap-3">
+                  {buttonGroupCountItems.map((item) => (
+                    <ShowcaseSample key={item.label} label={item.label}>
+                      <ButtonGroup {...item.props} />
+                    </ShowcaseSample>
+                  ))}
+                </div>
+              </ShowcasePanel>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-[var(--color-neutral-200)] pt-8 xl:grid-cols-[310px_minmax(0,1fr)]">
+          <div className="border border-[var(--color-neutral-200)] p-[10px]">
+            <h2 className="text-heading-3 leading-[1.12] text-[var(--color-text-300)]">
+              Badge
+            </h2>
+          </div>
+          <div className="border border-[var(--color-neutral-200)] p-4">
+            <div className="flex flex-col gap-4 rounded-[24px] bg-[var(--color-neutral-bg)] p-4">
+              <div className="grid gap-4 xl:grid-cols-2">
+                <ShowcasePanel title="Sizes">
+                  <div className="flex flex-wrap gap-3">
+                    {badgeSizeItems.map((item) => (
+                      <ShowcaseSample
+                        key={item.label}
+                        label={item.label}
+                        className="w-[82px]"
+                      >
+                        <Badge {...item.props} />
+                      </ShowcaseSample>
+                    ))}
+                  </div>
+                </ShowcasePanel>
+
+                <ShowcasePanel title="QuiCk Toggle">
+                  <div className="flex flex-wrap gap-3">
+                    {badgeQuickToggleItems.map((item) => (
+                      <ShowcaseSample
+                        key={item.label}
+                        label={item.label}
+                        className={clsx(
+                          item.label === "Text" && "w-[77px]",
+                          item.label === "Status Dot" && "w-[89px]",
+                          item.label === "Flag / Avatar" && "w-[93px]",
+                        )}
+                      >
+                        <Badge {...item.props} />
+                      </ShowcaseSample>
+                    ))}
+                  </div>
+                </ShowcasePanel>
+              </div>
+
+              <ShowcasePanel title="styles / status">
+                <div className="flex flex-wrap gap-3">
+                  {badgeStatusItems.map((item) => (
+                    <ShowcaseSample
+                      key={item.label}
+                      label={item.label}
+                      className="w-[82px]"
+                    >
+                      <Badge {...item.props} />
+                    </ShowcaseSample>
+                  ))}
+                </div>
+              </ShowcasePanel>
+
+              <div className="rounded-[8px] border border-dashed border-[#8b5cf6] p-6">
+                <div className="flex flex-col gap-4">
+                  {badgeMatrixThemes.map((theme) => (
+                    <div key={theme} className="flex flex-wrap gap-3">
+                      {badgeMatrixVariations.flatMap((variation) =>
+                        badgeMatrixSizes.map((size) => (
+                          <Badge
+                            key={`${theme}-${variation}-${size}`}
+                            {...createBadgeMatrixProps(theme, variation, size)}
+                          />
+                        )),
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-[var(--color-neutral-200)] pt-8 xl:grid-cols-[310px_minmax(0,1fr)]">
+          <div className="border border-[var(--color-neutral-200)] p-[10px]">
+            <h2 className="text-heading-3 leading-[1.12] text-[var(--color-text-300)]">
+              Tag
+            </h2>
+          </div>
+          <div className="border border-[var(--color-neutral-200)] p-4">
+            <div className="flex flex-col gap-4 rounded-[24px] bg-[var(--color-neutral-bg)] p-4">
+              <ShowcasePanel title="QuiCk Toggle">
+                <div className="flex flex-wrap gap-3">
+                  {tagQuickToggleItems.map((item) => (
+                    <ShowcaseSample
+                      key={item.label}
+                      label={item.label}
+                      className={clsx(
+                        item.label === "Text" && "w-[69px]",
+                        item.label === "Status Dot" && "w-[89px]",
+                        item.label === "Flag / Avatar" && "w-[89px]",
+                        item.label === "Close Icon" && "w-[85px]",
+                        item.label === "Count" && "w-[89px]",
+                      )}
+                    >
+                      <Tag {...item.props} />
+                    </ShowcaseSample>
+                  ))}
+                </div>
+              </ShowcasePanel>
+
+              <div className="w-fit rounded-[8px] border border-dashed border-[#8b5cf6] p-6">
+                <div className="flex flex-col gap-4">
+                  {tagMainStackItems.map((item, index) => (
+                    <Tag key={`${item.size}-${index}`} {...item} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
   );
