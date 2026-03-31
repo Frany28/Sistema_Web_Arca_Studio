@@ -5,6 +5,9 @@ import Button from "../components/ui/Button/Button.jsx";
 import ButtonGroupItem, {
   ButtonGroup,
 } from "../components/ui/ButtonGroupItem/ButtonGroupItem.jsx";
+import HintText from "../components/ui/HintText/HintText.jsx";
+import IconContainer from "../components/ui/IconContainer/IconContainer.jsx";
+import Label from "../components/ui/Label/Label.jsx";
 import Tag from "../components/ui/Tag/Tag.jsx";
 import ThemeToggle from "../components/ui/ThemeToggle.jsx";
 import {
@@ -28,6 +31,17 @@ import {
   buttonGroupItemStateSection,
   buttonGroupMainComponent,
 } from "../components/ui/ButtonGroupItem/buttonGroupItemShowcaseData.js";
+import {
+  hintTextQuickToggleItems,
+  hintTextStateItems,
+  passwordHintItems,
+} from "../components/ui/HintText/hintTextShowcaseData.js";
+import {
+  iconContainerMainComponent,
+  iconContainerSizeItems,
+  iconContainerTypeRows,
+} from "../components/ui/IconContainer/iconContainerShowcaseData.js";
+import { labelStateItems } from "../components/ui/Label/labelShowcaseData.js";
 import {
   tagMainStackItems,
   tagQuickToggleItems,
@@ -288,6 +302,144 @@ function Home() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-[var(--color-neutral-200)] pt-8 xl:grid-cols-[310px_minmax(0,1fr)]">
+          <div className="border border-[var(--color-neutral-200)] p-[10px]">
+            <h2 className="text-heading-3 leading-[1.12] text-[var(--color-text-300)]">
+              Icon container
+            </h2>
+          </div>
+          <div className="border border-[var(--color-neutral-200)] p-4">
+            <div className="flex flex-col gap-4 rounded-[24px] bg-[var(--color-neutral-bg)] p-4">
+              <div className="grid gap-4 xl:grid-cols-2">
+                <ShowcasePanel title="Main component" className="w-fit">
+                  <div className="flex items-start">
+                    <ShowcaseSample
+                      label="type=Outline, size=S"
+                      className="w-[120px]"
+                    >
+                      <IconContainer {...iconContainerMainComponent} />
+                    </ShowcaseSample>
+                  </div>
+                </ShowcasePanel>
+
+                <ShowcasePanel title="Sizes">
+                  <div className="flex flex-wrap gap-3">
+                    {iconContainerSizeItems.map((item) => (
+                      <ShowcaseSample
+                        key={item.label}
+                        label={item.label}
+                        className="w-[82px]"
+                      >
+                        <IconContainer {...item.props} />
+                      </ShowcaseSample>
+                    ))}
+                  </div>
+                </ShowcasePanel>
+              </div>
+
+              <ShowcasePanel title="Styles">
+                <div className="rounded-[8px] border border-dashed border-[#8b5cf6] p-6">
+                  <div className="flex flex-col gap-4">
+                    {iconContainerTypeRows.map((row) => (
+                      <div key={row.label} className="flex flex-wrap gap-3">
+                        {row.items.map((item) => (
+                          <IconContainer
+                            key={`${row.label}-${item.label}`}
+                            {...item.props}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </ShowcasePanel>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-[var(--color-neutral-200)] pt-8 xl:grid-cols-[310px_minmax(0,1fr)]">
+          <div className="border border-[var(--color-neutral-200)] p-[10px]">
+            <h2 className="text-heading-3 leading-[1.12] text-[var(--color-text-300)]">
+              Hint text
+            </h2>
+          </div>
+          <div className="border border-[var(--color-neutral-200)] p-4">
+            <div className="flex flex-col gap-4 rounded-[24px] bg-[var(--color-neutral-bg)] p-4">
+              <ShowcasePanel title="Hint / State">
+                <div className="flex flex-wrap gap-3">
+                  {hintTextStateItems.map((item) => (
+                    <ShowcaseSample
+                      key={item.label}
+                      label={item.label}
+                      className="w-[224px]"
+                    >
+                      <HintText {...item.props} />
+                    </ShowcaseSample>
+                  ))}
+                </div>
+              </ShowcasePanel>
+
+              <ShowcasePanel title="Hint / QuiCk Toggle">
+                <div className="flex flex-wrap gap-3">
+                  {hintTextQuickToggleItems.map((item) => (
+                    <ShowcaseSample
+                      key={item.label}
+                      label={item.label}
+                      className={clsx(
+                        item.label === "Text" && "w-[210px]",
+                        item.label === "Icon" && "w-[82px]",
+                      )}
+                    >
+                      <HintText {...item.props} />
+                    </ShowcaseSample>
+                  ))}
+                </div>
+              </ShowcasePanel>
+
+              <ShowcasePanel title="Password / State">
+                <div className="flex flex-wrap gap-3">
+                  {passwordHintItems.map((item) => (
+                    <ShowcaseSample
+                      key={item.label}
+                      label={item.label}
+                      className="w-[332px]"
+                    >
+                      <HintText {...item.props} />
+                    </ShowcaseSample>
+                  ))}
+                </div>
+              </ShowcasePanel>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-[var(--color-neutral-200)] pt-8 xl:grid-cols-[310px_minmax(0,1fr)]">
+          <div className="border border-[var(--color-neutral-200)] p-[10px]">
+            <h2 className="text-heading-3 leading-[1.12] text-[var(--color-text-300)]">
+              Label
+            </h2>
+          </div>
+          <div className="border border-[var(--color-neutral-200)] p-4">
+            <div className="flex flex-col gap-4 rounded-[24px] bg-[var(--color-neutral-bg)] p-4">
+              <div className="grid gap-4 xl:grid-cols-2">
+                <ShowcasePanel title="State">
+                  <div className="flex flex-wrap gap-3">
+                    {labelStateItems.map((item) => (
+                      <ShowcaseSample
+                        key={item.label}
+                        label={item.label}
+                        className="w-[120px]"
+                      >
+                        <Label {...item.props} />
+                      </ShowcaseSample>
+                    ))}
+                  </div>
+                </ShowcasePanel>
               </div>
             </div>
           </div>
