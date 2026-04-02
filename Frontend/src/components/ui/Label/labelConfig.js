@@ -11,6 +11,16 @@ export const LABEL_STATE_STYLES = {
     meta: "text-[var(--color-text-300)]",
     info: "text-[var(--color-neutral-400)]",
   },
+  Hover: {
+    label: "text-[var(--color-text-200)]",
+    meta: "text-[var(--color-text-200)]",
+    info: "text-[var(--color-neutral-400)]",
+  },
+  Focused: {
+    label: "text-[var(--color-text-200)]",
+    meta: "text-[var(--color-text-200)]",
+    info: "text-[var(--color-neutral-400)]",
+  },
   Disabled: {
     label: "text-[var(--color-neutral-400)]",
     meta: "text-[var(--color-neutral-400)]",

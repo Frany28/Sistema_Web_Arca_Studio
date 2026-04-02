@@ -74,9 +74,27 @@ function TickCircleIcon({ className }) {
 }
 
 function getPasswordSegments(state) {
+  if (typeof state === "number") {
+    if (state <= 0) {
+      return ["idle", "idle", "idle"];
+    }
+
+    if (state === 1) {
+      return ["error", "idle", "idle"];
+    }
+
+    if (state <= 3) {
+      return ["error", "warning", "idle"];
+    }
+
+    return ["error", "warning", "success"];
+  }
+
   switch (state) {
     case "Error":
       return ["error", "idle", "idle"];
+    case "Warning":
+      return ["error", "warning", "idle"];
     case "Success":
       return ["error", "warning", "success"];
     default:
@@ -93,13 +111,16 @@ function HintText({
   icon = null,
   passwordTitle = "Debe contener al menos;",
   requirements = PASSWORD_DEFAULT_REQUIREMENTS,
+  passwordProgress = null,
   ...props
 }) {
   const resolvedState = HINT_TEXT_STATE_STYLES[state] ? state : "Default";
   const visual = HINT_TEXT_STATE_STYLES[resolvedState];
 
   if (type === "Password") {
-    const segments = getPasswordSegments(resolvedState);
+    const segments = getPasswordSegments(
+      typeof passwordProgress === "number" ? passwordProgress : resolvedState,
+    );
     const isDisabled = resolvedState === "Disabled";
     const requirementColor = isDisabled
       ? "text-[var(--color-neutral-300)]"
@@ -125,7 +146,10 @@ function HintText({
         </p>
 
         {requirements.map((requirement) => {
-          const met = requirement.metInStates.includes(resolvedState);
+          const met =
+            typeof requirement.met === "boolean"
+              ? requirement.met
+              : requirement.metInStates?.includes(resolvedState);
           const statusColor = isDisabled
             ? "text-[var(--color-neutral-300)]"
             : met

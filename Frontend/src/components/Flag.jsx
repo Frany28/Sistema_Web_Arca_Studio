@@ -1,7 +1,8 @@
 import ReactCountryFlag from "react-country-flag";
 
-const SQUARE_FLAG_CDN_URL =
-  "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/1x1/";
+function normalizeCountryCode(countryCode) {
+  return String(countryCode ?? "").trim().toUpperCase();
+}
 
 function Flag({
   countryCode,
@@ -10,10 +11,17 @@ function Flag({
   className,
   style,
   imgStyle,
-  cdnUrl = SQUARE_FLAG_CDN_URL,
-  cdnSuffix = "svg",
+  useSvg = true,
+  cdnUrl,
+  cdnSuffix,
   ...flagProps
 }) {
+  const resolvedCountryCode = normalizeCountryCode(countryCode);
+
+  if (!resolvedCountryCode) {
+    return null;
+  }
+
   return (
     <span
       className={className}
@@ -30,17 +38,25 @@ function Flag({
       }}
     >
       <ReactCountryFlag
-        countryCode={countryCode}
-        svg
+        countryCode={resolvedCountryCode}
+        svg={useSvg}
         title={title}
-        aria-label={title ?? countryCode}
-        cdnUrl={cdnUrl}
-        cdnSuffix={cdnSuffix}
+        aria-label={title ?? resolvedCountryCode}
+        {...(cdnUrl ? { cdnUrl } : {})}
+        {...(cdnSuffix ? { cdnSuffix } : {})}
         style={{
-          width: "100%",
-          height: "100%",
-          display: "block",
-          objectFit: "cover",
+          ...(useSvg
+            ? {
+                width: "100%",
+                height: "100%",
+                display: "block",
+                objectFit: "cover",
+              }
+            : {
+                display: "inline-block",
+                fontSize: typeof size === "number" ? `${size}px` : size,
+                lineHeight: 1,
+              }),
           ...imgStyle,
         }}
         {...flagProps}

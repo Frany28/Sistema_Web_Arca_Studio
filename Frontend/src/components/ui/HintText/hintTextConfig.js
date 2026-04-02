@@ -18,6 +18,10 @@ export const HINT_TEXT_STATE_STYLES = {
     text: "text-[var(--color-success-200)]",
     icon: "text-[var(--color-success-200)]",
   },
+  Warning: {
+    text: "text-[var(--color-text-100)]",
+    icon: "text-[var(--color-neutral-400)]",
+  },
   Disabled: {
     text: "text-[var(--color-neutral-300)]",
     icon: "text-[var(--color-neutral-300)]",
@@ -32,10 +36,10 @@ export const PASSWORD_SEGMENT_STYLES = {
 };
 
 export const PASSWORD_DEFAULT_REQUIREMENTS = [
-  { label: "Al menos 1 mayuscula", metInStates: ["Error", "Success"] },
-  { label: "Al menos 1 numero", metInStates: ["Success"] },
-  { label: "Al menos 1 caracter especial", metInStates: ["Success"] },
-  { label: "Al menos 8 caracteres", metInStates: ["Success"] },
+  { label: "Al menos 1 mayuscula", met: false },
+  { label: "Al menos 1 numero", met: false },
+  { label: "Al menos 1 caracter especial", met: false },
+  { label: "Al menos 8 caracteres", met: false },
 ];
 
 export function createHintTextProps(overrides = {}) {

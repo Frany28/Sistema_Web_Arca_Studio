@@ -165,8 +165,7 @@ function ThemeToggle() {
       }}
       className={clsx(
         "inline-flex items-center gap-2 rounded-full border px-3 py-2 transition-colors duration-200",
-        "bg-white text-neutral-900 border-neutral-300 shadow-sm",
-        "dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-700 cursor-pointer",
+        "cursor-pointer bg-[var(--color-neutral-100)] text-[var(--color-text-300)] border-[var(--color-neutral-300)] shadow-[var(--shadow-e1)]",
       )}
       aria-label={`Activar modo ${isDark ? "claro" : "oscuro"}`}
       title={`Modo actual: ${isDark ? "oscuro" : "claro"}`}
@@ -174,8 +173,7 @@ function ThemeToggle() {
       <span
         className={clsx(
           "inline-flex size-8 items-center justify-center rounded-full transition-colors",
-          "bg-amber-100 text-amber-700",
-          "dark:bg-slate-800 dark:text-slate-100",
+          "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]",
         )}
       >
         {isDark ? <MoonIcon /> : <SunIcon />}

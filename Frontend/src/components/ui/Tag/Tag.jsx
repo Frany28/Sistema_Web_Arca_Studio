@@ -94,7 +94,7 @@ function Tag({
         {label}
       </span>
       {count ? (
-        <span className="inline-flex w-4 items-center justify-center rounded-[2px] bg-[var(--color-neutral-100)] px-[2px]">
+        <span className="inline-flex w-4 items-center justify-center rounded-[2px] bg-[var(--color-neutral-200)] px-[2px]">
           <span className={clsx("inline-flex items-center text-[var(--color-text-300)]", sizing.countText)}>
             {countValue}
           </span>
