@@ -146,7 +146,7 @@ function Home() {
           </ShowcaseCard>
 
           <ShowcaseCard title="Quick toggle" className="xl:col-span-8">
-            <div className="grid gap-4 xl:grid-cols-3">
+            <div className="grid gap-4 xl:grid-cols-3 md:grid-cols-2">
               {textAreaQuickToggleItems.map((item) => (
                 <SampleCell
                   key={item.label}
@@ -160,7 +160,7 @@ function Home() {
           </ShowcaseCard>
 
           <ShowcaseCard title="States" className="xl:col-span-8">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {textAreaStateItems.map((item) => (
                 <SampleCell
                   key={item.label}
