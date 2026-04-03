@@ -148,7 +148,11 @@ function Home() {
           <ShowcaseCard title="Quick toggle" className="xl:col-span-8">
             <div className="grid gap-4 xl:grid-cols-3">
               {textAreaQuickToggleItems.map((item) => (
-                <SampleCell key={item.label} label={item.label} className="min-h-[194px]">
+                <SampleCell
+                  key={item.label}
+                  label={item.label}
+                  className="min-h-[194px]"
+                >
                   <TextArea {...item.props} />
                 </SampleCell>
               ))}
@@ -158,7 +162,11 @@ function Home() {
           <ShowcaseCard title="States" className="xl:col-span-8">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {textAreaStateItems.map((item) => (
-                <SampleCell key={item.label} label={item.label} className="min-h-[245px]">
+                <SampleCell
+                  key={item.label}
+                  label={item.label}
+                  className="min-h-[245px]"
+                >
                   <TextArea {...item.props} />
                 </SampleCell>
               ))}
@@ -166,9 +174,13 @@ function Home() {
           </ShowcaseCard>
 
           <ShowcaseCard title="Feedback" className="xl:col-span-4">
-            <div className="grid gap-4">
+            <div className="grid gap-4 grid-cols-3">
               {textAreaFeedbackItems.map((item) => (
-                <SampleCell key={item.label} label={item.label} className="min-h-[245px]">
+                <SampleCell
+                  key={item.label}
+                  label={item.label}
+                  className="min-h-[245px]"
+                >
                   <TextArea {...item.props} />
                 </SampleCell>
               ))}
