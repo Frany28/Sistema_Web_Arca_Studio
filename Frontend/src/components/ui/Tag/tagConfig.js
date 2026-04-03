@@ -49,6 +49,16 @@ export const TAG_SIZE_STYLES = {
 export const TAG_BASE_STYLES =
   "inline-flex items-center rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)] tracking-[-0.5px]";
 
+export const TAG_INTERACTIVE_STYLES = {
+  default:
+    "transition-[border-color,background-color,box-shadow] duration-150",
+  interactive:
+    "cursor-pointer hover:border-[var(--color-neutral-300)] hover:bg-[var(--color-neutral-200)] hover:shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)]",
+  selected:
+    "border-[var(--color-primary-300)] bg-[var(--color-neutral-200)] shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)]",
+  disabled: "cursor-not-allowed opacity-60",
+};
+
 export function createTagProps(overrides = {}) {
   return {
     ...TAG_DEFAULT_PROPS,

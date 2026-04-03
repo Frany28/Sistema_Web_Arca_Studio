@@ -103,14 +103,9 @@ export const inputQuickToggleItems = [
     size: "L",
     showLeftIcon: false,
     showPasswordStrength: true,
-    defaultValue: "Password1!",
+    defaultValue: "",
     showHint: true,
-    passwordHintTitle: "Must contain at least;",
-    passwordRequirements: [
-      { label: "At least 1 uppercase", met: true },
-      { label: "At least 1 number", met: true },
-      { label: "At least 8 character", met: true },
-    ],
+    passwordHintTitle: "Debe contener al menos;",
   }),
 ];
 
@@ -132,12 +127,74 @@ export const inputTypeItems = [
   }),
   createInputShowcaseItem("Tags", {
     type: "Tags",
-    size: "L",
+    size: "S",
     tags: [],
+    tagOptions: [
+      { id: "tag-user-1", label: "Label", avatarText: "A" },
+      { id: "tag-user-2", label: "Label", avatarText: "B" },
+      { id: "tag-user-3", label: "Label", avatarText: "C" },
+    ],
   }),
   createInputShowcaseItem("Phone number", {
     type: "Phone number",
     size: "L",
+    defaultValue: "(444) 1234-5678",
+  }),
+];
+
+export const inputTypeStateItems = [
+  createInputShowcaseItem("Default input / Error", {
+    type: "Default input",
+    size: "L",
+    state: "Error",
+    defaultValue: "Texto de prueba",
+  }),
+  createInputShowcaseItem("Default input / Disabled", {
+    type: "Default input",
+    size: "L",
+    state: "Disabled",
+    disabled: true,
+    defaultValue: "Texto de prueba",
+  }),
+  createInputShowcaseItem("Search bar / Error", {
+    type: "Search bar",
+    size: "L",
+    state: "Error",
+    showRightIcon: false,
+    defaultValue: "Buscar...",
+  }),
+  createInputShowcaseItem("Search bar / Disabled", {
+    type: "Search bar",
+    size: "L",
+    state: "Disabled",
+    disabled: true,
+    showRightIcon: false,
+    defaultValue: "Buscar...",
+  }),
+  createInputShowcaseItem("Password / Error", {
+    type: "Password",
+    size: "L",
+    state: "Error",
+    defaultValue: "Password1!",
+  }),
+  createInputShowcaseItem("Password / Disabled", {
+    type: "Password",
+    size: "L",
+    state: "Disabled",
+    disabled: true,
+    defaultValue: "Password1!",
+  }),
+  createInputShowcaseItem("Phone number / Error", {
+    type: "Phone number",
+    size: "L",
+    state: "Error",
+    defaultValue: "(444) 1234-5678",
+  }),
+  createInputShowcaseItem("Phone number / Disabled", {
+    type: "Phone number",
+    size: "L",
+    state: "Disabled",
+    disabled: true,
     defaultValue: "(444) 1234-5678",
   }),
 ];

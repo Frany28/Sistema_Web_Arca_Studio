@@ -1,6 +1,10 @@
 import clsx from "clsx";
 import Flag from "../../Flag.jsx";
-import { TAG_BASE_STYLES, TAG_SIZE_STYLES } from "./tagConfig.js";
+import {
+  TAG_BASE_STYLES,
+  TAG_INTERACTIVE_STYLES,
+  TAG_SIZE_STYLES,
+} from "./tagConfig.js";
 
 function CloseIcon({ className }) {
   return (
@@ -75,17 +79,53 @@ function Tag({
   countValue = "5",
   countryCode = "IN",
   avatarText = "A",
+  selected = false,
+  interactive = false,
+  disabled = false,
+  onClick,
+  onRemove,
   ...props
 }) {
   const resolvedSize = TAG_SIZE_STYLES[size] ? size : "S";
   const sizing = TAG_SIZE_STYLES[resolvedSize];
+  const hasAction = Boolean(onClick || onRemove);
+  const Component = hasAction ? "button" : "span";
+  const actionLabel = onRemove ? `Quitar ${label}` : `Seleccionar ${label}`;
 
   if (type !== "Universal tag") {
     return null;
   }
 
   return (
-    <span className={clsx(TAG_BASE_STYLES, "shrink-0", sizing.container, className)} {...props}>
+    <Component
+      type={hasAction ? "button" : undefined}
+      className={clsx(
+        TAG_BASE_STYLES,
+        TAG_INTERACTIVE_STYLES.default,
+        "shrink-0",
+        (interactive || hasAction) && !disabled && TAG_INTERACTIVE_STYLES.interactive,
+        selected && TAG_INTERACTIVE_STYLES.selected,
+        disabled && TAG_INTERACTIVE_STYLES.disabled,
+        sizing.container,
+        className,
+      )}
+      onClick={
+        disabled
+          ? undefined
+          : (event) => {
+              if (onRemove) {
+                onRemove();
+                return;
+              }
+
+              onClick?.(event);
+            }
+      }
+      disabled={hasAction ? disabled : undefined}
+      aria-label={hasAction ? actionLabel : undefined}
+      aria-pressed={interactive || hasAction ? selected : undefined}
+      {...props}
+    >
       {checkbox ? <Checkbox className={sizing.checkbox} /> : null}
       {flag ? <Flag countryCode={countryCode} size={resolvedSize === "L" ? "20px" : "16px"} title={countryCode} /> : null}
       {avatar ? <Avatar className={sizing.avatar} text={avatarText} /> : null}
@@ -101,11 +141,14 @@ function Tag({
         </span>
       ) : null}
       {closeIcon ? (
-        <span className={clsx("inline-flex items-center justify-center text-[var(--color-text-300)]", sizing.icon)} aria-hidden="true">
+        <span
+          className={clsx("inline-flex items-center justify-center text-[var(--color-text-300)]", sizing.icon)}
+          aria-hidden="true"
+        >
           <CloseIcon className={sizing.icon} />
         </span>
       ) : null}
-    </span>
+    </Component>
   );
 }
 

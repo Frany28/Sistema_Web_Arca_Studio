@@ -262,6 +262,31 @@ function formatPhoneNumber(value, option) {
   return output;
 }
 
+function createTagFromText(value, fallbackIndex = 0) {
+  const label = String(value ?? "").trim();
+
+  if (!label) {
+    return null;
+  }
+
+  return {
+    id: `tag-custom-${label.toLowerCase().replace(/\s+/g, "-")}-${fallbackIndex}`,
+    label,
+    avatar: true,
+    closeIcon: true,
+    avatarText: label.charAt(0).toUpperCase() || String(fallbackIndex + 1),
+  };
+}
+
+function normalizeTagItem(tag, fallbackId) {
+  return {
+    id: tag.id ?? fallbackId,
+    avatar: true,
+    closeIcon: true,
+    ...tag,
+  };
+}
+
 function Input({
   className,
   id,
@@ -285,6 +310,7 @@ function Input({
   countryPrefix = "+1",
   phoneOptions = PHONE_COUNTRY_OPTIONS,
   tags = INPUT_TAG_DEFAULT_ITEMS,
+  tagOptions = INPUT_TAG_DEFAULT_ITEMS,
   showPasswordStrength = false,
   passwordRequirements,
   passwordHintTitle,
@@ -304,6 +330,16 @@ function Input({
   const [isFocused, setIsFocused] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [internalValue, setInternalValue] = useState(defaultValue ?? "");
+  const [selectedTags, setSelectedTags] = useState(() =>
+    Array.isArray(tags)
+      ? tags.map((tag, index) => normalizeTagItem(tag, `tag-selected-${index}`))
+      : [],
+  );
+  const [availableTags, setAvailableTags] = useState(() =>
+    Array.isArray(tagOptions)
+      ? tagOptions.map((tag, index) => normalizeTagItem(tag, `tag-option-${index}`))
+      : [],
+  );
   const [isPhoneMenuOpen, setIsPhoneMenuOpen] = useState(false);
   const [selectedPhoneOption, setSelectedPhoneOption] = useState(() => {
     const preferredByCountry = phoneOptions.find(
@@ -327,17 +363,44 @@ function Input({
   const resolvedSize = INPUT_SIZE_STYLES[size] ? size : "S";
   const resolvedType = INPUT_TYPES[type] ? type : "Default input";
   const baseState = disabled ? "Disabled" : state;
-  const resolvedState =
-    baseState === "Default" && isFocused ? "Focused" : baseState;
-  const stateStyles = INPUT_STATE_STYLES[resolvedState];
   const sizing = INPUT_SIZE_STYLES[resolvedSize];
   const typeConfig = INPUT_TYPES[resolvedType];
   const isControlled = value !== undefined;
   const fieldValue = isControlled ? value : internalValue;
 
+  const normalizedTagOptions = Array.isArray(availableTags) ? availableTags : [];
+  const visibleTags = resolvedType === "Tags" ? selectedTags : tags;
+  const normalizedVisibleTags = Array.isArray(visibleTags) ? visibleTags : [];
+  const hasSelectedTags =
+    resolvedType === "Tags" && normalizedVisibleTags.length > 0;
+  const resolvedState =
+    baseState === "Default"
+      ? resolvedType === "Tags"
+        ? isFocused
+          ? "Focused"
+          : hasSelectedTags
+            ? "Filled"
+            : "Default"
+        : isFocused
+          ? "Focused"
+          : baseState
+      : baseState;
+  const stateStyles = INPUT_STATE_STYLES[resolvedState];
+
   const currentValue = fieldValue ?? "";
-  const isFilled = hasTextValue(currentValue) || resolvedState === "Filled";
-  const showTags = resolvedType === "Tags" && tags?.length > 0;
+  const isFilled =
+    hasTextValue(currentValue) ||
+    resolvedState === "Filled" ||
+    hasSelectedTags;
+  const showTags = resolvedType === "Tags" && normalizedVisibleTags.length > 0;
+  const showTagsInsideField =
+    resolvedType === "Tags" &&
+    ["Filled", "Disabled"].includes(resolvedState) &&
+    showTags;
+  const showTagsBelowField =
+    resolvedType === "Tags" &&
+    resolvedState === "Focused" &&
+    normalizedTagOptions.length > 0;
   const resolvedPhoneOption = selectedPhoneOption ?? phoneOptions[0];
   const normalizedPhonePrefix = normalizeDialCode(phonePrefixValue);
   const filteredPhoneOptions =
@@ -387,9 +450,7 @@ function Input({
       ? "Default"
       : passwordProgressCount >= (passwordRequirementItems?.length ?? 0)
         ? "Success"
-        : passwordProgressCount >= 2
-          ? "Warning"
-          : "Error";
+        : "Error";
 
   const handleRightIconClick = () => {
     if (resolvedType === "Password" && !disabled) {
@@ -400,6 +461,15 @@ function Input({
   };
 
   const handleChange = (event) => {
+    if (resolvedType === "Tags") {
+      if (!isControlled) {
+        setInternalValue(event.target.value);
+      }
+
+      onChange?.(event);
+      return;
+    }
+
     if (resolvedType === "Phone number") {
       const formattedValue = formatPhoneNumber(
         event.target.value,
@@ -440,6 +510,120 @@ function Input({
     };
   }, [isPhoneMenuOpen]);
 
+  useEffect(() => {
+    if (resolvedType !== "Tags") {
+      return;
+    }
+
+    const normalizedSelected = Array.isArray(tags)
+      ? tags.map((tag, index) =>
+          normalizeTagItem(tag, `tag-selected-${index}-${tag.label}`),
+        )
+      : [];
+    setSelectedTags(normalizedSelected);
+  }, [resolvedType, tags]);
+
+  useEffect(() => {
+    if (resolvedType !== "Tags") {
+      return;
+    }
+
+    const normalizedSelectedIds = new Set(
+      (Array.isArray(tags) ? tags : []).map((tag, index) =>
+        normalizeTagItem(tag, `tag-selected-${index}-${tag.label}`).id,
+      ),
+    );
+    const normalizedAvailable = Array.isArray(tagOptions)
+      ? tagOptions
+          .map((tag, index) =>
+            normalizeTagItem(tag, `tag-option-${index}-${tag.label}`),
+          )
+          .filter((tag) => !normalizedSelectedIds.has(tag.id))
+      : [];
+    setAvailableTags(normalizedAvailable);
+  }, [resolvedType, tagOptions]);
+
+  const filteredSelectableTags = normalizedTagOptions.filter((option) => {
+    const query = String(currentValue).trim().toLowerCase();
+
+    if (!query) {
+      return true;
+    }
+
+    return String(option.label ?? "").trim().toLowerCase().includes(query);
+  });
+
+  const handleTagSelection = () => {
+    const nextTag =
+      filteredSelectableTags.find((option) => {
+        const optionLabel = String(option.label ?? "").trim().toLowerCase();
+        const query = String(currentValue).trim().toLowerCase();
+
+        return (
+          query &&
+          optionLabel.includes(query)
+        );
+      }) ?? createTagFromText(currentValue, normalizedVisibleTags.length);
+
+    if (!nextTag || disabled) {
+      return;
+    }
+
+    setSelectedTags((current) => {
+      const exists = current.some((tag) => {
+        const currentId = tag.id ?? "";
+        const nextId = nextTag.id ?? "";
+
+        return currentId === nextId || tag.label === nextTag.label;
+      });
+
+      return exists ? current : [...current, nextTag];
+    });
+    setAvailableTags((current) =>
+      current.filter((tag) => {
+        const currentId = tag.id ?? "";
+        const nextId = nextTag.id ?? "";
+
+        return currentId !== nextId && tag.label !== nextTag.label;
+      }),
+    );
+
+    if (!isControlled) {
+      setInternalValue("");
+    }
+  };
+
+  const handleToggleTag = (tagItem) => {
+    if (disabled) {
+      return;
+    }
+
+    setSelectedTags((current) => [...current, { ...tagItem, closeIcon: true }]);
+    setAvailableTags((current) => current.filter((tag) => tag.id !== tagItem.id));
+
+    if (!isControlled) {
+      setInternalValue("");
+    }
+  };
+
+  const handleRemoveTag = (tagId) => {
+    if (disabled) {
+      return;
+    }
+
+    const removedTag = normalizedVisibleTags.find((tag) => tag.id === tagId);
+
+    setSelectedTags((current) => current.filter((tag) => tag.id !== tagId));
+
+    if (removedTag) {
+      setAvailableTags((current) => {
+        const exists = current.some((tag) => tag.id === removedTag.id);
+
+        return exists ? current : [...current, { ...removedTag, closeIcon: true }];
+      });
+    }
+  };
+
   const content = (
     <div
       className={clsx(
@@ -452,17 +636,21 @@ function Input({
       )}
     >
       {resolvedType === "Phone number" ? (
-        <>
+        <div
+          className={clsx(
+            "flex min-w-0 flex-1 items-center rounded-[inherit]",
+            stateStyles.contentBorder,
+          )}
+        >
           <div
             ref={phoneMenuRef}
             className="relative"
           >
             <div
               className={clsx(
-                "flex shrink-0 items-center gap-[8px] rounded-[inherit] border-r border-[var(--color-neutral-200)]",
+                "flex shrink-0 items-center gap-[8px] border-r border-[var(--color-neutral-200)]",
                 disabled ? "cursor-not-allowed" : "cursor-pointer",
                 sizing.phonePrefix,
-                stateStyles.contentBorder,
               )}
             >
               <Flag
@@ -581,24 +769,18 @@ function Input({
               </div>
             ) : null}
           </div>
-          <div
-            className={clsx(
-              "flex min-w-0 flex-1 items-center gap-[8px] rounded-[inherit]",
-              sizing.field,
-              stateStyles.contentBorder,
-            )}
-          >
+          <div className={clsx("flex min-w-0 flex-1 items-center gap-[8px]", sizing.field)}>
             <input
               id={inputId}
               type={inputType}
               disabled={disabled}
               value={fieldValue}
               placeholder={resolvedPlaceholder}
-                className={clsx(
-                  "text-body-3 min-w-0 flex-1 border-0 bg-transparent tracking-[-0.5px] outline-none",
-                  disabled ? "cursor-not-allowed" : "cursor-text",
-                  stateStyles.inputText,
-                  stateStyles.placeholder,
+              className={clsx(
+                "text-body-3 min-w-0 flex-1 border-0 bg-transparent tracking-[-0.5px] outline-none",
+                disabled ? "cursor-not-allowed" : "cursor-text",
+                isFilled ? stateStyles.inputText : stateStyles.placeholder,
+                stateStyles.placeholder,
                 inputClassName,
               )}
               onFocus={(event) => {
@@ -628,7 +810,7 @@ function Input({
               </button>
             ) : null}
           </div>
-        </>
+        </div>
       ) : (
         <div
           className={clsx(
@@ -648,11 +830,11 @@ function Input({
             </span>
           ) : null}
 
-          {showTags ? (
+          {showTagsInsideField ? (
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-[4px]">
-              {tags.map((tag, index) => (
+              {normalizedVisibleTags.map((tag, index) => (
                 <Tag
-                  key={`${tag.label}-${index}`}
+                  key={tag.id ?? `${tag.label}-${index}`}
                   size={sizing.tagSize}
                   label={tag.label}
                   avatar={tag.avatar ?? true}
@@ -660,6 +842,7 @@ function Input({
                   closeIcon={tag.closeIcon ?? true}
                   count={false}
                   className="max-w-full"
+                  onRemove={() => handleRemoveTag(tag.id)}
                 />
               ))}
             </div>
@@ -684,6 +867,28 @@ function Input({
               onBlur={(event) => {
                 setIsFocused(false);
                 onBlur?.(event);
+              }}
+              onKeyDown={(event) => {
+                if (resolvedType !== "Tags") {
+                  return;
+                }
+
+                if ((event.key === "Enter" || event.key === ",") && hasTextValue(currentValue)) {
+                  event.preventDefault();
+                  handleTagSelection();
+                  return;
+                }
+
+                if (
+                  event.key === "Backspace" &&
+                  !hasTextValue(currentValue) &&
+                  normalizedVisibleTags.length > 0
+                ) {
+                  event.preventDefault();
+                  handleRemoveTag(
+                    normalizedVisibleTags[normalizedVisibleTags.length - 1].id,
+                  );
+                }
               }}
               onChange={handleChange}
               {...props}
@@ -751,6 +956,25 @@ function Input({
           passwordProgress={passwordProgressCount}
           className="w-full"
         />
+      ) : null}
+
+      {showTagsBelowField ? (
+        <div className="flex w-full flex-wrap items-center gap-[4px]">
+          {filteredSelectableTags.map((tag, index) => (
+            <Tag
+              key={tag.id ?? `${tag.label}-${index}`}
+              size={sizing.tagSize}
+              label={tag.label}
+              avatar={tag.avatar ?? true}
+              avatarText={tag.avatarText ?? "A"}
+              closeIcon={tag.closeIcon ?? true}
+              count={false}
+              interactive
+              onClick={() => handleToggleTag(tag)}
+              onRemove={() => handleToggleTag(tag)}
+            />
+          ))}
+        </div>
       ) : null}
     </div>
   );

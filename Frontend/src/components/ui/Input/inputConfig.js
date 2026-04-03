@@ -142,9 +142,9 @@ export const INPUT_TYPES = {
 };
 
 export const INPUT_TAG_DEFAULT_ITEMS = [
-  { label: "Label", avatarText: "A" },
-  { label: "Label", avatarText: "B" },
-  { label: "Label", avatarText: "C" },
+  { id: "tag-1", label: "Label", avatarText: "A" },
+  { id: "tag-2", label: "Label", avatarText: "B" },
+  { id: "tag-3", label: "Label", avatarText: "C" },
 ];
 
 export { PHONE_COUNTRY_OPTIONS };
@@ -152,17 +152,17 @@ export { PHONE_COUNTRY_OPTIONS };
 export const PASSWORD_REQUIREMENT_RULES = [
   {
     id: "uppercase",
-    label: "Al menos 1 mayuscula",
+    label: "Al menos 1 mayúscula",
     test: (value) => /[A-Z]/.test(value),
   },
   {
     id: "number",
-    label: "Al menos 1 numero",
+    label: "Al menos 1 número",
     test: (value) => /\d/.test(value),
   },
   {
     id: "special",
-    label: "Al menos 1 caracter especial",
+    label: "Al menos 1 carácter especial",
     test: (value) => /[^A-Za-z0-9]/.test(value),
   },
   {

@@ -83,7 +83,7 @@ function getPasswordSegments(state) {
       return ["error", "idle", "idle"];
     }
 
-    if (state <= 3) {
+    if (state === 2) {
       return ["error", "warning", "idle"];
     }
 
@@ -122,6 +122,13 @@ function HintText({
       typeof passwordProgress === "number" ? passwordProgress : resolvedState,
     );
     const isDisabled = resolvedState === "Disabled";
+    const titleColor = isDisabled
+      ? "text-[var(--color-neutral-300)]"
+      : resolvedState === "Error"
+        ? "text-[var(--color-danger-100)]"
+        : resolvedState === "Success"
+          ? "text-[var(--color-success-200)]"
+          : "text-[var(--color-text-100)]";
     const requirementColor = isDisabled
       ? "text-[var(--color-neutral-300)]"
       : "text-[var(--color-text-100)]";
@@ -141,7 +148,7 @@ function HintText({
           ))}
         </div>
 
-        <p className={clsx("w-full text-body-3 tracking-[-0.5px]", requirementColor)}>
+        <p className={clsx("w-full text-body-3 tracking-[-0.5px]", titleColor)}>
           {passwordTitle}
         </p>
 
