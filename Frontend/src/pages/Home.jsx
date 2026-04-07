@@ -791,9 +791,6 @@ function Home() {
             <h2 className="text-heading-4 text-[var(--color-text-50)]">
               Main component, type y example
             </h2>
-            <p className="text-body-3 text-[var(--color-text-200)]">
-              Implementacion basada en el nodo `2061:23838` de Figma.
-            </p>
           </div>
         </div>
 
@@ -838,9 +835,6 @@ function Home() {
             <h2 className="text-heading-4 text-[var(--color-text-50)]">
               Main component, states y example
             </h2>
-            <p className="text-body-3 text-[var(--color-text-200)]">
-              Implementacion basada en el nodo `2061:23879` de Figma.
-            </p>
           </div>
         </div>
 
