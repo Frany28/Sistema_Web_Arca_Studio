@@ -137,7 +137,7 @@ function Accordion({
     <Element
       type={isInteractive ? "button" : undefined}
       className={clsx(
-        "flex w-full gap-[12px] rounded-[12px] p-[12px] text-left transition-[background-color,border-color] duration-150",
+        "flex w-full gap-[12px] rounded-[var(--radius-3)] p-[12px] text-left transition-[background-color,border-color] duration-150",
         styles.container,
         styles.alignment,
         isInteractive &&
