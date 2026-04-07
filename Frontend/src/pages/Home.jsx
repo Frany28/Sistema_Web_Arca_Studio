@@ -150,8 +150,12 @@ function ScrollBarMovementDemo() {
         return;
       }
 
-      const maxScroll = Math.max(element.scrollHeight - element.clientHeight, 0);
-      const nextLength = element.clientHeight / Math.max(element.scrollHeight, 1);
+      const maxScroll = Math.max(
+        element.scrollHeight - element.clientHeight,
+        0,
+      );
+      const nextLength =
+        element.clientHeight / Math.max(element.scrollHeight, 1);
       const nextPosition =
         maxScroll === 0 ? 0 : clamp(element.scrollTop / maxScroll, 0, 1);
 
@@ -539,9 +543,6 @@ function Home() {
             <h2 className="text-heading-4 text-[var(--color-text-50)]">
               Main component, quick toggle y states
             </h2>
-            <p className="text-body-3 text-[var(--color-text-200)]">
-              Implementacion basada en el nodo `2061:22548` de Figma.
-            </p>
           </div>
         </div>
 
@@ -678,9 +679,6 @@ function Home() {
             <h2 className="text-heading-4 text-[var(--color-text-50)]">
               Main component, quick toggle y size
             </h2>
-            <p className="text-body-3 text-[var(--color-text-200)]">
-              Implementacion basada en el nodo `2061:23723` de Figma.
-            </p>
           </div>
         </div>
 
@@ -749,9 +747,6 @@ function Home() {
             <h2 className="text-heading-4 text-[var(--color-text-50)]">
               Main component, length y movement
             </h2>
-            <p className="text-body-3 text-[var(--color-text-200)]">
-              Implementacion basada en el nodo `2061:23797` de Figma.
-            </p>
           </div>
         </div>
 

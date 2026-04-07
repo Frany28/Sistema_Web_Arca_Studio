@@ -18,7 +18,7 @@ export const ACCORDION_STATE_STYLES = {
   },
   Hover: {
     container:
-      "border border-transparent bg-[var(--color-primary-10)] dark:bg-[var(--color-primary-100)]",
+      "bg-[var(--color-primary-10)] dark:border dark:border-transparent dark:bg-[var(--color-primary-100)]",
     alignment: "items-center",
   },
   Open: {

@@ -141,7 +141,7 @@ function Accordion({
         styles.container,
         styles.alignment,
         isInteractive &&
-          "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
+          "appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
         className,
       )}
       data-state={resolvedState.toLowerCase()}
