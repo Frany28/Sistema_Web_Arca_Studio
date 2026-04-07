@@ -18,11 +18,11 @@ export const TEXT_AREA_STATE_STYLES = {
     shell:
       "border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-none",
     field:
-      "border border-transparent bg-transparent",
+      "border border-transparent bg-transparent dark:bg-[var(--color-neutral-100-uniform)]",
     text: "text-[var(--color-text-100)] placeholder:text-[var(--color-text-100)]",
     labelState: "Default",
     hintState: "Default",
-    handle: "text-[var(--color-neutral-300)]",
+    handle: "text-[var(--color-neutral-300)] dark:text-[var(--color-neutral-400)]",
   },
   Hover: {
     shell:
@@ -32,17 +32,17 @@ export const TEXT_AREA_STATE_STYLES = {
     text: "text-[var(--color-text-300)] placeholder:text-[var(--color-text-100)]",
     labelState: "Default",
     hintState: "Default",
-    handle: "text-[var(--color-neutral-300)]",
+    handle: "text-[var(--color-neutral-300)] dark:text-[var(--color-neutral-400)]",
   },
   Focused: {
     shell:
-      "border-[4px] border-[var(--color-primary-10)] bg-[var(--color-neutral-100)] shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)]",
+      "border-[4px] border-[var(--color-primary-10)] bg-[var(--color-neutral-100)] shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)] dark:border-[#2a29291a]",
     field:
       "border border-[var(--color-primary-300)] bg-transparent",
     text: "text-[var(--color-text-300)] placeholder:text-[var(--color-text-100)]",
     labelState: "Default",
     hintState: "Default",
-    handle: "text-[var(--color-neutral-300)]",
+    handle: "text-[var(--color-neutral-300)] dark:text-[var(--color-neutral-400)]",
   },
   Filled: {
     shell:
