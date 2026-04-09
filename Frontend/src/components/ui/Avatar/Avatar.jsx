@@ -11,22 +11,22 @@ function AvatarIcon({ className }) {
 
   return (
     <svg
-      viewBox="0 0 56 56"
+      viewBox="0 0 40 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={className}
+      className={clsx("block", className)}
       aria-hidden="true"
     >
       <g clipPath={`url(#${clipPathId})`}>
         <path
-          d="M28.2745 13.9648C22.7387 13.9648 18.2549 18.4486 18.2549 23.9845C18.2549 29.5203 22.7387 34.0041 28.2745 34.0041C33.8103 34.0041 38.2941 29.5203 38.2941 23.9845C38.2941 18.4486 33.8103 13.9648 28.2745 13.9648ZM28.2745 36.509C21.5864 36.509 8.23529 39.8655 8.23529 46.5286V61.558H48.3137V46.5286C48.3137 39.8655 34.9626 36.509 28.2745 36.509Z"
+          d="M20.1961 9.97461C16.2419 9.97461 13.0392 13.1773 13.0392 17.1315C13.0392 21.0856 16.2419 24.2883 20.1961 24.2883C24.1502 24.2883 27.3529 21.0856 27.3529 17.1315C27.3529 13.1773 24.1502 9.97461 20.1961 9.97461ZM20.1961 26.0776C15.4189 26.0776 5.88235 28.4751 5.88235 33.2344V43.9697H34.5098V33.2344C34.5098 28.4751 24.9733 26.0776 20.1961 26.0776Z"
           fill="currentColor"
         />
       </g>
       <defs>
         <clipPath id={clipPathId}>
           <path
-            d="M0 28C0 12.536 12.536 0 28 0C43.464 0 56 12.536 56 28C56 43.464 43.464 56 28 56C12.536 56 0 43.464 0 28Z"
+            d="M0 20C0 8.95431 8.95431 0 20 0C31.0457 0 40 8.95431 40 20C40 31.0457 31.0457 40 20 40C8.95431 40 0 31.0457 0 20Z"
             fill="white"
           />
         </clipPath>
@@ -99,7 +99,8 @@ function Avatar({
   return (
     <span
       className={clsx(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+        "relative inline-flex shrink-0 overflow-hidden rounded-full leading-none",
+        resolvedContent === "Text" && "items-center justify-center",
         sizing.container,
         visual.container,
         className,
@@ -119,7 +120,7 @@ function Avatar({
       {resolvedContent === "Icon" ? (
         <span
           className={clsx(
-            "inline-flex size-full items-center justify-center",
+            "absolute inset-0 block",
             visual.content,
           )}
           aria-hidden="true"

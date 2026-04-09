@@ -48,7 +48,10 @@ function AvatarLabel({
         src={avatarSrc}
         alt={avatarAlt}
         decorative={avatarDecorative}
-        className={avatarClassName}
+        className={clsx(
+          "border-0 border-transparent outline-none ring-0 shadow-none",
+          avatarClassName,
+        )}
       />
 
       {hasText ? (

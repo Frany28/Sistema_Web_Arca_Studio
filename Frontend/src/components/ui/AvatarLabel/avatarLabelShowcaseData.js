@@ -1,12 +1,16 @@
+import avatarLabelFigmaAvatarSrc from "../../../assets/avatar-label-figma-40.svg";
 import {
   createAvatarLabelProps,
   createAvatarLabelShowcaseItem,
 } from "./avatarLabelConfig.js";
 
+export const AVATAR_LABEL_FIGMA_AVATAR_SRC = avatarLabelFigmaAvatarSrc;
+
 export const avatarLabelMainComponent = createAvatarLabelProps({
   size: "M",
   showLabel: true,
   showSubtitle: true,
+  avatarSrc: AVATAR_LABEL_FIGMA_AVATAR_SRC,
 });
 
 export const avatarLabelQuickToggleItems = [
@@ -15,6 +19,7 @@ export const avatarLabelQuickToggleItems = [
       size: "M",
       showLabel: false,
       showSubtitle: false,
+      avatarSrc: AVATAR_LABEL_FIGMA_AVATAR_SRC,
     }),
     previewWidthClassName: "w-[72px]",
   },
@@ -23,6 +28,7 @@ export const avatarLabelQuickToggleItems = [
       size: "M",
       showLabel: true,
       showSubtitle: false,
+      avatarSrc: AVATAR_LABEL_FIGMA_AVATAR_SRC,
     }),
     previewWidthClassName: "w-[165px]",
   },
@@ -31,6 +37,7 @@ export const avatarLabelQuickToggleItems = [
       size: "M",
       showLabel: true,
       showSubtitle: true,
+      avatarSrc: AVATAR_LABEL_FIGMA_AVATAR_SRC,
     }),
     previewWidthClassName: "w-[166px]",
   },
@@ -42,6 +49,7 @@ export const avatarLabelSizeItems = [
       size: "S",
       showLabel: true,
       showSubtitle: false,
+      avatarSrc: AVATAR_LABEL_FIGMA_AVATAR_SRC,
     }),
     previewWidthClassName: "w-[132px]",
   },
@@ -50,6 +58,7 @@ export const avatarLabelSizeItems = [
       size: "M",
       showLabel: true,
       showSubtitle: true,
+      avatarSrc: AVATAR_LABEL_FIGMA_AVATAR_SRC,
     }),
     previewWidthClassName: "w-[166px]",
   },
@@ -58,6 +67,7 @@ export const avatarLabelSizeItems = [
       size: "L",
       showLabel: true,
       showSubtitle: true,
+      avatarSrc: AVATAR_LABEL_FIGMA_AVATAR_SRC,
     }),
     previewWidthClassName: "w-[182px]",
   },

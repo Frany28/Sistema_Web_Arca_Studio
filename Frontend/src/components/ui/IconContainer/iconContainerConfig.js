@@ -24,10 +24,10 @@ export const ICON_CONTAINER_SIZE_STYLES = {
 
 export const ICON_CONTAINER_TYPE_STYLES = {
   Outline:
-    "border-[var(--stroke-0)] border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-100)] shadow-[var(--shadow-e1)]",
+    "border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-100)] shadow-[var(--shadow-e1)]",
   Fill:
-    "border-[var(--stroke-0)] border-transparent bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)] shadow-[var(--shadow-e1)]",
-  Ghost: "border-[var(--stroke-0)] border-transparent bg-transparent text-[var(--color-text-100)] shadow-none",
+    "border border-transparent bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)] shadow-[var(--shadow-e1)]",
+  Ghost: "border border-transparent bg-transparent text-[var(--color-text-100)] shadow-none",
 };
 
 export function createIconContainerProps(overrides = {}) {
