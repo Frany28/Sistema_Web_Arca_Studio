@@ -7,16 +7,47 @@ import {
 
 const HORIZONTAL_TAB_MENU_NODE_IDS = {
   light: {
-    wrapper: "2061:23099",
-    activeItem: "2061:23100",
-    inactiveItem: "2061:23101",
+    Brand: {
+      off: {
+        wrapper: "2061:23099",
+        activeItem: "2061:23100",
+        inactiveItem: "2061:23101",
+      },
+      on: {
+        wrapper: "2061:23106",
+        activeItem: "2061:23107",
+        inactiveItem: "2061:23108",
+      },
+    },
+    Underlined: {
+      off: {
+        wrapper: "2061:23112",
+        activeItem: "2061:23113",
+        inactiveItem: "2061:23114",
+      },
+      on: {
+        wrapper: "2061:23119",
+        activeItem: "2061:23120",
+        inactiveItem: "2061:23121",
+      },
+    },
   },
 };
 
-function getItemNodeId(isActive) {
+function getVariant(style, filled) {
+  const resolvedStyle = style === "Underlined" ? "Underlined" : "Brand";
+  const resolvedFilled = filled === "on" ? "on" : "off";
+
+  return {
+    style: resolvedStyle,
+    filled: resolvedFilled,
+  };
+}
+
+function getItemNodeId(style, filled, isActive) {
   return isActive
-    ? HORIZONTAL_TAB_MENU_NODE_IDS.light.activeItem
-    : HORIZONTAL_TAB_MENU_NODE_IDS.light.inactiveItem;
+    ? HORIZONTAL_TAB_MENU_NODE_IDS.light[style][filled].activeItem
+    : HORIZONTAL_TAB_MENU_NODE_IDS.light[style][filled].inactiveItem;
 }
 
 function getNextIndex(currentIndex, itemCount, direction) {
@@ -36,6 +67,8 @@ function HorizontalTabMenu({
   items = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.items,
   activeIndex,
   defaultActiveIndex = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.activeIndex,
+  filled = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.filled,
+  style = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.style,
   interactive = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.interactive,
   onChange,
   ...props
@@ -48,6 +81,7 @@ function HorizontalTabMenu({
       : HORIZONTAL_TAB_MENU_DEFAULT_ITEMS;
   const isControlled = Number.isInteger(activeIndex);
   const resolvedActiveIndex = isControlled ? activeIndex : internalActiveIndex;
+  const resolvedVariant = getVariant(style, filled);
   const hasActiveItem =
     Number.isInteger(resolvedActiveIndex) &&
     resolvedActiveIndex >= 0 &&
@@ -97,10 +131,23 @@ function HorizontalTabMenu({
   return (
     <div
       className={clsx(
-        "inline-flex max-w-full items-center gap-[8px] overflow-x-auto pb-[2px]",
+        "inline-flex max-w-full items-center overflow-x-auto",
+        resolvedVariant.style === "Brand" && "gap-[8px] pb-[2px]",
+        resolvedVariant.style === "Brand" &&
+          resolvedVariant.filled === "on" &&
+          "flex w-full",
+        resolvedVariant.style === "Underlined" &&
+          "gap-[16px] border-b border-[var(--color-neutral-200)]",
+        resolvedVariant.style === "Underlined" &&
+          resolvedVariant.filled === "on" &&
+          "flex w-full",
         className,
       )}
-      data-node-id={HORIZONTAL_TAB_MENU_NODE_IDS.light.wrapper}
+      data-node-id={
+        HORIZONTAL_TAB_MENU_NODE_IDS.light[resolvedVariant.style][
+          resolvedVariant.filled
+        ].wrapper
+      }
       role="tablist"
       {...props}
     >
@@ -116,18 +163,46 @@ function HorizontalTabMenu({
             role="tab"
             aria-selected={isActive}
             tabIndex={isActive || !hasActiveItem ? 0 : -1}
-            data-node-id={getItemNodeId(isActive)}
+            data-node-id={getItemNodeId(
+              resolvedVariant.style,
+              resolvedVariant.filled,
+              isActive,
+            )}
             className={clsx(
-              "inline-flex h-[36px] shrink-0 items-center justify-center rounded-[var(--radius-2)] px-[12px] py-[8px] text-heading-8 whitespace-nowrap transition-colors duration-150",
+              "inline-flex items-center justify-center text-heading-8 whitespace-nowrap transition-colors duration-150",
+              resolvedVariant.style === "Brand" &&
+                "h-[36px] rounded-[var(--radius-2)] px-[12px] py-[8px]",
+              resolvedVariant.style === "Brand" &&
+                resolvedVariant.filled === "on" &&
+                "min-w-0 flex-1",
+              resolvedVariant.style === "Brand" &&
+                resolvedVariant.filled === "off" &&
+                "shrink-0",
+              resolvedVariant.style === "Underlined" &&
+                "h-[32px] border-b-2 px-[4px] pb-[8px]",
+              resolvedVariant.style === "Underlined" &&
+                resolvedVariant.filled === "off" &&
+                "shrink-0",
+              resolvedVariant.style === "Underlined" &&
+                resolvedVariant.filled === "on" &&
+                "min-w-0 flex-1",
               "outline-none focus-visible:border-0 focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
               isInteractive && "cursor-pointer",
-              isActive
-                ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
-                : clsx(
-                    "bg-transparent text-[var(--color-text-100)]",
-                    isInteractive &&
-                      "hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
-                  ),
+              resolvedVariant.style === "Brand" &&
+                (isActive
+                  ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
+                  : clsx(
+                      "bg-transparent text-[var(--color-text-100)]",
+                      isInteractive &&
+                        "hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
+                    )),
+              resolvedVariant.style === "Underlined" &&
+                (isActive
+                  ? "border-[var(--color-text-300)] text-[var(--color-text-300)]"
+                  : clsx(
+                      "border-transparent text-[var(--color-text-100)]",
+                      isInteractive && "hover:text-[var(--color-text-200)]",
+                    )),
             )}
             onKeyDown={(event) => handleKeyDown(event, index)}
             onClick={() => handleSelect(index)}

@@ -10,6 +10,8 @@ export const HORIZONTAL_TAB_MENU_DEFAULT_ITEMS = [
 export const HORIZONTAL_TAB_MENU_DEFAULT_PROPS = {
   items: HORIZONTAL_TAB_MENU_DEFAULT_ITEMS,
   activeIndex: 0,
+  filled: "off",
+  style: "Brand",
   interactive: false,
   "aria-label": "Horizontal tab menu",
 };
