@@ -41,6 +41,7 @@ const TOGGLE_NODE_IDS = {
     S: {
       Default: {
         true: "2056:22331",
+        false: "2056:22341",
       },
     },
     M: {
@@ -61,6 +62,7 @@ const TOGGLE_NODE_IDS = {
     L: {
       Default: {
         true: "2056:22337",
+        false: "2056:22349",
       },
     },
   },
