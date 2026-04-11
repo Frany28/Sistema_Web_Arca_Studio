@@ -12,6 +12,7 @@ export const HORIZONTAL_TAB_MENU_DEFAULT_PROPS = {
   activeIndex: 0,
   filled: "off",
   style: "Brand",
+  orientation: "horizontal",
   interactive: false,
   "aria-label": "Horizontal tab menu",
 };

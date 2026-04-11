@@ -41,6 +41,7 @@ function Button({
   showLeftIcon = true,
   showRightIcon = true,
   showText = true,
+  fitContent = false,
   size = "S",
   state = "Default",
   theme = "Primary",
@@ -81,8 +82,12 @@ function Button({
     iconOnly
       ? BUTTON_SIZE_STYLES[resolvedSize].iconOnly
       : isLink
-        ? BUTTON_SIZE_STYLES[resolvedSize].link
-        : BUTTON_SIZE_STYLES[resolvedSize].default,
+        ? fitContent
+          ? BUTTON_SIZE_STYLES[resolvedSize].linkFitContent
+          : BUTTON_SIZE_STYLES[resolvedSize].link
+        : fitContent
+          ? BUTTON_SIZE_STYLES[resolvedSize].defaultFitContent
+          : BUTTON_SIZE_STYLES[resolvedSize].default,
     resolvedState === "Default" && visual.Default,
     resolvedState === "Hover" && visual.Hover,
     resolvedState === "Disabled" && visual.Disabled,
@@ -122,6 +127,7 @@ function Button({
         <span
           className={clsx(
             "inline-flex items-center justify-center",
+            fitContent && "whitespace-nowrap",
             BUTTON_SIZE_STYLES[resolvedSize].text,
           )}
         >

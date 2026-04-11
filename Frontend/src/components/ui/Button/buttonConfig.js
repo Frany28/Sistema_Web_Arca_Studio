@@ -2,21 +2,30 @@ export const BUTTON_SIZE_STYLES = {
   S: {
     default:
       "h-9 w-[115px] gap-[var(--spacing-spacing-gap-3,8px)] px-[var(--spacing-spacing-gap-3,8px)] py-[var(--spacing-spacing-gap-3,8px)]",
+    defaultFitContent:
+      "h-9 w-fit gap-[var(--spacing-spacing-gap-3,8px)] px-[var(--spacing-spacing-gap-3,8px)] py-[var(--spacing-spacing-gap-3,8px)] whitespace-nowrap",
     link: "h-9 w-[91px] gap-[4px] px-0 py-0",
+    linkFitContent: "h-9 w-fit gap-[4px] px-0 py-0 whitespace-nowrap",
     iconOnly: "size-9 p-[var(--spacing-spacing-gap-3,8px)]",
     focusedWrapper: { width: "115px", height: "36px" },
     text: "text-heading-8",
   },
   M: {
     default: "h-11 w-[123px] gap-[8px] px-[12px] py-[12px]",
+    defaultFitContent:
+      "h-11 w-fit gap-[8px] px-[12px] py-[12px] whitespace-nowrap",
     link: "h-11 w-[91px] gap-[4px] px-0 py-0",
+    linkFitContent: "h-11 w-fit gap-[4px] px-0 py-0 whitespace-nowrap",
     iconOnly: "size-11 p-[12px]",
     focusedWrapper: { width: "123px", height: "44px" },
     text: "text-heading-8",
   },
   L: {
     default: "h-[52px] w-[131px] gap-[8px] px-[16px] py-[16px]",
+    defaultFitContent:
+      "h-[52px] w-fit gap-[8px] px-[16px] py-[16px] whitespace-nowrap",
     link: "h-[52px] w-[91px] gap-[4px] px-0 py-0",
+    linkFitContent: "h-[52px] w-fit gap-[4px] px-0 py-0 whitespace-nowrap",
     iconOnly: "size-[52px] p-[16px]",
     focusedWrapper: { width: "131px", height: "52px" },
     text: "text-heading-8",

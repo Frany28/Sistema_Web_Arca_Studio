@@ -220,6 +220,8 @@ function TabItem({
   interactive = TAB_ITEM_DEFAULT_PROPS.interactive,
   iconLeft = TAB_ITEM_DEFAULT_PROPS.iconLeft,
   iconRight = TAB_ITEM_DEFAULT_PROPS.iconRight,
+  leftIcon = null,
+  rightIcon = null,
   onSelectedChange,
   onClick,
   ...props
@@ -275,6 +277,12 @@ function TabItem({
     isDarkMode,
   );
   const Component = isInteractive ? "button" : "span";
+  const resolvedLeftIcon =
+    leftIcon ??
+    (iconLeft ? <Box2Icon className={clsx(sizeStyles.icon, "shrink-0")} /> : null);
+  const resolvedRightIcon =
+    rightIcon ??
+    (iconRight ? <WindowIcon className={clsx(sizeStyles.icon, "shrink-0")} /> : null);
 
   function handleClick(event) {
     if (isInteractive) {
@@ -312,19 +320,22 @@ function TabItem({
       <span
         className={clsx(
           "inline-flex items-center gap-[8px]",
+          resolvedRightIcon && "w-full justify-between",
           visualSpec.contentClassName,
         )}
       >
-        {iconLeft ? (
-          <Box2Icon className={clsx(sizeStyles.icon, "shrink-0")} />
-        ) : null}
+        <span className="inline-flex min-w-0 items-center gap-[8px]">
+          {resolvedLeftIcon}
 
-        <span className="text-heading-8 whitespace-nowrap">
-          {label}
+          <span className="text-heading-8 whitespace-nowrap">
+            {label}
+          </span>
         </span>
 
-        {iconRight ? (
-          <WindowIcon className={clsx(sizeStyles.icon, "shrink-0")} />
+        {resolvedRightIcon ? (
+          <span className="inline-flex shrink-0 items-center justify-center">
+            {resolvedRightIcon}
+          </span>
         ) : null}
       </span>
     </Component>

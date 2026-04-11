@@ -69,6 +69,7 @@ function HorizontalTabMenu({
   defaultActiveIndex = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.activeIndex,
   filled = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.filled,
   style = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.style,
+  orientation = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.orientation,
   interactive = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.interactive,
   onChange,
   ...props
@@ -82,6 +83,7 @@ function HorizontalTabMenu({
   const isControlled = Number.isInteger(activeIndex);
   const resolvedActiveIndex = isControlled ? activeIndex : internalActiveIndex;
   const resolvedVariant = getVariant(style, filled);
+  const isVertical = orientation === "vertical";
   const hasActiveItem =
     Number.isInteger(resolvedActiveIndex) &&
     resolvedActiveIndex >= 0 &&
@@ -107,9 +109,9 @@ function HorizontalTabMenu({
 
     let nextIndex = null;
 
-    if (event.key === "ArrowRight") {
+    if (event.key === "ArrowRight" || (isVertical && event.key === "ArrowDown")) {
       nextIndex = getNextIndex(index, normalizedItems.length, 1);
-    } else if (event.key === "ArrowLeft") {
+    } else if (event.key === "ArrowLeft" || (isVertical && event.key === "ArrowUp")) {
       nextIndex = getNextIndex(index, normalizedItems.length, -1);
     } else if (event.key === "Home") {
       nextIndex = 0;
@@ -131,16 +133,22 @@ function HorizontalTabMenu({
   return (
     <div
       className={clsx(
-        "inline-flex max-w-full items-center overflow-x-auto",
-        resolvedVariant.style === "Brand" && "gap-[8px] pb-[2px]",
+        "inline-flex max-w-full",
+        isVertical
+          ? "flex-col items-center overflow-visible"
+          : "items-center overflow-x-auto",
+        resolvedVariant.style === "Brand" && !isVertical && "gap-[8px] pb-[2px]",
+        resolvedVariant.style === "Brand" && isVertical && "w-full gap-[20px]",
         resolvedVariant.style === "Brand" &&
           resolvedVariant.filled === "on" &&
-          "flex w-full",
+          (isVertical ? "w-full" : "flex w-full"),
         resolvedVariant.style === "Underlined" &&
-          "gap-[16px] border-b border-[var(--color-neutral-200)]",
+          (isVertical
+            ? "w-full"
+            : "gap-[16px] border-b border-[var(--color-neutral-200)]"),
         resolvedVariant.style === "Underlined" &&
           resolvedVariant.filled === "on" &&
-          "flex w-full",
+          (isVertical ? "w-full" : "flex w-full"),
         className,
       )}
       data-node-id={
@@ -173,16 +181,22 @@ function HorizontalTabMenu({
               resolvedVariant.style === "Brand" &&
                 "h-[36px] rounded-[var(--radius-2)] px-[12px] py-[8px]",
               resolvedVariant.style === "Brand" &&
+                isVertical &&
+                "h-auto w-auto rounded-none px-0 py-0 text-center",
+              resolvedVariant.style === "Brand" &&
                 resolvedVariant.filled === "on" &&
                 "min-w-0 flex-1",
               resolvedVariant.style === "Brand" &&
                 resolvedVariant.filled === "off" &&
-                "shrink-0",
+                (isVertical ? "w-auto shrink-0" : "shrink-0"),
               resolvedVariant.style === "Underlined" &&
                 "h-[32px] border-b-2 px-[4px] pb-[8px]",
               resolvedVariant.style === "Underlined" &&
+                isVertical &&
+                "w-full justify-start border-b px-[12px] py-[10px]",
+              resolvedVariant.style === "Underlined" &&
                 resolvedVariant.filled === "off" &&
-                "shrink-0",
+                (isVertical ? "w-full" : "shrink-0"),
               resolvedVariant.style === "Underlined" &&
                 resolvedVariant.filled === "on" &&
                 "min-w-0 flex-1",
@@ -190,17 +204,25 @@ function HorizontalTabMenu({
               isInteractive && "cursor-pointer",
               resolvedVariant.style === "Brand" &&
                 (isActive
-                  ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
+                  ? clsx(
+                      isVertical
+                        ? "bg-transparent text-[var(--color-text-300)]"
+                        : "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]",
+                    )
                   : clsx(
                       "bg-transparent text-[var(--color-text-100)]",
                       isInteractive &&
-                        "hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
+                        (isVertical
+                          ? "hover:bg-transparent hover:text-[var(--color-text-200)]"
+                          : "hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]"),
                     )),
               resolvedVariant.style === "Underlined" &&
                 (isActive
                   ? "border-[var(--color-text-300)] text-[var(--color-text-300)]"
                   : clsx(
-                      "border-transparent text-[var(--color-text-100)]",
+                      isVertical
+                        ? "text-[var(--color-text-100)]"
+                        : "border-transparent text-[var(--color-text-100)]",
                       isInteractive && "hover:text-[var(--color-text-200)]",
                     )),
             )}

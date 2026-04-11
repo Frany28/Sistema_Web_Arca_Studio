@@ -163,7 +163,7 @@ function CircleProgressBarLabel({
           </span>
           <span
             className={clsx(
-              "font-normal text-[var(--color-text-200)] dark:text-[var(--color-text-300)]",
+              "font-normal text-[var(--color-text-200)] dark:text-[var(--color-text-200)]",
               sizeStyles.descriptionClassName,
             )}
           >

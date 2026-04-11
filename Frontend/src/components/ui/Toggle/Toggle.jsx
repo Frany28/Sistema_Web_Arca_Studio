@@ -288,7 +288,14 @@ function Toggle({
       data-node-id={nodeId ?? undefined}
       onMouseEnter={isInteractive ? () => setIsHovered(true) : undefined}
       onMouseLeave={isInteractive ? () => setIsHovered(false) : undefined}
-      onFocus={isInteractive ? () => setIsFocused(true) : undefined}
+      onMouseDown={isInteractive ? () => setIsFocused(false) : undefined}
+      onFocus={
+        isInteractive
+          ? (event) => {
+              setIsFocused(event.currentTarget.matches(":focus-visible"));
+            }
+          : undefined
+      }
       onBlur={isInteractive ? () => setIsFocused(false) : undefined}
       onClick={handleToggle}
       {...props}
