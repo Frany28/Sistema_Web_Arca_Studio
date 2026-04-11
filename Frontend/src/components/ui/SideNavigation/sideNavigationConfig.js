@@ -39,8 +39,6 @@ export const SIDE_NAVIGATION_DEFAULT_PROPS = {
   items: SIDE_NAVIGATION_DEFAULT_ITEMS,
   activeItemId: "dashboard",
   defaultActiveItemId: "dashboard",
-  collapsed: undefined,
-  defaultCollapsed: false,
   searchPlaceholder: "Buscar...",
   userName: "Alan Wake",
   userEmail: "alanexample.com",

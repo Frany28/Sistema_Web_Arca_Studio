@@ -10,10 +10,6 @@ export const sideNavigationMainComponent = createSideNavigationProps({
 
 export const sideNavigationQuickToggleItems = [
   createSideNavigationShowcaseItem("Base", {}),
-  createSideNavigationShowcaseItem("Colapsado", {
-    collapsed: true,
-    defaultCollapsed: true,
-  }),
   createSideNavigationShowcaseItem("Proyecto activo", {
     activeItemId: "project-1",
     defaultActiveItemId: "project-1",
