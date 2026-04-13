@@ -117,19 +117,11 @@ function FileAttachmentIcons({
 
       <div
         className={clsx(
-          "absolute bottom-[4.75px] left-0 flex h-[11.15px] min-w-[24.89px] items-center justify-center rounded-[4px] px-[2.5px]",
+          "absolute bottom-[4.75px] left-0 inline-flex items-center justify-center rounded-[4px] px-[2.5px] py-[2px]",
           variant.color,
         )}
       >
-        <span
-          className="text-label-small uppercase text-neutral-100-uniform text-center"
-          style={{
-            lineHeight: "9px",
-            WebkitFontSmoothing: "antialiased",
-            MozOsxFontSmoothing: "grayscale",
-            textRendering: "geometricPrecision",
-          }}
-        >
+        <span className="text-label-small uppercase text-neutral-100-uniform text-center leading-none">
           {variant.label}
         </span>
       </div>
