@@ -1,3 +1,4 @@
+import { useState } from "react";
 import clsx from "clsx";
 import ThemeToggle from "../components/ui/ThemeToggle.jsx";
 import ProgressStepBase from "../components/ui/ProgressStepBase.jsx";
@@ -36,7 +37,35 @@ import {
   footerSectionMobileComponent,
 } from "../components/ui/FooterSection/footerSectionShowcaseData.js";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
-import { sideNavigationMainComponent } from "../components/ui/SideNavigation/sideNavigationShowcaseData.js";
+import {
+  sideNavigationCollapsedComponent,
+  sideNavigationMainComponent,
+} from "../components/ui/SideNavigation/sideNavigationShowcaseData.js";
+import DropdownMenu from "../components/ui/DropdownMenu/DropdownMenu.jsx";
+import {
+  dropdownMenuMainComponent,
+  dropdownMenuQuickToggleItems,
+} from "../components/ui/DropdownMenu/dropdownMenuShowcaseData.js";
+import Notification from "../components/ui/Notification/Notification.jsx";
+import {
+  notificationMainComponent,
+  notificationQuickToggleItems,
+  notificationTypeItems,
+} from "../components/ui/Notification/notificationShowcaseData.js";
+import Button from "../components/ui/Button/Button.jsx";
+import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
+import {
+  tooltipMainComponent,
+  tooltipPositionItems,
+  tooltipQuickToggleItems,
+} from "../components/ui/Tooltip/tooltipShowcaseData.js";
+import Alert from "../components/ui/Alert/Alert.jsx";
+import {
+  alertMainComponent,
+  alertQuickToggleItems,
+  alertStyleItems,
+  alertThemeItems,
+} from "../components/ui/Alert/alertShowcaseData.js";
 
 function ShowcaseCard({ title, children, className }) {
   return (
@@ -76,6 +105,97 @@ function PreviewTile({ label, children, className, previewClassName }) {
           {label}
         </span>
       </div>
+    </div>
+  );
+}
+
+function NotificationExample({ notificationProps }) {
+  const [instanceKey, setInstanceKey] = useState(0);
+  const [feedback, setFeedback] = useState("");
+
+  return (
+    <div className="flex w-full max-w-[347px] flex-col items-start gap-[12px]">
+      <Notification
+        key={instanceKey}
+        {...notificationProps}
+        onDismiss={() => setFeedback("Notificación cerrada.")}
+        onPrimaryAction={() => setFeedback("Acción ejecutada: Ver cambios.")}
+        onSecondaryAction={() => setFeedback("Acción ejecutada: Descartar.")}
+      />
+
+      {feedback ? (
+        <div className="flex flex-wrap items-center gap-[12px] pl-[4px]">
+          <span className="text-body-5 text-[var(--color-text-100)]">
+            {feedback}
+          </span>
+
+          <button
+            type="button"
+            className="text-body-5 text-[var(--color-text-300)] underline decoration-current underline-offset-2"
+            onClick={() => {
+              setInstanceKey((current) => current + 1);
+              setFeedback("");
+            }}
+          >
+            Reiniciar ejemplo
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TooltipInteractiveExample({ tooltipProps }) {
+  return (
+    <div className="flex min-h-[164px] w-full items-end justify-center pt-[56px]">
+      <Tooltip {...tooltipProps}>
+        <Button
+          theme="Primary"
+          type="Outline"
+          size="S"
+          fitContent
+          showLeftIcon={false}
+          showRightIcon={false}
+        >
+          Pasa el cursor
+        </Button>
+      </Tooltip>
+    </div>
+  );
+}
+
+function AlertExample({ alertProps }) {
+  const [instanceKey, setInstanceKey] = useState(0);
+  const [feedback, setFeedback] = useState("");
+
+  return (
+    <div className="flex w-full flex-col items-start gap-[12px]">
+      <Alert
+        key={instanceKey}
+        {...alertProps}
+        onDismiss={() => setFeedback("Alerta cerrada.")}
+        onPrimaryAction={() => setFeedback("Acción ejecutada: Realizar cambios.")}
+        onSecondaryAction={() => setFeedback("Acción ejecutada: Descartar.")}
+      />
+
+      {feedback ? (
+        <div className="flex flex-wrap items-center gap-[12px] pl-[4px]">
+          <span className="text-body-5 text-[var(--color-text-100)]">
+            {feedback}
+          </span>
+
+          <button
+            type="button"
+            className="text-body-5 text-[var(--color-text-300)] underline decoration-current underline-offset-2"
+            onClick={() => {
+              setInstanceKey((current) => current + 1);
+              setFeedback("");
+            }}
+          >
+            Reiniciar ejemplo
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -211,6 +331,214 @@ function Home() {
                   )}
                 >
                   <ProgressStepBase {...item.props} />
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+              Alert
+            </span>
+            <h2 className="text-heading-4 text-[var(--color-text-50)]">
+              Main component
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <ShowcaseCard title="Main component" className="xl:col-span-12">
+            <PreviewTile
+              label="Alert"
+              className="w-full max-w-[754px]"
+              previewClassName="w-full"
+            >
+              <AlertExample alertProps={alertMainComponent} />
+            </PreviewTile>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Quick Toggle" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {alertQuickToggleItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[754px]"
+                  previewClassName="w-full"
+                >
+                  <AlertExample alertProps={item.props} />
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Theme" className="xl:col-span-12">
+            <div className="flex flex-col gap-[12px]">
+              {alertThemeItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[1192px]"
+                  previewClassName="w-full"
+                >
+                  <div className="flex w-full flex-col items-center gap-[20px]">
+                    <AlertExample alertProps={item.props} />
+                    <AlertExample
+                      alertProps={{
+                        ...item.props,
+                        layout: "Full width",
+                      }}
+                    />
+                  </div>
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Style" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {alertStyleItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className={clsx(
+                    "w-full",
+                    item.label === "Box" ? "max-w-[754px]" : "max-w-[1192px]",
+                  )}
+                  previewClassName="w-full"
+                >
+                  <AlertExample alertProps={item.props} />
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+              Tooltip
+            </span>
+            <h2 className="text-heading-4 text-[var(--color-text-50)]">
+              Main component
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <ShowcaseCard title="Main component" className="xl:col-span-12">
+            <PreviewTile
+              label="Tooltip"
+              className="w-full max-w-[256px]"
+              previewClassName="min-h-[96px] w-full"
+            >
+              <Tooltip {...tooltipMainComponent} />
+            </PreviewTile>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Quick Toggle" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {tooltipQuickToggleItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[256px]"
+                  previewClassName="min-h-[96px] w-full"
+                >
+                  <Tooltip {...item.props} />
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Tip position" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {tooltipPositionItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[256px]"
+                  previewClassName="min-h-[96px] w-full"
+                >
+                  <Tooltip {...item.props} />
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Interactive" className="xl:col-span-12">
+            <PreviewTile
+              label="Hover / Focus"
+              className="w-full max-w-[320px]"
+              previewClassName="min-h-[180px] w-full"
+            >
+              <TooltipInteractiveExample
+                tooltipProps={{
+                  ...tooltipMainComponent,
+                  tipPosition: "Top center",
+                  showTip: true,
+                  showSubtext: true,
+                }}
+              />
+            </PreviewTile>
+          </ShowcaseCard>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+              Notification
+            </span>
+            <h2 className="text-heading-4 text-[var(--color-text-50)]">
+              Main component
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <ShowcaseCard title="Main component" className="xl:col-span-12">
+            <PreviewTile
+              label="Notification"
+              className="w-full max-w-[427px]"
+              previewClassName="w-full"
+            >
+              <NotificationExample notificationProps={notificationMainComponent} />
+            </PreviewTile>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Quick Toggle" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {notificationQuickToggleItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[427px]"
+                  previewClassName="w-full"
+                >
+                  <NotificationExample notificationProps={item.props} />
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Type" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {notificationTypeItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[427px]"
+                  previewClassName="w-full"
+                >
+                  <NotificationExample notificationProps={item.props} />
                 </PreviewTile>
               ))}
             </div>
@@ -495,6 +823,61 @@ function Home() {
               <SideNavigation {...sideNavigationMainComponent} />
             </PreviewTile>
           </ShowcaseCard>
+
+          <ShowcaseCard title="Collapsed" className="xl:col-span-12">
+            <PreviewTile
+              label="Side navigation / collapsed"
+              className="w-full max-w-[140px]"
+              previewClassName="w-full justify-start p-0"
+            >
+              <SideNavigation {...sideNavigationCollapsedComponent} />
+            </PreviewTile>
+          </ShowcaseCard>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+              Dropdown menu
+            </span>
+            <h2 className="text-heading-4 text-[var(--color-text-50)]">
+              Main component
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <ShowcaseCard title="Main component" className="xl:col-span-12">
+            <PreviewTile
+              label="Dropdown menu item"
+              className="w-full max-w-[384px]"
+              previewClassName="w-full justify-start"
+            >
+              <div className="w-full max-w-[320px]">
+                <DropdownMenu {...dropdownMenuMainComponent} />
+              </div>
+            </PreviewTile>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Quick Toggle" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {dropdownMenuQuickToggleItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[384px]"
+                  previewClassName="w-full justify-start"
+                >
+                  <div className="w-full max-w-[320px]">
+                    <DropdownMenu {...item.props} />
+                  </div>
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+
         </div>
       </section>
     </main>

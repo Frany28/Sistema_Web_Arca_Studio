@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import * as IconsaxIcons from "iconsax-react";
 import Button from "../Button/Button.jsx";
@@ -7,6 +8,8 @@ import {
   FILE_UPLOAD_SECTION_DEFAULT_FILES,
   FILE_UPLOAD_SECTION_DEFAULT_PROPS,
 } from "./fileUploadSectionConfig.js";
+
+const FILE_LIST_VIEWPORT_HEIGHT = 456;
 
 function CloudUploadIcon() {
   const CloudPlus = IconsaxIcons.CloudPlus;
@@ -160,22 +163,92 @@ function FileUploadSection({
   "aria-label": ariaLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
+  const filesViewportRef = useRef(null);
+  const [scrollState, setScrollState] = useState({
+    length: 1,
+    position: 0,
+  });
   const resolvedFiles =
     Array.isArray(files) && files.length > 0
       ? files
       : FILE_UPLOAD_SECTION_DEFAULT_FILES;
 
+  const syncScrollState = useCallback(() => {
+    const element = filesViewportRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    const maxScrollTop = Math.max(element.scrollHeight - element.clientHeight, 0);
+    const nextLength =
+      element.scrollHeight > 0
+        ? Math.min(element.clientHeight / element.scrollHeight, 1)
+        : 1;
+    const nextPosition =
+      maxScrollTop > 0 ? element.scrollTop / maxScrollTop : 0;
+
+    setScrollState({
+      length: nextLength,
+      position: nextPosition,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const element = filesViewportRef.current;
+    const frameId = window.requestAnimationFrame(() => {
+      syncScrollState();
+    });
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            syncScrollState();
+          })
+        : null;
+
+    if (element && resizeObserver) {
+      resizeObserver.observe(element);
+    }
+
+    window.addEventListener("resize", syncScrollState);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", syncScrollState);
+    };
+  }, [resolvedFiles, syncScrollState]);
+
+  const handleScrollBarPositionChange = useCallback((nextPosition) => {
+    const element = filesViewportRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    const maxScrollTop = Math.max(element.scrollHeight - element.clientHeight, 0);
+    element.scrollTop = maxScrollTop * nextPosition;
+  }, []);
+
   return (
     <section
       className={clsx(
-        "flex w-[512px] max-w-full items-end justify-center",
+        "flex w-[512px] max-w-full items-stretch justify-center",
         className,
       )}
       aria-label={ariaLabel}
       data-node-id="2061:23962"
       {...props}
     >
-      <div className="flex w-full min-w-0 flex-col items-center gap-[16px]">
+      <div
+        ref={filesViewportRef}
+        className="flex h-[456px] min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[12px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        onScroll={syncScrollState}
+      >
         <div className="flex w-full flex-col items-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] dark:border-[var(--color-neutral-300)]">
           <div className="rounded-[8px] border border-[var(--color-neutral-200)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)] dark:border-[var(--color-neutral-300)]">
             <div className="flex size-[40px] items-center justify-center rounded-[8px] bg-[var(--color-neutral-100)] p-[8px] text-[var(--color-text-300)]">
@@ -216,8 +289,14 @@ function FileUploadSection({
         </div>
       </div>
 
-      <div className="flex self-stretch items-end">
-        <ScrollBar height={456} length={0.25} position={0} />
+      <div className="flex self-stretch items-start">
+        <ScrollBar
+          height={FILE_LIST_VIEWPORT_HEIGHT}
+          length={scrollState.length}
+          position={scrollState.position}
+          interactive
+          onPositionChange={handleScrollBarPositionChange}
+        />
       </div>
 
       <span className="sr-only">{title}</span>

@@ -9,7 +9,6 @@ export const SIDE_NAVIGATION_DEFAULT_ITEMS = [
     id: "project-1",
     label: "Proyecto 1",
     icon: "project",
-    trailingIcon: "chevron",
     wrapperHeight: "56px",
   },
   {
@@ -23,22 +22,21 @@ export const SIDE_NAVIGATION_DEFAULT_ITEMS = [
     id: "more-projects",
     label: "Ver más proyectos",
     icon: "discover",
-    trailingIcon: "chevron",
     wrapperHeight: "56px",
   },
   {
     id: "settings",
     label: "Configuraciones",
     icon: "settings",
-    trailingIcon: "chevron",
     wrapperHeight: "56px",
   },
 ];
 
 export const SIDE_NAVIGATION_DEFAULT_PROPS = {
   items: SIDE_NAVIGATION_DEFAULT_ITEMS,
-  activeItemId: "dashboard",
-  defaultActiveItemId: "dashboard",
+  activeItemId: undefined,
+  defaultActiveItemId: null,
+  defaultExpanded: true,
   searchPlaceholder: "Buscar...",
   userName: "Alan Wake",
   userEmail: "alanexample.com",

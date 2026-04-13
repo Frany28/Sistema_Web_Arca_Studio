@@ -4,14 +4,21 @@ import {
 } from "./sideNavigationConfig.js";
 
 export const sideNavigationMainComponent = createSideNavigationProps({
-  activeItemId: "dashboard",
-  defaultActiveItemId: "dashboard",
+  defaultExpanded: true,
+});
+
+export const sideNavigationCollapsedComponent = createSideNavigationProps({
+  expanded: false,
+  defaultExpanded: false,
 });
 
 export const sideNavigationQuickToggleItems = [
   createSideNavigationShowcaseItem("Base", {}),
+  createSideNavigationShowcaseItem("Colapsado", {
+    expanded: false,
+    defaultExpanded: false,
+  }),
   createSideNavigationShowcaseItem("Proyecto activo", {
-    activeItemId: "project-1",
     defaultActiveItemId: "project-1",
   }),
 ];

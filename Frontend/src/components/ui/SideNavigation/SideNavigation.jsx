@@ -1,4 +1,3 @@
-/* eslint-disable no-empty-pattern */
 import { useMemo, useState } from "react";
 import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
@@ -12,11 +11,20 @@ import {
 } from "./sideNavigationConfig.js";
 
 const SIDE_NAVIGATION_NODE_IDS = {
-  wrapper: "2061:24560",
-  header: "2056:24079",
-  search: "2056:24082",
-  menu: "2056:24083",
-  footer: "2056:24094",
+  expanded: {
+    wrapper: "2061:24560",
+    header: "2056:24079",
+    search: "2056:24082",
+    menu: "2056:24083",
+    footer: "2056:24094",
+  },
+  collapsed: {
+    wrapper: "2061:24574",
+    header: "2056:24097",
+    search: "2056:24098",
+    menu: "2056:24108",
+    footer: "2056:23177",
+  },
 };
 
 function SidebarRightIcon({ className }) {
@@ -169,36 +177,36 @@ function DiscoverIcon({ className }) {
   );
 }
 
-function SettingsIcon({ }) {
+function SettingsIcon({ className }) {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="23"
-      height="23"
       viewBox="0 0 23 23"
       fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
     >
       <path
         d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
-        stroke="#818181"
-        stroke-width="1.5"
-        stroke-miterlimit="10"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeMiterlimit="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M2 12.8814V11.1214C2 10.0814 2.85 9.2214 3.9 9.2214C5.71 9.2214 6.45 7.9414 5.54 6.3714C5.02 5.4714 5.33 4.3014 6.24 3.7814L7.97 2.7914C8.76 2.3214 9.78 2.6014 10.25 3.3914L10.36 3.5814C11.26 5.1514 12.74 5.1514 13.65 3.5814L13.76 3.3914C14.23 2.6014 15.25 2.3214 16.04 2.7914L17.77 3.7814C18.68 4.3014 18.99 5.4714 18.47 6.3714C17.56 7.9414 18.3 9.2214 20.11 9.2214C21.15 9.2214 22.01 10.0714 22.01 11.1214V12.8814C22.01 13.9214 21.16 14.7814 20.11 14.7814C18.3 14.7814 17.56 16.0614 18.47 17.6314C18.99 18.5414 18.68 19.7014 17.77 20.2214L16.04 21.2114C15.25 21.6814 14.23 21.4014 13.76 20.6114L13.65 20.4214C12.75 18.8514 11.27 18.8514 10.36 20.4214L10.25 20.6114C9.78 21.4014 8.76 21.6814 7.97 21.2114L6.24 20.2214C5.33 19.7014 5.02 18.5314 5.54 17.6314C6.45 16.0614 5.71 14.7814 3.9 14.7814C2.85 14.7814 2 13.9214 2 12.8814Z"
-        stroke="#818181"
-        stroke-width="1.5"
-        stroke-miterlimit="10"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeMiterlimit="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
 }
 
-function WindowIcon({ className }) {
+function SearchIcon({ className }) {
   return (
     <svg
       viewBox="0 0 20 20"
@@ -206,39 +214,90 @@ function WindowIcon({ className }) {
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
-    ></svg>
+    >
+      <path
+        d="M9.58335 15.8333C13.0351 15.8333 15.8334 13.0351 15.8334 9.58333C15.8334 6.13155 13.0351 3.33333 9.58335 3.33333C6.13157 3.33333 3.33335 6.13155 3.33335 9.58333C3.33335 13.0351 6.13157 15.8333 9.58335 15.8333Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16.6667 16.6667L15 15"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
-function getItemIcon(icon) {
+function LogoutIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M7.41667 6.29922C7.67501 3.29922 9.21667 2.07422 12.5917 2.07422H12.7C16.425 2.07422 17.9167 3.56589 17.9167 7.29089V12.7242C17.9167 16.4492 16.425 17.9409 12.7 17.9409H12.5917C9.24167 17.9409 7.70001 16.7326 7.42501 13.7826"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12.5 10H3.01666"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4.87499 7.20703L2.08333 9.9987L4.87499 12.7904"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function getItemIcon(icon, className = "size-5 shrink-0") {
   if (icon === "dashboard") {
-    return <DashboardIcon className="size-5 shrink-0" />;
+    return <DashboardIcon className={className} />;
   }
 
   if (icon === "discover") {
-    return <DiscoverIcon className="size-5 shrink-0" />;
+    return <DiscoverIcon className={className} />;
   }
 
   if (icon === "settings") {
-    return <SettingsIcon className="size-5 shrink-0" />;
+    return <SettingsIcon className={className} />;
   }
 
-  return <ProjectIcon className="size-5 shrink-0" />;
+  return <ProjectIcon className={className} />;
 }
 
-function getTrailingIcon(type) {
-  if (type === "window") {
-    return <WindowIcon className="size-5 shrink-0" />;
-  }
+function clearPointerFocus(event) {
+  event.currentTarget.blur();
+}
 
-  return null;
+function preventPointerFocus(event) {
+  event.preventDefault();
 }
 
 function SideNavigation({
   className,
   items = SIDE_NAVIGATION_DEFAULT_PROPS.items,
-  activeItemId = SIDE_NAVIGATION_DEFAULT_PROPS.activeItemId,
+  activeItemId,
   defaultActiveItemId = SIDE_NAVIGATION_DEFAULT_PROPS.defaultActiveItemId,
+  expanded,
+  defaultExpanded = SIDE_NAVIGATION_DEFAULT_PROPS.defaultExpanded,
   searchPlaceholder = SIDE_NAVIGATION_DEFAULT_PROPS.searchPlaceholder,
   userName = SIDE_NAVIGATION_DEFAULT_PROPS.userName,
   userEmail = SIDE_NAVIGATION_DEFAULT_PROPS.userEmail,
@@ -246,22 +305,31 @@ function SideNavigation({
   logo = null,
   onSearchChange,
   onItemSelect,
+  onLogoutClick,
+  onExpandedChange,
   onCollapseClick,
   "aria-label": ariaLabel = SIDE_NAVIGATION_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
   const [searchValue, setSearchValue] = useState("");
-  const [internalActiveItemId, setInternalActiveItemId] =
-    useState(defaultActiveItemId);
+  const [internalActiveItemId, setInternalActiveItemId] = useState(
+    defaultActiveItemId,
+  );
+  const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const normalizedItems =
     Array.isArray(items) && items.length > 0
       ? items
       : SIDE_NAVIGATION_DEFAULT_ITEMS;
-  const isControlled =
+  const isActiveControlled =
     typeof activeItemId === "string" && activeItemId.length > 0;
-  const resolvedActiveItemId = isControlled
+  const isExpandedControlled = typeof expanded === "boolean";
+  const resolvedActiveItemId = isActiveControlled
     ? activeItemId
     : internalActiveItemId;
+  const isExpanded = isExpandedControlled ? expanded : internalExpanded;
+  const nodeIds = isExpanded
+    ? SIDE_NAVIGATION_NODE_IDS.expanded
+    : SIDE_NAVIGATION_NODE_IDS.collapsed;
   const visibleItems = useMemo(() => {
     const normalizedQuery = searchValue.trim().toLowerCase();
 
@@ -282,31 +350,55 @@ function SideNavigation({
   };
 
   const handleItemSelect = (item) => {
-    if (!isControlled) {
-      setInternalActiveItemId(item.id);
+    if (!isActiveControlled) {
+      setInternalActiveItemId(item.id ?? null);
     }
 
     onItemSelect?.(item);
   };
 
+  const handleToggleExpanded = () => {
+    const nextExpanded = !isExpanded;
+
+    if (!isExpandedControlled) {
+      setInternalExpanded(nextExpanded);
+    }
+
+    onExpandedChange?.(nextExpanded);
+    onCollapseClick?.(nextExpanded);
+  };
+
   return (
     <aside
       className={clsx(
-        "flex min-h-[1024px] w-full max-w-[312px] flex-col justify-between border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[16px] pb-[16px] pt-[16px]",
+        "flex min-h-[1024px] flex-col justify-between border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] transition-[width,padding] duration-200",
+        isExpanded
+          ? "w-full max-w-[312px] px-[16px] pb-[16px] pt-[16px]"
+          : "w-[76px] px-[16px] py-[16px]",
         className,
       )}
       aria-label={ariaLabel}
-      data-node-id={SIDE_NAVIGATION_NODE_IDS.wrapper}
+      data-node-id={nodeIds.wrapper}
       {...props}
     >
-      <div className="flex w-full flex-col gap-[20px]">
+      <div
+        className={clsx(
+          "flex flex-col gap-[20px]",
+          isExpanded ? "w-full" : "items-start",
+        )}
+      >
         <div
-          className="flex w-full items-center justify-between gap-[12px]"
-          data-node-id={SIDE_NAVIGATION_NODE_IDS.header}
+          className={clsx(
+            "flex items-center",
+            isExpanded ? "w-full justify-between gap-[12px]" : "justify-start",
+          )}
+          data-node-id={nodeIds.header}
         >
-          <div className="flex min-w-0 flex-1 items-center">
-            {logo ?? <MainLogo size="32px" />}
-          </div>
+          {isExpanded ? (
+            <div className="flex min-w-0 flex-1 items-center">
+              {logo ?? <MainLogo size="32px" />}
+            </div>
+          ) : null}
 
           <Button
             theme="Primary"
@@ -317,58 +409,105 @@ function SideNavigation({
             showRightIcon={false}
             iconLeft={<SidebarRightIcon className="size-5" />}
             className="shrink-0"
-            aria-label="Contraer navegación lateral"
-            onClick={onCollapseClick}
+            aria-label={
+              isExpanded ? "Contraer navegación lateral" : "Expandir navegación lateral"
+            }
+            onClick={handleToggleExpanded}
+            onMouseUp={clearPointerFocus}
+            onTouchEnd={clearPointerFocus}
           />
         </div>
 
-        <div data-node-id={SIDE_NAVIGATION_NODE_IDS.search} className="w-full">
-          <Input
-            type="Search bar"
-            size="L"
-            value={searchValue}
-            onChange={handleSearchChange}
-            placeholder={searchPlaceholder}
-            showLabel={false}
-            showHint={false}
-            showLeftIcon
-            showRightIcon={false}
-            showLabelInfo={false}
-            required={false}
-            className="max-w-none w-full"
-            aria-label="Buscar navegación"
-          />
+        <div data-node-id={nodeIds.search} className={clsx(isExpanded && "w-full")}>
+          {isExpanded ? (
+            <Input
+              type="Search bar"
+              size="L"
+              value={searchValue}
+              onChange={handleSearchChange}
+              placeholder={searchPlaceholder}
+              showLabel={false}
+              showHint={false}
+              showLeftIcon
+              showRightIcon={false}
+              showLabelInfo={false}
+              required={false}
+              className="max-w-none w-full"
+              aria-label="Buscar navegación"
+            />
+          ) : (
+            <Button
+              theme="Primary"
+              type="Outline"
+              size="M"
+              showText={false}
+              showLeftIcon
+              showRightIcon={false}
+              iconLeft={<SearchIcon className="size-5" />}
+              aria-label="Buscar navegación"
+              onMouseUp={clearPointerFocus}
+              onTouchEnd={clearPointerFocus}
+            />
+          )}
         </div>
 
         <nav
-          className="flex w-full flex-col gap-[8px]"
-          data-node-id={SIDE_NAVIGATION_NODE_IDS.menu}
+          className={clsx(
+            "flex flex-col gap-[8px]",
+            isExpanded ? "w-full" : "items-start",
+          )}
+          data-node-id={nodeIds.menu}
           aria-label="Secciones"
         >
-          {visibleItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex w-full items-center"
-              style={{ minHeight: item.wrapperHeight ?? "44px" }}
-            >
-              <TabItem
-                label={item.label}
-                size="M"
-                style="Brand"
-                selected={item.id === resolvedActiveItemId}
-                interactive
-                iconLeft={false}
-                iconRight={false}
-                leftIcon={getItemIcon(item.icon)}
-                rightIcon={getTrailingIcon(item.trailingIcon)}
-                className="w-full justify-start"
+          {visibleItems.map((item) =>
+            isExpanded ? (
+              <div
+                key={item.id}
+                className="flex w-full items-center"
+                style={{ minHeight: item.wrapperHeight ?? "44px" }}
+              >
+                <TabItem
+                  label={item.label}
+                  size="M"
+                  style="Brand"
+                  selected={item.id === resolvedActiveItemId}
+                  interactive
+                  iconLeft={false}
+                  iconRight={false}
+                  leftIcon={getItemIcon(item.icon)}
+                  rightIcon={null}
+                  className="w-full justify-start"
+                  aria-label={item.label}
+                  onClick={() => handleItemSelect(item)}
+                  onMouseDown={preventPointerFocus}
+                  onTouchStart={preventPointerFocus}
+                  onMouseUp={clearPointerFocus}
+                  onTouchEnd={clearPointerFocus}
+                />
+              </div>
+            ) : (
+              <button
+                key={item.id}
+                type="button"
+                className={clsx(
+                  "inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--radius-2)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+                  item.id === resolvedActiveItemId
+                    ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
+                    : "bg-transparent text-[var(--color-text-100)] hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
+                )}
                 aria-label={item.label}
+                onMouseDown={preventPointerFocus}
+                onTouchStart={preventPointerFocus}
                 onClick={() => handleItemSelect(item)}
-              />
-            </div>
-          ))}
+                onMouseUp={clearPointerFocus}
+                onTouchEnd={clearPointerFocus}
+              >
+                {getItemIcon(item.icon)}
+              </button>
+            ),
+          )}
 
-          {visibleItems.length === 0 ? (
+          {visibleItems.length === 0 && isExpanded ? (
             <p className="px-[12px] py-[8px] text-body-4 text-[var(--color-text-100)]">
               No hay coincidencias.
             </p>
@@ -376,17 +515,41 @@ function SideNavigation({
         </nav>
       </div>
 
-      <div data-node-id={SIDE_NAVIGATION_NODE_IDS.footer}>
+      <div
+        data-node-id={nodeIds.footer}
+        className={clsx(
+          "flex items-center",
+          isExpanded ? "w-full justify-between gap-[12px]" : "self-start",
+        )}
+      >
         <AvatarLabel
           size="M"
           label={userName}
           subtitle={userEmail}
+          showLabel={isExpanded}
+          showSubtitle={isExpanded}
           avatarTheme="Neutral"
           avatarContent={userAvatarSrc ? "Image" : "Icon"}
           avatarSrc={userAvatarSrc}
           avatarAlt={userName}
           avatarDecorative={false}
         />
+
+        {isExpanded ? (
+          <Button
+            theme="Primary"
+            type="Ghost"
+            size="S"
+            showText={false}
+            showLeftIcon
+            showRightIcon={false}
+            iconLeft={<LogoutIcon className="size-5" />}
+            aria-label="Cerrar sesión"
+            onClick={onLogoutClick}
+            onMouseUp={clearPointerFocus}
+            onTouchEnd={clearPointerFocus}
+          />
+        ) : null}
       </div>
     </aside>
   );

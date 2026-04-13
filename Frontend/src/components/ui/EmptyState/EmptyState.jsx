@@ -7,6 +7,9 @@ import {
   EMPTY_STATE_SIZES,
 } from "./emptyStateConfig.js";
 
+const EMPTY_STATE_DARK_CTAS_DOTS_ASSET =
+  "https://www.figma.com/api/mcp/asset/3e382045-786b-4e8e-b663-1e27a1316932";
+
 const EMPTY_STATE_NODE_IDS = {
   light: {
     S: {
@@ -32,7 +35,28 @@ const EMPTY_STATE_NODE_IDS = {
   },
 };
 
-function DecorativeDots({ isMedium, isDarkMode }) {
+function DecorativeDots({ isMedium, isDarkMode, useDarkCtasAsset = false }) {
+  if (useDarkCtasAsset) {
+    return (
+      <div
+        className="pointer-events-none absolute z-0"
+        aria-hidden="true"
+        style={{
+          right: "46px",
+          top: "-63px",
+          width: "200px",
+          height: "200px",
+        }}
+      >
+        <img
+          src={EMPTY_STATE_DARK_CTAS_DOTS_ASSET}
+          alt=""
+          className="block size-full max-w-none"
+        />
+      </div>
+    );
+  }
+
   const dotColor = isDarkMode
     ? "rgba(210,210,210,0.34)"
     : "rgba(232,232,232,0.92)";
@@ -193,7 +217,11 @@ function EmptyState({
       {...props}
     >
       {hasVisual ? (
-        <DecorativeDots isMedium={isMedium} isDarkMode={isDarkMode} />
+        <DecorativeDots
+          isMedium={isMedium}
+          isDarkMode={isDarkMode}
+          useDarkCtasAsset={isDarkCtasVariant}
+        />
       ) : null}
 
       {showFeaturedIcon ? (
