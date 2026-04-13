@@ -378,9 +378,7 @@ function renderMenuItemLeading(
           ? "text-[var(--color-text-200)]"
           : "text-[var(--color-text-100)]";
 
-    return (
-      <GridIcon className={clsx("size-5 shrink-0", iconState)} />
-    );
+    return <GridIcon className={clsx("size-5 shrink-0", iconState)} />;
   }
 
   if (itemType === "User profile") {
@@ -477,15 +475,16 @@ function DropdownMenu({
   const shouldShowDivider = showDivider;
   const shouldRenderContent = resolvedOpen || preserveMenuSpace;
   const resolvedHoveredItemId = hoveredItemId ?? internalHoveredItemId ?? null;
-  const resolvedSelectedItemId = selectedItemId ?? internalSelectedItemId ?? null;
+  const resolvedSelectedItemId =
+    selectedItemId ?? internalSelectedItemId ?? null;
   const selectedTriggerItem =
     normalizedItems.find((item) => item.id === resolvedSelectedItemId) ??
     (resolvedType === "Checkbox"
-      ? normalizedItems.find(
+      ? (normalizedItems.find(
           (item) =>
             getResolvedType(item.type ?? resolvedType) === "Checkbox" &&
             item.checked === "Yes",
-        ) ?? null
+        ) ?? null)
       : null);
   const triggerLabel = selectedTriggerItem?.label ?? label;
   const triggerSupportingText =
@@ -506,8 +505,8 @@ function DropdownMenu({
   });
 
   const itemHoverClassName = isDarkMode
-    ? "hover:bg-[var(--color-neutral-200)] focus-visible:bg-[var(--color-neutral-200)]"
-    : "hover:bg-[var(--color-neutral-200)] focus-visible:bg-[var(--color-neutral-200)]";
+    ? "hover:bg-[var(--color-neutral-300)]"
+    : "hover:bg-[var(--color-neutral-200)]";
 
   useEffect(() => {
     if (Array.isArray(items) && items.length > 0) {
@@ -675,7 +674,8 @@ function DropdownMenu({
           className={clsx(
             "group flex w-full items-center gap-[8px] rounded-[8px] px-[8px] text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
             getRowHeight(resolvedType),
-            resolvedState !== "Default" && "bg-[var(--color-neutral-200)]",
+            (resolvedState !== "Default" || resolvedOpen) &&
+              "bg-[var(--color-neutral-200)]",
           )}
           aria-label={ariaLabel}
           aria-expanded={resolvedOpen}
@@ -803,7 +803,9 @@ function DropdownMenu({
                     : isSelectedItem
                       ? "bg-[var(--color-neutral-200)] hover:bg-[var(--color-neutral-200)] focus-visible:bg-[var(--color-neutral-200)]"
                       : itemHoverClassName,
-                  isHoveredItem && !isSelectedItem && "bg-[var(--color-neutral-200)]",
+                  isHoveredItem &&
+                    !isSelectedItem &&
+                    "bg-[var(--color-neutral-200)]",
                 )}
                 onMouseEnter={() => setInternalHoveredItemId(item.id ?? null)}
                 onMouseLeave={() => setInternalHoveredItemId(null)}
