@@ -131,7 +131,9 @@ function NavigationBar({
             showText={false}
             showLeftIcon
             showRightIcon={false}
-            iconLeft={<BellIcon className="text-[var(--color-primary-200)]" />}
+            iconLeft={
+              <BellIcon className="text-[var(--color-primary-200)] dark:text-[var(--color-text-200)]" />
+            }
             aria-label="Notificaciones"
             onClick={onUtilityActionClick}
           />
@@ -160,7 +162,7 @@ function NavigationBar({
             type="button"
             aria-label={mobileMenuLabel}
             onClick={onMenuClick}
-            className="flex items-center justify-center gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-300)] bg-transparent p-[8px] text-[var(--color-primary-200)] transition-colors duration-200 hover:border-[var(--color-neutral-600)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-10)]"
+            className="flex items-center justify-center gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-300)] bg-transparent p-[8px] text-[var(--color-primary-200)] transition-colors duration-200 hover:border-[var(--color-neutral-600)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-10)] dark:text-[var(--color-text-200)]"
           >
             <MenuIcon />
           </button>

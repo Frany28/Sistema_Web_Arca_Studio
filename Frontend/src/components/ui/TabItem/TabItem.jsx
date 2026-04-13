@@ -217,6 +217,7 @@ function TabItem({
   state = TAB_ITEM_DEFAULT_PROPS.state,
   selected = TAB_ITEM_DEFAULT_PROPS.selected,
   defaultSelected = TAB_ITEM_DEFAULT_PROPS.defaultSelected,
+  persistSelection = TAB_ITEM_DEFAULT_PROPS.persistSelection,
   interactive = TAB_ITEM_DEFAULT_PROPS.interactive,
   iconLeft = TAB_ITEM_DEFAULT_PROPS.iconLeft,
   iconRight = TAB_ITEM_DEFAULT_PROPS.iconRight,
@@ -285,7 +286,7 @@ function TabItem({
     (iconRight ? <WindowIcon className={clsx(sizeStyles.icon, "shrink-0")} /> : null);
 
   function handleClick(event) {
-    if (isInteractive) {
+    if (isInteractive && persistSelection) {
       const nextSelected = true;
 
       if (typeof selected !== "boolean") {

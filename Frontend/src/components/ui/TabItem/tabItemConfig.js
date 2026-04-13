@@ -8,6 +8,7 @@ export const TAB_ITEM_DEFAULT_PROPS = {
   state: undefined,
   selected: undefined,
   defaultSelected: false,
+  persistSelection: true,
   interactive: false,
   iconLeft: true,
   iconRight: false,

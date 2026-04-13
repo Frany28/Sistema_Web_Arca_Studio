@@ -4,6 +4,7 @@ import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../Button/Button.jsx";
 import HorizontalTabMenu from "../HorizontalTabMenu/HorizontalTabMenu.jsx";
 import Input from "../Input/Input.jsx";
+import TabItem from "../TabItem/TabItem.jsx";
 
 const FOOTER_SECTION_NODE_IDS = {
   desktop: {
@@ -35,6 +36,10 @@ function getDocumentDarkMode() {
   }
 
   return document.documentElement.classList.contains("dark");
+}
+
+function clearPointerFocus(event) {
+  event.currentTarget.blur();
 }
 
 function InfoIcon({ className }) {
@@ -472,17 +477,43 @@ function FooterSection({
             isMobile ? "w-full justify-center" : "justify-start lg:justify-center",
           )}
         >
-          <HorizontalTabMenu
-            items={navItems}
-            activeIndex={resolvedActiveNavIndex}
-            interactive
-            onChange={handleNavChange}
-            filled="off"
-            style="Brand"
-            orientation={isMobile ? "vertical" : "horizontal"}
-            className={clsx("max-w-full", isMobile && "w-auto")}
-            aria-label="Footer navigation"
-          />
+          {isMobile ? (
+            <div
+              className="flex w-full flex-col items-center justify-center gap-[8px]"
+              data-node-id="2056:24023"
+              aria-label="Footer navigation"
+            >
+              {navItems.map((item, index) => (
+                <TabItem
+                  key={`${item}-${index}`}
+                  label={item}
+                  size="S"
+                  style="Brand"
+                  selected={resolvedActiveNavIndex === index}
+                  persistSelection={false}
+                  interactive
+                  iconLeft={false}
+                  iconRight={false}
+                  onClick={() => handleNavChange(index)}
+                  onMouseUp={clearPointerFocus}
+                  onTouchEnd={clearPointerFocus}
+                  aria-label={item}
+                />
+              ))}
+            </div>
+          ) : (
+            <HorizontalTabMenu
+              items={navItems}
+              activeIndex={resolvedActiveNavIndex}
+              interactive
+              onChange={handleNavChange}
+              filled="off"
+              style="Brand"
+              orientation="horizontal"
+              className="max-w-full"
+              aria-label="Footer navigation"
+            />
+          )}
         </div>
 
         <div

@@ -28,9 +28,7 @@ import {
   emptyStateSizeItems,
 } from "../components/ui/EmptyState/emptyStateShowcaseData.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
-import {
-  navigationBarMainComponent,
-} from "../components/ui/NavigationBar/navigationBarShowcaseData.js";
+import { navigationBarMainComponent } from "../components/ui/NavigationBar/navigationBarShowcaseData.js";
 import FooterSection from "../components/ui/FooterSection/FooterSection.jsx";
 import {
   footerSectionMainComponent,
@@ -52,6 +50,12 @@ import {
   notificationQuickToggleItems,
   notificationTypeItems,
 } from "../components/ui/Notification/notificationShowcaseData.js";
+import ListItem from "../components/ui/ListItem/ListItem.jsx";
+import {
+  listItemInteractiveExample,
+  listItemMainComponent,
+  listItemQuickToggleItems,
+} from "../components/ui/ListItem/listItemShowcaseData.js";
 import Button from "../components/ui/Button/Button.jsx";
 import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
 import {
@@ -174,7 +178,9 @@ function AlertExample({ alertProps }) {
         key={instanceKey}
         {...alertProps}
         onDismiss={() => setFeedback("Alerta cerrada.")}
-        onPrimaryAction={() => setFeedback("Acción ejecutada: Realizar cambios.")}
+        onPrimaryAction={() =>
+          setFeedback("Acción ejecutada: Realizar cambios.")
+        }
         onSecondaryAction={() => setFeedback("Acción ejecutada: Descartar.")}
       />
 
@@ -195,6 +201,33 @@ function AlertExample({ alertProps }) {
             Reiniciar ejemplo
           </button>
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ListItemExample({ itemProps }) {
+  const [feedback, setFeedback] = useState("");
+
+  return (
+    <div className="flex w-full max-w-[426px] flex-col items-start gap-[12px]">
+      <div className="w-full overflow-hidden rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+        <ListItem
+          {...itemProps}
+          onClick={() => setFeedback("Accion ejecutada: abrir detalle.")}
+          onPrimaryAction={() => setFeedback("Accion ejecutada: ver mas.")}
+          onSecondaryAction={() => setFeedback("Accion ejecutada: ignorar.")}
+        />
+      </div>
+
+      {feedback ? (
+        <button
+          type="button"
+          className="text-body-5 text-[var(--color-text-300)] underline decoration-current underline-offset-2"
+          onClick={() => setFeedback("")}
+        >
+          {feedback}
+        </button>
       ) : null}
     </div>
   );
@@ -510,7 +543,9 @@ function Home() {
               className="w-full max-w-[427px]"
               previewClassName="w-full"
             >
-              <NotificationExample notificationProps={notificationMainComponent} />
+              <NotificationExample
+                notificationProps={notificationMainComponent}
+              />
             </PreviewTile>
           </ShowcaseCard>
 
@@ -823,16 +858,6 @@ function Home() {
               <SideNavigation {...sideNavigationMainComponent} />
             </PreviewTile>
           </ShowcaseCard>
-
-          <ShowcaseCard title="Collapsed" className="xl:col-span-12">
-            <PreviewTile
-              label="Side navigation / collapsed"
-              className="w-full max-w-[140px]"
-              previewClassName="w-full justify-start p-0"
-            >
-              <SideNavigation {...sideNavigationCollapsedComponent} />
-            </PreviewTile>
-          </ShowcaseCard>
         </div>
       </section>
 
@@ -877,9 +902,62 @@ function Home() {
               ))}
             </div>
           </ShowcaseCard>
-
         </div>
       </section>
+
+      {/* <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+              List item
+            </span>
+            <h2 className="text-heading-4 text-[var(--color-text-50)]">
+              Main component
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <ShowcaseCard title="Main component" className="xl:col-span-4">
+            <PreviewTile
+              label="Default"
+              className="w-full max-w-[490px]"
+              previewClassName="w-full justify-start"
+            >
+              <div className="w-full max-w-[426px] overflow-hidden rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+                <ListItem {...listItemMainComponent} />
+              </div>
+            </PreviewTile>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Quick Toggle" className="xl:col-span-8">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {listItemQuickToggleItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[490px]"
+                  previewClassName="w-full justify-start"
+                >
+                  <div className="w-full max-w-[426px] overflow-hidden rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+                    <ListItem {...item.props} />
+                  </div>
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+
+          <ShowcaseCard title="Interactive" className="xl:col-span-12">
+            <PreviewTile
+              label="Hover + actions"
+              className="w-full max-w-[490px]"
+              previewClassName="w-full justify-start"
+            >
+              <ListItemExample itemProps={listItemInteractiveExample} />
+            </PreviewTile>
+          </ShowcaseCard>
+        </div>
+      </section>*/}
     </main>
   );
 }

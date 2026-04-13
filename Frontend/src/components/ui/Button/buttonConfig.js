@@ -51,8 +51,8 @@ export const BUTTON_VISUALS = {
       Hover:
         "border border-transparent bg-[var(--color-primary-500)] text-[var(--color-neutral-100-uniform)]",
       FocusedInner:
-        "border border-[var(--color-primary-200)] bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)]",
-      FocusedOuter: "var(--color-primary-10)",
+        "border border-[#4e4e4e] bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)]",
+      FocusedOuter: "rgba(42, 41, 41, 0.10)",
       Disabled:
         "border border-transparent bg-[var(--color-neutral-200)] text-[var(--color-neutral-400)]",
     },
@@ -143,7 +143,7 @@ export const BUTTON_VISUALS = {
 export const BUTTON_INTERACTIVE_STYLES = {
   Primary: {
     Solid:
-      "hover:border-[var(--color-primary-500)] hover:bg-[var(--color-primary-500)] focus:outline-none focus:border-[var(--color-primary-200)] focus:bg-[var(--color-primary-300)] focus:text-[var(--color-neutral-100-uniform)]",
+      "hover:border-[var(--color-primary-500)] hover:bg-[var(--color-primary-500)] focus:outline-none focus:border-[#4e4e4e] focus:bg-[var(--color-primary-300)] focus:text-[var(--color-neutral-100-uniform)]",
     Outline:
       "hover:border-[var(--color-neutral-600)] hover:bg-transparent hover:text-[var(--color-text-200)] focus:outline-none focus:border-[var(--color-neutral-600)] focus:bg-transparent focus:text-[var(--color-text-200)]",
     Ghost:

@@ -626,24 +626,14 @@ function DropdownMenu({
 
     if (itemType === "Checkbox") {
       const nextItems = normalizedItems.map((currentItem) => {
-        if (currentItem.id !== item.id) {
-          return currentItem;
-        }
-
         return {
           ...currentItem,
-          checked: currentItem.checked === "Yes" ? "No" : "Yes",
+          checked: currentItem.id === item.id ? "Yes" : "No",
         };
       });
       const nextSelectedItem =
         nextItems.find((currentItem) => currentItem.id === item.id) ?? item;
-      const checkedItems = nextItems.filter(
-        (currentItem) => currentItem.checked === "Yes",
-      );
-      const nextSelectedItemId =
-        nextSelectedItem.checked === "Yes"
-          ? nextSelectedItem.id ?? null
-          : checkedItems.at(-1)?.id ?? null;
+      const nextSelectedItemId = nextSelectedItem.id ?? null;
 
       setInternalItems(nextItems);
       setInternalSelectedItemId(nextSelectedItemId);

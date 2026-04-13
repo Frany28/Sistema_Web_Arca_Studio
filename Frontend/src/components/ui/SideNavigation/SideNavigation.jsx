@@ -236,32 +236,34 @@ function SearchIcon({ className }) {
 function LogoutIcon({ className }) {
   return (
     <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
       viewBox="0 0 20 20"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
     >
       <path
         d="M7.41667 6.29922C7.67501 3.29922 9.21667 2.07422 12.5917 2.07422H12.7C16.425 2.07422 17.9167 3.56589 17.9167 7.29089V12.7242C17.9167 16.4492 16.425 17.9409 12.7 17.9409H12.5917C9.24167 17.9409 7.70001 16.7326 7.42501 13.7826"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke="#4E4E4E"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       />
       <path
         d="M12.5 10H3.01666"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke="#4E4E4E"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       />
       <path
         d="M4.87499 7.20703L2.08333 9.9987L4.87499 12.7904"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke="#4E4E4E"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       />
     </svg>
   );
@@ -287,14 +289,10 @@ function clearPointerFocus(event) {
   event.currentTarget.blur();
 }
 
-function preventPointerFocus(event) {
-  event.preventDefault();
-}
-
 function SideNavigation({
   className,
   items = SIDE_NAVIGATION_DEFAULT_PROPS.items,
-  activeItemId,
+  activeItemId = SIDE_NAVIGATION_DEFAULT_PROPS.activeItemId,
   defaultActiveItemId = SIDE_NAVIGATION_DEFAULT_PROPS.defaultActiveItemId,
   expanded,
   defaultExpanded = SIDE_NAVIGATION_DEFAULT_PROPS.defaultExpanded,
@@ -312,9 +310,8 @@ function SideNavigation({
   ...props
 }) {
   const [searchValue, setSearchValue] = useState("");
-  const [internalActiveItemId, setInternalActiveItemId] = useState(
-    defaultActiveItemId,
-  );
+  const [internalActiveItemId, setInternalActiveItemId] =
+    useState(defaultActiveItemId);
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const normalizedItems =
     Array.isArray(items) && items.length > 0
@@ -351,7 +348,7 @@ function SideNavigation({
 
   const handleItemSelect = (item) => {
     if (!isActiveControlled) {
-      setInternalActiveItemId(item.id ?? null);
+      setInternalActiveItemId(item.id);
     }
 
     onItemSelect?.(item);
@@ -410,7 +407,9 @@ function SideNavigation({
             iconLeft={<SidebarRightIcon className="size-5" />}
             className="shrink-0"
             aria-label={
-              isExpanded ? "Contraer navegación lateral" : "Expandir navegación lateral"
+              isExpanded
+                ? "Contraer navegación lateral"
+                : "Expandir navegación lateral"
             }
             onClick={handleToggleExpanded}
             onMouseUp={clearPointerFocus}
@@ -418,7 +417,10 @@ function SideNavigation({
           />
         </div>
 
-        <div data-node-id={nodeIds.search} className={clsx(isExpanded && "w-full")}>
+        <div
+          data-node-id={nodeIds.search}
+          className={clsx(isExpanded && "w-full")}
+        >
           {isExpanded ? (
             <Input
               type="Search bar"
@@ -479,10 +481,6 @@ function SideNavigation({
                   className="w-full justify-start"
                   aria-label={item.label}
                   onClick={() => handleItemSelect(item)}
-                  onMouseDown={preventPointerFocus}
-                  onTouchStart={preventPointerFocus}
-                  onMouseUp={clearPointerFocus}
-                  onTouchEnd={clearPointerFocus}
                 />
               </div>
             ) : (
@@ -496,8 +494,6 @@ function SideNavigation({
                     : "bg-transparent text-[var(--color-text-100)] hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
                 )}
                 aria-label={item.label}
-                onMouseDown={preventPointerFocus}
-                onTouchStart={preventPointerFocus}
                 onClick={() => handleItemSelect(item)}
                 onMouseUp={clearPointerFocus}
                 onTouchEnd={clearPointerFocus}
