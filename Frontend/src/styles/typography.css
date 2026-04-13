@@ -136,3 +136,11 @@
   line-height: 12px;
   letter-spacing: -0.5px;
 }
+
+.text-label-small {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 9px;
+  letter-spacing: 0.5px;
+}

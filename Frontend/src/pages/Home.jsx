@@ -648,6 +648,13 @@ function Home() {
 
         <div className="grid gap-6 xl:grid-cols-12">
           <ShowcaseCard title="Saved icons" className="xl:col-span-12">
+            <span className="text-label-small uppercase text-neutral-100-uniform">
+              JPG
+            </span>
+
+            <span className="text-label-small uppercase text-neutral-100-uniform">
+              MP4
+            </span>
             <div className="overflow-x-auto rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-bg)] p-[20px]">
               <div className="flex min-w-max items-center gap-[20px]">
                 {fileAttachmentIconsShowcaseItems.map((item) => (

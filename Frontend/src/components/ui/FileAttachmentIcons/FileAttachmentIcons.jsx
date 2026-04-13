@@ -14,6 +14,7 @@ const FILE_ATTACHMENT_ICON_VARIANTS = {
   SVG: { label: "SVG", color: "bg-[#3873FF]", nodeId: "2061:24057" },
   TXT: { label: "TXT", color: "bg-[#344054]", nodeId: "2061:24064" },
   OBJ: { label: "OBJ", color: "bg-[#344054]", nodeId: "2061:24071" },
+  DWG: { label: "DWG", color: "bg-[#344054]", nodeId: "2061:24078" },
   CAD: { label: "DWG", color: "bg-[#344054]", nodeId: "2061:24078" },
   SKP: { label: "SKP", color: "bg-[#344054]", nodeId: "2061:24085" },
 };
@@ -22,11 +23,10 @@ function FilePageOutline() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    if (typeof document === "undefined") {
-      return undefined;
-    }
+    if (typeof document === "undefined") return undefined;
 
     const root = document.documentElement;
+
     const syncTheme = () => {
       setIsDarkMode(root.classList.contains("dark"));
     };
@@ -39,37 +39,60 @@ function FilePageOutline() {
       attributeFilter: ["class"],
     });
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
   const fill = isDarkMode
     ? "var(--color-neutral-100-uniform)"
     : "var(--color-neutral-100)";
+
   const stroke = "var(--color-neutral-200)";
 
   return (
     <svg
-      viewBox="0 0 30 40"
-      fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="absolute inset-y-0 right-0 h-[40px] w-[30px]"
+      width="35"
+      height="40"
+      viewBox="0 0 35 40"
+      fill="none"
+      className="absolute inset-0 h-[40px] w-[35px]"
       aria-hidden="true"
     >
-      <path
-        d="M6.5 1.5H20.95L28.5 9.05V36.5C28.5 37.6046 27.6046 38.5 26.5 38.5H6.5C5.39543 38.5 4.5 37.6046 4.5 36.5V3.5C4.5 2.39543 5.39543 1.5 6.5 1.5Z"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="1.5"
-      />
-      <path
-        d="M20.5 1.85V7.5C20.5 8.60457 21.3954 9.5 22.5 9.5H28.15"
-        stroke={stroke}
-        strokeWidth="1.5"
-      />
+      <g clipPath="url(#clip0_file_attachment_icon)">
+        <path
+          d="M5 4C5 1.79086 6.79086 0 9 0H22.5L35 12.5V36C35 38.2091 33.2091 40 31 40H9C6.79086 40 5 38.2091 5 36V4Z"
+          fill={fill}
+        />
+        <path
+          d="M5 36V4C5 1.79086 6.79086 0 9 0H22.5L35 12.5V36C35 38.2091 33.2091 40 31 40V38.5C32.3807 38.5 33.5 37.3807 33.5 36V13.1211L21.8789 1.5H9C7.61929 1.5 6.5 2.61929 6.5 4V36C6.5 37.3807 7.61929 38.5 9 38.5V40L8.79395 39.9951C6.68056 39.8879 5 38.14 5 36ZM31 38.5V40H9V38.5H31Z"
+          fill={stroke}
+        />
+        <path
+          d="M21.25 10V1C21.25 0.585786 21.5858 0.25 22 0.25C22.4142 0.25 22.75 0.585786 22.75 1V10C22.75 11.2426 23.7574 12.25 25 12.25H34C34.4142 12.25 34.75 12.5858 34.75 13C34.75 13.4142 34.4142 13.75 34 13.75H25C22.9289 13.75 21.25 12.0711 21.25 10Z"
+          fill={stroke}
+        />
+      </g>
+
+      <defs>
+        <clipPath id="clip0_file_attachment_icon">
+          <rect width="30" height="40" fill="white" transform="translate(5)" />
+        </clipPath>
+      </defs>
     </svg>
   );
+}
+
+function normalizeFileType(type) {
+  if (!type) return "AI";
+
+  const normalized = String(type).trim().toUpperCase();
+
+  const aliases = {
+    JPEG: "JPG",
+    TEXT: "TXT",
+  };
+
+  return aliases[normalized] ?? normalized;
 }
 
 function FileAttachmentIcons({
@@ -78,7 +101,10 @@ function FileAttachmentIcons({
   "aria-label": ariaLabel,
   ...props
 }) {
-  const variant = FILE_ATTACHMENT_ICON_VARIANTS[type] ?? FILE_ATTACHMENT_ICON_VARIANTS.AI;
+  const normalizedType = normalizeFileType(type);
+  const variant =
+    FILE_ATTACHMENT_ICON_VARIANTS[normalizedType] ??
+    FILE_ATTACHMENT_ICON_VARIANTS.AI;
 
   return (
     <div
@@ -91,11 +117,19 @@ function FileAttachmentIcons({
 
       <div
         className={clsx(
-          "absolute bottom-[5px] left-0 inline-flex items-center overflow-hidden rounded-[4px] px-[2.5px] py-[2px]",
+          "absolute bottom-[4.75px] left-0 flex h-[11.15px] min-w-[24.89px] items-center justify-center rounded-[4px] px-[2.5px]",
           variant.color,
         )}
       >
-        <span className="font-['Inter:Medium',sans-serif] text-[10px] leading-[9px] tracking-[0.5px] text-[var(--color-neutral-100-uniform)] uppercase">
+        <span
+          className="text-label-small uppercase text-neutral-100-uniform text-center"
+          style={{
+            lineHeight: "9px",
+            WebkitFontSmoothing: "antialiased",
+            MozOsxFontSmoothing: "grayscale",
+            textRendering: "geometricPrecision",
+          }}
+        >
           {variant.label}
         </span>
       </div>
