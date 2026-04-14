@@ -7,9 +7,7 @@ import {
   EMPTY_STATE_SIZES,
 } from "./emptyStateConfig.js";
 
-const EMPTY_STATE_DARK_CTAS_DOTS_ASSET =
-  "https://www.figma.com/api/mcp/asset/3e382045-786b-4e8e-b663-1e27a1316932";
-
+import emptyStateDarkDotsAsset from "./emptyStage.svg";
 const EMPTY_STATE_NODE_IDS = {
   light: {
     S: {
@@ -35,45 +33,57 @@ const EMPTY_STATE_NODE_IDS = {
   },
 };
 
-function DecorativeDots({ isMedium, isDarkMode, useDarkCtasAsset = false }) {
-  if (useDarkCtasAsset) {
+function DecorativeDots({
+  isMedium,
+  isDarkMode,
+  useDarkCtasAsset = false,
+  isFeatured = false,
+}) {
+  const featuredStyle = isMedium
+    ? {
+        left: "50%",
+        transform: "translateX(-50%)",
+        top: "-58px",
+      }
+    : {
+        left: "50%",
+        transform: "translateX(-50%)",
+        top: "-63px",
+      };
+
+  if (isDarkMode) {
     return (
       <div
-        className="pointer-events-none absolute z-0"
+        className={clsx(
+          "pointer-events-none absolute z-0",
+          !isFeatured && "left-1/2 -translate-x-1/2 -translate-y-1/2",
+          isMedium ? "size-[220px]" : "size-[200px]",
+        )}
         aria-hidden="true"
-        style={{
-          right: "46px",
-          top: "-63px",
-          width: "200px",
-          height: "200px",
-        }}
+        style={isFeatured ? featuredStyle : { top: isMedium ? "42px" : "37px" }}
       >
         <img
-          src={EMPTY_STATE_DARK_CTAS_DOTS_ASSET}
+          src={emptyStateDarkDotsAsset}
           alt=""
-          className="block size-full max-w-none"
+          className="block size-full max-w-none object-contain"
         />
       </div>
     );
   }
 
-  const dotColor = isDarkMode
-    ? "rgba(210,210,210,0.34)"
-    : "rgba(232,232,232,0.92)";
-  const fadeMask = isDarkMode
-    ? "radial-gradient(circle at center, rgba(0,0,0,0.9) 18%, rgba(0,0,0,0.6) 52%, rgba(0,0,0,0.18) 70%, transparent 84%)"
-    : "radial-gradient(circle at center, rgba(0,0,0,0.95) 14%, rgba(0,0,0,0.62) 48%, rgba(0,0,0,0.18) 66%, transparent 84%)";
+  const dotColor = "rgba(232,232,232,0.92)";
+  const fadeMask =
+    "radial-gradient(circle at center, rgba(0,0,0,0.95) 14%, rgba(0,0,0,0.62) 48%, rgba(0,0,0,0.18) 66%, transparent 84%)";
 
   return (
     <div
       className={clsx(
-        "pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-1/2",
+        "pointer-events-none absolute z-0",
+        !isFeatured && "left-1/2 -translate-x-1/2 -translate-y-1/2",
         isMedium ? "size-[220px]" : "size-[200px]",
       )}
       aria-hidden="true"
-      style={{
-        top: isMedium ? "42px" : "37px",
-      }}
+      style={isFeatured ? featuredStyle : { top: isMedium ? "42px" : "37px" }}
     >
       <div
         className="size-full"
@@ -98,19 +108,28 @@ function getDocumentDarkMode() {
 }
 
 function ImageIcon({ size }) {
-  const Image = IconsaxIcons.Image;
-
-  if (!Image) {
-    return null;
-  }
-
   return (
-    <Image
-      size={String(size)}
-      variant="Linear"
-      color="currentColor"
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="none"
       className={clsx(size === 24 ? "size-6" : "size-5")}
-    />
+    >
+      <path
+        d="M18.0664 14.133L15.4581 8.04137C14.5748 5.9747 12.9498 5.89137 11.8581 7.85803L10.2831 10.6997C9.48311 12.1414 7.99144 12.2664 6.95811 10.9747L6.77478 10.7414C5.69978 9.39137 4.18311 9.55803 3.40811 11.0997L1.97478 13.9747C0.966442 15.9747 2.42478 18.333 4.65811 18.333H15.2914C17.4581 18.333 18.9164 16.1247 18.0664 14.133Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.80811 6.66602C7.18882 6.66602 8.30811 5.54673 8.30811 4.16602C8.30811 2.7853 7.18882 1.66602 5.80811 1.66602C4.42739 1.66602 3.30811 2.7853 3.30811 4.16602C3.30811 5.54673 4.42739 6.66602 5.80811 6.66602Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -192,7 +211,7 @@ function EmptyState({
     ? "border-[var(--color-neutral-300)]"
     : "border-[var(--color-neutral-200,#e8e8e8)]";
   const iconSurfaceClass = isDarkMode
-    ? "bg-[var(--color-neutral-100)] text-[var(--color-neutral-500)]"
+    ? "bg-[var(--color-neutral-100)] text-[var(--color-neutral-200)]"
     : "bg-[var(--color-neutral-100,#fff)] text-[var(--color-text-100,#818181)]";
   const isDarkCtasVariant =
     isDarkMode && showActions && !showFeaturedIcon && !isMedium;
@@ -221,6 +240,7 @@ function EmptyState({
           isMedium={isMedium}
           isDarkMode={isDarkMode}
           useDarkCtasAsset={isDarkCtasVariant}
+          isFeatured={showFeaturedIcon}
         />
       ) : null}
 

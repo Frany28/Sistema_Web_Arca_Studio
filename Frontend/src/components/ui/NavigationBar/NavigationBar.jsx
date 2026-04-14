@@ -16,19 +16,19 @@ function MenuIcon({ className }) {
       aria-hidden="true"
     >
       <path
-        d="M3 7H21"
+        d="M2 5H20"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
       <path
-        d="M3 12H21"
+        d="M2 10H20"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
       <path
-        d="M3 17H21"
+        d="M2 15H20"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -99,7 +99,9 @@ function NavigationBar({
   const isMobile = variant === "mobile";
   const isUtility = variant === "utility";
   const isNavControlled = Number.isInteger(activeIndex) && activeIndex >= 0;
-  const resolvedActiveIndex = isNavControlled ? activeIndex : internalActiveIndex;
+  const resolvedActiveIndex = isNavControlled
+    ? activeIndex
+    : internalActiveIndex;
 
   const handleNavChange = (index) => {
     if (!isNavControlled) {

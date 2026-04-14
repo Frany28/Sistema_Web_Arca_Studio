@@ -1,9 +1,6 @@
 import { useId, useState } from "react";
 import clsx from "clsx";
-import {
-  TOOLTIP_DEFAULT_PROPS,
-  TOOLTIP_POSITIONS,
-} from "./tooltipConfig.js";
+import { TOOLTIP_DEFAULT_PROPS, TOOLTIP_POSITIONS } from "./tooltipConfig.js";
 
 const TOOLTIP_NODE_IDS = {
   base: "2061:19961",
@@ -23,14 +20,14 @@ const TOOLTIP_NODE_IDS = {
 };
 
 const TOOLTIP_TAIL_CLASSNAMES = {
-  Right: "right-[-8px] top-1/2 -translate-y-1/2",
-  Left: "left-[-8px] top-1/2 -translate-y-1/2",
-  "Top center": "left-1/2 top-[-8px] -translate-x-1/2",
-  "Top right": "right-[6px] top-[-8px]",
-  "Top left": "left-[6px] top-[-8px]",
-  "Bottom center": "bottom-[-8px] left-1/2 -translate-x-1/2",
-  "Bottom right": "bottom-[-8px] right-[6px]",
-  "Bottom left": "bottom-[-8px] left-[6px]",
+  Right: "right-[-10px] bottom-[6px]",
+  Left: "left-[-10px] bottom-[6px]",
+  "Top center": "right-[102px] top-[-8.512px]",
+  "Top right": "right-[6px] top-[-8.512px]",
+  "Top left": "left-[6px] top-[-8.512px]",
+  "Bottom center": "right-[102px] bottom-[-8.512px]",
+  "Bottom right": "right-[6px] bottom-[-8.512px]",
+  "Bottom left": "left-[6px] bottom-[-8.512px]",
 };
 
 const TOOLTIP_BUBBLE_CLASSNAMES = {
