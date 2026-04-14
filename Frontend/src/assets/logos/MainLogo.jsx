@@ -38,7 +38,10 @@ function getDocumentDarkMode() {
     return false;
   }
 
-  return document.documentElement.classList.contains("dark");
+  return (
+    document.documentElement.classList.contains("dark") ||
+    document.body.classList.contains("dark")
+  );
 }
 
 function MainLogo({
@@ -59,15 +62,24 @@ function MainLogo({
       return undefined;
     }
 
-    const root = document.documentElement;
+    const html = document.documentElement;
+    const body = document.body;
+
     const observer = new MutationObserver(() => {
       setIsDarkMode(getDocumentDarkMode());
     });
 
-    observer.observe(root, {
+    observer.observe(html, {
       attributes: true,
       attributeFilter: ["class"],
     });
+
+    if (body) {
+      observer.observe(body, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
 
     return () => {
       observer.disconnect();
