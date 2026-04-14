@@ -120,24 +120,21 @@ const PROGRESS_STEP_BASE_NODE_IDS = {
 const NUMBER_BADGE_SIZES = {
   S: {
     badge: "size-[32px]",
-    halo: "size-[32px]",
     featuredWidth: "w-[32px]",
-    icon: "size-[18px]",
-    number: "text-[12px] leading-[14px] tracking-[-0.5px]",
+    icon: "size-[16px]",
+    number: "text-[12px] leading-[12px] tracking-[-0.5px]",
   },
   M: {
     badge: "size-[40px]",
-    halo: "size-[40px]",
     featuredWidth: "w-[40px]",
     icon: "size-[20px]",
-    number: "text-[14px] leading-[17px] tracking-[-0.5px]",
+    number: "text-[14px] leading-[14px] tracking-[-0.5px]",
   },
   L: {
     badge: "size-[48px]",
-    halo: "size-[48px]",
     featuredWidth: "w-[48px]",
     icon: "size-[24px]",
-    number: "text-[16px] leading-[19px] tracking-[-0.5px]",
+    number: "text-[16px] leading-[16px] tracking-[-0.5px]",
   },
 };
 
@@ -173,8 +170,14 @@ function getDocumentDarkMode() {
   return document.documentElement.classList.contains("dark");
 }
 
-function getActiveHaloBorderClass(isDarkMode) {
-  return isDarkMode ? "border-[#2a29291a]" : "border-[var(--color-primary-10)]";
+function getNumberedInactiveShadowClass(isDarkMode) {
+  return isDarkMode ? "" : "shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)]";
+}
+
+function getNumberedActiveShadowClass(isDarkMode) {
+  return isDarkMode
+    ? ""
+    : "shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04),0_0_0_4px_rgba(42,41,41,0.10)]";
 }
 
 function getFeaturedActiveHaloShadowClass(isDarkMode) {
@@ -304,7 +307,7 @@ function ProgressStepBase({
       return (
         <div
           className={clsx(
-            "flex items-center justify-center rounded-full bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)]",
+            "flex shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)]",
             badgeStyles.badge,
           )}
         >
@@ -317,25 +320,19 @@ function ProgressStepBase({
       return (
         <div
           className={clsx(
-            "relative box-border shrink-0 rounded-full border-[4px] bg-[var(--color-neutral-100)]",
-            getActiveHaloBorderClass(isDarkMode),
-            badgeStyles.halo,
+            "flex shrink-0 items-center justify-center rounded-full border border-[var(--color-text-300)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)]",
+            getNumberedActiveShadowClass(isDarkMode),
+            badgeStyles.badge,
           )}
         >
-          <div
+          <span
             className={clsx(
-              "absolute inset-0 box-border flex items-center justify-center rounded-full border border-[var(--color-text-300)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)]",
+              "font-['Inter:Regular',sans-serif] font-normal not-italic",
+              badgeStyles.number,
             )}
           >
-            <span
-              className={clsx(
-                "font-['Inter:Regular',sans-serif] font-normal not-italic",
-                badgeStyles.number,
-              )}
-            >
-              {number}
-            </span>
-          </div>
+            {number}
+          </span>
         </div>
       );
     }
@@ -343,8 +340,8 @@ function ProgressStepBase({
     return (
       <div
         className={clsx(
-          "flex items-center justify-center rounded-full border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]",
-          "text-[var(--color-text-100)]",
+          "flex shrink-0 items-center justify-center rounded-full border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-100)]",
+          getNumberedInactiveShadowClass(isDarkMode),
           badgeStyles.badge,
         )}
       >

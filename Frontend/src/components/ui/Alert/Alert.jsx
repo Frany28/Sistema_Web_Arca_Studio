@@ -107,7 +107,13 @@ function TickCircleIcon({ className }) {
       className={className}
       aria-hidden="true"
     >
-      <circle cx="10" cy="10" r="8.25" stroke="currentColor" strokeWidth="1.5" />
+      <circle
+        cx="10"
+        cy="10"
+        r="8.25"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
       <path
         d="M6.5 10.1L8.8 12.4L13.5 7.7"
         stroke="currentColor"
@@ -237,7 +243,7 @@ function Alert({
       <div
         className={clsx(
           "flex min-w-0 flex-1 gap-[16px]",
-          isFullWidth ? "items-center" : "items-start",
+          isFullWidth ? "items-start min-[900px]:items-center" : "items-start",
           showCloseButton && "pr-[28px]",
         )}
         data-node-id={ALERT_NODE_IDS.content}
@@ -256,7 +262,9 @@ function Alert({
         <div
           className={clsx(
             "flex min-w-0 flex-1",
-            isFullWidth ? "items-center justify-between gap-[16px]" : "flex-col items-start gap-[8px]",
+            isFullWidth
+              ? "flex-col items-start gap-[12px] min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between min-[900px]:gap-[16px]"
+              : "flex-col items-start gap-[8px]",
           )}
         >
           <div
@@ -281,7 +289,12 @@ function Alert({
 
           {showActions ? (
             <div
-              className="flex shrink-0 flex-wrap items-center gap-[12px]"
+              className={clsx(
+                "flex shrink-0 gap-[12px]",
+                isFullWidth
+                  ? "w-full flex-wrap items-center min-[900px]:w-auto min-[900px]:flex-nowrap min-[900px]:justify-end"
+                  : "flex-wrap items-center",
+              )}
               data-node-id={ALERT_NODE_IDS.actions}
             >
               <Button
@@ -320,10 +333,7 @@ function Alert({
           showLeftIcon
           showRightIcon={false}
           iconLeft={<CloseIcon className="size-3" />}
-          className={clsx(
-            "absolute right-0 top-0",
-            visual.close,
-          )}
+          className={clsx("absolute right-0 top-0", visual.close)}
           aria-label="Cerrar alerta"
           onClick={handleDismiss}
           data-node-id={ALERT_NODE_IDS.close}
