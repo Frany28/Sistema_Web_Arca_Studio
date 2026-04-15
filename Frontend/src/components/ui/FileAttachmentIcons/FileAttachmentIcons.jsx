@@ -19,7 +19,20 @@ const FILE_ATTACHMENT_ICON_VARIANTS = {
   SKP: { label: "SKP", color: "bg-[#344054]", nodeId: "2061:24085" },
 };
 
-function FilePageOutline() {
+function normalizeFileType(type) {
+  if (!type) return "AI";
+
+  const normalized = String(type).trim().toUpperCase();
+
+  const aliases = {
+    JPEG: "JPG",
+    TEXT: "TXT",
+  };
+
+  return aliases[normalized] ?? normalized;
+}
+
+function FilePageOutline({ compact = false }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -48,14 +61,46 @@ function FilePageOutline() {
 
   const stroke = "var(--color-neutral-200)";
 
+  if (compact) {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="24"
+        viewBox="0 0 18 24"
+        fill="none"
+        className="absolute top-0 left-1/2 h-[24px] w-[18px] -translate-x-1/2"
+        aria-hidden="true"
+      >
+        <g clipPath="url(#clip0_file_attachment_compact)">
+          <path
+            d="M2.40039 0.450195H10.3135L17.5498 7.68652V21.5996C17.5498 22.6766 16.6766 23.5498 15.5996 23.5498H2.40039C1.32344 23.5498 0.450195 22.6766 0.450195 21.5996V2.40039C0.450195 1.32344 1.32344 0.450195 2.40039 0.450195Z"
+            fill={fill}
+            stroke={stroke}
+            strokeWidth="0.9"
+          />
+          <path
+            d="M10.2002 0.601562V6.00156C10.2002 6.99568 11.0061 7.80156 12.0002 7.80156H17.4002"
+            stroke={stroke}
+            strokeWidth="0.9"
+            strokeLinecap="round"
+          />
+        </g>
+        <defs>
+          <clipPath id="clip0_file_attachment_compact">
+            <rect width="18" height="24" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  }
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="35"
-      height="40"
       viewBox="0 0 35 40"
       fill="none"
-      className="absolute inset-0 h-[40px] w-[35px]"
+      className="absolute inset-0 h-full w-full"
       aria-hidden="true"
     >
       <g clipPath="url(#clip0_file_attachment_icon)">
@@ -82,22 +127,10 @@ function FilePageOutline() {
   );
 }
 
-function normalizeFileType(type) {
-  if (!type) return "AI";
-
-  const normalized = String(type).trim().toUpperCase();
-
-  const aliases = {
-    JPEG: "JPG",
-    TEXT: "TXT",
-  };
-
-  return aliases[normalized] ?? normalized;
-}
-
 function FileAttachmentIcons({
   className,
   type = "AI",
+  size = "default",
   "aria-label": ariaLabel,
   ...props
 }) {
@@ -106,22 +139,38 @@ function FileAttachmentIcons({
     FILE_ATTACHMENT_ICON_VARIANTS[normalizedType] ??
     FILE_ATTACHMENT_ICON_VARIANTS.AI;
 
+  const isCompact = size === "compact";
+
   return (
     <div
-      className={clsx("relative h-[40px] w-[35px] shrink-0", className)}
+      className={clsx(
+        "relative shrink-0",
+        isCompact ? "h-[24px] w-[21px]" : "h-[40px] w-[35px]",
+        className,
+      )}
       data-node-id={variant.nodeId}
       aria-label={ariaLabel ?? `File attachment icon ${variant.label}`}
       {...props}
     >
-      <FilePageOutline />
+      <FilePageOutline compact={isCompact} />
 
       <div
         className={clsx(
-          "absolute bottom-[4.75px] left-0 inline-flex items-center justify-center rounded-[4px] px-[2.5px] py-[2px]",
+          "absolute inline-flex items-center justify-center text-neutral-100-uniform",
+          isCompact
+            ? "-left-[1px] bottom-[2px] h-[8.4px] w-[16px] rounded-[1.8px]"
+            : "left-0 bottom-[4.75px] rounded-[4px] px-[2.5px] py-[2px]",
           variant.color,
         )}
       >
-        <span className="text-label-small uppercase text-neutral-100-uniform text-center leading-none">
+        <span
+          className={clsx(
+            "uppercase text-center",
+            isCompact
+              ? "text-[6px] font-bold leading-[5.4px] tracking-[0.3px]"
+              : "text-label-small leading-none",
+          )}
+        >
           {variant.label}
         </span>
       </div>

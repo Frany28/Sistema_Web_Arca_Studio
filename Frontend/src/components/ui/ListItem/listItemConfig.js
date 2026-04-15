@@ -1,34 +1,31 @@
-export const LIST_ITEM_TYPES = ["Default", "Upload file"];
-export const LIST_ITEM_STATES = ["Default", "Hover"];
-
 export const LIST_ITEM_DEFAULT_PROPS = {
-  type: "Default",
-  state: undefined,
-  interactive: false,
-  authorName: "Jonh Doe",
+  name: "Jonh Doe",
+  action: "Comentó",
+  badgeLabel: "Stand Nexar 2026",
+  description: "El cliente aprobó esta versión",
   timestamp: "Hace 2 minutos",
-  activityLabel: "Comentó",
-  uploadPrefix: "subió un archivo de",
-  projectLabel: "Stand Nexar 2026",
-  comment: "El cliente aprobó esta versión",
-  showMessage: true,
-  showComment: true,
-  showButtons: false,
+  showBadge: true,
+  showDivider: true,
+  showActions: false,
+  state: "Default",
   primaryActionLabel: "Ver más",
   secondaryActionLabel: "Ignorar",
-  fileName: "Archivo.pdf",
-  fileSize: "200KB",
-  fileType: "PDF",
-  avatarName: "Jonh Doe",
-  avatarSrc: null,
-  avatarInitials: "",
-  "aria-label": "List item",
+  avatarProps: {
+    size: "M",
+    style: "Icon",
+    theme: "Brand 1",
+    decorative: true,
+  },
 };
 
 export function createListItemProps(overrides = {}) {
   return {
     ...LIST_ITEM_DEFAULT_PROPS,
     ...overrides,
+    avatarProps: {
+      ...LIST_ITEM_DEFAULT_PROPS.avatarProps,
+      ...(overrides.avatarProps ?? {}),
+    },
   };
 }
 

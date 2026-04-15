@@ -55,6 +55,7 @@ import {
   listItemInteractiveExample,
   listItemMainComponent,
   listItemQuickToggleItems,
+  listItemStateItems,
 } from "../components/ui/ListItem/listItemShowcaseData.js";
 import Button from "../components/ui/Button/Button.jsx";
 import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
@@ -70,6 +71,10 @@ import {
   alertStyleItems,
   alertThemeItems,
 } from "../components/ui/Alert/alertShowcaseData.js";
+import CommentPanel from "../components/ui/CommentPanel/CommentPanel.jsx";
+import { commentPanelMainComponent } from "../components/ui/CommentPanel/commentPanelShowcaseData.js";
+import NotificationsPanel from "../components/ui/NotificationsPanel/NotificationsPanel.jsx";
+import { notificationsPanelMainComponent } from "../components/ui/NotificationsPanel/notificationsPanelShowcaseData.js";
 
 function ShowcaseCard({ title, children, className }) {
   return (
@@ -201,33 +206,6 @@ function AlertExample({ alertProps }) {
             Reiniciar ejemplo
           </button>
         </div>
-      ) : null}
-    </div>
-  );
-}
-
-function ListItemExample({ itemProps }) {
-  const [feedback, setFeedback] = useState("");
-
-  return (
-    <div className="flex w-full max-w-[426px] flex-col items-start gap-[12px]">
-      <div className="w-full overflow-hidden rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
-        <ListItem
-          {...itemProps}
-          onClick={() => setFeedback("Accion ejecutada: abrir detalle.")}
-          onPrimaryAction={() => setFeedback("Accion ejecutada: ver mas.")}
-          onSecondaryAction={() => setFeedback("Accion ejecutada: ignorar.")}
-        />
-      </div>
-
-      {feedback ? (
-        <button
-          type="button"
-          className="text-body-5 text-[var(--color-text-300)] underline decoration-current underline-offset-2"
-          onClick={() => setFeedback("")}
-        >
-          {feedback}
-        </button>
       ) : null}
     </div>
   );
@@ -911,8 +889,7 @@ function Home() {
           </ShowcaseCard>
         </div>
       </section>
-
-      {/* <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+      <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="max-w-3xl space-y-3">
             <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
@@ -925,7 +902,7 @@ function Home() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-12">
-          <ShowcaseCard title="Main component" className="xl:col-span-4">
+          <ShowcaseCard title="Main component" className="xl:col-span-12">
             <PreviewTile
               label="Default"
               className="w-full max-w-[490px]"
@@ -937,7 +914,7 @@ function Home() {
             </PreviewTile>
           </ShowcaseCard>
 
-          <ShowcaseCard title="Quick Toggle" className="xl:col-span-8">
+          <ShowcaseCard title="Quick Toggle" className="xl:col-span-12">
             <div className="flex flex-wrap items-start gap-[12px]">
               {listItemQuickToggleItems.map((item) => (
                 <PreviewTile
@@ -954,17 +931,72 @@ function Home() {
             </div>
           </ShowcaseCard>
 
-          <ShowcaseCard title="Interactive" className="xl:col-span-12">
+          <ShowcaseCard title="State" className="xl:col-span-12">
+            <div className="flex flex-wrap items-start gap-[12px]">
+              {listItemStateItems.map((item) => (
+                <PreviewTile
+                  key={item.label}
+                  label={item.label}
+                  className="w-full max-w-[490px]"
+                  previewClassName="w-full justify-start"
+                >
+                  <div className="w-full max-w-[426px] overflow-hidden rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+                    <ListItem {...item.props} />
+                  </div>
+                </PreviewTile>
+              ))}
+            </div>
+          </ShowcaseCard>
+        </div>
+      </section>
+      <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+              Comment panel
+            </span>
+            <h2 className="text-heading-4 text-[var(--color-text-50)]">
+              Main component
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <ShowcaseCard title="Main component" className="xl:col-span-12">
             <PreviewTile
-              label="Hover + actions"
+              label="Comment Panel"
               className="w-full max-w-[490px]"
               previewClassName="w-full justify-start"
             >
-              <ListItemExample itemProps={listItemInteractiveExample} />
+              <CommentPanel {...commentPanelMainComponent} />
             </PreviewTile>
           </ShowcaseCard>
         </div>
-      </section>*/}
+      </section>
+      <section className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-8 rounded-[24px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-8 shadow-[var(--shadow-e1)] transition-colors duration-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-[12px] font-semibold uppercase tracking-[1.44px] text-[var(--color-text-300)]">
+              Notifications panel
+            </span>
+            <h2 className="text-heading-4 text-[var(--color-text-50)]">
+              Main component
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <ShowcaseCard title="Main component" className="xl:col-span-12">
+            <PreviewTile
+              label="Notifications Panel"
+              className="w-full max-w-[490px]"
+              previewClassName="w-full justify-start"
+            >
+              <NotificationsPanel {...notificationsPanelMainComponent} />
+            </PreviewTile>
+          </ShowcaseCard>
+        </div>
+      </section>
     </main>
   );
 }

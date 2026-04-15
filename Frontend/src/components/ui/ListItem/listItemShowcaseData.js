@@ -3,29 +3,31 @@ import {
   createListItemShowcaseItem,
 } from "./listItemConfig.js";
 
-export const listItemMainComponent = createListItemProps({});
+export const listItemMainComponent = createListItemProps();
+
+export const listItemInteractiveExample = createListItemProps({
+  showActions: true,
+  primaryActionLabel: "Ver más",
+  secondaryActionLabel: "Ignorar",
+});
 
 export const listItemQuickToggleItems = [
-  createListItemShowcaseItem("Default", {
-    type: "Default",
-    state: "Default",
-  }),
-  createListItemShowcaseItem("Hover", {
-    type: "Default",
-    state: "Hover",
-  }),
-  createListItemShowcaseItem("Upload file", {
-    type: "Upload file",
-    timestamp: "Hace 30 minutos",
-  }),
-  createListItemShowcaseItem("CTA buttons", {
-    type: "Default",
-    showButtons: true,
+  createListItemShowcaseItem("Default", {}),
+  createListItemShowcaseItem("CTA", {
+    showActions: true,
+    primaryActionLabel: "Ver más",
+    secondaryActionLabel: "Ignorar",
   }),
 ];
 
-export const listItemInteractiveExample = createListItemProps({
-  interactive: true,
-  showButtons: true,
-  comment: "Podemos ajustar la iluminación en este render?",
-});
+export const listItemStateItems = [
+  createListItemShowcaseItem("Default", {
+    state: "Default",
+  }),
+  createListItemShowcaseItem("Hover", {
+    state: "Hover",
+  }),
+  createListItemShowcaseItem("Read", {
+    state: "Read",
+  }),
+];
