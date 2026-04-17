@@ -21,7 +21,28 @@ function InfoCircleIcon({ className }) {
         strokeWidth="1.5"
         strokeLinecap="round"
       />
-      <circle cx="8" cy="4.95" r="0.8" fill="currentColor" />
+      <circle cx="8" cy="4.95" r="0.8" fill="var(--color-danger-100)" />
+    </svg>
+  );
+}
+
+function ErrorInfoCircleIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="8" fill="currentColor" />
+      <path
+        d="M8 4.4V9"
+        stroke="white"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <circle cx="8" cy="11.6" r="1" fill="white" />
     </svg>
   );
 }
@@ -186,7 +207,12 @@ function HintText({
     <div className={clsx("inline-flex items-center gap-[2px]", className)} {...props}>
       {hintIcon ? (
         <span className={clsx("inline-flex size-4 shrink-0 items-center justify-center", visual.icon)} aria-hidden="true">
-          {icon ?? <InfoCircleIcon className="size-4 shrink-0" />}
+          {icon ??
+            (resolvedState === "Error" ? (
+              <ErrorInfoCircleIcon className="size-4 shrink-0" />
+            ) : (
+              <InfoCircleIcon className="size-4 shrink-0" />
+            ))}
         </span>
       ) : null}
 

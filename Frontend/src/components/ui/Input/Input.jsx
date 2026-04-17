@@ -38,6 +38,35 @@ function UserIcon({ className }) {
   );
 }
 
+function SmsIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M14.1667 17.0833H5.83341C3.33341 17.0833 1.66675 15.8333 1.66675 12.9166V7.08329C1.66675 4.16663 3.33341 2.91663 5.83341 2.91663H14.1667C16.6667 2.91663 18.3334 4.16663 18.3334 7.08329V12.9166C18.3334 15.8333 16.6667 17.0833 14.1667 17.0833Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeMiterlimit="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14.1666 7.5L11.5582 9.58333C10.6999 10.2667 9.29158 10.2667 8.43325 9.58333L5.83325 7.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeMiterlimit="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function SearchIcon({ className }) {
   return (
     <svg
@@ -75,19 +104,25 @@ function LockIcon({ className }) {
       aria-hidden="true"
     >
       <path
-        d="M5.83331 8.33333V6.66667C5.83331 4.36548 7.69879 2.5 9.99998 2.5C12.3012 2.5 14.1666 4.36548 14.1666 6.66667V8.33333"
+        d="M5 8.33329V6.66663C5 3.90829 5.83333 1.66663 10 1.66663C14.1667 1.66663 15 3.90829 15 6.66663V8.33329"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <rect
-        x="4.16669"
-        y="8.33333"
-        width="11.6667"
-        height="8.33333"
-        rx="2"
+      <path
+        d="M10.0001 15.4167C11.1507 15.4167 12.0834 14.4839 12.0834 13.3333C12.0834 12.1827 11.1507 11.25 10.0001 11.25C8.84949 11.25 7.91675 12.1827 7.91675 13.3333C7.91675 14.4839 8.84949 15.4167 10.0001 15.4167Z"
         stroke="currentColor"
         strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14.1667 18.3334H5.83341C2.50008 18.3334 1.66675 17.5 1.66675 14.1667V12.5C1.66675 9.16671 2.50008 8.33337 5.83341 8.33337H14.1667C17.5001 8.33337 18.3334 9.16671 18.3334 12.5V14.1667C18.3334 17.5 17.5001 18.3334 14.1667 18.3334Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -195,7 +230,7 @@ function getDefaultLeftIcon(type) {
     return <LockIcon className="size-5" />;
   }
 
-  return <UserIcon className="size-5" />;
+  return <SmsIcon className="size-5" />;
 }
 
 function getDefaultRightIcon(type, passwordVisible) {
@@ -802,6 +837,9 @@ function Input({
                   stateStyles.trailingIcon,
                   disabled ? "cursor-not-allowed" : "cursor-pointer",
                 )}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                }}
                 onClick={handleRightIconClick}
                 disabled={disabled}
                 aria-label="Accion del campo"
@@ -907,6 +945,9 @@ function Input({
                 stateStyles.trailingIcon,
                 disabled ? "cursor-not-allowed" : "cursor-pointer",
               )}
+              onMouseDown={(event) => {
+                event.preventDefault();
+              }}
               onClick={handleRightIconClick}
               disabled={disabled}
               aria-label="Accion del campo"
