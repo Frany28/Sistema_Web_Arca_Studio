@@ -233,6 +233,33 @@ function SearchIcon({ className }) {
   );
 }
 
+function AddIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M10 4.16663V15.8333"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4.16675 10H15.8334"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function LogoutIcon({ className }) {
   return (
     <svg
@@ -303,6 +330,7 @@ function SideNavigation({
   logo = null,
   onSearchChange,
   onItemSelect,
+  onNewOpportunityClick,
   onLogoutClick,
   onExpandedChange,
   onCollapseClick,
@@ -368,10 +396,10 @@ function SideNavigation({
   return (
     <aside
       className={clsx(
-        "flex min-h-[1024px] flex-col justify-between border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] transition-[width,padding] duration-200",
+        "flex min-h-[1024px] flex-col justify-between border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] transition-[width,padding] will-change-[width,padding]",
         isExpanded
-          ? "w-full max-w-[312px] px-[16px] pb-[16px] pt-[16px]"
-          : "w-[76px] px-[16px] py-[16px]",
+          ? "w-full max-w-[312px] px-[16px] pb-[16px] pt-[16px] duration-200 ease-out"
+          : "w-[76px] px-[16px] py-[16px] duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]",
         className,
       )}
       aria-label={ariaLabel}
@@ -447,6 +475,37 @@ function SideNavigation({
               showRightIcon={false}
               iconLeft={<SearchIcon className="size-5" />}
               aria-label="Buscar navegación"
+              onMouseUp={clearPointerFocus}
+              onTouchEnd={clearPointerFocus}
+            />
+          )}
+        </div>
+
+        <div className={clsx(isExpanded ? "w-full" : "self-start")}>
+          {isExpanded ? (
+            <Button
+              theme="Primary"
+              type="Solid"
+              size="M"
+              fitContent={false}
+              showLeftIcon={false}
+              showRightIcon={false}
+              className="w-full"
+              onClick={onNewOpportunityClick}
+            >
+              Nueva oportunidad
+            </Button>
+          ) : (
+            <Button
+              theme="Primary"
+              type="Solid"
+              size="M"
+              showText={false}
+              showLeftIcon
+              showRightIcon={false}
+              iconLeft={<AddIcon className="size-5" />}
+              aria-label="Nueva oportunidad"
+              onClick={onNewOpportunityClick}
               onMouseUp={clearPointerFocus}
               onTouchEnd={clearPointerFocus}
             />

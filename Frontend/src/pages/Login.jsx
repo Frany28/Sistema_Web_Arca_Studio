@@ -1,17 +1,24 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import group1Logo from "../assets/logos/Group 1.svg";
+import AuthLayout from "../components/layout/AuthLayout.jsx";
 import Button from "../components/ui/Button/Button.jsx";
+import AuthToast, {
+  AuthToastLockIcon,
+} from "../components/ui/AuthToast/AuthToast.jsx";
 import Input from "../components/ui/Input/Input.jsx";
-import LoginBackgroundCarousel from "../components/ui/LoginBackgroundCarousel.jsx";
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 }
 
 function Login() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loginToast, setLoginToast] = useState(null);
   const [touched, setTouched] = useState({
     email: false,
     password: false,
@@ -47,25 +54,46 @@ function Login() {
 
   const showEmailHint = touched.email && emailHasError;
   const showPasswordHint = touched.password && passwordHasError;
+  const authToast = location.state?.authToast;
+
+  useEffect(() => {
+    if (!authToast) {
+      return;
+    }
+
+    setLoginToast(authToast);
+
+    navigate(location.pathname, {
+      replace: true,
+      state: {},
+    });
+  }, [authToast, location.pathname, navigate]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#fafaf8]">
-      <LoginBackgroundCarousel />
-
-      <div className="relative z-[1] flex min-h-screen items-center justify-center p-8">
-        <section className="flex h-[544px] w-[581px]  items-center gap-[var(--spacing-spacing-gap-5,16px)] rounded-[var(--radius-radius-4,16px)] border border-[var(--Color-neutral-200,#E8E8E8)] bg-[var(--Color-neutral-100,#FFF)] p-[var(--spacing-spacing-gap-5,16px)] ">
-          <div className="box-border flex-col items-start justify-center gap-4 p-[var(--spacing-spacing-gap-9,56px)]">
+    <AuthLayout>
+      <AuthToast
+        trigger={loginToast?.id ?? null}
+        title={loginToast?.title ?? ""}
+        description={loginToast?.description ?? ""}
+        startDelayMs={320}
+        autoHideMs={6200}
+        leading={
+          loginToast?.icon === "lock" ? <AuthToastLockIcon /> : undefined
+        }
+      />
+      <section className="flex w-full max-w-[581px] items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)] lg:min-h-[544px]">
+        <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
             <form
               onSubmit={handleSubmit}
               className="flex w-full flex-col gap-4"
             >
-              <div className="flex w-full flex-col items-start gap-2 border-b border-[#E8E8E8] pb-4">
+              <div className="flex w-full flex-col items-start gap-2 border-b border-[var(--color-neutral-200)] pb-4">
                 <img
                   src={group1Logo}
                   alt="ARCA Studio"
                   className="h-12 w-[50.64px] object-contain"
                 />
-                <h1 className="text-heading-3 m-0 self-stretch text-[var(--Color-text-primary-300,#2A2929)]">
+                <h1 className="text-heading-3 m-0 self-stretch text-[var(--color-text-300)] max-sm:text-[40px] max-sm:leading-[46px]">
                   Accede a tu cuenta
                 </h1>
               </div>
@@ -124,15 +152,15 @@ function Login() {
                   fitContent
                   showLeftIcon={false}
                   showRightIcon={false}
+                  onClick={() => navigate("/recuperar-cuenta")}
                 >
                   Olvide mi contrasena
                 </Button>
               </div>
             </form>
-          </div>
-        </section>
-      </div>
-    </main>
+        </div>
+      </section>
+    </AuthLayout>
   );
 }
 

@@ -90,6 +90,7 @@ function NavigationBar({
   onLoginClick,
   onMenuClick,
   onUtilityActionClick,
+  utilityActionActive = false,
   logo,
   ...props
 }) {
@@ -137,6 +138,11 @@ function NavigationBar({
               <BellIcon className="text-[var(--color-primary-200)] dark:text-[var(--color-text-200)]" />
             }
             aria-label="Notificaciones"
+            aria-expanded={utilityActionActive}
+            className={clsx(
+              utilityActionActive &&
+                "!bg-[var(--color-neutral-10)] !text-[var(--color-primary-200)]",
+            )}
             onClick={onUtilityActionClick}
           />
         </div>
