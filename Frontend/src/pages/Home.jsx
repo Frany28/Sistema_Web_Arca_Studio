@@ -299,7 +299,9 @@ function Home() {
             />
           </div>
 
-          <ProjectsShowcaseCarousel items={PROJECT_SHOWCASE_ITEMS} />
+          <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[24px]">
+            <ProjectsShowcaseCarousel items={PROJECT_SHOWCASE_ITEMS} />
+          </div>
 
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
