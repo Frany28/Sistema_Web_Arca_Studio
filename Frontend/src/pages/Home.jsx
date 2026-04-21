@@ -15,6 +15,7 @@ import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
+const TABLET_BREAKPOINT_PX = 768;
 const PROJECT_ITEMS = [
   {
     id: "stand-nexar",
@@ -225,6 +226,23 @@ function Home() {
 
     return () => {
       window.removeEventListener("resize", syncScrollMetrics);
+    };
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      `(max-width: ${TABLET_BREAKPOINT_PX - 1}px)`,
+    );
+
+    function syncSidebarForViewport(event) {
+      setIsSidebarExpanded(!event.matches);
+    }
+
+    syncSidebarForViewport(mediaQuery);
+    mediaQuery.addEventListener("change", syncSidebarForViewport);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncSidebarForViewport);
     };
   }, []);
 
