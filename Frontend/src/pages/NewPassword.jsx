@@ -86,9 +86,9 @@ function NewPassword() {
       state: {
         authToast: {
           id: Date.now(),
-          title: "Contrasena restablecida",
+          title: "Contraseña restablecida",
           description:
-            "Tu contrasena ha sido actualizada con exito. Por razones de seguridad, por favor verifica la actividad reciente.",
+            "Tu contraseña ha sido actualizada con éxito. Por razones de seguridad, por favor verifica la actividad reciente.",
           icon: "lock",
         },
       },
@@ -112,12 +112,12 @@ function NewPassword() {
             </div>
 
             <Input
-              label="Nueva contrasena"
+              label="Nueva contraseña"
               type="Password"
               size="S"
               value={password}
               state={passwordState}
-              hintText="Ingresa una nueva contrasena"
+              hintText="Ingresa una nueva contraseña"
               showHint
               showLabelInfo={false}
               required={false}
@@ -135,13 +135,13 @@ function NewPassword() {
             />
 
             <Input
-              label="Confirmar contrasena"
+              label="Confirmar contraseña"
               type="Password"
               size="S"
               value={confirmPassword}
               state={confirmPasswordState}
               showHint={showConfirmHint}
-              hintText="Las contrasenas no coinciden."
+              hintText="Las contraseñas no coinciden."
               showLabelInfo={false}
               required={false}
               showPasswordStrength={false}
@@ -165,7 +165,7 @@ function NewPassword() {
               showRightIcon={false}
               className="w-full"
             >
-              Actualizar contrasena
+              Actualizar contraseña
             </Button>
           </form>
         </div>

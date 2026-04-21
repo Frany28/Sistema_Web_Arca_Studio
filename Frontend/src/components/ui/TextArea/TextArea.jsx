@@ -44,6 +44,7 @@ function TextArea({
   className,
   id,
   label = "Description",
+  labelInfoIcon = null,
   hintText = "Texto de ayuda para los usuarios",
   placeholder = "Texto de prueba",
   state = "Default",
@@ -101,6 +102,7 @@ function TextArea({
           label={label}
           required={required}
           information={showLabelInfo}
+          infoIcon={labelInfoIcon}
           state={styles.labelState}
         />
       ) : null}

@@ -10,14 +10,14 @@ function InfoCircleIcon({ className }) {
       className={className}
       aria-hidden="true"
     >
-      <circle cx="9" cy="9" r="7.25" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="9" cy="9" r="9" fill="currentColor" />
       <path
-        d="M9 8.1V11.85"
-        stroke="currentColor"
+        d="M9 5.8V9.55"
+        stroke="white"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
-      <circle cx="9" cy="5.55" r="0.9" fill="currentColor" />
+      <circle cx="9" cy="11.85" r="1" fill="white" />
     </svg>
   );
 }

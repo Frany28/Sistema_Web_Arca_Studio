@@ -115,13 +115,13 @@ function Login() {
               />
 
               <Input
-                label="Contrasena"
+                label="Contraseña"
                 type="Password"
                 size="S"
                 value={password}
                 state={passwordState}
                 showHint={showPasswordHint}
-                hintText="Contraseña Incorrecta."
+                hintText="Contraseña incorrecta."
                 showLabelInfo={false}
                 required={false}
                 showPasswordStrength={false}
@@ -154,7 +154,7 @@ function Login() {
                   showRightIcon={false}
                   onClick={() => navigate("/recuperar-cuenta")}
                 >
-                  Olvide mi contrasena
+                  Olvide mi contraseña
                 </Button>
               </div>
             </form>

@@ -85,20 +85,20 @@ function ScrollBar({
       {...props}
     >
       <div
-        className="flex items-start p-[4px]"
+        className="flex items-start rounded-[var(--radius-2)] bg-[var(--color-neutral-100)] p-[4px]"
         style={{ height: `${height}px`, width: "16px" }}
       >
         <div
           ref={trackRef}
           className={clsx(
-            "relative h-full min-h-px flex-1 rounded-[var(--radius-2)]",
+            "relative h-full min-h-px flex-1 rounded-[var(--radius-2)] bg-transparent",
             interactive && "cursor-pointer",
           )}
           onPointerDown={beginDrag}
         >
           <div
             className={clsx(
-              "absolute inset-x-0 rounded-[var(--radius-2)] bg-[var(--color-neutral-200)] transition-[top,height] duration-150",
+              "absolute left-1/2 w-[8px] -translate-x-1/2 rounded-[999px] bg-[var(--color-neutral-300)] transition-[top,height] duration-150",
               interactive && "cursor-grab active:cursor-grabbing",
             )}
             style={{

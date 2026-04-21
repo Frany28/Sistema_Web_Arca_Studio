@@ -1,16 +1,19 @@
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import Button from "../Button/Button.jsx";
 import Checkbox from "../Checkbox.jsx";
 import IconContainer from "../IconContainer.jsx";
+import ModalOverlay from "./ModalOverlay.jsx";
 import {
   MODAL_ALIGNMENTS,
   MODAL_DEFAULT_PROPS,
   MODAL_MOUNTS,
+  MODAL_OVERLAY_VARIANTS,
+  MODAL_TRANSITION_PRESETS,
 } from "./modalConfig.js";
 
-const MODAL_BACKDROP_FILTER = "var(--effect-blur-b1)";
-const MODAL_OVERLAY_BACKGROUND =
-  "var(--color-primary-10, rgba(42, 41, 41, 0.10))";
+const MODAL_TRANSITION_MS = 320;
+const MODAL_EASING = "ease-in-out";
 
 function CloseIcon({ className }) {
   return (
@@ -43,6 +46,8 @@ function Modal({
   mount = MODAL_DEFAULT_PROPS.mount,
   visible = MODAL_DEFAULT_PROPS.visible,
   alignment = MODAL_DEFAULT_PROPS.alignment,
+  overlayVariant = MODAL_DEFAULT_PROPS.overlayVariant,
+  transitionPreset = MODAL_DEFAULT_PROPS.transitionPreset,
   showDialog = MODAL_DEFAULT_PROPS.showDialog,
   title = MODAL_DEFAULT_PROPS.title,
   description = MODAL_DEFAULT_PROPS.description,
@@ -56,7 +61,42 @@ function Modal({
   style,
   ...props
 }) {
-  if (!visible) {
+  const [shouldRender, setShouldRender] = useState(visible);
+  const [isActive, setIsActive] = useState(false);
+  const closeTimeoutRef = useRef(null);
+  const frameRef = useRef(null);
+
+  useEffect(() => {
+    if (visible) {
+      setShouldRender(true);
+      window.clearTimeout(closeTimeoutRef.current);
+      window.cancelAnimationFrame(frameRef.current);
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = window.requestAnimationFrame(() => {
+          setIsActive(true);
+        });
+      });
+
+      return undefined;
+    }
+
+    setIsActive(false);
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setShouldRender(false);
+    }, MODAL_TRANSITION_MS);
+
+    return () => {
+      window.clearTimeout(closeTimeoutRef.current);
+      window.cancelAnimationFrame(frameRef.current);
+    };
+  }, [visible]);
+
+  useEffect(() => () => {
+    window.clearTimeout(closeTimeoutRef.current);
+    window.cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  if (!shouldRender) {
     return null;
   }
 
@@ -66,6 +106,12 @@ function Modal({
   const resolvedAlignment = MODAL_ALIGNMENTS.includes(alignment)
     ? alignment
     : MODAL_DEFAULT_PROPS.alignment;
+  const resolvedOverlayVariant = MODAL_OVERLAY_VARIANTS.includes(overlayVariant)
+    ? overlayVariant
+    : MODAL_DEFAULT_PROPS.overlayVariant;
+  const resolvedTransitionPreset = MODAL_TRANSITION_PRESETS.includes(transitionPreset)
+    ? transitionPreset
+    : MODAL_DEFAULT_PROPS.transitionPreset;
 
   const positionClassName =
     resolvedMount === "contained"
@@ -88,6 +134,29 @@ function Modal({
   const buttonClassName = isHorizontalSplit
     ? "h-[40px] min-w-0 w-[90px]"
     : "h-[40px] min-w-0 w-auto flex-1";
+  const overlayClassName =
+    resolvedTransitionPreset === "fade-scale"
+      ? clsx(
+          "transition-opacity",
+          isActive ? "opacity-100" : "opacity-0",
+        )
+      : undefined;
+  const animatedContentClassName =
+    resolvedTransitionPreset === "fade-scale"
+      ? clsx(
+          "transition-[opacity,transform] transform-gpu will-change-transform will-change-opacity",
+          isActive
+            ? "translate-y-0 scale-100 opacity-100"
+            : "translate-y-[12px] scale-[0.985] opacity-0",
+        )
+      : undefined;
+  const transitionStyle =
+    resolvedTransitionPreset === "fade-scale"
+      ? {
+          transitionDuration: `${MODAL_TRANSITION_MS}ms`,
+          transitionTimingFunction: MODAL_EASING,
+        }
+      : undefined;
 
   return (
     <div
@@ -96,21 +165,24 @@ function Modal({
         "z-50 overflow-hidden",
         className,
       )}
-      style={{
-        background: MODAL_OVERLAY_BACKGROUND,
-        backdropFilter: MODAL_BACKDROP_FILTER,
-        WebkitBackdropFilter: MODAL_BACKDROP_FILTER,
-        ...style,
-      }}
+      style={style}
       {...props}
     >
+      <ModalOverlay
+        variant={resolvedOverlayVariant}
+        className={overlayClassName}
+        style={transitionStyle}
+      />
+
       {shouldRenderDialog ? (
-        <div
-          className={clsx(
-            dialogShellClassName,
-          )}
-        >
-          <div className="flex w-full flex-col items-center px-[16px] py-[24px]">
+        <div className={clsx("relative z-[1]", dialogShellClassName)}>
+          <div
+            className={clsx(
+              "flex w-full flex-col items-center px-[16px] py-[24px]",
+              animatedContentClassName,
+            )}
+            style={transitionStyle}
+          >
             {children ?? (
               <div
                 className="relative flex w-full max-w-[400px] flex-col overflow-hidden rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]"
@@ -189,7 +261,12 @@ function Modal({
           </div>
         </div>
       ) : (
-        children
+        <div
+          className={clsx("relative z-[1]", animatedContentClassName)}
+          style={transitionStyle}
+        >
+          {children}
+        </div>
       )}
     </div>
   );

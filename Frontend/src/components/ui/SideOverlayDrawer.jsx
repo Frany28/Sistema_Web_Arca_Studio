@@ -72,13 +72,10 @@ function SideOverlayDrawer({
     <Modal
       visible={shouldRender}
       mount="viewport"
+      overlayVariant="transparent"
+      transitionPreset="none"
       showDialog={false}
       className={clsx("z-50", className)}
-      style={{
-        background: "transparent",
-        backdropFilter: "none",
-        WebkitBackdropFilter: "none",
-      }}
       onClick={onClose}
       {...props}
     >

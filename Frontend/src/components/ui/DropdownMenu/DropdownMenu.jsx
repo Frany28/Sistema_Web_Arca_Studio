@@ -220,17 +220,26 @@ function getResolvedState(state, isHovered, isPressed) {
 
 function getRowHeight(type) {
   if (type === "Icon") {
-    return "h-[36px]";
+    return "h-[39px]";
   }
 
   if (type === "Flag" || type === "User profile") {
     return "h-[40px]";
   }
 
-  return "h-[35px]";
+  return "h-[39px]";
 }
 
 function getTriggerTextClasses(type, state) {
+  if (type === "Text" && state === "Selected") {
+    return {
+      label: "text-[var(--color-neutral-100-uniform)]",
+      supporting: "text-[var(--color-neutral-100-uniform)]",
+      icon: "text-[var(--color-neutral-100-uniform)]",
+      arrow: "text-[var(--color-neutral-100-uniform)]",
+    };
+  }
+
   if (type === "Icon") {
     if (state === "Selected") {
       return {
@@ -602,9 +611,14 @@ function DropdownMenu({
       return;
     }
 
-    setMenuOpen(!resolvedOpen);
+    const nextOpen = !resolvedOpen;
+
+    setMenuOpen(nextOpen);
     setIsPressed(false);
     setIsHovered(false);
+    if (nextOpen) {
+      triggerRef.current?.blur();
+    }
     onClick?.();
   };
 
@@ -663,7 +677,7 @@ function DropdownMenu({
       {...props}
     >
       <div
-        className="w-full p-[8px]"
+        className="w-full"
         data-node-id={
           DROPDOWN_MENU_NODE_IDS.trigger[resolvedType][resolvedState]
         }
@@ -672,10 +686,8 @@ function DropdownMenu({
           ref={triggerRef}
           type="button"
           className={clsx(
-            "group flex w-full items-center gap-[8px] rounded-[8px] px-[8px] text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
-            getRowHeight(resolvedType),
-            (resolvedState !== "Default" || resolvedOpen) &&
-              "bg-[var(--color-neutral-200)]",
+            "group flex h-[39px] w-full items-center gap-[8px] rounded-[8px] px-[12px] text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+            resolvedState !== "Default" && "bg-[var(--color-neutral-200)]",
           )}
           aria-label={ariaLabel}
           aria-expanded={resolvedOpen}

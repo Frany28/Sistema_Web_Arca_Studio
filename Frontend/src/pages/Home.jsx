@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
+import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";
 import ScrollBar from "../components/ui/ScrollBar/ScrollBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
@@ -173,6 +174,8 @@ function Home() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
+  const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
+    useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [scrollLength, setScrollLength] = useState(1);
   const projectsContainerRef = useRef(null);
@@ -253,6 +256,7 @@ function Home() {
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
           onExpandedChange={setIsSidebarExpanded}
+          onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
           onLogoutClick={() => navigate("/")}
           className="h-screen min-h-screen max-h-screen"
         />
@@ -324,6 +328,12 @@ function Home() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
+          />
+          <ProjectRequestModal
+            open={isProjectRequestModalOpen}
+            onClose={() => setIsProjectRequestModalOpen(false)}
+            onPrevious={() => setIsProjectRequestModalOpen(false)}
+            onNext={() => setIsProjectRequestModalOpen(false)}
           />
         </div>
       </div>

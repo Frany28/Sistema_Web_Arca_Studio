@@ -313,10 +313,10 @@ function Checkbox({
     ? "Disabled"
     : hasForcedState
       ? state
-      : isFocused
-        ? "Focused"
-        : isHovered
-          ? "Hover"
+      : isHovered
+        ? "Hover"
+        : isFocused
+          ? "Focused"
           : "Default";
   const isInteractive =
     !disabled &&

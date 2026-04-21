@@ -18,7 +18,7 @@ export const TEXT_AREA_STATE_STYLES = {
     shell:
       "border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-none",
     field:
-      "border border-transparent bg-transparent dark:bg-[var(--color-neutral-100-uniform)]",
+      "border border-transparent bg-transparent",
     text: "text-[var(--color-text-100)] placeholder:text-[var(--color-text-100)]",
     labelState: "Default",
     hintState: "Default",
@@ -28,7 +28,7 @@ export const TEXT_AREA_STATE_STYLES = {
     shell:
       "border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)]",
     field:
-      "border border-transparent bg-[var(--color-neutral-100)]",
+      "border border-transparent bg-transparent",
     text: "text-[var(--color-text-300)] placeholder:text-[var(--color-text-100)]",
     labelState: "Default",
     hintState: "Default",
