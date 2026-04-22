@@ -42,13 +42,13 @@ function DecorativeDots({
   const featuredStyle = isMedium
     ? {
         left: "50%",
-        transform: "translateX(-50%)",
-        top: "-58px",
+        top: "calc(50% - 48px)",
+        transform: "translate(-50%, -50%)",
       }
     : {
         left: "50%",
-        transform: "translateX(-50%)",
-        top: "-63px",
+        top: "calc(50% - 44px)",
+        transform: "translate(-50%, -50%)",
       };
 
   if (isDarkMode) {
@@ -165,6 +165,7 @@ function EmptyState({
   size = EMPTY_STATE_DEFAULT_PROPS.size,
   showFeaturedIcon = EMPTY_STATE_DEFAULT_PROPS.showFeaturedIcon,
   showActions = EMPTY_STATE_DEFAULT_PROPS.showActions,
+  showSecondaryAction = EMPTY_STATE_DEFAULT_PROPS.showSecondaryAction,
   "aria-label": ariaLabel = EMPTY_STATE_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
@@ -299,17 +300,19 @@ function EmptyState({
 
         {showActions ? (
           <div className="flex flex-wrap items-center justify-center gap-[16px] pt-[2px]">
-            <Button
-              theme="Primary"
-              type="Outline"
-              size="S"
-              fitContent
-              className={secondaryButtonClass}
-              showLeftIcon={false}
-              showRightIcon={false}
-            >
-              {secondaryActionLabel}
-            </Button>
+            {showSecondaryAction ? (
+              <Button
+                theme="Primary"
+                type="Outline"
+                size="S"
+                fitContent
+                className={secondaryButtonClass}
+                showLeftIcon={false}
+                showRightIcon={false}
+              >
+                {secondaryActionLabel}
+              </Button>
+            ) : null}
 
             <Button
               theme="Primary"

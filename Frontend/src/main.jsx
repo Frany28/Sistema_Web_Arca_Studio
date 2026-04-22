@@ -4,11 +4,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import ThemeSync from "./components/ui/ThemeSync.jsx";
 import {
+  EmptyProjectsExample,
   Home,
   InactiveAccount,
   Login,
   NewPassword,
   RecoverAccount,
+  Settings,
 } from "./pages/pages.js";
 
 createRoot(document.getElementById("root")).render(
@@ -21,6 +23,11 @@ createRoot(document.getElementById("root")).render(
         <Route path="/recuperar-cuenta" element={<RecoverAccount />} />
         <Route path="/nueva-contrasena" element={<NewPassword />} />
         <Route path="/dashboard-clientes" element={<Home />} />
+        <Route path="/configuraciones" element={<Settings />} />
+        <Route
+          path="/dashboard-clientes-vacio"
+          element={<EmptyProjectsExample />}
+        />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

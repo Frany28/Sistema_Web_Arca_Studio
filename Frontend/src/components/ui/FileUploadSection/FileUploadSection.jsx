@@ -160,6 +160,8 @@ function FileUploadSection({
   dropLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS.dropLabel,
   formatsLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS.formatsLabel,
   files = FILE_UPLOAD_SECTION_DEFAULT_PROPS.files,
+  showUploadedFiles = FILE_UPLOAD_SECTION_DEFAULT_PROPS.showUploadedFiles,
+  viewportHeight = FILE_UPLOAD_SECTION_DEFAULT_PROPS.viewportHeight,
   "aria-label": ariaLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
@@ -168,10 +170,9 @@ function FileUploadSection({
     length: 1,
     position: 0,
   });
-  const resolvedFiles =
-    Array.isArray(files) && files.length > 0
-      ? files
-      : FILE_UPLOAD_SECTION_DEFAULT_FILES;
+  const resolvedFiles = Array.isArray(files)
+    ? files
+    : FILE_UPLOAD_SECTION_DEFAULT_FILES;
 
   const syncScrollState = useCallback(() => {
     const element = filesViewportRef.current;
@@ -237,7 +238,7 @@ function FileUploadSection({
   return (
     <section
       className={clsx(
-        "flex w-[512px] max-w-full items-stretch justify-center",
+        "flex w-full max-w-full items-stretch justify-center",
         className,
       )}
       aria-label={ariaLabel}
@@ -246,7 +247,12 @@ function FileUploadSection({
     >
       <div
         ref={filesViewportRef}
-        className="flex h-[456px] min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[12px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="flex min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[12px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        style={
+          typeof viewportHeight === "number"
+            ? { height: `${viewportHeight}px` }
+            : undefined
+        }
         onScroll={syncScrollState}
       >
         <div className="flex w-full flex-col items-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] dark:border-[var(--color-neutral-300)]">
@@ -282,22 +288,26 @@ function FileUploadSection({
           </div>
         </div>
 
-        <div className="flex w-full min-w-0 flex-col gap-[12px]">
-          {resolvedFiles.map((file) => (
-            <FileUploadCard key={file.id} file={file} />
-          ))}
-        </div>
+        {showUploadedFiles && resolvedFiles.length > 0 ? (
+          <div className="flex w-full min-w-0 flex-col gap-[12px]">
+            {resolvedFiles.map((file) => (
+              <FileUploadCard key={file.id} file={file} />
+            ))}
+          </div>
+        ) : null}
       </div>
 
-      <div className="flex self-stretch items-start">
-        <ScrollBar
-          height={FILE_LIST_VIEWPORT_HEIGHT}
-          length={scrollState.length}
-          position={scrollState.position}
-          interactive
-          onPositionChange={handleScrollBarPositionChange}
-        />
-      </div>
+      {showUploadedFiles && typeof viewportHeight === "number" && scrollState.length < 1 ? (
+        <div className="flex self-stretch items-start">
+          <ScrollBar
+            height={viewportHeight ?? FILE_LIST_VIEWPORT_HEIGHT}
+            length={scrollState.length}
+            position={scrollState.position}
+            interactive
+            onPositionChange={handleScrollBarPositionChange}
+          />
+        </div>
+      ) : null}
 
       <span className="sr-only">{title}</span>
     </section>

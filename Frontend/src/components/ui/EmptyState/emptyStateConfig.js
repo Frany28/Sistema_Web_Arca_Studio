@@ -9,6 +9,7 @@ export const EMPTY_STATE_DEFAULT_PROPS = {
   size: "S",
   showFeaturedIcon: true,
   showActions: true,
+  showSecondaryAction: true,
   "aria-label": "Empty state",
 };
 

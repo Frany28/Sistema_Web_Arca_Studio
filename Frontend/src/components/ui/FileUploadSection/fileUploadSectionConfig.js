@@ -33,6 +33,8 @@ export const FILE_UPLOAD_SECTION_DEFAULT_PROPS = {
   dropLabel: "Arrastra y suelta",
   formatsLabel: "Formatos JPEG, PNG, PDF y MP4, hasta 50 MB.",
   files: FILE_UPLOAD_SECTION_DEFAULT_FILES,
+  showUploadedFiles: true,
+  viewportHeight: 456,
   "aria-label": "File upload section",
 };
 

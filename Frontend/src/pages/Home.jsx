@@ -249,6 +249,17 @@ function Home() {
     };
   }, []);
 
+  const handleSideNavigationSelect = (item) => {
+    if (item?.id === "dashboard") {
+      navigate("/dashboard-clientes");
+      return;
+    }
+
+    if (item?.id === "settings") {
+      navigate("/configuraciones");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full">
@@ -256,6 +267,7 @@ function Home() {
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
           onExpandedChange={setIsSidebarExpanded}
+          onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
           onLogoutClick={() => navigate("/")}
           className="h-screen min-h-screen max-h-screen"
