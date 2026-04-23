@@ -238,7 +238,7 @@ function FileUploadSection({
   return (
     <section
       className={clsx(
-        "flex w-full max-w-full items-stretch justify-center",
+        "flex h-full w-full max-w-full items-stretch justify-center",
         className,
       )}
       aria-label={ariaLabel}
@@ -247,15 +247,25 @@ function FileUploadSection({
     >
       <div
         ref={filesViewportRef}
-        className="flex min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[12px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className={clsx(
+          "flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          showUploadedFiles && typeof viewportHeight === "number" && scrollState.length < 1
+            ? "pr-[12px]"
+            : "pr-0",
+        )}
         style={
           typeof viewportHeight === "number"
             ? { height: `${viewportHeight}px` }
-            : undefined
+            : { height: "100%" }
         }
         onScroll={syncScrollState}
       >
-        <div className="flex w-full flex-col items-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] dark:border-[var(--color-neutral-300)]">
+        <div
+          className={clsx(
+            "flex w-full flex-col items-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] dark:border-[var(--color-neutral-300)]",
+            !showUploadedFiles ? "min-h-full justify-center" : null,
+          )}
+        >
           <div className="rounded-[8px] border border-[var(--color-neutral-200)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)] dark:border-[var(--color-neutral-300)]">
             <div className="flex size-[40px] items-center justify-center rounded-[8px] bg-[var(--color-neutral-100)] p-[8px] text-[var(--color-text-300)]">
               <CloudUploadIcon />

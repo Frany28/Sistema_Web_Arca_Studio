@@ -218,15 +218,10 @@ function getResolvedState(state, isHovered, isPressed) {
   return "Default";
 }
 
-function getRowHeight(type) {
-  if (type === "Icon") {
-    return "h-[39px]";
-  }
-
+function getDefaultRowHeight(type) {
   if (type === "Flag" || type === "User profile") {
     return "h-[40px]";
   }
-
   return "h-[39px]";
 }
 
@@ -420,10 +415,17 @@ function renderMenuItemLeading(
 
 function DropdownMenu({
   className,
+  triggerClassName,
+  triggerWrapperClassName,
+  contentClassName,
+  itemClassName,
+  rowHeightClassName,
+  triggerHeightClassName = "h-[39px]",
+  triggerPaddingXClassName = "px-[12px]",
+  contentPaddingClassName = "px-[8px] pt-[8px] pb-[8px]",
   type = DROPDOWN_MENU_DEFAULT_PROPS.type,
   label = DROPDOWN_MENU_DEFAULT_PROPS.label,
   supportingText = DROPDOWN_MENU_DEFAULT_PROPS.supportingText,
-  showDivider = DROPDOWN_MENU_DEFAULT_PROPS.showDivider,
   showContainer = DROPDOWN_MENU_DEFAULT_PROPS.showContainer,
   checked = DROPDOWN_MENU_DEFAULT_PROPS.checked,
   countryCode = DROPDOWN_MENU_DEFAULT_PROPS.countryCode,
@@ -446,6 +448,7 @@ function DropdownMenu({
   const menuId = useId();
   const wrapperRef = useRef(null);
   const triggerRef = useRef(null);
+
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [internalOpen, setInternalOpen] = useState(defaultOpen);
@@ -481,11 +484,11 @@ function DropdownMenu({
   );
 
   const shouldShowContainer = showContainer || resolvedOpen;
-  const shouldShowDivider = showDivider;
   const shouldRenderContent = resolvedOpen || preserveMenuSpace;
   const resolvedHoveredItemId = hoveredItemId ?? internalHoveredItemId ?? null;
   const resolvedSelectedItemId =
     selectedItemId ?? internalSelectedItemId ?? null;
+
   const selectedTriggerItem =
     normalizedItems.find((item) => item.id === resolvedSelectedItemId) ??
     (resolvedType === "Checkbox"
@@ -495,6 +498,7 @@ function DropdownMenu({
             item.checked === "Yes",
         ) ?? null)
       : null);
+
   const triggerLabel = selectedTriggerItem?.label ?? label;
   const triggerSupportingText =
     selectedTriggerItem?.supportingText ?? supportingText;
@@ -504,6 +508,7 @@ function DropdownMenu({
     resolvedType === "Checkbox" && selectedTriggerItem?.checked === "Yes"
       ? "Yes"
       : checked;
+
   const leading = TriggerLeading({
     type: resolvedType,
     state: resolvedState,
@@ -522,7 +527,6 @@ function DropdownMenu({
       setInternalItems(items);
       return;
     }
-
     setInternalItems(getDefaultMenuItems(resolvedType));
   }, [items, resolvedType]);
 
@@ -545,9 +549,7 @@ function DropdownMenu({
       attributeFilter: ["class"],
     });
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -559,7 +561,6 @@ function DropdownMenu({
       if (!isOpenControlled) {
         setInternalOpen(nextOpen);
       }
-
       onOpenChange?.(nextOpen);
     }
 
@@ -601,7 +602,6 @@ function DropdownMenu({
     if (!isOpenControlled) {
       setInternalOpen(nextOpen);
     }
-
     onOpenChange?.(nextOpen);
   };
 
@@ -612,13 +612,14 @@ function DropdownMenu({
     }
 
     const nextOpen = !resolvedOpen;
-
     setMenuOpen(nextOpen);
     setIsPressed(false);
     setIsHovered(false);
+
     if (nextOpen) {
       triggerRef.current?.blur();
     }
+
     onClick?.();
   };
 
@@ -638,14 +639,14 @@ function DropdownMenu({
     const itemType = getResolvedType(item.type ?? resolvedType);
 
     if (itemType === "Checkbox") {
-      const nextItems = normalizedItems.map((currentItem) => {
-        return {
-          ...currentItem,
-          checked: currentItem.id === item.id ? "Yes" : "No",
-        };
-      });
+      const nextItems = normalizedItems.map((currentItem) => ({
+        ...currentItem,
+        checked: currentItem.id === item.id ? "Yes" : "No",
+      }));
+
       const nextSelectedItem =
         nextItems.find((currentItem) => currentItem.id === item.id) ?? item;
+
       const nextSelectedItemId = nextSelectedItem.id ?? null;
 
       setInternalItems(nextItems);
@@ -667,27 +668,34 @@ function DropdownMenu({
     <div
       ref={wrapperRef}
       className={clsx(
-        shouldShowContainer &&
-          "w-full rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] overflow-hidden",
+        "relative inline-flex w-full flex-col items-start",
         className,
       )}
-      data-node-id={
-        shouldShowContainer ? DROPDOWN_MENU_NODE_IDS.wrapper : undefined
-      }
       {...props}
     >
       <div
-        className="w-full"
+        className={clsx(
+          "relative z-[60] w-full rounded-[12px] border border-[var(--color-neutral-200)] bg-transparent",
+          resolvedOpen && "rounded-b-none border-b-[var(--color-neutral-200)]",
+          !shouldShowContainer && "border-transparent bg-transparent",
+          triggerWrapperClassName,
+        )}
         data-node-id={
-          DROPDOWN_MENU_NODE_IDS.trigger[resolvedType][resolvedState]
+          shouldShowContainer ? DROPDOWN_MENU_NODE_IDS.wrapper : undefined
         }
       >
         <button
           ref={triggerRef}
           type="button"
           className={clsx(
-            "group flex h-[39px] w-full items-center gap-[8px] rounded-[8px] px-[12px] text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
-            resolvedState !== "Default" && "bg-[var(--color-neutral-200)]",
+            "group flex w-full cursor-pointer items-center gap-[8px] rounded-[12px] text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+            triggerHeightClassName,
+            triggerPaddingXClassName,
+            resolvedState !== "Default" &&
+              !resolvedOpen &&
+              "bg-[var(--color-neutral-200)]",
+            resolvedOpen && "rounded-b-none",
+            triggerClassName,
           )}
           aria-label={ariaLabel}
           aria-expanded={resolvedOpen}
@@ -727,12 +735,13 @@ function DropdownMenu({
             <div className="flex min-w-0 flex-1 items-center gap-[8px] tracking-[-0.5px]">
               <p
                 className={clsx(
-                  "shrink-0 text-heading-8",
+                  "shrink-0 text-[14px] font-medium leading-[17px] tracking-[-0.5px]",
                   triggerTextClasses.label,
                 )}
               >
                 {triggerLabel}
               </p>
+
               {triggerSupportingText ? (
                 <p
                   className={clsx(
@@ -757,20 +766,15 @@ function DropdownMenu({
         </button>
       </div>
 
-      {shouldShowDivider ? (
-        <div
-          className="h-px w-full bg-[var(--color-neutral-200)]"
-          data-node-id={DROPDOWN_MENU_NODE_IDS.divider}
-        />
-      ) : null}
-
       {shouldRenderContent ? (
         <div
           id={`${menuId}-content`}
           role="menu"
           className={clsx(
-            "w-full px-[8px] pb-[8px]",
+            "absolute left-0 top-full z-[70] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
+            contentPaddingClassName,
             resolvedOpen ? "flex flex-col gap-[4px]" : "hidden",
+            contentClassName,
           )}
           data-node-id={DROPDOWN_MENU_NODE_IDS.content}
         >
@@ -779,6 +783,7 @@ function DropdownMenu({
             const isHoveredItem = item.id === resolvedHoveredItemId;
             const isCheckboxSelected =
               itemType === "Checkbox" && item.checked === "Yes";
+
             const isSelectedItem =
               itemType === "Checkbox"
                 ? isCheckboxSelected
@@ -807,7 +812,7 @@ function DropdownMenu({
                 }
                 className={clsx(
                   "group flex w-full items-center gap-[8px] rounded-[8px] px-[8px] text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
-                  getRowHeight(itemType),
+                  rowHeightClassName ?? getDefaultRowHeight(itemType),
                   itemType === "Checkbox"
                     ? isSelectedItem
                       ? "bg-[var(--color-neutral-200)] hover:bg-[var(--color-neutral-200)] focus-visible:bg-[var(--color-neutral-200)]"
@@ -818,6 +823,7 @@ function DropdownMenu({
                   isHoveredItem &&
                     !isSelectedItem &&
                     "bg-[var(--color-neutral-200)]",
+                  itemClassName,
                 )}
                 onMouseEnter={() => setInternalHoveredItemId(item.id ?? null)}
                 onMouseLeave={() => setInternalHoveredItemId(null)}
@@ -852,6 +858,7 @@ function DropdownMenu({
                     >
                       {item.label}
                     </p>
+
                     {item.supportingText ? (
                       <p
                         className={clsx(

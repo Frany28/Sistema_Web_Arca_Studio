@@ -262,7 +262,7 @@ function Home() {
 
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full items-stretch">
         <SideNavigation
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
@@ -270,31 +270,19 @@ function Home() {
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
           onLogoutClick={() => navigate("/")}
-          className="h-screen min-h-screen max-h-screen"
+          className="min-h-screen shrink-0 self-stretch"
         />
 
-        <div
-          className="relative min-w-0 self-stretch overflow-y-auto transition-[width] duration-300 ease-out"
-          style={{
-            height: "100vh",
-            width: `calc(100% - ${
-              isSidebarExpanded
-                ? EXPANDED_SIDEBAR_WIDTH
-                : COLLAPSED_SIDEBAR_WIDTH
-            }px)`,
-          }}
-        >
-          <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between self-stretch border-b border-[var(--color-neutral-200)]">
-            <NavigationBar
-              variant="utility"
-              utilityText={formattedTodayLabel}
-              utilityActionActive={isNotificationsDrawerOpen}
-              onUtilityActionClick={() =>
-                setIsNotificationsDrawerOpen((current) => !current)
-              }
-              className="w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
-            />
-          </div>
+        <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
+          <NavigationBar
+            variant="utility"
+            utilityText={formattedTodayLabel}
+            utilityActionActive={isNotificationsDrawerOpen}
+            onUtilityActionClick={() =>
+              setIsNotificationsDrawerOpen((current) => !current)
+            }
+            className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
+          />
 
           <div className="mx-auto flex w-full max-w-[1200px] px-[48px] py-[16px]">
             <p className="text-heading-6 w-full text-[var(--color-text-300)]">

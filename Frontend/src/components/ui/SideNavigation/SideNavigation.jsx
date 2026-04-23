@@ -396,7 +396,7 @@ function SideNavigation({
   return (
     <aside
       className={clsx(
-        "flex min-h-[1024px] flex-col justify-between border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] transition-[width,padding] will-change-[width,padding]",
+        "flex min-h-screen self-stretch flex-col justify-between border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] transition-[width,padding] will-change-[width,padding]",
         isExpanded
           ? "w-full max-w-[312px] px-[16px] pb-[16px] pt-[16px] duration-200 ease-out"
           : "w-[76px] px-[16px] py-[16px] duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]",

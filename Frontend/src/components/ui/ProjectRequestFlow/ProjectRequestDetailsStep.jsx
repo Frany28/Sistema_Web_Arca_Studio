@@ -13,7 +13,12 @@ const PROJECT_TYPE_OPTIONS = [
   { id: "residencial", label: "Residencial", type: "Checkbox", checked: "Yes" },
   { id: "comercial", label: "Comercial", type: "Checkbox", checked: "No" },
   { id: "corporativo", label: "Corporativo", type: "Checkbox", checked: "No" },
-  { id: "stands", label: "Stands y exhibiciones", type: "Checkbox", checked: "No" },
+  {
+    id: "stands",
+    label: "Stands y exhibiciones",
+    type: "Checkbox",
+    checked: "No",
+  },
 ];
 
 function EditIcon({ className }) {
@@ -98,7 +103,8 @@ function ProjectRequestDetailsStep({
     values.hasBlueprints === "Yes" || values.hasBlueprints === "No";
   const showProjectNameError = hasAttemptedSubmit && !isProjectNameValid;
   const showProjectTypeError = hasAttemptedSubmit && !isProjectTypeValid;
-  const showProjectLocationError = hasAttemptedSubmit && !isProjectLocationValid;
+  const showProjectLocationError =
+    hasAttemptedSubmit && !isProjectLocationValid;
   const showBlueprintsError = hasAttemptedSubmit && !isBlueprintsValid;
 
   const projectTypeItems = useMemo(
@@ -112,8 +118,9 @@ function ProjectRequestDetailsStep({
 
   const selectedProjectType = useMemo(
     () =>
-      projectTypeItems.find((option) => option.id === values.selectedProjectTypeId) ??
-      null,
+      projectTypeItems.find(
+        (option) => option.id === values.selectedProjectTypeId,
+      ) ?? null,
     [projectTypeItems, values.selectedProjectTypeId],
   );
 
@@ -136,7 +143,10 @@ function ProjectRequestDetailsStep({
     }
 
     function syncScrollMetrics() {
-      const maxScroll = Math.max(container.scrollHeight - container.clientHeight, 1);
+      const maxScroll = Math.max(
+        container.scrollHeight - container.clientHeight,
+        1,
+      );
       const nextLength = Math.min(
         container.clientHeight / Math.max(container.scrollHeight, 1),
         1,
@@ -168,7 +178,10 @@ function ProjectRequestDetailsStep({
       return;
     }
 
-    const maxScroll = Math.max(container.scrollHeight - container.clientHeight, 0);
+    const maxScroll = Math.max(
+      container.scrollHeight - container.clientHeight,
+      0,
+    );
     container.scrollTo({
       top: maxScroll * scrollPosition,
       behavior: "auto",
@@ -205,7 +218,8 @@ function ProjectRequestDetailsStep({
           className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           style={{ maxHeight: `${modalBodyMaxHeight}px` }}
           onScroll={(event) => {
-            const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+            const { scrollTop, scrollHeight, clientHeight } =
+              event.currentTarget;
             const maxScroll = Math.max(scrollHeight - clientHeight, 1);
             setScrollPosition(scrollTop / maxScroll);
           }}
@@ -243,7 +257,9 @@ function ProjectRequestDetailsStep({
               <Label label="Tipo de proyecto" required information={false} />
               <DropdownMenu
                 type="Text"
-                label={selectedProjectType?.label ?? "Selecciona tipo de proyecto"}
+                label={
+                  selectedProjectType?.label ?? "Selecciona tipo de proyecto"
+                }
                 supportingText=""
                 items={projectTypeItems}
                 selectedItemId={selectedProjectType?.id}
