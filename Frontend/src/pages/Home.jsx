@@ -99,6 +99,8 @@ const PROJECT_SHOWCASE_ITEMS = [
 ];
 
 function ProjectRow({ title, image }) {
+  const navigate = useNavigate();
+
   return (
     <article className="flex items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px]">
       <div className="h-[80px] w-[140px] shrink-0 overflow-hidden rounded-[var(--radius-2)]">
@@ -162,6 +164,7 @@ function ProjectRow({ title, image }) {
         showLeftIcon={false}
         showRightIcon={false}
         className="shrink-0"
+        onClick={() => navigate("/proyectos/quinta-bella-vista")}
       >
         Ver Proyecto
       </Button>
@@ -252,6 +255,16 @@ function Home() {
   const handleSideNavigationSelect = (item) => {
     if (item?.id === "dashboard") {
       navigate("/dashboard-clientes");
+      return;
+    }
+
+    if (item?.id === "project-1" || item?.id === "project-2") {
+      navigate("/proyectos/quinta-bella-vista");
+      return;
+    }
+
+    if (item?.id === "more-projects") {
+      navigate("/dashboard-clientes-vacio");
       return;
     }
 

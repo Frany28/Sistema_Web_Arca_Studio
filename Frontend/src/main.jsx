@@ -9,6 +9,7 @@ import {
   InactiveAccount,
   Login,
   NewPassword,
+  ProjectDetails,
   RecoverAccount,
   Settings,
 } from "./pages/pages.js";
@@ -23,6 +24,10 @@ createRoot(document.getElementById("root")).render(
         <Route path="/recuperar-cuenta" element={<RecoverAccount />} />
         <Route path="/nueva-contrasena" element={<NewPassword />} />
         <Route path="/dashboard-clientes" element={<Home />} />
+        <Route
+          path="/proyectos/quinta-bella-vista"
+          element={<ProjectDetails />}
+        />
         <Route path="/configuraciones" element={<Settings />} />
         <Route
           path="/dashboard-clientes-vacio"

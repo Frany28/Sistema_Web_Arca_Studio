@@ -120,6 +120,27 @@ function EmptyProjectsExample() {
     };
   }, []);
 
+  const handleSideNavigationSelect = (item) => {
+    if (item?.id === "dashboard") {
+      navigate("/dashboard-clientes");
+      return;
+    }
+
+    if (item?.id === "project-1" || item?.id === "project-2") {
+      navigate("/proyectos/quinta-bella-vista");
+      return;
+    }
+
+    if (item?.id === "more-projects") {
+      navigate("/dashboard-clientes-vacio");
+      return;
+    }
+
+    if (item?.id === "settings") {
+      navigate("/configuraciones");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full">
@@ -127,6 +148,7 @@ function EmptyProjectsExample() {
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
           onExpandedChange={setIsSidebarExpanded}
+          onItemSelect={handleSideNavigationSelect}
           onLogoutClick={() => navigate("/")}
           className="h-screen min-h-screen max-h-screen"
         />

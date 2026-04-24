@@ -1,4 +1,5 @@
 import Input from "../../../components/ui/Input/Input.jsx";
+import Button from "../../../components/ui/Button/Button.jsx";
 
 export default function SecurityPanel({
   currentPassword,
@@ -8,6 +9,7 @@ export default function SecurityPanel({
   confirmPassword,
   setConfirmPassword,
   passwordRequirements,
+  onSubmit,
 }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-4">
@@ -28,7 +30,7 @@ export default function SecurityPanel({
         <div className="w-[320px]" />
       </div>
 
-      <div className="flex w-[664px] max-w-full items-start gap-[24px] pb-[16px]">
+      <div className="flex w-[664px] max-w-full items-start gap-[24px] pb-[16px] border-b border-[var(--color-neutral-200)]">
         <Input
           label="Nueva contrasena"
           required={false}
@@ -58,6 +60,20 @@ export default function SecurityPanel({
           onChange={(event) => setConfirmPassword(event.target.value)}
           className="w-[320px] max-w-none"
         />
+      </div>
+      <div className="flex w-[664px] max-w-full items-end justify-end gap-[24px] ">
+        <Button
+          theme="Primary"
+          type="Solid"
+          size="M"
+          fitContent
+          showLeftIcon={false}
+          showRightIcon={false}
+          className="shrink-0"
+          onClick={onSubmit}
+        >
+          Cambiar contraseña
+        </Button>
       </div>
     </div>
   );

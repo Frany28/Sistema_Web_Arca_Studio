@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import AuthToast from "../../components/ui/AuthToast/AuthToast.jsx";
+import AuthToast, {
+  AuthToastLockIcon,
+} from "../../components/ui/AuthToast/AuthToast.jsx";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
@@ -56,6 +58,7 @@ export default function SettingsPage() {
   const [supportSubject, setSupportSubject] = useState("");
   const [supportDescription, setSupportDescription] = useState("");
   const [supportToastTrigger, setSupportToastTrigger] = useState(0);
+  const [passwordToastTrigger, setPasswordToastTrigger] = useState(0);
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -85,6 +88,16 @@ export default function SettingsPage() {
   const handleSideNavigationSelect = (item) => {
     if (item?.id === "dashboard") {
       navigate("/dashboard-clientes");
+      return;
+    }
+
+    if (item?.id === "project-1" || item?.id === "project-2") {
+      navigate("/proyectos/quinta-bella-vista");
+      return;
+    }
+
+    if (item?.id === "more-projects") {
+      navigate("/dashboard-clientes-vacio");
       return;
     }
 
@@ -139,6 +152,7 @@ export default function SettingsPage() {
         confirmPassword={confirmPassword}
         setConfirmPassword={setConfirmPassword}
         passwordRequirements={passwordRequirements}
+        onSubmit={() => setPasswordToastTrigger((current) => current + 1)}
       />
     );
   } else if (activeSettingsTabId === "preferences") {
@@ -196,6 +210,13 @@ export default function SettingsPage() {
                 <SendIcon className="size-5" />
               </span>
             }
+            autoHideMs={4200}
+          />
+          <AuthToast
+            trigger={passwordToastTrigger > 0 ? passwordToastTrigger : null}
+            title="Contrasena restablecida"
+            description="Tu contrasena ha sido actualizada con exito. Por razones de seguridad, por favor verifica la actividad reciente."
+            leading={<AuthToastLockIcon />}
             autoHideMs={4200}
           />
 

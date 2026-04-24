@@ -152,35 +152,35 @@ function Accordion({
       onClick={handleToggle}
       {...props}
     >
-      <span
+      <div
         className="inline-flex size-[24px] shrink-0 items-center justify-center text-[var(--color-text-200)]"
         aria-hidden="true"
       >
         {resolvedLeftIcon}
-      </span>
+      </div>
 
-      <span className="flex min-h-px min-w-px flex-1 flex-col gap-[8px]">
-        <span className="text-body-4 text-left font-medium tracking-[-0.5px] text-[var(--color-text-300)]">
+      <div className="flex min-h-px min-w-px flex-1 flex-col gap-[8px]">
+        <div className="text-body-4 text-left font-medium tracking-[-0.5px] text-[var(--color-text-300)]">
           {title}
-        </span>
+        </div>
 
         {isOpenState ? (
-          <span
+          <div
             id={descriptionId}
             className="text-body-4 text-left font-normal tracking-[-0.5px] text-[var(--color-text-200)]"
           >
             {description}
-          </span>
+          </div>
         ) : null}
-      </span>
+      </div>
 
       {showRightIcon ? (
-        <span
+        <div
           className="inline-flex size-[24px] shrink-0 items-center justify-center text-[var(--color-text-200)]"
           aria-hidden="true"
         >
           {rightIcon ?? <QuestionCircleIcon className="size-5" />}
-        </span>
+        </div>
       ) : null}
     </Element>
   );

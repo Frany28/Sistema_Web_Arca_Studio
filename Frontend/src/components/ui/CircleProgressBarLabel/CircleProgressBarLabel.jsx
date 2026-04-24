@@ -130,7 +130,7 @@ function CircleProgressBarLabel({
             cy={sizeStyles.circleSize / 2}
             r={circleRadius}
             fill="none"
-            stroke="var(--color-text-300)"
+            stroke="var(--color-accent-300)"
             strokeWidth={sizeStyles.strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
