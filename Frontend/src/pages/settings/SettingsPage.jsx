@@ -214,8 +214,8 @@ export default function SettingsPage() {
           />
           <AuthToast
             trigger={passwordToastTrigger > 0 ? passwordToastTrigger : null}
-            title="Contrasena restablecida"
-            description="Tu contrasena ha sido actualizada con exito. Por razones de seguridad, por favor verifica la actividad reciente."
+            title="Contraseña restablecida"
+            description="Tu contraseña ha sido actualizada con exito. Por razones de seguridad, por favor verifica la actividad reciente."
             leading={<AuthToastLockIcon />}
             autoHideMs={4200}
           />

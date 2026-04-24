@@ -62,7 +62,7 @@ function EmptyProjectsCarouselSection() {
             type="button"
             aria-label="Proyecto anterior"
             disabled
-            className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
+            className=" cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
           >
             <ChevronLeftIcon className="size-4" />
           </button>
@@ -71,7 +71,7 @@ function EmptyProjectsCarouselSection() {
             type="button"
             aria-label="Proyecto siguiente"
             disabled
-            className="flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
+            className=" cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
           >
             <ChevronRightIcon className="size-4" />
           </button>

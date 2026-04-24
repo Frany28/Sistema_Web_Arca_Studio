@@ -396,9 +396,9 @@ function SideNavigation({
   return (
     <aside
       className={clsx(
-        "flex min-h-screen self-stretch flex-col justify-between border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] transition-[width,padding] will-change-[width,padding]",
+        "sticky top-0 flex h-screen min-h-screen self-start flex-col overflow-hidden border-r border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] transition-[width,padding] will-change-[width,padding]",
         isExpanded
-          ? "w-full max-w-[312px] px-[16px] pb-[16px] pt-[16px] duration-200 ease-out"
+          ? "w-[312px] px-[16px] pb-[16px] pt-[16px] duration-200 ease-out"
           : "w-[76px] px-[16px] py-[16px] duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]",
         className,
       )}
@@ -408,7 +408,7 @@ function SideNavigation({
     >
       <div
         className={clsx(
-          "flex flex-col gap-[20px]",
+          "flex min-h-0 flex-1 flex-col gap-[20px]",
           isExpanded ? "w-full" : "items-start",
         )}
       >
@@ -446,6 +446,12 @@ function SideNavigation({
         </div>
 
         <div
+          className={clsx(
+            "flex min-h-0 flex-1 flex-col gap-[20px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+            isExpanded ? "w-full" : "items-start",
+          )}
+        >
+          <div
           data-node-id={nodeIds.search}
           className={clsx(isExpanded && "w-full")}
         >
@@ -512,7 +518,7 @@ function SideNavigation({
           )}
         </div>
 
-        <nav
+          <nav
           className={clsx(
             "flex flex-col gap-[8px]",
             isExpanded ? "w-full" : "items-start",
@@ -567,13 +573,14 @@ function SideNavigation({
               No hay coincidencias.
             </p>
           ) : null}
-        </nav>
+          </nav>
+        </div>
       </div>
 
       <div
         data-node-id={nodeIds.footer}
         className={clsx(
-          "flex items-center",
+          "mt-[20px] flex shrink-0 items-center",
           isExpanded ? "w-full justify-between gap-[12px]" : "self-start",
         )}
       >

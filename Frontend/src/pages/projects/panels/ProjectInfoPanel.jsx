@@ -1,4 +1,8 @@
 import Accordion from "../../../components/ui/Accordion/Accordion.jsx";
+import AvatarLabel from "../../../components/ui/AvatarLabel/AvatarLabel.jsx";
+import Button from "../../../components/ui/Button/Button.jsx";
+import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
+import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import {
   PROJECT_DETAIL_DATA,
   TECHNICAL_ACCORDIONS,
@@ -70,13 +74,59 @@ function LocationRow() {
   );
 }
 
-function TechnicalAccordionDescription({ items }) {
+function QuestionTooltipIcon() {
   return (
-    <ul className="list-disc pl-[18px] text-body-4 text-[var(--color-text-200)]">
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
+    <Tooltip
+      text="Haz clic para desplegar la informacion."
+      showTip
+      tipPosition="Top center"
+    >
+      <span className="inline-flex size-[24px] items-center justify-center text-[var(--color-text-200)]">
+        <svg
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="size-5"
+          aria-hidden="true"
+        >
+          <path
+            d="M10 18.3333C14.6024 18.3333 18.3333 14.6024 18.3333 10C18.3333 5.39762 14.6024 1.66666 10 1.66666C5.39763 1.66666 1.66667 5.39762 1.66667 10C1.66667 14.6024 5.39763 18.3333 10 18.3333Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M7.57501 7.50001C7.77085 6.94384 8.15715 6.4749 8.66546 6.17783C9.17377 5.88076 9.77094 5.77475 10.3499 5.87864C10.9289 5.98253 11.4525 6.28952 11.8282 6.74544C12.2038 7.20137 12.4074 7.77594 12.4025 8.36816C12.4025 10.0417 9.89168 10.8333 9.89168 10.8333"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M10 14.1667H10.0083"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </Tooltip>
+  );
+}
+
+function TechnicalAccordionDescription({ content }) {
+  if (Array.isArray(content)) {
+    return (
+      <ul className="list-disc pl-[18px] text-body-4 text-[var(--color-text-200)]">
+        {content.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <p className="text-body-4 text-[var(--color-text-200)]">{content}</p>
   );
 }
 
@@ -93,11 +143,12 @@ function TechnicalSpecificationsSection() {
             key={accordion.id}
             title={accordion.title}
             description={
-              <TechnicalAccordionDescription items={accordion.description} />
+              <TechnicalAccordionDescription content={accordion.description} />
             }
             defaultOpen={accordion.defaultOpen}
             interactive
             className="rounded-[var(--radius-2)]"
+            rightIcon={<QuestionTooltipIcon />}
           />
         ))}
       </div>
@@ -106,21 +157,84 @@ function TechnicalSpecificationsSection() {
 }
 
 function RequirementsSection() {
+  const requirementColumns = [
+    PROJECT_DETAIL_DATA.requirements.slice(0, 4),
+    PROJECT_DETAIL_DATA.requirements.slice(4, 8),
+  ];
+
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
         Requerimientos
       </span>
 
-      <div className="border-t border-[var(--color-neutral-200)] pt-[8px]">
-        <ul className="grid grid-cols-2 gap-x-[32px] gap-y-[8px] pl-[18px] text-body-4 font-medium text-[var(--color-text-300)]">
-          {PROJECT_DETAIL_DATA.requirements.map((item, index) => (
-            <li key={`${item}-${index}`} className="list-disc">
-              {item}
-            </li>
-          ))}
-        </ul>
+      <div className="flex min-h-px flex-1 flex-wrap items-start gap-[16px] border-b border-t border-[var(--color-neutral-200)] p-[12px]">
+        {requirementColumns.map((column, columnIndex) => (
+          <div
+            key={columnIndex}
+            className="flex min-w-[220px] flex-1 flex-col gap-[16px]"
+          >
+            {column.map((item, itemIndex) => (
+              <ul key={`${item}-${itemIndex}`} className="block">
+                <li className="ms-[24px] list-disc text-[16px] font-bold leading-[19px] tracking-[-0.5px] text-[var(--color-text-200)]">
+                  {item}
+                </li>
+              </ul>
+            ))}
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
+
+function ProjectDocumentsSection() {
+  return (
+    <div className="flex w-full flex-col gap-[12px]">
+      {PROJECT_DETAIL_DATA.documents.map((document) => (
+        <div
+          key={document.id}
+          className="flex w-full items-center gap-[24px] border-b border-[var(--color-neutral-200)] py-[16px]"
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-[12px]">
+            <FileAttachmentIcons
+              type={document.fileType}
+              className="h-[40px] w-[35px] shrink-0"
+            />
+
+            <div className="flex min-w-0 flex-col">
+              <p className="truncate text-heading-8 text-[var(--color-text-300)]">
+                {document.name}
+              </p>
+              <p className="text-body-3 text-[var(--color-text-100)]">
+                {document.size}
+              </p>
+            </div>
+          </div>
+
+          <AvatarLabel
+            size="S"
+            label={document.owner}
+            showSubtitle={false}
+            avatarTheme="Neutral"
+            avatarContent="Icon"
+            avatarDecorative
+            className="shrink-0"
+          />
+
+          <Button
+            theme="Info"
+            type="Outline"
+            size="S"
+            fitContent
+            showLeftIcon={false}
+            showRightIcon={false}
+            className="shrink-0"
+          >
+            Ver
+          </Button>
+        </div>
+      ))}
     </div>
   );
 }
@@ -136,6 +250,8 @@ export default function ProjectInfoPanel() {
         <TechnicalSpecificationsSection />
         <RequirementsSection />
       </div>
+
+      <ProjectDocumentsSection />
     </section>
   );
 }

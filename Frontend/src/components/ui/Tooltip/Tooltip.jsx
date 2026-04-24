@@ -22,12 +22,12 @@ const TOOLTIP_NODE_IDS = {
 const TOOLTIP_TAIL_CLASSNAMES = {
   Right: "right-[-10px] bottom-[6px]",
   Left: "left-[-10px] bottom-[6px]",
-  "Top center": "right-[102px] top-[-8.512px]",
-  "Top right": "right-[6px] top-[-8.512px]",
-  "Top left": "left-[6px] top-[-8.512px]",
-  "Bottom center": "right-[102px] bottom-[-8.512px]",
-  "Bottom right": "right-[6px] bottom-[-8.512px]",
-  "Bottom left": "left-[6px] bottom-[-8.512px]",
+  "Top center": "right-[102px] bottom-[-8.512px]",
+  "Top right": "right-[6px] bottom-[-8.512px]",
+  "Top left": "left-[6px] bottom-[-8.512px]",
+  "Bottom center": "right-[102px] top-[-8.512px]",
+  "Bottom right": "right-[6px] top-[-8.512px]",
+  "Bottom left": "left-[6px] top-[-8.512px]",
 };
 
 const TOOLTIP_BUBBLE_CLASSNAMES = {
@@ -44,12 +44,12 @@ const TOOLTIP_BUBBLE_CLASSNAMES = {
 const TOOLTIP_TAIL_TRANSFORMS = {
   Right: "rotate-90",
   Left: "-scale-y-100 rotate-90",
-  "Top center": "",
-  "Top right": "",
-  "Top left": "",
-  "Bottom center": "-scale-y-100",
-  "Bottom right": "-scale-y-100",
-  "Bottom left": "-scale-y-100",
+  "Top center": "-scale-y-100",
+  "Top right": "-scale-y-100",
+  "Top left": "-scale-y-100",
+  "Bottom center": "",
+  "Bottom right": "",
+  "Bottom left": "",
 };
 
 function TooltipTail({ tipPosition }) {
@@ -123,7 +123,7 @@ function TooltipBubble({
       id={tooltipId}
       role="tooltip"
       className={clsx(
-        "relative flex w-[224px] flex-col items-start gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[8px] shadow-[var(--shadow-e2)] transition-colors duration-200",
+        "relative flex w-fit max-w-none flex-col items-start gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[8px] shadow-[var(--shadow-e2)] transition-colors duration-200",
         className,
       )}
       data-node-id={getResolvedNodeId({
@@ -133,7 +133,7 @@ function TooltipBubble({
       })}
       {...props}
     >
-      <p className="w-full text-heading-8 text-[var(--color-text-200)]">
+      <p className="w-full whitespace-nowrap text-heading-8 text-[var(--color-text-200)]">
         {text}
       </p>
 

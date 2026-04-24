@@ -56,6 +56,29 @@ export const PROJECT_DETAIL_DATA = {
     "Iluminacion calida",
     "Espacios funcionales",
   ],
+  documents: [
+    {
+      id: "minutes",
+      name: "Acta de Inicio.pdf",
+      size: "200KB",
+      owner: "Armando Carroz",
+      fileType: "PDF",
+    },
+    {
+      id: "brief",
+      name: "Memoria descriptiva.pdf",
+      size: "200KB",
+      owner: "Armando Carroz",
+      fileType: "PDF",
+    },
+    {
+      id: "survey-record",
+      name: "Registro de levantamiento.pdf",
+      size: "200KB",
+      owner: "Armando Carroz",
+      fileType: "PDF",
+    },
+  ],
 };
 
 export const TECHNICAL_ACCORDIONS = [
@@ -81,5 +104,22 @@ export const TECHNICAL_ACCORDIONS = [
       "Validacion de materiales y cronograma.",
       "Coordinacion de aprobaciones previas a ejecucion.",
     ],
+  },
+  {
+    id: "conditions",
+    title: "Condiciones",
+    defaultOpen: false,
+    description: [
+      "Condiciones de iluminacion natural y asoleamiento.",
+      "Condiciones de ventilacion y circulacion interior.",
+      "Condiciones del entorno inmediato y accesos.",
+    ],
+  },
+  {
+    id: "equipment",
+    title: "Equipo utilizado",
+    defaultOpen: false,
+    description:
+      "La descripcion del acordeon va aqui, se debe intentar mantenerla en menos de 2 lineas.",
   },
 ];
