@@ -8,6 +8,7 @@ import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.js
 import ProjectDetailTabMenu from "./components/ProjectDetailTabMenu.jsx";
 import ProjectOverviewHeader from "./components/ProjectOverviewHeader.jsx";
 import ProjectInfoPanel from "./panels/ProjectInfoPanel.jsx";
+import ProjectRendersPanel from "./panels/ProjectRendersPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 
 const TABLET_BREAKPOINT_PX = 768;
@@ -67,6 +68,12 @@ export default function ProjectDetailsPage() {
     }
   };
 
+  let activeProjectPanel = <ProjectInfoPanel />;
+
+  if (activeProjectTabIndex === 1) {
+    activeProjectPanel = <ProjectRendersPanel />;
+  }
+
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
@@ -97,7 +104,7 @@ export default function ProjectDetailsPage() {
               activeIndex={activeProjectTabIndex}
               onChange={setActiveProjectTabIndex}
             />
-            <ProjectInfoPanel />
+            {activeProjectPanel}
           </div>
 
           <NotificationsDrawer

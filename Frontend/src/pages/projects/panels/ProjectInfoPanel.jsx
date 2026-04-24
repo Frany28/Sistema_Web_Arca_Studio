@@ -41,18 +41,11 @@ function OverviewMetrics() {
   return (
     <div className="grid w-full grid-cols-[1fr_auto_1fr_auto_1fr_auto] items-center gap-x-[48px] border-b border-[var(--color-neutral-200)] py-[16px]">
       {overviewPairs.map((item) => (
-        <div
-          key={item.label}
-          className="contents"
-        >
-          <span
-            className="text-body-4 text-[var(--color-text-200)]"
-          >
+        <div key={item.label} className="contents">
+          <span className="text-body-4 text-[var(--color-text-200)]">
             {item.label}
           </span>
-          <span
-            className="justify-self-end text-body-3 font-bold text-[var(--color-text-300)]"
-          >
+          <span className="justify-self-end text-body-3 font-bold text-[var(--color-text-300)]">
             {item.value}
           </span>
         </div>
@@ -125,9 +118,7 @@ function TechnicalAccordionDescription({ content }) {
     );
   }
 
-  return (
-    <p className="text-body-4 text-[var(--color-text-200)]">{content}</p>
-  );
+  return <p className="text-body-4 text-[var(--color-text-200)]">{content}</p>;
 }
 
 function TechnicalSpecificationsSection() {
@@ -168,7 +159,7 @@ function RequirementsSection() {
         Requerimientos
       </span>
 
-      <div className="flex min-h-px flex-1 flex-wrap items-start gap-[16px] border-b border-t border-[var(--color-neutral-200)] p-[12px]">
+      <div className="flex min-h-px flex-1 flex-wrap items-start gap-[16px]  p-[12px]">
         {requirementColumns.map((column, columnIndex) => (
           <div
             key={columnIndex}

@@ -13,6 +13,7 @@ import PreferencesPanel from "./panels/PreferencesPanel.jsx";
 import ProfilePanel from "./panels/ProfilePanel.jsx";
 import SecurityPanel from "./panels/SecurityPanel.jsx";
 import SupportPanel from "./panels/SupportPanel.jsx";
+import AvatarUploadModal from "./components/AvatarUploadModal.jsx";
 import { SendIcon } from "./settingsIcons.jsx";
 import {
   applyThemePreference,
@@ -38,6 +39,9 @@ export default function SettingsPage() {
   const [primaryPhone] = useState("(444) 1234-5678");
   const [secondaryPhone] = useState("(444) 1234-5678");
   const [avatarInitials] = useState("JS");
+  const [avatarSrc, setAvatarSrc] = useState("");
+  const [isAvatarUploadModalOpen, setIsAvatarUploadModalOpen] =
+    useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -84,6 +88,12 @@ export default function SettingsPage() {
       mediaQuery.removeEventListener("change", syncSidebarForViewport);
     };
   }, []);
+
+  useEffect(() => () => {
+    if (avatarSrc) {
+      URL.revokeObjectURL(avatarSrc);
+    }
+  }, [avatarSrc]);
 
   const handleSideNavigationSelect = (item) => {
     if (item?.id === "dashboard") {
@@ -139,6 +149,8 @@ export default function SettingsPage() {
       primaryPhone={primaryPhone}
       secondaryPhone={secondaryPhone}
       avatarInitials={avatarInitials}
+      avatarSrc={avatarSrc}
+      onUploadImageClick={() => setIsAvatarUploadModalOpen(true)}
     />
   );
 
@@ -249,6 +261,26 @@ export default function SettingsPage() {
             onClose={() => setIsProjectRequestModalOpen(false)}
             onPrevious={() => setIsProjectRequestModalOpen(false)}
             onNext={() => setIsProjectRequestModalOpen(false)}
+          />
+          <AvatarUploadModal
+            open={isAvatarUploadModalOpen}
+            onClose={() => setIsAvatarUploadModalOpen(false)}
+            onConfirm={(file) => {
+              if (!file.type.startsWith("image/")) {
+                setIsAvatarUploadModalOpen(false);
+                return;
+              }
+
+              const objectUrl = URL.createObjectURL(file);
+              setAvatarSrc((currentValue) => {
+                if (currentValue) {
+                  URL.revokeObjectURL(currentValue);
+                }
+
+                return objectUrl;
+              });
+              setIsAvatarUploadModalOpen(false);
+            }}
           />
         </div>
       </div>

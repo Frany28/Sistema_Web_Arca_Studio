@@ -1,3 +1,4 @@
+import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
 import Badge from "../../../components/ui/Badge/Badge.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import HintText from "../../../components/ui/HintText/HintText.jsx";
@@ -18,6 +19,8 @@ export default function ProfilePanel({
   primaryPhone,
   secondaryPhone,
   avatarInitials,
+  avatarSrc,
+  onUploadImageClick,
 }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-4">
@@ -136,9 +139,14 @@ export default function ProfilePanel({
             </p>
           </div>
           <div className="flex items-center gap-[16px]">
-            <div className="flex size-[56px] items-center justify-center rounded-full bg-[var(--color-neutral-200)] text-[18px] font-normal tracking-[-0.5px] text-[var(--color-text-300)]">
-              {avatarInitials}
-            </div>
+            <Avatar
+              size="L"
+              content={avatarSrc ? "Image" : "Text"}
+              initials={avatarInitials}
+              src={avatarSrc}
+              alt="Avatar del usuario"
+              decorative={false}
+            />
             <Button
               theme="Primary"
               type="Outline"
@@ -146,6 +154,7 @@ export default function ProfilePanel({
               fitContent
               showLeftIcon={false}
               showRightIcon={false}
+              onClick={onUploadImageClick}
             >
               Subir imagen
             </Button>
