@@ -150,7 +150,7 @@ function ImageGallerySection({ items }) {
     <div className="flex w-full flex-col gap-[16px]">
       <div className="flex w-full items-center justify-between">
         <span className="text-heading-8 text-[var(--color-text-200)]">
-          Galeria de Imagenes
+          Galería de Imágenes
         </span>
 
         <Button
@@ -161,7 +161,7 @@ function ImageGallerySection({ items }) {
           showLeftIcon={false}
           showRightIcon={false}
         >
-          Ver mas
+          Ver más
         </Button>
       </div>
 
@@ -328,7 +328,7 @@ function VideoGallerySection({ items }) {
     <div className="flex w-full flex-col gap-[16px]">
       <div className="flex w-full items-center justify-between">
         <span className="text-heading-8 text-[var(--color-text-200)]">
-          Galeria de Videos
+          Galería de Videos
         </span>
 
         <Button
@@ -339,7 +339,7 @@ function VideoGallerySection({ items }) {
           showLeftIcon={false}
           showRightIcon={false}
         >
-          Ver mas
+          Ver más
         </Button>
       </div>
 

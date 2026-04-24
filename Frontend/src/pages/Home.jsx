@@ -139,7 +139,7 @@ function ProjectRow({ title, image }) {
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-[2px] border-t-[4px] border-[var(--color-accent-300)] pt-[12px]">
-            <p className="text-body-3 text-[var(--color-text-300)]">Diseno</p>
+            <p className="text-body-3 text-[var(--color-text-300)]">Diseño</p>
             <p className="text-body-4 text-[var(--color-text-300)]">
               En proceso
             </p>
@@ -147,7 +147,7 @@ function ProjectRow({ title, image }) {
 
           <div className="flex min-w-0 flex-1 flex-col gap-[2px] border-t-[4px] border-[var(--color-neutral-200)] pt-[12px]">
             <p className="text-body-3 text-[var(--color-text-100)]">
-              Ejecucion
+              Ejecución
             </p>
             <p className="text-body-4 text-[var(--color-neutral-400)]">
               Pendiente

@@ -20,13 +20,13 @@ export const PROJECT_DETAIL_DATA = {
     },
     {
       id: "design",
-      title: "Propuesta de Diseno",
+      title: "Propuesta de Diseño",
       status: "En proceso",
       tone: "active",
     },
     {
       id: "execution",
-      title: "Ejecucion",
+      title: "Ejecución",
       status: "Pendiente",
       tone: "pending",
     },
@@ -39,21 +39,21 @@ export const PROJECT_DETAIL_DATA = {
   ],
   overview: [
     { label: "Tipo", value: "Residencial" },
-    { label: "Area General", value: "90 mts" },
-    { label: "Area de Construccion", value: "70 mts" },
+    { label: "Área General", value: "90 mts" },
+    { label: "Área de Construcción", value: "70 mts" },
   ],
   location: {
-    label: "Ubicacion",
+    label: "Ubicación",
     value: `Maracaibo | 10°39'55"N 71°35'45"W`,
   },
   requirements: [
     "Cocina Abierta",
-    "Area social integrada",
-    "Iluminacion calida",
+    "Área social integrada",
+    "Iluminación cálida",
     "Espacios funcionales",
     "Cocina Abierta",
-    "Area social integrada",
-    "Iluminacion calida",
+    "Área social integrada",
+    "Iluminación cálida",
     "Espacios funcionales",
   ],
   documents: [
@@ -84,10 +84,10 @@ export const PROJECT_DETAIL_DATA = {
 export const TECHNICAL_ACCORDIONS = [
   {
     id: "zoning",
-    title: "Zonificacion",
+    title: "Zonificación",
     defaultOpen: true,
     description: [
-      "Habitacion principal: 18 mts",
+      "Habitación principal: 18 mts",
       "Habitaciones secundarias: 15mts c/u",
       "Cocina: 10 mts",
       "Sala:",
@@ -100,9 +100,9 @@ export const TECHNICAL_ACCORDIONS = [
     title: "Procedimientos",
     defaultOpen: false,
     description: [
-      "Revision de requerimientos del cliente.",
-      "Validacion de materiales y cronograma.",
-      "Coordinacion de aprobaciones previas a ejecucion.",
+      "Revisión de requerimientos del cliente.",
+      "Validación de materiales y cronograma.",
+      "Coordinación de aprobaciones previas a ejecución.",
     ],
   },
   {
@@ -110,8 +110,8 @@ export const TECHNICAL_ACCORDIONS = [
     title: "Condiciones",
     defaultOpen: false,
     description: [
-      "Condiciones de iluminacion natural y asoleamiento.",
-      "Condiciones de ventilacion y circulacion interior.",
+      "Condiciones de iluminación natural y asoleamiento.",
+      "Condiciones de ventilación y circulación interior.",
       "Condiciones del entorno inmediato y accesos.",
     ],
   },
@@ -120,6 +120,6 @@ export const TECHNICAL_ACCORDIONS = [
     title: "Equipo utilizado",
     defaultOpen: false,
     description:
-      "La descripcion del acordeon va aqui, se debe intentar mantenerla en menos de 2 lineas.",
+      "La descripción del acordeon va aqui, se debe intentar mantenerla en menos de 2 lineas.",
   },
 ];
