@@ -22,10 +22,10 @@ const TOOLTIP_NODE_IDS = {
 const TOOLTIP_TAIL_CLASSNAMES = {
   Right: "right-[-10px] bottom-[6px]",
   Left: "left-[-10px] bottom-[6px]",
-  "Top center": "right-[102px] bottom-[-8.512px]",
+  "Top center": "left-1/2 bottom-[-8.512px] -translate-x-1/2",
   "Top right": "right-[6px] bottom-[-8.512px]",
   "Top left": "left-[6px] bottom-[-8.512px]",
-  "Bottom center": "right-[102px] top-[-8.512px]",
+  "Bottom center": "left-1/2 top-[-8.512px] -translate-x-1/2",
   "Bottom right": "right-[6px] top-[-8.512px]",
   "Bottom left": "left-[6px] top-[-8.512px]",
 };

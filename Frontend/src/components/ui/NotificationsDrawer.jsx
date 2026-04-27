@@ -172,41 +172,63 @@ function SendIcon() {
   );
 }
 
-function CommentCard({ name, timestamp, message, type = "comment" }) {
+function CommentCard({
+  id,
+  name,
+  timestamp,
+  message,
+  type = "comment",
+  showReplyAction = false,
+  onMoreClick,
+  onReplyClick,
+}) {
   const isReply = type === "reply";
 
   return (
     <div className={clsx("flex w-full items-start", isReply && "pl-[28px]")}>
-      <article className="relative flex flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[rgba(74,74,74,0.10)] p-[8px]">
-        <div className="flex w-full items-start justify-between gap-[8px]">
-          <div className="flex min-w-0 items-center gap-[8px]">
-            <Avatar
-              size="S"
-              style="Icon"
-              theme="Brand 1"
-              decorative
-            />
-            <p className="text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-              {name}
-            </p>
-            <p className="text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-              {timestamp}
-            </p>
+      <div className="flex flex-1 flex-col gap-[8px]">
+        <article className="relative flex flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[rgba(74,74,74,0.10)] p-[8px]">
+          <div className="flex w-full items-start justify-between gap-[8px]">
+            <div className="flex min-w-0 items-center gap-[8px]">
+              <Avatar size="S" style="Icon" theme="Brand 1" decorative />
+              <p className="text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
+                {name}
+              </p>
+              <p className="text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
+                {timestamp}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              aria-label={`Mostrar acciones de ${name}`}
+              aria-expanded={showReplyAction}
+              aria-controls={`reply-action-${id}`}
+              className="-mr-[8px] -mt-[8px] flex shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-100)] transition-colors duration-200 hover:bg-[rgba(74,74,74,0.14)]"
+              data-reply-interaction="true"
+              onClick={onMoreClick}
+            >
+              <MoreIcon />
+            </button>
           </div>
 
-          <button
-            type="button"
-            aria-label={`Mas opciones para ${name}`}
-            className="-mr-[8px] -mt-[8px] flex shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-100)] transition-colors duration-200 hover:bg-[rgba(74,74,74,0.14)]"
-          >
-            <MoreIcon />
-          </button>
-        </div>
+          <p className="text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
+            {message}
+          </p>
+        </article>
 
-        <p className="text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
-          {message}
-        </p>
-      </article>
+        {showReplyAction ? (
+          <button
+            id={`reply-action-${id}`}
+            type="button"
+            onClick={onReplyClick}
+            className="w-fit"
+            data-reply-interaction="true"
+          >
+            <ReplyButton />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -289,12 +311,7 @@ function ActivityItem({
   return (
     <div className="flex w-full flex-col gap-[2px]">
       <article className="flex w-full items-start gap-[8px] overflow-hidden rounded-[8px] border border-[var(--color-neutral-200)] bg-[rgba(74,74,74,0.10)] p-[8px]">
-        <Avatar
-          size="M"
-          style="Icon"
-          theme="Brand 1"
-          decorative
-        />
+        <Avatar size="M" style="Icon" theme="Brand 1" decorative />
 
         <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
           <p className="text-[14px] leading-[17px] tracking-[-0.5px]">
@@ -322,12 +339,7 @@ function ActivityItem({
             </div>
           ) : (
             <div className="flex items-center gap-[2px]">
-              <Badge
-                theme="Info"
-                variation="Simple"
-                size="S"
-                label={status}
-              />
+              <Badge theme="Info" variation="Simple" size="S" label={status} />
             </div>
           )}
         </div>
@@ -340,23 +352,25 @@ function ActivityItem({
   );
 }
 
-function NotificationsDrawer({
-  open = false,
-  onClose,
-  className,
-  ...props
-}) {
+function NotificationsDrawer({ open = false, onClose, className, ...props }) {
+  const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
 
   useEffect(() => {
     if (!open) {
-      setActiveReplyComposer(null);
-      return;
+      const resetTimeout = window.setTimeout(() => {
+        setVisibleReplyAction(null);
+        setActiveReplyComposer(null);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(resetTimeout);
+      };
     }
   }, [open]);
 
   useEffect(() => {
-    if (!activeReplyComposer) {
+    if (!visibleReplyAction && !activeReplyComposer) {
       return undefined;
     }
 
@@ -370,6 +384,7 @@ function NotificationsDrawer({
         return;
       }
 
+      setVisibleReplyAction(null);
       setActiveReplyComposer(null);
     }
 
@@ -378,7 +393,19 @@ function NotificationsDrawer({
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [activeReplyComposer]);
+  }, [visibleReplyAction, activeReplyComposer]);
+
+  function handleMoreClick(commentId) {
+    setActiveReplyComposer(null);
+    setVisibleReplyAction((currentId) =>
+      currentId === commentId ? null : commentId,
+    );
+  }
+
+  function handleReplyClick(commentId) {
+    setVisibleReplyAction(null);
+    setActiveReplyComposer(commentId);
+  }
 
   return (
     <SideOverlayDrawer
@@ -393,42 +420,18 @@ function NotificationsDrawer({
           <MessageInput multiline placeholder="Escribe algo..." />
 
           <div className="flex flex-col gap-[8px]">
-            {GENERAL_COMMENTS.map((item, index) => {
-              if (index === 2) {
-                return (
-                  <div key={item.id} className="flex flex-col gap-[8px]">
-                    {activeReplyComposer === "inline" ? (
-                      <ReplyComposer />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setActiveReplyComposer("inline")}
-                        className="w-fit"
-                        data-reply-interaction="true"
-                      >
-                        <ReplyButton />
-                      </button>
-                    )}
-                    <CommentCard {...item} />
-                  </div>
-                );
-              }
+            {GENERAL_COMMENTS.map((item) => (
+              <div key={item.id} className="flex flex-col gap-[8px]">
+                <CommentCard
+                  {...item}
+                  showReplyAction={visibleReplyAction === item.id}
+                  onMoreClick={() => handleMoreClick(item.id)}
+                  onReplyClick={() => handleReplyClick(item.id)}
+                />
 
-              return <CommentCard key={item.id} {...item} />;
-            })}
-
-            {activeReplyComposer === "bottom" ? (
-              <ReplyComposer />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setActiveReplyComposer("bottom")}
-                className="w-fit"
-                data-reply-interaction="true"
-              >
-                <ReplyButton />
-              </button>
-            )}
+                {activeReplyComposer === item.id ? <ReplyComposer /> : null}
+              </div>
+            ))}
           </div>
         </section>
 
