@@ -187,7 +187,7 @@ function EmptyProjectsExample() {
               showActions
               showSecondaryAction={false}
               primaryActionLabel="Actualizar"
-              className="min-h-[248px]"
+              className="min-h-[300px]"
             />
           </div>
 

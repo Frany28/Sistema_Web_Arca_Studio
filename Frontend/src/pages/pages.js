@@ -1,4 +1,5 @@
 export { default as EmptyProjectsExample } from "./EmptyProjectsExample.jsx";
+export { default as EmptyProjectRendersExample } from "./EmptyProjectRendersExample.jsx";
 export { default as Home } from "./Home.jsx";
 export { default as InactiveAccount } from "./InactiveAccount.jsx";
 export { default as Login } from "./Login.jsx";

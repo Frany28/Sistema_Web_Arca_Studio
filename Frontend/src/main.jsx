@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import ThemeSync from "./components/ui/ThemeSync.jsx";
 import {
+  EmptyProjectRendersExample,
   EmptyProjectsExample,
   Home,
   InactiveAccount,
@@ -32,6 +33,10 @@ createRoot(document.getElementById("root")).render(
         <Route
           path="/dashboard-clientes-vacio"
           element={<EmptyProjectsExample />}
+        />
+        <Route
+          path="/proyectos/quinta-bella-vista/renders-imagenes-vacio"
+          element={<EmptyProjectRendersExample />}
         />
       </Routes>
     </BrowserRouter>

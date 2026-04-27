@@ -1,11 +1,84 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import EmptyState from "../../../components/ui/EmptyState.jsx";
+import Modal from "../../../components/ui/Modal/Modal.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 
 const RENDER_LOADING_MS = 1600;
+
+function MediaEmptyState({
+  title,
+  description,
+  className,
+  small = false,
+  panel = false,
+  circlePositionClassName = "",
+}) {
+  return (
+    <div
+      className={clsx(
+        "relative flex w-full items-center justify-center overflow-visible",
+        panel &&
+          "rounded-[var(--radius-3)] bg-[rgba(42,41,41,0.10)] dark:bg-[rgba(42,41,41,0.10)]",
+        className,
+      )}
+    >
+      <EmptyState
+        title={title}
+        description={description}
+        size={small ? "S" : "M"}
+        showFeaturedIcon
+        showActions
+        showSecondaryAction={false}
+        primaryActionLabel="Actualizar"
+        className={clsx(
+          "w-full overflow-visible",
+          circlePositionClassName,
+          small ? "min-h-[206px]" : "min-h-[254px]",
+        )}
+      />
+    </div>
+  );
+}
+
+function EmptyRenderOverview() {
+  return (
+    <section className="flex w-full flex-col gap-[8px]">
+      <div className="flex w-full items-start gap-[12px] max-[1024px]:flex-col">
+        <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
+          <MediaEmptyState
+            title="No se encontraron modelos 3D"
+            description="Aún no se han subido modelos 3D."
+            className="h-[398px]"
+            panel
+            circlePositionClassName="[&>div.pointer-events-none.absolute.z-0]:left-[444px] [&>div.pointer-events-none.absolute.z-0]:top-[-58px] [&>div.pointer-events-none.absolute.z-0]:translate-x-0 [&>div.pointer-events-none.absolute.z-0]:translate-y-0"
+          />
+
+          <h2 className="text-heading-4 text-[var(--color-text-300)]">
+            Sin información
+          </h2>
+        </div>
+
+        <aside className="flex h-[438px] w-[200px] shrink-0 flex-col justify-center overflow-visible max-[1024px]:h-auto max-[1024px]:w-full">
+          <MediaEmptyState
+            title="Aún no hay requerimientos"
+            description="Aún no se han subido modelos 3D."
+            className="h-full min-h-[206px] w-full"
+            small
+          />
+        </aside>
+      </div>
+
+      <div
+        aria-hidden="true"
+        className="border-b border-[var(--color-neutral-200)] pb-[2px]"
+      />
+    </section>
+  );
+}
 
 function RenderLoadingState({ image, progress }) {
   return (
@@ -143,6 +216,35 @@ function PlayIcon({ className }) {
 }
 
 function ImageGallerySection({ items }) {
+  if (!items.length) {
+    return (
+      <section className="flex w-full flex-col gap-[16px]">
+        <div className="flex w-full items-center justify-between">
+          <span className="text-heading-8 text-[var(--color-text-200)]">
+            Galería de Imágenes
+          </span>
+
+          <Button
+            theme="Primary"
+            type="Outline"
+            size="S"
+            fitContent
+            showLeftIcon={false}
+            showRightIcon={false}
+          >
+            Ver más
+          </Button>
+        </div>
+
+        <MediaEmptyState
+          title="Aún no hay imágenes"
+          description="Esta sección muestra las imágenes creadas para el proyecto."
+          className="min-h-[206px]"
+        />
+      </section>
+    );
+  }
+
   const topRow = [items[1], items[2], items[4]].filter(Boolean);
   const bottomRow = [items[3], items[5], items[1]].filter(Boolean);
 
@@ -300,6 +402,10 @@ function VideoGallerySection({ items }) {
   }, []);
 
   useEffect(() => {
+    setActiveVideoId(items[0]?.id);
+  }, [items]);
+
+  useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
       syncScrollState();
     });
@@ -320,8 +426,34 @@ function VideoGallerySection({ items }) {
     element.scrollTop = maxScrollTop * nextPosition;
   }, []);
 
-  if (!activeVideo) {
-    return null;
+  if (!items.length || !activeVideo) {
+    return (
+      <section className="flex h-[287px] w-full flex-col gap-[16px] overflow-hidden rounded-[var(--radius-3)]">
+        <div className="flex w-full items-center justify-between">
+          <span className="text-heading-8 text-[var(--color-text-200)]">
+            Galería de Videos
+          </span>
+
+          <Button
+            theme="Primary"
+            type="Outline"
+            size="S"
+            fitContent
+            showLeftIcon={false}
+            showRightIcon={false}
+          >
+            Ver más
+          </Button>
+        </div>
+
+        <MediaEmptyState
+          title="Aún no hay videos"
+          description="Esta sección muestra los videos creados para el proyecto."
+          className="h-[206px]"
+          small
+        />
+      </section>
+    );
   }
 
   return (
@@ -379,21 +511,30 @@ function VideoGallerySection({ items }) {
   );
 }
 
-export default function ProjectRendersPanel() {
-  const [activeRenderId, setActiveRenderId] = useState(
-    PROJECT_RENDER_GALLERY[0]?.id,
-  );
+export default function ProjectRendersPanel({
+  renderGallery = PROJECT_RENDER_GALLERY,
+  videoGallery = PROJECT_VIDEO_GALLERY,
+}) {
+  const [activeRenderId, setActiveRenderId] = useState(renderGallery[0]?.id);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(43);
 
   const activeRender = useMemo(
-    () =>
-      PROJECT_RENDER_GALLERY.find((item) => item.id === activeRenderId) ??
-      PROJECT_RENDER_GALLERY[0],
-    [activeRenderId],
+    () => renderGallery.find((item) => item.id === activeRenderId) ?? renderGallery[0],
+    [activeRenderId, renderGallery],
   );
 
   useEffect(() => {
+    setActiveRenderId(renderGallery[0]?.id);
+  }, [renderGallery]);
+
+  useEffect(() => {
+    if (!activeRender) {
+      setIsLoading(false);
+      setProgress(100);
+      return undefined;
+    }
+
     setIsLoading(true);
     setProgress(43);
 
@@ -417,10 +558,16 @@ export default function ProjectRendersPanel() {
       window.clearInterval(intervalId);
       window.clearTimeout(timeoutId);
     };
-  }, [activeRenderId]);
+  }, [activeRender, activeRenderId]);
 
   if (!activeRender) {
-    return null;
+    return (
+      <section className="flex w-full flex-col gap-[48px]">
+        <EmptyRenderOverview />
+        <ImageGallerySection items={renderGallery} />
+        <VideoGallerySection items={videoGallery} />
+      </section>
+    );
   }
 
   return (
@@ -432,14 +579,14 @@ export default function ProjectRendersPanel() {
           progress={progress}
         />
         <RenderThumbnailRail
-          items={PROJECT_RENDER_GALLERY}
+          items={renderGallery}
           activeRenderId={activeRenderId}
           onSelect={setActiveRenderId}
         />
       </div>
 
-      <ImageGallerySection items={PROJECT_RENDER_GALLERY} />
-      <VideoGallerySection items={PROJECT_VIDEO_GALLERY} />
+      <ImageGallerySection items={renderGallery} />
+      <VideoGallerySection items={videoGallery} />
     </section>
   );
 }

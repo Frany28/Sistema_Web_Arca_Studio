@@ -7,7 +7,8 @@ import {
   EMPTY_STATE_SIZES,
 } from "./emptyStateConfig.js";
 
-import emptyStateDarkDotsAsset from "./emptyStage.svg";
+import circlesAsset from "../../../assets/circles.svg";
+
 const EMPTY_STATE_NODE_IDS = {
   light: {
     S: {
@@ -33,23 +34,12 @@ const EMPTY_STATE_NODE_IDS = {
   },
 };
 
-function DecorativeDots({
-  isMedium,
-  isDarkMode,
-  useDarkCtasAsset = false,
-  isFeatured = false,
-}) {
-  const featuredStyle = isMedium
-    ? {
-        left: "50%",
-        top: "calc(50% - 48px)",
-        transform: "translate(-50%, -50%)",
-      }
-    : {
-        left: "50%",
-        top: "calc(50% - 44px)",
-        transform: "translate(-50%, -50%)",
-      };
+function DecorativeDots({ isMedium, isDarkMode, isFeatured = false }) {
+  const featuredStyle = {
+    left: "50%",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
+  };
 
   if (isDarkMode) {
     return (
@@ -57,15 +47,15 @@ function DecorativeDots({
         className={clsx(
           "pointer-events-none absolute z-0",
           !isFeatured && "left-1/2 -translate-x-1/2 -translate-y-1/2",
-          isMedium ? "size-[220px]" : "size-[200px]",
+          isMedium ? "h-[216px] w-[221px]" : "h-[196px] w-[201px]",
         )}
         aria-hidden="true"
         style={isFeatured ? featuredStyle : { top: isMedium ? "42px" : "37px" }}
       >
         <img
-          src={emptyStateDarkDotsAsset}
+          src={circlesAsset}
           alt=""
-          className="block size-full max-w-none object-contain"
+          className="block h-full w-full max-w-none object-fill"
         />
       </div>
     );
@@ -208,9 +198,7 @@ function EmptyState({
   const descriptionColorClass = isDarkMode
     ? "text-[var(--color-text-100,#484848)]"
     : "text-[var(--color-text-100,#818181)]";
-  const iconBorderClass = isDarkMode
-    ? "border-[var(--color-neutral-300)]"
-    : "border-[var(--color-neutral-200,#e8e8e8)]";
+  const iconBorderClass = "border-[var(--color-neutral-200,#e8e8e8)]";
   const iconSurfaceClass = isDarkMode
     ? "bg-[var(--color-neutral-100)] text-[var(--color-neutral-200)]"
     : "bg-[var(--color-neutral-100,#fff)] text-[var(--color-text-100,#818181)]";
@@ -226,7 +214,7 @@ function EmptyState({
   return (
     <section
       className={clsx(
-        "relative flex w-full flex-col items-center justify-center overflow-hidden",
+        "relative flex w-full flex-col items-center justify-center overflow-visible",
         isMedium
           ? "min-h-[254px] gap-[32px] px-[24px] py-[24px]"
           : "h-[206px] gap-[24px] px-[16px] py-[16px]",
@@ -236,30 +224,33 @@ function EmptyState({
       data-node-id={nodeId}
       {...props}
     >
-      {hasVisual ? (
-        <DecorativeDots
-          isMedium={isMedium}
-          isDarkMode={isDarkMode}
-          useDarkCtasAsset={isDarkCtasVariant}
-          isFeatured={showFeaturedIcon}
-        />
+      {hasVisual && !showFeaturedIcon ? (
+        <DecorativeDots isMedium={isMedium} isDarkMode={isDarkMode} />
       ) : null}
 
       {showFeaturedIcon ? (
-        <div
-          className={clsx(
-            "relative z-[1] shrink-0 rounded-[8px] border shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)]",
-            iconBorderClass,
-          )}
-        >
+        <div className="relative z-[1] flex shrink-0 items-center justify-center overflow-visible">
+          <DecorativeDots
+            isMedium={isMedium}
+            isDarkMode={isDarkMode}
+            isFeatured
+          />
+
           <div
             className={clsx(
-              "flex items-center justify-center rounded-[8px]",
-              iconSurfaceClass,
-              isMedium ? "size-[48px] p-[8px]" : "size-[40px] p-[8px]",
+              "relative z-[1] shrink-0 rounded-[var(--radius-2,8px)] border shadow-[var(--shadow-e1,0px_0px_5px_0px_rgba(0,0,0,0.05))]",
+              iconBorderClass,
             )}
           >
-            <ImageIcon size={isMedium ? 24 : 20} />
+            <div
+              className={clsx(
+                "flex items-center justify-center rounded-[var(--radius-2,8px)]",
+                iconSurfaceClass,
+                isMedium ? "size-[48px] p-[8px]" : "size-[40px] p-[8px]",
+              )}
+            >
+              <ImageIcon size={isMedium ? 24 : 20} />
+            </div>
           </div>
         </div>
       ) : null}
