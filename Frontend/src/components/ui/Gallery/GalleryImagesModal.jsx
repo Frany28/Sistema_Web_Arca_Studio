@@ -1,0 +1,243 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import clsx from "clsx";
+import Button from "../../ui/Button/Button.jsx";
+import Modal from "../../ui/Modal/Modal.jsx";
+import ScrollBar from "../../ui/ScrollBar/ScrollBar.jsx";
+import GalleryImageCard from "./GalleryImageCard.jsx";
+
+function CloseIcon({ className }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M0.195262 0.195262C0.455612 -0.0650874 0.877722 -0.0650874 1.13807 0.195262L6 5.05719L10.8619 0.195263C11.1223 -0.0650867 11.5444 -0.0650866 11.8047 0.195263C12.0651 0.455612 12.0651 0.877722 11.8047 1.13807L6.94281 6L11.8047 10.8619C12.0651 11.1223 12.0651 11.5444 11.8047 11.8047C11.5444 12.0651 11.1223 12.0651 10.8619 11.8047L6 6.94281L1.13807 11.8047C0.877722 12.0651 0.455612 12.0651 0.195262 11.8047C-0.0650873 11.5444 -0.0650873 11.1223 0.195262 10.8619L5.05719 6L0.195262 1.13807C-0.0650874 0.877722 -0.0650874 0.455612 0.195262 0.195262Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function chunkItems(items, size) {
+  const rows = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    rows.push(items.slice(index, index + size));
+  }
+
+  return rows;
+}
+
+function GalleryMosaic({ items }) {
+  const rows = useMemo(() => chunkItems(items, 3), [items]);
+
+  return (
+    <div className="flex w-full flex-col gap-[16px]">
+      {rows.map((row, rowIndex) => {
+        const isEvenRow = rowIndex % 2 === 0;
+
+        return (
+          <div
+            key={`gallery-modal-row-${rowIndex}`}
+            className="flex w-full items-center gap-[16px] max-[900px]:grid max-[900px]:grid-cols-2 max-[520px]:grid-cols-1"
+          >
+            {row.map((item, itemIndex) => {
+              const isSmallCard = isEvenRow ? itemIndex === 0 : itemIndex === 2;
+
+              return (
+                <GalleryImageCard
+                  key={item.id ?? `${rowIndex}-${itemIndex}`}
+                  item={item}
+                  size={isSmallCard ? "small" : "fluid"}
+                  className="max-[900px]:w-full"
+                />
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function GalleryImagesModal({
+  visible = false,
+  items = [],
+  title = "Galería de Imágenes",
+  onClose,
+  className,
+}) {
+  const viewportRef = useRef(null);
+
+  const [scrollState, setScrollState] = useState({
+    length: 1,
+    position: 0,
+    height: 240,
+  });
+
+  const repeatedItems = useMemo(() => {
+    return [...items, ...items, ...items];
+  }, [items]);
+
+  const syncScrollState = useCallback(() => {
+    const element = viewportRef.current;
+
+    if (!element) return;
+
+    const maxScrollTop = Math.max(
+      element.scrollHeight - element.clientHeight,
+      0,
+    );
+
+    const nextLength =
+      element.scrollHeight > 0
+        ? Math.min(element.clientHeight / element.scrollHeight, 1)
+        : 1;
+
+    const nextPosition =
+      maxScrollTop > 0 ? element.scrollTop / maxScrollTop : 0;
+
+    setScrollState({
+      length: nextLength,
+      position: nextPosition,
+      height: element.clientHeight,
+    });
+  }, []);
+
+  const handleScrollBarPositionChange = useCallback((nextPosition) => {
+    const element = viewportRef.current;
+
+    if (!element) return;
+
+    const maxScrollTop = Math.max(
+      element.scrollHeight - element.clientHeight,
+      0,
+    );
+
+    element.scrollTop = maxScrollTop * nextPosition;
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return undefined;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const frameId = window.requestAnimationFrame(syncScrollState);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [visible, repeatedItems, syncScrollState]);
+
+  useEffect(() => {
+    if (!visible) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose?.();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [visible, onClose]);
+
+  useEffect(() => {
+    if (
+      !visible ||
+      !viewportRef.current ||
+      typeof ResizeObserver === "undefined"
+    ) {
+      return undefined;
+    }
+
+    const observer = new ResizeObserver(syncScrollState);
+    observer.observe(viewportRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [visible, syncScrollState]);
+
+  return (
+    <Modal
+      visible={visible}
+      mount="viewport"
+      alignment="Centered"
+      overlayVariant="blurred"
+      transitionPreset="fade-scale"
+      showDialog
+      onClose={onClose}
+      className="z-50"
+    >
+      <section
+        className={clsx(
+          "flex w-[956px] max-w-[calc(100vw-32px)] h-[769px] flex-col items-start",
+          "gap-(--spacing-spacing-gap-5,16px)",
+          "p-(--spacing-spacing-gap-6,20px)",
+          "rounded-(--radius-radius-3,var(--radius-3,12px))",
+          "bg-(--Color-neutral-100,var(--color-neutral-100,#fff))",
+          "dark:bg-(--color-neutral-100)",
+          "overflow-hidden",
+          className,
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className={clsx("flex w-full items-center justify-between")}>
+          <h2 className="text-heading-8 text-[var(--Color-text-primary-300,var(--color-text-300,#2A2929))]">
+            {title}
+          </h2>
+
+          <Button
+            theme="Primary"
+            type="Ghost"
+            size="S"
+            showText={false}
+            showLeftIcon
+            showRightIcon={false}
+            iconLeft={<CloseIcon className="size-3" />}
+            aria-label="Cerrar galería de imágenes"
+            onClick={onClose}
+            className="size-9 shrink-0 text-[var(--Color-text-primary-200,var(--color-text-200,#4E4E4E))] dark:text-[var(--color-text-200)]"
+          />
+        </header>
+
+        <div className="relative w-full max-h-[calc(100dvh-170px)] overflow-hidden">
+          <div
+            ref={viewportRef}
+            className="max-h-[calc(100dvh-170px)] overflow-y-auto pr-[24px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            onScroll={syncScrollState}
+          >
+            <GalleryMosaic items={repeatedItems} />
+          </div>
+
+          <div className="pointer-events-auto absolute right-0 top-0 h-full">
+            <ScrollBar
+              length={scrollState.length}
+              position={scrollState.position}
+              height={scrollState.height}
+              interactive
+              onPositionChange={handleScrollBarPositionChange}
+            />
+          </div>
+        </div>
+      </section>
+    </Modal>
+  );
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import Modal from "../../../components/ui/Modal/Modal.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
@@ -215,7 +216,7 @@ function PlayIcon({ className }) {
   );
 }
 
-function ImageGallerySection({ items }) {
+function ImageGallerySection({ items, onOpenGallery }) {
   if (!items.length) {
     return (
       <section className="flex w-full flex-col gap-[16px]">
@@ -231,6 +232,7 @@ function ImageGallerySection({ items }) {
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
+            onClick={onOpenGallery}
           >
             Ver más
           </Button>
@@ -262,6 +264,7 @@ function ImageGallerySection({ items }) {
           fitContent
           showLeftIcon={false}
           showRightIcon={false}
+          onClick={onOpenGallery}
         >
           Ver más
         </Button>
@@ -387,7 +390,10 @@ function VideoGallerySection({ items }) {
       return;
     }
 
-    const maxScrollTop = Math.max(element.scrollHeight - element.clientHeight, 0);
+    const maxScrollTop = Math.max(
+      element.scrollHeight - element.clientHeight,
+      0,
+    );
     const nextLength =
       element.scrollHeight > 0
         ? Math.min(element.clientHeight / element.scrollHeight, 1)
@@ -422,7 +428,10 @@ function VideoGallerySection({ items }) {
       return;
     }
 
-    const maxScrollTop = Math.max(element.scrollHeight - element.clientHeight, 0);
+    const maxScrollTop = Math.max(
+      element.scrollHeight - element.clientHeight,
+      0,
+    );
     element.scrollTop = maxScrollTop * nextPosition;
   }, []);
 
@@ -518,9 +527,12 @@ export default function ProjectRendersPanel({
   const [activeRenderId, setActiveRenderId] = useState(renderGallery[0]?.id);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(43);
+  const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
 
   const activeRender = useMemo(
-    () => renderGallery.find((item) => item.id === activeRenderId) ?? renderGallery[0],
+    () =>
+      renderGallery.find((item) => item.id === activeRenderId) ??
+      renderGallery[0],
     [activeRenderId, renderGallery],
   );
 
@@ -562,31 +574,53 @@ export default function ProjectRendersPanel({
 
   if (!activeRender) {
     return (
-      <section className="flex w-full flex-col gap-[48px]">
-        <EmptyRenderOverview />
-        <ImageGallerySection items={renderGallery} />
-        <VideoGallerySection items={videoGallery} />
-      </section>
+      <>
+        <section className="flex w-full flex-col gap-[48px]">
+          <EmptyRenderOverview />
+          <ImageGallerySection
+            items={renderGallery}
+            onOpenGallery={() => setIsImageGalleryModalOpen(true)}
+          />
+          <VideoGallerySection items={videoGallery} />
+        </section>
+
+        <GalleryImagesModal
+          visible={isImageGalleryModalOpen}
+          items={renderGallery}
+          onClose={() => setIsImageGalleryModalOpen(false)}
+        />
+      </>
     );
   }
 
   return (
-    <section className="flex w-full flex-col gap-[48px]">
-      <div className="flex w-full items-start gap-[12px] max-[1024px]:flex-col">
-        <RenderStage
-          activeRender={activeRender}
-          isLoading={isLoading}
-          progress={progress}
-        />
-        <RenderThumbnailRail
-          items={renderGallery}
-          activeRenderId={activeRenderId}
-          onSelect={setActiveRenderId}
-        />
-      </div>
+    <>
+      <section className="flex w-full flex-col gap-[48px]">
+        <div className="flex w-full items-start gap-[12px] max-[1024px]:flex-col">
+          <RenderStage
+            activeRender={activeRender}
+            isLoading={isLoading}
+            progress={progress}
+          />
+          <RenderThumbnailRail
+            items={renderGallery}
+            activeRenderId={activeRenderId}
+            onSelect={setActiveRenderId}
+          />
+        </div>
 
-      <ImageGallerySection items={renderGallery} />
-      <VideoGallerySection items={videoGallery} />
-    </section>
+        <ImageGallerySection
+          items={renderGallery}
+          onOpenGallery={() => setIsImageGalleryModalOpen(true)}
+        />
+        <VideoGallerySection items={videoGallery} />
+      </section>
+
+      <GalleryImagesModal
+        visible={isImageGalleryModalOpen}
+        items={renderGallery}
+        onClose={() => setIsImageGalleryModalOpen(false)}
+      />
+    </>
   );
 }

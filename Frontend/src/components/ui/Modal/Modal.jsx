@@ -91,10 +91,13 @@ function Modal({
     };
   }, [visible]);
 
-  useEffect(() => () => {
-    window.clearTimeout(closeTimeoutRef.current);
-    window.cancelAnimationFrame(frameRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(closeTimeoutRef.current);
+      window.cancelAnimationFrame(frameRef.current);
+    },
+    [],
+  );
 
   if (!shouldRender) {
     return null;
@@ -109,7 +112,9 @@ function Modal({
   const resolvedOverlayVariant = MODAL_OVERLAY_VARIANTS.includes(overlayVariant)
     ? overlayVariant
     : MODAL_DEFAULT_PROPS.overlayVariant;
-  const resolvedTransitionPreset = MODAL_TRANSITION_PRESETS.includes(transitionPreset)
+  const resolvedTransitionPreset = MODAL_TRANSITION_PRESETS.includes(
+    transitionPreset,
+  )
     ? transitionPreset
     : MODAL_DEFAULT_PROPS.transitionPreset;
 
@@ -136,10 +141,7 @@ function Modal({
     : "h-[40px] min-w-0 w-auto flex-1";
   const overlayClassName =
     resolvedTransitionPreset === "fade-scale"
-      ? clsx(
-          "transition-opacity",
-          isActive ? "opacity-100" : "opacity-0",
-        )
+      ? clsx("transition-opacity", isActive ? "opacity-100" : "opacity-0")
       : undefined;
   const animatedContentClassName =
     resolvedTransitionPreset === "fade-scale"
@@ -160,16 +162,14 @@ function Modal({
 
   return (
     <div
-      className={clsx(
-        positionClassName,
-        "z-50 overflow-hidden",
-        className,
-      )}
+      className={clsx(positionClassName, "z-50 overflow-hidden", className)}
       style={style}
       {...props}
     >
       <ModalOverlay
-        variant={resolvedOverlayVariant}
+        vat={resolvedOverlayVariant}
+        rian
+        onClose={onClose}
         className={overlayClassName}
         style={transitionStyle}
       />
@@ -221,11 +221,7 @@ function Modal({
                 <div className="flex w-full items-center gap-[16px] border-t border-[var(--color-neutral-200)] p-[16px]">
                   {isHorizontalSplit ? (
                     <div className="flex h-[17px] w-[168px] items-center gap-[12px]">
-                      <Checkbox
-                        checked="No"
-                        size="S"
-                        interactive={false}
-                      />
+                      <Checkbox checked="No" size="S" interactive={false} />
                       <span className="text-body-3 text-[var(--color-text-300)]">
                         {checkboxLabel}
                       </span>

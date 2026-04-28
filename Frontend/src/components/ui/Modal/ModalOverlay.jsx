@@ -21,11 +21,11 @@ function ModalOverlay({
   className,
   variant = "blurred",
   style,
+  onClose,
+  onClick,
   ...props
 }) {
-  const resolvedVariant = MODAL_OVERLAY_VARIANTS[variant]
-    ? variant
-    : "blurred";
+  const resolvedVariant = MODAL_OVERLAY_VARIANTS[variant] ? variant : "blurred";
   const visual = MODAL_OVERLAY_VARIANTS[resolvedVariant];
 
   return (
@@ -36,6 +36,13 @@ function ModalOverlay({
         ...style,
       }}
       aria-hidden="true"
+      onClick={(event) => {
+        onClick?.(event);
+
+        if (event.target === event.currentTarget) {
+          onClose?.();
+        }
+      }}
       {...props}
     />
   );
