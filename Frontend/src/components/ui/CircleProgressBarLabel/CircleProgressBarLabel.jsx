@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import {
   CIRCLE_PROGRESS_BAR_LABEL_DEFAULT_PROPS,
@@ -81,12 +82,25 @@ function CircleProgressBarLabel({
     : CIRCLE_PROGRESS_BAR_LABEL_DEFAULT_PROPS.size;
   const sizeStyles = CIRCLE_PROGRESS_BAR_SIZE_STYLES[resolvedSize];
   const percentage = getPercentage(value, max);
-  const roundedPercentage = getRoundedPercentage(percentage);
+  const [animatedPercentage, setAnimatedPercentage] = useState(0);
+  const roundedPercentage = getRoundedPercentage(animatedPercentage);
   const normalizedValue = clamp(value, 0, max);
   const circleRadius = (sizeStyles.circleSize - sizeStyles.strokeWidth) / 2;
   const circumference = 2 * Math.PI * circleRadius;
-  const dashOffset = circumference - (percentage / 100) * circumference;
+  const dashOffset = circumference - (animatedPercentage / 100) * circumference;
   const viewBox = `0 0 ${sizeStyles.circleSize} ${sizeStyles.circleSize}`;
+
+  useEffect(() => {
+    setAnimatedPercentage(0);
+
+    const frameId = window.requestAnimationFrame(() => {
+      setAnimatedPercentage(percentage);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [percentage]);
 
   return (
     <div
@@ -134,7 +148,8 @@ function CircleProgressBarLabel({
             strokeWidth={sizeStyles.strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
-            strokeLinecap={percentage >= 99.5 ? "butt" : "round"}
+            strokeLinecap={animatedPercentage >= 99.5 ? "butt" : "round"}
+            className="transition-[stroke-dashoffset] duration-700 ease-out"
           />
         </svg>
 
