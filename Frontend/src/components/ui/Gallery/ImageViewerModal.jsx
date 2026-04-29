@@ -4,6 +4,7 @@ import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
+import ImageHighlighter from "./ImageHighlighter.jsx";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -297,16 +298,16 @@ export default function ImageViewerModal({
           )}
           onClick={(event) => event.stopPropagation()}
         >
-          <img
-            src={displayItem.image}
-            alt={displayItem.title}
+          <div
             className={clsx(
-              "absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-200 ease-out",
+              "absolute inset-0 transition-[opacity,transform] duration-200 ease-out",
               isImageVisible
                 ? "scale-100 opacity-100"
                 : "scale-[1.01] opacity-0",
             )}
-          />
+          >
+            <ImageHighlighter imageSrc={displayItem.image} />
+          </div>
 
           <div className="pointer-events-none absolute inset-0 bg-[rgba(42,41,41,0.18)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.26)_0%,rgba(0,0,0,0)_100%)]" />
