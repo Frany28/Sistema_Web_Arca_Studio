@@ -360,7 +360,7 @@ function ReplyComposer({ placeholder = "Escribe tu mensaje..." }) {
   );
 }
 
-function GeneralCommentsDrawer() {
+export function GeneralCommentsDrawer() {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
 

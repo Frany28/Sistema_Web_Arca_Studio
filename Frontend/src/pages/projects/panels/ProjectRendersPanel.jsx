@@ -4,6 +4,7 @@ import Button from "../../../components/ui/Button/Button.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
 import GalleryVideosModal from "../../../components/ui/Gallery/GalleryVideosModal.jsx";
 import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.jsx";
+import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
@@ -337,9 +338,13 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage }) {
   );
 }
 
-function VideoPreviewCard({ item }) {
+function VideoPreviewCard({ item, onClick }) {
   return (
-    <div className="group relative h-[385px] overflow-hidden rounded-[var(--radius-2)] shadow-[var(--shadow-e2)]">
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative h-[385px] w-full cursor-pointer overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)] transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
+    >
       <img
         src={item.image}
         alt={item.label}
@@ -356,7 +361,7 @@ function VideoPreviewCard({ item }) {
           {item.label}
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -395,7 +400,7 @@ function VideoListItem({ item, active, onSelect }) {
   );
 }
 
-function VideoGallerySection({ items, onOpenGallery }) {
+function VideoGallerySection({ items, onOpenGallery, onOpenVideo }) {
   const [activeVideoId, setActiveVideoId] = useState(items[0]?.id);
   const listViewportRef = useRef(null);
   const [scrollState, setScrollState] = useState({
@@ -513,7 +518,10 @@ function VideoGallerySection({ items, onOpenGallery }) {
 
       <div className="flex h-[385px] w-full items-start gap-[16px] max-[1024px]:h-auto max-[1024px]:flex-col">
         <div className="w-[696px] max-w-full flex-1">
-          <VideoPreviewCard item={activeVideo} />
+          <VideoPreviewCard
+            item={activeVideo}
+            onClick={() => onOpenVideo(activeVideo)}
+          />
         </div>
 
         <div className="flex h-full min-w-[0] flex-1 items-start max-[1024px]:w-full">
@@ -557,6 +565,7 @@ export default function ProjectRendersPanel({
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
   const [isVideoGalleryModalOpen, setIsVideoGalleryModalOpen] = useState(false);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(null);
+  const [selectedGalleryVideo, setSelectedGalleryVideo] = useState(null);
 
   const activeRender = useMemo(
     () =>
@@ -614,6 +623,7 @@ export default function ProjectRendersPanel({
           <VideoGallerySection
             items={videoGallery}
             onOpenGallery={() => setIsVideoGalleryModalOpen(true)}
+            onOpenVideo={setSelectedGalleryVideo}
           />
         </section>
 
@@ -626,11 +636,17 @@ export default function ProjectRendersPanel({
           visible={isVideoGalleryModalOpen}
           items={videoGallery}
           onClose={() => setIsVideoGalleryModalOpen(false)}
+          onWatchVideo={setSelectedGalleryVideo}
         />
         <ImageViewerModal
           visible={Boolean(selectedGalleryImage)}
           item={selectedGalleryImage}
           onClose={() => setSelectedGalleryImage(null)}
+        />
+        <VideoViewerModal
+          visible={Boolean(selectedGalleryVideo)}
+          item={selectedGalleryVideo}
+          onClose={() => setSelectedGalleryVideo(null)}
         />
       </>
     );
@@ -660,6 +676,7 @@ export default function ProjectRendersPanel({
         <VideoGallerySection
           items={videoGallery}
           onOpenGallery={() => setIsVideoGalleryModalOpen(true)}
+          onOpenVideo={setSelectedGalleryVideo}
         />
       </section>
 
@@ -672,11 +689,17 @@ export default function ProjectRendersPanel({
         visible={isVideoGalleryModalOpen}
         items={videoGallery}
         onClose={() => setIsVideoGalleryModalOpen(false)}
+        onWatchVideo={setSelectedGalleryVideo}
       />
       <ImageViewerModal
         visible={Boolean(selectedGalleryImage)}
         item={selectedGalleryImage}
         onClose={() => setSelectedGalleryImage(null)}
+      />
+      <VideoViewerModal
+        visible={Boolean(selectedGalleryVideo)}
+        item={selectedGalleryVideo}
+        onClose={() => setSelectedGalleryVideo(null)}
       />
     </>
   );

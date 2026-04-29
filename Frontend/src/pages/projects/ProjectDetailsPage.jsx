@@ -7,6 +7,7 @@ import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import ProjectDetailTabMenu from "./components/ProjectDetailTabMenu.jsx";
 import ProjectOverviewHeader from "./components/ProjectOverviewHeader.jsx";
+import ProjectDocumentsPanel from "./panels/ProjectDocumentsPanel.jsx";
 import ProjectInfoPanel from "./panels/ProjectInfoPanel.jsx";
 import ProjectRendersPanel from "./panels/ProjectRendersPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
@@ -72,6 +73,8 @@ export default function ProjectDetailsPage() {
 
   if (activeProjectTabIndex === 1) {
     activeProjectPanel = <ProjectRendersPanel />;
+  } else if (activeProjectTabIndex === 2) {
+    activeProjectPanel = <ProjectDocumentsPanel />;
   }
 
   return (

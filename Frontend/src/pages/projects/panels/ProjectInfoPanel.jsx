@@ -1,7 +1,4 @@
 import Accordion from "../../../components/ui/Accordion/Accordion.jsx";
-import AvatarLabel from "../../../components/ui/AvatarLabel/AvatarLabel.jsx";
-import Button from "../../../components/ui/Button/Button.jsx";
-import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import {
   PROJECT_DETAIL_DATA,
@@ -179,57 +176,6 @@ function RequirementsSection() {
   );
 }
 
-function ProjectDocumentsSection() {
-  return (
-    <div className="flex w-full flex-col gap-[12px]">
-      {PROJECT_DETAIL_DATA.documents.map((document) => (
-        <div
-          key={document.id}
-          className="flex w-full items-center gap-[24px] border-b border-[var(--color-neutral-200)] py-[16px]"
-        >
-          <div className="flex min-w-0 flex-1 items-center gap-[12px]">
-            <FileAttachmentIcons
-              type={document.fileType}
-              className="h-[40px] w-[35px] shrink-0"
-            />
-
-            <div className="flex min-w-0 flex-col">
-              <p className="truncate text-heading-8 text-[var(--color-text-300)]">
-                {document.name}
-              </p>
-              <p className="text-body-3 text-[var(--color-text-100)]">
-                {document.size}
-              </p>
-            </div>
-          </div>
-
-          <AvatarLabel
-            size="S"
-            label={document.owner}
-            showSubtitle={false}
-            avatarTheme="Neutral"
-            avatarContent="Icon"
-            avatarDecorative
-            className="shrink-0"
-          />
-
-          <Button
-            theme="Info"
-            type="Outline"
-            size="S"
-            fitContent
-            showLeftIcon={false}
-            showRightIcon={false}
-            className="shrink-0"
-          >
-            Ver
-          </Button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function ProjectInfoPanel() {
   return (
     <section className="flex w-full flex-col gap-[24px]">
@@ -241,8 +187,6 @@ export default function ProjectInfoPanel() {
         <TechnicalSpecificationsSection />
         <RequirementsSection />
       </div>
-
-      <ProjectDocumentsSection />
     </section>
   );
 }
