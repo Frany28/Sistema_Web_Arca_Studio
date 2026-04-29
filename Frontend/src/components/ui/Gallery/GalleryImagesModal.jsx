@@ -58,8 +58,8 @@ function GalleryMosaic({ items, onSelectImage }) {
                   key={item.id ?? `${rowIndex}-${itemIndex}`}
                   item={item}
                   size={isSmallCard ? "small" : "fluid"}
-                  className="max-[900px]:w-full"
                   onClick={() => onSelectImage(item)}
+                  className="max-[900px]:w-full"
                 />
               );
             })}
@@ -89,6 +89,11 @@ export default function GalleryImagesModal({
   const repeatedItems = useMemo(() => {
     return [...items, ...items, ...items];
   }, [items]);
+
+  const handleClose = useCallback(() => {
+    setSelectedImage(null);
+    onClose?.();
+  }, [onClose]);
 
   const syncScrollState = useCallback(() => {
     const element = viewportRef.current;
@@ -152,7 +157,7 @@ export default function GalleryImagesModal({
           return;
         }
 
-        onClose?.();
+        handleClose();
       }
     };
 
@@ -161,7 +166,7 @@ export default function GalleryImagesModal({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [visible, selectedImage, onClose]);
+  }, [handleClose, selectedImage, visible]);
 
   useEffect(() => {
     if (!visible) {
@@ -194,7 +199,7 @@ export default function GalleryImagesModal({
       overlayVariant="blurred"
       transitionPreset="fade-scale"
       showDialog
-      onClose={onClose}
+      onClose={handleClose}
       className="z-50"
     >
       <section
@@ -231,7 +236,7 @@ export default function GalleryImagesModal({
             showRightIcon={false}
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar galería de imágenes"
-            onClick={onClose}
+            onClick={handleClose}
             className="size-9 shrink-0 text-[var(--Color-text-primary-200,var(--color-text-200,#4E4E4E))] dark:text-[var(--color-text-200)]"
           />
         </header>
@@ -266,7 +271,8 @@ export default function GalleryImagesModal({
 
       <ImageViewerModal
         visible={Boolean(selectedImage)}
-        item={selectedImage}
+        items={items}
+        initialItem={selectedImage}
         onClose={() => setSelectedImage(null)}
       />
     </Modal>

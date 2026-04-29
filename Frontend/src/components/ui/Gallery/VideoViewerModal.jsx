@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
-import { GeneralCommentsDrawer } from "./ImageViewerModal.jsx";
+import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -234,7 +234,7 @@ export default function VideoViewerModal({ visible = false, item, onClose }) {
 
           <Button
             theme="Primary"
-            type="Ghost"
+            type="Solid"
             size="S"
             showText={false}
             showLeftIcon

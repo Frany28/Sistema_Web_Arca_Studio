@@ -4,6 +4,7 @@ import Button from "../../../components/ui/Button/Button.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
 import GalleryVideosModal from "../../../components/ui/Gallery/GalleryVideosModal.jsx";
 import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.jsx";
+import Model3DViewerModal from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
@@ -112,10 +113,16 @@ function RenderLoadingState({ image, progress }) {
   );
 }
 
-function RenderStage({ activeRender, isLoading, progress }) {
+function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-      <div className="relative h-[398px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)]">
+      <button
+        type="button"
+        className="relative h-[398px] w-full cursor-pointer overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
+        onClick={onOpenModel}
+        disabled={isLoading}
+        aria-label={`Abrir modelo 3D ${activeRender.title}`}
+      >
         {isLoading ? (
           <RenderLoadingState image={activeRender.image} progress={progress} />
         ) : (
@@ -125,7 +132,7 @@ function RenderStage({ activeRender, isLoading, progress }) {
             className="h-full w-full object-cover"
           />
         )}
-      </div>
+      </button>
 
       <h2 className="text-heading-4 text-[var(--color-text-300)]">
         {activeRender.title}
@@ -178,12 +185,21 @@ function RenderThumbnailRail({ items, activeRenderId, onSelect }) {
 }
 
 function GalleryImageCard({ item, className, onClick }) {
+  const Component = onClick ? "button" : "article";
+  const interactiveProps = onClick
+    ? {
+        type: "button",
+        onClick,
+      }
+    : {};
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Component
+      {...interactiveProps}
       className={clsx(
-        "group relative h-[212px] cursor-pointer overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)] transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
+        "group relative h-[212px] overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)]",
+        onClick &&
+          "cursor-pointer transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
         className,
       )}
     >
@@ -196,7 +212,7 @@ function GalleryImageCard({ item, className, onClick }) {
       <span className="absolute inset-x-[10px] bottom-[10px] text-heading-8 text-[var(--color-neutral-100-uniform)]">
         {item.title}
       </span>
-    </button>
+    </Component>
   );
 }
 
@@ -220,7 +236,7 @@ function PlayIcon({ className }) {
   );
 }
 
-function ImageGallerySection({ items, onOpenGallery, onSelectImage }) {
+function ImageGallerySection({ items, onOpenGallery, onSelectImage = () => {} }) {
   if (!items.length) {
     return (
       <section className="flex w-full flex-col gap-[16px]">
@@ -279,22 +295,22 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage }) {
           {topRow[0] ? (
             <GalleryImageCard
               item={topRow[0]}
-              className="w-[204px] shrink-0"
               onClick={() => onSelectImage(topRow[0])}
+              className="w-[204px] shrink-0"
             />
           ) : null}
           {topRow[1] ? (
             <GalleryImageCard
               item={topRow[1]}
-              className="min-w-0 flex-1"
               onClick={() => onSelectImage(topRow[1])}
+              className="min-w-0 flex-1"
             />
           ) : null}
           {topRow[2] ? (
             <GalleryImageCard
               item={topRow[2]}
-              className="min-w-0 flex-1"
               onClick={() => onSelectImage(topRow[2])}
+              className="min-w-0 flex-1"
             />
           ) : null}
         </div>
@@ -303,22 +319,22 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage }) {
           {bottomRow[0] ? (
             <GalleryImageCard
               item={bottomRow[0]}
-              className="min-w-0 flex-1"
               onClick={() => onSelectImage(bottomRow[0])}
+              className="min-w-0 flex-1"
             />
           ) : null}
           {bottomRow[1] ? (
             <GalleryImageCard
               item={bottomRow[1]}
-              className="min-w-0 flex-1"
               onClick={() => onSelectImage(bottomRow[1])}
+              className="min-w-0 flex-1"
             />
           ) : null}
           {bottomRow[2] ? (
             <GalleryImageCard
               item={bottomRow[2]}
-              className="w-[204px] shrink-0"
               onClick={() => onSelectImage(bottomRow[2])}
+              className="w-[204px] shrink-0"
             />
           ) : null}
         </div>
@@ -329,8 +345,8 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage }) {
           <GalleryImageCard
             key={`gallery-mobile-${item.id}`}
             item={item}
-            className="w-full"
             onClick={() => onSelectImage(item)}
+            className="w-full"
           />
         ))}
       </div>
@@ -564,6 +580,7 @@ export default function ProjectRendersPanel({
   const [progress, setProgress] = useState(43);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
   const [isVideoGalleryModalOpen, setIsVideoGalleryModalOpen] = useState(false);
+  const [selectedModel3D, setSelectedModel3D] = useState(null);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(null);
   const [selectedGalleryVideo, setSelectedGalleryVideo] = useState(null);
 
@@ -638,15 +655,21 @@ export default function ProjectRendersPanel({
           onClose={() => setIsVideoGalleryModalOpen(false)}
           onWatchVideo={setSelectedGalleryVideo}
         />
-        <ImageViewerModal
-          visible={Boolean(selectedGalleryImage)}
-          item={selectedGalleryImage}
-          onClose={() => setSelectedGalleryImage(null)}
+        <Model3DViewerModal
+          visible={Boolean(selectedModel3D)}
+          item={selectedModel3D}
+          onClose={() => setSelectedModel3D(null)}
         />
         <VideoViewerModal
           visible={Boolean(selectedGalleryVideo)}
           item={selectedGalleryVideo}
           onClose={() => setSelectedGalleryVideo(null)}
+        />
+        <ImageViewerModal
+          visible={Boolean(selectedGalleryImage)}
+          items={renderGallery}
+          initialItem={selectedGalleryImage}
+          onClose={() => setSelectedGalleryImage(null)}
         />
       </>
     );
@@ -660,6 +683,7 @@ export default function ProjectRendersPanel({
             activeRender={activeRender}
             isLoading={isLoading}
             progress={progress}
+            onOpenModel={() => setSelectedModel3D(activeRender)}
           />
           <RenderThumbnailRail
             items={renderGallery}
@@ -691,15 +715,21 @@ export default function ProjectRendersPanel({
         onClose={() => setIsVideoGalleryModalOpen(false)}
         onWatchVideo={setSelectedGalleryVideo}
       />
-      <ImageViewerModal
-        visible={Boolean(selectedGalleryImage)}
-        item={selectedGalleryImage}
-        onClose={() => setSelectedGalleryImage(null)}
+      <Model3DViewerModal
+        visible={Boolean(selectedModel3D)}
+        item={selectedModel3D}
+        onClose={() => setSelectedModel3D(null)}
       />
       <VideoViewerModal
         visible={Boolean(selectedGalleryVideo)}
         item={selectedGalleryVideo}
         onClose={() => setSelectedGalleryVideo(null)}
+      />
+      <ImageViewerModal
+        visible={Boolean(selectedGalleryImage)}
+        items={renderGallery}
+        initialItem={selectedGalleryImage}
+        onClose={() => setSelectedGalleryImage(null)}
       />
     </>
   );
