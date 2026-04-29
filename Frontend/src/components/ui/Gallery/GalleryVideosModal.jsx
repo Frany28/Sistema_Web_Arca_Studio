@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import Button from "../../ui/Button/Button.jsx";
-import Modal from "../../ui/Modal/Modal.jsx";
-import ScrollBar from "../../ui/ScrollBar/ScrollBar.jsx";
-import GalleryImageCard from "./GalleryImageCard.jsx";
-import ImageViewerModal from "./ImageViewerModal.jsx";
+import AvatarLabel from "../AvatarLabel/AvatarLabel.jsx";
+import Button from "../Button/Button.jsx";
+import Modal from "../Modal/Modal.jsx";
+import ScrollBar from "../ScrollBar/ScrollBar.jsx";
 
 function CloseIcon({ className }) {
   return (
@@ -27,67 +26,107 @@ function CloseIcon({ className }) {
   );
 }
 
-function chunkItems(items, size) {
-  const rows = [];
-
-  for (let index = 0; index < items.length; index += size) {
-    rows.push(items.slice(index, index + size));
-  }
-
-  return rows;
+function PlayIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M6 3.9V16.1C6 16.6 6.54 16.92 6.98 16.67L17.18 10.57C17.6 10.32 17.6 9.68 17.18 9.43L6.98 3.33C6.54 3.08 6 3.4 6 3.9Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
-function GalleryMosaic({ items, onSelectImage }) {
-  const rows = useMemo(() => chunkItems(items, 3), [items]);
-
+function VideoThumb({ item }) {
   return (
-    <div className="flex w-full flex-col gap-[16px]">
-      {rows.map((row, rowIndex) => {
-        const isEvenRow = rowIndex % 2 === 0;
-
-        return (
-          <div
-            key={`gallery-modal-row-${rowIndex}`}
-            className="flex w-full items-center gap-[16px] max-[900px]:grid max-[900px]:grid-cols-2 max-[520px]:grid-cols-1"
-          >
-            {row.map((item, itemIndex) => {
-              const isSmallCard = isEvenRow ? itemIndex === 0 : itemIndex === 2;
-
-              return (
-                <GalleryImageCard
-                  key={item.id ?? `${rowIndex}-${itemIndex}`}
-                  item={item}
-                  size={isSmallCard ? "small" : "fluid"}
-                  className="max-[900px]:w-full"
-                  onClick={() => onSelectImage(item)}
-                />
-              );
-            })}
-          </div>
-        );
-      })}
+    <div className="relative h-[60px] w-[99px] shrink-0 overflow-hidden rounded-[var(--radius-1)] shadow-[var(--shadow-e2)] max-[560px]:h-[72px] max-[560px]:w-[120px]">
+      <img
+        src={item.image}
+        alt=""
+        className="h-full w-full object-cover"
+        aria-hidden="true"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.16)_42%,rgba(0,0,0,0.60)_100%)]" />
+      <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-[var(--color-neutral-100-uniform)]">
+        <PlayIcon className="size-5" />
+      </span>
     </div>
   );
 }
 
-export default function GalleryImagesModal({
+function VideoGalleryModalRow({ item, onWatchVideo }) {
+  return (
+    <article className="grid min-h-[100px] grid-cols-[minmax(260px,1fr)_auto_auto_auto] items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-[20px] py-[20px] max-[900px]:grid-cols-[minmax(0,1fr)_auto] max-[900px]:gap-x-[16px] max-[760px]:grid-cols-1 max-[760px]:gap-y-[12px] max-[560px]:px-[12px] max-[560px]:py-[16px]">
+      <div className="flex min-w-0 items-center gap-[12px]">
+        <VideoThumb item={item} />
+
+        <div className="flex min-w-0 flex-col">
+          <h3 className="truncate text-heading-8 text-[var(--color-text-300)]">
+            {item.title}
+          </h3>
+          <p className="text-body-3 text-[var(--color-text-100)]">
+            {item.size}
+          </p>
+        </div>
+      </div>
+
+      <p className="whitespace-nowrap text-body-3 text-[var(--color-text-100)] max-[900px]:justify-self-end max-[760px]:justify-self-start">
+        {item.uploadedAt}
+      </p>
+
+      <div className="flex min-w-0 items-center justify-end gap-[24px] max-[900px]:col-span-2 max-[900px]:justify-end max-[760px]:col-span-1 max-[760px]:justify-between max-[560px]:flex-wrap max-[560px]:gap-[12px]">
+        <AvatarLabel
+          size="S"
+          label={item.author ?? "Armando Carroz"}
+          showSubtitle={false}
+          avatarTheme="Neutral"
+          avatarContent="Icon"
+          avatarDecorative
+          className="min-w-0"
+          textClassName="truncate text-[var(--color-text-300)]"
+        />
+        <Button
+          theme="Primary"
+          type="Outline"
+          size="S"
+          fitContent
+          showLeftIcon={false}
+          showRightIcon={false}
+          onClick={() => onWatchVideo?.(item)}
+          className="shrink-0"
+        >
+          Ver video
+        </Button>
+      </div>
+    </article>
+  );
+}
+
+export default function GalleryVideosModal({
   visible = false,
   items = [],
-  title = "Galería de Imágenes",
+  title = "Galería de Videos",
   onClose,
+  onWatchVideo,
   className,
 }) {
   const viewportRef = useRef(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-
   const [scrollState, setScrollState] = useState({
     length: 1,
     position: 0,
-    height: 240,
+    height: 392,
   });
 
   const repeatedItems = useMemo(() => {
-    return [...items, ...items, ...items];
+    return items.length > 0 ? [...items, ...items] : [];
   }, [items]);
 
   const syncScrollState = useCallback(() => {
@@ -99,12 +138,10 @@ export default function GalleryImagesModal({
       element.scrollHeight - element.clientHeight,
       0,
     );
-
     const nextLength =
       element.scrollHeight > 0
         ? Math.min(element.clientHeight / element.scrollHeight, 1)
         : 1;
-
     const nextPosition =
       maxScrollTop > 0 ? element.scrollTop / maxScrollTop : 0;
 
@@ -133,7 +170,6 @@ export default function GalleryImagesModal({
 
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     const frameId = window.requestAnimationFrame(syncScrollState);
 
     return () => {
@@ -147,11 +183,6 @@ export default function GalleryImagesModal({
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
-        if (selectedImage) {
-          setSelectedImage(null);
-          return;
-        }
-
         onClose?.();
       }
     };
@@ -161,13 +192,7 @@ export default function GalleryImagesModal({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [visible, selectedImage, onClose]);
-
-  useEffect(() => {
-    if (!visible) {
-      setSelectedImage(null);
-    }
-  }, [visible]);
+  }, [visible, onClose]);
 
   useEffect(() => {
     if (
@@ -199,17 +224,7 @@ export default function GalleryImagesModal({
     >
       <section
         className={clsx(
-          "flex flex-col items-start overflow-hidden w-full max-w-[956px]",
-          "h-[min(769px,calc(100dvh-32px))]",
-          "gap-[var(--spacing-spacing-gap-5,16px)]",
-          "p-[var(--spacing-spacing-gap-6,20px)]",
-          "rounded-[var(--radius-radius-3,var(--radius-3,12px))]",
-          "bg-[var(--Color-neutral-100,var(--color-neutral-100,#fff))]",
-          "dark:bg-[var(--color-neutral-100)]",
-          "max-[640px]:max-w-[100vw]",
-          "max-[640px]:h-[calc(100dvh-16px)]",
-          "max-[640px]:p-[12px]",
-          "max-[640px]:gap-[12px]",
+          "flex h-[656px] w-[956px] max-h-[calc(100dvh-48px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)]",
           className,
         )}
         role="dialog"
@@ -217,8 +232,8 @@ export default function GalleryImagesModal({
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex w-full items-center justify-between">
-          <h2 className="text-heading-8 text-[var(--Color-text-primary-300,var(--color-text-300,#2A2929))]">
+        <header className="flex h-[56px] w-full shrink-0 items-center justify-between px-[20px]">
+          <h2 className="text-heading-8 text-[var(--color-text-300)]">
             {title}
           </h2>
 
@@ -230,29 +245,28 @@ export default function GalleryImagesModal({
             showLeftIcon
             showRightIcon={false}
             iconLeft={<CloseIcon className="size-3" />}
-            aria-label="Cerrar galería de imágenes"
+            aria-label="Cerrar galería de videos"
             onClick={onClose}
-            className="size-9 shrink-0 text-[var(--Color-text-primary-200,var(--color-text-200,#4E4E4E))] dark:text-[var(--color-text-200)]"
+            className="size-9 shrink-0 text-[var(--color-text-200)]"
           />
         </header>
 
         <div className="relative min-h-0 w-full flex-1 overflow-hidden">
           <div
             ref={viewportRef}
-            className={clsx(
-              "h-full overflow-y-auto pr-[24px]",
-              "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-              "max-[640px]:pr-[16px]",
-            )}
+            className="h-full overflow-y-auto pr-[16px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden max-[760px]:pr-0"
             onScroll={syncScrollState}
           >
-            <GalleryMosaic
-              items={repeatedItems}
-              onSelectImage={setSelectedImage}
-            />
+            {repeatedItems.map((item, index) => (
+              <VideoGalleryModalRow
+                key={`${item.id}-${index}`}
+                item={item}
+                onWatchVideo={onWatchVideo}
+              />
+            ))}
           </div>
 
-          <div className="pointer-events-auto absolute right-0 top-0 h-full">
+          <div className="pointer-events-auto absolute right-0 top-0 h-full max-[760px]:hidden">
             <ScrollBar
               length={scrollState.length}
               position={scrollState.position}
@@ -263,12 +277,6 @@ export default function GalleryImagesModal({
           </div>
         </div>
       </section>
-
-      <ImageViewerModal
-        visible={Boolean(selectedImage)}
-        item={selectedImage}
-        onClose={() => setSelectedImage(null)}
-      />
     </Modal>
   );
 }

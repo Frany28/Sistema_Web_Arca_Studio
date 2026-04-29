@@ -67,10 +67,12 @@ function Modal({
   const frameRef = useRef(null);
 
   useEffect(() => {
+    window.clearTimeout(closeTimeoutRef.current);
+    window.cancelAnimationFrame(frameRef.current);
+
     if (visible) {
+      setIsActive(false);
       setShouldRender(true);
-      window.clearTimeout(closeTimeoutRef.current);
-      window.cancelAnimationFrame(frameRef.current);
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = window.requestAnimationFrame(() => {
           setIsActive(true);

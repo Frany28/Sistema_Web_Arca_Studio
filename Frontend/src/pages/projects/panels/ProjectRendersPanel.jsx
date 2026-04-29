@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
+import GalleryVideosModal from "../../../components/ui/Gallery/GalleryVideosModal.jsx";
+import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
-import Modal from "../../../components/ui/Modal/Modal.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
@@ -175,11 +176,13 @@ function RenderThumbnailRail({ items, activeRenderId, onSelect }) {
   );
 }
 
-function GalleryImageCard({ item, className }) {
+function GalleryImageCard({ item, className, onClick }) {
   return (
-    <article
+    <button
+      type="button"
+      onClick={onClick}
       className={clsx(
-        "group relative h-[212px] overflow-hidden rounded-[var(--radius-2)] text-left",
+        "group relative h-[212px] cursor-pointer overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)] transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
         className,
       )}
     >
@@ -192,7 +195,7 @@ function GalleryImageCard({ item, className }) {
       <span className="absolute inset-x-[10px] bottom-[10px] text-heading-8 text-[var(--color-neutral-100-uniform)]">
         {item.title}
       </span>
-    </article>
+    </button>
   );
 }
 
@@ -216,7 +219,7 @@ function PlayIcon({ className }) {
   );
 }
 
-function ImageGallerySection({ items, onOpenGallery }) {
+function ImageGallerySection({ items, onOpenGallery, onSelectImage }) {
   if (!items.length) {
     return (
       <section className="flex w-full flex-col gap-[16px]">
@@ -273,27 +276,48 @@ function ImageGallerySection({ items, onOpenGallery }) {
       <div className="flex w-full flex-col gap-[16px] max-[1024px]:hidden">
         <div className="flex w-full items-center gap-[16px]">
           {topRow[0] ? (
-            <GalleryImageCard item={topRow[0]} className="w-[204px] shrink-0" />
+            <GalleryImageCard
+              item={topRow[0]}
+              className="w-[204px] shrink-0"
+              onClick={() => onSelectImage(topRow[0])}
+            />
           ) : null}
           {topRow[1] ? (
-            <GalleryImageCard item={topRow[1]} className="min-w-0 flex-1" />
+            <GalleryImageCard
+              item={topRow[1]}
+              className="min-w-0 flex-1"
+              onClick={() => onSelectImage(topRow[1])}
+            />
           ) : null}
           {topRow[2] ? (
-            <GalleryImageCard item={topRow[2]} className="min-w-0 flex-1" />
+            <GalleryImageCard
+              item={topRow[2]}
+              className="min-w-0 flex-1"
+              onClick={() => onSelectImage(topRow[2])}
+            />
           ) : null}
         </div>
 
         <div className="flex w-full items-center gap-[16px]">
           {bottomRow[0] ? (
-            <GalleryImageCard item={bottomRow[0]} className="min-w-0 flex-1" />
+            <GalleryImageCard
+              item={bottomRow[0]}
+              className="min-w-0 flex-1"
+              onClick={() => onSelectImage(bottomRow[0])}
+            />
           ) : null}
           {bottomRow[1] ? (
-            <GalleryImageCard item={bottomRow[1]} className="min-w-0 flex-1" />
+            <GalleryImageCard
+              item={bottomRow[1]}
+              className="min-w-0 flex-1"
+              onClick={() => onSelectImage(bottomRow[1])}
+            />
           ) : null}
           {bottomRow[2] ? (
             <GalleryImageCard
               item={bottomRow[2]}
               className="w-[204px] shrink-0"
+              onClick={() => onSelectImage(bottomRow[2])}
             />
           ) : null}
         </div>
@@ -305,6 +329,7 @@ function ImageGallerySection({ items, onOpenGallery }) {
             key={`gallery-mobile-${item.id}`}
             item={item}
             className="w-full"
+            onClick={() => onSelectImage(item)}
           />
         ))}
       </div>
@@ -370,7 +395,7 @@ function VideoListItem({ item, active, onSelect }) {
   );
 }
 
-function VideoGallerySection({ items }) {
+function VideoGallerySection({ items, onOpenGallery }) {
   const [activeVideoId, setActiveVideoId] = useState(items[0]?.id);
   const listViewportRef = useRef(null);
   const [scrollState, setScrollState] = useState({
@@ -450,6 +475,7 @@ function VideoGallerySection({ items }) {
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
+            onClick={onOpenGallery}
           >
             Ver más
           </Button>
@@ -479,6 +505,7 @@ function VideoGallerySection({ items }) {
           fitContent
           showLeftIcon={false}
           showRightIcon={false}
+          onClick={onOpenGallery}
         >
           Ver más
         </Button>
@@ -528,6 +555,8 @@ export default function ProjectRendersPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(43);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
+  const [isVideoGalleryModalOpen, setIsVideoGalleryModalOpen] = useState(false);
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState(null);
 
   const activeRender = useMemo(
     () =>
@@ -580,14 +609,28 @@ export default function ProjectRendersPanel({
           <ImageGallerySection
             items={renderGallery}
             onOpenGallery={() => setIsImageGalleryModalOpen(true)}
+            onSelectImage={setSelectedGalleryImage}
           />
-          <VideoGallerySection items={videoGallery} />
+          <VideoGallerySection
+            items={videoGallery}
+            onOpenGallery={() => setIsVideoGalleryModalOpen(true)}
+          />
         </section>
 
         <GalleryImagesModal
           visible={isImageGalleryModalOpen}
           items={renderGallery}
           onClose={() => setIsImageGalleryModalOpen(false)}
+        />
+        <GalleryVideosModal
+          visible={isVideoGalleryModalOpen}
+          items={videoGallery}
+          onClose={() => setIsVideoGalleryModalOpen(false)}
+        />
+        <ImageViewerModal
+          visible={Boolean(selectedGalleryImage)}
+          item={selectedGalleryImage}
+          onClose={() => setSelectedGalleryImage(null)}
         />
       </>
     );
@@ -612,14 +655,28 @@ export default function ProjectRendersPanel({
         <ImageGallerySection
           items={renderGallery}
           onOpenGallery={() => setIsImageGalleryModalOpen(true)}
+          onSelectImage={setSelectedGalleryImage}
         />
-        <VideoGallerySection items={videoGallery} />
+        <VideoGallerySection
+          items={videoGallery}
+          onOpenGallery={() => setIsVideoGalleryModalOpen(true)}
+        />
       </section>
 
       <GalleryImagesModal
         visible={isImageGalleryModalOpen}
         items={renderGallery}
         onClose={() => setIsImageGalleryModalOpen(false)}
+      />
+      <GalleryVideosModal
+        visible={isVideoGalleryModalOpen}
+        items={videoGallery}
+        onClose={() => setIsVideoGalleryModalOpen(false)}
+      />
+      <ImageViewerModal
+        visible={Boolean(selectedGalleryImage)}
+        item={selectedGalleryImage}
+        onClose={() => setSelectedGalleryImage(null)}
       />
     </>
   );

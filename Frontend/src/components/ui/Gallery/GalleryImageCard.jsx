@@ -6,17 +6,42 @@ const CARD_SIZE_STYLES = {
   full: "w-full",
 };
 
-function GalleryImageCard({ item, size = "fluid", className, imageClassName }) {
+function GalleryImageCard({
+  item,
+  size = "fluid",
+  className,
+  imageClassName,
+  onClick,
+}) {
   if (!item) {
     return null;
   }
 
   const resolvedSize = CARD_SIZE_STYLES[size] ? size : "fluid";
+  const interactiveProps = onClick
+    ? {
+        as: "button",
+        type: "button",
+        onClick,
+      }
+    : {
+        as: "article",
+      };
+  const Component = interactiveProps.as;
+  const componentProps = onClick
+    ? {
+        type: interactiveProps.type,
+        onClick: interactiveProps.onClick,
+      }
+    : {};
 
   return (
-    <article
+    <Component
+      {...componentProps}
       className={clsx(
         "group relative h-[212px] overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)]",
+        onClick &&
+          "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]",
         "max-[768px]:h-[190px] max-[520px]:h-[176px]",
         CARD_SIZE_STYLES[resolvedSize],
         className,
@@ -31,12 +56,12 @@ function GalleryImageCard({ item, size = "fluid", className, imageClassName }) {
         )}
       />
 
-      <div className="cursor-pointer absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.14)_40%,rgba(0,0,0,0.56)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.14)_40%,rgba(0,0,0,0.56)_100%)]" />
 
       <span className=" absolute inset-x-[10px] bottom-[10px] truncate text-heading-8 text-[var(--color-neutral-100-uniform)]">
         {item.title}
       </span>
-    </article>
+    </Component>
   );
 }
 
