@@ -119,17 +119,17 @@ export default function SettingsPage() {
   const passwordRequirements = [
     {
       id: "uppercase",
-      label: "Al menos 1 mayuscula",
+      label: "Al menos 1 mayúscula",
       test: (value) => /[A-Z]/.test(value),
     },
     {
       id: "number",
-      label: "Al menos 1 numero",
+      label: "Al menos 1 número",
       test: (value) => /\d/.test(value),
     },
     {
       id: "special",
-      label: "Al menos 1 caracter especial",
+      label: "Al menos 1 carácter especial",
       test: (value) => /[^A-Za-z0-9]/.test(value),
     },
     {
@@ -216,7 +216,7 @@ export default function SettingsPage() {
           <AuthToast
             trigger={supportToastTrigger > 0 ? supportToastTrigger : null}
             title="Tu solicitud fue enviada"
-            description="Estaremos verificando la informacion y te contactaremos en breve."
+            description="Estaremos verificando la información y te contactaremos en breve."
             leading={
               <span className="inline-flex items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[8px] shadow-[var(--shadow-e1)] text-[var(--color-text-300)]">
                 <SendIcon className="size-5" />
@@ -227,7 +227,7 @@ export default function SettingsPage() {
           <AuthToast
             trigger={passwordToastTrigger > 0 ? passwordToastTrigger : null}
             title="Contraseña restablecida"
-            description="Tu contraseña ha sido actualizada con exito. Por razones de seguridad, por favor verifica la actividad reciente."
+            description="Tu contraseña ha sido actualizada con éxito. Por razones de seguridad, por favor verifica la actividad reciente."
             leading={<AuthToastLockIcon />}
             autoHideMs={4200}
           />

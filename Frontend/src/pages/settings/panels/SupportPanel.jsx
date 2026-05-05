@@ -38,7 +38,7 @@ export default function SupportPanel({
     },
     {
       id: "guarantees",
-      label: "Garantias",
+      label: "Garantías",
       type: "Checkbox",
       checked: supportIssueType === "guarantees" ? "Yes" : "No",
     },
@@ -60,7 +60,7 @@ export default function SupportPanel({
             Contactar Soporte
           </h2>
           <p className="w-[340px] max-w-full text-[16px] leading-[19px] tracking-[-0.5px] text-[var(--color-text-200)]">
-            Nuestro equipo te ayudara lo antes posible.
+            Nuestro equipo te ayudará lo antes posible.
           </p>
         </div>
 
@@ -117,13 +117,13 @@ export default function SupportPanel({
           <div />
           <div className="flex w-[325px] max-w-none flex-col gap-[8px]">
             <TextArea
-              label="Descripcion"
+              label="Descripción"
               required
               information={false}
               showLabelInfo={false}
               showHint={false}
               value={supportDescription}
-              placeholder="Describe el problema con el mayor detalle posible. Puedes incluir que ocurrio, cuando sucedio y que esperabas que pasara."
+              placeholder="Describe el problema con el mayor detalle posible. Puedes incluir qué ocurrió, cuándo sucedió y qué esperabas que pasara."
               onChange={(event) => setSupportDescription(event.target.value)}
               minHeight={106}
               rows={5}
@@ -131,7 +131,7 @@ export default function SupportPanel({
             />
             <HintText
               state="Default"
-              hintText="Mientras mas detalles proporciones, mas rapido podremos ayudarte."
+              hintText="Mientras más detalles proporciones, más rápido podremos ayudarte."
               leftIcon={<InfoCircleIcon className="size-4" />}
               className="w-full items-start [&>p]:whitespace-normal [&>p]:break-words"
             />

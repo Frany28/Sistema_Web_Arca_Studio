@@ -42,7 +42,7 @@ function RecoverAccount() {
       <AuthToast
         trigger={toastTrigger}
         title="Enlace enviado"
-        description="Hemos enviado un enlace a tu correo electronico."
+        description="Hemos enviado un enlace a tu correo electrónico."
         leading={<AuthToastMailIcon />}
       />
 
@@ -61,7 +61,7 @@ function RecoverAccount() {
             </div>
 
             <Input
-              label="Correo Electronico"
+              label="Correo electrónico"
               type="Default input"
               size="S"
               value={email}
@@ -69,7 +69,7 @@ function RecoverAccount() {
               placeholder="ejemplo@dominio.com"
               hintText={
                 emailHasError
-                  ? "Ingresa un correo electronico valido."
+                  ? "Ingresa un correo electrónico válido."
                   : "Te enviaremos un enlace para restablecer tu contraseña"
               }
               showHint

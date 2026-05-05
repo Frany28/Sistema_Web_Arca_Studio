@@ -99,7 +99,7 @@ function Login() {
               </div>
 
               <Input
-                label="Correo Electronico"
+                label="Correo Electrónico"
                 type="Default input"
                 size="S"
                 value={email}
@@ -140,7 +140,7 @@ function Login() {
                   showRightIcon={false}
                   className="w-full"
                 >
-                  Iniciar sesion
+                  Iniciar sesión
                 </Button>
               </div>
 

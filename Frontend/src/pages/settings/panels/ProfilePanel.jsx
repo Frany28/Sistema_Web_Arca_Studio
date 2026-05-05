@@ -101,7 +101,7 @@ export default function ProfilePanel({
             className="flex w-[320px] min-w-[320px] max-w-[320px] flex-col gap-[8px]"
           >
             <Input
-              label="Telefono"
+              label="Teléfono"
               required={false}
               information={false}
               showLabelInfo={false}
@@ -120,7 +120,7 @@ export default function ProfilePanel({
             />
             <HintText
               state="Disabled"
-              hintText="Le enviaremos un codigo para la verificacion."
+              hintText="Le enviaremos un código para la verificación."
               leftIcon={<InfoCircleIcon className="size-4" />}
               className="w-full"
             />

@@ -67,7 +67,7 @@ function LocationRow() {
 function QuestionTooltipIcon() {
   return (
     <Tooltip
-      text="Haz clic para desplegar la informacion."
+      text="Haz clic para desplegar la información."
       showTip
       tipPosition="Top center"
     >
@@ -122,7 +122,7 @@ function TechnicalSpecificationsSection() {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
-        Especificaciones Tecnicas
+        Especificaciones técnicas
       </span>
 
       <div className="flex flex-col gap-[12px]">

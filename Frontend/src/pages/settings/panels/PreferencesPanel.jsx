@@ -75,7 +75,7 @@ export default function PreferencesPanel({
       <PreferenceItem
         className="border-b border-[var(--color-neutral-200)]"
         icon={<SmsIcon className="size-5" />}
-        title="Correo Electronico"
+        title="Correo Electrónico"
         description="Recibir actualizaciones en su bandeja de entrada."
         rightContent={
           <Toggle
@@ -89,7 +89,7 @@ export default function PreferencesPanel({
 
       <PreferenceItem
         icon={<CallIcon className="size-5" />}
-        title="whatsapp"
+        title="Whatsapp"
         description="Recibir actualizaciones en sus mensajes."
         rightContent={
           <Toggle

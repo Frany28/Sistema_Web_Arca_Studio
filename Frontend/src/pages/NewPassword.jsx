@@ -8,15 +8,15 @@ import Input from "../components/ui/Input/Input.jsx";
 
 const PASSWORD_REQUIREMENTS = [
   {
-    label: "Al menos 1 mayuscula",
+    label: "Al menos 1 mayúscula",
     test: (value) => /[A-Z]/.test(value),
   },
   {
-    label: "Al menos 1 numero",
+    label: "Al menos 1 número",
     test: (value) => /\d/.test(value),
   },
   {
-    label: "Al menos 1 caracter especial",
+    label: "Al menos 1 carácter especial",
     test: (value) => /[^A-Za-z0-9]/.test(value),
   },
   {

@@ -4,7 +4,7 @@ export const COMMENT_PANEL_DEFAULT_ITEMS = [
     name: "Jonh Doe",
     action: "Comentó",
     badgeLabel: "Stand Nexar 2026.",
-    description: "Podemos ajustar la iluminación en este render?",
+    description: "¿Podemos ajustar la iluminación en este render?",
     timestamp: "Hace 2 minutos",
     showBadge: true,
   },

@@ -36,9 +36,9 @@ export const PASSWORD_SEGMENT_STYLES = {
 };
 
 export const PASSWORD_DEFAULT_REQUIREMENTS = [
-  { label: "Al menos 1 mayuscula", met: false },
-  { label: "Al menos 1 numero", met: false },
-  { label: "Al menos 1 caracter especial", met: false },
+  { label: "Al menos 1 mayúscula", met: false },
+  { label: "Al menos 1 número", met: false },
+  { label: "Al menos 1 carácter especial", met: false },
   { label: "Al menos 8 caracteres", met: false },
 ];
 
