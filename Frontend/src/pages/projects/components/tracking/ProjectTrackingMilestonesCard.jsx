@@ -1,3 +1,5 @@
+import IconContainer from "../../../../components/ui/IconContainer.jsx";
+import Label from "../../../../components/ui/Label/Label.jsx";
 import { CalendarIcon } from "./ProjectTrackingIcons.jsx";
 
 function MilestoneRow({ item, withDivider }) {
@@ -8,9 +10,16 @@ function MilestoneRow({ item, withDivider }) {
       }`}
     >
       <div className="flex min-w-0 items-center gap-[8px]">
-        <span className="inline-flex size-[32px] shrink-0 items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-200)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)]">
-          <CalendarIcon className="size-[16px]" />
-        </span>
+        <IconContainer
+          size="S"
+          type="Outline"
+          icon={
+            <CalendarIcon
+              size={16}
+              className="text-[var(--color-text-200)]"
+            />
+          }
+        />
         <p className="truncate text-heading-8 text-[var(--color-text-200)]">
           {item.label}
         </p>
@@ -25,9 +34,7 @@ function MilestoneRow({ item, withDivider }) {
 export default function ProjectTrackingMilestonesCard({ items = [] }) {
   return (
     <aside className="w-full min-w-0 lg:w-[390px]">
-      <h3 className="text-heading-8 text-[var(--color-text-200)]">
-        Próximos Hitos
-      </h3>
+      <Label label="Próximos Hitos" required={false} information={false} />
       <ul className="mt-[12px] space-y-[12px] py-[12px]">
         {items.map((item, index) => (
           <MilestoneRow

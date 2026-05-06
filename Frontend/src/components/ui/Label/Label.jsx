@@ -62,7 +62,7 @@ function Label({
           )}
           aria-hidden="true"
         >
-          {infoIcon ?? <InfoCircleIcon className="size-[18px] shrink-0" />}
+          {infoIcon ?? <InfoCircleIcon className="size-[15px] shrink-0" />}
         </span>
       ) : null}
     </label>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import DropdownMenu from "../../../../components/ui/DropdownMenu/DropdownMenu.jsx";
+import Label from "../../../../components/ui/Label/Label.jsx";
 import Tooltip from "../../../../components/ui/Tooltip/Tooltip.jsx";
-import { InfoIcon } from "./ProjectTrackingIcons.jsx";
 
 function ComparisonCard({ item }) {
   const [selectedItemId, setSelectedItemId] = useState(item.selectedOptionId);
@@ -27,6 +27,7 @@ function ComparisonCard({ item }) {
       <DropdownMenu
         type="Text"
         label={selectedLabel}
+        supportingText=""
         items={item.options}
         selectedItemId={selectedItemId}
         onItemSelect={(option) => setSelectedItemId(option.id)}
@@ -42,24 +43,19 @@ export default function ProjectTrackingComparisonGallery({ items = [] }) {
   return (
     <section className="flex w-full flex-col gap-[16px]">
       <div className="flex items-center">
-        <div className="flex items-center gap-[4px]">
-          <p className="text-heading-8 text-[var(--color-text-200)]">
-            Comparativa de resultados
-          </p>
-          <Tooltip
-            text="Compara las distintas etapas del proyecto."
-            showTip
-            tipPosition="Top center"
-          >
-            <button
-              type="button"
-              className="inline-flex size-[18px] items-center justify-center text-[var(--color-text-100)]"
-              aria-label="Información sobre comparativa"
-            >
-              <InfoIcon className="size-[18px]" />
-            </button>
-          </Tooltip>
-        </div>
+        <Tooltip
+          text="Compara las distintas etapas del proyecto."
+          showTip
+          tipPosition="Top center"
+        >
+          <Label
+            label="Comparativa de resultados"
+            required={false}
+            information
+            state="Focused"
+            aria-label="Información sobre comparativa"
+          />
+        </Tooltip>
       </div>
 
       <div className="grid grid-cols-1 gap-[16px] lg:grid-cols-2">

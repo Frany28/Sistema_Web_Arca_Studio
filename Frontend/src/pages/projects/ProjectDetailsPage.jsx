@@ -11,6 +11,7 @@ import ProjectDocumentsPanel from "./panels/ProjectDocumentsPanel.jsx";
 import ProjectInfoPanel from "./panels/ProjectInfoPanel.jsx";
 import ProjectRendersPanel from "./panels/ProjectRendersPanel.jsx";
 import ProjectTrackingPanel from "./panels/ProjectTrackingPanel.jsx";
+import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 
 const TABLET_BREAKPOINT_PX = 768;
@@ -78,6 +79,8 @@ export default function ProjectDetailsPage() {
     activeProjectPanel = <ProjectDocumentsPanel />;
   } else if (activeProjectTabIndex === 3) {
     activeProjectPanel = <ProjectTrackingPanel />;
+  } else if (activeProjectTabIndex === 4) {
+    activeProjectPanel = <ProjectWarrantiesPanel />;
   }
 
   return (

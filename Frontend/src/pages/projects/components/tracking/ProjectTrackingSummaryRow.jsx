@@ -1,4 +1,5 @@
 import CircleProgressBarLabel from "../../../../components/ui/CircleProgressBarLabel/CircleProgressBarLabel.jsx";
+import IconContainer from "../../../../components/ui/IconContainer.jsx";
 import { CalendarTickIcon, ClockIcon } from "./ProjectTrackingIcons.jsx";
 
 function SummaryInfoCard({ icon, title, description, withDivider = false }) {
@@ -9,9 +10,7 @@ function SummaryInfoCard({ icon, title, description, withDivider = false }) {
       }`}
     >
       <div className="flex min-w-0 items-center gap-[16px]">
-        <span className="inline-flex size-[56px] shrink-0 items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)]">
-          {icon}
-        </span>
+        <IconContainer size="M" type="Outline" icon={icon} />
         <div className="min-w-0">
           <p className="truncate text-heading-8 text-[var(--color-text-300)]">
             {title}
@@ -50,10 +49,15 @@ function SummaryProgressCard({ title, description, value }) {
 
 function getInfoIcon(iconKey) {
   if (iconKey === "calendar-tick") {
-    return <CalendarTickIcon className="size-[28px]" />;
+    return (
+      <CalendarTickIcon
+        size={20}
+        className="text-[var(--color-text-300)]"
+      />
+    );
   }
 
-  return <ClockIcon className="size-[28px]" />;
+  return <ClockIcon size={20} className="text-[var(--color-text-300)]" />;
 }
 
 export default function ProjectTrackingSummaryRow({ items = [] }) {
