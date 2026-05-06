@@ -66,7 +66,7 @@ function FileUploadProgress({ progress, showValue = true }) {
   );
 }
 
-function FileUploadCard({ file }) {
+function FileUploadCard({ file, onRetryUpload }) {
   const isCompleted = file.status === "completed";
   const isUploading = file.status === "uploading";
   const isFailed = file.status === "failed";
@@ -124,6 +124,7 @@ function FileUploadCard({ file }) {
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
+            onClick={onRetryUpload}
           >
             Intenta de nuevo
           </Button>
@@ -163,6 +164,7 @@ function FileUploadSection({
   showUploadedFiles = FILE_UPLOAD_SECTION_DEFAULT_PROPS.showUploadedFiles,
   viewportHeight = FILE_UPLOAD_SECTION_DEFAULT_PROPS.viewportHeight,
   fileListViewportHeight = null,
+  onRetryUpload,
   "aria-label": ariaLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
@@ -322,7 +324,11 @@ function FileUploadSection({
             onScroll={shouldConstrainFileList ? syncScrollState : undefined}
           >
             {resolvedFiles.map((file) => (
-              <FileUploadCard key={file.id} file={file} />
+              <FileUploadCard
+                key={file.id}
+                file={file}
+                onRetryUpload={onRetryUpload}
+              />
             ))}
           </div>
         ) : null}

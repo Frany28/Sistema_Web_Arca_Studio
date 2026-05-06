@@ -1,33 +1,12 @@
+import { useState } from "react";
+
+import AuthToast from "../../../components/ui/AuthToast/AuthToast.jsx";
 import FileUploadSection from "../../../components/ui/FileUploadSection/FileUploadSection.jsx";
 import HintText from "../../../components/ui/HintText/HintText.jsx";
-import Notification from "../../../components/ui/Notification/Notification.jsx";
-
-function UploadStatusNotification() {
-  return (
-    <aside
-      className="pointer-events-none fixed right-[24px] top-[18px] z-40 w-[395px] max-w-[calc(100vw-48px)] p-[24px]"
-      aria-label="Estado de subida de archivos"
-    >
-      <Notification
-        title="Tus archivos se est&aacute;n subiendo"
-        timestamp="Hace 2 min"
-        description={
-          <>
-            Nuestro equipo proceder&aacute; a verificar la informaci&oacute;n
-            para garantizar su seguridad; en breve estar&aacute; disponible para
-            su visualizaci&oacute;n.
-          </>
-        }
-        leadingType="Featured icon"
-        showCloseButton={false}
-        showActions={false}
-        className="max-w-[347px]"
-      />
-    </aside>
-  );
-}
 
 export default function ProjectUploadFilesPanel() {
+  const [uploadToastTrigger, setUploadToastTrigger] = useState(null);
+
   return (
     <section
       className="relative flex w-full items-start justify-between gap-[48px] max-lg:flex-col"
@@ -55,10 +34,21 @@ export default function ProjectUploadFilesPanel() {
           viewportHeight={null}
           fileListViewportHeight={292}
           showUploadedFiles
+          onRetryUpload={() => setUploadToastTrigger(Date.now())}
         />
       </div>
 
-      <UploadStatusNotification />
+      <AuthToast
+        trigger={uploadToastTrigger}
+        title="Tus archivos se est&aacute;n subiendo"
+        description={
+          <>
+            Nuestro equipo proceder&aacute; a verificar la informaci&oacute;n para
+            garantizar su seguridad; en breve estar&aacute; disponible para su
+            visualizaci&oacute;n.
+          </>
+        }
+      />
     </section>
   );
 }

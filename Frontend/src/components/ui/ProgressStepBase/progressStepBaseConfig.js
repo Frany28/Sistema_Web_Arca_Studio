@@ -12,12 +12,15 @@ export const PROGRESS_STEP_BASE_STATES = [
 
 export const PROGRESS_STEP_BASE_SIZES = ["S", "M", "L"];
 
+export const PROGRESS_STEP_BASE_LAYOUTS = ["Stack", "Inline"];
+
 export const PROGRESS_STEP_BASE_DEFAULT_PROPS = {
   title: "Title goes here",
   subtext: "Subdescription goes here",
   type: "Numbered",
   state: "Completed",
   size: "M",
+  layout: "Stack",
   showSubtext: true,
   number: "01",
   "aria-label": "Progress step base",
