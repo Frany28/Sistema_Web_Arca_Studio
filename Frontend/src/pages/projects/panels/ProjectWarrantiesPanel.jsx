@@ -45,7 +45,7 @@ function SearchIcon() {
 
 function WarrantySearchInput({ value, onChange }) {
   return (
-    <label className="flex h-[40px] w-full max-w-[320px] shrink-0 items-center rounded-[12px] border border-[var(--color-neutral-200)] bg-transparent px-[8px] py-[2px] text-[var(--color-text-100)] transition-colors focus-within:border-[var(--color-neutral-300)]">
+    <label className="flex h-[40px] w-full max-w-[320px] shrink-0 items-center rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[8px] py-[2px] text-[var(--color-text-100)] transition-colors focus-within:border-[var(--color-neutral-300)]">
       <span className="flex h-[36px] min-w-0 flex-1 items-center gap-[8px] rounded-[var(--radius-2)] p-[8px]">
         <span className="inline-flex size-5 shrink-0 items-center justify-center">
           <SearchIcon />

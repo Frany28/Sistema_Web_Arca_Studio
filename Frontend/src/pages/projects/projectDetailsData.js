@@ -4,6 +4,7 @@ export const PROJECT_DETAIL_TABS = [
   "Documentos",
   "Seguimiento",
   "Garantías",
+  "Subir archivos",
 ];
 
 export const PROJECT_DETAIL_DATA = {

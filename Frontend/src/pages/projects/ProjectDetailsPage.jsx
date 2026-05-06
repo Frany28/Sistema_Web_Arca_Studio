@@ -11,6 +11,7 @@ import ProjectDocumentsPanel from "./panels/ProjectDocumentsPanel.jsx";
 import ProjectInfoPanel from "./panels/ProjectInfoPanel.jsx";
 import ProjectRendersPanel from "./panels/ProjectRendersPanel.jsx";
 import ProjectTrackingPanel from "./panels/ProjectTrackingPanel.jsx";
+import ProjectUploadFilesPanel from "./panels/ProjectUploadFilesPanel.jsx";
 import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 
@@ -81,6 +82,8 @@ export default function ProjectDetailsPage() {
     activeProjectPanel = <ProjectTrackingPanel />;
   } else if (activeProjectTabIndex === 4) {
     activeProjectPanel = <ProjectWarrantiesPanel />;
+  } else if (activeProjectTabIndex === 5) {
+    activeProjectPanel = <ProjectUploadFilesPanel />;
   }
 
   return (
