@@ -162,6 +162,7 @@ function FileUploadSection({
   files = FILE_UPLOAD_SECTION_DEFAULT_PROPS.files,
   showUploadedFiles = FILE_UPLOAD_SECTION_DEFAULT_PROPS.showUploadedFiles,
   viewportHeight = FILE_UPLOAD_SECTION_DEFAULT_PROPS.viewportHeight,
+  fileListViewportHeight = null,
   "aria-label": ariaLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
@@ -173,6 +174,10 @@ function FileUploadSection({
   const resolvedFiles = Array.isArray(files)
     ? files
     : FILE_UPLOAD_SECTION_DEFAULT_FILES;
+  const shouldConstrainFileList =
+    showUploadedFiles && typeof fileListViewportHeight === "number";
+  const shouldConstrainWholeSection =
+    typeof viewportHeight === "number" && !shouldConstrainFileList;
 
   const syncScrollState = useCallback(() => {
     const element = filesViewportRef.current;
@@ -238,7 +243,8 @@ function FileUploadSection({
   return (
     <section
       className={clsx(
-        "flex h-full w-full max-w-full items-stretch justify-center",
+        "flex h-full w-full max-w-full justify-center",
+        shouldConstrainFileList ? "items-end" : "items-stretch",
         className,
       )}
       aria-label={ariaLabel}
@@ -246,18 +252,20 @@ function FileUploadSection({
       {...props}
     >
       <div
-        ref={filesViewportRef}
         className={clsx(
-          "flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-          showUploadedFiles && typeof viewportHeight === "number" && scrollState.length < 1
+          "flex min-h-0 min-w-0 flex-1 flex-col gap-[16px]",
+          shouldConstrainWholeSection &&
+            "overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          shouldConstrainWholeSection && scrollState.length < 1
             ? "pr-[12px]"
             : "pr-0",
         )}
         style={
-          typeof viewportHeight === "number"
+          shouldConstrainWholeSection
             ? { height: `${viewportHeight}px` }
             : { height: "100%" }
         }
+        ref={shouldConstrainWholeSection ? filesViewportRef : null}
         onScroll={syncScrollState}
       >
         <div
@@ -299,7 +307,20 @@ function FileUploadSection({
         </div>
 
         {showUploadedFiles && resolvedFiles.length > 0 ? (
-          <div className="flex w-full min-w-0 flex-col gap-[12px]">
+          <div
+            ref={shouldConstrainFileList ? filesViewportRef : null}
+            className={clsx(
+              "flex w-full min-w-0 flex-col gap-[12px]",
+              shouldConstrainFileList &&
+                "overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+            )}
+            style={
+              shouldConstrainFileList
+                ? { height: `${fileListViewportHeight}px` }
+                : undefined
+            }
+            onScroll={shouldConstrainFileList ? syncScrollState : undefined}
+          >
             {resolvedFiles.map((file) => (
               <FileUploadCard key={file.id} file={file} />
             ))}
@@ -307,7 +328,20 @@ function FileUploadSection({
         ) : null}
       </div>
 
-      {showUploadedFiles && typeof viewportHeight === "number" && scrollState.length < 1 ? (
+      {shouldConstrainFileList ? (
+        <div className="flex h-full items-end">
+          <ScrollBar
+            height={fileListViewportHeight}
+            length={scrollState.length}
+            position={scrollState.position}
+            interactive
+            trackContainerClassName="bg-transparent"
+            onPositionChange={handleScrollBarPositionChange}
+          />
+        </div>
+      ) : null}
+
+      {shouldConstrainWholeSection && scrollState.length < 1 ? (
         <div className="flex self-stretch items-start">
           <ScrollBar
             height={viewportHeight ?? FILE_LIST_VIEWPORT_HEIGHT}

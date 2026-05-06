@@ -8,6 +8,7 @@ function clamp(value, min = 0, max = 1) {
 
 function ScrollBar({
   className,
+  trackContainerClassName,
   length = SCROLL_BAR_DEFAULT_PROPS.length,
   position = SCROLL_BAR_DEFAULT_PROPS.position,
   height = SCROLL_BAR_DEFAULT_PROPS.height,
@@ -85,7 +86,10 @@ function ScrollBar({
       {...props}
     >
       <div
-        className="flex items-start rounded-[var(--radius-2)] bg-[var(--color-neutral-100)] p-[4px]"
+        className={clsx(
+          "flex items-start rounded-[var(--radius-2)] bg-[var(--color-neutral-100)] p-[4px]",
+          trackContainerClassName,
+        )}
         style={{ height: `${height}px`, width: "16px" }}
       >
         <div
