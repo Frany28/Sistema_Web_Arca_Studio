@@ -132,7 +132,7 @@ function EmptyProjectsExample() {
     }
 
     if (item?.id === "more-projects") {
-      navigate("/dashboard-clientes-vacio");
+      navigate("/proyectos/quinta-bella-vista");
       return;
     }
 

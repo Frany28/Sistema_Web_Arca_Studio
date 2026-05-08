@@ -5,6 +5,10 @@ import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
+import {
+  CLIENT_DRAWER_COMMENTS,
+  CLIENT_DRAWER_RECENT_ACTIVITY,
+} from "../clientDrawerData.js";
 import ProjectDetailTabMenu from "./components/ProjectDetailTabMenu.jsx";
 import ProjectOverviewHeader from "./components/ProjectOverviewHeader.jsx";
 import ProjectDocumentsPanel from "./panels/ProjectDocumentsPanel.jsx";
@@ -71,13 +75,22 @@ export default function ProjectDetailsPage({
     }
 
     if (item?.id === "more-projects") {
-      navigate("/dashboard-clientes-vacio");
+      navigate("/proyectos/quinta-bella-vista");
       return;
     }
 
     if (item?.id === "settings") {
       navigate("/configuraciones");
     }
+  };
+
+  const handleActivitySelect = (activity) => {
+    if (!activity?.to) {
+      return;
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(activity.to);
   };
 
   let activeProjectPanel = <ProjectInfoPanel {...infoProps} />;
@@ -130,6 +143,9 @@ export default function ProjectDetailsPage({
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
+            comments={CLIENT_DRAWER_COMMENTS}
+            recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
+            onActivitySelect={handleActivitySelect}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

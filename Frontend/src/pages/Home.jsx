@@ -13,6 +13,10 @@ import fondoActualizarContrasena from "../assets/fondos/Property 1=actualizar co
 import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
 import fondoRestablecerContrasena from "../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
+import {
+  CLIENT_DRAWER_COMMENTS,
+  CLIENT_DRAWER_RECENT_ACTIVITY,
+} from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
@@ -264,13 +268,22 @@ function Home() {
     }
 
     if (item?.id === "more-projects") {
-      navigate("/dashboard-clientes-vacio");
+      navigate("/proyectos/quinta-bella-vista");
       return;
     }
 
     if (item?.id === "settings") {
       navigate("/configuraciones");
     }
+  };
+
+  const handleActivitySelect = (activity) => {
+    if (!activity?.to) {
+      return;
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(activity.to);
   };
 
   return (
@@ -341,6 +354,9 @@ function Home() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
+            comments={CLIENT_DRAWER_COMMENTS}
+            recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
+            onActivitySelect={handleActivitySelect}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

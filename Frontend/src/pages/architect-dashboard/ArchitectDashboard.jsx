@@ -58,7 +58,7 @@ function ArchitectDashboard({ empty = false }) {
     }
 
     if (item?.id === "more-projects") {
-      navigate("/dashboard-clientes-vacio");
+      navigate("/proyectos/quinta-bella-vista");
       return;
     }
 

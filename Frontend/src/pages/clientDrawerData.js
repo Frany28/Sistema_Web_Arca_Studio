@@ -1,0 +1,73 @@
+export const CLIENT_DRAWER_COMMENTS = [
+  {
+    id: "client-comment-1",
+    name: "Arq. Armando",
+    timestamp: "Hace 2 horas",
+    message: "¿Podemos ajustar la iluminación en esta área?",
+    type: "comment",
+  },
+  {
+    id: "client-reply-1",
+    name: "Tú",
+    timestamp: "Hace 2 horas",
+    message: "Sí, claro.",
+    type: "reply",
+  },
+  {
+    id: "client-comment-2",
+    name: "Arq. Wilmer",
+    timestamp: "Hace 2 horas",
+    message: "Actualizamos el render principal del proyecto.",
+    type: "comment",
+  },
+  {
+    id: "client-reply-2",
+    name: "Tú",
+    timestamp: "Hace 2 horas",
+    message: "Perfecto, lo reviso.",
+    type: "reply",
+  },
+];
+
+export const CLIENT_DRAWER_RECENT_ACTIVITY = [
+  {
+    id: "client-activity-file-1",
+    name: "Arq. Armando",
+    action: "subió un archivo",
+    timestamp: "Hace 30 minutos",
+    type: "file",
+    fileType: "PDF",
+    fileName: "Archivo.pdf",
+    fileSize: "200KB",
+    to: "/proyectos/quinta-bella-vista",
+  },
+  {
+    id: "client-activity-status-1",
+    name: "Arq. Armando",
+    action: "modificó el estado a",
+    timestamp: "Hace 30 minutos",
+    type: "status",
+    status: "En proceso",
+    to: "/proyectos/quinta-bella-vista",
+  },
+  {
+    id: "client-activity-file-2",
+    name: "Arq. Wilmer",
+    action: "subió un archivo",
+    timestamp: "Hace 30 minutos",
+    type: "file",
+    fileType: "PDF",
+    fileName: "Plano.pdf",
+    fileSize: "200KB",
+    to: "/proyectos/quinta-bella-vista",
+  },
+  {
+    id: "client-activity-status-2",
+    name: "Arq. Wilmer",
+    action: "modificó el estado a",
+    timestamp: "Hace 30 minutos",
+    type: "status",
+    status: "En proceso",
+    to: "/proyectos/quinta-bella-vista",
+  },
+];
