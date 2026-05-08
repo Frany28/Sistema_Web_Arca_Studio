@@ -5,6 +5,7 @@ import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import AvatarLabel from "../../ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
+import TextArea from "../../ui/TextArea/TextArea.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 
 function CloseIcon({ className }) {
@@ -179,7 +180,7 @@ const GENERAL_COMMENTS = [
   {
     id: "reply-1",
     type: "reply",
-    author: "John Doe",
+    author: "Arq. Armando",
     time: "Hace 2 horas",
     body: "Sí, claro.",
   },
@@ -268,10 +269,21 @@ function CommentCard({
   const isReply = type === "reply";
 
   return (
-    <div className={clsx("flex w-full items-start", isReply && "pl-[28px]")}>
+    <div
+      className={clsx(
+        "flex w-full items-start",
+        isReply ? "gap-[4px]" : "gap-0",
+      )}
+    >
+      {isReply ? (
+        <span className="mt-0 inline-flex size-[16.5px] shrink-0 items-start justify-center">
+          <ReplyArrowIcon />
+        </span>
+      ) : null}
+
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-        <article className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[rgba(74,74,74,0.10)] p-[8px]">
-          <div className="flex w-full items-start justify-between gap-[8px]">
+        <article className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
+          <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
               <AvatarLabel
                 size="S"
@@ -291,7 +303,7 @@ function CommentCard({
               aria-label={`Mostrar acciones de ${author}`}
               aria-expanded={showReplyAction}
               aria-controls={`image-reply-action-${id}`}
-              className="-mr-[8px] -mt-[8px] flex shrink-0 items-center justify-center rounded-[var(--radius-2)] p-[8px] text-[var(--color-text-100)] transition-colors hover:bg-[rgba(74,74,74,0.14)] hover:text-[var(--color-text-300)]"
+              className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[var(--radius-2)] p-[8px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
               data-reply-interaction="true"
               onClick={onMoreClick}
             >
@@ -321,14 +333,20 @@ function CommentCard({
 }
 
 function MessageInput({ placeholder, multiline = false }) {
+  const [textAreaValue, setTextAreaValue] = useState("");
+
   return multiline ? (
-    <label className="flex flex-col gap-[8px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
-      Comentarios Generales
-      <textarea
-        placeholder={placeholder}
-        className="h-[130px] resize-none rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[16px] py-[12px] text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none placeholder:text-[var(--color-text-100)]"
-      />
-    </label>
+    <TextArea
+      label="Comentarios Generales"
+      placeholder={placeholder}
+      value={textAreaValue}
+      showHint={false}
+      showLabelInfo={false}
+      minHeight={104}
+      rows={4}
+      className="!max-w-none"
+      onChange={(event) => setTextAreaValue(event.target.value)}
+    />
   ) : (
     <div className="flex w-full items-start gap-[4px]">
       <ReplyArrowIcon />
@@ -458,28 +476,45 @@ export default function Model3DViewerModal({ visible = false, item, onClose }) {
   );
 
   useEffect(() => {
+    let cancelled = false;
+
     window.clearTimeout(closeTimeoutRef.current);
     window.cancelAnimationFrame(frameRef.current);
 
     if (visible && item) {
-      setDisplayItem(item);
-      setIsActive(false);
-      setShouldRender(true);
-      frameRef.current = window.requestAnimationFrame(() => {
+      queueMicrotask(() => {
+        if (cancelled) {
+          return;
+        }
+
+        setDisplayItem(item);
+        setIsActive(false);
+        setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
-          setIsActive(true);
+          frameRef.current = window.requestAnimationFrame(() => {
+            setIsActive(true);
+          });
         });
       });
 
-      return undefined;
+      return () => {
+        cancelled = true;
+      };
     }
 
-    setIsActive(false);
-    closeTimeoutRef.current = window.setTimeout(() => {
-      setShouldRender(false);
-    }, MODAL_TRANSITION_MS);
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setIsActive(false);
+      closeTimeoutRef.current = window.setTimeout(() => {
+        setShouldRender(false);
+      }, MODAL_TRANSITION_MS);
+    });
 
     return () => {
+      cancelled = true;
       window.clearTimeout(closeTimeoutRef.current);
       window.cancelAnimationFrame(frameRef.current);
     };

@@ -6,6 +6,7 @@ import Badge from "./Badge/Badge.jsx";
 import Button from "./Button/Button.jsx";
 import FileAttachmentIcons from "./FileAttachmentIcons/FileAttachmentIcons.jsx";
 import SideOverlayDrawer from "./SideOverlayDrawer.jsx";
+import TextArea from "./TextArea/TextArea.jsx";
 
 const GENERAL_COMMENTS = [
   {
@@ -185,10 +186,21 @@ function CommentCard({
   const isReply = type === "reply";
 
   return (
-    <div className={clsx("flex w-full items-start", isReply && "pl-[28px]")}>
+    <div
+      className={clsx(
+        "flex w-full items-start",
+        isReply ? "gap-[4px]" : "gap-0",
+      )}
+    >
+      {isReply ? (
+        <span className="mt-0 inline-flex size-[16.5px] shrink-0 items-start justify-center">
+          <ReplyArrowIcon />
+        </span>
+      ) : null}
+
       <div className="flex flex-1 flex-col gap-[8px]">
-        <article className="relative flex flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[rgba(74,74,74,0.10)] p-[8px]">
-          <div className="flex w-full items-start justify-between gap-[8px]">
+        <article className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
+          <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
               <Avatar size="S" style="Icon" theme="Brand 1" decorative />
               <p className="text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
@@ -204,7 +216,7 @@ function CommentCard({
               aria-label={`Mostrar acciones de ${name}`}
               aria-expanded={showReplyAction}
               aria-controls={`reply-action-${id}`}
-              className="-mr-[8px] -mt-[8px] flex shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-100)] transition-colors duration-200 hover:bg-[rgba(74,74,74,0.14)]"
+              className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-200)] transition-colors duration-200 hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
               data-reply-interaction="true"
               onClick={onMoreClick}
             >
@@ -261,20 +273,20 @@ function ReplyComposer({ placeholder = "Escribe tu mensaje..." }) {
 }
 
 function MessageInput({ placeholder, multiline = false }) {
-  return multiline ? (
-    <div className="flex w-full flex-col gap-[8px]">
-      <label className="text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
-        Comentarios Generales
-      </label>
+  const [textAreaValue, setTextAreaValue] = useState("");
 
-      <div className="relative h-[130px] w-full overflow-hidden rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
-        <textarea
-          placeholder={placeholder}
-          className="h-full w-full resize-none border-0 bg-transparent px-[16px] py-[12px] text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none placeholder:text-[var(--color-text-100)]"
-        />
-        <div className="pointer-events-none absolute bottom-[12px] right-[12px] h-[8px] w-[8px] border-b border-r border-[var(--color-neutral-300)]" />
-      </div>
-    </div>
+  return multiline ? (
+    <TextArea
+      label="Comentarios Generales"
+      placeholder={placeholder}
+      value={textAreaValue}
+      showHint={false}
+      showLabelInfo={false}
+      minHeight={104}
+      rows={4}
+      className="!max-w-none"
+      onChange={(event) => setTextAreaValue(event.target.value)}
+    />
   ) : (
     <div className="flex w-full items-start gap-[4px]">
       <ReplyArrowIcon />
@@ -322,7 +334,7 @@ function ActivityItem({
       )}
       onClick={isInteractive ? () => onSelect({ id, type }) : undefined}
     >
-      <article className="flex w-full items-start gap-[8px] overflow-hidden rounded-[8px] border border-[var(--color-neutral-200)] bg-[rgba(74,74,74,0.10)] p-[8px]">
+      <article className="flex w-full items-start gap-[8px] overflow-hidden rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
         <Avatar size="M" style="Icon" theme="Brand 1" decorative />
 
         <div className="flex min-w-0 flex-1 flex-col gap-[4px]">

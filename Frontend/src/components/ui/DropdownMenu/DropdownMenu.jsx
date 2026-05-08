@@ -675,7 +675,7 @@ function DropdownMenu({
     >
       <div
         className={clsx(
-          "relative z-[60] w-full rounded-[12px] border border-[var(--color-neutral-200)] bg-transparent",
+          "relative z-[1] w-full rounded-[12px] border border-[var(--color-neutral-200)] bg-transparent",
           resolvedOpen && "rounded-b-none border-b-[var(--color-neutral-200)]",
           !shouldShowContainer && "border-transparent bg-transparent",
           triggerWrapperClassName,
@@ -771,7 +771,7 @@ function DropdownMenu({
           id={`${menuId}-content`}
           role="menu"
           className={clsx(
-            "absolute left-0 top-full z-[70] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
+            "absolute left-0 top-full z-[2] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
             contentPaddingClassName,
             resolvedOpen ? "flex flex-col gap-[4px]" : "hidden",
             contentClassName,

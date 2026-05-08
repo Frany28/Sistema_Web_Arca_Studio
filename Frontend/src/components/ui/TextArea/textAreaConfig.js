@@ -76,9 +76,6 @@ export const TEXT_AREA_STATE_STYLES = {
   },
 };
 
-export const TEXT_AREA_INTERACTIVE_STYLES =
-  "hover:border-[var(--color-neutral-200)] hover:shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)] focus-within:border-[4px] focus-within:border-[var(--color-primary-10)] focus-within:shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)]";
-
 export function createTextAreaProps(overrides = {}) {
   return {
     ...TEXT_AREA_DEFAULT_PROPS,
