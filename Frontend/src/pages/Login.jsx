@@ -154,7 +154,7 @@ function Login() {
                   showRightIcon={false}
                   onClick={() => navigate("/recuperar-cuenta")}
                 >
-                  Olvide mi contraseña
+                  Olvidé mi contraseña
                 </Button>
               </div>
             </form>

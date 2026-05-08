@@ -43,7 +43,7 @@ function ResizeHandleIcon({ className }) {
 function TextArea({
   className,
   id,
-  label = "Description",
+  label = "Descripción",
   labelInfoIcon = null,
   hintText = "Texto de ayuda para los usuarios",
   placeholder = "Texto de prueba",

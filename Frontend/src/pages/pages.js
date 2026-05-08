@@ -1,5 +1,12 @@
+export { default as ArchitectDashboard } from "./architect-dashboard/ArchitectDashboard.jsx";
+export { default as NewArchitectProjectPage } from "./architect-dashboard/NewArchitectProjectPage.jsx";
+export { default as EmptyArchitectDashboardExample } from "./EmptyArchitectDashboardExample.jsx";
 export { default as EmptyProjectsExample } from "./EmptyProjectsExample.jsx";
+export { default as EmptyProjectDocumentsExample } from "./EmptyProjectDocumentsExample.jsx";
+export { default as EmptyProjectInfoExample } from "./EmptyProjectInfoExample.jsx";
 export { default as EmptyProjectRendersExample } from "./EmptyProjectRendersExample.jsx";
+export { default as EmptyProjectTrackingExample } from "./EmptyProjectTrackingExample.jsx";
+export { default as EmptyProjectWarrantiesExample } from "./EmptyProjectWarrantiesExample.jsx";
 export { default as Home } from "./Home.jsx";
 export { default as InactiveAccount } from "./InactiveAccount.jsx";
 export { default as Login } from "./Login.jsx";

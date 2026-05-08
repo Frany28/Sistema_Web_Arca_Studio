@@ -1,5 +1,5 @@
 export const TEXT_AREA_DEFAULT_PROPS = {
-  label: "Description",
+  label: "Descripción",
   hintText: "Texto de ayuda para los usuarios",
   placeholder: "Texto de prueba",
   state: "Default",

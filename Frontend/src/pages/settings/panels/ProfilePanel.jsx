@@ -63,7 +63,7 @@ export default function ProfilePanel({
 
       <div className="flex w-[664px] max-w-full items-start gap-[24px] border-b border-[var(--color-neutral-200)] pb-[16px]">
         <Input
-          label="Email"
+          label="Correo electrónico"
           required={false}
           information={false}
           showLabelInfo={false}

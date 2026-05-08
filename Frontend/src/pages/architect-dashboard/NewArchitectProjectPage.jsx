@@ -3,36 +3,22 @@ import { useNavigate } from "react-router-dom";
 
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
-import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
-import ProjectDetailTabMenu from "./components/ProjectDetailTabMenu.jsx";
-import ProjectOverviewHeader from "./components/ProjectOverviewHeader.jsx";
-import ProjectDocumentsPanel from "./panels/ProjectDocumentsPanel.jsx";
-import ProjectInfoPanel from "./panels/ProjectInfoPanel.jsx";
-import ProjectRendersPanel from "./panels/ProjectRendersPanel.jsx";
-import ProjectTrackingPanel from "./panels/ProjectTrackingPanel.jsx";
-import ProjectUploadFilesPanel from "./panels/ProjectUploadFilesPanel.jsx";
-import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
-import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
+import {
+  ARCHITECT_DRAWER_COMMENTS,
+  ARCHITECT_DRAWER_RECENT_ACTIVITY,
+  ARCHITECT_NAVIGATION_ITEMS,
+} from "./architectDashboardData.js";
+import ArchitectProjectInformationForm from "./components/ArchitectProjectInformationForm.jsx";
+import ProjectCreationTabs from "./components/ProjectCreationTabs.jsx";
 
 const TABLET_BREAKPOINT_PX = 768;
 
-export default function ProjectDetailsPage({
-  project = PROJECT_DETAIL_DATA,
-  initialActiveProjectTabIndex = 0,
-  infoProps,
-  trackingProps,
-  warrantiesProps,
-}) {
+function NewArchitectProjectPage() {
   const navigate = useNavigate();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
-  const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
-    useState(false);
-  const [activeProjectTabIndex, setActiveProjectTabIndex] = useState(
-    initialActiveProjectTabIndex,
-  );
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -61,7 +47,7 @@ export default function ProjectDetailsPage({
 
   const handleSideNavigationSelect = (item) => {
     if (item?.id === "dashboard") {
-      navigate("/dashboard-clientes");
+      navigate("/dashboard-arquitecto");
       return;
     }
 
@@ -80,29 +66,30 @@ export default function ProjectDetailsPage({
     }
   };
 
-  let activeProjectPanel = <ProjectInfoPanel {...infoProps} />;
+  const handleActivitySelect = (activity) => {
+    if (!activity?.to) {
+      return;
+    }
 
-  if (activeProjectTabIndex === 1) {
-    activeProjectPanel = <ProjectRendersPanel />;
-  } else if (activeProjectTabIndex === 2) {
-    activeProjectPanel = <ProjectDocumentsPanel documents={project.documents} />;
-  } else if (activeProjectTabIndex === 3) {
-    activeProjectPanel = <ProjectTrackingPanel {...trackingProps} />;
-  } else if (activeProjectTabIndex === 4) {
-    activeProjectPanel = <ProjectWarrantiesPanel {...warrantiesProps} />;
-  } else if (activeProjectTabIndex === 5) {
-    activeProjectPanel = <ProjectUploadFilesPanel />;
-  }
+    setIsNotificationsDrawerOpen(false);
+    navigate(activity.to);
+  };
 
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
         <SideNavigation
-          activeItemId="project-1"
+          activeItemId="dashboard"
           expanded={isSidebarExpanded}
+          items={ARCHITECT_NAVIGATION_ITEMS}
+          newOpportunityLabel="Nuevo proyecto"
+          userName="Armando Carroz"
+          userEmail="armandoc@arcastudio2025.com"
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
-          onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
+          onNewOpportunityClick={() =>
+            navigate("/dashboard-arquitecto/nuevo-proyecto")
+          }
           onLogoutClick={() => navigate("/")}
           className="min-h-screen shrink-0 self-stretch"
         />
@@ -118,27 +105,24 @@ export default function ProjectDetailsPage({
             className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
           />
 
-          <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[48px] px-[48px] pb-[24px] pt-0">
-            <ProjectOverviewHeader project={project} />
-            <ProjectDetailTabMenu
-              activeIndex={activeProjectTabIndex}
-              onChange={setActiveProjectTabIndex}
-            />
-            {activeProjectPanel}
+          <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-start px-[48px] pt-[48px]">
+            <section className="flex w-full min-w-0 items-start justify-between gap-[48px] self-stretch">
+              <ProjectCreationTabs activeItemId="general" />
+              <ArchitectProjectInformationForm />
+            </section>
           </div>
 
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-          />
-          <ProjectRequestModal
-            open={isProjectRequestModalOpen}
-            onClose={() => setIsProjectRequestModalOpen(false)}
-            onPrevious={() => setIsProjectRequestModalOpen(false)}
-            onNext={() => setIsProjectRequestModalOpen(false)}
+            comments={ARCHITECT_DRAWER_COMMENTS}
+            recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
+            onActivitySelect={handleActivitySelect}
           />
         </div>
       </div>
     </main>
   );
 }
+
+export default NewArchitectProjectPage;

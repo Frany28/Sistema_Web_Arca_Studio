@@ -1,3 +1,4 @@
+import EmptyState from "../../../../components/ui/EmptyState.jsx";
 import IconContainer from "../../../../components/ui/IconContainer.jsx";
 import Label from "../../../../components/ui/Label/Label.jsx";
 import { CalendarIcon } from "./ProjectTrackingIcons.jsx";
@@ -32,18 +33,28 @@ function MilestoneRow({ item, withDivider }) {
 }
 
 export default function ProjectTrackingMilestonesCard({ items = [] }) {
+  const hasItems = Array.isArray(items) && items.length > 0;
+
   return (
     <aside className="w-full min-w-0 lg:w-[390px]">
       <Label label="Próximos Hitos" required={false} information={false} />
-      <ul className="mt-[12px] space-y-[12px] py-[12px]">
-        {items.map((item, index) => (
-          <MilestoneRow
-            key={item.id}
-            item={item}
-            withDivider={index < items.length - 1}
-          />
-        ))}
-      </ul>
+      {hasItems ? (
+        <ul className="mt-[12px] space-y-[12px] py-[12px]">
+          {items.map((item, index) => (
+            <MilestoneRow
+              key={item.id}
+              item={item}
+              withDivider={index < items.length - 1}
+            />
+          ))}
+        </ul>
+      ) : (
+        <EmptyState
+          className="mt-[12px]"
+          title="Título Principal"
+          showSecondaryAction={false}
+        />
+      )}
     </aside>
   );
 }

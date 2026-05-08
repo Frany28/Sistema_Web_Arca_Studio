@@ -16,8 +16,8 @@ export const PROJECT_WARRANTIES = [
     statusTheme: "Success",
     defaultExpanded: true,
     details: [
-      { label: "Proximo servicio", value: "12/02/2026" },
-      { label: "Ultimo servicio", value: "12/02/2026" },
+      { label: "Próximo servicio", value: "12/02/2026" },
+      { label: "Último servicio", value: "12/02/2026" },
     ],
   },
   {
@@ -29,8 +29,8 @@ export const PROJECT_WARRANTIES = [
     status: "Activa",
     statusTheme: "Success",
     details: [
-      { label: "Proximo servicio", value: "12/02/2026" },
-      { label: "Ultimo servicio", value: "12/02/2026" },
+      { label: "Próximo servicio", value: "12/02/2026" },
+      { label: "Último servicio", value: "12/02/2026" },
     ],
   },
   {
@@ -42,8 +42,8 @@ export const PROJECT_WARRANTIES = [
     status: "Activa",
     statusTheme: "Success",
     details: [
-      { label: "Proximo servicio", value: "12/02/2026" },
-      { label: "Ultimo servicio", value: "12/02/2026" },
+      { label: "Próximo servicio", value: "12/02/2026" },
+      { label: "Último servicio", value: "12/02/2026" },
     ],
   },
   {
@@ -55,8 +55,8 @@ export const PROJECT_WARRANTIES = [
     status: "Activa",
     statusTheme: "Success",
     details: [
-      { label: "Proximo servicio", value: "12/02/2026" },
-      { label: "Ultimo servicio", value: "12/02/2026" },
+      { label: "Próximo servicio", value: "12/02/2026" },
+      { label: "Último servicio", value: "12/02/2026" },
     ],
   },
 ];

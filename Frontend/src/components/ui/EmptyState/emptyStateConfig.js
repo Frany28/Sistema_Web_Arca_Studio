@@ -10,7 +10,7 @@ export const EMPTY_STATE_DEFAULT_PROPS = {
   showFeaturedIcon: true,
   showActions: true,
   showSecondaryAction: true,
-  "aria-label": "Empty state",
+  "aria-label": "Estado vacío",
 };
 
 export function createEmptyStateProps(overrides = {}) {

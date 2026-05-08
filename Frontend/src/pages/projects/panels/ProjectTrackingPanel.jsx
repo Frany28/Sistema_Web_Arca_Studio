@@ -14,17 +14,23 @@ export default function ProjectTrackingPanel({
   stages = PROJECT_TRACKING_STAGES,
   milestones = PROJECT_TRACKING_MILESTONES,
   comparisons = PROJECT_TRACKING_COMPARISONS,
+  empty = false,
 }) {
+  const resolvedSummary = empty ? [] : summary;
+  const resolvedStages = empty ? [] : stages;
+  const resolvedMilestones = empty ? [] : milestones;
+  const resolvedComparisons = empty ? [] : comparisons;
+
   return (
     <section className="flex w-full flex-col gap-[16px]">
-      <ProjectTrackingSummaryRow items={summary} />
+      <ProjectTrackingSummaryRow items={resolvedSummary} />
 
       <div className="flex w-full flex-col items-start gap-[24px] lg:flex-row">
-        <ProjectTrackingStagesCard stages={stages} />
-        <ProjectTrackingMilestonesCard items={milestones} />
+        <ProjectTrackingStagesCard stages={resolvedStages} />
+        <ProjectTrackingMilestonesCard items={resolvedMilestones} />
       </div>
 
-      <ProjectTrackingComparisonGallery items={comparisons} />
+      <ProjectTrackingComparisonGallery items={resolvedComparisons} />
     </section>
   );
 }

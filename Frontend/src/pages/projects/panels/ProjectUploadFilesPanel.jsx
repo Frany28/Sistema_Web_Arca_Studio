@@ -19,7 +19,7 @@ export default function ProjectUploadFilesPanel() {
         <HintText
           state="Default"
           hintText="Todos los archivos ser&aacute;n verificados por nuestro equipo."
-          className="[&>p]:text-[14px] [&>p]:font-normal [&>p]:leading-[17px] [&>p]:tracking-[-0.5px] [&>p]:text-[var(--color-text-100)]"
+          className="[&>span>svg]:size-[14px] [&>span]:size-[14px] [&>span]:text-[var(--color-text-100)] [&>p]:text-[10px] [&>p]:font-normal [&>p]:leading-[12px] [&>p]:tracking-[-0.5px] [&>p]:text-[var(--color-text-100)]"
         />
       </div>
 

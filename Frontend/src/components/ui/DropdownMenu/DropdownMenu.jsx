@@ -127,9 +127,9 @@ function DropdownCheckbox({
 function getDefaultMenuItems(type) {
   if (type === "Flag") {
     return [
-      { id: "us", label: "United States", type: "Flag", countryCode: "US" },
+      { id: "us", label: "Estados Unidos", type: "Flag", countryCode: "US" },
       { id: "ve", label: "Venezuela", type: "Flag", countryCode: "VE" },
-      { id: "es", label: "Espana", type: "Flag", countryCode: "ES" },
+      { id: "es", label: "España", type: "Flag", countryCode: "ES" },
       { id: "ar", label: "Argentina", type: "Flag", countryCode: "AR" },
     ];
   }
@@ -165,10 +165,10 @@ function getDefaultMenuItems(type) {
 
   if (type === "Icon") {
     return [
-      { id: "dashboard", label: "Dashboard", type: "Icon" },
-      { id: "analytics", label: "Analytics", type: "Icon" },
-      { id: "reports", label: "Reports", type: "Icon" },
-      { id: "settings", label: "Settings", type: "Icon" },
+      { id: "dashboard", label: "Panel", type: "Icon" },
+      { id: "analytics", label: "Analíticas", type: "Icon" },
+      { id: "reports", label: "Reportes", type: "Icon" },
+      { id: "settings", label: "Configuración", type: "Icon" },
     ];
   }
 
@@ -176,20 +176,20 @@ function getDefaultMenuItems(type) {
     return [
       {
         id: "username",
-        label: "Label",
-        supportingText: "@username",
+        label: "Etiqueta",
+        supportingText: "",
         type: "Text",
       },
       {
         id: "billing",
-        label: "Billing",
-        supportingText: "@billing",
+        label: "Facturación",
+        supportingText: "",
         type: "Text",
       },
       {
         id: "support",
-        label: "Support",
-        supportingText: "@support",
+        label: "Soporte",
+        supportingText: "",
         type: "Text",
       },
     ];

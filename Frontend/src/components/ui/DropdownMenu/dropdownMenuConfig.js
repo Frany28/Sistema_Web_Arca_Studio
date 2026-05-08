@@ -18,7 +18,7 @@ export const DROPDOWN_MENU_DEFAULT_ITEMS = [
 export const DROPDOWN_MENU_DEFAULT_PROPS = {
   type: "Text",
   label: "Label",
-  supportingText: "@username",
+  supportingText: "",
   showDivider: true,
   showContainer: true,
   checked: "No",

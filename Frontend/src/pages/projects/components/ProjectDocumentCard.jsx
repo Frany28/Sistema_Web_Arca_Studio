@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import AvatarLabel from "../../../components/ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
@@ -41,35 +42,51 @@ export default function ProjectDocumentCard({ document }) {
     return null;
   }
 
+  const isEmptyState = document.emptyState === true;
+
   return (
     <article className="flex w-full items-center gap-[24px] bg-[var(--color-neutral-100)] p-[16px] max-[720px]:flex-wrap max-[520px]:gap-[16px]">
       <div className="flex min-w-0 flex-1 items-center gap-[12px]">
         <FileAttachmentIcons
           type={document.fileType}
-          className="h-[40px] w-[35px] shrink-0"
+          className={clsx(
+            "h-[40px] w-[35px] shrink-0",
+            isEmptyState && "opacity-50",
+          )}
         />
 
         <div className="flex min-w-0 flex-col">
-          <p className="truncate text-heading-8 text-[var(--color-text-300)]">
+          <p
+            className={clsx(
+              "truncate text-heading-8",
+              isEmptyState
+                ? "text-[var(--color-neutral-400)]"
+                : "text-[var(--color-text-300)]",
+            )}
+          >
             {document.name}
           </p>
-          <p className="truncate text-body-3 text-[var(--color-text-100)]">
-            {document.size}
-            {document.uploadedAt ? ` • ${document.uploadedAt}` : ""}
-          </p>
+          {!isEmptyState ? (
+            <p className="truncate text-body-3 text-[var(--color-text-100)]">
+              {document.size}
+              {document.uploadedAt ? ` • ${document.uploadedAt}` : ""}
+            </p>
+          ) : null}
         </div>
       </div>
 
-      <AvatarLabel
-        size="S"
-        label={document.owner}
-        showSubtitle={false}
-        avatarTheme="Neutral"
-        avatarContent="Icon"
-        avatarDecorative
-        className="shrink-0"
-        textClassName="text-[var(--color-text-300)]"
-      />
+      {!isEmptyState ? (
+        <AvatarLabel
+          size="S"
+          label={document.owner}
+          showSubtitle={false}
+          avatarTheme="Neutral"
+          avatarContent="Icon"
+          avatarDecorative
+          className="shrink-0"
+          textClassName="text-[var(--color-text-300)]"
+        />
+      ) : null}
 
       <Button
         theme="Primary"
@@ -79,7 +96,12 @@ export default function ProjectDocumentCard({ document }) {
         showLeftIcon
         showRightIcon={false}
         iconLeft={<ExportIcon className="size-5" />}
-        className="shrink-0"
+        className={clsx(
+          "shrink-0",
+          isEmptyState &&
+            "border-[var(--color-neutral-400)] bg-transparent text-[var(--color-neutral-400)]",
+        )}
+        disabled={isEmptyState}
       >
         Abrir
       </Button>

@@ -1,11 +1,39 @@
 import Accordion from "../../../components/ui/Accordion/Accordion.jsx";
+import EmptyState from "../../../components/ui/EmptyState.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import {
   PROJECT_DETAIL_DATA,
   TECHNICAL_ACCORDIONS,
 } from "../projectDetailsData.js";
 
-function MapEmbed() {
+function InfoEmptyState({ title, description, className = "" }) {
+  return (
+    <EmptyState
+      title={title}
+      description={description}
+      size="S"
+      showFeaturedIcon
+      showActions
+      showSecondaryAction={false}
+      primaryActionLabel="Actualizar"
+      className={className}
+    />
+  );
+}
+
+function MapEmbed({ empty = false }) {
+  if (empty) {
+    return (
+      <div className="flex h-[300px] w-[1104px] max-w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)]">
+        <InfoEmptyState
+          title="No está disponible la ubicación"
+          description="Actualiza la página e inténtalo de nuevo."
+          className="h-auto min-h-[254px]"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-[300px] w-[1104px] max-w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
       <iframe
@@ -19,19 +47,19 @@ function MapEmbed() {
   );
 }
 
-function OverviewMetrics() {
+function OverviewMetrics({ empty = false }) {
   const overviewPairs = [
     {
       label: "Tipo",
-      value: PROJECT_DETAIL_DATA.overview[0].value,
+      value: empty ? "-" : PROJECT_DETAIL_DATA.overview[0].value,
     },
     {
       label: PROJECT_DETAIL_DATA.overview[1].label,
-      value: PROJECT_DETAIL_DATA.overview[1].value,
+      value: empty ? "-" : PROJECT_DETAIL_DATA.overview[1].value,
     },
     {
       label: PROJECT_DETAIL_DATA.overview[2].label,
-      value: PROJECT_DETAIL_DATA.overview[2].value,
+      value: empty ? "-" : PROJECT_DETAIL_DATA.overview[2].value,
     },
   ];
 
@@ -51,14 +79,14 @@ function OverviewMetrics() {
   );
 }
 
-function LocationRow() {
+function LocationRow({ empty = false }) {
   return (
     <div className="flex w-full items-center justify-between border-b border-[var(--color-neutral-200)] py-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
         {PROJECT_DETAIL_DATA.location.label}
       </span>
       <span className="text-body-4 font-medium text-[var(--color-text-300)]">
-        {PROJECT_DETAIL_DATA.location.value}
+        {empty ? "-" : PROJECT_DETAIL_DATA.location.value}
       </span>
     </div>
   );
@@ -118,33 +146,41 @@ function TechnicalAccordionDescription({ content }) {
   return <p className="text-body-4 text-[var(--color-text-200)]">{content}</p>;
 }
 
-function TechnicalSpecificationsSection() {
+function TechnicalSpecificationsSection({ empty = false }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
-        Especificaciones técnicas
+        Especificaciones Técnicas
       </span>
 
-      <div className="flex flex-col gap-[12px]">
-        {TECHNICAL_ACCORDIONS.map((accordion) => (
-          <Accordion
-            key={accordion.id}
-            title={accordion.title}
-            description={
-              <TechnicalAccordionDescription content={accordion.description} />
-            }
-            defaultOpen={accordion.defaultOpen}
-            interactive
-            className="rounded-[var(--radius-2)]"
-            rightIcon={<QuestionTooltipIcon />}
-          />
-        ))}
-      </div>
+      {empty ? (
+        <InfoEmptyState
+          title="Aún no hay información"
+          description="Esta sección describe las herramientas y tecnologías utilizadas en el proyecto, asegurando transparencia."
+          className="min-h-[254px]"
+        />
+      ) : (
+        <div className="flex flex-col gap-[12px]">
+          {TECHNICAL_ACCORDIONS.map((accordion) => (
+            <Accordion
+              key={accordion.id}
+              title={accordion.title}
+              description={
+                <TechnicalAccordionDescription content={accordion.description} />
+              }
+              defaultOpen={accordion.defaultOpen}
+              interactive
+              className="rounded-[var(--radius-2)]"
+              rightIcon={<QuestionTooltipIcon />}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function RequirementsSection() {
+function RequirementsSection({ empty = false }) {
   const requirementColumns = [
     PROJECT_DETAIL_DATA.requirements.slice(0, 4),
     PROJECT_DETAIL_DATA.requirements.slice(4, 8),
@@ -156,37 +192,65 @@ function RequirementsSection() {
         Requerimientos
       </span>
 
-      <div className="flex min-h-px flex-1 flex-wrap items-start gap-[16px]  p-[12px]">
-        {requirementColumns.map((column, columnIndex) => (
-          <div
-            key={columnIndex}
-            className="flex min-w-[220px] flex-1 flex-col gap-[16px]"
-          >
-            {column.map((item, itemIndex) => (
-              <ul key={`${item}-${itemIndex}`} className="block">
-                <li className="ms-[24px] list-disc text-[16px] font-bold leading-[19px] tracking-[-0.5px] text-[var(--color-text-200)]">
-                  {item}
-                </li>
-              </ul>
-            ))}
-          </div>
-        ))}
-      </div>
+      {empty ? (
+        <InfoEmptyState
+          title="Aún no hay requerimientos"
+          description="Esta sección detalla las características especificadas para el proyecto."
+          className="min-h-[254px]"
+        />
+      ) : (
+        <div className="flex min-h-px flex-1 flex-wrap items-start gap-[16px] p-[12px]">
+          {requirementColumns.map((column, columnIndex) => (
+            <div
+              key={columnIndex}
+              className="flex min-w-[220px] flex-1 flex-col gap-[16px]"
+            >
+              {column.map((item, itemIndex) => (
+                <ul key={`${item}-${itemIndex}`} className="block">
+                  <li className="ms-[24px] list-disc text-[16px] font-bold leading-[19px] tracking-[-0.5px] text-[var(--color-text-200)]">
+                    {item}
+                  </li>
+                </ul>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-export default function ProjectInfoPanel() {
+function KeyDocumentsSection({ empty = false }) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
+      <span className="text-body-4 text-[var(--color-text-200)]">
+        Documentos Clave
+      </span>
+
+      {empty ? (
+        <InfoEmptyState
+          title="Aún no hay documentos"
+          description="Actualmente no hay documentación disponible para este proyecto. Por favor, revisa más tarde."
+          className="min-h-[254px]"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export default function ProjectInfoPanel({ empty = false }) {
   return (
     <section className="flex w-full flex-col gap-[24px]">
-      <OverviewMetrics />
-      <LocationRow />
-      <MapEmbed />
+      <OverviewMetrics empty={empty} />
+      <LocationRow empty={empty} />
+      <MapEmbed empty={empty} />
 
       <div className="flex w-full items-start gap-[16px] max-[1024px]:flex-col">
-        <TechnicalSpecificationsSection />
-        <RequirementsSection />
+        <TechnicalSpecificationsSection empty={empty} />
+        <RequirementsSection empty={empty} />
       </div>
+
+      {empty ? <KeyDocumentsSection empty /> : null}
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
+import SharedGalleryImageCard from "../../../components/ui/Gallery/GalleryImageCard.jsx";
 import GalleryVideosModal from "../../../components/ui/Gallery/GalleryVideosModal.jsx";
 import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.jsx";
 import Model3DViewerModal from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
@@ -184,38 +185,6 @@ function RenderThumbnailRail({ items, activeRenderId, onSelect }) {
   );
 }
 
-function GalleryImageCard({ item, className, onClick }) {
-  const Component = onClick ? "button" : "article";
-  const interactiveProps = onClick
-    ? {
-        type: "button",
-        onClick,
-      }
-    : {};
-
-  return (
-    <Component
-      {...interactiveProps}
-      className={clsx(
-        "group relative h-[212px] overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)]",
-        onClick &&
-          "cursor-pointer transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
-        className,
-      )}
-    >
-      <img
-        src={item.image}
-        alt={item.title}
-        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.14)_40%,rgba(0,0,0,0.56)_100%)]" />
-      <span className="absolute inset-x-[10px] bottom-[10px] text-heading-8 text-[var(--color-neutral-100-uniform)]">
-        {item.title}
-      </span>
-    </Component>
-  );
-}
-
 function PlayIcon({ className }) {
   return (
     <svg
@@ -293,21 +262,21 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage = () => {} })
       <div className="flex w-full flex-col gap-[16px] max-[1024px]:hidden">
         <div className="flex w-full items-center gap-[16px]">
           {topRow[0] ? (
-            <GalleryImageCard
+            <SharedGalleryImageCard
               item={topRow[0]}
               onClick={() => onSelectImage(topRow[0])}
               className="w-[204px] shrink-0"
             />
           ) : null}
           {topRow[1] ? (
-            <GalleryImageCard
+            <SharedGalleryImageCard
               item={topRow[1]}
               onClick={() => onSelectImage(topRow[1])}
               className="min-w-0 flex-1"
             />
           ) : null}
           {topRow[2] ? (
-            <GalleryImageCard
+            <SharedGalleryImageCard
               item={topRow[2]}
               onClick={() => onSelectImage(topRow[2])}
               className="min-w-0 flex-1"
@@ -317,21 +286,21 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage = () => {} })
 
         <div className="flex w-full items-center gap-[16px]">
           {bottomRow[0] ? (
-            <GalleryImageCard
+            <SharedGalleryImageCard
               item={bottomRow[0]}
               onClick={() => onSelectImage(bottomRow[0])}
               className="min-w-0 flex-1"
             />
           ) : null}
           {bottomRow[1] ? (
-            <GalleryImageCard
+            <SharedGalleryImageCard
               item={bottomRow[1]}
               onClick={() => onSelectImage(bottomRow[1])}
               className="min-w-0 flex-1"
             />
           ) : null}
           {bottomRow[2] ? (
-            <GalleryImageCard
+            <SharedGalleryImageCard
               item={bottomRow[2]}
               onClick={() => onSelectImage(bottomRow[2])}
               className="w-[204px] shrink-0"
@@ -342,7 +311,7 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage = () => {} })
 
       <div className="hidden w-full grid-cols-2 gap-[16px] max-[1024px]:grid max-[640px]:grid-cols-1">
         {items.slice(1).map((item) => (
-          <GalleryImageCard
+          <SharedGalleryImageCard
             key={`gallery-mobile-${item.id}`}
             item={item}
             onClick={() => onSelectImage(item)}
@@ -452,10 +421,6 @@ function VideoGallerySection({ items, onOpenGallery, onOpenVideo }) {
       position: nextPosition,
     });
   }, []);
-
-  useEffect(() => {
-    setActiveVideoId(items[0]?.id);
-  }, [items]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -592,18 +557,21 @@ export default function ProjectRendersPanel({
   );
 
   useEffect(() => {
-    setActiveRenderId(renderGallery[0]?.id);
-  }, [renderGallery]);
-
-  useEffect(() => {
     if (!activeRender) {
-      setIsLoading(false);
-      setProgress(100);
-      return undefined;
+      const frameId = window.requestAnimationFrame(() => {
+        setIsLoading(false);
+        setProgress(100);
+      });
+
+      return () => {
+        window.cancelAnimationFrame(frameId);
+      };
     }
 
-    setIsLoading(true);
-    setProgress(43);
+    const frameId = window.requestAnimationFrame(() => {
+      setIsLoading(true);
+      setProgress(43);
+    });
 
     const intervalId = window.setInterval(() => {
       setProgress((current) => {
@@ -622,6 +590,7 @@ export default function ProjectRendersPanel({
     }, RENDER_LOADING_MS);
 
     return () => {
+      window.cancelAnimationFrame(frameId);
       window.clearInterval(intervalId);
       window.clearTimeout(timeoutId);
     };

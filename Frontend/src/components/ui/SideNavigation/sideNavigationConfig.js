@@ -1,7 +1,7 @@
 export const SIDE_NAVIGATION_DEFAULT_ITEMS = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    label: "Panel",
     icon: "dashboard",
     wrapperHeight: "44px",
   },
@@ -38,9 +38,10 @@ export const SIDE_NAVIGATION_DEFAULT_PROPS = {
   defaultActiveItemId: null,
   defaultExpanded: true,
   searchPlaceholder: "Buscar...",
+  newOpportunityLabel: "Nueva oportunidad",
   userName: "Alan Wake",
   userEmail: "alanexample.com",
-  "aria-label": "Side navigation",
+  "aria-label": "Navegación lateral",
 };
 
 export function createSideNavigationProps(overrides = {}) {

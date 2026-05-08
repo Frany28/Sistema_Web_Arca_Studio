@@ -324,6 +324,7 @@ function SideNavigation({
   expanded,
   defaultExpanded = SIDE_NAVIGATION_DEFAULT_PROPS.defaultExpanded,
   searchPlaceholder = SIDE_NAVIGATION_DEFAULT_PROPS.searchPlaceholder,
+  newOpportunityLabel = SIDE_NAVIGATION_DEFAULT_PROPS.newOpportunityLabel,
   userName = SIDE_NAVIGATION_DEFAULT_PROPS.userName,
   userEmail = SIDE_NAVIGATION_DEFAULT_PROPS.userEmail,
   userAvatarSrc = null,
@@ -499,7 +500,7 @@ function SideNavigation({
               className="w-full"
               onClick={onNewOpportunityClick}
             >
-              Nueva oportunidad
+              {newOpportunityLabel}
             </Button>
           ) : (
             <Button
@@ -510,7 +511,7 @@ function SideNavigation({
               showLeftIcon
               showRightIcon={false}
               iconLeft={<AddIcon className="size-5" />}
-              aria-label="Nueva oportunidad"
+              aria-label={newOpportunityLabel}
               onClick={onNewOpportunityClick}
               onMouseUp={clearPointerFocus}
               onTouchEnd={clearPointerFocus}

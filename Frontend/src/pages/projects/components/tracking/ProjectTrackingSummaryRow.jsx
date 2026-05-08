@@ -60,8 +60,34 @@ function getInfoIcon(iconKey) {
   return <ClockIcon size={20} className="text-[var(--color-text-300)]" />;
 }
 
+const EMPTY_SUMMARY_ITEMS = [
+  {
+    id: "overall-progress-empty",
+    type: "progress",
+    title: "Progreso General",
+    description: "Sin información",
+    value: 0,
+  },
+  {
+    id: "last-update-empty",
+    type: "info",
+    icon: "clock",
+    title: "Última actualización",
+    description: "Sin información",
+  },
+  {
+    id: "estimated-date-empty",
+    type: "info",
+    icon: "calendar-tick",
+    title: "Fecha Estimada",
+    description: "Sin información",
+  },
+];
+
 export default function ProjectTrackingSummaryRow({ items = [] }) {
-  const [progressItem, ...infoItems] = items;
+  const normalizedItems =
+    Array.isArray(items) && items.length > 0 ? items : EMPTY_SUMMARY_ITEMS;
+  const [progressItem, ...infoItems] = normalizedItems;
 
   return (
     <section className="grid w-full grid-cols-1 gap-0  border-[var(--color-neutral-200)] min-[1024px]:grid-cols-3">

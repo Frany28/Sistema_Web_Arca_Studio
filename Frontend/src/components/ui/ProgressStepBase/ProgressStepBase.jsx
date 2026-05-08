@@ -3,6 +3,7 @@ import clsx from "clsx";
 import * as IconsaxIcons from "iconsax-react";
 import {
   PROGRESS_STEP_BASE_DEFAULT_PROPS,
+  PROGRESS_STEP_BASE_LAYOUTS,
   PROGRESS_STEP_BASE_SIZES,
   PROGRESS_STEP_BASE_STATES,
   PROGRESS_STEP_BASE_TYPES,
@@ -121,7 +122,7 @@ const NUMBER_BADGE_SIZES = {
   S: {
     badge: "size-[32px]",
     featuredWidth: "w-[32px]",
-    icon: "size-[16px]",
+    icon: "size-[18px]",
     number: "text-[12px] leading-[12px] tracking-[-0.5px]",
   },
   M: {
@@ -210,16 +211,16 @@ function getLineBorderClass(state) {
 function CheckTickIcon({ className }) {
   return (
     <svg
-      viewBox="0 0 20 20"
+      viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
     >
       <path
-        d="M5.5 10.25L8.375 13.125L14.5 7"
+        d="M2.21533 9.00009L6.733 13.5178L15.7843 4.48242"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="2.25879"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -251,6 +252,7 @@ function ProgressStepBase({
   type = PROGRESS_STEP_BASE_DEFAULT_PROPS.type,
   state = PROGRESS_STEP_BASE_DEFAULT_PROPS.state,
   size = PROGRESS_STEP_BASE_DEFAULT_PROPS.size,
+  layout = PROGRESS_STEP_BASE_DEFAULT_PROPS.layout,
   showSubtext = PROGRESS_STEP_BASE_DEFAULT_PROPS.showSubtext,
   number = PROGRESS_STEP_BASE_DEFAULT_PROPS.number,
   "aria-label": ariaLabel = PROGRESS_STEP_BASE_DEFAULT_PROPS["aria-label"],
@@ -287,6 +289,9 @@ function ProgressStepBase({
   const resolvedSize = PROGRESS_STEP_BASE_SIZES.includes(size)
     ? size
     : PROGRESS_STEP_BASE_DEFAULT_PROPS.size;
+  const resolvedLayout = PROGRESS_STEP_BASE_LAYOUTS.includes(layout)
+    ? layout
+    : PROGRESS_STEP_BASE_DEFAULT_PROPS.layout;
   const textStyles = TEXT_SIZES[resolvedSize];
   const badgeStyles = NUMBER_BADGE_SIZES[resolvedSize];
   const themeKey = isDarkMode ? "dark" : "light";
@@ -298,6 +303,7 @@ function ProgressStepBase({
   const isLineText = resolvedType === "Line text";
   const isNumbered = resolvedType === "Numbered";
   const isFeaturedIcon = resolvedType === "Featured Icon";
+  const isInlineLayout = !isLineText && resolvedLayout === "Inline";
   const isActive = resolvedState === "Active";
   const isCompleted = resolvedState === "Completed";
   const stateTextColors = getStateTextColorClasses(resolvedState);
@@ -440,7 +446,9 @@ function ProgressStepBase({
               textStyles.linePaddingTop,
               getLineBorderClass(resolvedState),
             )
-          : clsx("flex-col items-center", textStyles.stackGap),
+          : isInlineLayout
+            ? "flex-row items-start gap-[8px]"
+            : clsx("flex-col items-center", textStyles.stackGap),
         className,
       )}
       data-node-id={nodeId}
@@ -475,12 +483,20 @@ function ProgressStepBase({
           {isNumbered ? renderNumberedBadge() : null}
           {isFeaturedIcon ? renderFeaturedIconBadge() : null}
 
-          <div className="flex w-full flex-col items-center gap-[4px] text-center tracking-[-0.5px]">
+          <div
+            className={clsx(
+              "flex w-full flex-col gap-[4px] tracking-[-0.5px]",
+              isInlineLayout
+                ? "min-w-0 flex-1 items-start pt-[1px] text-left"
+                : "items-center text-center",
+            )}
+          >
             <span
               className={clsx(
                 "font-['Inter:Regular',sans-serif] font-normal not-italic",
                 textStyles.title,
                 stateTextColors.title,
+                isInlineLayout && "w-full truncate",
               )}
             >
               {title}
@@ -488,11 +504,12 @@ function ProgressStepBase({
             {showSubtext ? (
               <span
                 className={clsx(
-                  "font-['Inter:Regular',sans-serif] font-normal not-italic",
-                  textStyles.subtext,
-                  stateTextColors.supporting,
-                )}
-              >
+                "font-['Inter:Regular',sans-serif] font-normal not-italic",
+                textStyles.subtext,
+                stateTextColors.supporting,
+                isInlineLayout && "w-full truncate",
+              )}
+            >
                 {subtext}
               </span>
             ) : null}

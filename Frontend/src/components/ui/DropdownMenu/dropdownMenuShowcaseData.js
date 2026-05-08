@@ -107,13 +107,13 @@ export const dropdownMenuOpenItems = [
       },
       {
         id: "billing",
-        label: "Billing",
+        label: "Facturación",
         supportingText: "@billing",
         type: "Text",
       },
       {
         id: "support",
-        label: "Support",
+        label: "Soporte",
         supportingText: "@support",
         type: "Text",
       },
@@ -127,10 +127,10 @@ export const dropdownMenuOpenItems = [
     defaultOpen: true,
     showContainer: true,
     items: [
-      { id: "dashboard", label: "Dashboard", supportingText: "@dashboard", type: "Icon" },
-      { id: "analytics", label: "Analytics", supportingText: "@analytics", type: "Icon" },
-      { id: "reports", label: "Reports", supportingText: "@reports", type: "Icon" },
-      { id: "settings", label: "Settings", supportingText: "@settings", type: "Icon" },
+      { id: "dashboard", label: "Panel", supportingText: "@panel", type: "Icon" },
+      { id: "analytics", label: "Analíticas", supportingText: "@analiticas", type: "Icon" },
+      { id: "reports", label: "Reportes", supportingText: "@reportes", type: "Icon" },
+      { id: "settings", label: "Configuración", supportingText: "@configuracion", type: "Icon" },
     ],
   }),
   createDropdownMenuShowcaseItem("Checkbox / Open", {
@@ -215,9 +215,9 @@ export const dropdownMenuOpenItems = [
     defaultOpen: true,
     showContainer: true,
     items: [
-      { id: "us", label: "United States", supportingText: "@us", type: "Flag", countryCode: "US" },
+      { id: "us", label: "Estados Unidos", supportingText: "@us", type: "Flag", countryCode: "US" },
       { id: "ve", label: "Venezuela", supportingText: "@ve", type: "Flag", countryCode: "VE" },
-      { id: "es", label: "Espana", supportingText: "@es", type: "Flag", countryCode: "ES" },
+      { id: "es", label: "España", supportingText: "@es", type: "Flag", countryCode: "ES" },
       { id: "ar", label: "Argentina", supportingText: "@ar", type: "Flag", countryCode: "AR" },
     ],
   }),
@@ -238,13 +238,13 @@ export const dropdownMenuQuickToggleItems = [
       },
       {
         id: "billing",
-        label: "Billing",
+        label: "Facturación",
         supportingText: "@billing",
         type: "Text",
       },
       {
         id: "support",
-        label: "Support",
+        label: "Soporte",
         supportingText: "@support",
         type: "Text",
       },
@@ -258,25 +258,25 @@ export const dropdownMenuQuickToggleItems = [
     items: [
       {
         id: "dashboard",
-        label: "Dashboard",
+        label: "Panel",
         supportingText: "@dashboard",
         type: "Icon",
       },
       {
         id: "analytics",
-        label: "Analytics",
-        supportingText: "@analytics",
+        label: "Analíticas",
+        supportingText: "@analiticas",
         type: "Icon",
       },
       {
         id: "reports",
-        label: "Reports",
-        supportingText: "@reports",
+        label: "Reportes",
+        supportingText: "@reportes",
         type: "Icon",
       },
       {
         id: "settings",
-        label: "Settings",
+        label: "Configuración",
         supportingText: "@settings",
         type: "Icon",
       },
@@ -359,7 +359,7 @@ export const dropdownMenuQuickToggleItems = [
     items: [
       {
         id: "us",
-        label: "United States",
+        label: "Estados Unidos",
         supportingText: "@us",
         type: "Flag",
         countryCode: "US",
@@ -373,7 +373,7 @@ export const dropdownMenuQuickToggleItems = [
       },
       {
         id: "es",
-        label: "Espana",
+        label: "España",
         supportingText: "@es",
         type: "Flag",
         countryCode: "ES",

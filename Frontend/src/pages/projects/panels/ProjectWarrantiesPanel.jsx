@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { ArrowDown2, ArrowUp2, Filter, SearchNormal1 } from "iconsax-react";
+import { ArrowDown2, ArrowUp2 } from "iconsax-react";
 
 import Badge from "../../../components/ui/Badge/Badge.jsx";
+import DropdownMenu from "../../../components/ui/DropdownMenu/DropdownMenu.jsx";
+import EmptyState from "../../../components/ui/EmptyState.jsx";
+import Input from "../../../components/ui/Input/Input.jsx";
 import {
   PROJECT_WARRANTIES,
   PROJECT_WARRANTY_FILTER_ITEMS,
@@ -21,45 +24,23 @@ function WarrantyChevronIcon({ expanded }) {
   );
 }
 
-function FilterIcon() {
+function WarrantySearchInput({ value, onChange, disabled = false }) {
   return (
-    <Filter
-      size={20}
-      variant="Linear"
-      color="currentColor"
-      aria-hidden="true"
+    <Input
+      type="Search bar"
+      size="M"
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      showLabel={false}
+      showHint={false}
+      showRightIcon={false}
+      required={false}
+      placeholder="Buscar..."
+      className="w-full max-w-[320px] shrink-0 gap-0"
+      inputClassName="font-medium"
+      aria-label="Buscar garantías"
     />
-  );
-}
-
-function SearchIcon() {
-  return (
-    <SearchNormal1
-      size={20}
-      variant="Linear"
-      color="currentColor"
-      aria-hidden="true"
-    />
-  );
-}
-
-function WarrantySearchInput({ value, onChange }) {
-  return (
-    <label className="flex h-[40px] w-full max-w-[320px] shrink-0 items-center rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[8px] py-[2px] text-[var(--color-text-100)] transition-colors focus-within:border-[var(--color-neutral-300)]">
-      <span className="flex h-[36px] min-w-0 flex-1 items-center gap-[8px] rounded-[var(--radius-2)] p-[8px]">
-        <span className="inline-flex size-5 shrink-0 items-center justify-center">
-          <SearchIcon />
-        </span>
-        <input
-          type="search"
-          value={value}
-          placeholder="Buscar..."
-          className="min-w-0 flex-1 border-0 bg-transparent text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] outline-none placeholder:text-[var(--color-text-100)]"
-          onChange={onChange}
-          aria-label="Buscar garantias"
-        />
-      </span>
-    </label>
   );
 }
 
@@ -68,107 +49,29 @@ function WarrantyFilterMenu({
   selectedFilterId,
   selectedFilter,
   onSelect,
+  disabled = false,
 }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
-
-    function handlePointerDown(event) {
-      if (!menuRef.current?.contains(event.target)) {
-        setOpen(false);
-      }
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
   return (
-    <div ref={menuRef} className="relative w-full max-w-[320px] shrink-0">
-      <button
-        type="button"
-        className={clsx(
-          "flex h-[40px] w-full cursor-pointer flex-col items-start rounded-[12px] border border-[var(--color-neutral-200)] bg-transparent px-[8px] py-[2px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
-          open && "rounded-b-none",
-        )}
-        aria-label={`Filtrar garantias${selectedFilter ? `: ${selectedFilter.label}` : ""}`}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span className="flex h-[36px] w-full items-center gap-[8px] rounded-[var(--radius-2)] p-[8px]">
-          <span className="flex min-w-0 flex-1 items-center gap-[12px]">
-            <span className="inline-flex size-5 shrink-0 items-center justify-center text-[var(--color-text-100)]">
-              <FilterIcon />
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)]">
-              Filtrar por:
-            </span>
-          </span>
-          <span className="inline-flex size-5 shrink-0 items-center justify-center text-[var(--color-text-100)]">
-            <ArrowDown2
-              size={20}
-              variant="Linear"
-              color="currentColor"
-              aria-hidden="true"
-            />
-          </span>
-        </span>
-      </button>
-
-      {open ? (
-        <div
-          role="menu"
-          className="absolute left-0 top-full z-20 flex w-full flex-col gap-[4px] rounded-b-[12px] border border-t-0 border-[var(--color-neutral-200)] bg-transparent px-[8px] pb-[8px] pt-[6px]"
-        >
-          {filters.map((item) => {
-            const selected = item.id === selectedFilterId;
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                role="menuitem"
-                className={clsx(
-                  "h-[36px] rounded-[var(--radius-2)] px-[8px] text-left text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
-                  selected && "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]",
-                )}
-                onClick={() => {
-                  onSelect(item.id);
-                  setOpen(false);
-                }}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
+    <DropdownMenu
+      type="Text"
+      label="Filtrar por:"
+      supportingText=""
+      items={filters.map((item) => ({ ...item, type: "Text" }))}
+      selectedItemId={selectedFilterId}
+      onItemSelect={(item) => onSelect(item.id)}
+      interactive={!disabled}
+      className={clsx("w-full max-w-[320px] shrink-0", disabled && "opacity-60")}
+      triggerClassName={disabled ? "cursor-not-allowed bg-[var(--color-neutral-200)]" : undefined}
+      triggerHeightClassName="h-[40px]"
+      triggerPaddingXClassName="px-[8px]"
+      contentPaddingClassName="px-[8px] pb-[8px] pt-[6px]"
+      aria-label={`Filtrar garantías${selectedFilter ? `: ${selectedFilter.label}` : ""}`}
+    />
   );
 }
 
 function WarrantyDateBadge({ children }) {
-  return (
-    <span className="inline-flex h-[20px] items-center justify-center rounded-[var(--radius-full)] border border-[var(--color-primary-100)] bg-[var(--color-neutral-100)] px-[8px] py-[2px] text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-      {children}
-    </span>
-  );
+  return <Badge label={children} theme="Neutral" size="S" variation="Simple" />;
 }
 
 function WarrantyField({ children, className }) {
@@ -206,7 +109,7 @@ function WarrantyRow({ warranty, expanded, onToggle }) {
         <button
           type="button"
           className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]"
-          aria-label={expanded ? "Contraer garantia" : "Expandir garantia"}
+          aria-label={expanded ? "Contraer garantía" : "Expandir garantía"}
           aria-expanded={expanded}
           aria-controls={detailsId}
           onClick={onToggle}
@@ -237,22 +140,25 @@ function WarrantyRow({ warranty, expanded, onToggle }) {
 export default function ProjectWarrantiesPanel({
   warranties = PROJECT_WARRANTIES,
   filters = PROJECT_WARRANTY_FILTER_ITEMS,
+  empty = false,
 }) {
+  const resolvedWarranties = empty ? [] : warranties;
   const [query, setQuery] = useState("");
   const [selectedFilterId, setSelectedFilterId] = useState(filters[0]?.id);
   const [expandedIds, setExpandedIds] = useState(() => {
     return new Set(
-      warranties
+      resolvedWarranties
         .filter((warranty) => warranty.defaultExpanded)
         .map((warranty) => warranty.id),
     );
   });
 
+  const hasWarranties = resolvedWarranties.length > 0;
   const selectedFilter = filters.find((item) => item.id === selectedFilterId);
   const normalizedQuery = query.trim().toLowerCase();
 
   const visibleWarranties = useMemo(() => {
-    return warranties.filter((warranty) => {
+    return resolvedWarranties.filter((warranty) => {
       const matchesQuery = [
         warranty.item,
         warranty.code,
@@ -272,7 +178,7 @@ export default function ProjectWarrantiesPanel({
 
       return matchesQuery && matchesFilter;
     });
-  }, [normalizedQuery, selectedFilterId, warranties]);
+  }, [normalizedQuery, selectedFilterId, resolvedWarranties]);
 
   function toggleWarranty(warrantyId) {
     setExpandedIds((current) => {
@@ -289,10 +195,11 @@ export default function ProjectWarrantiesPanel({
   }
 
   return (
-    <section className="flex w-full flex-col gap-[24px]" aria-label="Garantias">
+    <section className="flex w-full flex-col gap-[24px]" aria-label="Garantías">
       <div className="flex w-full flex-wrap items-start gap-[8px]">
         <WarrantySearchInput
           value={query}
+          disabled={!hasWarranties}
           onChange={(event) => setQuery(event.target.value)}
         />
 
@@ -300,26 +207,30 @@ export default function ProjectWarrantiesPanel({
           filters={filters}
           selectedFilterId={selectedFilterId}
           selectedFilter={selectedFilter}
+          disabled={!hasWarranties}
           onSelect={setSelectedFilterId}
         />
       </div>
 
-      <div className="flex w-full flex-col">
-        {visibleWarranties.map((warranty) => (
-          <WarrantyRow
-            key={warranty.id}
-            warranty={warranty}
-            expanded={expandedIds.has(warranty.id)}
-            onToggle={() => toggleWarranty(warranty.id)}
-          />
-        ))}
-
-        {visibleWarranties.length === 0 ? (
-          <div className="border-b border-[var(--color-neutral-200)] py-[24px] text-center text-body-3 text-[var(--color-text-100)]">
-            No hay garantias que coincidan con la busqueda.
-          </div>
-        ) : null}
-      </div>
+      {visibleWarranties.length > 0 ? (
+        <div className="flex w-full flex-col">
+          {visibleWarranties.map((warranty) => (
+            <WarrantyRow
+              key={warranty.id}
+              warranty={warranty}
+              expanded={expandedIds.has(warranty.id)}
+              onToggle={() => toggleWarranty(warranty.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          className="min-h-[360px]"
+          title="No se encontraron garantías"
+          description="Aún no hay información."
+          showSecondaryAction={false}
+        />
+      )}
     </section>
   );
 }

@@ -95,6 +95,7 @@ function ProjectRequestDetailsStep({
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [scrollLength, setScrollLength] = useState(1);
+  const [contentHeight, setContentHeight] = useState(modalBodyMaxHeight);
   const contentRef = useRef(null);
   const isProjectNameValid = values.projectName.trim().length > 0;
   const isProjectTypeValid = Boolean(values.selectedProjectTypeId);
@@ -126,13 +127,25 @@ function ProjectRequestDetailsStep({
 
   useEffect(() => {
     if (!open) {
-      return;
+      return undefined;
     }
 
-    setIsProjectTypeMenuOpen(false);
-    setHasAttemptedSubmit(false);
-    setScrollPosition(0);
-    setScrollLength(1);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setIsProjectTypeMenuOpen(false);
+      setHasAttemptedSubmit(false);
+      setScrollPosition(0);
+      setScrollLength(1);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -151,6 +164,7 @@ function ProjectRequestDetailsStep({
         container.clientHeight / Math.max(container.scrollHeight, 1),
         1,
       );
+      setContentHeight(container.clientHeight);
       setScrollLength(nextLength);
       setScrollPosition(container.scrollTop / maxScroll);
     }
@@ -316,7 +330,7 @@ function ProjectRequestDetailsStep({
             ) : null}
 
             <TextArea
-              label="Description"
+              label="Descripción"
               required={false}
               showLabelInfo
               showHint
@@ -359,10 +373,7 @@ function ProjectRequestDetailsStep({
         {scrollLength < 1 ? (
           <ScrollBar
             height={Math.max(
-              Math.min(
-                contentRef.current?.clientHeight ?? modalBodyMaxHeight,
-                modalBodyMaxHeight,
-              ),
+              Math.min(contentHeight, modalBodyMaxHeight),
               24,
             )}
             length={scrollLength}

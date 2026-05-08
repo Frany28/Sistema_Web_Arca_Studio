@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import clsx from "clsx";
+import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import IconContainer from "../../../components/ui/IconContainer.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import ProjectDocumentCard from "../components/ProjectDocumentCard.jsx";
@@ -6,6 +8,13 @@ import ProjectDocumentListCard from "../components/ProjectDocumentListCard.jsx";
 import ProjectDocumentPreview from "../components/ProjectDocumentPreview.jsx";
 import ProjectDocumentsToolbar from "../components/ProjectDocumentsToolbar.jsx";
 import { PROJECT_DETAIL_DATA } from "../projectDetailsData.js";
+
+const EMPTY_DOCUMENT_PREVIEW = {
+  id: "empty-document-preview",
+  name: "Sin información",
+  fileType: "PDF",
+  emptyState: true,
+};
 
 function CloudAddIcon({ className }) {
   return (
@@ -15,6 +24,7 @@ function CloudAddIcon({ className }) {
       height="16"
       viewBox="0 0 16 16"
       fill="none"
+      className={className}
     >
       <path
         d="M3.69352 7.41406C0.573516 7.63406 0.573516 12.1741 3.69352 12.3941H4.97354"
@@ -59,6 +69,7 @@ function TickCircleIcon({ className }) {
       height="16"
       viewBox="0 0 16 16"
       fill="none"
+      className={className}
     >
       <path
         d="M8.00016 14.6673C11.6668 14.6673 14.6668 11.6673 14.6668 8.00065C14.6668 4.33398 11.6668 1.33398 8.00016 1.33398C4.3335 1.33398 1.3335 4.33398 1.3335 8.00065C1.3335 11.6673 4.3335 14.6673 8.00016 14.6673Z"
@@ -97,6 +108,7 @@ function ProgressSection({ icon, children }) {
 export default function ProjectDocumentsPanel({
   documents = PROJECT_DETAIL_DATA.documents,
 }) {
+  const hasDocuments = documents.length > 0;
   const listViewportRef = useRef(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState(
     documents[0]?.id,
@@ -108,11 +120,15 @@ export default function ProjectDocumentsPanel({
   });
 
   const selectedDocument = useMemo(() => {
+    if (!hasDocuments) {
+      return EMPTY_DOCUMENT_PREVIEW;
+    }
+
     return (
       documents.find((document) => document.id === selectedDocumentId) ??
       documents[0]
     );
-  }, [documents, selectedDocumentId]);
+  }, [documents, hasDocuments, selectedDocumentId]);
 
   const syncScrollState = useCallback(() => {
     const element = listViewportRef.current;
@@ -174,25 +190,52 @@ export default function ProjectDocumentsPanel({
   return (
     <section className="flex w-full flex-col gap-[16px]">
       <div className="grid w-full grid-cols-[minmax(0,1fr)_335px] gap-[20px] max-[1024px]:grid-cols-1">
-        <div className="flex min-w-0 flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]">
+        <div
+          className={clsx(
+            "flex min-w-0 flex-col overflow-hidden rounded-[var(--radius-3)] shadow-[var(--shadow-e1)]",
+            hasDocuments
+              ? "bg-[var(--color-neutral-100)]"
+              : "bg-[var(--color-neutral-10)]",
+          )}
+        >
           <ProjectDocumentCard document={selectedDocument} />
 
-          <div className="flex h-[34px] items-center gap-[12px] bg-[#333] px-[178px] text-[10px] text-[var(--color-neutral-100-uniform)] max-[720px]:px-[24px]">
-            <span className="rounded-[2px] bg-[#111] px-[4px]">1</span>
-            <span>/</span>
-            <span>8</span>
-            <span className="text-[var(--color-neutral-300)]">|</span>
-            <span>-</span>
-            <span className="rounded-[2px] bg-[#111] px-[4px]">100%</span>
-            <span>+</span>
-          </div>
+          {hasDocuments ? (
+            <>
+              <div className="flex h-[34px] items-center gap-[12px] bg-[#333] px-[178px] text-[10px] text-[var(--color-neutral-100-uniform)] max-[720px]:px-[24px]">
+                <span className="rounded-[2px] bg-[#111] px-[4px]">1</span>
+                <span>/</span>
+                <span>8</span>
+                <span className="text-[var(--color-neutral-300)]">|</span>
+                <span>-</span>
+                <span className="rounded-[2px] bg-[#111] px-[4px]">
+                  100%
+                </span>
+                <span>+</span>
+              </div>
 
-          <ProjectDocumentPreview document={selectedDocument} />
+              <ProjectDocumentPreview document={selectedDocument} />
+            </>
+          ) : (
+            <div className="flex min-h-[426px] flex-1 items-center justify-center border-t border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] px-[24px]">
+              <EmptyState
+                title="Sin documentos"
+                description="No hay archivos disponibles. Carga archivos para ver una vista previa aquí."
+                size="S"
+                showFeaturedIcon
+                showActions
+                showSecondaryAction={false}
+                primaryActionLabel="Actualizar"
+                className="h-auto min-h-[254px]"
+              />
+            </div>
+          )}
         </div>
 
         <aside className="flex min-h-0 flex-col">
-          <ProjectDocumentsToolbar />
+          <ProjectDocumentsToolbar disabled={!hasDocuments} />
 
+          {hasDocuments ? (
           <div className="flex flex-col gap-[12px] py-[12px]">
             <p className="text-heading-8 text-[var(--color-text-200)]">
               Selecciona un documento para ver la previsualización
@@ -225,15 +268,33 @@ export default function ProjectDocumentsPanel({
               </div>
             </div>
           </div>
+          ) : (
+            <div className="flex min-h-[443px] items-center justify-center px-[16px]">
+              <EmptyState
+                title="No se encontraron documentos"
+                description="Aquí encontrarás todos los documentos importantes sobre este proyecto."
+                size="S"
+                showFeaturedIcon
+                showActions
+                showSecondaryAction={false}
+                primaryActionLabel="Actualizar"
+                className="h-auto min-h-[254px]"
+              />
+            </div>
+          )}
         </aside>
       </div>
 
       <div className="flex w-full items-center gap-[24px] max-[760px]:flex-col max-[760px]:items-start">
         <ProgressSection icon={<CloudAddIcon className="size-4" />}>
-          Última sincronización: hace 2 horas
+          {hasDocuments
+            ? "Última sincronización: hace 2 horas"
+            : "Última sincronización: Sin información"}
         </ProgressSection>
         <ProgressSection icon={<TickCircleIcon className="size-4" />}>
-          Todos los documentos están actualizados
+          {hasDocuments
+            ? "Todos los documentos están actualizados"
+            : "Sin documentos actualizados"}
         </ProgressSection>
       </div>
     </section>

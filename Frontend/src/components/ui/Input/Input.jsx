@@ -730,7 +730,7 @@ function Input({
                     setIsPhoneMenuOpen(true);
                   }
                 }}
-                aria-label="Codigo de pais"
+                aria-label="Código de país"
               />
               <button
                 type="button"
@@ -745,7 +745,7 @@ function Input({
                   }
                 }}
                 disabled={disabled}
-                aria-label="Mostrar sugerencias de pais"
+                aria-label="Mostrar sugerencias de país"
                 aria-expanded={isPhoneMenuOpen}
               >
                 <ChevronDownIcon className="size-5" />
@@ -842,7 +842,7 @@ function Input({
                 }}
                 onClick={handleRightIconClick}
                 disabled={disabled}
-                aria-label="Accion del campo"
+                aria-label="Acción del campo"
               >
                 {trailingIcon}
               </button>
@@ -950,7 +950,7 @@ function Input({
               }}
               onClick={handleRightIconClick}
               disabled={disabled}
-              aria-label="Accion del campo"
+              aria-label="Acción del campo"
             >
               {trailingIcon}
             </button>

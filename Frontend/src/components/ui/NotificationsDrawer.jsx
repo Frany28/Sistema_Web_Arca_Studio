@@ -299,6 +299,7 @@ function MessageInput({ placeholder, multiline = false }) {
 }
 
 function ActivityItem({
+  id,
   name,
   action,
   timestamp,
@@ -307,9 +308,20 @@ function ActivityItem({
   fileType,
   fileName,
   fileSize,
+  onSelect,
 }) {
+  const isInteractive = typeof onSelect === "function";
+  const Container = isInteractive ? "button" : "div";
+
   return (
-    <div className="flex w-full flex-col gap-[2px]">
+    <Container
+      type={isInteractive ? "button" : undefined}
+      className={clsx(
+        "flex w-full flex-col gap-[2px] text-left",
+        isInteractive && "cursor-pointer rounded-[8px] focus:outline-none",
+      )}
+      onClick={isInteractive ? () => onSelect({ id, type }) : undefined}
+    >
       <article className="flex w-full items-start gap-[8px] overflow-hidden rounded-[8px] border border-[var(--color-neutral-200)] bg-[rgba(74,74,74,0.10)] p-[8px]">
         <Avatar size="M" style="Icon" theme="Brand 1" decorative />
 
@@ -348,11 +360,19 @@ function ActivityItem({
       <p className="w-full text-right text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
         {timestamp}
       </p>
-    </div>
+    </Container>
   );
 }
 
-function NotificationsDrawer({ open = false, onClose, className, ...props }) {
+function NotificationsDrawer({
+  open = false,
+  onClose,
+  className,
+  comments = GENERAL_COMMENTS,
+  recentActivity = RECENT_ACTIVITY,
+  onActivitySelect,
+  ...props
+}) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
 
@@ -420,7 +440,7 @@ function NotificationsDrawer({ open = false, onClose, className, ...props }) {
           <MessageInput multiline placeholder="Escribe algo..." />
 
           <div className="flex flex-col gap-[8px]">
-            {GENERAL_COMMENTS.map((item) => (
+            {comments.map((item) => (
               <div key={item.id} className="flex flex-col gap-[8px]">
                 <CommentCard
                   {...item}
@@ -441,8 +461,14 @@ function NotificationsDrawer({ open = false, onClose, className, ...props }) {
           </h3>
 
           <div className="flex flex-col gap-[8px]">
-            {RECENT_ACTIVITY.map((item) => (
-              <ActivityItem key={item.id} {...item} />
+            {recentActivity.map((item) => (
+              <ActivityItem
+                key={item.id}
+                {...item}
+                onSelect={
+                  onActivitySelect ? () => onActivitySelect(item) : undefined
+                }
+              />
             ))}
           </div>
         </section>
