@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 
-import { apiRequest } from "../api/http.js";
+import { api } from "../api/http.js";
 
 const AuthContext = createContext(null);
 
@@ -24,7 +24,7 @@ function normalizeUser(user) {
 }
 
 export function getDefaultAuthenticatedPath(user) {
-  if (user?.role === "architect") {
+  if (user?.role === "architect" || user?.role === "admin") {
     return "/dashboard-arquitecto";
   }
 
@@ -38,7 +38,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
 
-    apiRequest("/auth/me")
+    api.auth
+      .me()
       .then((data) => {
         if (isMounted) {
           setUser(normalizeUser(data.user));
@@ -61,10 +62,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async ({ email, password }) => {
-    const data = await apiRequest("/auth/login", {
-      body: JSON.stringify({ email, password }),
-      method: "POST",
-    });
+    const data = await api.auth.login({ email, password });
     const nextUser = normalizeUser(data.user);
     setUser(nextUser);
     return nextUser;
@@ -74,9 +72,7 @@ export function AuthProvider({ children }) {
     setUser(null);
 
     try {
-      await apiRequest("/auth/logout", {
-        method: "POST",
-      });
+      await api.auth.logout();
     } catch {
       // The local session is already cleared; the server cookie may be expired.
     }

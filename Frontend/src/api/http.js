@@ -2,7 +2,7 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3000/api"
 ).replace(/\/$/, "");
 
-export async function apiRequest(path, options = {}) {
+async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     credentials: "include",
@@ -27,3 +27,26 @@ export async function apiRequest(path, options = {}) {
 
   return data;
 }
+
+export const authApi = {
+  login({ email, password }) {
+    return apiRequest("/auth/login", {
+      body: JSON.stringify({ email, password }),
+      method: "POST",
+    });
+  },
+
+  logout() {
+    return apiRequest("/auth/logout", {
+      method: "POST",
+    });
+  },
+
+  me() {
+    return apiRequest("/auth/me");
+  },
+};
+
+export const api = {
+  auth: authApi,
+};

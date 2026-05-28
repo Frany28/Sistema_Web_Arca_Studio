@@ -47,7 +47,7 @@ createRoot(document.getElementById("root")).render(
             />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["architect"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["admin", "architect"]} />}>
             <Route
               path="/dashboard-arquitecto"
               element={<ArchitectDashboard />}

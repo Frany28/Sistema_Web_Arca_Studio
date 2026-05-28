@@ -17,12 +17,19 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 }
 
+const DEV_ADMIN_EMAIL = import.meta.env.DEV
+  ? import.meta.env.VITE_DEV_ADMIN_EMAIL || ""
+  : "";
+const DEV_ADMIN_PASSWORD = import.meta.env.DEV
+  ? import.meta.env.VITE_DEV_ADMIN_PASSWORD || ""
+  : "";
+
 function Login() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(DEV_ADMIN_EMAIL);
+  const [password, setPassword] = useState(DEV_ADMIN_PASSWORD);
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginToast, setLoginToast] = useState(null);
@@ -172,6 +179,7 @@ function Login() {
                   showLeftIcon={false}
                   showRightIcon={false}
                   className="w-full"
+                  disabled={isSubmitting}
                 >
                   Iniciar sesión
                 </Button>
