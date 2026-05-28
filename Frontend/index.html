@@ -8,31 +8,7 @@
       rel="stylesheet"
     />
     <title>ARCA Studio</title>
-    <script>
-      (function () {
-        const STORAGE_KEY = "arca-theme";
-
-        try {
-          const storedTheme = localStorage.getItem(STORAGE_KEY);
-          const systemPrefersDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          ).matches;
-
-          const theme =
-            storedTheme === "dark" || storedTheme === "light"
-              ? storedTheme
-              : systemPrefersDark
-                ? "dark"
-                : "light";
-
-          document.documentElement.classList.toggle("dark", theme === "dark");
-          document.documentElement.style.colorScheme = theme;
-        } catch (error) {
-          document.documentElement.classList.remove("dark");
-          document.documentElement.style.colorScheme = "light";
-        }
-      })();
-    </script>
+    <script type="module" src="/src/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../auth/AuthContext.jsx";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
@@ -16,6 +17,7 @@ const TABLET_BREAKPOINT_PX = 768;
 
 function NewArchitectProjectPage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
@@ -90,7 +92,10 @@ function NewArchitectProjectPage() {
           onNewOpportunityClick={() =>
             navigate("/dashboard-arquitecto/nuevo-proyecto")
           }
-          onLogoutClick={() => navigate("/")}
+          onLogoutClick={() => {
+            logout();
+            navigate("/");
+          }}
           className="min-h-screen shrink-0 self-stretch"
         />
 

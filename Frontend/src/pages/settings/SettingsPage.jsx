@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../auth/AuthContext.jsx";
 import AuthToast, {
   AuthToastLockIcon,
 } from "../../components/ui/AuthToast/AuthToast.jsx";
@@ -30,6 +31,7 @@ const TABLET_BREAKPOINT_PX = 768;
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
@@ -221,7 +223,10 @@ export default function SettingsPage() {
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
-          onLogoutClick={() => navigate("/")}
+          onLogoutClick={() => {
+            logout();
+            navigate("/");
+          }}
           className="min-h-screen shrink-0 self-stretch"
         />
 

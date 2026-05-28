@@ -1,0 +1,107 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { apiRequest } from "../api/http.js";
+
+const AuthContext = createContext(null);
+
+function normalizeUser(user) {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    ...user,
+    role: typeof user.role === "string" ? user.role : user.role?.code,
+    roleDetails: typeof user.role === "object" ? user.role : null,
+  };
+}
+
+export function getDefaultAuthenticatedPath(user) {
+  if (user?.role === "architect") {
+    return "/dashboard-arquitecto";
+  }
+
+  return "/dashboard-clientes";
+}
+
+export function AuthProvider({ children }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    apiRequest("/auth/me")
+      .then((data) => {
+        if (isMounted) {
+          setUser(normalizeUser(data.user));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const login = useCallback(async ({ email, password }) => {
+    const data = await apiRequest("/auth/login", {
+      body: JSON.stringify({ email, password }),
+      method: "POST",
+    });
+    const nextUser = normalizeUser(data.user);
+    setUser(nextUser);
+    return nextUser;
+  }, []);
+
+  const logout = useCallback(async () => {
+    setUser(null);
+
+    try {
+      await apiRequest("/auth/logout", {
+        method: "POST",
+      });
+    } catch {
+      // The local session is already cleared; the server cookie may be expired.
+    }
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      isAuthenticated: Boolean(user),
+      isLoading,
+      login,
+      logout,
+      user,
+    }),
+    [isLoading, login, logout, user],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const auth = useContext(AuthContext);
+
+  if (!auth) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+
+  return auth;
+}

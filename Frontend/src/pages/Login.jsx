@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import {
+  getDefaultAuthenticatedPath,
+  useAuth,
+} from "../auth/AuthContext.jsx";
 import group1Logo from "../assets/logos/Group 1.svg";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import Button from "../components/ui/Button/Button.jsx";
@@ -16,8 +20,11 @@ function isValidEmail(value) {
 function Login() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginToast, setLoginToast] = useState(null);
   const [touched, setTouched] = useState({
     email: false,
@@ -25,7 +32,8 @@ function Login() {
   });
 
   const emailHasError = touched.email && !isValidEmail(email);
-  const passwordHasError = touched.password && password.trim().length < 8;
+  const passwordHasError =
+    touched.password && (password.trim().length < 8 || Boolean(authError));
 
   const emailState = useMemo(() => {
     if (emailHasError) {
@@ -43,13 +51,38 @@ function Login() {
     return password.trim() ? "Filled" : "Default";
   }, [password, passwordHasError]);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setAuthError("");
 
     setTouched({
       email: true,
       password: true,
     });
+
+    if (!isValidEmail(email) || password.trim().length < 8) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const user = await login({ email, password });
+      const fallbackPath = getDefaultAuthenticatedPath(user);
+      const redirectTo = location.state?.from?.pathname || fallbackPath;
+
+      navigate(redirectTo, {
+        replace: true,
+      });
+    } catch {
+      setAuthError("Correo o contrasena incorrectos.");
+      setTouched({
+        email: true,
+        password: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const showEmailHint = touched.email && emailHasError;
