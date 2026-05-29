@@ -1,9 +1,8 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import { getDefaultAuthenticatedPath, useAuth } from "./AuthContext.jsx";
 
 function ProtectedRoute({ allowedRoles }) {
-  const location = useLocation();
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -11,21 +10,7 @@ function ProtectedRoute({ allowedRoles }) {
   }
 
   if (!isAuthenticated) {
-    return (
-      <Navigate
-        to="/"
-        replace
-        state={{
-          authToast: {
-            description: "Inicia sesiÃ³n para continuar.",
-            icon: "lock",
-            id: Date.now(),
-            title: "Acceso protegido",
-          },
-          from: location,
-        }}
-      />
-    );
+    return <Navigate to="/" replace />;
   }
 
   if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
