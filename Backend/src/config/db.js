@@ -3,10 +3,17 @@ import pg from "pg";
 const { Pool } = pg;
 
 const databaseUrl = process.env.DATABASE_URL;
-const isProduction = process.env.NODE_ENV === "production";
 
 if (!databaseUrl) {
   throw new Error("DATABASE_URL is required");
+}
+
+function parseBoolean(value, fallback) {
+  if (value === undefined || value === "") {
+    return fallback;
+  }
+
+  return String(value).trim().toLowerCase() === "true";
 }
 
 function isLocalDatabase(url) {
@@ -19,7 +26,7 @@ function isLocalDatabase(url) {
 }
 
 function getSslConfig() {
-  if (process.env.DATABASE_SSL === "false") {
+  if (!parseBoolean(process.env.DATABASE_SSL, true)) {
     return false;
   }
 
@@ -27,12 +34,12 @@ function getSslConfig() {
     return false;
   }
 
-  const rejectUnauthorized =
-    process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === undefined
-      ? isProduction
-      : process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false";
-
-  const sslConfig = { rejectUnauthorized };
+  const sslConfig = {
+    rejectUnauthorized: parseBoolean(
+      process.env.DATABASE_SSL_REJECT_UNAUTHORIZED,
+      false,
+    ),
+  };
 
   if (process.env.DATABASE_SSL_CA_CERT) {
     sslConfig.ca = process.env.DATABASE_SSL_CA_CERT.replace(/\\n/g, "\n");
