@@ -2,11 +2,11 @@ const defaultOrigins = ["http://localhost:5173"];
 const isProduction = process.env.NODE_ENV === "production";
 
 function parseBoolean(value, fallback = false) {
-  if (value === undefined) {
+  if (value === undefined || value === "") {
     return fallback;
   }
 
-  return value === "true";
+  return String(value).trim().toLowerCase() === "true";
 }
 
 export function getAllowedOrigins() {
@@ -45,7 +45,7 @@ export function corsOptions() {
   );
 
   return {
-    credentials: parseBoolean(process.env.CORS_CREDENTIALS),
+    credentials: parseBoolean(process.env.CORS_CREDENTIALS, true),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 204,

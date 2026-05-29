@@ -18,7 +18,7 @@ export const authConfig = {
   cookieName:
     process.env.AUTH_COOKIE_NAME ||
     (isProduction ? "__Host-arca_session" : "arca_session"),
-  cookieSameSite: process.env.AUTH_COOKIE_SAMESITE || "Lax",
+  cookieSameSite: process.env.AUTH_COOKIE_SAMESITE || (isProduction ? "None" : "Lax"),
   cookieSecure:
     process.env.AUTH_COOKIE_SECURE === undefined
       ? isProduction
