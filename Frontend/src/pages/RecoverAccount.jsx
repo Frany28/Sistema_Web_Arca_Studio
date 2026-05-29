@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { api } from "../api/http.js";
 import group1Logo from "../assets/logos/Group 1.svg";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import Button from "../components/ui/Button/Button.jsx";
@@ -15,9 +16,11 @@ function isValidEmail(value) {
 function RecoverAccount() {
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [toastTrigger, setToastTrigger] = useState(null);
 
-  const emailHasError = touched && !isValidEmail(email);
+  const emailHasError = (touched && !isValidEmail(email)) || Boolean(submitError);
   const emailState = useMemo(() => {
     if (emailHasError) {
       return "Error";
@@ -26,15 +29,35 @@ function RecoverAccount() {
     return email.trim() ? "Filled" : "Default";
   }, [email, emailHasError]);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setTouched(true);
+    setSubmitError("");
 
     if (!isValidEmail(email)) {
       return;
     }
 
-    setToastTrigger(Date.now());
+    setIsSubmitting(true);
+
+    try {
+      await api.auth.requestPasswordReset({ email });
+      setToastTrigger(Date.now());
+    } catch (error) {
+      if (error.code === "EMAIL_NOT_FOUND") {
+        setSubmitError("No encontramos una cuenta asociada a ese correo.");
+        return;
+      }
+
+      if (error.code === "ACCOUNT_NOT_ACTIVE") {
+        setSubmitError("La cuenta no esta activa. Contacta a soporte.");
+        return;
+      }
+
+      setSubmitError("No pudimos enviar el enlace. Intentalo de nuevo.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -42,7 +65,7 @@ function RecoverAccount() {
       <AuthToast
         trigger={toastTrigger}
         title="Enlace enviado"
-        description="Hemos enviado un enlace a tu correo electrónico."
+        description="Hemos enviado un enlace a tu correo electronico."
         leading={<AuthToastMailIcon />}
       />
 
@@ -61,23 +84,27 @@ function RecoverAccount() {
             </div>
 
             <Input
-              label="Correo electrónico"
+              label="Correo electronico"
               type="Default input"
               size="S"
               value={email}
               state={emailState}
               placeholder="ejemplo@dominio.com"
               hintText={
-                emailHasError
-                  ? "Ingresa un correo electrónico válido."
-                  : "Te enviaremos un enlace para restablecer tu contraseña"
+                submitError ||
+                (emailHasError
+                  ? "Ingresa un correo electronico valido."
+                  : "Te enviaremos un enlace para restablecer tu contrasena")
               }
               showHint
               showLabelInfo={false}
               required={false}
               showRightIcon={false}
               className="w-full max-w-none"
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setSubmitError("");
+              }}
             />
 
             <Button
@@ -89,8 +116,9 @@ function RecoverAccount() {
               showLeftIcon={false}
               showRightIcon={false}
               className="w-full"
+              disabled={isSubmitting}
             >
-              Enviar enlace
+              {isSubmitting ? "Enviando..." : "Enviar enlace"}
             </Button>
           </form>
         </div>

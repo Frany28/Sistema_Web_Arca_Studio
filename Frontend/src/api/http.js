@@ -36,6 +36,13 @@ export const authApi = {
     });
   },
 
+  requestPasswordReset({ email }) {
+    return apiRequest("/auth/forgot-password", {
+      body: JSON.stringify({ email }),
+      method: "POST",
+    });
+  },
+
   logout() {
     return apiRequest("/auth/logout", {
       method: "POST",

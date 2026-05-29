@@ -6,6 +6,10 @@ import {
   sanitizeUser,
   updateLastLoginAt,
 } from "../repositories/userRepository.js";
+import {
+  createPasswordResetPayload,
+  sendPasswordResetEmail,
+} from "../services/passwordResetEmailService.js";
 import { serializeCookie } from "../utils/cookies.js";
 import { createAuthToken } from "../utils/tokens.js";
 
@@ -109,4 +113,48 @@ export function me(req, res) {
 export function logout(_req, res) {
   res.setHeader("Set-Cookie", buildExpiredSessionCookie());
   res.status(204).end();
+}
+
+export async function forgotPassword(req, res, next) {
+  try {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+
+    if (!isValidEmail(email)) {
+      res.status(400).json({
+        code: "INVALID_EMAIL",
+        message: "Ingresa un correo electronico valido.",
+      });
+      return;
+    }
+
+    const userRecord = await findUserByEmail(email);
+
+    if (!userRecord) {
+      res.status(404).json({
+        code: "EMAIL_NOT_FOUND",
+        message: "No encontramos una cuenta asociada a ese correo.",
+      });
+      return;
+    }
+
+    if (userRecord.status !== "active") {
+      res.status(409).json({
+        code: "ACCOUNT_NOT_ACTIVE",
+        message: "La cuenta no esta activa. Contacta a soporte.",
+      });
+      return;
+    }
+
+    const resetPayload = createPasswordResetPayload(userRecord);
+    await sendPasswordResetEmail({
+      email: userRecord.email,
+      ...resetPayload,
+    });
+
+    res.status(202).json({
+      message: "Enviamos un enlace de recuperacion a tu correo.",
+    });
+  } catch (error) {
+    next(error);
+  }
 }
