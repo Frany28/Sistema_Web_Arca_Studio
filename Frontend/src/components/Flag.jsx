@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import ReactCountryFlag from "react-country-flag";
 
 function normalizeCountryCode(countryCode) {
@@ -14,13 +15,22 @@ function Flag({
   useSvg = true,
   cdnUrl,
   cdnSuffix,
+  loading,
+  onError,
   ...flagProps
 }) {
   const resolvedCountryCode = normalizeCountryCode(countryCode);
+  const [hasSvgError, setHasSvgError] = useState(false);
+
+  useEffect(() => {
+    setHasSvgError(false);
+  }, [resolvedCountryCode, useSvg, cdnUrl, cdnSuffix]);
 
   if (!resolvedCountryCode) {
     return null;
   }
+
+  const shouldUseSvg = useSvg && !hasSvgError;
 
   return (
     <span
@@ -39,13 +49,22 @@ function Flag({
     >
       <ReactCountryFlag
         countryCode={resolvedCountryCode}
-        svg={useSvg}
+        svg={shouldUseSvg}
         title={title}
         aria-label={title ?? resolvedCountryCode}
         {...(cdnUrl ? { cdnUrl } : {})}
         {...(cdnSuffix ? { cdnSuffix } : {})}
+        {...(shouldUseSvg && loading ? { loading } : {})}
+        {...(shouldUseSvg
+          ? {
+              onError: (event) => {
+                setHasSvgError(true);
+                onError?.(event);
+              },
+            }
+          : {})}
         style={{
-          ...(useSvg
+          ...(shouldUseSvg
             ? {
                 width: "100%",
                 height: "100%",
