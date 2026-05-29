@@ -18,6 +18,7 @@ export default function ProfilePanel({
   email,
   primaryPhone,
   secondaryPhone,
+  roleLabel = "Usuario",
   avatarInitials,
   avatarSrc,
   onUploadImageClick,
@@ -85,7 +86,7 @@ export default function ProfilePanel({
             Rol
           </span>
           <Badge
-            label="Cliente"
+            label={roleLabel}
             theme="Neutral"
             variation="Simple"
             size="M"

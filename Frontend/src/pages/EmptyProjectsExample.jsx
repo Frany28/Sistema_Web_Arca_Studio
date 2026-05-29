@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../auth/AuthContext.jsx";
+import { getUserDisplay } from "../auth/userDisplay.js";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
@@ -94,6 +96,8 @@ function EmptyProjectsCarouselSection() {
 
 function EmptyProjectsExample() {
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
+  const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -147,9 +151,14 @@ function EmptyProjectsExample() {
         <SideNavigation
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
+          userName={currentUser.name}
+          userEmail={currentUser.email}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
-          onLogoutClick={() => navigate("/")}
+          onLogoutClick={() => {
+            logout();
+            navigate("/");
+          }}
           className="h-screen min-h-screen max-h-screen"
         />
 
@@ -174,7 +183,7 @@ function EmptyProjectsExample() {
 
           <div className="mx-auto flex w-full max-w-[1200px] px-[48px] py-[16px]">
             <p className="w-full text-heading-6 text-[var(--color-text-300)]">
-              Bienvenido, Alan
+              Bienvenido, {currentUser.shortName}
             </p>
           </div>
 

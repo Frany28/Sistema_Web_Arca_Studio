@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
@@ -18,7 +19,8 @@ const TABLET_BREAKPOINT_PX = 768;
 
 function ArchitectDashboard({ empty = false }) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
@@ -86,8 +88,8 @@ function ArchitectDashboard({ empty = false }) {
           expanded={isSidebarExpanded}
           items={ARCHITECT_NAVIGATION_ITEMS}
           newOpportunityLabel="Nuevo proyecto"
-          userName="Armando Carroz"
-          userEmail="armandoc@arcastudio2025.com"
+          userName={currentUser.name}
+          userEmail={currentUser.email}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() =>
@@ -113,7 +115,7 @@ function ArchitectDashboard({ empty = false }) {
 
           <div className="mx-auto flex w-full max-w-[1200px] px-[48px] py-[16px]">
             <p className="text-heading-6 w-full text-[var(--color-text-300)]">
-              Bienvenido, Arq. Armando
+              Bienvenido, {currentUser.shortName}
             </p>
           </div>
 

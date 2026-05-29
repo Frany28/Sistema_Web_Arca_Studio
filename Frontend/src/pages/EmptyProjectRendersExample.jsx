@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../auth/AuthContext.jsx";
+import { getUserDisplay } from "../auth/userDisplay.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
@@ -19,6 +21,8 @@ const TABLET_BREAKPOINT_PX = 768;
 
 export default function EmptyProjectRendersExample() {
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
+  const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
@@ -94,10 +98,15 @@ export default function EmptyProjectRendersExample() {
         <SideNavigation
           activeItemId="project-1"
           expanded={isSidebarExpanded}
+          userName={currentUser.name}
+          userEmail={currentUser.email}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
-          onLogoutClick={() => navigate("/")}
+          onLogoutClick={() => {
+            logout();
+            navigate("/");
+          }}
           className="min-h-screen shrink-0 self-stretch"
         />
 

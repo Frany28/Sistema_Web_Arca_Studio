@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { getUserDisplay } from "../../auth/userDisplay.js";
 import AuthToast, {
   AuthToastLockIcon,
 } from "../../components/ui/AuthToast/AuthToast.jsx";
@@ -31,7 +32,8 @@ const TABLET_BREAKPOINT_PX = 768;
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
@@ -39,12 +41,8 @@ export default function SettingsPage() {
     useState(false);
   const [activeSettingsTabId, setActiveSettingsTabId] = useState("profile");
 
-  const [profileName, setProfileName] = useState("John Doe");
+  const [profileName, setProfileName] = useState(currentUser.name);
   const [companyName, setCompanyName] = useState("Next C.A.");
-  const [email] = useState("usuario@gmail.com");
-  const [primaryPhone] = useState("(444) 1234-5678");
-  const [secondaryPhone] = useState("(444) 1234-5678");
-  const [avatarInitials] = useState("JS");
   const [avatarSrc, setAvatarSrc] = useState("");
   const [isAvatarUploadModalOpen, setIsAvatarUploadModalOpen] =
     useState(false);
@@ -100,6 +98,10 @@ export default function SettingsPage() {
       URL.revokeObjectURL(avatarSrc);
     }
   }, [avatarSrc]);
+
+  useEffect(() => {
+    setProfileName(currentUser.name);
+  }, [currentUser.name]);
 
   const handleSideNavigationSelect = (item) => {
     if (item?.id === "dashboard") {
@@ -160,10 +162,11 @@ export default function SettingsPage() {
       setProfileName={setProfileName}
       companyName={companyName}
       setCompanyName={setCompanyName}
-      email={email}
-      primaryPhone={primaryPhone}
-      secondaryPhone={secondaryPhone}
-      avatarInitials={avatarInitials}
+      email={currentUser.email}
+      primaryPhone={currentUser.phone}
+      secondaryPhone={currentUser.phone}
+      roleLabel={currentUser.roleName}
+      avatarInitials={getUserDisplay({ name: profileName }).initials}
       avatarSrc={avatarSrc}
       onUploadImageClick={() => setIsAvatarUploadModalOpen(true)}
     />
@@ -220,6 +223,8 @@ export default function SettingsPage() {
         <SideNavigation
           activeItemId="settings"
           expanded={isSidebarExpanded}
+          userName={currentUser.name}
+          userEmail={currentUser.email}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
