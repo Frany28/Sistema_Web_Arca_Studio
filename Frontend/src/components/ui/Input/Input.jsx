@@ -692,7 +692,7 @@ function Input({
                 countryCode={resolvedPhoneOption.countryCode}
                 size="20px"
                 title={resolvedPhoneOption.label}
-                useSvg={false}
+                useSvg
                 loading="lazy"
               />
               <input
@@ -785,7 +785,7 @@ function Input({
                       countryCode={option.countryCode}
                       size="20px"
                       title={option.label}
-                      useSvg={false}
+                      useSvg
                       loading="lazy"
                     />
                     <span className="text-body-3 text-[var(--color-text-300)]">
