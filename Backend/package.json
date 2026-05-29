@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "check:user-login": "node scripts/check-user-login.mjs",
     "dev": "node local.js",
     "start": "node local.js"
   },
