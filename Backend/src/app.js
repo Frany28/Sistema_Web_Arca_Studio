@@ -12,6 +12,14 @@ app.use(express.json({ limit: "100kb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api", routes);
 
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    code: "API_ROUTE_NOT_FOUND",
+    message: `Cannot ${req.method} ${req.originalUrl}`,
+    service: "arca-studio-backend",
+  });
+});
+
 app.use((error, _req, res, _next) => {
   console.error("Unhandled request error", {
     code: error.code,

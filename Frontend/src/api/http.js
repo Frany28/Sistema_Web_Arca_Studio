@@ -16,12 +16,17 @@ async function apiRequest(path, options = {}) {
     return null;
   }
 
-  const data = await response.json().catch(() => null);
+  const contentType = response.headers.get("content-type") || "";
+  const data = contentType.includes("application/json")
+    ? await response.json().catch(() => null)
+    : null;
 
   if (!response.ok) {
-    const error = new Error(data?.message || "Request failed");
+    const error = new Error(
+      data?.message || "La API no esta disponible para esta accion.",
+    );
     error.status = response.status;
-    error.code = data?.code;
+    error.code = data?.code || "API_ROUTE_UNAVAILABLE";
     throw error;
   }
 
