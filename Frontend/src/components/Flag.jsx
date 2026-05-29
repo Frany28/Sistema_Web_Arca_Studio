@@ -31,6 +31,7 @@ function Flag({
   }
 
   const shouldUseSvg = useSvg && !hasSvgError;
+  const fallbackLabel = resolvedCountryCode.slice(0, 2);
 
   return (
     <span
@@ -47,39 +48,53 @@ function Flag({
         ...style,
       }}
     >
-      <ReactCountryFlag
-        countryCode={resolvedCountryCode}
-        svg={shouldUseSvg}
-        title={title}
-        aria-label={title ?? resolvedCountryCode}
-        {...(cdnUrl ? { cdnUrl } : {})}
-        {...(cdnSuffix ? { cdnSuffix } : {})}
-        {...(shouldUseSvg && loading ? { loading } : {})}
-        {...(shouldUseSvg
-          ? {
-              onError: (event) => {
-                setHasSvgError(true);
-                onError?.(event);
-              },
-            }
-          : {})}
-        style={{
-          ...(shouldUseSvg
-            ? {
-                width: "100%",
-                height: "100%",
-                display: "block",
-                objectFit: "cover",
-              }
-            : {
-                display: "inline-block",
-                fontSize: typeof size === "number" ? `${size}px` : size,
-                lineHeight: 1,
-              }),
-          ...imgStyle,
-        }}
-        {...flagProps}
-      />
+      {shouldUseSvg ? (
+        <ReactCountryFlag
+          countryCode={resolvedCountryCode}
+          svg
+          title={title}
+          aria-label={title ?? resolvedCountryCode}
+          {...(cdnUrl ? { cdnUrl } : {})}
+          {...(cdnSuffix ? { cdnSuffix } : {})}
+          {...(loading ? { loading } : {})}
+          onError={(event) => {
+            setHasSvgError(true);
+            onError?.(event);
+          }}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+            objectFit: "cover",
+            ...imgStyle,
+          }}
+          {...flagProps}
+        />
+      ) : (
+        <span
+          role="img"
+          title={title}
+          aria-label={title ?? resolvedCountryCode}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "inherit",
+            backgroundColor: "var(--color-neutral-200)",
+            color: "var(--color-text-300)",
+            fontSize: "9px",
+            fontWeight: 700,
+            lineHeight: 1,
+            letterSpacing: "0px",
+            ...imgStyle,
+          }}
+          {...flagProps}
+        >
+          {fallbackLabel}
+        </span>
+      )}
     </span>
   );
 }
