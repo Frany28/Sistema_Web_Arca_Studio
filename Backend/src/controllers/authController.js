@@ -22,6 +22,16 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function isValidPassword(password) {
+  return (
+    typeof password === "string" &&
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9]/.test(password)
+  );
+}
+
 function buildSessionCookie(token, maxAge) {
   return serializeCookie(authConfig.cookieName, token, {
     httpOnly: true,
@@ -216,10 +226,11 @@ export async function resetPassword(req, res, next) {
     const token = String(req.body?.token || "").trim();
     const password = String(req.body?.password || "").trim();
 
-    if (!password || password.length < 8) {
+    if (!isValidPassword(password)) {
       res.status(400).json({
         code: "INVALID_PASSWORD",
-        message: "La contraseña debe tener al menos 8 caracteres.",
+        message:
+          "La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un carácter especial.",
       });
       return;
     }

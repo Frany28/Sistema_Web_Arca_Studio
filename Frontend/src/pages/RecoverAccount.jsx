@@ -78,7 +78,7 @@ function RecoverAccount() {
                 alt="ARCA Studio"
                 className="h-[48px] w-[50.64px] object-contain"
               />
-              <h1 className="text-heading-3 m-0 text-[var(--color-text-300)] max-sm:text-[40px] max-sm:leading-[46px]">
+              <h1 className="m-0 whitespace-nowrap text-[42px] font-bold text-(--color-text-300) max-sm:text-[34px] max-sm:leading-[40px]">
                 Recupera tu acceso
               </h1>
             </div>
