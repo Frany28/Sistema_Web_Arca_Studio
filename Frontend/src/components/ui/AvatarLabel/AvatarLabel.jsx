@@ -33,7 +33,7 @@ function AvatarLabel({
   return (
     <span
       className={clsx(
-        "inline-flex shrink-0 items-center",
+        "inline-flex shrink min-w-0 items-center",
         hasText && styles.container,
         className,
       )}
@@ -57,14 +57,14 @@ function AvatarLabel({
       {hasText ? (
         <span
           className={clsx(
-            "flex min-w-0 shrink-0 flex-col items-start",
+            "flex min-w-0 shrink flex-col items-start",
             styles.textGroup,
           )}
         >
           {showLabel ? (
             <span
               className={clsx(
-                "max-w-full whitespace-nowrap tracking-[-0.5px] text-[var(--color-text-300)]",
+                "block max-w-full truncate tracking-[-0.5px] text-[var(--color-text-300)]",
                 styles.label,
                 textClassName,
               )}
@@ -76,7 +76,7 @@ function AvatarLabel({
           {showSubtitle ? (
             <span
               className={clsx(
-                "max-w-full whitespace-nowrap tracking-[-0.5px] text-[var(--color-text-200)]",
+                "block max-w-full truncate tracking-[-0.5px] text-[var(--color-text-200)]",
                 styles.subtitle,
                 subtitleClassName,
               )}

@@ -581,11 +581,12 @@ function SideNavigation({
       <div
         data-node-id={nodeIds.footer}
         className={clsx(
-          "mt-[20px] flex shrink-0 items-center",
+          "mt-[20px] flex min-w-0 items-center",
           isExpanded ? "w-full justify-between gap-[12px]" : "self-start",
         )}
       >
         <AvatarLabel
+          className="min-w-0 flex-1"
           size="M"
           label={userName}
           subtitle={userEmail}
@@ -600,6 +601,7 @@ function SideNavigation({
 
         {isExpanded ? (
           <Button
+            className="shrink-0"
             theme="Primary"
             type="Ghost"
             size="S"
