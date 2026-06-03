@@ -7,12 +7,14 @@ const RESET_TOKEN_EXPIRES_IN_SECONDS = Number(
   process.env.PASSWORD_RESET_EXPIRES_IN_SECONDS || 15 * 60,
 );
 
+const DEFAULT_FRONTEND_URL = "https://arcastudio.netlify.app";
+
 function getFrontendBaseUrl() {
   const baseUrl =
     process.env.FRONTEND_URL ||
     process.env.PUBLIC_APP_URL ||
     process.env.APP_URL ||
-    "http://localhost:5173";
+    DEFAULT_FRONTEND_URL;
 
   return String(baseUrl).replace(/\/$/, "");
 }
