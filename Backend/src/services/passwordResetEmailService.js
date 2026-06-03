@@ -22,6 +22,14 @@ function getMailFrom() {
   return process.env.MAIL_FROM || process.env.RESEND_FROM_EMAIL;
 }
 
+function createEmailServiceError(message, code, status = 502) {
+  const error = new Error(message);
+  error.code = code;
+  error.publicMessage = "No pudimos enviar el correo de recuperacion.";
+  error.status = status;
+  return error;
+}
+
 function createResetCode() {
   return String(crypto.randomInt(0, 1_000_000)).padStart(
     RESET_CODE_LENGTH,
@@ -70,7 +78,11 @@ export async function sendPasswordResetEmail({ code, email, expiresInMinutes, re
   const from = getMailFrom();
 
   if (!apiKey || !from) {
-    throw new Error("RESEND_API_KEY and MAIL_FROM are required to send email");
+    throw createEmailServiceError(
+      "RESEND_API_KEY and MAIL_FROM are required to send email",
+      "EMAIL_SERVICE_NOT_CONFIGURED",
+      503,
+    );
   }
 
   const safeResetUrl = escapeHtml(resetUrl);
@@ -117,6 +129,6 @@ export async function sendPasswordResetEmail({ code, email, expiresInMinutes, re
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     const message = data?.message || "Unable to send password reset email";
-    throw new Error(message);
+    throw createEmailServiceError(message, "EMAIL_DELIVERY_FAILED", 502);
   }
 }

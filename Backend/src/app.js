@@ -27,9 +27,9 @@ app.use((error, _req, res, _next) => {
     name: error.name,
   });
 
-  res.status(500).json({
-    code: "INTERNAL_SERVER_ERROR",
-    message: "Ocurrio un error inesperado.",
+  res.status(error.status || 500).json({
+    code: error.code || "INTERNAL_SERVER_ERROR",
+    message: error.publicMessage || "Ocurrio un error inesperado.",
   });
 });
 
