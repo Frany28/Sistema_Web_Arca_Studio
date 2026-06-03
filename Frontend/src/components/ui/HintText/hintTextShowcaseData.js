@@ -28,14 +28,17 @@ export const hintTextQuickToggleItems = [
   }),
 ];
 
-export const passwordHintItems = ["Default", "Error", "Success", "Disabled"].map(
-  (state) => ({
-    label: state,
-    props: createHintTextProps({
-      type: "Password",
-      state,
-      passwordTitle: "Debe contener al menos;",
-      requirements: PASSWORD_DEFAULT_REQUIREMENTS,
-    }),
+export const passwordHintItems = [
+  "Default",
+  "Error",
+  "Success",
+  "Disabled",
+].map((state) => ({
+  label: state,
+  props: createHintTextProps({
+    type: "Password",
+    state,
+    passwordTitle: "Debe contener al menos:",
+    requirements: PASSWORD_DEFAULT_REQUIREMENTS,
   }),
-);
+}));

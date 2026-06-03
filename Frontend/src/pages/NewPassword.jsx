@@ -132,6 +132,12 @@ function NewPassword() {
 
     try {
       await api.auth.resetPassword({ token, password });
+      try {
+        window.localStorage.setItem("arca_auth_logout", Date.now().toString());
+      } catch {
+        // Ignore storage errors in restricted browser contexts.
+      }
+
       navigate("/", {
         state: {
           authToast: {
@@ -211,7 +217,7 @@ function NewPassword() {
               required={false}
               showPasswordStrength
               passwordRequirements={PASSWORD_REQUIREMENTS}
-              passwordHintTitle="Debe contener al menos;"
+              passwordHintTitle="Debe contener al menos:"
               className="w-full max-w-none"
               onChange={(event) => setPassword(event.target.value)}
               onBlur={() =>

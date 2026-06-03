@@ -43,7 +43,7 @@ export default function SecurityPanel({
           onChange={(event) => setNewPassword(event.target.value)}
           showPasswordStrength
           passwordRequirements={passwordRequirements}
-          passwordHintTitle="Debe contener al menos;"
+          passwordHintTitle="Debe contener al menos:"
           className="w-[320px] max-w-none"
         />
         <Input

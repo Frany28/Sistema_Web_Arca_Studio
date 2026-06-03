@@ -68,6 +68,28 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
+  useEffect(() => {
+    const handleStorageEvent = (event) => {
+      if (event.key === "arca_auth_logout") {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, []);
+
+  const broadcastLogout = useCallback(() => {
+    try {
+      window.localStorage.setItem("arca_auth_logout", Date.now().toString());
+    } catch {
+      // Ignore storage errors in restricted browser contexts.
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     setUser(null);
 
@@ -76,7 +98,9 @@ export function AuthProvider({ children }) {
     } catch {
       // The local session is already cleared; the server cookie may be expired.
     }
-  }, []);
+
+    broadcastLogout();
+  }, [broadcastLogout]);
 
   const value = useMemo(
     () => ({

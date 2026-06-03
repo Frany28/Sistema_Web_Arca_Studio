@@ -130,7 +130,7 @@ function HintText({
   hintText = "Texto de ayuda para los usuarios",
   hintIcon = true,
   icon = null,
-  passwordTitle = "Debe contener al menos;",
+  passwordTitle = "Debe contener al menos:",
   requirements = PASSWORD_DEFAULT_REQUIREMENTS,
   passwordProgress = null,
   ...props

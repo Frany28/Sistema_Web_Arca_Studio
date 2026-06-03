@@ -105,7 +105,7 @@ export const inputQuickToggleItems = [
     showPasswordStrength: true,
     defaultValue: "",
     showHint: true,
-    passwordHintTitle: "Debe contener al menos;",
+    passwordHintTitle: "Debe contener al menos:",
   }),
 ];
 

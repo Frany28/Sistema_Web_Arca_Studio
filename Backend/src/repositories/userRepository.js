@@ -13,6 +13,7 @@ const USER_SELECT = `
     u.phone,
     u.status,
     u.last_login_at,
+    u.updated_at,
     r.code as role_code,
     r.name as role_name
   from public.users u
@@ -42,6 +43,7 @@ function toSafeUser(row) {
       name: row.role_name,
     },
     status: row.status,
+    updatedAt: row.updated_at || null,
   };
 }
 

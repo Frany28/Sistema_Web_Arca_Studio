@@ -29,6 +29,19 @@ export async function requireAuth(req, res, next) {
       return;
     }
 
+    if (payload.iat && user.updatedAt) {
+      const tokenIssuedAt = Number(payload.iat) * 1000;
+      const userUpdatedAt = new Date(user.updatedAt).getTime();
+
+      if (userUpdatedAt > tokenIssuedAt) {
+        res.status(401).json({
+          code: "UNAUTHENTICATED",
+          message: "Sesion invalida.",
+        });
+        return;
+      }
+    }
+
     req.user = user;
     next();
   } catch (error) {
