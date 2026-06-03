@@ -1,6 +1,11 @@
 import { query } from "../config/db.js";
 
-export async function createPasswordResetToken(userId, token, codeHash, expiresAt) {
+export async function createPasswordResetToken(
+  userId,
+  token,
+  codeHash,
+  expiresAt,
+) {
   await query(
     `
       insert into public.password_reset_tokens (

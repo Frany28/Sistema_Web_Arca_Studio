@@ -29,7 +29,6 @@ function createEmailServiceError(message, code, status = 502) {
   return error;
 }
 
-
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -51,7 +50,9 @@ export function createPasswordResetPayload(user) {
       secret: authConfig.tokenSecret,
     },
   );
-  const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRES_IN_SECONDS * 1000);
+  const expiresAt = new Date(
+    Date.now() + RESET_TOKEN_EXPIRES_IN_SECONDS * 1000,
+  );
   const resetUrl = `${getFrontendBaseUrl()}/nueva-contrasena?token=${encodeURIComponent(token)}`;
 
   return {
@@ -61,7 +62,11 @@ export function createPasswordResetPayload(user) {
   };
 }
 
-export async function sendPasswordResetEmail({ email, expiresInMinutes, resetUrl }) {
+export async function sendPasswordResetEmail({
+  email,
+  expiresInMinutes,
+  resetUrl,
+}) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = getMailFrom();
 

@@ -69,14 +69,12 @@ function parseResetToken(token) {
 
 export async function login(req, res, next) {
   try {
-    const email = String(req.body?.email || "").trim().toLowerCase();
+    const email = String(req.body?.email || "")
+      .trim()
+      .toLowerCase();
     const password = String(req.body?.password || "");
 
-    if (
-      !isValidEmail(email) ||
-      password.length < 8 ||
-      password.length > 256
-    ) {
+    if (!isValidEmail(email) || password.length < 8 || password.length > 256) {
       res.status(400).json({
         code: "INVALID_CREDENTIALS",
         message: "Correo o contrasena invalidos.",
@@ -88,11 +86,7 @@ export async function login(req, res, next) {
     const passwordHash = userRecord?.password_hash || FAKE_BCRYPT_HASH;
     const passwordMatches = await bcrypt.compare(password, passwordHash);
 
-    if (
-      !userRecord ||
-      userRecord.status !== "active" ||
-      !passwordMatches
-    ) {
+    if (!userRecord || userRecord.status !== "active" || !passwordMatches) {
       res.status(401).json({
         code: "INVALID_CREDENTIALS",
         message: "Correo o contrasena invalidos.",
@@ -143,7 +137,9 @@ export function logout(_req, res) {
 
 export async function forgotPassword(req, res, next) {
   try {
-    const email = String(req.body?.email || "").trim().toLowerCase();
+    const email = String(req.body?.email || "")
+      .trim()
+      .toLowerCase();
 
     if (!isValidEmail(email)) {
       res.status(400).json({

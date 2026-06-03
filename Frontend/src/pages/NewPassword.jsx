@@ -145,7 +145,8 @@ function NewPassword() {
       });
     } catch (error) {
       setFormError(
-        error?.message || "No se pudo restablecer la contraseña. Intenta nuevamente.",
+        error?.message ||
+          "No se pudo restablecer la contraseña. Intenta nuevamente.",
       );
     } finally {
       setSubmitting(false);
@@ -156,7 +157,10 @@ function NewPassword() {
     <AuthLayout>
       <section className="flex w-full max-w-[581px] items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
         <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
-          <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full flex-col gap-[16px]"
+          >
             <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
               <img
                 src={group1Logo}
@@ -248,10 +252,16 @@ function NewPassword() {
               showRightIcon={false}
               className="w-full"
               disabled={
-                submitting || isValidatingToken || !isTokenValid || !passwordIsValid || !passwordsMatch
+                submitting ||
+                isValidatingToken ||
+                !isTokenValid ||
+                !passwordIsValid ||
+                !passwordsMatch
               }
             >
-              {submitting ? "Actualizando contraseña..." : "Actualizar contraseña"}
+              {submitting
+                ? "Actualizando contraseña..."
+                : "Actualizar contraseña"}
             </Button>
           </form>
         </div>
