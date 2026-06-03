@@ -453,127 +453,127 @@ function SideNavigation({
           )}
         >
           <div
-          data-node-id={nodeIds.search}
-          className={clsx(isExpanded && "w-full")}
-        >
-          {isExpanded ? (
-            <Input
-              type="Search bar"
-              size="L"
-              value={searchValue}
-              onChange={handleSearchChange}
-              placeholder={searchPlaceholder}
-              showLabel={false}
-              showHint={false}
-              showLeftIcon
-              showRightIcon={false}
-              showLabelInfo={false}
-              required={false}
-              className="max-w-none w-full"
-              aria-label="Buscar navegación"
-            />
-          ) : (
-            <Button
-              theme="Primary"
-              type="Outline"
-              size="M"
-              showText={false}
-              showLeftIcon
-              showRightIcon={false}
-              iconLeft={<SearchIcon className="size-5" />}
-              aria-label="Buscar navegación"
-              onMouseUp={clearPointerFocus}
-              onTouchEnd={clearPointerFocus}
-            />
-          )}
-        </div>
-
-        <div className={clsx(isExpanded ? "w-full" : "self-start")}>
-          {isExpanded ? (
-            <Button
-              theme="Primary"
-              type="Solid"
-              size="M"
-              fitContent={false}
-              showLeftIcon={false}
-              showRightIcon={false}
-              className="w-full"
-              onClick={onNewOpportunityClick}
-            >
-              {newOpportunityLabel}
-            </Button>
-          ) : (
-            <Button
-              theme="Primary"
-              type="Solid"
-              size="M"
-              showText={false}
-              showLeftIcon
-              showRightIcon={false}
-              iconLeft={<AddIcon className="size-5" />}
-              aria-label={newOpportunityLabel}
-              onClick={onNewOpportunityClick}
-              onMouseUp={clearPointerFocus}
-              onTouchEnd={clearPointerFocus}
-            />
-          )}
-        </div>
-
-          <nav
-          className={clsx(
-            "flex flex-col gap-[8px]",
-            isExpanded ? "w-full" : "items-start",
-          )}
-          data-node-id={nodeIds.menu}
-          aria-label="Secciones"
-        >
-          {visibleItems.map((item) =>
-            isExpanded ? (
-              <div
-                key={item.id}
-                className="flex w-full items-center"
-                style={{ minHeight: item.wrapperHeight ?? "44px" }}
-              >
-                <TabItem
-                  label={item.label}
-                  size="M"
-                  style="Brand"
-                  selected={item.id === resolvedActiveItemId}
-                  interactive
-                  iconLeft={false}
-                  iconRight={false}
-                  leftIcon={getItemIcon(item.icon)}
-                  rightIcon={null}
-                  className="w-full justify-start"
-                  aria-label={item.label}
-                  onClick={() => handleItemSelect(item)}
-                />
-              </div>
+            data-node-id={nodeIds.search}
+            className={clsx(isExpanded && "w-full")}
+          >
+            {isExpanded ? (
+              <Input
+                type="Search bar"
+                size="L"
+                value={searchValue}
+                onChange={handleSearchChange}
+                placeholder={searchPlaceholder}
+                showLabel={false}
+                showHint={false}
+                showLeftIcon
+                showRightIcon={false}
+                showLabelInfo={false}
+                required={false}
+                className="max-w-none w-full"
+                aria-label="Buscar navegación"
+              />
             ) : (
-              <button
-                key={item.id}
-                type="button"
-                className={clsx(
-                  "inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--radius-2)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
-                  item.id === resolvedActiveItemId
-                    ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
-                    : "bg-transparent text-[var(--color-text-100)] hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
-                )}
-                aria-label={item.label}
-                onClick={() => handleItemSelect(item)}
+              <Button
+                theme="Primary"
+                type="Outline"
+                size="M"
+                showText={false}
+                showLeftIcon
+                showRightIcon={false}
+                iconLeft={<SearchIcon className="size-5" />}
+                aria-label="Buscar navegación"
                 onMouseUp={clearPointerFocus}
                 onTouchEnd={clearPointerFocus}
-              >
-                {getItemIcon(item.icon)}
-              </button>
-            ),
-          )}
+              />
+            )}
+          </div>
 
-          {visibleItems.length === 0 && isExpanded ? (
-            <p className="px-[12px] py-[8px] text-body-4 text-[var(--color-text-100)]">
-              No hay coincidencias.
-            </p>
-          ) : null}
+          <div className={clsx(isExpanded ? "w-full" : "self-start")}>
+            {isExpanded ? (
+              <Button
+                theme="Primary"
+                type="Solid"
+                size="M"
+                fitContent={false}
+                showLeftIcon={false}
+                showRightIcon={false}
+                className="w-full"
+                onClick={onNewOpportunityClick}
+              >
+                {newOpportunityLabel}
+              </Button>
+            ) : (
+              <Button
+                theme="Primary"
+                type="Solid"
+                size="M"
+                showText={false}
+                showLeftIcon
+                showRightIcon={false}
+                iconLeft={<AddIcon className="size-5" />}
+                aria-label={newOpportunityLabel}
+                onClick={onNewOpportunityClick}
+                onMouseUp={clearPointerFocus}
+                onTouchEnd={clearPointerFocus}
+              />
+            )}
+          </div>
+
+          <nav
+            className={clsx(
+              "flex flex-col gap-[8px]",
+              isExpanded ? "w-full" : "items-start",
+            )}
+            data-node-id={nodeIds.menu}
+            aria-label="Secciones"
+          >
+            {visibleItems.map((item) =>
+              isExpanded ? (
+                <div
+                  key={item.id}
+                  className="flex w-full items-center"
+                  style={{ minHeight: item.wrapperHeight ?? "44px" }}
+                >
+                  <TabItem
+                    label={item.label}
+                    size="M"
+                    style="Brand"
+                    selected={item.id === resolvedActiveItemId}
+                    interactive
+                    iconLeft={false}
+                    iconRight={false}
+                    leftIcon={getItemIcon(item.icon)}
+                    rightIcon={null}
+                    className="w-full justify-start"
+                    aria-label={item.label}
+                    onClick={() => handleItemSelect(item)}
+                  />
+                </div>
+              ) : (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={clsx(
+                    "inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--radius-2)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+                    item.id === resolvedActiveItemId
+                      ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
+                      : "bg-transparent text-[var(--color-text-100)] hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
+                  )}
+                  aria-label={item.label}
+                  onClick={() => handleItemSelect(item)}
+                  onMouseUp={clearPointerFocus}
+                  onTouchEnd={clearPointerFocus}
+                >
+                  {getItemIcon(item.icon)}
+                </button>
+              ),
+            )}
+
+            {visibleItems.length === 0 && isExpanded ? (
+              <p className="px-[12px] py-[8px] text-body-4 text-[var(--color-text-100)]">
+                No hay coincidencias.
+              </p>
+            ) : null}
           </nav>
         </div>
       </div>
