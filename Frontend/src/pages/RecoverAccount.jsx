@@ -20,7 +20,8 @@ function RecoverAccount() {
   const [submitError, setSubmitError] = useState("");
   const [toastTrigger, setToastTrigger] = useState(null);
 
-  const emailHasError = (touched && !isValidEmail(email)) || Boolean(submitError);
+  const emailHasError =
+    (touched && !isValidEmail(email)) || Boolean(submitError);
   const emailState = useMemo(() => {
     if (emailHasError) {
       return "Error";
@@ -71,7 +72,10 @@ function RecoverAccount() {
 
       <section className="flex w-full max-w-[581px] items-center gap-[var(--spacing-gap-0)] rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
         <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
-          <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full flex-col gap-[16px]"
+          >
             <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
               <img
                 src={group1Logo}
