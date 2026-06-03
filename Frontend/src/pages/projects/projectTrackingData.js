@@ -1,4 +1,4 @@
-import fondoActualizarContrasena from "../../assets/fondos/Property 1=actualizar contraseña.png";
+import fondoActualizarcontraseña from "../../assets/fondos/Property 1=actualizar contraseña.png";
 import fondoVariante2 from "../../assets/fondos/Property 1=Variant2.png";
 
 export const PROJECT_TRACKING_SUMMARY = [
@@ -75,7 +75,7 @@ export const PROJECT_TRACKING_COMPARISONS = [
   {
     id: "comparison-before",
     title: "Baño Principal",
-    image: fondoActualizarContrasena,
+    image: fondoActualizarcontraseña,
     selectedOptionId: "survey",
     options: [
       { id: "survey", label: "Levantamiento", type: "Text" },

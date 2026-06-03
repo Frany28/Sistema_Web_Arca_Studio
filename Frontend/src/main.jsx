@@ -37,7 +37,7 @@ createRoot(document.getElementById("root")).render(
 
           <Route path="/cuenta-inactiva" element={<InactiveAccount />} />
           <Route path="/recuperar-cuenta" element={<RecoverAccount />} />
-          <Route path="/nueva-contrasena" element={<NewPassword />} />
+          <Route path="/nueva-contraseña" element={<NewPassword />} />
 
           <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
             <Route path="/dashboard-clientes" element={<Home />} />
@@ -47,7 +47,9 @@ createRoot(document.getElementById("root")).render(
             />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["admin", "architect"]} />}>
+          <Route
+            element={<ProtectedRoute allowedRoles={["admin", "architect"]} />}
+          >
             <Route
               path="/dashboard-arquitecto"
               element={<ArchitectDashboard />}

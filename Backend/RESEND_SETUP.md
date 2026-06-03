@@ -22,7 +22,7 @@ Importante: `FRONTEND_URL` debe apuntar al dominio de tu frontend de producción
 
 El enlace de recuperación usa la ruta del frontend:
 
-- `/nueva-contrasena`
+- `/nueva-contraseña`
 
 Si quieres guardar el código temporalmente en la base de datos, crea la tabla de restablecimiento con el script:
 

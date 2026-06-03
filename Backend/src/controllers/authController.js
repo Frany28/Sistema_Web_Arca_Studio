@@ -87,7 +87,7 @@ export async function login(req, res, next) {
     if (!isValidEmail(email) || password.length < 8 || password.length > 256) {
       res.status(400).json({
         code: "INVALID_CREDENTIALS",
-        message: "Correo o contrasena invalidos.",
+        message: "Correo o contraseña invalidos.",
       });
       return;
     }
@@ -96,10 +96,18 @@ export async function login(req, res, next) {
     const passwordHash = userRecord?.password_hash || FAKE_BCRYPT_HASH;
     const passwordMatches = await bcrypt.compare(password, passwordHash);
 
-    if (!userRecord || userRecord.status !== "active" || !passwordMatches) {
+    if (!userRecord || !passwordMatches) {
       res.status(401).json({
         code: "INVALID_CREDENTIALS",
-        message: "Correo o contrasena invalidos.",
+        message: "Correo o contraseña invalidos.",
+      });
+      return;
+    }
+
+    if (userRecord.status !== "active") {
+      res.status(409).json({
+        code: "ACCOUNT_NOT_ACTIVE",
+        message: "La cuenta no esta activa. Contacta a soporte.",
       });
       return;
     }

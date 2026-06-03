@@ -1,6 +1,6 @@
-import fondoActualizarContrasena from "../../assets/fondos/Property 1=actualizar contraseña.png";
+import fondoActualizarcontraseña from "../../assets/fondos/Property 1=actualizar contraseña.png";
 import fondoNotificacion from "../../assets/fondos/Property 1=notificacion.png";
-import fondoRestablecerContrasena from "../../assets/fondos/Property 1=restablecer contraseña.png";
+import fondoRestablecercontraseña from "../../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../../assets/fondos/Property 1=Variant2.png";
 
 export const PROJECT_VIDEO_GALLERY = [
@@ -18,7 +18,7 @@ export const PROJECT_VIDEO_GALLERY = [
     label: "Habitacion Principal",
     uploadedAt: "Subido el 12 Feb 2026",
     size: "5MB",
-    image: fondoRestablecerContrasena,
+    image: fondoRestablecercontraseña,
   },
   {
     id: "secondary-bedroom-video",
@@ -34,7 +34,7 @@ export const PROJECT_VIDEO_GALLERY = [
     label: "Baño principal",
     uploadedAt: "Subido el 12 Feb 2026",
     size: "5MB",
-    image: fondoActualizarContrasena,
+    image: fondoActualizarcontraseña,
   },
   {
     id: "kitchen-video",

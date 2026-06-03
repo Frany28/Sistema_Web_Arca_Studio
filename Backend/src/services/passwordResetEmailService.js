@@ -55,7 +55,7 @@ export function createPasswordResetPayload(user) {
   const expiresAt = new Date(
     Date.now() + RESET_TOKEN_EXPIRES_IN_SECONDS * 1000,
   );
-  const resetUrl = `${getFrontendBaseUrl()}/nueva-contrasena?token=${encodeURIComponent(token)}`;
+  const resetUrl = `${getFrontendBaseUrl()}/nueva-contraseña?token=${encodeURIComponent(token)}`;
 
   return {
     expiresAt: expiresAt.toISOString(),
@@ -87,7 +87,7 @@ export async function sendPasswordResetEmail({
     body: JSON.stringify({
       from,
       to: [email],
-      subject: "Restablece tu contrasena",
+      subject: "Restablece tu contraseña",
       html: `
         <div style="font-family: Arial, sans-serif; color: #1f1f1f; line-height: 1.5;">
           <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: flex-start;">
@@ -115,12 +115,12 @@ export async function sendPasswordResetEmail({
               <path d="M150.816 116.642C153.528 116.642 155.727 114.444 155.727 111.731C155.727 109.019 153.528 106.821 150.816 106.821C148.104 106.821 145.906 109.019 145.906 111.731C145.906 114.444 148.104 116.642 150.816 116.642Z" fill="white"/>
             </svg>
           </div>
-          <h1 style="font-size: 22px; margin-bottom: 12px;">Restablece tu contrasena</h1>
-          <p>Recibimos una solicitud para restablecer la contrasena de ${safeEmail}.</p>
+          <h1 style="font-size: 22px; margin-bottom: 12px;">Restablece tu contraseña</h1>
+          <p>Recibimos una solicitud para restablecer la contraseña de ${safeEmail}.</p>
           <p>Haz clic en el siguiente boton para continuar con el restablecimiento:</p>
           <p>
             <a href="${safeResetUrl}" style="display: inline-block; padding: 12px 18px; background: #ff4438; color: #ffffff; text-decoration: none; border-radius: 8px;">
-              Restablecer contrasena
+              Restablecer contraseña
             </a>
           </p>
           <p>Este enlace vencera en ${expiresInMinutes} minutos.</p>
@@ -130,7 +130,7 @@ export async function sendPasswordResetEmail({
         </div>
       `,
       text: [
-        "Restablece tu contrasena",
+        "Restablece tu contraseña",
         `Visita el siguiente enlace para restablecer tu contraseña: ${resetUrl}`,
         `Este enlace vencera en ${expiresInMinutes} minutos.`,
         "Si no solicitaste este cambio, puedes ignorar este correo.",

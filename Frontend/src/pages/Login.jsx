@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import {
-  getDefaultAuthenticatedPath,
-  useAuth,
-} from "../auth/AuthContext.jsx";
+import { getDefaultAuthenticatedPath, useAuth } from "../auth/AuthContext.jsx";
 import group1Logo from "../assets/logos/Group 1.svg";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import Button from "../components/ui/Button/Button.jsx";
@@ -77,8 +74,15 @@ function Login() {
       navigate(redirectTo, {
         replace: true,
       });
-    } catch {
-      setAuthError("Correo o contrasena incorrectos.");
+    } catch (error) {
+      if (error?.code === "ACCOUNT_NOT_ACTIVE") {
+        navigate("/cuenta-inactiva", {
+          replace: true,
+        });
+        return;
+      }
+
+      setAuthError("Correo o contraseña incorrectos.");
       setTouched({
         email: true,
         password: true,
@@ -119,82 +123,79 @@ function Login() {
       />
       <section className="flex w-full max-w-[581px] items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)] lg:min-h-[544px]">
         <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
-            <form
-              onSubmit={handleSubmit}
-              className="flex w-full flex-col gap-4"
-            >
-              <div className="flex w-full flex-col items-start gap-2 border-b border-[var(--color-neutral-200)] pb-4">
-                <img
-                  src={group1Logo}
-                  alt="ARCA Studio"
-                  className="h-12 w-[50.64px] object-contain"
-                />
-                <h1 className="text-heading-3 m-0 self-stretch text-[var(--color-text-300)] max-sm:text-[40px] max-sm:leading-[46px]">
-                  Accede a tu cuenta
-                </h1>
-              </div>
+          <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+            <div className="flex w-full flex-col items-start gap-2 border-b border-[var(--color-neutral-200)] pb-4">
+              <img
+                src={group1Logo}
+                alt="ARCA Studio"
+                className="h-12 w-[50.64px] object-contain"
+              />
+              <h1 className="text-heading-3 m-0 self-stretch text-[var(--color-text-300)] max-sm:text-[40px] max-sm:leading-[46px]">
+                Accede a tu cuenta
+              </h1>
+            </div>
 
-              <Input
-                label="Correo Electrónico"
-                type="Default input"
-                size="S"
-                value={email}
-                state={emailState}
-                placeholder="ejemplo@dominio.com"
-                showHint={showEmailHint}
-                hintText="Este correo no se encuentra."
-                showLabelInfo={false}
-                required={false}
+            <Input
+              label="Correo Electrónico"
+              type="Default input"
+              size="S"
+              value={email}
+              state={emailState}
+              placeholder="ejemplo@dominio.com"
+              showHint={showEmailHint}
+              hintText="Este correo no se encuentra."
+              showLabelInfo={false}
+              required={false}
+              showRightIcon={false}
+              className="max-w-none w-full"
+              onChange={(event) => setEmail(event.target.value)}
+            />
+
+            <Input
+              label="Contraseña"
+              type="Password"
+              size="S"
+              value={password}
+              state={passwordState}
+              showHint={showPasswordHint}
+              hintText="Contraseña incorrecta."
+              showLabelInfo={false}
+              required={false}
+              showPasswordStrength={false}
+              className="max-w-none w-full"
+              onChange={(event) => setPassword(event.target.value)}
+            />
+
+            <div className="w-full">
+              <Button
+                htmlType="submit"
+                theme="Primary"
+                type="Solid"
+                size="M"
+                fitContent={false}
+                showLeftIcon={false}
                 showRightIcon={false}
-                className="max-w-none w-full"
-                onChange={(event) => setEmail(event.target.value)}
-              />
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                Iniciar sesión
+              </Button>
+            </div>
 
-              <Input
-                label="Contraseña"
-                type="Password"
-                size="S"
-                value={password}
-                state={passwordState}
-                showHint={showPasswordHint}
-                hintText="Contraseña incorrecta."
-                showLabelInfo={false}
-                required={false}
-                showPasswordStrength={false}
-                className="max-w-none w-full"
-                onChange={(event) => setPassword(event.target.value)}
-              />
-
-              <div className="w-full">
-                <Button
-                  htmlType="submit"
-                  theme="Primary"
-                  type="Solid"
-                  size="M"
-                  fitContent={false}
-                  showLeftIcon={false}
-                  showRightIcon={false}
-                  className="w-full"
-                  disabled={isSubmitting}
-                >
-                  Iniciar sesión
-                </Button>
-              </div>
-
-              <div className="flex w-full justify-center">
-                <Button
-                  theme="Primary"
-                  type="Link"
-                  size="M"
-                  fitContent
-                  showLeftIcon={false}
-                  showRightIcon={false}
-                  onClick={() => navigate("/recuperar-cuenta")}
-                >
-                  Olvidé mi contraseña
-                </Button>
-              </div>
-            </form>
+            <div className="flex w-full justify-center">
+              <Button
+                theme="Primary"
+                type="Link"
+                size="M"
+                fitContent
+                showLeftIcon={false}
+                showRightIcon={false}
+                onClick={() => navigate("/recuperar-cuenta")}
+              >
+                Olvidé mi contraseña
+              </Button>
+            </div>
+          </form>
         </div>
       </section>
     </AuthLayout>

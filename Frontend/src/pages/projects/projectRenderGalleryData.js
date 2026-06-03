@@ -1,6 +1,6 @@
-import fondoActualizarContrasena from "../../assets/fondos/Property 1=actualizar contraseña.png";
+import fondoActualizarcontraseña from "../../assets/fondos/Property 1=actualizar contraseña.png";
 import fondoNotificacion from "../../assets/fondos/Property 1=notificacion.png";
-import fondoRestablecerContrasena from "../../assets/fondos/Property 1=restablecer contraseña.png";
+import fondoRestablecercontraseña from "../../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../../assets/fondos/Property 1=Variant2.png";
 
 export const PROJECT_RENDER_GALLERY = [
@@ -12,7 +12,7 @@ export const PROJECT_RENDER_GALLERY = [
   {
     id: "main-bathroom",
     title: "Baño Principal",
-    image: fondoActualizarContrasena,
+    image: fondoActualizarcontraseña,
   },
   {
     id: "living-room",
@@ -22,7 +22,7 @@ export const PROJECT_RENDER_GALLERY = [
   {
     id: "main-bedroom",
     title: "Habitación Principal",
-    image: fondoRestablecerContrasena,
+    image: fondoRestablecercontraseña,
   },
   {
     id: "secondary-bedroom",

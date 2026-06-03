@@ -105,7 +105,7 @@ function RecoverAccount() {
                 submitError ||
                 (emailHasError
                   ? "Ingresa un correo electronico valido."
-                  : "Te enviaremos un enlace para restablecer tu contrasena")
+                  : "Te enviaremos un enlace para restablecer tu contraseña")
               }
               showHint
               showLabelInfo={false}

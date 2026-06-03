@@ -5,12 +5,12 @@ import fondoNotificacion from "../../assets/fondos/Property 1=notificacion.png";
 import fondoTextura from "../../assets/fondos/88c12dc848224c27f9236223c33f47621394518d.jpg";
 import logoArca from "../../assets/logos/SIZE=200px.svg";
 
-const fondoActualizarContrasena = new URL(
+const fondoActualizarcontraseña = new URL(
   "../../assets/fondos/Property 1=actualizar contrase\u00f1a.png",
   import.meta.url,
 ).href;
 
-const fondoRestablecerContrasena = new URL(
+const fondoRestablecercontraseña = new URL(
   "../../assets/fondos/Property 1=restablecer contrase\u00f1a.png",
   import.meta.url,
 ).href;
@@ -18,8 +18,8 @@ const fondoRestablecerContrasena = new URL(
 const DEFAULT_IMAGES = [
   fondoVariante2,
   fondoNotificacion,
-  fondoActualizarContrasena,
-  fondoRestablecerContrasena,
+  fondoActualizarcontraseña,
+  fondoRestablecercontraseña,
   fondoTextura,
 ];
 

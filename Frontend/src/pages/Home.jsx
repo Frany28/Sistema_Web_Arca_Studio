@@ -11,9 +11,9 @@ import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";
 import ScrollBar from "../components/ui/ScrollBar/ScrollBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
-import fondoActualizarContrasena from "../assets/fondos/Property 1=actualizar contraseña.png";
+import fondoActualizarcontraseña from "../assets/fondos/Property 1=actualizar contraseña.png";
 import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
-import fondoRestablecerContrasena from "../assets/fondos/Property 1=restablecer contraseña.png";
+import fondoRestablecercontraseña from "../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
 import {
   CLIENT_DRAWER_COMMENTS,
@@ -55,12 +55,12 @@ const PROJECT_SHOWCASE_ITEMS = [
   {
     id: "aura-bathroom-1",
     title: "Stand Aura 2026",
-    image: fondoActualizarContrasena,
+    image: fondoActualizarcontraseña,
   },
   {
     id: "aura-living-1",
     title: "Stand Aura 2026",
-    image: fondoRestablecerContrasena,
+    image: fondoRestablecercontraseña,
   },
   {
     id: "aura-kitchen-2",
@@ -70,7 +70,7 @@ const PROJECT_SHOWCASE_ITEMS = [
   {
     id: "aura-bathroom-2",
     title: "Stand Aura 2026",
-    image: fondoActualizarContrasena,
+    image: fondoActualizarcontraseña,
   },
   {
     id: "aura-stand-2",
@@ -85,12 +85,12 @@ const PROJECT_SHOWCASE_ITEMS = [
   {
     id: "aura-bathroom-3",
     title: "Stand Aura 2026",
-    image: fondoActualizarContrasena,
+    image: fondoActualizarcontraseña,
   },
   {
     id: "aura-living-2",
     title: "Stand Aura 2026",
-    image: fondoRestablecerContrasena,
+    image: fondoRestablecercontraseña,
   },
   {
     id: "aura-kitchen-4",
@@ -100,7 +100,7 @@ const PROJECT_SHOWCASE_ITEMS = [
   {
     id: "aura-bathroom-4",
     title: "Stand Aura 2026",
-    image: fondoActualizarContrasena,
+    image: fondoActualizarcontraseña,
   },
 ];
 

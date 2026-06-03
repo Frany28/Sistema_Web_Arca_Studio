@@ -8,6 +8,7 @@
   },
   "scripts": {
     "check:user-login": "node scripts/check-user-login.mjs",
+    "user:set-status": "node scripts/set-user-status.mjs",
     "dev": "node local.js",
     "start": "node local.js"
   },
