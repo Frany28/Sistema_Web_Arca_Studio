@@ -14,7 +14,19 @@ Variables opcionales
 Dónde añadirlas
 
 - En desarrollo: añade las variables en `Backend/.env` (no comites este archivo).
-- En producción: añade `RESEND_API_KEY` y `MAIL_FROM` en los secrets/env vars de tu host (Vercel, Netlify, etc.).
+- En producción: añade `RESEND_API_KEY`, `MAIL_FROM` y `FRONTEND_URL` en los secrets/env vars de tu host (Vercel, Netlify, etc.).
+
+Importante: `FRONTEND_URL` debe apuntar al dominio de tu frontend de producción, por ejemplo:
+- `https://arcastudio.netlify.app`
+
+El enlace de recuperación usa la ruta del frontend:
+- `/nueva-contrasena`
+
+Si quieres guardar el código temporalmente en la base de datos, crea la tabla de restablecimiento con el script:
+
+```bash
+pnpm exec node scripts/create-password-reset-table.mjs
+```
 
 Pasos rápidos para obtener la API key
 

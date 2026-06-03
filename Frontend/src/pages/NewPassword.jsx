@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { api } from "../api/http.js";
 import group1Logo from "../assets/logos/Group 1.svg";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import Button from "../components/ui/Button/Button.jsx";
@@ -37,12 +38,56 @@ function getPasswordState(value, touched) {
 
 function NewPassword() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token") || "";
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [touched, setTouched] = useState({
     password: false,
     confirmPassword: false,
   });
+  const [isTokenValid, setIsTokenValid] = useState(false);
+  const [isValidatingToken, setIsValidatingToken] = useState(true);
+  const [validationError, setValidationError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    if (!token) {
+      setValidationError(
+        "No se encontró un enlace válido para recuperar la contraseña.",
+      );
+      setIsTokenValid(false);
+      setIsValidatingToken(false);
+      return;
+    }
+
+    let active = true;
+    setValidationError("");
+    setIsValidatingToken(true);
+
+    api.auth
+      .verifyResetToken({ token })
+      .then(() => {
+        if (!active) return;
+        setIsTokenValid(true);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setIsTokenValid(false);
+        setValidationError(
+          error?.message || "El enlace de recuperación no es válido o expiró.",
+        );
+      })
+      .finally(() => {
+        if (!active) return;
+        setIsValidatingToken(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   const passwordState = useMemo(
     () => getPasswordState(password, touched.password),
@@ -71,28 +116,40 @@ function NewPassword() {
   const passwordsMatch =
     confirmPassword.trim().length > 0 && confirmPassword === password;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setTouched({
       password: true,
       confirmPassword: true,
     });
 
-    if (!passwordIsValid || !passwordsMatch) {
+    if (!passwordIsValid || !passwordsMatch || !isTokenValid) {
       return;
     }
 
-    navigate("/", {
-      state: {
-        authToast: {
-          id: Date.now(),
-          title: "Contraseña restablecida",
-          description:
-            "Tu contraseña ha sido actualizada con éxito. Por razones de seguridad, por favor verifica la actividad reciente.",
-          icon: "lock",
+    setFormError("");
+    setSubmitting(true);
+
+    try {
+      await api.auth.resetPassword({ token, password });
+      navigate("/", {
+        state: {
+          authToast: {
+            id: Date.now(),
+            title: "Contraseña restablecida",
+            description:
+              "Tu contraseña ha sido actualizada con éxito. Por razones de seguridad, por favor verifica la actividad reciente.",
+            icon: "lock",
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      setFormError(
+        error?.message || "No se pudo restablecer la contraseña. Intenta nuevamente.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -110,6 +167,26 @@ function NewPassword() {
                 Recupera tu acceso
               </h1>
             </div>
+
+            {(validationError || isValidatingToken) && (
+              <div className="w-full rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-white p-[16px] text-[var(--color-text-300)]">
+                <p className="m-0 text-sm text-[var(--color-text-300)]">
+                  {isValidatingToken
+                    ? "Validando enlace de recuperación..."
+                    : validationError}
+                </p>
+                {!isValidatingToken && validationError && (
+                  <p className="mt-[8px] text-sm">
+                    <a
+                      href="/recuperar-cuenta"
+                      className="text-[var(--color-primary-600)] hover:underline"
+                    >
+                      Solicitar otro enlace de recuperación
+                    </a>
+                  </p>
+                )}
+              </div>
+            )}
 
             <Input
               label="Nueva contraseña"
@@ -155,6 +232,12 @@ function NewPassword() {
               }
             />
 
+            {formError ? (
+              <div className="rounded-[var(--radius-4)] border border-red-300 bg-[#fff1f0] p-[12px] text-sm text-[#9a1f1f]">
+                {formError}
+              </div>
+            ) : null}
+
             <Button
               htmlType="submit"
               theme="Primary"
@@ -164,8 +247,11 @@ function NewPassword() {
               showLeftIcon={false}
               showRightIcon={false}
               className="w-full"
+              disabled={
+                submitting || isValidatingToken || !isTokenValid || !passwordIsValid || !passwordsMatch
+              }
             >
-              Actualizar contraseña
+              {submitting ? "Actualizando contraseña..." : "Actualizar contraseña"}
             </Button>
           </form>
         </div>

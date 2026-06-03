@@ -83,6 +83,17 @@ export async function updateLastLoginAt(id) {
   );
 }
 
+export async function updateUserPassword(id, passwordHash) {
+  await query(
+    `
+      update public.users
+      set password_hash = $2, updated_at = now()
+      where id = $1
+    `,
+    [id, passwordHash],
+  );
+}
+
 export function sanitizeUser(row) {
   return toSafeUser(row);
 }

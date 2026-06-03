@@ -3,15 +3,17 @@ import bcrypt from "bcrypt";
 import { authConfig } from "../config/auth.js";
 import {
   findUserByEmail,
+  findActiveUserById,
   sanitizeUser,
   updateLastLoginAt,
+  updateUserPassword,
 } from "../repositories/userRepository.js";
 import {
   createPasswordResetPayload,
   sendPasswordResetEmail,
 } from "../services/passwordResetEmailService.js";
 import { serializeCookie } from "../utils/cookies.js";
-import { createAuthToken } from "../utils/tokens.js";
+import { createAuthToken, verifyAuthToken } from "../utils/tokens.js";
 
 const FAKE_BCRYPT_HASH =
   "$2a$10$rN2S9IoJgP1Fx41s6fWaIOY6PksHh4EYoJ.13YZRbrxIJpV66F79i";
@@ -39,6 +41,30 @@ function buildExpiredSessionCookie() {
     sameSite: authConfig.cookieSameSite,
     secure: authConfig.cookieSecure,
   });
+}
+
+function parseResetToken(token) {
+  if (!token || typeof token !== "string") {
+    return null;
+  }
+
+  const payload = verifyAuthToken(token, {
+    secret: authConfig.tokenSecret,
+  });
+
+  if (
+    !payload ||
+    payload.purpose !== "password_reset" ||
+    !payload.sub ||
+    Number.isNaN(Number(payload.sub))
+  ) {
+    return null;
+  }
+
+  return {
+    userId: Number(payload.sub),
+    email: payload.email,
+  };
 }
 
 export async function login(req, res, next) {
@@ -146,6 +172,7 @@ export async function forgotPassword(req, res, next) {
     }
 
     const resetPayload = createPasswordResetPayload(userRecord);
+
     await sendPasswordResetEmail({
       email: userRecord.email,
       ...resetPayload,
@@ -153,6 +180,79 @@ export async function forgotPassword(req, res, next) {
 
     res.status(202).json({
       message: "Enviamos un enlace de recuperacion a tu correo.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function verifyResetToken(req, res, next) {
+  try {
+    const token = String(req.body?.token || "").trim();
+    const payload = parseResetToken(token);
+
+    if (!payload) {
+      res.status(400).json({
+        code: "INVALID_RESET_TOKEN",
+        message: "El enlace de restablecimiento no es válido o expiró.",
+      });
+      return;
+    }
+
+    const userRecord = await findActiveUserById(payload.userId);
+
+    if (!userRecord) {
+      res.status(404).json({
+        code: "USER_NOT_FOUND",
+        message: "No encontramos un usuario válido para este enlace.",
+      });
+      return;
+    }
+
+    res.status(200).json({ valid: true });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function resetPassword(req, res, next) {
+  try {
+    const token = String(req.body?.token || "").trim();
+    const password = String(req.body?.password || "").trim();
+
+    if (!password || password.length < 8) {
+      res.status(400).json({
+        code: "INVALID_PASSWORD",
+        message: "La contraseña debe tener al menos 8 caracteres.",
+      });
+      return;
+    }
+
+    const payload = parseResetToken(token);
+
+    if (!payload) {
+      res.status(400).json({
+        code: "INVALID_RESET_TOKEN",
+        message: "El enlace de restablecimiento no es válido o expiró.",
+      });
+      return;
+    }
+
+    const userRecord = await findActiveUserById(payload.userId);
+
+    if (!userRecord) {
+      res.status(404).json({
+        code: "USER_NOT_FOUND",
+        message: "No encontramos un usuario válido para este enlace.",
+      });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await updateUserPassword(userRecord.id, passwordHash);
+
+    res.status(200).json({
+      message: "Tu contraseña ha sido actualizada con éxito.",
     });
   } catch (error) {
     next(error);

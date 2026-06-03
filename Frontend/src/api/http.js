@@ -48,6 +48,20 @@ export const authApi = {
     });
   },
 
+  verifyResetToken({ token }) {
+    return apiRequest("/auth/verify-reset-token", {
+      body: JSON.stringify({ token }),
+      method: "POST",
+    });
+  },
+
+  resetPassword({ token, password }) {
+    return apiRequest("/auth/reset-password", {
+      body: JSON.stringify({ token, password }),
+      method: "POST",
+    });
+  },
+
   logout() {
     return apiRequest("/auth/logout", {
       method: "POST",
