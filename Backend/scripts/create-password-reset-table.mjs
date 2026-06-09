@@ -11,6 +11,12 @@ const sql = `
     created_at timestamptz not null default now(),
     used boolean not null default false
   );
+
+  create index if not exists password_reset_tokens_lookup_idx
+    on public.password_reset_tokens (user_id, token, purpose, used, expires_at);
+
+  create index if not exists password_reset_tokens_cleanup_idx
+    on public.password_reset_tokens (expires_at);
 `;
 
 try {

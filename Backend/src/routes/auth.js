@@ -15,8 +15,8 @@ const router = Router();
 
 router.post("/login", loginRateLimit, login);
 router.post("/forgot-password", loginRateLimit, forgotPassword);
-router.post("/verify-reset-token", verifyResetToken);
-router.post("/reset-password", resetPassword);
+router.post("/verify-reset-token", loginRateLimit, verifyResetToken);
+router.post("/reset-password", loginRateLimit, resetPassword);
 router.get("/me", requireAuth, me);
 router.post("/logout", logout);
 

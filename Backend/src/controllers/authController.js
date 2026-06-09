@@ -9,7 +9,13 @@ import {
   updateUserPassword,
 } from "../repositories/userRepository.js";
 import {
+  consumePasswordResetToken,
+  createPasswordResetToken,
+  findValidPasswordResetToken,
+} from "../repositories/passwordResetRepository.js";
+import {
   createPasswordResetPayload,
+  hashPasswordResetToken,
   sendPasswordResetEmail,
 } from "../services/passwordResetEmailService.js";
 import { serializeCookie } from "../utils/cookies.js";
@@ -17,6 +23,9 @@ import { createAuthToken, verifyAuthToken } from "../utils/tokens.js";
 
 const FAKE_BCRYPT_HASH =
   "$2a$10$rN2S9IoJgP1Fx41s6fWaIOY6PksHh4EYoJ.13YZRbrxIJpV66F79i";
+const PASSWORD_RESET_ACCEPTED_RESPONSE = {
+  message: "Si el correo esta registrado, enviaremos un enlace de recuperacion.",
+};
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -74,6 +83,7 @@ function parseResetToken(token) {
   return {
     userId: Number(payload.sub),
     email: payload.email,
+    tokenHash: hashPasswordResetToken(token),
   };
 }
 
@@ -169,32 +179,24 @@ export async function forgotPassword(req, res, next) {
 
     const userRecord = await findUserByEmail(email);
 
-    if (!userRecord) {
-      res.status(404).json({
-        code: "EMAIL_NOT_FOUND",
-        message: "No encontramos una cuenta asociada a ese correo.",
-      });
-      return;
-    }
-
-    if (userRecord.status !== "active") {
-      res.status(409).json({
-        code: "ACCOUNT_NOT_ACTIVE",
-        message: "La cuenta no esta activa. Contacta a soporte.",
-      });
+    if (!userRecord || userRecord.status !== "active") {
+      res.status(202).json(PASSWORD_RESET_ACCEPTED_RESPONSE);
       return;
     }
 
     const resetPayload = createPasswordResetPayload(userRecord);
+    await createPasswordResetToken(
+      userRecord.id,
+      resetPayload.tokenHash,
+      resetPayload.expiresAt,
+    );
 
     await sendPasswordResetEmail({
       email: userRecord.email,
       ...resetPayload,
     });
 
-    res.status(202).json({
-      message: "Enviamos un enlace de recuperacion a tu correo.",
-    });
+    res.status(202).json(PASSWORD_RESET_ACCEPTED_RESPONSE);
   } catch (error) {
     next(error);
   }
@@ -214,8 +216,11 @@ export async function verifyResetToken(req, res, next) {
     }
 
     const userRecord = await findActiveUserById(payload.userId);
+    const resetRecord = userRecord
+      ? await findValidPasswordResetToken(payload.userId, payload.tokenHash)
+      : null;
 
-    if (!userRecord) {
+    if (!userRecord || !resetRecord) {
       res.status(404).json({
         code: "USER_NOT_FOUND",
         message: "No encontramos un usuario válido para este enlace.",
@@ -254,8 +259,11 @@ export async function resetPassword(req, res, next) {
     }
 
     const userRecord = await findActiveUserById(payload.userId);
+    const tokenConsumed = userRecord
+      ? await consumePasswordResetToken(payload.userId, payload.tokenHash)
+      : false;
 
-    if (!userRecord) {
+    if (!userRecord || !tokenConsumed) {
       res.status(404).json({
         code: "USER_NOT_FOUND",
         message: "No encontramos un usuario válido para este enlace.",

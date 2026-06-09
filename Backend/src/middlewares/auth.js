@@ -3,50 +3,92 @@ import { findActiveUserById } from "../repositories/userRepository.js";
 import { parseCookies } from "../utils/cookies.js";
 import { verifyAuthToken } from "../utils/tokens.js";
 
-export async function requireAuth(req, res, next) {
+function getEmptySession() {
+  return {
+    isAuthenticated: false,
+    payload: null,
+    token: null,
+  };
+}
+
+function isTokenOlderThanUser(payload, user) {
+  if (!payload.iat || !user.updatedAt) {
+    return false;
+  }
+
+  const tokenIssuedAt = Number(payload.iat) * 1000;
+  const userUpdatedAt = new Date(user.updatedAt).getTime();
+
+  return userUpdatedAt > tokenIssuedAt;
+}
+
+async function resolveSession(req) {
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies[authConfig.cookieName];
+  const payload = verifyAuthToken(token, {
+    secret: authConfig.tokenSecret,
+  });
+
+  if (!payload?.sub) {
+    return {
+      session: getEmptySession(),
+      user: null,
+    };
+  }
+
+  const user = await findActiveUserById(payload.sub);
+
+  if (!user || isTokenOlderThanUser(payload, user)) {
+    return {
+      session: getEmptySession(),
+      user: null,
+    };
+  }
+
+  return {
+    session: {
+      isAuthenticated: true,
+      payload,
+      token,
+    },
+    user,
+  };
+}
+
+export async function loadSession(req, _res, next) {
   try {
-    const cookies = parseCookies(req.headers.cookie);
-    const token = cookies[authConfig.cookieName];
-    const payload = verifyAuthToken(token, {
-      secret: authConfig.tokenSecret,
-    });
+    const { session, user } = await resolveSession(req);
 
-    if (!payload?.sub) {
-      res.status(401).json({
-        code: "UNAUTHENTICATED",
-        message: "Sesion requerida.",
-      });
-      return;
-    }
-
-    const user = await findActiveUserById(payload.sub);
-
-    if (!user) {
-      res.status(401).json({
-        code: "UNAUTHENTICATED",
-        message: "Sesion invalida.",
-      });
-      return;
-    }
-
-    if (payload.iat && user.updatedAt) {
-      const tokenIssuedAt = Number(payload.iat) * 1000;
-      const userUpdatedAt = new Date(user.updatedAt).getTime();
-
-      if (userUpdatedAt > tokenIssuedAt) {
-        res.status(401).json({
-          code: "UNAUTHENTICATED",
-          message: "Sesion invalida.",
-        });
-        return;
-      }
-    }
-
+    req.session = session;
     req.user = user;
     next();
   } catch (error) {
     next(error);
   }
+}
+
+export async function requireAuth(req, res, next) {
+  if (!req.session) {
+    try {
+      const { session, user } = await resolveSession(req);
+
+      req.session = session;
+      req.user = user;
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+
+  if (!req.session.isAuthenticated || !req.user) {
+    res.status(401).json({
+      code: "UNAUTHENTICATED",
+      message: "Sesion requerida.",
+    });
+    return;
+  }
+
+  next();
 }
 
 export function requireRoles(...allowedRoles) {
