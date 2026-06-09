@@ -112,3 +112,30 @@ export function requireRoles(...allowedRoles) {
     next();
   };
 }
+
+export function requirePermissions(...requiredPermissions) {
+  return (req, res, next) => {
+    if (!req.user) {
+      res.status(401).json({
+        code: "UNAUTHENTICATED",
+        message: "Sesion requerida.",
+      });
+      return;
+    }
+
+    const userPermissions = new Set(req.user.permissionCodes || []);
+    const hasAllPermissions = requiredPermissions.every((permission) =>
+      userPermissions.has(permission),
+    );
+
+    if (!hasAllPermissions) {
+      res.status(403).json({
+        code: "FORBIDDEN",
+        message: "No tienes permisos para realizar esta accion.",
+      });
+      return;
+    }
+
+    next();
+  };
+}

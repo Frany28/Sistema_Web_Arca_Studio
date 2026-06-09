@@ -15,17 +15,60 @@ const USER_SELECT = `
     u.last_login_at,
     u.updated_at,
     r.code as role_code,
-    r.name as role_name
+    r.name as role_name,
+    coalesce(role_permissions.permissions, '[]'::json) as permissions
   from public.users u
   inner join public.roles r on r.id = u.role_id
+  left join lateral (
+    select json_agg(
+      json_build_object(
+        'id', p.id,
+        'code', p.code,
+        'name', p.name,
+        'description', p.description,
+        'module', p.module
+      )
+      order by p.module, p.code
+    ) as permissions
+    from public.role_permissions rp
+    inner join public.permissions p on p.id = rp.permission_id
+    where rp.role_id = u.role_id
+      and rp.is_active = true
+      and p.is_active = true
+  ) role_permissions on true
   where u.deleted_at is null
     and r.is_active = true
 `;
+
+function normalizePermissions(value) {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 function toSafeUser(row) {
   if (!row) {
     return null;
   }
+
+  const permissions = normalizePermissions(row.permissions).map((permission) => ({
+    code: permission.code,
+    description: permission.description || null,
+    id: Number(permission.id),
+    module: permission.module,
+    name: permission.name,
+  }));
 
   return {
     clientId: row.client_id ? Number(row.client_id) : null,
@@ -42,6 +85,8 @@ function toSafeUser(row) {
       id: Number(row.role_id),
       name: row.role_name,
     },
+    permissions,
+    permissionCodes: permissions.map((permission) => permission.code),
     status: row.status,
     updatedAt: row.updated_at || null,
   };
