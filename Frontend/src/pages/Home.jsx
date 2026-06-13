@@ -119,12 +119,30 @@ function createProjectNavigationItems(projects) {
   ];
 }
 
+function getProjectAssigneeAvatars(project) {
+  const architect = project.assignedArchitect;
+
+  if (!architect) {
+    return [];
+  }
+
+  return [
+    {
+      alt: architect.name || architect.email || "Arquitecto encargado",
+      content: "Text",
+      name: architect.name || architect.email,
+      src: architect.profilePhotoUrl,
+      theme: "Neutral",
+    },
+  ];
+}
+
 function toProjectRow(project, index) {
   return {
     ...project,
+    assigneeAvatars: getProjectAssigneeAvatars(project),
     image: PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
     title: project.name,
-    visibilityLabel: project.isPublic ? "Publico" : "Privado",
   };
 }
 
@@ -146,23 +164,9 @@ function ProjectRow({ project }) {
           <h2 className="text-heading-4 text-[var(--color-text-50)]">
             {project.name}
           </h2>
-          <span className="text-body-4 rounded-[var(--radius-1)] border border-[var(--color-neutral-200)] px-[8px] py-[2px] text-[var(--color-text-200)]">
-            {project.visibilityLabel}
-          </span>
-          <AvatarGroup
-            size="S"
-            items={[
-              {
-                content: "Icon",
-                theme: "Neutral",
-              },
-              {
-                content: "Text",
-                theme: "Neutral",
-                initials: "AC",
-              },
-            ]}
-          />
+          {project.assigneeAvatars.length ? (
+            <AvatarGroup size="S" items={project.assigneeAvatars} />
+          ) : null}
         </div>
 
         <div className="flex w-full items-center gap-[24px]">

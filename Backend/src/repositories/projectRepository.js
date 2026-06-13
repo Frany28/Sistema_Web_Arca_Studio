@@ -16,6 +16,7 @@ function toProject(row) {
           name: `${row.architect_first_name || ""} ${
             row.architect_last_name || ""
           }`.trim(),
+          profilePhotoUrl: row.architect_profile_photo_url || null,
         }
       : null,
     budget: toNumber(row.budget),
@@ -109,7 +110,8 @@ export async function listProjectsForUser(user) {
         c.phone as client_phone,
         architect.email as architect_email,
         architect.first_name as architect_first_name,
-        architect.last_name as architect_last_name
+        architect.last_name as architect_last_name,
+        architect.profile_photo_url as architect_profile_photo_url
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
@@ -169,7 +171,8 @@ export async function updateProjectVisibility(projectId, isPublic) {
         c.phone as client_phone,
         architect.email as architect_email,
         architect.first_name as architect_first_name,
-        architect.last_name as architect_last_name
+        architect.last_name as architect_last_name,
+        architect.profile_photo_url as architect_profile_photo_url
       from updated_project p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id

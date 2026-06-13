@@ -63,7 +63,7 @@ function ChevronRightIcon({ className }) {
   );
 }
 
-function ProjectShowcaseCard({ title, image, height }) {
+function ProjectShowcaseCard({ title, image, height, assigneeAvatars = [] }) {
   return (
     <article
       className="group relative flex shrink-0 flex-col justify-between overflow-hidden rounded-[12px] p-[16px] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
@@ -94,21 +94,15 @@ function ProjectShowcaseCard({ title, image, height }) {
         </h3>
 
         <div className="flex w-full min-w-0 items-center justify-between gap-[10px]">
-          <AvatarGroup
-            size="S"
-            items={[
-              {
-                content: "Icon",
-                theme: "Neutral",
-              },
-              {
-                content: "Text",
-                theme: "Neutral",
-                initials: "AC",
-              },
-            ]}
-            className="[&>span]:border-[rgba(255,255,255,0.18)] [&>span]:shadow-none"
-          />
+          {assigneeAvatars.length ? (
+            <AvatarGroup
+              size="S"
+              items={assigneeAvatars}
+              className="[&>span]:border-[rgba(255,255,255,0.18)] [&>span]:shadow-none"
+            />
+          ) : (
+            <span aria-hidden="true" />
+          )}
 
           <Button
             theme="Primary"
@@ -288,6 +282,7 @@ function ProjectsShowcaseCarousel({ title = "Ver más proyectos", items = [] }) 
                       title={project.title}
                       image={project.image}
                       height={project.height}
+                      assigneeAvatars={project.assigneeAvatars}
                     />
                   ))}
                 </div>
