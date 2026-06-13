@@ -64,6 +64,14 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async ({ email, password }) => {
     const data = await api.auth.login({ email, password });
+
+    if (!data.token) {
+      throw Object.assign(
+        new Error("El backend de autenticacion no esta actualizado."),
+        { code: "AUTH_TOKEN_MISSING" },
+      );
+    }
+
     setAuthToken(data.token);
     const nextUser = normalizeUser(data.user);
     setUser(nextUser);

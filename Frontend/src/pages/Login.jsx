@@ -82,7 +82,14 @@ function Login() {
         return;
       }
 
-      setAuthError("Correo o contraseña incorrectos.");
+      if (error?.code === "AUTH_TOKEN_MISSING") {
+        setAuthError(
+          "El backend desplegado debe actualizarse para enviar la sesion.",
+        );
+      } else {
+        setAuthError("Correo o contraseña incorrectos.");
+      }
+
       setTouched({
         email: true,
         password: true,
@@ -165,6 +172,12 @@ function Login() {
               className="max-w-none w-full"
               onChange={(event) => setPassword(event.target.value)}
             />
+
+            {authError ? (
+              <p className="text-body-4 text-[var(--color-danger-100)]">
+                {authError}
+              </p>
+            ) : null}
 
             <div className="w-full">
               <Button

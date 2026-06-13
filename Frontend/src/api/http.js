@@ -3,23 +3,35 @@ const API_BASE_URL = (
   (import.meta.env.DEV ? "http://localhost:3000/api" : "/api")
 ).replace(/\/$/, "");
 const AUTH_TOKEN_STORAGE_KEY = "arca_auth_token";
+let authTokenMemory = null;
 
 export function getAuthToken() {
+  if (authTokenMemory) {
+    return authTokenMemory;
+  }
+
   try {
-    return window.sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+    return (
+      window.sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ||
+      window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
+    );
   } catch {
     return null;
   }
 }
 
 export function setAuthToken(token) {
+  authTokenMemory = token || null;
+
   try {
     if (token) {
       window.sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+      window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
       return;
     }
 
     window.sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
   } catch {
     // Ignore storage errors in restricted browser contexts.
   }

@@ -40,7 +40,7 @@ function isTokenOlderThanUser(payload, user) {
 
 async function resolveSession(req) {
   const cookies = parseCookies(req.headers.cookie);
-  const token = cookies[authConfig.cookieName] || getBearerToken(req);
+  const token = getBearerToken(req) || cookies[authConfig.cookieName];
   const payload = verifyAuthToken(token, {
     secret: authConfig.tokenSecret,
   });

@@ -2,7 +2,7 @@ import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api } from "../api/http.js";
+import { api, getAuthToken } from "../api/http.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
@@ -258,6 +258,22 @@ function Home() {
     setProjectsLoading(true);
     setProjectsError("");
 
+    if (!user) {
+      setProjectsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    if (!getAuthToken()) {
+      setProjects([]);
+      setProjectsError("Vuelve a iniciar sesion para sincronizar la sesion.");
+      setProjectsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
     api.projects
       .list()
       .then((data) => {
@@ -280,7 +296,7 @@ function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const container = projectsContainerRef.current;

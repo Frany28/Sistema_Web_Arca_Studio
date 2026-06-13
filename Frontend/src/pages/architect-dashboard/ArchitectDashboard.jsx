@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api } from "../../api/http.js";
+import { api, getAuthToken } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import projectImage from "../../assets/fondos/Project Image.png";
@@ -141,6 +141,22 @@ function ArchitectDashboard({ empty = false }) {
     setProjectsLoading(true);
     setProjectsError("");
 
+    if (!user) {
+      setProjectsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    if (!getAuthToken()) {
+      setProjects([]);
+      setProjectsError("Vuelve a iniciar sesion para sincronizar la sesion.");
+      setProjectsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
     api.projects
       .list()
       .then((data) => {
@@ -163,7 +179,7 @@ function ArchitectDashboard({ empty = false }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
