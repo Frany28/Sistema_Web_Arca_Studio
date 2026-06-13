@@ -11,6 +11,22 @@ function getEmptySession() {
   };
 }
 
+function getBearerToken(req) {
+  const authorization = req.headers.authorization;
+
+  if (!authorization || typeof authorization !== "string") {
+    return null;
+  }
+
+  const [scheme, token] = authorization.split(" ");
+
+  if (scheme?.toLowerCase() !== "bearer" || !token) {
+    return null;
+  }
+
+  return token.trim();
+}
+
 function isTokenOlderThanUser(payload, user) {
   if (!payload.iat || !user.updatedAt) {
     return false;
@@ -24,7 +40,7 @@ function isTokenOlderThanUser(payload, user) {
 
 async function resolveSession(req) {
   const cookies = parseCookies(req.headers.cookie);
-  const token = cookies[authConfig.cookieName];
+  const token = cookies[authConfig.cookieName] || getBearerToken(req);
   const payload = verifyAuthToken(token, {
     secret: authConfig.tokenSecret,
   });

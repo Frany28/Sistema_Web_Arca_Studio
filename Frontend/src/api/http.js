@@ -1,13 +1,39 @@
 const API_BASE_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:3000/api"
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3000/api" : "/api")
 ).replace(/\/$/, "");
+const AUTH_TOKEN_STORAGE_KEY = "arca_auth_token";
+
+export function getAuthToken() {
+  try {
+    return window.sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAuthToken(token) {
+  try {
+    if (token) {
+      window.sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+      return;
+    }
+
+    window.sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  } catch {
+    // Ignore storage errors in restricted browser contexts.
+  }
+}
 
 async function apiRequest(path, options = {}) {
+  const token = getAuthToken();
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });

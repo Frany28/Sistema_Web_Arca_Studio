@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 
-import { api } from "../api/http.js";
+import { api, setAuthToken } from "../api/http.js";
 
 const AuthContext = createContext(null);
 
@@ -47,6 +47,7 @@ export function AuthProvider({ children }) {
       })
       .catch(() => {
         if (isMounted) {
+          setAuthToken(null);
           setUser(null);
         }
       })
@@ -63,6 +64,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async ({ email, password }) => {
     const data = await api.auth.login({ email, password });
+    setAuthToken(data.token);
     const nextUser = normalizeUser(data.user);
     setUser(nextUser);
     return nextUser;
@@ -71,6 +73,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const handleStorageEvent = (event) => {
       if (event.key === "arca_auth_logout") {
+        setAuthToken(null);
         setUser(null);
       }
     };
@@ -91,6 +94,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
+    setAuthToken(null);
     setUser(null);
 
     try {
