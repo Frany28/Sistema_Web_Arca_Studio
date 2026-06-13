@@ -6,6 +6,7 @@ import { loadSession } from "./middlewares/auth.js";
 import { requireTrustedOrigin } from "./middlewares/trustedOrigin.js";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
+import projectRoutes from "./routes/projects.js";
 import routes from "./routes/index.js";
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(loadSession);
 app.use(requireTrustedOrigin);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/api", routes);
 
 app.use("/api", (req, res) => {

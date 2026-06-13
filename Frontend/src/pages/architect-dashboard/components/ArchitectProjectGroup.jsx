@@ -1,7 +1,11 @@
 import ArchitectProjectRow from "./ArchitectProjectRow.jsx";
 import ArchitectStatusBadge from "./ArchitectStatusBadge.jsx";
 
-function ArchitectProjectGroup({ group }) {
+function ArchitectProjectGroup({
+  canManagePublication = false,
+  group,
+  onPublicationChange,
+}) {
   return (
     <section className="flex flex-col">
       <div className="flex items-center gap-[8px]">
@@ -13,7 +17,12 @@ function ArchitectProjectGroup({ group }) {
 
       <div className="flex flex-col">
         {group.projects.map((project) => (
-          <ArchitectProjectRow key={project.id} project={project} />
+          <ArchitectProjectRow
+            key={project.id}
+            canManagePublication={canManagePublication}
+            project={project}
+            onPublicationChange={onPublicationChange}
+          />
         ))}
       </div>
     </section>

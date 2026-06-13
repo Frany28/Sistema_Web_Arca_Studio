@@ -4,7 +4,11 @@ import AvatarGroup from "../../../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import ArchitectProjectProgress from "./ArchitectProjectProgress.jsx";
 
-function ArchitectProjectRow({ project }) {
+function ArchitectProjectRow({
+  canManagePublication = false,
+  onPublicationChange,
+  project,
+}) {
   const navigate = useNavigate();
 
   const handleOpenProject = () => {
@@ -26,6 +30,9 @@ function ArchitectProjectRow({ project }) {
           <h2 className="min-w-0 text-heading-4 text-[var(--color-text-50)]">
             {project.title}
           </h2>
+          <span className="text-body-4 rounded-[var(--radius-1)] border border-[var(--color-neutral-200)] px-[8px] py-[2px] text-[var(--color-text-200)]">
+            {project.isPublic ? "Publico" : "Privado"}
+          </span>
           <AvatarGroup
             size="S"
             items={[
@@ -46,6 +53,19 @@ function ArchitectProjectRow({ project }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-[8px]">
+        {canManagePublication ? (
+          <Button
+            theme="Primary"
+            type="Outline"
+            size="M"
+            fitContent
+            showLeftIcon={false}
+            showRightIcon={false}
+            onClick={() => onPublicationChange?.(project)}
+          >
+            {project.isPublic ? "Ocultar" : "Publicar"}
+          </Button>
+        ) : null}
         <Button
           theme="Primary"
           type="Outline"

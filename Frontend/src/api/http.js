@@ -73,6 +73,20 @@ export const authApi = {
   },
 };
 
+export const projectsApi = {
+  list() {
+    return apiRequest("/projects");
+  },
+
+  updatePublication({ projectId, isPublic }) {
+    return apiRequest(`/projects/${projectId}/publication`, {
+      body: JSON.stringify({ isPublic }),
+      method: "PATCH",
+    });
+  },
+};
+
 export const api = {
   auth: authApi,
+  projects: projectsApi,
 };

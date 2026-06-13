@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
+import projectImage from "../../assets/fondos/Project Image.png";
+import standImage from "../../assets/fondos/Property 1=Variant2.png";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
@@ -10,12 +13,96 @@ import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.js
 import {
   ARCHITECT_DRAWER_COMMENTS,
   ARCHITECT_DRAWER_RECENT_ACTIVITY,
-  ARCHITECT_NAVIGATION_ITEMS,
-  ARCHITECT_PROJECT_GROUPS,
 } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
 const TABLET_BREAKPOINT_PX = 768;
+const PROJECT_IMAGE_POOL = [standImage, projectImage];
+const PROJECT_STATUS_GROUPS = [
+  {
+    id: "in_process",
+    status: "En Progreso",
+    badgeClassName:
+      "border-[var(--color-info-10)] bg-[var(--color-info-10)] text-[var(--color-info-100)]",
+  },
+  {
+    id: "in_review",
+    status: "En Revision",
+    badgeClassName:
+      "border-[var(--color-primary-10)] bg-[var(--color-primary-10)] text-[var(--color-text-300)]",
+  },
+  {
+    id: "pending_approval",
+    status: "En espera de Aprobacion",
+    badgeClassName:
+      "border-[var(--color-neutral-600)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)]",
+  },
+  {
+    id: "finished",
+    status: "Finalizados",
+    badgeClassName:
+      "border-[var(--color-success-10)] bg-[var(--color-success-10)] text-[var(--color-success-200)]",
+  },
+];
+
+function createNavigationItems(projects) {
+  return [
+    {
+      id: "dashboard",
+      label: "Panel",
+      icon: "dashboard",
+      wrapperHeight: "44px",
+    },
+    ...projects.slice(0, 2).map((project) => ({
+      id: `project-${project.id}`,
+      label: project.name,
+      icon: "project",
+      trailingIcon: project.isPublic ? "window" : undefined,
+      wrapperHeight: "56px",
+    })),
+    {
+      id: "more-projects",
+      label: "Ver mas proyectos",
+      icon: "discover",
+      wrapperHeight: "56px",
+    },
+    {
+      id: "settings",
+      label: "Configuraciones",
+      icon: "settings",
+      wrapperHeight: "56px",
+    },
+  ];
+}
+
+function toProjectRow(project, index, user) {
+  return {
+    ...project,
+    editable:
+      user?.role === "admin" || project.assignedArchitect?.id === user?.id,
+    image: PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
+    title: project.name,
+  };
+}
+
+function groupProjects(projects) {
+  const fallbackGroup = PROJECT_STATUS_GROUPS[0];
+
+  return PROJECT_STATUS_GROUPS.map((group) => ({
+    ...group,
+    projects: projects.filter((project) => project.status === group.id),
+  }))
+    .concat({
+      ...fallbackGroup,
+      id: "other",
+      projects: projects.filter(
+        (project) =>
+          !PROJECT_STATUS_GROUPS.some((group) => group.id === project.status),
+      ),
+      status: "Otros",
+    })
+    .filter((group) => group.projects.length > 0);
+}
 
 function ArchitectDashboard({ empty = false }) {
   const navigate = useNavigate();
@@ -24,6 +111,12 @@ function ArchitectDashboard({ empty = false }) {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
+  const [projects, setProjects] = useState([]);
+  const [projectsError, setProjectsError] = useState("");
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const canManagePublication = user?.permissionCodes?.includes(
+    "projects.publish",
+  );
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -32,6 +125,45 @@ function ArchitectDashboard({ empty = false }) {
   }).format(new Date());
   const formattedTodayLabel =
     todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
+  const projectRows = useMemo(
+    () => projects.map((project, index) => toProjectRow(project, index, user)),
+    [projects, user],
+  );
+  const projectGroups = useMemo(() => groupProjects(projectRows), [projectRows]);
+  const navigationItems = useMemo(
+    () => createNavigationItems(projectRows),
+    [projectRows],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setProjectsLoading(true);
+    setProjectsError("");
+
+    api.projects
+      .list()
+      .then((data) => {
+        if (isMounted) {
+          setProjects(data.projects || []);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setProjects([]);
+          setProjectsError("No se pudieron cargar los proyectos.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setProjectsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -56,7 +188,7 @@ function ArchitectDashboard({ empty = false }) {
       return;
     }
 
-    if (item?.id === "project-1" || item?.id === "project-2") {
+    if (item?.id?.startsWith("project-")) {
       navigate("/proyectos/quinta-bella-vista");
       return;
     }
@@ -80,13 +212,27 @@ function ArchitectDashboard({ empty = false }) {
     navigate(activity.to);
   };
 
+  const handlePublicationChange = async (project) => {
+    const nextIsPublic = !project.isPublic;
+    const data = await api.projects.updatePublication({
+      isPublic: nextIsPublic,
+      projectId: project.id,
+    });
+
+    setProjects((currentProjects) =>
+      currentProjects.map((currentProject) =>
+        currentProject.id === project.id ? data.project : currentProject,
+      ),
+    );
+  };
+
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
         <SideNavigation
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
-          items={ARCHITECT_NAVIGATION_ITEMS}
+          items={navigationItems}
           newOpportunityLabel="Nuevo proyecto"
           userName={currentUser.name}
           userEmail={currentUser.email}
@@ -119,7 +265,19 @@ function ArchitectDashboard({ empty = false }) {
             </p>
           </div>
 
-          {empty ? (
+          {projectsLoading ? (
+            <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">
+              <p className="text-body-3 text-[var(--color-text-200)]">
+                Cargando proyectos...
+              </p>
+            </div>
+          ) : projectsError ? (
+            <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">
+              <p className="text-body-3 text-[var(--color-danger-100)]">
+                {projectsError}
+              </p>
+            </div>
+          ) : empty || !projectRows.length ? (
             <div className="mx-auto flex w-full max-w-[1200px] flex-1 items-center justify-center px-[48px] pb-[48px]">
               <EmptyState
                 title="Tu espacio de proyectos está listo"
@@ -135,8 +293,13 @@ function ArchitectDashboard({ empty = false }) {
             </div>
           ) : (
             <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[48px] px-[48px] pb-[48px]">
-              {ARCHITECT_PROJECT_GROUPS.map((group) => (
-                <ArchitectProjectGroup key={group.id} group={group} />
+              {projectGroups.map((group) => (
+                <ArchitectProjectGroup
+                  key={group.id}
+                  canManagePublication={canManagePublication}
+                  group={group}
+                  onPublicationChange={handlePublicationChange}
+                />
               ))}
             </div>
           )}

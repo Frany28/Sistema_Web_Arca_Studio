@@ -1,7 +1,8 @@
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { api } from "../api/http.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
@@ -23,23 +24,7 @@ import {
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
 const TABLET_BREAKPOINT_PX = 768;
-const PROJECT_ITEMS = [
-  {
-    id: "stand-nexar",
-    title: "Stand Nexar 2026",
-    image: fondoVariante2,
-  },
-  {
-    id: "torre-nexar",
-    title: "Torre Nexar 2026",
-    image: fondoNotificacion,
-  },
-  {
-    id: "casa-nexar",
-    title: "Casa Nexar 2026",
-    image: fondoVariante2,
-  },
-];
+const PROJECT_IMAGE_POOL = [fondoVariante2, fondoNotificacion];
 
 const PROJECT_SHOWCASE_ITEMS = [
   {
@@ -104,20 +89,66 @@ const PROJECT_SHOWCASE_ITEMS = [
   },
 ];
 
-function ProjectRow({ title, image }) {
+function createProjectNavigationItems(projects) {
+  return [
+    {
+      id: "dashboard",
+      label: "Panel",
+      icon: "dashboard",
+      wrapperHeight: "44px",
+    },
+    ...projects.slice(0, 2).map((project) => ({
+      id: `project-${project.id}`,
+      label: project.name,
+      icon: "project",
+      trailingIcon: project.isPublic ? "window" : undefined,
+      wrapperHeight: "56px",
+    })),
+    {
+      id: "more-projects",
+      label: "Ver mas proyectos",
+      icon: "discover",
+      wrapperHeight: "56px",
+    },
+    {
+      id: "settings",
+      label: "Configuraciones",
+      icon: "settings",
+      wrapperHeight: "56px",
+    },
+  ];
+}
+
+function toProjectRow(project, index) {
+  return {
+    ...project,
+    image: PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
+    title: project.name,
+    visibilityLabel: project.isPublic ? "Publico" : "Privado",
+  };
+}
+
+function ProjectRow({ project }) {
   const navigate = useNavigate();
 
   return (
     <article className="flex items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px]">
       <div className="h-[80px] w-[140px] shrink-0 overflow-hidden rounded-[var(--radius-2)]">
-        <img src={image} alt={title} className="h-full w-full object-cover" />
+        <img
+          src={project.image}
+          alt={project.name}
+          className="h-full w-full object-cover"
+        />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
         <div className="flex items-center gap-[8px]">
           <h2 className="text-heading-4 text-[var(--color-text-50)]">
-            {title}
+            {project.name}
           </h2>
+          <span className="text-body-4 rounded-[var(--radius-1)] border border-[var(--color-neutral-200)] px-[8px] py-[2px] text-[var(--color-text-200)]">
+            {project.visibilityLabel}
+          </span>
           <AvatarGroup
             size="S"
             items={[
@@ -189,6 +220,9 @@ function Home() {
     useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [scrollLength, setScrollLength] = useState(1);
+  const [projects, setProjects] = useState([]);
+  const [projectsError, setProjectsError] = useState("");
+  const [projectsLoading, setProjectsLoading] = useState(true);
   const projectsContainerRef = useRef(null);
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -197,6 +231,56 @@ function Home() {
   }).format(new Date());
   const formattedTodayLabel =
     todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
+  const projectRows = useMemo(
+    () => projects.map((project, index) => toProjectRow(project, index)),
+    [projects],
+  );
+  const ownedProjectRows = useMemo(
+    () =>
+      projectRows.filter((project) => project.client?.id === user?.clientId),
+    [projectRows, user?.clientId],
+  );
+  const publicProjectRows = useMemo(
+    () =>
+      projectRows.filter(
+        (project) => project.isPublic && project.client?.id !== user?.clientId,
+      ),
+    [projectRows, user?.clientId],
+  );
+  const navigationItems = useMemo(
+    () => createProjectNavigationItems(ownedProjectRows),
+    [ownedProjectRows],
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setProjectsLoading(true);
+    setProjectsError("");
+
+    api.projects
+      .list()
+      .then((data) => {
+        if (isMounted) {
+          setProjects(data.projects || []);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setProjects([]);
+          setProjectsError("No se pudieron cargar los proyectos.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setProjectsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const container = projectsContainerRef.current;
@@ -241,7 +325,7 @@ function Home() {
     return () => {
       window.removeEventListener("resize", syncScrollMetrics);
     };
-  }, []);
+  }, [ownedProjectRows.length]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -266,7 +350,7 @@ function Home() {
       return;
     }
 
-    if (item?.id === "project-1" || item?.id === "project-2") {
+    if (item?.id?.startsWith("project-")) {
       navigate("/proyectos/quinta-bella-vista");
       return;
     }
@@ -296,6 +380,7 @@ function Home() {
         <SideNavigation
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
+          items={navigationItems}
           userName={currentUser.name}
           userEmail={currentUser.email}
           onExpandedChange={setIsSidebarExpanded}
@@ -337,13 +422,23 @@ function Home() {
                 setScrollPosition(scrollTop / maxScroll);
               }}
             >
-              {PROJECT_ITEMS.map((project) => (
-                <ProjectRow
-                  key={project.id}
-                  title={project.title}
-                  image={project.image}
-                />
-              ))}
+              {projectsLoading ? (
+                <p className="text-body-3 py-[24px] text-[var(--color-text-200)]">
+                  Cargando proyectos...
+                </p>
+              ) : projectsError ? (
+                <p className="text-body-3 py-[24px] text-[var(--color-danger-100)]">
+                  {projectsError}
+                </p>
+              ) : ownedProjectRows.length ? (
+                ownedProjectRows.map((project) => (
+                  <ProjectRow key={project.id} project={project} />
+                ))
+              ) : (
+                <p className="text-body-3 py-[24px] text-[var(--color-text-200)]">
+                  No tienes proyectos asignados.
+                </p>
+              )}
             </div>
 
             <ScrollBar
@@ -356,9 +451,14 @@ function Home() {
             />
           </div>
 
-          <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[24px]">
-            <ProjectsShowcaseCarousel items={PROJECT_SHOWCASE_ITEMS} />
-          </div>
+          {publicProjectRows.length ? (
+            <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[24px]">
+              <ProjectsShowcaseCarousel
+                title="Proyectos publicos"
+                items={publicProjectRows}
+              />
+            </div>
+          ) : null}
 
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
