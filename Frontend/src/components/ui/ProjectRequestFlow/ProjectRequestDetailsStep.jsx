@@ -8,7 +8,7 @@ import Label from "../Label/Label.jsx";
 import ScrollBar from "../ScrollBar/ScrollBar.jsx";
 import TextArea from "../TextArea/TextArea.jsx";
 import ProjectRequestModalShell from "./ProjectRequestModalShell.jsx";
-import { loadGoogleMapsPlaces } from "../../../utils/googleMaps.js";
+import { searchAddressSuggestions } from "../../../utils/geoapify.js";
 
 const PROJECT_TYPE_OPTIONS = [
   { id: "residencial", label: "Residencial", type: "Checkbox", checked: "Yes" },
@@ -21,8 +21,6 @@ const PROJECT_TYPE_OPTIONS = [
     checked: "No",
   },
 ];
-const LOCATION_INPUT_ID = "project-request-location";
-
 function EditIcon({ className }) {
   return (
     <svg
@@ -99,10 +97,9 @@ function ProjectRequestDetailsStep({
   const [scrollPosition, setScrollPosition] = useState(0);
   const [scrollLength, setScrollLength] = useState(1);
   const [contentHeight, setContentHeight] = useState(modalBodyMaxHeight);
-  const [locationAutocompleteReady, setLocationAutocompleteReady] =
-    useState(false);
+  const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
   const contentRef = useRef(null);
-  const locationAutocompleteRef = useRef(null);
   const isProjectNameValid = values.projectName.trim().length > 0;
   const isProjectTypeValid = Boolean(values.selectedProjectTypeId);
   const isProjectLocationValid = values.projectLocation.trim().length > 0;
@@ -155,61 +152,33 @@ function ProjectRequestDetailsStep({
   }, [open]);
 
   useEffect(() => {
-    if (!open || locationAutocompleteRef.current) {
+    if (
+      !open ||
+      values.projectLocation.trim().length < 3 ||
+      values.projectLocationLatitude
+    ) {
+      setLocationSuggestions([]);
       return undefined;
     }
 
-    let cancelled = false;
-
-    loadGoogleMapsPlaces()
-      .then((google) => {
-        if (cancelled) {
-          return;
-        }
-
-        const input = document.getElementById(LOCATION_INPUT_ID);
-
-        if (!input) {
-          return;
-        }
-
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-          fields: ["formatted_address", "geometry", "name", "place_id"],
-          types: ["geocode"],
-        });
-
-        locationAutocompleteRef.current = autocomplete;
-        setLocationAutocompleteReady(true);
-
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          const location = place.geometry?.location;
-
-          if (!location) {
-            return;
-          }
-
-          const formattedAddress =
-            place.formatted_address || place.name || input.value;
-
-          setHasAttemptedSubmit(false);
-          onProjectLocationChange?.(formattedAddress);
-          onProjectLocationSelect?.({
-            formattedAddress,
-            latitude: location.lat(),
-            longitude: location.lng(),
-            placeId: place.place_id || null,
-          });
-        });
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      searchAddressSuggestions(values.projectLocation, {
+        signal: controller.signal,
       })
-      .catch(() => {
-        setLocationAutocompleteReady(false);
-      });
+        .then(setLocationSuggestions)
+        .catch((error) => {
+          if (error.name !== "AbortError") {
+            setLocationSuggestions([]);
+          }
+        });
+    }, 280);
 
     return () => {
-      cancelled = true;
+      controller.abort();
+      window.clearTimeout(timeoutId);
     };
-  }, [onProjectLocationChange, onProjectLocationSelect, open]);
+  }, [open, values.projectLocation, values.projectLocationLatitude]);
 
   useEffect(() => {
     const container = contentRef.current;
@@ -278,6 +247,14 @@ function ProjectRequestDetailsStep({
     }
 
     onNext?.();
+  };
+
+  const handleLocationSuggestionSelect = (suggestion) => {
+    setHasAttemptedSubmit(false);
+    setLocationSuggestions([]);
+    setIsLocationInputFocused(false);
+    onProjectLocationChange?.(suggestion.formattedAddress);
+    onProjectLocationSelect?.(suggestion);
   };
 
   return (
@@ -364,34 +341,58 @@ function ProjectRequestDetailsStep({
               ) : null}
             </div>
 
-            <Input
-              id={LOCATION_INPUT_ID}
-              label="Ubicación del proyecto"
-              required
-              showLabelInfo={false}
-              showHint={false}
-              size="S"
-              type="Default input"
-              state={showProjectLocationError ? "Error" : "Default"}
-              placeholder='Ej. "Maracaibo, Estado Zulia."'
-              leftIcon={<LocationIcon className="size-5" />}
-              rightIcon={null}
-              showLeftIcon
-              showRightIcon={false}
-              value={values.projectLocation}
-              onChange={(event) => {
-                setHasAttemptedSubmit(false);
-                onProjectLocationChange?.(event.target.value);
-                onProjectLocationSelect?.({
-                  formattedAddress: "",
-                  latitude: null,
-                  longitude: null,
-                  placeId: null,
-                });
-              }}
-              className="w-full max-w-none"
-            />
-            {locationAutocompleteReady && values.projectLocationLatitude ? (
+            <div className="relative">
+              <Input
+                label="Ubicación del proyecto"
+                required
+                showLabelInfo={false}
+                showHint={false}
+                size="S"
+                type="Default input"
+                state={showProjectLocationError ? "Error" : "Default"}
+                placeholder='Ej. "Maracaibo, Estado Zulia."'
+                leftIcon={<LocationIcon className="size-5" />}
+                rightIcon={null}
+                showLeftIcon
+                showRightIcon={false}
+                value={values.projectLocation}
+                onFocus={() => setIsLocationInputFocused(true)}
+                onBlur={() => {
+                  window.setTimeout(() => {
+                    setIsLocationInputFocused(false);
+                  }, 120);
+                }}
+                onChange={(event) => {
+                  setHasAttemptedSubmit(false);
+                  onProjectLocationChange?.(event.target.value);
+                  onProjectLocationSelect?.({
+                    formattedAddress: "",
+                    latitude: null,
+                    longitude: null,
+                    placeId: null,
+                  });
+                }}
+                className="w-full max-w-none"
+              />
+              {isLocationInputFocused && locationSuggestions.length ? (
+                <div className="absolute left-0 right-0 top-full z-50 mt-[6px] overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e2)]">
+                  {locationSuggestions.map((suggestion) => (
+                    <button
+                      key={`${suggestion.placeId ?? suggestion.formattedAddress}-${suggestion.latitude}-${suggestion.longitude}`}
+                      type="button"
+                      className="text-body-3 flex w-full cursor-pointer items-start px-[12px] py-[10px] text-left text-[var(--color-text-300)] transition-colors hover:bg-[var(--color-neutral-200)]"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleLocationSuggestionSelect(suggestion);
+                      }}
+                    >
+                      {suggestion.formattedAddress}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {values.projectLocationLatitude ? (
               <HintText
                 state="Success"
                 hintText={`Coordenadas: ${Number(
