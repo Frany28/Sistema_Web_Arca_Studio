@@ -17,6 +17,12 @@ const CARD_HEIGHTS = {
   shortRight: 195,
 };
 
+const SHOWCASE_COLUMN_HEIGHTS = [
+  [CARD_HEIGHTS.tallLeft, CARD_HEIGHTS.shortLeft],
+  [CARD_HEIGHTS.shortCenter, CARD_HEIGHTS.tallCenter],
+  [CARD_HEIGHTS.tallRight, CARD_HEIGHTS.shortRight],
+];
+
 function ChevronLeftIcon({ className }) {
   return (
     <svg
@@ -140,24 +146,22 @@ function buildShowcasePages(items) {
       itemIndex + SHOWCASE_ITEMS_PER_PAGE,
     );
 
-    while (slice.length < SHOWCASE_ITEMS_PER_PAGE) {
-      slice.push(safeItems[slice.length % safeItems.length] ?? safeItems[0]);
-    }
+    const columns = SHOWCASE_COLUMN_HEIGHTS.map(() => []);
 
-    pages.push([
-      [
-        { ...slice[0], height: CARD_HEIGHTS.tallLeft },
-        { ...slice[1], height: CARD_HEIGHTS.shortLeft },
-      ],
-      [
-        { ...slice[2], height: CARD_HEIGHTS.shortCenter },
-        { ...slice[3], height: CARD_HEIGHTS.tallCenter },
-      ],
-      [
-        { ...slice[4], height: CARD_HEIGHTS.tallRight },
-        { ...slice[5], height: CARD_HEIGHTS.shortRight },
-      ],
-    ]);
+    slice.forEach((item, index) => {
+      const columnIndex = index % SHOWCASE_COLUMNS_PER_PAGE;
+      const rowIndex = Math.floor(index / SHOWCASE_COLUMNS_PER_PAGE);
+      const fallbackHeight = CARD_HEIGHTS.tallLeft;
+      const height =
+        SHOWCASE_COLUMN_HEIGHTS[columnIndex]?.[rowIndex] ?? fallbackHeight;
+
+      columns[columnIndex].push({
+        ...item,
+        height,
+      });
+    });
+
+    pages.push(columns.filter((column) => column.length > 0));
   }
 
   return pages;
@@ -225,27 +229,29 @@ function ProjectsShowcaseCarousel({ title = "Ver más proyectos", items = [] }) 
           {title}
         </h2>
 
-        <div className="flex items-center gap-[6px]">
-          <button
-            type="button"
-            aria-label="Proyecto anterior"
-            onClick={() => handleNavigation(-1)}
-            disabled={activePage === 0}
-            className="cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] transition-all duration-200 hover:border-[rgba(255,255,255,0.16)] hover:bg-[rgba(255,255,255,0.05)] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ChevronLeftIcon className="size-4" />
-          </button>
+        {pages.length > 1 ? (
+          <div className="flex items-center gap-[6px]">
+            <button
+              type="button"
+              aria-label="Proyecto anterior"
+              onClick={() => handleNavigation(-1)}
+              disabled={activePage === 0}
+              className="cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] transition-all duration-200 hover:border-[rgba(255,255,255,0.16)] hover:bg-[rgba(255,255,255,0.05)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeftIcon className="size-4" />
+            </button>
 
-          <button
-            type="button"
-            aria-label="Proyecto siguiente"
-            onClick={() => handleNavigation(1)}
-            disabled={activePage >= pages.length - 1}
-            className="cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] transition-all duration-200 hover:border-[rgba(255,255,255,0.16)] hover:bg-[rgba(255,255,255,0.05)] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ChevronRightIcon className="size-4" />
-          </button>
-        </div>
+            <button
+              type="button"
+              aria-label="Proyecto siguiente"
+              onClick={() => handleNavigation(1)}
+              disabled={activePage >= pages.length - 1}
+              className="cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] transition-all duration-200 hover:border-[rgba(255,255,255,0.16)] hover:bg-[rgba(255,255,255,0.05)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronRightIcon className="size-4" />
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="w-full min-w-0 overflow-hidden">
