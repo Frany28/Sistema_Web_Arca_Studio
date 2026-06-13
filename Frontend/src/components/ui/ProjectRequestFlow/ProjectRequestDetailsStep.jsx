@@ -8,6 +8,7 @@ import Label from "../Label/Label.jsx";
 import ScrollBar from "../ScrollBar/ScrollBar.jsx";
 import TextArea from "../TextArea/TextArea.jsx";
 import ProjectRequestModalShell from "./ProjectRequestModalShell.jsx";
+import { loadGoogleMapsPlaces } from "../../../utils/googleMaps.js";
 
 const PROJECT_TYPE_OPTIONS = [
   { id: "residencial", label: "Residencial", type: "Checkbox", checked: "Yes" },
@@ -20,6 +21,7 @@ const PROJECT_TYPE_OPTIONS = [
     checked: "No",
   },
 ];
+const LOCATION_INPUT_ID = "project-request-location";
 
 function EditIcon({ className }) {
   return (
@@ -89,6 +91,7 @@ function ProjectRequestDetailsStep({
   onDescriptionChange,
   onHasBlueprintsChange,
   onProjectTypeChange,
+  onProjectLocationSelect,
 }) {
   const modalBodyMaxHeight = 520;
   const [isProjectTypeMenuOpen, setIsProjectTypeMenuOpen] = useState(false);
@@ -96,7 +99,10 @@ function ProjectRequestDetailsStep({
   const [scrollPosition, setScrollPosition] = useState(0);
   const [scrollLength, setScrollLength] = useState(1);
   const [contentHeight, setContentHeight] = useState(modalBodyMaxHeight);
+  const [locationAutocompleteReady, setLocationAutocompleteReady] =
+    useState(false);
   const contentRef = useRef(null);
+  const locationAutocompleteRef = useRef(null);
   const isProjectNameValid = values.projectName.trim().length > 0;
   const isProjectTypeValid = Boolean(values.selectedProjectTypeId);
   const isProjectLocationValid = values.projectLocation.trim().length > 0;
@@ -147,6 +153,63 @@ function ProjectRequestDetailsStep({
       cancelled = true;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || locationAutocompleteRef.current) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    loadGoogleMapsPlaces()
+      .then((google) => {
+        if (cancelled) {
+          return;
+        }
+
+        const input = document.getElementById(LOCATION_INPUT_ID);
+
+        if (!input) {
+          return;
+        }
+
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+          fields: ["formatted_address", "geometry", "name", "place_id"],
+          types: ["geocode"],
+        });
+
+        locationAutocompleteRef.current = autocomplete;
+        setLocationAutocompleteReady(true);
+
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          const location = place.geometry?.location;
+
+          if (!location) {
+            return;
+          }
+
+          const formattedAddress =
+            place.formatted_address || place.name || input.value;
+
+          setHasAttemptedSubmit(false);
+          onProjectLocationChange?.(formattedAddress);
+          onProjectLocationSelect?.({
+            formattedAddress,
+            latitude: location.lat(),
+            longitude: location.lng(),
+            placeId: place.place_id || null,
+          });
+        });
+      })
+      .catch(() => {
+        setLocationAutocompleteReady(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onProjectLocationChange, onProjectLocationSelect, open]);
 
   useEffect(() => {
     const container = contentRef.current;
@@ -302,6 +365,7 @@ function ProjectRequestDetailsStep({
             </div>
 
             <Input
+              id={LOCATION_INPUT_ID}
               label="Ubicación del proyecto"
               required
               showLabelInfo={false}
@@ -318,9 +382,26 @@ function ProjectRequestDetailsStep({
               onChange={(event) => {
                 setHasAttemptedSubmit(false);
                 onProjectLocationChange?.(event.target.value);
+                onProjectLocationSelect?.({
+                  formattedAddress: "",
+                  latitude: null,
+                  longitude: null,
+                  placeId: null,
+                });
               }}
               className="w-full max-w-none"
             />
+            {locationAutocompleteReady && values.projectLocationLatitude ? (
+              <HintText
+                state="Success"
+                hintText={`Coordenadas: ${Number(
+                  values.projectLocationLatitude,
+                ).toFixed(6)}, ${Number(
+                  values.projectLocationLongitude,
+                ).toFixed(6)}`}
+                className="w-full"
+              />
+            ) : null}
             {showProjectLocationError ? (
               <HintText
                 state="Error"

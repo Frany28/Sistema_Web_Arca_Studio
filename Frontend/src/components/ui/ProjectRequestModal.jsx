@@ -14,6 +14,10 @@ function ProjectRequestModal({
   const [formValues, setFormValues] = useState({
     projectName: "",
     projectLocation: "",
+    projectLocationFormattedAddress: "",
+    projectLocationLatitude: null,
+    projectLocationLongitude: null,
+    projectLocationPlaceId: null,
     description: "",
     hasBlueprints: "No",
     selectedProjectTypeId: "",
@@ -27,6 +31,10 @@ function ProjectRequestModal({
       setFormValues({
         projectName: "",
         projectLocation: "",
+        projectLocationFormattedAddress: "",
+        projectLocationLatitude: null,
+        projectLocationLongitude: null,
+        projectLocationPlaceId: null,
         description: "",
         hasBlueprints: "No",
         selectedProjectTypeId: "",
@@ -102,6 +110,15 @@ function ProjectRequestModal({
         setFormValues((current) => ({
           ...current,
           projectLocation,
+        }))
+      }
+      onProjectLocationSelect={(location) =>
+        setFormValues((current) => ({
+          ...current,
+          projectLocationFormattedAddress: location.formattedAddress,
+          projectLocationLatitude: location.latitude,
+          projectLocationLongitude: location.longitude,
+          projectLocationPlaceId: location.placeId,
         }))
       }
       onDescriptionChange={(description) =>

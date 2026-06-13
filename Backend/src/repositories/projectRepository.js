@@ -37,6 +37,18 @@ function toProject(row) {
     id: Number(row.id),
     isPublic: Boolean(row.is_public),
     location: row.location,
+    locationCoordinates:
+      row.location_latitude !== null &&
+      row.location_latitude !== undefined &&
+      row.location_longitude !== null &&
+      row.location_longitude !== undefined
+        ? {
+            latitude: Number(row.location_latitude),
+            longitude: Number(row.location_longitude),
+          }
+        : null,
+    locationFormattedAddress: row.formatted_address || null,
+    googlePlaceId: row.google_place_id || null,
     name: row.name,
     progress: Number(row.progress),
     projectType: row.project_type,
@@ -88,6 +100,10 @@ export async function listProjectsForUser(user) {
         p.construction_area,
         p.area_unit,
         p.is_public,
+        p.location_latitude,
+        p.location_longitude,
+        p.google_place_id,
+        p.formatted_address,
         c.name as client_name,
         c.email as client_email,
         c.phone as client_phone,
@@ -144,6 +160,10 @@ export async function updateProjectVisibility(projectId, isPublic) {
         p.construction_area,
         p.area_unit,
         p.is_public,
+        p.location_latitude,
+        p.location_longitude,
+        p.google_place_id,
+        p.formatted_address,
         c.name as client_name,
         c.email as client_email,
         c.phone as client_phone,

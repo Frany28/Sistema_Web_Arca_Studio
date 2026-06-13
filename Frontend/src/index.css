@@ -15,3 +15,7 @@ body {
 #root {
   min-height: 100vh;
 }
+
+.pac-container {
+  z-index: 9999;
+}
