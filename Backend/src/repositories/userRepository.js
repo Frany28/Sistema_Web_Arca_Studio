@@ -123,7 +123,7 @@ export async function updateLastLoginAt(id) {
   await query(
     `
       update public.users
-      set last_login_at = now(), updated_at = now()
+      set last_login_at = now()
       where id = $1
     `,
     [id],

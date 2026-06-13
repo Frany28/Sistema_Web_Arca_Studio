@@ -35,7 +35,7 @@ function isTokenOlderThanUser(payload, user) {
   const tokenIssuedAt = Number(payload.iat) * 1000;
   const userUpdatedAt = new Date(user.updatedAt).getTime();
 
-  return userUpdatedAt > tokenIssuedAt;
+  return userUpdatedAt > tokenIssuedAt + 1000;
 }
 
 async function resolveSession(req) {
