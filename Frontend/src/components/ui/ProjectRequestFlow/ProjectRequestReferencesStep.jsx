@@ -36,8 +36,60 @@ function ProjectRequestReferencesStep({
   onPrevious,
   onNext,
   values,
+  uploadedFiles,
   onReferenceLinkChange,
+  onFilesChange,
 }) {
+  const handleFilesSelected = (fileList) => {
+    const nextFiles = Array.from(fileList || []);
+
+    if (nextFiles.length === 0) {
+      return;
+    }
+
+    onFilesChange?.([
+      ...(uploadedFiles || []),
+      ...nextFiles.map((file) => ({
+        errorMessage: "",
+        file,
+        id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+        progress: 0,
+        status: "pending",
+        uploadResult: null,
+      })),
+    ]);
+  };
+
+  const visibleFiles = (uploadedFiles || []).map((fileItem) => {
+    const file = fileItem.file || fileItem;
+    const loadedSize = file.size || 0;
+    const totalSizeLabel =
+      loadedSize >= 1024 * 1024
+        ? `${(loadedSize / (1024 * 1024)).toFixed(1)}MB`
+        : `${Math.max(Math.ceil(loadedSize / 1024), 1)}KB`;
+    const currentSizeLabel =
+      fileItem.status === "completed"
+        ? totalSizeLabel
+        : `${Math.round((loadedSize * (fileItem.progress || 0)) / 100 / 1024)}KB`;
+
+    return {
+      currentSizeLabel,
+      errorMessage: fileItem.errorMessage,
+      id: fileItem.id,
+      name: file.name,
+      onRemove: fileItem.status === "uploading" ? undefined : () => {
+        onFilesChange?.(
+          (uploadedFiles || []).filter((item) => item.id !== fileItem.id),
+        );
+      },
+      onRetryUpload: fileItem.onRetryUpload,
+      progress: fileItem.progress || 0,
+      status: fileItem.status || "pending",
+      totalSizeLabel,
+      type: file.type || "Archivo",
+    };
+  });
+
   return (
     <ProjectRequestModalShell
       open={open}
@@ -56,9 +108,10 @@ function ProjectRequestReferencesStep({
           />
           <FileUploadSection
             className="w-full"
-            files={[]}
-            showUploadedFiles={false}
+            files={visibleFiles}
+            showUploadedFiles={visibleFiles.length > 0}
             viewportHeight={null}
+            onFilesSelected={handleFilesSelected}
           />
         </div>
 

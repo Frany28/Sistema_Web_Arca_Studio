@@ -131,6 +131,38 @@ export const projectRequestsApi = {
       method: "POST",
     });
   },
+
+  uploadFile({ file, projectRequestId }) {
+    const token = getAuthToken();
+    const fileName = encodeURIComponent(file?.name || "archivo");
+
+    return fetch(`${API_BASE_URL}/project-requests/${projectRequestId}/files`, {
+      body: file,
+      credentials: "include",
+      headers: {
+        "Content-Type": file?.type || "application/octet-stream",
+        "X-File-Name": fileName,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      method: "POST",
+    }).then(async (response) => {
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json().catch(() => null)
+        : null;
+
+      if (!response.ok) {
+        const error = new Error(
+          data?.message || "No se pudo subir el archivo.",
+        );
+        error.status = response.status;
+        error.code = data?.code || "FILE_UPLOAD_FAILED";
+        throw error;
+      }
+
+      return data;
+    });
+  },
 };
 
 export const api = {

@@ -70,6 +70,7 @@ function FileUploadCard({ file, onRetryUpload }) {
   const isCompleted = file.status === "completed";
   const isUploading = file.status === "uploading";
   const isFailed = file.status === "failed";
+  const isPending = file.status === "pending";
 
   return (
     <div
@@ -110,7 +111,11 @@ function FileUploadCard({ file, onRetryUpload }) {
                     : "text-[var(--color-text-300)]",
                 )}
               >
-                {isCompleted ? "Completado" : "Subiendo..."}
+                {isCompleted
+                  ? "Completado"
+                  : isPending
+                    ? "Pendiente"
+                    : "Subiendo..."}
               </span>
             </div>
           )}
@@ -124,7 +129,7 @@ function FileUploadCard({ file, onRetryUpload }) {
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
-            onClick={onRetryUpload}
+            onClick={file.onRetryUpload || onRetryUpload}
           >
             Intenta de nuevo
           </Button>
@@ -136,7 +141,7 @@ function FileUploadCard({ file, onRetryUpload }) {
         )}
       </div>
 
-      {isUploading ? (
+      {isUploading || isPending ? (
         <Button
           theme="Primary"
           type="Ghost"
@@ -147,6 +152,7 @@ function FileUploadCard({ file, onRetryUpload }) {
           iconLeft={<TrashIcon />}
           className="shrink-0"
           aria-label="Eliminar archivo"
+          onClick={file.onRemove}
         />
       ) : null}
     </div>
@@ -165,10 +171,12 @@ function FileUploadSection({
   viewportHeight = FILE_UPLOAD_SECTION_DEFAULT_PROPS.viewportHeight,
   fileListViewportHeight = null,
   onRetryUpload,
+  onFilesSelected,
   "aria-label": ariaLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
   const filesViewportRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [scrollState, setScrollState] = useState({
     length: 1,
     position: 0,
@@ -275,6 +283,13 @@ function FileUploadSection({
             "flex w-full flex-col items-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] dark:border-[var(--color-neutral-300)]",
             !showUploadedFiles ? "min-h-full justify-center" : null,
           )}
+          onDragOver={(event) => {
+            event.preventDefault();
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            onFilesSelected?.(event.dataTransfer.files);
+          }}
         >
           <div className="rounded-[8px] border border-[var(--color-neutral-200)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)] dark:border-[var(--color-neutral-300)]">
             <div className="flex size-[40px] items-center justify-center rounded-[8px] bg-[var(--color-neutral-100)] p-[8px] text-[var(--color-text-300)]">
@@ -291,9 +306,20 @@ function FileUploadSection({
                 fitContent
                 showLeftIcon={false}
                 showRightIcon={false}
+                onClick={() => fileInputRef.current?.click()}
               >
                 {chooseFileLabel}
               </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="sr-only"
+                onChange={(event) => {
+                  onFilesSelected?.(event.target.files);
+                  event.target.value = "";
+                }}
+              />
               <span className="text-[14px] leading-[17px] font-normal tracking-[-0.5px] text-[var(--color-text-100)]">
                 {separatorLabel}
               </span>

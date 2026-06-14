@@ -13,6 +13,7 @@ function ProjectRequestModal({
 }) {
   const [step, setStep] = useState("details");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [referenceFiles, setReferenceFiles] = useState([]);
   const [formValues, setFormValues] = useState({
     projectName: "",
     projectLocation: "",
@@ -31,6 +32,7 @@ function ProjectRequestModal({
     if (!open) {
       setStep("details");
       setIsSubmitting(false);
+      setReferenceFiles([]);
       setFormValues({
         projectName: "",
         projectLocation: "",
@@ -47,15 +49,69 @@ function ProjectRequestModal({
     }
   }, [open]);
 
+  const updateReferenceFile = (fileId, nextValues) => {
+    setReferenceFiles((current) =>
+      current.map((fileItem) =>
+        fileItem.id === fileId
+          ? {
+              ...fileItem,
+              ...nextValues,
+            }
+          : fileItem,
+      ),
+    );
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
-      const data = await api.projectRequests.create(formValues);
-      setFormValues((current) => ({
-        ...current,
-        projectRequestId: data.projectRequest?.id ?? null,
-      }));
+      let projectRequestId = formValues.projectRequestId ?? null;
+
+      if (!projectRequestId) {
+        const data = await api.projectRequests.create(formValues);
+        projectRequestId = data.projectRequest?.id ?? null;
+
+        setFormValues((current) => ({
+          ...current,
+          projectRequestId,
+        }));
+      }
+
+      if (projectRequestId) {
+        for (const fileItem of referenceFiles) {
+          if (fileItem.status === "completed") {
+            continue;
+          }
+
+          updateReferenceFile(fileItem.id, {
+            errorMessage: "",
+            progress: 10,
+            status: "uploading",
+          });
+
+          try {
+            const uploadResult = await api.projectRequests.uploadFile({
+              file: fileItem.file,
+              projectRequestId,
+            });
+
+            updateReferenceFile(fileItem.id, {
+              progress: 100,
+              status: "completed",
+              uploadResult,
+            });
+          } catch (error) {
+            updateReferenceFile(fileItem.id, {
+              errorMessage: error.message || "No se pudo subir el archivo",
+              progress: 0,
+              status: "failed",
+            });
+            setStep("references");
+            return;
+          }
+        }
+      }
       setStep("success");
     } finally {
       setIsSubmitting(false);
@@ -102,6 +158,8 @@ function ProjectRequestModal({
         onPrevious={() => setStep("details")}
         onNext={() => setStep("validation")}
         values={formValues}
+        uploadedFiles={referenceFiles}
+        onFilesChange={setReferenceFiles}
         onReferenceLinkChange={(referenceLink) =>
           setFormValues((current) => ({
             ...current,
