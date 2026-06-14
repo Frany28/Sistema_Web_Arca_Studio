@@ -124,7 +124,17 @@ export const projectsApi = {
   },
 };
 
+export const projectRequestsApi = {
+  create(payload) {
+    return apiRequest("/project-requests", {
+      body: JSON.stringify(payload),
+      method: "POST",
+    });
+  },
+};
+
 export const api = {
   auth: authApi,
+  projectRequests: projectRequestsApi,
   projects: projectsApi,
 };

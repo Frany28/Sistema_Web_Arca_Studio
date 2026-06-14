@@ -27,6 +27,7 @@ function ProjectRequestValidationStep({
   onPrevious,
   onNext,
   code,
+  isSubmitting = false,
   onCodeChange,
 }) {
   return (
@@ -36,7 +37,8 @@ function ProjectRequestValidationStep({
       onClose={onClose}
       onPrevious={onPrevious}
       onNext={() => onNext?.(code)}
-      nextLabel="Enviar"
+      nextDisabled={isSubmitting}
+      nextLabel={isSubmitting ? "Enviando" : "Enviar"}
     >
       <Input
         label="Código"

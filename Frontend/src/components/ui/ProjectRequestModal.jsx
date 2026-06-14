@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { api } from "../../api/http.js";
 import ProjectRequestDetailsStep from "./ProjectRequestFlow/ProjectRequestDetailsStep.jsx";
 import ProjectRequestReferencesStep from "./ProjectRequestFlow/ProjectRequestReferencesStep.jsx";
 import ProjectRequestSuccessStep from "./ProjectRequestFlow/ProjectRequestSuccessStep.jsx";
@@ -11,6 +12,7 @@ function ProjectRequestModal({
   onNext,
 }) {
   const [step, setStep] = useState("details");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formValues, setFormValues] = useState({
     projectName: "",
     projectLocation: "",
@@ -28,6 +30,7 @@ function ProjectRequestModal({
   useEffect(() => {
     if (!open) {
       setStep("details");
+      setIsSubmitting(false);
       setFormValues({
         projectName: "",
         projectLocation: "",
@@ -43,6 +46,21 @@ function ProjectRequestModal({
       });
     }
   }, [open]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const data = await api.projectRequests.create(formValues);
+      setFormValues((current) => ({
+        ...current,
+        projectRequestId: data.projectRequest?.id ?? null,
+      }));
+      setStep("success");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (step === "success") {
     return (
@@ -63,8 +81,9 @@ function ProjectRequestModal({
         open={open}
         onClose={onClose}
         onPrevious={() => setStep("references")}
-        onNext={() => setStep("success")}
+        onNext={handleSubmit}
         code={formValues.code}
+        isSubmitting={isSubmitting}
         onCodeChange={(code) =>
           setFormValues((current) => ({
             ...current,
