@@ -45,14 +45,17 @@ function TrashIcon() {
   );
 }
 
-function FileUploadProgress({ progress, showValue = true }) {
+function FileUploadProgress({ progress, showValue = true, isUploading = false }) {
   const resolvedProgress = Math.min(Math.max(progress ?? 0, 0), 100);
 
   return (
     <div className="flex w-full items-center gap-[8px]">
       <div className="relative h-[8px] min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--color-neutral-200)] dark:bg-[var(--color-text-100)]">
         <div
-          className="h-full rounded-full bg-[var(--color-text-300)]"
+          className={clsx(
+            "h-full rounded-full bg-[var(--color-text-300)]",
+            isUploading && "arca-file-upload-progress-bar",
+          )}
           style={{ width: `${resolvedProgress}%` }}
         />
       </div>
@@ -136,7 +139,8 @@ function FileUploadCard({ file, onRetryUpload }) {
         ) : (
           <FileUploadProgress
             progress={file.progress}
-            showValue={isCompleted}
+            isUploading={isUploading}
+            showValue={isCompleted || isUploading}
           />
         )}
       </div>
@@ -177,6 +181,7 @@ function FileUploadSection({
 }) {
   const filesViewportRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [scrollState, setScrollState] = useState({
     length: 1,
     position: 0,
@@ -280,14 +285,24 @@ function FileUploadSection({
       >
         <div
           className={clsx(
-            "flex w-full flex-col items-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] dark:border-[var(--color-neutral-300)]",
+            "flex w-full flex-col items-center gap-[12px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[24px] py-[32px] transition-colors duration-200 hover:border-[var(--color-neutral-600)] dark:hover:border-[var(--color-neutral-600)]",
+            isDragActive
+              ? "border-[var(--color-neutral-600)]"
+              : "border-[var(--color-neutral-200)] dark:border-[var(--color-neutral-300)]",
             !showUploadedFiles ? "min-h-full justify-center" : null,
           )}
           onDragOver={(event) => {
             event.preventDefault();
+            setIsDragActive(true);
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+              setIsDragActive(false);
+            }
           }}
           onDrop={(event) => {
             event.preventDefault();
+            setIsDragActive(false);
             onFilesSelected?.(event.dataTransfer.files);
           }}
         >

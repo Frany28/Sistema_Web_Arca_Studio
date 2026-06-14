@@ -62,15 +62,20 @@ function ProjectRequestReferencesStep({
 
   const visibleFiles = (uploadedFiles || []).map((fileItem) => {
     const file = fileItem.file || fileItem;
-    const loadedSize = file.size || 0;
-    const totalSizeLabel =
-      loadedSize >= 1024 * 1024
-        ? `${(loadedSize / (1024 * 1024)).toFixed(1)}MB`
-        : `${Math.max(Math.ceil(loadedSize / 1024), 1)}KB`;
-    const currentSizeLabel =
+    const fileSize = file.size || 0;
+    const loadedSize =
       fileItem.status === "completed"
-        ? totalSizeLabel
-        : `${Math.round((loadedSize * (fileItem.progress || 0)) / 100 / 1024)}KB`;
+        ? fileSize
+        : Math.min(fileItem.loadedBytes || 0, fileSize);
+    const formatFileSize = (size) =>
+      size >= 1024 * 1024
+        ? `${(size / (1024 * 1024)).toFixed(1)}MB`
+        : `${Math.max(Math.ceil(size / 1024), size > 0 ? 1 : 0)}KB`;
+    const totalSizeLabel =
+      fileItem.totalBytes || fileSize
+        ? formatFileSize(fileItem.totalBytes || fileSize)
+        : "0KB";
+    const currentSizeLabel = formatFileSize(loadedSize);
 
     return {
       currentSizeLabel,

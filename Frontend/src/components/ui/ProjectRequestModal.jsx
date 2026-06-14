@@ -86,13 +86,21 @@ function ProjectRequestModal({
 
           updateReferenceFile(fileItem.id, {
             errorMessage: "",
-            progress: 10,
+            loadedBytes: 0,
+            progress: 0,
             status: "uploading",
           });
 
           try {
             const uploadResult = await api.projectRequests.uploadFile({
               file: fileItem.file,
+              onUploadProgress: ({ loaded, progress, total }) => {
+                updateReferenceFile(fileItem.id, {
+                  loadedBytes: loaded,
+                  progress,
+                  totalBytes: total,
+                });
+              },
               projectRequestId,
             });
 

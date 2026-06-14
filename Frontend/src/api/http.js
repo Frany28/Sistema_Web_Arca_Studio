@@ -132,35 +132,81 @@ export const projectRequestsApi = {
     });
   },
 
-  uploadFile({ file, projectRequestId }) {
+  uploadFile({ file, onUploadProgress, projectRequestId }) {
     const token = getAuthToken();
     const fileName = encodeURIComponent(file?.name || "archivo");
 
-    return fetch(`${API_BASE_URL}/project-requests/${projectRequestId}/files`, {
-      body: file,
-      credentials: "include",
-      headers: {
-        "Content-Type": file?.type || "application/octet-stream",
-        "X-File-Name": fileName,
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      method: "POST",
-    }).then(async (response) => {
-      const contentType = response.headers.get("content-type") || "";
-      const data = contentType.includes("application/json")
-        ? await response.json().catch(() => null)
-        : null;
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
 
-      if (!response.ok) {
-        const error = new Error(
-          data?.message || "No se pudo subir el archivo.",
-        );
-        error.status = response.status;
-        error.code = data?.code || "FILE_UPLOAD_FAILED";
-        throw error;
+      request.open(
+        "POST",
+        `${API_BASE_URL}/project-requests/${projectRequestId}/files`,
+      );
+      request.withCredentials = true;
+      request.setRequestHeader(
+        "Content-Type",
+        file?.type || "application/octet-stream",
+      );
+      request.setRequestHeader("X-File-Name", fileName);
+
+      if (token) {
+        request.setRequestHeader("Authorization", `Bearer ${token}`);
       }
 
-      return data;
+      request.upload.onprogress = (event) => {
+        if (!event.lengthComputable || !event.total) {
+          return;
+        }
+
+        const progress = Math.min(
+          Math.round((event.loaded / event.total) * 100),
+          99,
+        );
+
+        onUploadProgress?.({
+          loaded: event.loaded,
+          progress,
+          total: event.total,
+        });
+      };
+
+      request.onload = () => {
+        let data = null;
+
+        try {
+          data = request.responseText ? JSON.parse(request.responseText) : null;
+        } catch {
+          data = null;
+        }
+
+        if (request.status < 200 || request.status >= 300) {
+          const error = new Error(
+            data?.message || "No se pudo subir el archivo.",
+          );
+          error.status = request.status;
+          error.code = data?.code || "FILE_UPLOAD_FAILED";
+          reject(error);
+          return;
+        }
+
+        onUploadProgress?.({
+          loaded: file?.size || 0,
+          progress: 100,
+          total: file?.size || 0,
+        });
+        resolve(data);
+      };
+
+      request.onerror = () => {
+        reject(new Error("No se pudo subir el archivo."));
+      };
+
+      request.onabort = () => {
+        reject(new Error("La subida del archivo fue cancelada."));
+      };
+
+      request.send(file);
     });
   },
 };

@@ -955,3 +955,26 @@
   /*efecto de desenfoque*/
   --effect-blur-b1: var(--effect-blur-b1);
 }
+
+@keyframes arca-file-upload-progress {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 32px 0;
+  }
+}
+
+.arca-file-upload-progress-bar {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-text-300) 0,
+    var(--color-text-300) 35%,
+    var(--color-neutral-600) 50%,
+    var(--color-text-300) 65%,
+    var(--color-text-300) 100%
+  );
+  background-size: 32px 8px;
+  animation: arca-file-upload-progress 720ms linear infinite;
+}
