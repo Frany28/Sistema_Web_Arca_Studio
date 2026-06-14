@@ -5,10 +5,16 @@ const API_BASE_URL = (
   (import.meta.env.DEV ? "http://localhost:3000/api" : "/api")
 ).replace(/\/$/, "");
 
+function looksLikeCoordinates(value) {
+  return /^-?\d+(?:\.\d+)?\s*[, ]\s*-?\d*(?:\.\d*)?$/.test(
+    String(value || "").trim(),
+  );
+}
+
 export async function searchAddressSuggestions(query, { signal } = {}) {
   const trimmedQuery = String(query || "").trim();
 
-  if (trimmedQuery.length < 2) {
+  if (trimmedQuery.length < 2 && !looksLikeCoordinates(trimmedQuery)) {
     return [];
   }
 
