@@ -155,7 +155,7 @@ function ProjectRequestDetailsStep({
   useEffect(() => {
     if (
       !open ||
-      values.projectLocation.trim().length < 3 ||
+      values.projectLocation.trim().length < 2 ||
       values.projectLocationLatitude
     ) {
       setLocationSuggestions([]);
@@ -173,7 +173,7 @@ function ProjectRequestDetailsStep({
             setLocationSuggestions([]);
           }
         });
-    }, 280);
+    }, 120);
 
     return () => {
       controller.abort();
@@ -365,6 +365,7 @@ function ProjectRequestDetailsStep({
                 }}
                 onChange={(event) => {
                   setHasAttemptedSubmit(false);
+                  setIsLocationInputFocused(true);
                   onProjectLocationChange?.(event.target.value);
                   onProjectLocationSelect?.({
                     formattedAddress: "",
