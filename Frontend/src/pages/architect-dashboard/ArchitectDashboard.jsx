@@ -149,6 +149,8 @@ function ArchitectDashboard({ empty = false }) {
     drawerComments: submittedDrawerComments,
     submitComment,
     refresh: refreshSubmittedComments,
+    error: submittedCommentsError,
+    loading: submittedCommentsLoading,
   } = useProjectComments({
     enabled: false,
     projectId: commentsProjectId,

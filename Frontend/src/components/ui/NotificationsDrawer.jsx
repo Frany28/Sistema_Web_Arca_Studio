@@ -641,10 +641,17 @@ function NotificationsDrawer({
   }
 
   async function handleCommentSubmit(message, parentCommentId = null) {
-    await onSubmitComment?.({ message, parentCommentId });
-
-    if (parentCommentId) {
-      setActiveReplyComposer(null);
+    try {
+      await onSubmitComment?.({ message, parentCommentId });
+    } catch (err) {
+      // Error will be reflected via props `commentsError` from the caller;
+      // prevent unhandled rejection from breaking the UI.
+      // eslint-disable-next-line no-console
+      console.warn("Comment submit failed:", err);
+    } finally {
+      if (parentCommentId) {
+        setActiveReplyComposer(null);
+      }
     }
   }
 

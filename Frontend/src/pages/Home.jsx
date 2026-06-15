@@ -268,6 +268,8 @@ function Home() {
     drawerComments: submittedDrawerComments,
     submitComment,
     refresh: refreshSubmittedComments,
+    error: submittedCommentsError,
+    loading: submittedCommentsLoading,
   } = useProjectComments({
     enabled: false,
     projectId: commentsProjectId,
@@ -295,8 +297,8 @@ function Home() {
 
     return Array.from(commentsById.values());
   }, [recentProjectComments, submittedDrawerComments]);
-  const drawerCommentsError = recentProjectCommentsError;
-  const drawerCommentsLoading = recentProjectCommentsLoading;
+  const drawerCommentsError = recentProjectCommentsError || submittedCommentsError;
+  const drawerCommentsLoading = recentProjectCommentsLoading || submittedCommentsLoading;
   const notificationComments = useMemo(
     () => [...drawerComments, ...imageCommentNotifications],
     [drawerComments, imageCommentNotifications],

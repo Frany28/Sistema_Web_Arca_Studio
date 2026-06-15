@@ -108,7 +108,6 @@ function SideOverlayDrawer({
           transitionTimingFunction: DRAWER_EASING,
         }}
         onClick={(event) => event.stopPropagation()}
-        aria-hidden={!isActive}
       >
         {children}
       </aside>

@@ -54,13 +54,27 @@ function getRelativeTimeLabel(value) {
 }
 
 function getCommentAuthorLabel(comment, user) {
-  if (Number(comment.author?.id) === Number(user?.id)) {
+  const author = comment.author;
+
+  const authorId = author?.id;
+  const authorEmail = author?.email?.toLowerCase?.();
+  const authorName = String(author?.name || "").trim().toLowerCase();
+  const userId = user?.id;
+  const userEmail = user?.email?.toLowerCase?.();
+  const userName = String(user?.name || "").trim().toLowerCase();
+
+  const isCurrentUser =
+    (authorId && userId && Number(authorId) === Number(userId)) ||
+    (authorEmail && userEmail && authorEmail === userEmail) ||
+    (authorName && userName && authorName === userName);
+
+  if (isCurrentUser) {
     return "Tú";
   }
 
-  const name = comment.author?.name || "Usuario";
+  const name = author?.name || comment.name || "Usuario";
 
-  return comment.author?.roleCode === "architect" ? `Arq. ${name}` : name;
+  return author?.roleCode === "architect" ? `Arq. ${name}` : name;
 }
 
 function toDrawerComment(comment, user) {

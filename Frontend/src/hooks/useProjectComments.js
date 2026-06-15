@@ -32,13 +32,27 @@ function getRelativeTimeLabel(value) {
 }
 
 function getCommentAuthorLabel(comment, user) {
-  if (Number(comment.author?.id) === Number(user?.id)) {
+  const author = comment.author;
+
+  const authorId = author?.id;
+  const authorEmail = author?.email?.toLowerCase?.();
+  const authorName = String(author?.name || "").trim().toLowerCase();
+  const userId = user?.id;
+  const userEmail = user?.email?.toLowerCase?.();
+  const userName = String(user?.name || "").trim().toLowerCase();
+
+  const isCurrentUser =
+    (authorId && userId && Number(authorId) === Number(userId)) ||
+    (authorEmail && userEmail && authorEmail === userEmail) ||
+    (authorName && userName && authorName === userName);
+
+  if (isCurrentUser) {
     return "Tú";
   }
 
-  const name = comment.author?.name || "Usuario";
+  const name = author?.name || comment.name || "Usuario";
 
-  return comment.author?.roleCode === "architect" ? `Arq. ${name}` : name;
+  return author?.roleCode === "architect" ? `Arq. ${name}` : name;
 }
 
 function toDrawerComment(comment, user) {
@@ -108,11 +122,26 @@ export function useProjectComments({ enabled = true, projectId, user }) {
   }, [enabled, projectId]);
 
   const submitComment = useCallback(
-    async ({ message, parentCommentId = null }) => {
+    async (input) => {
+      // Support both `submitComment("text")` and `submitComment({ message, parentCommentId })`
+      const payload =
+        typeof input === "string"
+          ? { message: input, parentCommentId: null }
+          : input || {};
+
+      const { message, parentCommentId } = payload;
+
       if (!projectId) {
         setError("No se encontro el proyecto para comentar.");
         return;
       }
+
+      const normalizedParent =
+        parentCommentId == null || parentCommentId === ""
+          ? null
+          : Number.isFinite(Number(parentCommentId))
+          ? Number(parentCommentId)
+          : parentCommentId;
 
       setLoading(true);
       setError("");
@@ -120,15 +149,16 @@ export function useProjectComments({ enabled = true, projectId, user }) {
       try {
         const data = await api.projects.createComment({
           content: message,
-          parentCommentId,
+          parentCommentId: normalizedParent,
           projectId,
         });
 
-        if (data.comment) {
+        if (data && data.comment) {
           setComments((current) => [...current, data.comment]);
         }
       } catch (requestError) {
         setError(requestError.message || "No se pudo guardar el comentario.");
+        throw requestError;
       } finally {
         setLoading(false);
       }

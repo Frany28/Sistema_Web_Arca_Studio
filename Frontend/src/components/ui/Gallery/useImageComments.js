@@ -125,16 +125,25 @@ function getStoredAuthor(user) {
 function getAuthorLabel(comment, user) {
   const author = comment.author;
 
-  if (author?.id && user?.id && Number(author.id) === Number(user.id)) {
+  const authorId = author?.id;
+  const authorEmail = author?.email?.toLowerCase?.();
+  const authorName = String(author?.name || "").trim().toLowerCase();
+  const userId = user?.id;
+  const userEmail = user?.email?.toLowerCase?.();
+  const userName = String(user?.name || "").trim().toLowerCase();
+
+  const isCurrentUser =
+    (authorId && userId && Number(authorId) === Number(userId)) ||
+    (authorEmail && userEmail && authorEmail === userEmail) ||
+    (authorName && userName && authorName === userName) ||
+    comment.name === "Tú" || comment.name === "Tu";
+
+  if (isCurrentUser) {
     return "Tú";
   }
 
   if (author?.name) {
     return author.roleCode === "architect" ? `Arq. ${author.name}` : author.name;
-  }
-
-  if (comment.name === "Tu" || comment.name === "Tú") {
-    return "Usuario";
   }
 
   return comment.name || "Usuario";
