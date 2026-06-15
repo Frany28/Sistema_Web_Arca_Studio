@@ -381,7 +381,7 @@ function CommentCard({
             {displayBody}
           </p>
 
-          {selection ? (
+          {selection && !isReply ? (
             <SelectionPreview
               active={selectionActive}
               image={image}

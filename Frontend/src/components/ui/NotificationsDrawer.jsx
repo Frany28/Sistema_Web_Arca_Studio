@@ -325,7 +325,7 @@ function CommentCard({
             {message}
           </p>
 
-          {imageComment && selection ? (
+          {imageComment && selection && !isReply ? (
             <ImageCommentPreview image={image} selection={selection} />
           ) : null}
         </article>
