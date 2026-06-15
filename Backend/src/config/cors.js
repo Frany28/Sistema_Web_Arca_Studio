@@ -9,6 +9,27 @@ function parseBoolean(value, fallback = false) {
   return String(value).trim().toLowerCase() === "true";
 }
 
+function getAllowedHeaders() {
+  const defaultHeaders = [
+    "Authorization",
+    "Content-Type",
+    "X-File-Name",
+    "X-Original-File-Name",
+  ];
+  const configuredHeaders = process.env.CORS_ALLOWED_HEADERS;
+
+  if (!configuredHeaders) {
+    return defaultHeaders;
+  }
+
+  const extraHeaders = configuredHeaders
+    .split(",")
+    .map((header) => header.trim())
+    .filter(Boolean);
+
+  return [...new Set([...defaultHeaders, ...extraHeaders])];
+}
+
 export function getAllowedOrigins() {
   const configuredOrigins = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS;
 
@@ -47,7 +68,7 @@ export function corsOptions() {
   return {
     credentials: parseBoolean(process.env.CORS_CREDENTIALS, true),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: getAllowedHeaders(),
     optionsSuccessStatus: 204,
     origin(origin, callback) {
       if (!origin) {
