@@ -196,31 +196,43 @@ export default function ProjectDetailsPage({
 
     let isMounted = true;
 
-    setProjectCommentsLoading(true);
-    setProjectCommentsError("");
+    function loadProjectComments({ showLoading = false } = {}) {
+      if (showLoading) {
+        setProjectCommentsLoading(true);
+      }
 
-    api.projects
-      .listComments({ projectId: resolvedProjectId })
-      .then((data) => {
-        if (isMounted) {
-          setProjectComments(Array.isArray(data.comments) ? data.comments : []);
-        }
-      })
-      .catch((error) => {
-        if (isMounted) {
-          setProjectCommentsError(
-            error.message || "No se pudieron cargar los comentarios.",
-          );
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setProjectCommentsLoading(false);
-        }
-      });
+      setProjectCommentsError("");
+
+      api.projects
+        .listComments({ projectId: resolvedProjectId })
+        .then((data) => {
+          if (isMounted) {
+            setProjectComments(
+              Array.isArray(data.comments) ? data.comments : [],
+            );
+          }
+        })
+        .catch((error) => {
+          if (isMounted) {
+            setProjectCommentsError(
+              error.message || "No se pudieron cargar los comentarios.",
+            );
+          }
+        })
+        .finally(() => {
+          if (isMounted && showLoading) {
+            setProjectCommentsLoading(false);
+          }
+        });
+    }
+
+    loadProjectComments({ showLoading: true });
+
+    const refreshInterval = window.setInterval(loadProjectComments, 5000);
 
     return () => {
       isMounted = false;
+      window.clearInterval(refreshInterval);
     };
   }, [isNotificationsDrawerOpen, resolvedProjectId]);
 

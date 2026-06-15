@@ -49,30 +49,24 @@ function readStoredComments() {
   }
 
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
-    const { changed, comments } = sanitizeStoredComments(parsed);
-
-    if (changed) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-    }
-
-    return comments;
+    window.localStorage.removeItem(STORAGE_KEY);
   } catch {
-    return {};
+    // Ignore blocked localStorage; the database remains the source of truth.
   }
+
+  return {};
 }
 
-function writeStoredComments(nextComments) {
+function writeStoredComments() {
   if (typeof window === "undefined") {
     return;
   }
 
   try {
-    const { comments } = sanitizeStoredComments(nextComments);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+    window.localStorage.removeItem(STORAGE_KEY);
     window.dispatchEvent(new CustomEvent(STORAGE_EVENT));
   } catch {
-    // Comments remain available in memory if localStorage is blocked.
+    // Ignore blocked localStorage; the database remains the source of truth.
   }
 }
 
