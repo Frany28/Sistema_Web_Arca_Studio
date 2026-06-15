@@ -85,6 +85,26 @@ const RECENT_ACTIVITY = [
   },
 ];
 
+function orderCommentsByThread(comments) {
+  const repliesByParent = new Map();
+  const rootComments = [];
+
+  comments.forEach((comment) => {
+    if (comment.parentCommentId) {
+      const key = String(comment.parentCommentId);
+      repliesByParent.set(key, [...(repliesByParent.get(key) ?? []), comment]);
+      return;
+    }
+
+    rootComments.push(comment);
+  });
+
+  return rootComments.flatMap((comment) => [
+    comment,
+    ...(repliesByParent.get(String(comment.id)) ?? []),
+  ]);
+}
+
 function MoreIcon() {
   return (
     <svg
@@ -511,6 +531,7 @@ function NotificationsDrawer({
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
   const canSubmitComments = typeof onSubmitComment === "function";
+  const orderedComments = orderCommentsByThread(comments);
 
   useEffect(() => {
     if (!open) {
@@ -601,7 +622,7 @@ function NotificationsDrawer({
               </p>
             ) : null}
 
-            {comments.map((item) => (
+            {orderedComments.map((item) => (
               <div key={item.id} className="flex flex-col gap-[8px]">
                 <CommentCard
                   {...item}

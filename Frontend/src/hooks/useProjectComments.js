@@ -46,6 +46,7 @@ function toDrawerComment(comment, user) {
     id: comment.id,
     message: comment.content,
     name: getCommentAuthorLabel(comment, user),
+    parentCommentId: comment.parentCommentId,
     timestamp: getRelativeTimeLabel(comment.createdAt),
     type: comment.type,
   };

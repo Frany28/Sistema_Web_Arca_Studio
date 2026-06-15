@@ -211,6 +211,26 @@ const GENERAL_COMMENTS = [
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
 
+function orderCommentsByThread(comments) {
+  const repliesByParent = new Map();
+  const rootComments = [];
+
+  comments.forEach((comment) => {
+    if (comment.parentCommentId) {
+      const key = String(comment.parentCommentId);
+      repliesByParent.set(key, [...(repliesByParent.get(key) ?? []), comment]);
+      return;
+    }
+
+    rootComments.push(comment);
+  });
+
+  return rootComments.flatMap((comment) => [
+    comment,
+    ...(repliesByParent.get(String(comment.id)) ?? []),
+  ]);
+}
+
 function ReplyArrowIcon({ className }) {
   return (
     <svg
@@ -521,6 +541,7 @@ export function GeneralCommentsDrawer({
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
+  const orderedComments = orderCommentsByThread(comments);
 
   useEffect(() => {
     if (!visibleReplyAction && !activeReplyComposer) {
@@ -584,7 +605,7 @@ export function GeneralCommentsDrawer({
         />
 
         <div className="flex flex-col gap-[8px]">
-          {comments.map((comment) => (
+          {orderedComments.map((comment) => (
             <div key={comment.id} className="flex flex-col gap-[8px]">
               <CommentCard
                 {...comment}

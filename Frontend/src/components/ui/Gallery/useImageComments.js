@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useAuth } from "../../../auth/AuthContext.jsx";
+
 const STORAGE_KEY = "arca.image-comments.v1";
 const STORAGE_EVENT = "arca:image-comments-updated";
 const DEFAULT_PROJECT_ID = "quinta-bella-vista";
@@ -67,6 +69,45 @@ function getRelativeTimeLabel(value) {
   return `Hace ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
 }
 
+function getStoredAuthor(user) {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    email: user.email ?? null,
+    id: user.id ?? null,
+    name: user.name ?? [user.firstName, user.lastName].filter(Boolean).join(" "),
+    roleCode: user.role?.code ?? user.roleCode ?? user.role ?? null,
+  };
+}
+
+function getAuthorLabel(comment, user) {
+  const author = comment.author;
+
+  if (author?.id && user?.id && Number(author.id) === Number(user.id)) {
+    return "Tu";
+  }
+
+  if (author?.name) {
+    return author.roleCode === "architect" ? `Arq. ${author.name}` : author.name;
+  }
+
+  if (comment.name === "Tu") {
+    return "Usuario";
+  }
+
+  return comment.name || "Usuario";
+}
+
+function decorateComment(comment, user) {
+  return {
+    ...comment,
+    name: getAuthorLabel(comment, user),
+    timestamp: getRelativeTimeLabel(comment.createdAt) || comment.timestamp,
+  };
+}
+
 export function getCommentImageKey(item) {
   return getImageKey(item);
 }
@@ -76,13 +117,17 @@ export function getStoredImageComments() {
 }
 
 export function useImageComments(item, { projectId } = {}) {
+  const { user } = useAuth();
   const imageKey = useMemo(() => getImageKey(item), [item]);
   const projectKey = getProjectKey(projectId);
   const [commentsByImage, setCommentsByImage] = useState(() =>
     readStoredComments(),
   );
 
-  const comments = commentsByImage[imageKey] ?? [];
+  const comments = useMemo(
+    () => (commentsByImage[imageKey] ?? []).map((comment) => decorateComment(comment, user)),
+    [commentsByImage, imageKey, user],
+  );
 
   useEffect(() => {
     function syncComments() {
@@ -106,6 +151,7 @@ export function useImageComments(item, { projectId } = {}) {
           .toString(36)
           .slice(2, 8)}`,
         message,
+        author: getStoredAuthor(user),
         name: "Tu",
         parentCommentId,
         selection,
@@ -135,7 +181,7 @@ export function useImageComments(item, { projectId } = {}) {
 
       return comment;
     },
-    [imageKey, item?.image, item?.label, item?.title, projectKey],
+    [imageKey, item?.image, item?.label, item?.title, projectKey, user],
   );
 
   return {
@@ -145,6 +191,7 @@ export function useImageComments(item, { projectId } = {}) {
 }
 
 export function useImageCommentNotifications({ projectIds = [] } = {}) {
+  const { user } = useAuth();
   const projectIdSet = useMemo(
     () => new Set(projectIds.map((projectId) => getProjectKey(projectId))),
     [projectIds],
@@ -191,8 +238,8 @@ export function useImageCommentNotifications({ projectIds = [] } = {}) {
       .map((comment) => ({
         ...comment,
         imageComment: true,
-        name: comment.name || "Usuario",
+        name: getAuthorLabel(comment, user),
         timestamp: getRelativeTimeLabel(comment.createdAt),
       }));
-  }, [commentsByImage, projectIdSet]);
+  }, [commentsByImage, projectIdSet, user]);
 }
