@@ -116,6 +116,17 @@ export const projectsApi = {
     return apiRequest("/projects");
   },
 
+  listComments({ projectId }) {
+    return apiRequest(`/projects/${projectId}/comments`);
+  },
+
+  createComment({ content, parentCommentId = null, projectId }) {
+    return apiRequest(`/projects/${projectId}/comments`, {
+      body: JSON.stringify({ content, parentCommentId }),
+      method: "POST",
+    });
+  },
+
   updatePublication({ projectId, isPublic }) {
     return apiRequest(`/projects/${projectId}/publication`, {
       body: JSON.stringify({ isPublic }),

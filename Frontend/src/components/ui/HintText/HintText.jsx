@@ -204,7 +204,7 @@ function HintText({
   }
 
   return (
-    <div className={clsx("inline-flex items-center gap-[2px]", className)} {...props}>
+    <div className={clsx("inline-flex min-w-0 items-start gap-[2px]", className)} {...props}>
       {hintIcon ? (
         <span className={clsx("inline-flex size-4 shrink-0 items-center justify-center", visual.icon)} aria-hidden="true">
           {icon ??
@@ -219,7 +219,7 @@ function HintText({
       {hintText ? (
         <p
           className={clsx(
-            "text-body-3 whitespace-nowrap tracking-[-0.5px]",
+            "text-body-3 min-w-0 flex-1 whitespace-normal break-words tracking-[-0.5px]",
             visual.text,
           )}
         >

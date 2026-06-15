@@ -184,11 +184,13 @@ function ProjectRequestDetailsStep({
   const projectName = values.projectName.trim();
   const description = values.description.trim();
   const isProjectNameRequiredValid = projectName.length > 0;
-  const isProjectNameLengthValid = projectName.length <= PROJECT_NAME_MAX_LENGTH;
+  const isProjectNameLengthValid =
+    projectName.length <= PROJECT_NAME_MAX_LENGTH;
   const isProjectNameValid =
     isProjectNameRequiredValid && isProjectNameLengthValid;
   const isProjectTypeValid = Boolean(values.selectedProjectTypeId);
-  const isProjectLocationRequiredValid = values.projectLocation.trim().length > 0;
+  const isProjectLocationRequiredValid =
+    values.projectLocation.trim().length > 0;
   const isProjectLocationLengthValid =
     values.projectLocation.trim().length <= PROJECT_LOCATION_MAX_LENGTH;
   const isProjectLocationFormatValid = isValidProjectLocationFormat(
@@ -537,7 +539,7 @@ function ProjectRequestDetailsStep({
                     ? "Ingresa la ubicación del proyecto"
                     : "Ingresa una dirección valida o selecciona una sugerencia"
                 }
-                className="w-full"
+                className="w-full "
               />
             ) : null}
 
@@ -550,9 +552,9 @@ function ProjectRequestDetailsStep({
               hintText={
                 showDescriptionError
                   ? showDescriptionRequiredError
-                    ? "Ingresa una descripciÃ³n del proyecto"
-                    : `La descripciÃ³n debe tener entre ${PROJECT_DESCRIPTION_MIN_LENGTH} y ${PROJECT_DESCRIPTION_MAX_LENGTH} caracteres`
-                  : "Describe el objetivo del proyecto y cualquier detalle importante para evaluar la solicitud."
+                    ? "Ingresa una descripción del proyecto"
+                    : `La descripción debe tener entre ${PROJECT_DESCRIPTION_MIN_LENGTH} y ${PROJECT_DESCRIPTION_MAX_LENGTH} caracteres`
+                  : "Describe el objetivo del proyecto."
               }
               placeholder="Texto de prueba"
               value={values.description}
@@ -591,17 +593,18 @@ function ProjectRequestDetailsStep({
               />
             ) : null}
             {submitError ? (
-              <HintText state="Error" hintText={submitError} className="w-full" />
+              <HintText
+                state="Error"
+                hintText={submitError}
+                className="w-full"
+              />
             ) : null}
           </div>
         </div>
 
         {scrollLength < 1 ? (
           <ScrollBar
-            height={Math.max(
-              Math.min(contentHeight, modalBodyMaxHeight),
-              24,
-            )}
+            height={Math.max(Math.min(contentHeight, modalBodyMaxHeight), 24)}
             length={scrollLength}
             position={scrollPosition}
             interactive

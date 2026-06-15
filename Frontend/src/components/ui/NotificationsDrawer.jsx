@@ -264,29 +264,62 @@ function ReplyButton() {
   );
 }
 
-function ReplyComposer({ placeholder = "Escribe tu mensaje..." }) {
+function ReplyComposer({ disabled = false, onSubmit, placeholder = "Escribe tu mensaje..." }) {
   return (
     <div data-reply-interaction="true">
-      <MessageInput placeholder={placeholder} />
+      <MessageInput
+        disabled={disabled}
+        placeholder={placeholder}
+        onSubmit={onSubmit}
+      />
     </div>
   );
 }
 
-function MessageInput({ placeholder, multiline = false }) {
+function MessageInput({
+  disabled = false,
+  multiline = false,
+  onSubmit,
+  placeholder,
+}) {
   const [textAreaValue, setTextAreaValue] = useState("");
+  const trimmedValue = textAreaValue.trim();
+
+  function handleSubmit() {
+    if (!trimmedValue || disabled) {
+      return;
+    }
+
+    onSubmit?.(trimmedValue);
+    setTextAreaValue("");
+  }
 
   return multiline ? (
-    <TextArea
-      label="Comentarios Generales"
-      placeholder={placeholder}
-      value={textAreaValue}
-      showHint={false}
-      showLabelInfo={false}
-      minHeight={104}
-      rows={4}
-      className="!max-w-none"
-      onChange={(event) => setTextAreaValue(event.target.value)}
-    />
+    <div className="flex flex-col gap-[8px]">
+      <TextArea
+        label="Comentarios Generales"
+        placeholder={placeholder}
+        value={textAreaValue}
+        disabled={disabled}
+        showHint={false}
+        showLabelInfo={false}
+        minHeight={104}
+        rows={4}
+        className="!max-w-none"
+        onChange={(event) => setTextAreaValue(event.target.value)}
+      />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          aria-label="Enviar comentario"
+          disabled={!trimmedValue || disabled}
+          className="flex size-8 items-center justify-center rounded-[8px] text-[var(--color-neutral-300)] transition-colors duration-200 hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={handleSubmit}
+        >
+          <SendIcon />
+        </button>
+      </div>
+    </div>
   ) : (
     <div className="flex w-full items-start gap-[4px]">
       <ReplyArrowIcon />
@@ -295,12 +328,23 @@ function MessageInput({ placeholder, multiline = false }) {
           <input
             type="text"
             placeholder={placeholder}
+            value={textAreaValue}
+            disabled={disabled}
             className="min-w-0 flex-1 border-0 bg-transparent text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none placeholder:text-[var(--color-text-100)]"
+            onChange={(event) => setTextAreaValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleSubmit();
+              }
+            }}
           />
           <button
             type="button"
             aria-label="Enviar mensaje"
-            className="flex shrink-0 items-center justify-center text-[var(--color-neutral-300)] transition-colors duration-200 hover:text-[var(--color-text-300)]"
+            disabled={!trimmedValue || disabled}
+            className="flex shrink-0 items-center justify-center text-[var(--color-neutral-300)] transition-colors duration-200 hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={handleSubmit}
           >
             <SendIcon />
           </button>
@@ -381,8 +425,11 @@ function NotificationsDrawer({
   onClose,
   className,
   comments = GENERAL_COMMENTS,
+  commentsError = "",
+  commentsLoading = false,
   recentActivity = RECENT_ACTIVITY,
   onActivitySelect,
+  onSubmitComment,
   ...props
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
@@ -439,6 +486,14 @@ function NotificationsDrawer({
     setActiveReplyComposer(commentId);
   }
 
+  async function handleCommentSubmit(message, parentCommentId = null) {
+    await onSubmitComment?.({ message, parentCommentId });
+
+    if (parentCommentId) {
+      setActiveReplyComposer(null);
+    }
+  }
+
   return (
     <SideOverlayDrawer
       open={open}
@@ -449,9 +504,26 @@ function NotificationsDrawer({
     >
       <div className="flex min-h-0 flex-1 flex-col gap-[24px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <section className="flex w-[280px] max-w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] pb-[24px]">
-          <MessageInput multiline placeholder="Escribe algo..." />
+          <MessageInput
+            multiline
+            disabled={commentsLoading}
+            placeholder="Escribe algo..."
+            onSubmit={(message) => handleCommentSubmit(message)}
+          />
+
+          {commentsError ? (
+            <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-danger-100)]">
+              {commentsError}
+            </p>
+          ) : null}
 
           <div className="flex flex-col gap-[8px]">
+            {commentsLoading && comments.length === 0 ? (
+              <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-100)]">
+                Cargando comentarios...
+              </p>
+            ) : null}
+
             {comments.map((item) => (
               <div key={item.id} className="flex flex-col gap-[8px]">
                 <CommentCard
@@ -461,7 +533,14 @@ function NotificationsDrawer({
                   onReplyClick={() => handleReplyClick(item.id)}
                 />
 
-                {activeReplyComposer === item.id ? <ReplyComposer /> : null}
+                {activeReplyComposer === item.id ? (
+                  <ReplyComposer
+                    disabled={commentsLoading}
+                    onSubmit={(message) =>
+                      handleCommentSubmit(message, item.id)
+                    }
+                  />
+                ) : null}
               </div>
             ))}
           </div>
