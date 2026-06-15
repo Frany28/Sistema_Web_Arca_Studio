@@ -640,9 +640,32 @@ function NotificationsDrawer({
     setActiveReplyComposer(commentId);
   }
 
-  async function handleCommentSubmit(message, parentCommentId = null) {
+  async function handleCommentSubmit(message, parentComment = null) {
+    const parentCommentId =
+      parentComment && typeof parentComment === "object"
+        ? parentComment.id
+        : parentComment;
+    const projectId =
+      parentComment && typeof parentComment === "object"
+        ? parentComment.projectId
+        : null;
+    const parentCommentPayload =
+      parentComment && typeof parentComment === "object"
+        ? {
+            commentType: parentComment.commentType,
+            image: parentComment.image,
+            selection: parentComment.selection,
+            targetId: parentComment.targetId || parentComment.imageId,
+          }
+        : {};
+
     try {
-      await onSubmitComment?.({ message, parentCommentId });
+      await onSubmitComment?.({
+        ...parentCommentPayload,
+        message,
+        parentCommentId,
+        projectId,
+      });
     } catch (err) {
       // Error will be reflected via props `commentsError` from the caller;
       // prevent unhandled rejection from breaking the UI.
@@ -703,7 +726,7 @@ function NotificationsDrawer({
                   <ReplyComposer
                     disabled={commentsLoading || !canSubmitComments}
                     onSubmit={(message) =>
-                      handleCommentSubmit(message, item.id)
+                      handleCommentSubmit(message, item)
                     }
                   />
                 ) : null}

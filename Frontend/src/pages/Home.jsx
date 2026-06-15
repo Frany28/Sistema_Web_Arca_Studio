@@ -264,7 +264,7 @@ function Home() {
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: visibleProjectRows.map((project) => project.id),
   });
-  const commentsProjectId = visibleProjectRows[0]?.id ?? null;
+  const commentsProjectId = ownedProjectRows[0]?.id ?? null;
   const {
     drawerComments: submittedDrawerComments,
     submitComment,

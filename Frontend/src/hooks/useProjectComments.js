@@ -172,8 +172,12 @@ export function useProjectComments({
           : input || {};
 
       const { message, parentCommentId } = payload;
+      const targetProjectId =
+        payload.projectId == null || payload.projectId === ""
+          ? projectId
+          : payload.projectId;
 
-      if (!projectId) {
+      if (!targetProjectId) {
         setError("No se encontro el proyecto para comentar.");
         return;
       }
@@ -190,9 +194,13 @@ export function useProjectComments({
 
       try {
         const data = await api.projects.createComment({
+          commentType: payload.commentType,
           content: message,
+          image: payload.image,
           parentCommentId: normalizedParent,
-          projectId,
+          projectId: targetProjectId,
+          selection: payload.selection,
+          targetId: payload.targetId,
         });
 
         if (data && data.comment) {
