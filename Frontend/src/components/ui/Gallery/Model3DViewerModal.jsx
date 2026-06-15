@@ -740,8 +740,8 @@ export default function Model3DViewerModal({
   }
 
   function handleSubmitComment({ message, parentCommentId, selection }) {
-    addComment({ message, parentCommentId, selection });
-    if (!parentCommentId) {
+    const comment = addComment({ message, parentCommentId, selection });
+    if (comment && !parentCommentId) {
       setPendingSelection(null);
     }
   }

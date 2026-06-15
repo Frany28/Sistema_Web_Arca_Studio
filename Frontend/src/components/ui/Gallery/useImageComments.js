@@ -10,6 +10,39 @@ function getImageKey(item) {
   return String(item?.id ?? item?.image ?? item?.title ?? "image");
 }
 
+function hasAuthor(comment) {
+  return Boolean(
+    comment?.author &&
+      (comment.author.id || comment.author.email || comment.author.name),
+  );
+}
+
+function sanitizeStoredComments(value) {
+  let changed = false;
+  const nextComments = {};
+
+  Object.entries(value && typeof value === "object" ? value : {}).forEach(
+    ([imageId, comments]) => {
+      if (!Array.isArray(comments)) {
+        changed = true;
+        return;
+      }
+
+      const authoredComments = comments.filter((comment) => hasAuthor(comment));
+
+      if (authoredComments.length !== comments.length) {
+        changed = true;
+      }
+
+      if (authoredComments.length > 0) {
+        nextComments[imageId] = authoredComments;
+      }
+    },
+  );
+
+  return { changed, comments: nextComments };
+}
+
 function readStoredComments() {
   if (typeof window === "undefined") {
     return {};
@@ -17,7 +50,13 @@ function readStoredComments() {
 
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}");
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const { changed, comments } = sanitizeStoredComments(parsed);
+
+    if (changed) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+    }
+
+    return comments;
   } catch {
     return {};
   }
@@ -29,7 +68,8 @@ function writeStoredComments(nextComments) {
   }
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextComments));
+    const { comments } = sanitizeStoredComments(nextComments);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
     window.dispatchEvent(new CustomEvent(STORAGE_EVENT));
   } catch {
     // Comments remain available in memory if localStorage is blocked.
@@ -145,13 +185,19 @@ export function useImageComments(item, { projectId } = {}) {
 
   const addComment = useCallback(
     ({ message, parentCommentId = null, selection = null }) => {
+      const author = getStoredAuthor(user);
+
+      if (!hasAuthor({ author })) {
+        return null;
+      }
+
       const now = new Date().toISOString();
       const comment = {
         id: `image-comment-${Date.now()}-${Math.random()
           .toString(36)
           .slice(2, 8)}`,
         message,
-        author: getStoredAuthor(user),
+        author,
         name: "Tu",
         parentCommentId,
         selection,
@@ -176,8 +222,10 @@ export function useImageComments(item, { projectId } = {}) {
         ],
       };
 
-      setCommentsByImage(next);
-      writeStoredComments(next);
+      const { comments: sanitizedNext } = sanitizeStoredComments(next);
+
+      setCommentsByImage(sanitizedNext);
+      writeStoredComments(sanitizedNext);
 
       return comment;
     },

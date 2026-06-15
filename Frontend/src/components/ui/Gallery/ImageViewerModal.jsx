@@ -298,9 +298,9 @@ export default function ImageViewerModal({
   };
 
   const handleSubmitComment = ({ message, parentCommentId, selection }) => {
-    addComment({ message, parentCommentId, selection });
+    const comment = addComment({ message, parentCommentId, selection });
 
-    if (!parentCommentId) {
+    if (comment && !parentCommentId) {
       setPendingSelection(null);
     }
   };
