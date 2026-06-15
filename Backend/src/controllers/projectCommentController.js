@@ -102,7 +102,7 @@ export async function createProjectComment(req, res, next) {
       return;
     }
 
-    if (commentType !== "general" && !targetId) {
+    if (!parentCommentId && commentType !== "general" && !targetId) {
       res.status(400).json({
         code: "COMMENT_TARGET_REQUIRED",
         message: "El comentario necesita un recurso asociado.",

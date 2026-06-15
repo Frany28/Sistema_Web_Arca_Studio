@@ -168,14 +168,23 @@ export async function createProjectCommentRecord({
         limit 1
       ),
       parent_comment as (
-        select coalesce(pc.parent_comment_id, pc.id) as id
+        select
+          coalesce(parent_pc.id, pc.id) as id,
+          coalesce(parent_pc.comment_type, pc.comment_type) as comment_type,
+          coalesce(parent_pc.target_id, pc.target_id) as target_id,
+          coalesce(parent_pc.target_metadata, pc.target_metadata) as target_metadata
         from public.project_comments pc
+        left join public.project_comments parent_pc
+          on parent_pc.id = pc.parent_comment_id
+          and parent_pc.project_id = pc.project_id
+          and parent_pc.deleted_at is null
+          and parent_pc.status = $${statusParam}::comment_status
+          and parent_pc.file_id is null
+          and parent_pc.file_version_id is null
         where pc.id = $${parentIdParam}
           and pc.project_id = $${projectIdParam}
           and pc.deleted_at is null
           and pc.status = $${statusParam}::comment_status
-          and pc.comment_type = $${typeParam}::comment_type
-          and coalesce(pc.target_id, '') = coalesce($${targetIdParam}::text, '')
           and pc.file_id is null
           and pc.file_version_id is null
       ),
@@ -197,10 +206,19 @@ export async function createProjectCommentRecord({
             when $${parentIdParam}::bigint is null then null
             else pc.id
           end,
-          $${typeParam}::comment_type,
+          case
+            when $${parentIdParam}::bigint is null then $${typeParam}::comment_type
+            else pc.comment_type
+          end,
           $${contentParam},
-          $${targetIdParam}::text,
-          $${targetMetadataParam}::jsonb,
+          case
+            when $${parentIdParam}::bigint is null then $${targetIdParam}::text
+            else pc.target_id
+          end,
+          case
+            when $${parentIdParam}::bigint is null then $${targetMetadataParam}::jsonb
+            else pc.target_metadata
+          end,
           $${statusParam}::comment_status
         from accessible_project ap
         left join parent_comment pc on true
