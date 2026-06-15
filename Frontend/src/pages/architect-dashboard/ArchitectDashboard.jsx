@@ -143,7 +143,7 @@ function ArchitectDashboard({ empty = false }) {
     ],
   });
   const commentsProjectId = projectRows[0]?.id ?? null;
-  const { drawerComments: submittedDrawerComments, submitComment } =
+  const { drawerComments: submittedDrawerComments, submitComment, refresh: refreshSubmittedComments } =
     useProjectComments({
       enabled: false,
       projectId: commentsProjectId,
@@ -153,11 +153,13 @@ function ArchitectDashboard({ empty = false }) {
     drawerComments: recentProjectComments,
     error: recentProjectCommentsError,
     loading: recentProjectCommentsLoading,
+    refresh: refreshRecentComments,
   } = useRecentProjectComments({
     enabled: projectRows.length > 0,
     projectIds: projectRows.map((project) => project.id),
     user,
   });
+ 
   const drawerComments = useMemo(() => {
     const commentsById = new Map();
 
@@ -173,6 +175,13 @@ function ArchitectDashboard({ empty = false }) {
     () => [...drawerComments, ...imageCommentNotifications],
     [drawerComments, imageCommentNotifications],
   );
+
+  useEffect(() => {
+    if (isNotificationsDrawerOpen) {
+      refreshRecentComments?.();
+      refreshSubmittedComments?.();
+    }
+  }, [isNotificationsDrawerOpen, refreshRecentComments, refreshSubmittedComments]);
 
   useEffect(() => {
     let isMounted = true;

@@ -264,7 +264,7 @@ function Home() {
     ],
   });
   const commentsProjectId = ownedProjectRows[0]?.id ?? null;
-  const { drawerComments: submittedDrawerComments, submitComment } =
+  const { drawerComments: submittedDrawerComments, submitComment, refresh: refreshSubmittedComments } =
     useProjectComments({
       enabled: false,
       projectId: commentsProjectId,
@@ -274,11 +274,13 @@ function Home() {
     drawerComments: recentProjectComments,
     error: recentProjectCommentsError,
     loading: recentProjectCommentsLoading,
+    refresh: refreshRecentComments,
   } = useRecentProjectComments({
     enabled: ownedProjectRows.length > 0,
     projectIds: ownedProjectRows.map((project) => project.id),
     user,
   });
+
   const drawerComments = useMemo(() => {
     const commentsById = new Map();
 
@@ -294,6 +296,13 @@ function Home() {
     () => [...drawerComments, ...imageCommentNotifications],
     [drawerComments, imageCommentNotifications],
   );
+
+  useEffect(() => {
+    if (isNotificationsDrawerOpen) {
+      refreshRecentComments?.();
+      refreshSubmittedComments?.();
+    }
+  }, [isNotificationsDrawerOpen, refreshRecentComments, refreshSubmittedComments]);
 
   useEffect(() => {
     let isMounted = true;

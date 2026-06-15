@@ -136,6 +136,25 @@ export function useProjectComments({ enabled = true, projectId, user }) {
     [projectId],
   );
 
+    const refresh = useCallback(async () => {
+      if (!projectId) {
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      try {
+        const data = await api.projects.listComments({ projectId });
+
+        setComments(Array.isArray(data.comments) ? data.comments : []);
+      } catch (requestError) {
+        setError(requestError.message || "No se pudieron cargar los comentarios.");
+      } finally {
+        setLoading(false);
+      }
+    }, [projectId]);
+
   const drawerComments = useMemo(
     () => comments.map((comment) => toDrawerComment(comment, user)),
     [comments, user],
@@ -147,6 +166,7 @@ export function useProjectComments({ enabled = true, projectId, user }) {
     error,
     loading,
     submitComment,
+    refresh,
   };
 }
 
@@ -209,6 +229,33 @@ export function useRecentProjectComments({
     };
   }, [enabled, normalizedProjectIds]);
 
+  const refresh = useCallback(async () => {
+    if (normalizedProjectIds.length === 0) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const responses = await Promise.all(
+        normalizedProjectIds.map((projectId) =>
+          api.projects.listComments({ projectId }),
+        ),
+      );
+
+      setComments(
+        responses.flatMap((data) =>
+          Array.isArray(data.comments) ? data.comments : [],
+        ),
+      );
+    } catch (requestError) {
+      setError(requestError.message || "No se pudieron cargar los comentarios.");
+    } finally {
+      setLoading(false);
+    }
+  }, [normalizedProjectIds]);
+
   const drawerComments = useMemo(
     () => comments.map((comment) => toDrawerComment(comment, user)),
     [comments, user],
@@ -219,5 +266,6 @@ export function useRecentProjectComments({
     drawerComments,
     error,
     loading,
+    refresh,
   };
 }

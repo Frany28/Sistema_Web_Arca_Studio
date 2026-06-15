@@ -248,6 +248,10 @@ function CommentCard({
 }) {
   const isReply = type === "reply";
   const isInteractive = typeof onSelect === "function";
+  const displayName =
+    name && typeof name === "object"
+      ? name.name ?? name.email ?? String(name)
+      : name;
 
   return (
     <div
@@ -294,7 +298,7 @@ function CommentCard({
             <div className="flex min-w-0 items-center gap-[8px]">
               <Avatar size="S" style="Icon" theme="Brand 1" decorative />
               <p className="text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-                {name}
+                {displayName}
               </p>
               <p className="text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {timestamp}
@@ -303,7 +307,7 @@ function CommentCard({
 
             <button
               type="button"
-              aria-label={`Mostrar acciones de ${name}`}
+              aria-label={`Mostrar acciones de ${displayName}`}
               aria-expanded={showReplyAction}
               aria-controls={`reply-action-${id}`}
               className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-200)] transition-colors duration-200 hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
