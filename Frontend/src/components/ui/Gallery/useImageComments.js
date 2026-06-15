@@ -13,7 +13,7 @@ function getImageKey(item) {
 function hasAuthor(comment) {
   return Boolean(
     comment?.author &&
-      (comment.author.id || comment.author.email || comment.author.name),
+    (comment.author.id || comment.author.email || comment.author.name),
   );
 }
 
@@ -117,7 +117,8 @@ function getStoredAuthor(user) {
   return {
     email: user.email ?? null,
     id: user.id ?? null,
-    name: user.name ?? [user.firstName, user.lastName].filter(Boolean).join(" "),
+    name:
+      user.name ?? [user.firstName, user.lastName].filter(Boolean).join(" "),
     roleCode: user.role?.code ?? user.roleCode ?? user.role ?? null,
   };
 }
@@ -127,23 +128,30 @@ function getAuthorLabel(comment, user) {
 
   const authorId = author?.id;
   const authorEmail = author?.email?.toLowerCase?.();
-  const authorName = String(author?.name || "").trim().toLowerCase();
+  const authorName = String(author?.name || "")
+    .trim()
+    .toLowerCase();
   const userId = user?.id;
   const userEmail = user?.email?.toLowerCase?.();
-  const userName = String(user?.name || "").trim().toLowerCase();
+  const userName = String(user?.name || "")
+    .trim()
+    .toLowerCase();
 
   const isCurrentUser =
     (authorId && userId && Number(authorId) === Number(userId)) ||
     (authorEmail && userEmail && authorEmail === userEmail) ||
     (authorName && userName && authorName === userName) ||
-    comment.name === "Tú" || comment.name === "Tu";
+    comment.name === "Tú" ||
+    comment.name === "Tu";
 
   if (isCurrentUser) {
     return "Tú";
   }
 
   if (author?.name) {
-    return author.roleCode === "architect" ? `Arq. ${author.name}` : author.name;
+    return author.roleCode === "architect"
+      ? `Arq. ${author.name}`
+      : author.name;
   }
 
   return comment.name || "Usuario";
@@ -174,7 +182,10 @@ export function useImageComments(item, { projectId } = {}) {
   );
 
   const comments = useMemo(
-    () => (commentsByImage[imageKey] ?? []).map((comment) => decorateComment(comment, user)),
+    () =>
+      (commentsByImage[imageKey] ?? []).map((comment) =>
+        decorateComment(comment, user),
+      ),
     [commentsByImage, imageKey, user],
   );
 

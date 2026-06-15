@@ -9,9 +9,7 @@ import { useImageCommentNotifications } from "../../components/ui/Gallery/useIma
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
-import {
-  CLIENT_DRAWER_RECENT_ACTIVITY,
-} from "../clientDrawerData.js";
+import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
 import ProjectDetailTabMenu from "./components/ProjectDetailTabMenu.jsx";
 import ProjectOverviewHeader from "./components/ProjectOverviewHeader.jsx";
 import ProjectDocumentsPanel from "./panels/ProjectDocumentsPanel.jsx";
@@ -58,10 +56,14 @@ function getCommentAuthorLabel(comment, user) {
 
   const authorId = author?.id;
   const authorEmail = author?.email?.toLowerCase?.();
-  const authorName = String(author?.name || "").trim().toLowerCase();
+  const authorName = String(author?.name || "")
+    .trim()
+    .toLowerCase();
   const userId = user?.id;
   const userEmail = user?.email?.toLowerCase?.();
-  const userName = String(user?.name || "").trim().toLowerCase();
+  const userName = String(user?.name || "")
+    .trim()
+    .toLowerCase();
 
   const isCurrentUser =
     (authorId && userId && Number(authorId) === Number(userId)) ||
@@ -306,7 +308,9 @@ export default function ProjectDetailsPage({
       />
     );
   } else if (activeProjectTabIndex === 2) {
-    activeProjectPanel = <ProjectDocumentsPanel documents={project.documents} />;
+    activeProjectPanel = (
+      <ProjectDocumentsPanel documents={project.documents} />
+    );
   } else if (activeProjectTabIndex === 3) {
     activeProjectPanel = <ProjectTrackingPanel {...trackingProps} />;
   } else if (activeProjectTabIndex === 4) {

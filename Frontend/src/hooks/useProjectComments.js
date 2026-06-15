@@ -36,10 +36,14 @@ function getCommentAuthorLabel(comment, user) {
 
   const authorId = author?.id;
   const authorEmail = author?.email?.toLowerCase?.();
-  const authorName = String(author?.name || "").trim().toLowerCase();
+  const authorName = String(author?.name || "")
+    .trim()
+    .toLowerCase();
   const userId = user?.id;
   const userEmail = user?.email?.toLowerCase?.();
-  const userName = String(user?.name || "").trim().toLowerCase();
+  const userName = String(user?.name || "")
+    .trim()
+    .toLowerCase();
 
   const isCurrentUser =
     (authorId && userId && Number(authorId) === Number(userId)) ||
@@ -140,8 +144,8 @@ export function useProjectComments({ enabled = true, projectId, user }) {
         parentCommentId == null || parentCommentId === ""
           ? null
           : Number.isFinite(Number(parentCommentId))
-          ? Number(parentCommentId)
-          : parentCommentId;
+            ? Number(parentCommentId)
+            : parentCommentId;
 
       setLoading(true);
       setError("");

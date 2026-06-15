@@ -297,8 +297,10 @@ function Home() {
 
     return Array.from(commentsById.values());
   }, [recentProjectComments, submittedDrawerComments]);
-  const drawerCommentsError = recentProjectCommentsError || submittedCommentsError;
-  const drawerCommentsLoading = recentProjectCommentsLoading || submittedCommentsLoading;
+  const drawerCommentsError =
+    recentProjectCommentsError || submittedCommentsError;
+  const drawerCommentsLoading =
+    recentProjectCommentsLoading || submittedCommentsLoading;
   const notificationComments = useMemo(
     () => [...drawerComments, ...imageCommentNotifications],
     [drawerComments, imageCommentNotifications],
