@@ -641,7 +641,12 @@ export function GeneralCommentsDrawer({
     setActiveReplyComposer(commentId);
   }
 
-  async function handleCommentSubmit(message, parentCommentId = null) {
+  async function handleCommentSubmit(message, parentComment = null) {
+    const parentCommentId =
+      parentComment && typeof parentComment === "object"
+        ? parentComment.parentCommentId || parentComment.id
+        : parentComment;
+
     try {
       await onSubmitComment?.({
         message,
@@ -690,7 +695,7 @@ export function GeneralCommentsDrawer({
               {activeReplyComposer === comment.id ? (
                 <ReplyComposer
                   onSubmit={(message) =>
-                    handleCommentSubmit(message, comment.id)
+                    handleCommentSubmit(message, comment)
                   }
                 />
               ) : null}

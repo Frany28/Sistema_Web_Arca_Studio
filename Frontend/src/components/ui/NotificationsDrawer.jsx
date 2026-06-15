@@ -643,7 +643,7 @@ function NotificationsDrawer({
   async function handleCommentSubmit(message, parentComment = null) {
     const parentCommentId =
       parentComment && typeof parentComment === "object"
-        ? parentComment.id
+        ? parentComment.parentCommentId || parentComment.id
         : parentComment;
     const projectId =
       parentComment && typeof parentComment === "object"

@@ -168,14 +168,13 @@ export async function createProjectCommentRecord({
         limit 1
       ),
       parent_comment as (
-        select pc.id
+        select coalesce(pc.parent_comment_id, pc.id) as id
         from public.project_comments pc
         where pc.id = $${parentIdParam}
           and pc.project_id = $${projectIdParam}
           and pc.deleted_at is null
           and pc.status = $${statusParam}::comment_status
           and pc.comment_type = $${typeParam}::comment_type
-          and pc.parent_comment_id is null
           and coalesce(pc.target_id, '') = coalesce($${targetIdParam}::text, '')
           and pc.file_id is null
           and pc.file_version_id is null
