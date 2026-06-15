@@ -424,7 +424,7 @@ function NotificationsDrawer({
   open = false,
   onClose,
   className,
-  comments = GENERAL_COMMENTS,
+  comments = [],
   commentsError = "",
   commentsLoading = false,
   recentActivity = RECENT_ACTIVITY,
@@ -434,6 +434,7 @@ function NotificationsDrawer({
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
+  const canSubmitComments = typeof onSubmitComment === "function";
 
   useEffect(() => {
     if (!open) {
@@ -506,7 +507,7 @@ function NotificationsDrawer({
         <section className="flex w-[280px] max-w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] pb-[24px]">
           <MessageInput
             multiline
-            disabled={commentsLoading}
+            disabled={commentsLoading || !canSubmitComments}
             placeholder="Escribe algo..."
             onSubmit={(message) => handleCommentSubmit(message)}
           />
@@ -535,7 +536,7 @@ function NotificationsDrawer({
 
                 {activeReplyComposer === item.id ? (
                   <ReplyComposer
-                    disabled={commentsLoading}
+                    disabled={commentsLoading || !canSubmitComments}
                     onSubmit={(message) =>
                       handleCommentSubmit(message, item.id)
                     }

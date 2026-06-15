@@ -7,10 +7,7 @@ import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
-import {
-  CLIENT_DRAWER_COMMENTS,
-  CLIENT_DRAWER_RECENT_ACTIVITY,
-} from "./clientDrawerData.js";
+import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 import ProjectDetailTabMenu from "./projects/components/ProjectDetailTabMenu.jsx";
 import ProjectOverviewHeader from "./projects/components/ProjectOverviewHeader.jsx";
 import ProjectInfoPanel from "./projects/panels/ProjectInfoPanel.jsx";
@@ -133,7 +130,6 @@ export default function EmptyProjectRendersExample() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={CLIENT_DRAWER_COMMENTS}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
           />

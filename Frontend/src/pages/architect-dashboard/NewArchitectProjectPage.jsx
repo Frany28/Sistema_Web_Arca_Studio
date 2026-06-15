@@ -7,7 +7,6 @@ import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import {
-  ARCHITECT_DRAWER_COMMENTS,
   ARCHITECT_DRAWER_RECENT_ACTIVITY,
   ARCHITECT_NAVIGATION_ITEMS,
 } from "./architectDashboardData.js";
@@ -122,7 +121,6 @@ function NewArchitectProjectPage() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={ARCHITECT_DRAWER_COMMENTS}
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
           />

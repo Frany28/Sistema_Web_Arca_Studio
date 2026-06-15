@@ -16,10 +16,8 @@ import fondoActualizarcontraseña from "../assets/fondos/Property 1=actualizar c
 import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
 import fondoRestablecercontraseña from "../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
-import {
-  CLIENT_DRAWER_COMMENTS,
-  CLIENT_DRAWER_RECENT_ACTIVITY,
-} from "./clientDrawerData.js";
+import { useProjectComments } from "../hooks/useProjectComments.js";
+import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
@@ -255,6 +253,17 @@ function Home() {
     () => createProjectNavigationItems(ownedProjectRows),
     [ownedProjectRows],
   );
+  const commentsProjectId = ownedProjectRows[0]?.id ?? null;
+  const {
+    drawerComments,
+    error: projectCommentsError,
+    loading: projectCommentsLoading,
+    submitComment,
+  } = useProjectComments({
+    enabled: isNotificationsDrawerOpen,
+    projectId: commentsProjectId,
+    user,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -483,9 +492,12 @@ function Home() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={CLIENT_DRAWER_COMMENTS}
+            comments={drawerComments}
+            commentsError={projectCommentsError}
+            commentsLoading={projectCommentsLoading}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
+            onSubmitComment={submitComment}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

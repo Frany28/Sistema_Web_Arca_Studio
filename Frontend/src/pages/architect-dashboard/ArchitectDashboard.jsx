@@ -10,10 +10,8 @@ import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
-import {
-  ARCHITECT_DRAWER_COMMENTS,
-  ARCHITECT_DRAWER_RECENT_ACTIVITY,
-} from "./architectDashboardData.js";
+import { useProjectComments } from "../../hooks/useProjectComments.js";
+import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
 const TABLET_BREAKPOINT_PX = 768;
@@ -134,6 +132,17 @@ function ArchitectDashboard({ empty = false }) {
     () => createNavigationItems(projectRows),
     [projectRows],
   );
+  const commentsProjectId = projectRows[0]?.id ?? null;
+  const {
+    drawerComments,
+    error: projectCommentsError,
+    loading: projectCommentsLoading,
+    submitComment,
+  } = useProjectComments({
+    enabled: isNotificationsDrawerOpen,
+    projectId: commentsProjectId,
+    user,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -323,9 +332,12 @@ function ArchitectDashboard({ empty = false }) {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={ARCHITECT_DRAWER_COMMENTS}
+            comments={drawerComments}
+            commentsError={projectCommentsError}
+            commentsLoading={projectCommentsLoading}
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
+            onSubmitComment={submitComment}
           />
         </div>
       </div>

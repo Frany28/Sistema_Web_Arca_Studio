@@ -11,10 +11,7 @@ import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import SettingsVerticalTabMenu from "../../components/ui/SettingsVerticalTabMenu.jsx";
-import {
-  CLIENT_DRAWER_COMMENTS,
-  CLIENT_DRAWER_RECENT_ACTIVITY,
-} from "../clientDrawerData.js";
+import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
 import PreferencesPanel from "./panels/PreferencesPanel.jsx";
 import ProfilePanel from "./panels/ProfilePanel.jsx";
 import SecurityPanel from "./panels/SecurityPanel.jsx";
@@ -278,7 +275,6 @@ export default function SettingsPage() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={CLIENT_DRAWER_COMMENTS}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
           />

@@ -426,7 +426,7 @@ export function GeneralCommentsDrawer() {
         <MessageInput multiline placeholder="Escribe algo..." />
 
         <div className="flex flex-col gap-[8px]">
-          {GENERAL_COMMENTS.map((comment) => (
+          {[].map((comment) => (
             <div key={comment.id} className="flex flex-col gap-[8px]">
               <CommentCard
                 {...comment}
