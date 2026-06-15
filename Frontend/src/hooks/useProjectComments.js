@@ -136,24 +136,26 @@ export function useProjectComments({ enabled = true, projectId, user }) {
     [projectId],
   );
 
-    const refresh = useCallback(async () => {
-      if (!projectId) {
-        return;
-      }
+  const refresh = useCallback(async () => {
+    if (!projectId) {
+      return;
+    }
 
-      setLoading(true);
-      setError("");
+    setLoading(true);
+    setError("");
 
-      try {
-        const data = await api.projects.listComments({ projectId });
+    try {
+      const data = await api.projects.listComments({ projectId });
 
-        setComments(Array.isArray(data.comments) ? data.comments : []);
-      } catch (requestError) {
-        setError(requestError.message || "No se pudieron cargar los comentarios.");
-      } finally {
-        setLoading(false);
-      }
-    }, [projectId]);
+      setComments(Array.isArray(data.comments) ? data.comments : []);
+    } catch (requestError) {
+      setError(
+        requestError.message || "No se pudieron cargar los comentarios.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
 
   const drawerComments = useMemo(
     () => comments.map((comment) => toDrawerComment(comment, user)),
@@ -250,7 +252,9 @@ export function useRecentProjectComments({
         ),
       );
     } catch (requestError) {
-      setError(requestError.message || "No se pudieron cargar los comentarios.");
+      setError(
+        requestError.message || "No se pudieron cargar los comentarios.",
+      );
     } finally {
       setLoading(false);
     }

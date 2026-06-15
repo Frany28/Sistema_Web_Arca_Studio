@@ -116,9 +116,8 @@ function ArchitectDashboard({ empty = false }) {
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(true);
-  const canManagePublication = user?.permissionCodes?.includes(
-    "projects.publish",
-  );
+  const canManagePublication =
+    user?.permissionCodes?.includes("projects.publish");
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -131,7 +130,10 @@ function ArchitectDashboard({ empty = false }) {
     () => projects.map((project, index) => toProjectRow(project, index, user)),
     [projects, user],
   );
-  const projectGroups = useMemo(() => groupProjects(projectRows), [projectRows]);
+  const projectGroups = useMemo(
+    () => groupProjects(projectRows),
+    [projectRows],
+  );
   const navigationItems = useMemo(
     () => createNavigationItems(projectRows),
     [projectRows],
@@ -143,12 +145,15 @@ function ArchitectDashboard({ empty = false }) {
     ],
   });
   const commentsProjectId = projectRows[0]?.id ?? null;
-  const { drawerComments: submittedDrawerComments, submitComment, refresh: refreshSubmittedComments } =
-    useProjectComments({
-      enabled: false,
-      projectId: commentsProjectId,
-      user,
-    });
+  const {
+    drawerComments: submittedDrawerComments,
+    submitComment,
+    refresh: refreshSubmittedComments,
+  } = useProjectComments({
+    enabled: false,
+    projectId: commentsProjectId,
+    user,
+  });
   const {
     drawerComments: recentProjectComments,
     error: recentProjectCommentsError,
@@ -159,13 +164,15 @@ function ArchitectDashboard({ empty = false }) {
     projectIds: projectRows.map((project) => project.id),
     user,
   });
- 
+
   const drawerComments = useMemo(() => {
     const commentsById = new Map();
 
-    [...recentProjectComments, ...submittedDrawerComments].forEach((comment) => {
-      commentsById.set(String(comment.id), comment);
-    });
+    [...recentProjectComments, ...submittedDrawerComments].forEach(
+      (comment) => {
+        commentsById.set(String(comment.id), comment);
+      },
+    );
 
     return Array.from(commentsById.values());
   }, [recentProjectComments, submittedDrawerComments]);
@@ -181,7 +188,11 @@ function ArchitectDashboard({ empty = false }) {
       refreshRecentComments?.();
       refreshSubmittedComments?.();
     }
-  }, [isNotificationsDrawerOpen, refreshRecentComments, refreshSubmittedComments]);
+  }, [
+    isNotificationsDrawerOpen,
+    refreshRecentComments,
+    refreshSubmittedComments,
+  ]);
 
   useEffect(() => {
     let isMounted = true;

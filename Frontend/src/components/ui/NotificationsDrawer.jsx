@@ -250,7 +250,7 @@ function CommentCard({
   const isInteractive = typeof onSelect === "function";
   const displayName =
     name && typeof name === "object"
-      ? name.name ?? name.email ?? String(name)
+      ? (name.name ?? name.email ?? String(name))
       : name;
 
   return (
@@ -286,7 +286,10 @@ function CommentCard({
             onSelect?.();
           }}
           onKeyDown={(event) => {
-            if (!isInteractive || (event.key !== "Enter" && event.key !== " ")) {
+            if (
+              !isInteractive ||
+              (event.key !== "Enter" && event.key !== " ")
+            ) {
               return;
             }
 
@@ -393,7 +396,11 @@ function ReplyButton() {
   );
 }
 
-function ReplyComposer({ disabled = false, onSubmit, placeholder = "Escribe tu mensaje..." }) {
+function ReplyComposer({
+  disabled = false,
+  onSubmit,
+  placeholder = "Escribe tu mensaje...",
+}) {
   return (
     <div data-reply-interaction="true">
       <MessageInput
