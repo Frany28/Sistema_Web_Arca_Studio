@@ -320,7 +320,8 @@ function CommentCard({
   const resolveString = (value) => {
     if (value == null) return "";
     if (typeof value === "string") return value;
-    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (typeof value === "number" || typeof value === "boolean")
+      return String(value);
     if (typeof value === "object") {
       return value.name ?? value.email ?? JSON.stringify(value);
     }
@@ -399,12 +400,7 @@ function CommentCard({
   );
 }
 
-function SelectionPreview({
-  compact = false,
-  image,
-  onClear,
-  selection,
-}) {
+function SelectionPreview({ compact = false, image, onClear, selection }) {
   if (!selection) {
     return null;
   }
@@ -650,7 +646,9 @@ export function GeneralCommentsDrawer({
 
               {activeReplyComposer === comment.id ? (
                 <ReplyComposer
-                  onSubmit={(message) => handleCommentSubmit(message, comment.id)}
+                  onSubmit={(message) =>
+                    handleCommentSubmit(message, comment.id)
+                  }
                 />
               ) : null}
             </div>

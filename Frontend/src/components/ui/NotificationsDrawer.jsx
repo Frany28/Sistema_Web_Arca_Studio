@@ -515,7 +515,7 @@ function ActivityItem({
   const Container = isInteractive ? "button" : "div";
   const displayName =
     name && typeof name === "object"
-      ? name.name ?? name.email ?? String(name)
+      ? (name.name ?? name.email ?? String(name))
       : name;
 
   return (
