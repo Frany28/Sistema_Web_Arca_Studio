@@ -132,6 +132,13 @@ export const projectRequestsApi = {
     });
   },
 
+  update({ payload, projectRequestId }) {
+    return apiRequest(`/project-requests/${projectRequestId}`, {
+      body: JSON.stringify(payload),
+      method: "PATCH",
+    });
+  },
+
   uploadFile({ file, onUploadProgress, projectRequestId }) {
     const token = getAuthToken();
     const fileName = encodeURIComponent(file?.name || "archivo");

@@ -132,9 +132,9 @@ function FileUploadCard({ file, onRetryUpload }) {
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
-            onClick={file.onRetryUpload || onRetryUpload}
+            onClick={file.onRetryUpload || file.onRemove || onRetryUpload}
           >
-            Intenta de nuevo
+            {file.onRetryUpload || onRetryUpload ? "Intenta de nuevo" : "Eliminar"}
           </Button>
         ) : (
           <FileUploadProgress

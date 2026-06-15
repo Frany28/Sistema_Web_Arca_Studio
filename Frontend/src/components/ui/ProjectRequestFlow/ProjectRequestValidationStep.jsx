@@ -1,3 +1,4 @@
+import HintText from "../HintText/HintText.jsx";
 import Input from "../Input/Input.jsx";
 import ProjectRequestModalShell from "./ProjectRequestModalShell.jsx";
 
@@ -28,35 +29,41 @@ function ProjectRequestValidationStep({
   onNext,
   code,
   isSubmitting = false,
+  submitError = "",
   onCodeChange,
 }) {
   return (
     <ProjectRequestModalShell
       open={open}
-      sectionTitle="Validación"
+      sectionTitle="Validacion"
       onClose={onClose}
       onPrevious={onPrevious}
       onNext={() => onNext?.(code)}
       nextDisabled={isSubmitting}
       nextLabel={isSubmitting ? "Enviando" : "Enviar"}
     >
-      <Input
-        label="Código"
-        required={false}
-        showLabelInfo={false}
-        showHint
-        size="S"
-        type="Default input"
-        placeholder="Ingresa el código"
-        hintText="Enviamos un código a tu correo"
-        leftIcon={<SecurityIcon className="size-5" />}
-        rightIcon={null}
-        showLeftIcon
-        showRightIcon={false}
-        value={code}
-        onChange={(event) => onCodeChange?.(event.target.value)}
-        className="w-full max-w-none"
-      />
+      <div className="flex w-full flex-col gap-[8px]">
+        <Input
+          label="Codigo"
+          required={false}
+          showLabelInfo={false}
+          showHint
+          size="S"
+          type="Default input"
+          placeholder="Ingresa el codigo"
+          hintText="Enviamos un codigo a tu correo"
+          leftIcon={<SecurityIcon className="size-5" />}
+          rightIcon={null}
+          showLeftIcon
+          showRightIcon={false}
+          value={code}
+          onChange={(event) => onCodeChange?.(event.target.value)}
+          className="w-full max-w-none"
+        />
+        {submitError ? (
+          <HintText state="Error" hintText={submitError} className="w-full" />
+        ) : null}
+      </div>
     </ProjectRequestModalShell>
   );
 }

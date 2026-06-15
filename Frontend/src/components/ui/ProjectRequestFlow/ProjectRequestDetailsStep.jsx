@@ -91,6 +91,7 @@ function ProjectRequestDetailsStep({
   onHasBlueprintsChange,
   onProjectTypeChange,
   onProjectLocationSelect,
+  submitError = "",
 }) {
   const modalBodyMaxHeight = 520;
   const [isProjectTypeMenuOpen, setIsProjectTypeMenuOpen] = useState(false);
@@ -439,6 +440,9 @@ function ProjectRequestDetailsStep({
                 hintText="Indica si dispones de planos del lugar"
                 className="w-full"
               />
+            ) : null}
+            {submitError ? (
+              <HintText state="Error" hintText={submitError} className="w-full" />
             ) : null}
           </div>
         </div>

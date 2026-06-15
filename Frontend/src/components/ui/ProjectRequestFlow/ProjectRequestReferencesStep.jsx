@@ -1,7 +1,57 @@
 import FileUploadSection from "../FileUploadSection.jsx";
+import HintText from "../HintText/HintText.jsx";
 import Input from "../Input/Input.jsx";
 import Label from "../Label/Label.jsx";
 import ProjectRequestModalShell from "./ProjectRequestModalShell.jsx";
+
+const ALLOWED_FILE_EXTENSIONS = new Set(["jpeg", "jpg", "mp4", "pdf", "png"]);
+const ALLOWED_FILE_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "video/mp4",
+]);
+const MAX_FILE_NAME_LENGTH = 150;
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+
+function getFileExtension(fileName) {
+  const normalized = String(fileName || "").trim().toLowerCase();
+  const lastDotIndex = normalized.lastIndexOf(".");
+
+  if (lastDotIndex <= 0 || lastDotIndex === normalized.length - 1) {
+    return "";
+  }
+
+  return normalized.slice(lastDotIndex + 1);
+}
+
+function getFileError(file, existingFiles) {
+  const extension = getFileExtension(file.name);
+  const normalizedName = String(file.name || "").trim().toLowerCase();
+
+  if (!file.name || file.name.length > MAX_FILE_NAME_LENGTH) {
+    return `El nombre del archivo no puede superar ${MAX_FILE_NAME_LENGTH} caracteres`;
+  }
+
+  if (
+    existingFiles.some((item) => {
+      const existingFile = item.file || item;
+      return String(existingFile.name || "").trim().toLowerCase() === normalizedName;
+    })
+  ) {
+    return "Ese archivo ya esta seleccionado";
+  }
+
+  if (!ALLOWED_FILE_EXTENSIONS.has(extension) || !ALLOWED_FILE_TYPES.has(file.type)) {
+    return "Solo se permiten archivos JPEG, PNG, PDF y MP4";
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return "El archivo supera el tamano permitido de 50 MB";
+  }
+
+  return "";
+}
 
 function LinkIcon({ className }) {
   return (
@@ -37,6 +87,7 @@ function ProjectRequestReferencesStep({
   onNext,
   values,
   uploadedFiles,
+  submitError = "",
   onReferenceLinkChange,
   onFilesChange,
 }) {
@@ -47,17 +98,28 @@ function ProjectRequestReferencesStep({
       return;
     }
 
-    onFilesChange?.([
-      ...(uploadedFiles || []),
-      ...nextFiles.map((file) => ({
-        errorMessage: "",
+    const filesToAdd = [];
+    const existingFiles = [...(uploadedFiles || [])];
+
+    for (const file of nextFiles) {
+      const errorMessage = getFileError(file, existingFiles);
+      const fileItem = {
+        canUpload: !errorMessage,
+        errorMessage,
         file,
         id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+        loadedBytes: 0,
         progress: 0,
-        status: "pending",
+        status: errorMessage ? "failed" : "pending",
+        totalBytes: file.size || 0,
         uploadResult: null,
-      })),
-    ]);
+      };
+
+      filesToAdd.push(fileItem);
+      existingFiles.push(fileItem);
+    }
+
+    onFilesChange?.([...(uploadedFiles || []), ...filesToAdd]);
   };
 
   const visibleFiles = (uploadedFiles || []).map((fileItem) => {
@@ -82,11 +144,14 @@ function ProjectRequestReferencesStep({
       errorMessage: fileItem.errorMessage,
       id: fileItem.id,
       name: file.name,
-      onRemove: fileItem.status === "uploading" ? undefined : () => {
-        onFilesChange?.(
-          (uploadedFiles || []).filter((item) => item.id !== fileItem.id),
-        );
-      },
+      onRemove:
+        fileItem.status === "uploading"
+          ? undefined
+          : () => {
+              onFilesChange?.(
+                (uploadedFiles || []).filter((item) => item.id !== fileItem.id),
+              );
+            },
       onRetryUpload: fileItem.onRetryUpload,
       progress: fileItem.progress || 0,
       status: fileItem.status || "pending",
@@ -118,6 +183,9 @@ function ProjectRequestReferencesStep({
             viewportHeight={null}
             onFilesSelected={handleFilesSelected}
           />
+          {submitError ? (
+            <HintText state="Error" hintText={submitError} className="w-full" />
+          ) : null}
         </div>
 
         <Input

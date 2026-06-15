@@ -1,4 +1,4 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import {
   buildStorageFileUrl,
@@ -44,10 +44,11 @@ function toFileUpload(row) {
 export async function findProjectRequestForFileUpload(projectRequestId, user) {
   const result = await query(
     `
-      select id, client_id, requested_by
+      select id, client_id, requested_by, status
       from public.project_requests
       where id = $1
         and deleted_at is null
+        and status in ('pending_verification', 'pending_review')
       limit 1
     `,
     [projectRequestId],
@@ -65,6 +66,28 @@ export async function findProjectRequestForFileUpload(projectRequestId, user) {
   const isAdmin = user.role?.code === "admin";
 
   return isOwner || isAdmin ? projectRequest : null;
+}
+
+export async function findExistingProjectRequestFile({
+  originalName,
+  projectRequestId,
+  userId,
+}) {
+  const result = await query(
+    `
+      select id, title
+      from public.files
+      where project_request_id = $1
+        and uploaded_by = $2
+        and deleted_at is null
+        and status <> 'deleted'
+        and lower(title) = lower($3)
+      limit 1
+    `,
+    [projectRequestId, userId, String(originalName || "").trim()],
+  );
+
+  return result.rows[0] || null;
 }
 
 export async function uploadProjectRequestFile({
@@ -87,7 +110,20 @@ export async function uploadProjectRequestFile({
   const safeOriginalName = String(originalName || "archivo").trim();
   const fileType = getFileType(contentType, safeOriginalName);
   const fileExtension = getFileExtension(safeOriginalName);
+  const existingFile = await findExistingProjectRequestFile({
+    originalName: safeOriginalName,
+    projectRequestId,
+    userId: user.id,
+  });
+
+  if (existingFile) {
+    const error = new Error("Duplicate project request file");
+    error.code = "DUPLICATE_PROJECT_REQUEST_FILE";
+    throw error;
+  }
+
   const client = await pool.connect();
+  let uploadedStorageKey = null;
 
   try {
     await client.query("begin");
@@ -125,6 +161,7 @@ export async function uploadProjectRequestFile({
       versionNumber,
     });
     const fileUrl = buildStorageFileUrl(storageKey);
+    uploadedStorageKey = storageKey;
 
     await s3Client.send(
       new PutObjectCommand({
@@ -186,6 +223,18 @@ export async function uploadProjectRequestFile({
     });
   } catch (error) {
     await client.query("rollback");
+
+    if (uploadedStorageKey) {
+      await s3Client
+        .send(
+          new DeleteObjectCommand({
+            Bucket: storageConfig.bucket,
+            Key: uploadedStorageKey,
+          }),
+        )
+        .catch(() => {});
+    }
+
     throw error;
   } finally {
     client.release();

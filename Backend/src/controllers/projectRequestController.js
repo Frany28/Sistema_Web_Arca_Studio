@@ -1,10 +1,23 @@
 import {
   createProjectRequestForUser,
+  findExistingProjectNameForClient,
+  findProjectRequestEditableByUser,
   normalizeProjectType,
+  updateProjectRequestForUser,
 } from "../repositories/projectRequestRepository.js";
 
+const PROJECT_NAME_MAX_LENGTH = 150;
+const PROJECT_LOCATION_MAX_LENGTH = 255;
+const PROJECT_DESCRIPTION_MAX_LENGTH = 5000;
+const PROJECT_REFERENCE_LINK_MAX_LENGTH = 500;
+const VERIFICATION_CODE_MIN_LENGTH = 4;
+const VERIFICATION_CODE_MAX_LENGTH = 12;
+
 function isValidCoordinatePair(latitude, longitude) {
-  if (latitude === null && longitude === null) {
+  if (
+    (latitude === null || latitude === undefined || latitude === "") &&
+    (longitude === null || longitude === undefined || longitude === "")
+  ) {
     return true;
   }
 
@@ -21,25 +34,60 @@ function isValidCoordinatePair(latitude, longitude) {
   );
 }
 
-export async function createProjectRequest(req, res, next) {
-  try {
-    if (!req.user?.clientId) {
-      res.status(403).json({
-        code: "CLIENT_REQUIRED",
-        message: "Solo los clientes pueden crear solicitudes de proyecto.",
-      });
-      return;
-    }
+function hasOnlyOneCoordinate(latitude, longitude) {
+  const hasLatitude = latitude !== null && latitude !== undefined && latitude !== "";
+  const hasLongitude =
+    longitude !== null && longitude !== undefined && longitude !== "";
 
-    const payload = req.body || {};
+  return hasLatitude !== hasLongitude;
+}
+
+function isValidReferenceLink(value) {
+  const normalized = String(value || "").trim();
+
+  if (!normalized) {
+    return true;
+  }
+
+  try {
+    const url = new URL(normalized);
+    return ["http:", "https:"].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function isValidVerificationCode(value) {
+  const normalized = String(value || "").trim();
+
+  return (
+    normalized.length >= VERIFICATION_CODE_MIN_LENGTH &&
+    normalized.length <= VERIFICATION_CODE_MAX_LENGTH &&
+    /^[a-zA-Z0-9]+$/.test(normalized)
+  );
+}
+
+async function validateProjectRequestPayload(req, res, options = {}) {
+  const payload = req.body || {};
     const projectName = String(payload.projectName || "").trim();
     const projectLocation = String(payload.projectLocation || "").trim();
     const projectType = normalizeProjectType(payload.selectedProjectTypeId);
+    const description = String(payload.description || "").trim();
+    const referenceLink = String(payload.referenceLink || "").trim();
+  const allowMissingCode = Boolean(options.allowMissingCode);
 
     if (!projectName) {
       res.status(400).json({
         code: "PROJECT_NAME_REQUIRED",
         message: "Ingresa el nombre del proyecto.",
+      });
+      return;
+    }
+
+    if (projectName.length > PROJECT_NAME_MAX_LENGTH) {
+      res.status(400).json({
+        code: "PROJECT_NAME_TOO_LONG",
+        message: `El nombre del proyecto no puede superar ${PROJECT_NAME_MAX_LENGTH} caracteres.`,
       });
       return;
     }
@@ -60,6 +108,70 @@ export async function createProjectRequest(req, res, next) {
       return;
     }
 
+    if (projectLocation.length > PROJECT_LOCATION_MAX_LENGTH) {
+      res.status(400).json({
+        code: "PROJECT_LOCATION_TOO_LONG",
+        message: `La ubicacion no puede superar ${PROJECT_LOCATION_MAX_LENGTH} caracteres.`,
+      });
+      return;
+    }
+
+    if (!["Yes", "No"].includes(payload.hasBlueprints)) {
+      res.status(400).json({
+        code: "HAS_PLANS_REQUIRED",
+        message: "Indica si dispones de planos del lugar.",
+      });
+      return;
+    }
+
+    if (description.length > PROJECT_DESCRIPTION_MAX_LENGTH) {
+      res.status(400).json({
+        code: "PROJECT_DESCRIPTION_TOO_LONG",
+        message: `La descripcion no puede superar ${PROJECT_DESCRIPTION_MAX_LENGTH} caracteres.`,
+      });
+      return;
+    }
+
+    if (referenceLink.length > PROJECT_REFERENCE_LINK_MAX_LENGTH) {
+      res.status(400).json({
+        code: "REFERENCE_LINK_TOO_LONG",
+        message: `El link de referencia no puede superar ${PROJECT_REFERENCE_LINK_MAX_LENGTH} caracteres.`,
+      });
+      return;
+    }
+
+    if (!isValidReferenceLink(referenceLink)) {
+      res.status(400).json({
+        code: "INVALID_REFERENCE_LINK",
+        message: "Ingresa un link de referencia valido.",
+      });
+      return;
+    }
+
+    if (
+      !allowMissingCode &&
+      !isValidVerificationCode(payload.code)
+    ) {
+      res.status(400).json({
+        code: "INVALID_VERIFICATION_CODE",
+        message: "Ingresa un codigo de verificacion valido.",
+      });
+      return;
+    }
+
+    if (
+      hasOnlyOneCoordinate(
+        payload.projectLocationLatitude,
+        payload.projectLocationLongitude,
+      )
+    ) {
+      res.status(400).json({
+        code: "INCOMPLETE_PROJECT_COORDINATES",
+        message: "La latitud y longitud deben enviarse juntas.",
+      });
+      return;
+    }
+
     if (
       !isValidCoordinatePair(
         payload.projectLocationLatitude,
@@ -73,10 +185,142 @@ export async function createProjectRequest(req, res, next) {
       return;
     }
 
-    const projectRequest = await createProjectRequestForUser(req.user, payload);
+    const existingProjectName = await findExistingProjectNameForClient(
+      req.user.clientId,
+      projectName,
+      {
+        excludeProjectRequestId: options.excludeProjectRequestId,
+      },
+    );
+
+    if (existingProjectName) {
+      res.status(409).json({
+        code: "PROJECT_NAME_ALREADY_EXISTS",
+        message: "Ya existe un proyecto o solicitud activa con ese nombre.",
+      });
+      return;
+    }
+
+  return true;
+}
+
+export async function createProjectRequest(req, res, next) {
+  try {
+    if (!req.user?.clientId) {
+      res.status(403).json({
+        code: "CLIENT_REQUIRED",
+        message: "Solo los clientes pueden crear solicitudes de proyecto.",
+      });
+      return;
+    }
+
+    const payload = req.body || {};
+    const isPrepareRequest = payload.prepare === true;
+    const isValid = await validateProjectRequestPayload(req, res, {
+      allowMissingCode: isPrepareRequest,
+    });
+
+    if (!isValid) {
+      return;
+    }
+
+    let projectRequest;
+
+    try {
+      projectRequest = await createProjectRequestForUser(req.user, payload);
+    } catch (error) {
+      if (error.code === "23505") {
+        res.status(409).json({
+          code: "PROJECT_NAME_ALREADY_EXISTS",
+          message: "Ya existe un proyecto o solicitud activa con ese nombre.",
+        });
+        return;
+      }
+
+      throw error;
+    }
 
     res.status(201).json({
       projectRequest,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateProjectRequest(req, res, next) {
+  try {
+    if (!req.user?.clientId) {
+      res.status(403).json({
+        code: "CLIENT_REQUIRED",
+        message: "Solo los clientes pueden actualizar solicitudes de proyecto.",
+      });
+      return;
+    }
+
+    const projectRequestId = Number(req.params.projectRequestId);
+
+    if (!Number.isInteger(projectRequestId) || projectRequestId <= 0) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_REQUEST_ID",
+        message: "La solicitud de proyecto no es valida.",
+      });
+      return;
+    }
+
+    const projectRequest = await findProjectRequestEditableByUser(
+      projectRequestId,
+      req.user,
+    );
+
+    if (!projectRequest) {
+      res.status(404).json({
+        code: "PROJECT_REQUEST_NOT_FOUND",
+        message: "No se encontro la solicitud de proyecto.",
+      });
+      return;
+    }
+
+    const isPrepareRequest = req.body?.prepare === true;
+    const isValid = await validateProjectRequestPayload(req, res, {
+      allowMissingCode: isPrepareRequest,
+      excludeProjectRequestId: projectRequestId,
+    });
+
+    if (!isValid) {
+      return;
+    }
+
+    let updatedProjectRequest;
+
+    try {
+      updatedProjectRequest = await updateProjectRequestForUser(
+        projectRequestId,
+        req.user,
+        req.body || {},
+      );
+    } catch (error) {
+      if (error.code === "23505") {
+        res.status(409).json({
+          code: "PROJECT_NAME_ALREADY_EXISTS",
+          message: "Ya existe un proyecto o solicitud activa con ese nombre.",
+        });
+        return;
+      }
+
+      throw error;
+    }
+
+    if (!updatedProjectRequest) {
+      res.status(404).json({
+        code: "PROJECT_REQUEST_NOT_FOUND",
+        message: "No se encontro la solicitud de proyecto.",
+      });
+      return;
+    }
+
+    res.json({
+      projectRequest: updatedProjectRequest,
     });
   } catch (error) {
     next(error);

@@ -1,13 +1,17 @@
 import express, { Router } from "express";
 
-import { createProjectRequest } from "../controllers/projectRequestController.js";
+import {
+  createProjectRequest,
+  updateProjectRequest,
+} from "../controllers/projectRequestController.js";
 import { uploadProjectRequestAttachment } from "../controllers/fileController.js";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
-const fileUploadLimit = process.env.FILE_UPLOAD_LIMIT || "25mb";
+const fileUploadLimit = process.env.FILE_UPLOAD_LIMIT || "50mb";
 
 router.post("/", requireAuth, createProjectRequest);
+router.patch("/:projectRequestId", requireAuth, updateProjectRequest);
 router.post(
   "/:projectRequestId/files",
   requireAuth,
