@@ -29,6 +29,18 @@ function AvatarLabel({
     : AVATAR_LABEL_DEFAULT_PROPS.size;
   const styles = AVATAR_LABEL_SIZE_STYLES[resolvedSize];
   const hasText = showLabel || showSubtitle;
+  const resolveString = (value) => {
+    if (value == null) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (typeof value === "object") {
+      return value.name ?? value.email ?? JSON.stringify(value);
+    }
+    return String(value);
+  };
+
+  const safeLabel = resolveString(label);
+  const safeSubtitle = resolveString(subtitle);
 
   return (
     <span
@@ -69,7 +81,7 @@ function AvatarLabel({
                 textClassName,
               )}
             >
-              {label}
+              {safeLabel}
             </span>
           ) : null}
 
@@ -81,7 +93,7 @@ function AvatarLabel({
                 subtitleClassName,
               )}
             >
-              {subtitle}
+              {safeSubtitle}
             </span>
           ) : null}
         </span>

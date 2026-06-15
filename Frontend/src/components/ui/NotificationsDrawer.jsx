@@ -513,6 +513,10 @@ function ActivityItem({
 }) {
   const isInteractive = typeof onSelect === "function";
   const Container = isInteractive ? "button" : "div";
+  const displayName =
+    name && typeof name === "object"
+      ? name.name ?? name.email ?? String(name)
+      : name;
 
   return (
     <Container
@@ -529,7 +533,7 @@ function ActivityItem({
         <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
           <p className="text-[14px] leading-[17px] tracking-[-0.5px]">
             <span className="font-medium text-[var(--color-text-300)]">
-              {name}
+              {displayName}
             </span>{" "}
             <span className="font-normal text-[var(--color-text-200)]">
               {action}

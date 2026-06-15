@@ -317,6 +317,19 @@ function CommentCard({
   const displayAuthor = author ?? name;
   const displayTime = time ?? timestamp;
   const displayBody = body ?? message;
+  const resolveString = (value) => {
+    if (value == null) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (typeof value === "object") {
+      return value.name ?? value.email ?? JSON.stringify(value);
+    }
+    return String(value);
+  };
+
+  const safeDisplayAuthor = resolveString(displayAuthor);
+  const safeDisplayTime = resolveString(displayTime);
+  const safeDisplayBody = resolveString(displayBody);
 
   return (
     <div
@@ -337,14 +350,14 @@ function CommentCard({
             <div className="flex min-w-0 items-center gap-[8px]">
               <AvatarLabel
                 size="S"
-                label={displayAuthor}
+                label={safeDisplayAuthor}
                 showSubtitle={false}
                 avatarTheme="Neutral"
                 avatarContent="Icon"
                 avatarDecorative
               />
               <span className="shrink-0 text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-                {displayTime}
+                {safeDisplayTime}
               </span>
             </div>
 
