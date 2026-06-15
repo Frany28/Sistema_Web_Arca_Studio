@@ -37,7 +37,7 @@ function toProjectComment(row) {
   };
 }
 
-function getProjectAccessCondition(user, projectAlias = "p") {
+function getProjectAccessCondition(user, projectAlias = "p", { includePublic = false } = {}) {
   const roleCode = user?.role?.code;
 
   if (roleCode === "admin") {
@@ -50,14 +50,18 @@ function getProjectAccessCondition(user, projectAlias = "p") {
   if (roleCode === "architect") {
     return {
       params: [user.id],
-      sql: `${projectAlias}.assigned_architect_id = $1`,
+      sql: includePublic
+        ? `(${projectAlias}.assigned_architect_id = $1 or ${projectAlias}.is_public = true)`
+        : `${projectAlias}.assigned_architect_id = $1`,
     };
   }
 
   if (roleCode === "client" && user.clientId) {
     return {
       params: [user.clientId],
-      sql: `${projectAlias}.client_id = $1`,
+      sql: includePublic
+        ? `(${projectAlias}.client_id = $1 or ${projectAlias}.is_public = true)`
+        : `${projectAlias}.client_id = $1`,
     };
   }
 
@@ -68,7 +72,7 @@ function getProjectAccessCondition(user, projectAlias = "p") {
 }
 
 export async function canAccessProjectComments(projectId, user) {
-  const access = getProjectAccessCondition(user);
+  const access = getProjectAccessCondition(user, "p", { includePublic: true });
   const result = await query(
     `
       select p.id
@@ -85,7 +89,7 @@ export async function canAccessProjectComments(projectId, user) {
 }
 
 export async function listProjectComments(projectId, user) {
-  const access = getProjectAccessCondition(user);
+  const access = getProjectAccessCondition(user, "p", { includePublic: true });
   const result = await query(
     `
       select
