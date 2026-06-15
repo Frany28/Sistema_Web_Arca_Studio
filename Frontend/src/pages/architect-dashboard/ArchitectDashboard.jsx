@@ -154,6 +154,7 @@ function ArchitectDashboard({ empty = false }) {
   } = useProjectComments({
     enabled: false,
     projectId: commentsProjectId,
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
     user,
   });
   const {
@@ -164,6 +165,7 @@ function ArchitectDashboard({ empty = false }) {
   } = useRecentProjectComments({
     enabled: projectRows.length > 0,
     projectIds: projectRows.map((project) => project.id),
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
     user,
   });
 

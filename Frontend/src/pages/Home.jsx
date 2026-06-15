@@ -273,6 +273,7 @@ function Home() {
   } = useProjectComments({
     enabled: false,
     projectId: commentsProjectId,
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
     user,
   });
   const {
@@ -283,6 +284,7 @@ function Home() {
   } = useRecentProjectComments({
     enabled: ownedProjectRows.length > 0,
     projectIds: ownedProjectRows.map((project) => project.id),
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
     user,
   });
 

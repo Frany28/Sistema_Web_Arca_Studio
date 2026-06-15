@@ -156,6 +156,8 @@ export default function ImageViewerModal({
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [displayIndex, setDisplayIndex] = useState(initialIndex);
   const [isImageVisible, setIsImageVisible] = useState(true);
+  const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
+    useState(focusedCommentId);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
   const imageTimeoutRef = useRef(null);
@@ -188,6 +190,7 @@ export default function ImageViewerModal({
       setIsImageVisible(true);
       setIsActive(false);
       setPendingSelection(null);
+      setFocusedSelectionCommentId(focusedCommentId);
       setShouldRender(true);
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = window.requestAnimationFrame(() => {
@@ -207,7 +210,7 @@ export default function ImageViewerModal({
       window.clearTimeout(closeTimeoutRef.current);
       window.cancelAnimationFrame(frameRef.current);
     };
-  }, [visible, galleryItems.length, initialIndex]);
+  }, [focusedCommentId, visible, galleryItems.length, initialIndex]);
 
   useEffect(() => {
     if (!visible || activeIndex === displayIndex) {
@@ -220,6 +223,7 @@ export default function ImageViewerModal({
     imageTimeoutRef.current = window.setTimeout(() => {
       setDisplayIndex(activeIndex);
       setPendingSelection(null);
+      setFocusedSelectionCommentId(null);
       window.requestAnimationFrame(() => setIsImageVisible(true));
     }, IMAGE_TRANSITION_MS);
 
@@ -289,6 +293,7 @@ export default function ImageViewerModal({
   };
 
   const handleSelectionChange = (selection) => {
+    setFocusedSelectionCommentId(null);
     setPendingSelection({
       ...selection,
       image: {
@@ -349,6 +354,7 @@ export default function ImageViewerModal({
           >
             <ImageHighlighter
               annotations={comments.filter((comment) => comment.selection)}
+              focusedAnnotationId={focusedSelectionCommentId}
               imageSrc={displayItem.image}
               onSelectionChange={handleSelectionChange}
             />
@@ -394,8 +400,14 @@ export default function ImageViewerModal({
         >
           <GeneralCommentsDrawer
             comments={drawerComments}
+            focusedSelectionCommentId={focusedSelectionCommentId}
             pendingSelection={pendingSelection}
             onClearSelection={() => setPendingSelection(null)}
+            onSelectionPreviewClick={(commentId) =>
+              setFocusedSelectionCommentId((currentId) =>
+                String(currentId) === String(commentId) ? null : commentId,
+              )
+            }
             onSubmitComment={handleSubmitComment}
           />
         </div>

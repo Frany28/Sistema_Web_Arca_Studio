@@ -113,8 +113,61 @@ function SelectionBox({ box, subtle = false }) {
   );
 }
 
+function SelectionOverlay({ box }) {
+  if (!box) {
+    return null;
+  }
+
+  const borderWidth = 4;
+  const innerBox = {
+    x1: Math.min(box.x1 + borderWidth, box.x1 + box.width),
+    y1: Math.min(box.y1 + borderWidth, box.y1 + box.height),
+    x2: Math.max(box.x1 + box.width - borderWidth, box.x1),
+    y2: Math.max(box.y1 + box.height - borderWidth, box.y1),
+    width: Math.max(box.width - borderWidth * 2, 0),
+    height: Math.max(box.height - borderWidth * 2, 0),
+  };
+
+  return (
+    <>
+      <div
+        className="absolute left-0 right-0 bg-[rgba(0,0,0,0.3)] pointer-events-none"
+        style={{ top: 0, height: innerBox.y1 }}
+      />
+      <div
+        className="absolute left-0 right-0 bg-[rgba(0,0,0,0.3)] pointer-events-none"
+        style={{
+          top: innerBox.y2,
+          height: `calc(100% - ${innerBox.y2}px)`,
+        }}
+      />
+      <div
+        className="absolute bg-[rgba(0,0,0,0.3)] pointer-events-none"
+        style={{
+          top: innerBox.y1,
+          left: 0,
+          width: innerBox.x1,
+          height: innerBox.height,
+        }}
+      />
+      <div
+        className="absolute bg-[rgba(0,0,0,0.3)] pointer-events-none"
+        style={{
+          top: innerBox.y1,
+          left: innerBox.x2,
+          width: `calc(100% - ${innerBox.x2}px)`,
+          height: innerBox.height,
+        }}
+      />
+
+      <SelectionBox box={box} />
+    </>
+  );
+}
+
 export default function ImageHighlighter({
   annotations = [],
+  focusedAnnotationId = null,
   imageSrc,
   onSelectionChange,
 }) {
@@ -235,25 +288,15 @@ export default function ImageHighlighter({
   };
 
   const box = getBox();
-  const borderWidth = 4;
-  const innerBox = box
-    ? {
-        x1: Math.min(box.x1 + borderWidth, box.x2),
-        y1: Math.min(box.y1 + borderWidth, box.y2),
-        x2: Math.max(box.x2 - borderWidth, box.x1),
-        y2: Math.max(box.y2 - borderWidth, box.y1),
-        width: Math.max(box.width - borderWidth * 2, 0),
-        height: Math.max(box.height - borderWidth * 2, 0),
-      }
+  const focusedAnnotation =
+    focusedAnnotationId && layout
+      ? annotations.find(
+          (annotation) => String(annotation.id) === String(focusedAnnotationId),
+        )
+      : null;
+  const focusedAnnotationBox = focusedAnnotation
+    ? getRenderedBoxFromNatural(focusedAnnotation.selection, layout)
     : null;
-  const renderedAnnotations =
-    annotations.length > 0 && layout
-      ? annotations
-          .map((annotation) =>
-            getRenderedBoxFromNatural(annotation.selection, layout),
-          )
-          .filter(Boolean)
-      : [];
 
   return (
     <div
@@ -276,49 +319,13 @@ export default function ImageHighlighter({
         onLoad={updateLayout}
       />
 
-      {renderedAnnotations.map((annotationBox, index) => (
-        <SelectionBox
-          key={`annotation-${index}-${annotationBox.x1}-${annotationBox.y1}`}
-          box={annotationBox}
-          subtle
-        />
-      ))}
+      {!isActive && focusedAnnotationBox ? (
+        <SelectionOverlay box={focusedAnnotationBox} />
+      ) : null}
 
-      {isActive && box && innerBox && (
+      {isActive && box && (
         <>
-          {/* Overlay gris dividido en 4 para que no invada el cuadro */}
-          <div
-            className="absolute left-0 right-0 bg-[rgba(0,0,0,0.3)] pointer-events-none"
-            style={{ top: 0, height: innerBox.y1 }}
-          />
-          <div
-            className="absolute left-0 right-0 bg-[rgba(0,0,0,0.3)] pointer-events-none"
-            style={{
-              top: innerBox.y2,
-              height: `calc(100% - ${innerBox.y2}px)`,
-            }}
-          />
-          <div
-            className="absolute bg-[rgba(0,0,0,0.3)] pointer-events-none"
-            style={{
-              top: innerBox.y1,
-              left: 0,
-              width: innerBox.x1,
-              height: innerBox.height,
-            }}
-          />
-          <div
-            className="absolute bg-[rgba(0,0,0,0.3)] pointer-events-none"
-            style={{
-              top: innerBox.y1,
-              left: innerBox.x2,
-              width: `calc(100% - ${innerBox.x2}px)`,
-              height: innerBox.height,
-            }}
-          />
-
-          {/* El hueco transparente empieza dentro del borde rojo. */}
-          <SelectionBox box={box} />
+          <SelectionOverlay box={box} />
         </>
       )}
     </div>

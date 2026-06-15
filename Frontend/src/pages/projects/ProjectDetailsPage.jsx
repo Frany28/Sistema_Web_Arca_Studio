@@ -54,19 +54,28 @@ function getRelativeTimeLabel(value) {
 function getCommentAuthorLabel(comment, user) {
   const author = comment.author;
 
-  const authorId = author?.id;
-  const authorEmail = author?.email?.toLowerCase?.();
-  const authorName = String(author?.name || "")
+  const authorId = author?.id == null ? "" : String(author.id);
+  const authorEmail = String(author?.email || "")
     .trim()
     .toLowerCase();
-  const userId = user?.id;
-  const userEmail = user?.email?.toLowerCase?.();
-  const userName = String(user?.name || "")
+  const authorName = String(
+    author?.name ||
+      [author?.firstName, author?.lastName].filter(Boolean).join(" "),
+  )
+    .trim()
+    .toLowerCase();
+  const userId = user?.id == null ? "" : String(user.id);
+  const userEmail = String(user?.email || "")
+    .trim()
+    .toLowerCase();
+  const userName = String(
+    user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(" "),
+  )
     .trim()
     .toLowerCase();
 
   const isCurrentUser =
-    (authorId && userId && Number(authorId) === Number(userId)) ||
+    (authorId && userId && authorId === userId) ||
     (authorEmail && userEmail && authorEmail === userEmail) ||
     (authorName && userName && authorName === userName);
 

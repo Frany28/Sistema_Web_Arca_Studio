@@ -309,9 +309,11 @@ function CommentCard({
   selection,
   timestamp,
   type = "comment",
+  selectionActive = false,
   showReplyAction = false,
   onMoreClick,
   onReplyClick,
+  onSelectionClick,
 }) {
   const isReply = type === "reply";
   const displayAuthor = author ?? name;
@@ -380,7 +382,13 @@ function CommentCard({
           </p>
 
           {selection ? (
-            <SelectionPreview image={image} selection={selection} compact />
+            <SelectionPreview
+              active={selectionActive}
+              image={image}
+              selection={selection}
+              compact
+              onSelect={onSelectionClick}
+            />
           ) : null}
         </article>
 
@@ -400,7 +408,14 @@ function CommentCard({
   );
 }
 
-function SelectionPreview({ compact = false, image, onClear, selection }) {
+function SelectionPreview({
+  active = false,
+  compact = false,
+  image,
+  onClear,
+  onSelect,
+  selection,
+}) {
   if (!selection) {
     return null;
   }
@@ -424,8 +439,21 @@ function SelectionPreview({ compact = false, image, onClear, selection }) {
       }%`
     : undefined;
 
+  const Container = onSelect ? "button" : "div";
+
   return (
-    <div className="flex items-center gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+    <Container
+      type={onSelect ? "button" : undefined}
+      className={clsx(
+        "flex w-full items-center gap-[8px] rounded-[var(--radius-2)] border bg-[var(--color-neutral-100)] p-[6px] text-left transition-colors",
+        active
+          ? "border-[var(--color-accent-300)]"
+          : "border-[var(--color-neutral-200)]",
+        onSelect &&
+          "cursor-pointer hover:border-[var(--color-neutral-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]",
+      )}
+      onClick={onSelect}
+    >
       <div
         className={clsx(
           "shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]",
@@ -461,7 +489,7 @@ function SelectionPreview({ compact = false, image, onClear, selection }) {
           Quitar
         </button>
       ) : null}
-    </div>
+    </Container>
   );
 }
 
@@ -565,7 +593,9 @@ function ReplyComposer({ onSubmit, placeholder = "Escribe tu mensaje..." }) {
 
 export function GeneralCommentsDrawer({
   comments = [],
+  focusedSelectionCommentId = null,
   onClearSelection,
+  onSelectionPreviewClick,
   onSubmitComment,
   pendingSelection,
 }) {
@@ -644,9 +674,17 @@ export function GeneralCommentsDrawer({
             <div key={comment.id} className="flex flex-col gap-[8px]">
               <CommentCard
                 {...comment}
+                selectionActive={
+                  String(focusedSelectionCommentId) === String(comment.id)
+                }
                 showReplyAction={visibleReplyAction === comment.id}
                 onMoreClick={() => handleMoreClick(comment.id)}
                 onReplyClick={() => handleReplyClick(comment.id)}
+                onSelectionClick={
+                  comment.selection
+                    ? () => onSelectionPreviewClick?.(comment.id)
+                    : undefined
+                }
               />
 
               {activeReplyComposer === comment.id ? (
@@ -680,6 +718,8 @@ export default function Model3DViewerModal({
     projectId,
   });
   const [pendingSelection, setPendingSelection] = useState(null);
+  const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
+    useState(null);
 
   const buttonGroupItems = useMemo(
     () => [
@@ -719,6 +759,7 @@ export default function Model3DViewerModal({
 
         setDisplayItem(item);
         setIsActive(false);
+        setFocusedSelectionCommentId(null);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
           frameRef.current = window.requestAnimationFrame(() => {
@@ -768,6 +809,7 @@ export default function Model3DViewerModal({
   };
 
   function handleSelectionChange(selection) {
+    setFocusedSelectionCommentId(null);
     setPendingSelection({
       ...selection,
       image: {
@@ -819,6 +861,7 @@ export default function Model3DViewerModal({
         >
           <ImageHighlighter
             annotations={comments.filter((comment) => comment.selection)}
+            focusedAnnotationId={focusedSelectionCommentId}
             imageSrc={displayItem.image}
             onSelectionChange={handleSelectionChange}
           />
@@ -858,8 +901,14 @@ export default function Model3DViewerModal({
         >
           <GeneralCommentsDrawer
             comments={comments}
+            focusedSelectionCommentId={focusedSelectionCommentId}
             pendingSelection={pendingSelection}
             onClearSelection={() => setPendingSelection(null)}
+            onSelectionPreviewClick={(commentId) =>
+              setFocusedSelectionCommentId((currentId) =>
+                String(currentId) === String(commentId) ? null : commentId,
+              )
+            }
             onSubmitComment={handleSubmitComment}
           />
         </div>

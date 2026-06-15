@@ -34,19 +34,28 @@ function getRelativeTimeLabel(value) {
 function getCommentAuthorLabel(comment, user) {
   const author = comment.author;
 
-  const authorId = author?.id;
-  const authorEmail = author?.email?.toLowerCase?.();
-  const authorName = String(author?.name || "")
+  const authorId = author?.id == null ? "" : String(author.id);
+  const authorEmail = String(author?.email || "")
     .trim()
     .toLowerCase();
-  const userId = user?.id;
-  const userEmail = user?.email?.toLowerCase?.();
-  const userName = String(user?.name || "")
+  const authorName = String(
+    author?.name ||
+      [author?.firstName, author?.lastName].filter(Boolean).join(" "),
+  )
+    .trim()
+    .toLowerCase();
+  const userId = user?.id == null ? "" : String(user.id);
+  const userEmail = String(user?.email || "")
+    .trim()
+    .toLowerCase();
+  const userName = String(
+    user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(" "),
+  )
     .trim()
     .toLowerCase();
 
   const isCurrentUser =
-    (authorId && userId && Number(authorId) === Number(userId)) ||
+    (authorId && userId && authorId === userId) ||
     (authorEmail && userEmail && authorEmail === userEmail) ||
     (authorName && userName && authorName === userName);
 
@@ -82,7 +91,12 @@ function normalizeProjectIds(projectIds = []) {
   ];
 }
 
-export function useProjectComments({ enabled = true, projectId, user }) {
+export function useProjectComments({
+  enabled = true,
+  projectId,
+  refreshIntervalMs = 0,
+  user,
+}) {
   const [comments, setComments] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -120,10 +134,34 @@ export function useProjectComments({ enabled = true, projectId, user }) {
         }
       });
 
+    const refreshInterval =
+      refreshIntervalMs > 0
+        ? window.setInterval(() => {
+            api.projects
+              .listComments({ projectId })
+              .then((data) => {
+                if (isMounted) {
+                  setComments(Array.isArray(data.comments) ? data.comments : []);
+                }
+              })
+              .catch((requestError) => {
+                if (isMounted) {
+                  setError(
+                    requestError.message ||
+                      "No se pudieron cargar los comentarios.",
+                  );
+                }
+              });
+          }, refreshIntervalMs)
+        : null;
+
     return () => {
       isMounted = false;
+      if (refreshInterval) {
+        window.clearInterval(refreshInterval);
+      }
     };
-  }, [enabled, projectId]);
+  }, [enabled, projectId, refreshIntervalMs]);
 
   const submitComment = useCallback(
     async (input) => {
@@ -212,6 +250,7 @@ export function useProjectComments({ enabled = true, projectId, user }) {
 export function useRecentProjectComments({
   enabled = true,
   projectIds = [],
+  refreshIntervalMs = 0,
   user,
 }) {
   const projectIdsKey = useMemo(
@@ -263,10 +302,41 @@ export function useRecentProjectComments({
         }
       });
 
+    const refreshInterval =
+      refreshIntervalMs > 0
+        ? window.setInterval(() => {
+            Promise.all(
+              normalizedProjectIds.map((projectId) =>
+                api.projects.listComments({ projectId }),
+              ),
+            )
+              .then((responses) => {
+                if (isMounted) {
+                  setComments(
+                    responses.flatMap((data) =>
+                      Array.isArray(data.comments) ? data.comments : [],
+                    ),
+                  );
+                }
+              })
+              .catch((requestError) => {
+                if (isMounted) {
+                  setError(
+                    requestError.message ||
+                      "No se pudieron cargar los comentarios.",
+                  );
+                }
+              });
+          }, refreshIntervalMs)
+        : null;
+
     return () => {
       isMounted = false;
+      if (refreshInterval) {
+        window.clearInterval(refreshInterval);
+      }
     };
-  }, [enabled, normalizedProjectIds]);
+  }, [enabled, normalizedProjectIds, refreshIntervalMs]);
 
   const refresh = useCallback(async () => {
     if (normalizedProjectIds.length === 0) {
