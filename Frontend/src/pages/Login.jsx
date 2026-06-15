@@ -87,7 +87,7 @@ function Login() {
           "El backend desplegado debe actualizarse para enviar la sesion.",
         );
       } else {
-        setAuthError("Correo o contraseña incorrectos.");
+        console.error(error);
       }
 
       setTouched({
