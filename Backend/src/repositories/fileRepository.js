@@ -240,3 +240,110 @@ export async function uploadProjectRequestFile({
     client.release();
   }
 }
+
+export async function deleteProjectRequestFile({
+  fileId,
+  projectRequestId,
+  user,
+}) {
+  const storageConfig = getSupabaseStorageConfig();
+  const s3Client = getSupabaseS3Client();
+  const client = await pool.connect();
+  let storageKeys = [];
+
+  try {
+    await client.query("begin");
+
+    const fileResult = await client.query(
+      `
+        select f.id, f.uploaded_by, f.project_request_id, pr.client_id, pr.requested_by, pr.status
+        from public.files f
+        inner join public.project_requests pr
+          on pr.id = f.project_request_id
+        where f.id = $1
+          and f.project_request_id = $2
+          and f.deleted_at is null
+          and f.status <> 'deleted'
+          and pr.deleted_at is null
+          and pr.status in ('pending_verification', 'pending_review')
+        limit 1
+      `,
+      [fileId, projectRequestId],
+    );
+    const file = fileResult.rows[0];
+
+    if (!file) {
+      await client.query("rollback");
+      return null;
+    }
+
+    const isOwner =
+      Number(file.requested_by) === Number(user.id) ||
+      Number(file.uploaded_by) === Number(user.id) ||
+      (user.clientId && Number(file.client_id) === Number(user.clientId));
+    const isAdmin = user.role?.code === "admin";
+
+    if (!isOwner && !isAdmin) {
+      await client.query("rollback");
+      return null;
+    }
+
+    const versionsResult = await client.query(
+      `
+        select file_name
+        from public.file_versions
+        where file_id = $1
+          and deleted_at is null
+      `,
+      [fileId],
+    );
+    storageKeys = versionsResult.rows
+      .map((row) => row.file_name)
+      .filter(Boolean);
+
+    await client.query(
+      `
+        update public.file_versions
+        set deleted_at = now()
+        where file_id = $1
+          and deleted_at is null
+      `,
+      [fileId],
+    );
+
+    await client.query(
+      `
+        update public.files
+        set status = 'deleted'::file_status,
+            deleted_at = now(),
+            updated_at = now()
+        where id = $1
+      `,
+      [fileId],
+    );
+
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  if (storageConfig.bucket) {
+    await Promise.all(
+      storageKeys.map((storageKey) =>
+        s3Client
+          .send(
+            new DeleteObjectCommand({
+              Bucket: storageConfig.bucket,
+              Key: storageKey,
+            }),
+          )
+          .catch(() => {}),
+      ),
+    );
+  }
+
+  return { deleted: true, fileId: Number(fileId) };
+}

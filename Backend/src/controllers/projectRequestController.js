@@ -8,10 +8,32 @@ import {
 
 const PROJECT_NAME_MAX_LENGTH = 150;
 const PROJECT_LOCATION_MAX_LENGTH = 255;
+const PROJECT_DESCRIPTION_MIN_LENGTH = 10;
 const PROJECT_DESCRIPTION_MAX_LENGTH = 5000;
 const PROJECT_REFERENCE_LINK_MAX_LENGTH = 500;
-const VERIFICATION_CODE_MIN_LENGTH = 4;
-const VERIFICATION_CODE_MAX_LENGTH = 12;
+
+const ADDRESS_KEYWORDS = [
+  "apartamento",
+  "apto",
+  "avenida",
+  "av",
+  "calle",
+  "carrera",
+  "casa",
+  "centro",
+  "ciudad",
+  "conjunto",
+  "edificio",
+  "estado",
+  "local",
+  "municipio",
+  "parcelamiento",
+  "sector",
+  "torre",
+  "urbanizacion",
+  "urb",
+  "zona",
+];
 
 function isValidCoordinatePair(latitude, longitude) {
   if (
@@ -57,14 +79,53 @@ function isValidReferenceLink(value) {
   }
 }
 
-function isValidVerificationCode(value) {
-  const normalized = String(value || "").trim();
+function normalizeForAddressValidation(value) {
+  return String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
+function hasUsableCoordinates(latitude, longitude) {
   return (
-    normalized.length >= VERIFICATION_CODE_MIN_LENGTH &&
-    normalized.length <= VERIFICATION_CODE_MAX_LENGTH &&
-    /^[a-zA-Z0-9]+$/.test(normalized)
+    latitude !== null &&
+    latitude !== undefined &&
+    latitude !== "" &&
+    longitude !== null &&
+    longitude !== undefined &&
+    longitude !== "" &&
+    isValidCoordinatePair(latitude, longitude)
   );
+}
+
+function isValidProjectLocationFormat(value, latitude, longitude) {
+  const normalized = normalizeForAddressValidation(value);
+
+  if (hasUsableCoordinates(latitude, longitude)) {
+    return normalized.length >= 5;
+  }
+
+  if (normalized.length < 10 || normalized.length > PROJECT_LOCATION_MAX_LENGTH) {
+    return false;
+  }
+
+  if (!/[a-z]/.test(normalized)) {
+    return false;
+  }
+
+  if (/^(.)\1{5,}$/.test(normalized.replace(/\s/g, ""))) {
+    return false;
+  }
+
+  const words = normalized.match(/[a-z0-9]+/g) || [];
+  const meaningfulWords = words.filter((word) => word.length >= 3);
+  const hasAddressKeyword = ADDRESS_KEYWORDS.some((keyword) =>
+    new RegExp(`\\b${keyword}\\b`).test(normalized),
+  );
+  const hasStructure = /[,#-]/.test(normalized) || /\d/.test(normalized);
+
+  return meaningfulWords.length >= 2 && (hasStructure || hasAddressKeyword);
 }
 
 async function validateProjectRequestPayload(req, res, options = {}) {
@@ -74,7 +135,6 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     const projectType = normalizeProjectType(payload.selectedProjectTypeId);
     const description = String(payload.description || "").trim();
     const referenceLink = String(payload.referenceLink || "").trim();
-  const allowMissingCode = Boolean(options.allowMissingCode);
 
     if (!projectName) {
       res.status(400).json({
@@ -116,6 +176,21 @@ async function validateProjectRequestPayload(req, res, options = {}) {
       return;
     }
 
+    if (
+      !isValidProjectLocationFormat(
+        projectLocation,
+        payload.projectLocationLatitude,
+        payload.projectLocationLongitude,
+      )
+    ) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_LOCATION_FORMAT",
+        message:
+          "Ingresa una direccion valida o selecciona una ubicacion sugerida.",
+      });
+      return;
+    }
+
     if (!["Yes", "No"].includes(payload.hasBlueprints)) {
       res.status(400).json({
         code: "HAS_PLANS_REQUIRED",
@@ -132,6 +207,22 @@ async function validateProjectRequestPayload(req, res, options = {}) {
       return;
     }
 
+    if (!description) {
+      res.status(400).json({
+        code: "PROJECT_DESCRIPTION_REQUIRED",
+        message: "Ingresa una descripcion del proyecto.",
+      });
+      return;
+    }
+
+    if (description.length < PROJECT_DESCRIPTION_MIN_LENGTH) {
+      res.status(400).json({
+        code: "PROJECT_DESCRIPTION_TOO_SHORT",
+        message: `La descripcion debe tener al menos ${PROJECT_DESCRIPTION_MIN_LENGTH} caracteres.`,
+      });
+      return;
+    }
+
     if (referenceLink.length > PROJECT_REFERENCE_LINK_MAX_LENGTH) {
       res.status(400).json({
         code: "REFERENCE_LINK_TOO_LONG",
@@ -144,17 +235,6 @@ async function validateProjectRequestPayload(req, res, options = {}) {
       res.status(400).json({
         code: "INVALID_REFERENCE_LINK",
         message: "Ingresa un link de referencia valido.",
-      });
-      return;
-    }
-
-    if (
-      !allowMissingCode &&
-      !isValidVerificationCode(payload.code)
-    ) {
-      res.status(400).json({
-        code: "INVALID_VERIFICATION_CODE",
-        message: "Ingresa un codigo de verificacion valido.",
       });
       return;
     }
@@ -215,10 +295,7 @@ export async function createProjectRequest(req, res, next) {
     }
 
     const payload = req.body || {};
-    const isPrepareRequest = payload.prepare === true;
-    const isValid = await validateProjectRequestPayload(req, res, {
-      allowMissingCode: isPrepareRequest,
-    });
+    const isValid = await validateProjectRequestPayload(req, res);
 
     if (!isValid) {
       return;
@@ -281,9 +358,7 @@ export async function updateProjectRequest(req, res, next) {
       return;
     }
 
-    const isPrepareRequest = req.body?.prepare === true;
     const isValid = await validateProjectRequestPayload(req, res, {
-      allowMissingCode: isPrepareRequest,
       excludeProjectRequestId: projectRequestId,
     });
 

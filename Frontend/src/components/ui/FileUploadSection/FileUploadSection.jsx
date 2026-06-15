@@ -145,7 +145,7 @@ function FileUploadCard({ file, onRetryUpload }) {
         )}
       </div>
 
-      {isUploading || isPending ? (
+      {!isFailed && file.onRemove ? (
         <Button
           theme="Primary"
           type="Ghost"

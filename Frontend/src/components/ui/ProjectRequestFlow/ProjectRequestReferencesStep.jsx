@@ -1,3 +1,4 @@
+import { useState } from "react";
 import FileUploadSection from "../FileUploadSection.jsx";
 import HintText from "../HintText/HintText.jsx";
 import Input from "../Input/Input.jsx";
@@ -13,6 +14,22 @@ const ALLOWED_FILE_TYPES = new Set([
 ]);
 const MAX_FILE_NAME_LENGTH = 150;
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+const REFERENCE_LINK_MAX_LENGTH = 500;
+
+function isValidReferenceLink(value) {
+  const normalized = String(value || "").trim();
+
+  if (!normalized) {
+    return true;
+  }
+
+  try {
+    const url = new URL(normalized);
+    return ["http:", "https:"].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
 
 function getFileExtension(fileName) {
   const normalized = String(fileName || "").trim().toLowerCase();
@@ -88,9 +105,36 @@ function ProjectRequestReferencesStep({
   values,
   uploadedFiles,
   submitError = "",
+  onFileRemove,
   onReferenceLinkChange,
   onFilesChange,
 }) {
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const referenceLink = String(values.referenceLink || "").trim();
+  const isReferenceLinkLengthValid =
+    referenceLink.length <= REFERENCE_LINK_MAX_LENGTH;
+  const isReferenceLinkFormatValid = isValidReferenceLink(referenceLink);
+  const isReferenceLinkValid =
+    isReferenceLinkLengthValid && isReferenceLinkFormatValid;
+  const showReferenceLinkError = hasAttemptedSubmit && !isReferenceLinkValid;
+  const hasInvalidFiles = (uploadedFiles || []).some(
+    (fileItem) => fileItem.canUpload === false || fileItem.status === "failed",
+  );
+  const hasUploadingFiles = (uploadedFiles || []).some((fileItem) =>
+    ["pending", "uploading"].includes(fileItem.status),
+  );
+  const showFileError = hasAttemptedSubmit && (hasInvalidFiles || hasUploadingFiles);
+
+  const handleNext = () => {
+    setHasAttemptedSubmit(true);
+
+    if (!isReferenceLinkValid || hasInvalidFiles || hasUploadingFiles) {
+      return;
+    }
+
+    onNext?.();
+  };
+
   const handleFilesSelected = (fileList) => {
     const nextFiles = Array.from(fileList || []);
 
@@ -98,6 +142,7 @@ function ProjectRequestReferencesStep({
       return;
     }
 
+    setHasAttemptedSubmit(false);
     const filesToAdd = [];
     const existingFiles = [...(uploadedFiles || [])];
 
@@ -144,14 +189,16 @@ function ProjectRequestReferencesStep({
       errorMessage: fileItem.errorMessage,
       id: fileItem.id,
       name: file.name,
-      onRemove:
-        fileItem.status === "uploading"
-          ? undefined
-          : () => {
-              onFilesChange?.(
-                (uploadedFiles || []).filter((item) => item.id !== fileItem.id),
-              );
-            },
+      onRemove: () => {
+        if (onFileRemove) {
+          onFileRemove(fileItem);
+          return;
+        }
+
+        onFilesChange?.(
+          (uploadedFiles || []).filter((item) => item.id !== fileItem.id),
+        );
+      },
       onRetryUpload: fileItem.onRetryUpload,
       progress: fileItem.progress || 0,
       status: fileItem.status || "pending",
@@ -166,7 +213,7 @@ function ProjectRequestReferencesStep({
       sectionTitle="Referencias"
       onClose={onClose}
       onPrevious={onPrevious}
-      onNext={onNext}
+      onNext={handleNext}
       nextLabel="Siguiente"
     >
       <div className="flex w-full flex-col gap-[16px]">
@@ -186,6 +233,17 @@ function ProjectRequestReferencesStep({
           {submitError ? (
             <HintText state="Error" hintText={submitError} className="w-full" />
           ) : null}
+          {showFileError ? (
+            <HintText
+              state="Error"
+              hintText={
+                hasUploadingFiles
+                  ? "Espera a que los archivos terminen de subir."
+                  : "Elimina los archivos con errores antes de enviar."
+              }
+              className="w-full"
+            />
+          ) : null}
         </div>
 
         <Input
@@ -195,15 +253,30 @@ function ProjectRequestReferencesStep({
           showHint={false}
           size="S"
           type="Default input"
+          state={showReferenceLinkError ? "Error" : "Default"}
           placeholder='Ej. “https://es.pinterest.com/pin”'
           leftIcon={<LinkIcon className="size-5" />}
           rightIcon={null}
           showLeftIcon
           showRightIcon={false}
           value={values.referenceLink}
-          onChange={(event) => onReferenceLinkChange?.(event.target.value)}
+          onChange={(event) => {
+            setHasAttemptedSubmit(false);
+            onReferenceLinkChange?.(event.target.value);
+          }}
           className="w-full max-w-none"
         />
+        {showReferenceLinkError ? (
+          <HintText
+            state="Error"
+            hintText={
+              !isReferenceLinkLengthValid
+                ? `El link no puede superar ${REFERENCE_LINK_MAX_LENGTH} caracteres`
+                : "Ingresa un link valido que empiece con http:// o https://"
+            }
+            className="w-full"
+          />
+        ) : null}
       </div>
     </ProjectRequestModalShell>
   );

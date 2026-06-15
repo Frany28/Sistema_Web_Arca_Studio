@@ -127,6 +127,8 @@ export async function findProjectRequestEditableByUser(projectRequestId, user) {
 
 export async function createProjectRequestForUser(user, payload) {
   const projectType = normalizeProjectType(payload.selectedProjectTypeId);
+  const requestStatus =
+    payload.prepare === true ? "pending_verification" : "pending_review";
 
   const result = await query(
     `
@@ -139,6 +141,7 @@ export async function createProjectRequestForUser(user, payload) {
         description,
         has_plans,
         reference_link,
+        status,
         verification_code_hash,
         verification_expires_at,
         location_latitude,
@@ -155,12 +158,13 @@ export async function createProjectRequestForUser(user, payload) {
         $6,
         $7,
         $8,
-        $9,
-        now() + interval '15 minutes',
+        $9::project_request_status,
         $10,
+        now() + interval '15 minutes',
         $11,
         $12,
-        $13
+        $13,
+        $14
       )
       returning
         id,
@@ -188,6 +192,7 @@ export async function createProjectRequestForUser(user, payload) {
       toNullableString(payload.description),
       payload.hasBlueprints === "Yes",
       toNullableString(payload.referenceLink),
+      requestStatus,
       hashVerificationCode(payload.code),
       toNullableNumber(payload.projectLocationLatitude),
       toNullableNumber(payload.projectLocationLongitude),
@@ -201,6 +206,7 @@ export async function createProjectRequestForUser(user, payload) {
 
 export async function updateProjectRequestForUser(projectRequestId, user, payload) {
   const projectType = normalizeProjectType(payload.selectedProjectTypeId);
+  const shouldSubmitRequest = payload.prepare !== true;
   const shouldUpdateVerificationCode = Boolean(
     String(payload.code || "").trim(),
   );
@@ -219,6 +225,10 @@ export async function updateProjectRequestForUser(projectRequestId, user, payloa
         location_longitude = $11,
         google_place_id = $12,
         formatted_address = $13,
+        status = case
+          when $16::boolean then 'pending_review'::project_request_status
+          else status
+        end,
         verification_code_hash = case
           when $14::boolean then $15
           else verification_code_hash
@@ -266,6 +276,7 @@ export async function updateProjectRequestForUser(projectRequestId, user, payloa
       toNullableString(payload.projectLocationFormattedAddress),
       shouldUpdateVerificationCode,
       hashVerificationCode(payload.code),
+      shouldSubmitRequest,
     ],
   );
 

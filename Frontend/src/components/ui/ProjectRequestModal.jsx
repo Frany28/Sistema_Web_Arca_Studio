@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../api/http.js";
 import ProjectRequestDetailsStep from "./ProjectRequestFlow/ProjectRequestDetailsStep.jsx";
 import ProjectRequestReferencesStep from "./ProjectRequestFlow/ProjectRequestReferencesStep.jsx";
 import ProjectRequestSuccessStep from "./ProjectRequestFlow/ProjectRequestSuccessStep.jsx";
-import ProjectRequestValidationStep from "./ProjectRequestFlow/ProjectRequestValidationStep.jsx";
 
 function ProjectRequestModal({
   open,
@@ -15,6 +14,7 @@ function ProjectRequestModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [referenceFiles, setReferenceFiles] = useState([]);
+  const uploadControllersRef = useRef(new Map());
   const [formValues, setFormValues] = useState({
     projectName: "",
     projectLocation: "",
@@ -31,6 +31,8 @@ function ProjectRequestModal({
 
   useEffect(() => {
     if (!open) {
+      uploadControllersRef.current.forEach((controller) => controller.abort());
+      uploadControllersRef.current.clear();
       setStep("details");
       setIsSubmitting(false);
       setSubmitError("");
@@ -87,6 +89,9 @@ function ProjectRequestModal({
   };
 
   const uploadReferenceFile = async (fileItem, projectRequestId) => {
+    const controller = new AbortController();
+    uploadControllersRef.current.set(fileItem.id, controller);
+
     updateReferenceFile(fileItem.id, {
       errorMessage: "",
       loadedBytes: 0,
@@ -105,8 +110,10 @@ function ProjectRequestModal({
           });
         },
         projectRequestId,
+        signal: controller.signal,
       });
 
+      uploadControllersRef.current.delete(fileItem.id);
       updateReferenceFile(fileItem.id, {
         loadedBytes: fileItem.file?.size || fileItem.totalBytes || 0,
         progress: 100,
@@ -114,6 +121,11 @@ function ProjectRequestModal({
         uploadResult,
       });
     } catch (error) {
+      uploadControllersRef.current.delete(fileItem.id);
+      if (error.code === "UPLOAD_ABORTED") {
+        return;
+      }
+
       updateReferenceFile(fileItem.id, {
         canUpload: true,
         errorMessage: error.message || "No se pudo subir el archivo",
@@ -121,6 +133,43 @@ function ProjectRequestModal({
         status: "failed",
       });
       setSubmitError(error.message || "No se pudo subir el archivo.");
+    }
+  };
+
+  const handleReferenceFileRemove = async (fileItem) => {
+    setSubmitError("");
+    const controller = uploadControllersRef.current.get(fileItem.id);
+
+    if (controller) {
+      controller.abort();
+      uploadControllersRef.current.delete(fileItem.id);
+    }
+
+    setReferenceFiles((current) =>
+      current.filter((item) => item.id !== fileItem.id),
+    );
+
+    const uploadedFileId = fileItem.uploadResult?.file?.id;
+    const projectRequestId = formValues.projectRequestId ?? null;
+
+    if (!uploadedFileId || !projectRequestId) {
+      return;
+    }
+
+    try {
+      await api.projectRequests.deleteFile({
+        fileId: uploadedFileId,
+        projectRequestId,
+      });
+    } catch (error) {
+      setSubmitError(error.message || "No se pudo eliminar el archivo.");
+      setReferenceFiles((current) => {
+        if (current.some((item) => item.id === fileItem.id)) {
+          return current;
+        }
+
+        return [...current, fileItem];
+      });
     }
   };
 
@@ -219,37 +268,17 @@ function ProjectRequestModal({
     );
   }
 
-  if (step === "validation") {
-    return (
-      <ProjectRequestValidationStep
-        open={open}
-        onClose={onClose}
-        onPrevious={() => setStep("references")}
-        onNext={handleSubmit}
-        code={formValues.code}
-        isSubmitting={isSubmitting}
-        submitError={submitError}
-        onCodeChange={(code) => {
-          setSubmitError("");
-          setFormValues((current) => ({
-            ...current,
-            code,
-          }));
-        }}
-      />
-    );
-  }
-
   if (step === "references") {
     return (
       <ProjectRequestReferencesStep
         open={open}
         onClose={onClose}
         onPrevious={() => setStep("details")}
-        onNext={() => setStep("validation")}
+        onNext={handleSubmit}
         values={formValues}
         uploadedFiles={referenceFiles}
         submitError={submitError}
+        onFileRemove={handleReferenceFileRemove}
         onFilesChange={handleReferenceFilesChange}
         onReferenceLinkChange={(referenceLink) => {
           setSubmitError("");

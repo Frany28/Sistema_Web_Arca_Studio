@@ -1,4 +1,5 @@
 import {
+  deleteProjectRequestFile,
   findProjectRequestForFileUpload,
   uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
@@ -139,6 +140,47 @@ export async function uploadProjectRequestAttachment(req, res, next) {
       return;
     }
 
+    next(error);
+  }
+}
+
+export async function deleteProjectRequestAttachment(req, res, next) {
+  try {
+    const projectRequestId = Number(req.params.projectRequestId);
+    const fileId = Number(req.params.fileId);
+
+    if (!Number.isInteger(projectRequestId) || projectRequestId <= 0) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_REQUEST_ID",
+        message: "La solicitud de proyecto no es valida.",
+      });
+      return;
+    }
+
+    if (!Number.isInteger(fileId) || fileId <= 0) {
+      res.status(400).json({
+        code: "INVALID_FILE_ID",
+        message: "El archivo no es valido.",
+      });
+      return;
+    }
+
+    const deletedFile = await deleteProjectRequestFile({
+      fileId,
+      projectRequestId,
+      user: req.user,
+    });
+
+    if (!deletedFile) {
+      res.status(404).json({
+        code: "FILE_NOT_FOUND",
+        message: "No se encontro el archivo en esta solicitud.",
+      });
+      return;
+    }
+
+    res.status(200).json(deletedFile);
+  } catch (error) {
     next(error);
   }
 }

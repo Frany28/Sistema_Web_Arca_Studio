@@ -22,6 +22,85 @@ const PROJECT_TYPE_OPTIONS = [
     checked: "No",
   },
 ];
+const PROJECT_NAME_MAX_LENGTH = 150;
+const PROJECT_LOCATION_MAX_LENGTH = 255;
+const PROJECT_DESCRIPTION_MIN_LENGTH = 10;
+const PROJECT_DESCRIPTION_MAX_LENGTH = 5000;
+const ADDRESS_KEYWORDS = [
+  "apartamento",
+  "apto",
+  "avenida",
+  "av",
+  "calle",
+  "carrera",
+  "casa",
+  "centro",
+  "ciudad",
+  "conjunto",
+  "edificio",
+  "estado",
+  "local",
+  "municipio",
+  "parcelamiento",
+  "sector",
+  "torre",
+  "urbanizacion",
+  "urb",
+  "zona",
+];
+
+function normalizeForAddressValidation(value) {
+  return String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function hasUsableCoordinates(latitude, longitude) {
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+
+  return (
+    latitude !== null &&
+    latitude !== undefined &&
+    latitude !== "" &&
+    longitude !== null &&
+    longitude !== undefined &&
+    longitude !== "" &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
+
+function isValidProjectLocationFormat(value, latitude, longitude) {
+  const normalized = normalizeForAddressValidation(value);
+
+  if (hasUsableCoordinates(latitude, longitude)) {
+    return normalized.length >= 5;
+  }
+
+  if (normalized.length < 10 || !/[a-z]/.test(normalized)) {
+    return false;
+  }
+
+  if (/^(.)\1{5,}$/.test(normalized.replace(/\s/g, ""))) {
+    return false;
+  }
+
+  const words = normalized.match(/[a-z0-9]+/g) || [];
+  const meaningfulWords = words.filter((word) => word.length >= 3);
+  const hasAddressKeyword = ADDRESS_KEYWORDS.some((keyword) =>
+    new RegExp(`\\b${keyword}\\b`).test(normalized),
+  );
+  const hasStructure = /[,#-]/.test(normalized) || /\d/.test(normalized);
+
+  return meaningfulWords.length >= 2 && (hasStructure || hasAddressKeyword);
+}
 function EditIcon({ className }) {
   return (
     <svg
@@ -102,15 +181,65 @@ function ProjectRequestDetailsStep({
   const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const contentRef = useRef(null);
-  const isProjectNameValid = values.projectName.trim().length > 0;
+  const projectName = values.projectName.trim();
+  const description = values.description.trim();
+  const isProjectNameRequiredValid = projectName.length > 0;
+  const isProjectNameLengthValid = projectName.length <= PROJECT_NAME_MAX_LENGTH;
+  const isProjectNameValid =
+    isProjectNameRequiredValid && isProjectNameLengthValid;
   const isProjectTypeValid = Boolean(values.selectedProjectTypeId);
-  const isProjectLocationValid = values.projectLocation.trim().length > 0;
+  const isProjectLocationRequiredValid = values.projectLocation.trim().length > 0;
+  const isProjectLocationLengthValid =
+    values.projectLocation.trim().length <= PROJECT_LOCATION_MAX_LENGTH;
+  const isProjectLocationFormatValid = isValidProjectLocationFormat(
+    values.projectLocation,
+    values.projectLocationLatitude,
+    values.projectLocationLongitude,
+  );
+  const isProjectLocationValid =
+    isProjectLocationRequiredValid &&
+    isProjectLocationLengthValid &&
+    isProjectLocationFormatValid;
   const isBlueprintsValid =
     values.hasBlueprints === "Yes" || values.hasBlueprints === "No";
-  const showProjectNameError = hasAttemptedSubmit && !isProjectNameValid;
+  const isDescriptionRequiredValid = description.length > 0;
+  const isDescriptionLengthValid =
+    description.length >= PROJECT_DESCRIPTION_MIN_LENGTH &&
+    description.length <= PROJECT_DESCRIPTION_MAX_LENGTH;
+  const isDescriptionValid =
+    isDescriptionRequiredValid && isDescriptionLengthValid;
+  const showProjectNameRequiredError =
+    hasAttemptedSubmit && !isProjectNameRequiredValid;
+  const showProjectNameLengthError =
+    hasAttemptedSubmit &&
+    isProjectNameRequiredValid &&
+    !isProjectNameLengthValid;
+  const showProjectNameError =
+    showProjectNameRequiredError || showProjectNameLengthError;
   const showProjectTypeError = hasAttemptedSubmit && !isProjectTypeValid;
+  const showProjectLocationRequiredError =
+    hasAttemptedSubmit && !isProjectLocationRequiredValid;
+  const showProjectLocationFormatError =
+    hasAttemptedSubmit &&
+    isProjectLocationRequiredValid &&
+    isProjectLocationLengthValid &&
+    !isProjectLocationFormatValid;
+  const showProjectLocationLengthError =
+    hasAttemptedSubmit &&
+    isProjectLocationRequiredValid &&
+    !isProjectLocationLengthValid;
   const showProjectLocationError =
-    hasAttemptedSubmit && !isProjectLocationValid;
+    showProjectLocationRequiredError ||
+    showProjectLocationLengthError ||
+    showProjectLocationFormatError;
+  const showDescriptionRequiredError =
+    hasAttemptedSubmit && !isDescriptionRequiredValid;
+  const showDescriptionLengthError =
+    hasAttemptedSubmit &&
+    isDescriptionRequiredValid &&
+    !isDescriptionLengthValid;
+  const showDescriptionError =
+    showDescriptionRequiredError || showDescriptionLengthError;
   const showBlueprintsError = hasAttemptedSubmit && !isBlueprintsValid;
 
   const projectTypeItems = useMemo(
@@ -243,6 +372,7 @@ function ProjectRequestDetailsStep({
       !isProjectNameValid ||
       !isProjectTypeValid ||
       !isProjectLocationValid ||
+      !isDescriptionValid ||
       !isBlueprintsValid
     ) {
       return;
@@ -304,7 +434,11 @@ function ProjectRequestDetailsStep({
             {showProjectNameError ? (
               <HintText
                 state="Error"
-                hintText="Ingresa el nombre del proyecto"
+                hintText={
+                  showProjectNameRequiredError
+                    ? "Ingresa el nombre del proyecto"
+                    : `El nombre no puede superar ${PROJECT_NAME_MAX_LENGTH} caracteres`
+                }
                 className="w-full"
               />
             ) : null}
@@ -398,19 +532,34 @@ function ProjectRequestDetailsStep({
             {showProjectLocationError ? (
               <HintText
                 state="Error"
-                hintText="Ingresa la ubicación del proyecto"
+                hintText={
+                  showProjectLocationRequiredError
+                    ? "Ingresa la ubicación del proyecto"
+                    : "Ingresa una dirección valida o selecciona una sugerencia"
+                }
                 className="w-full"
               />
             ) : null}
 
             <TextArea
               label="Descripción"
-              required={false}
+              required
               showLabelInfo
               showHint
+              state={showDescriptionError ? "Error" : "Default"}
+              hintText={
+                showDescriptionError
+                  ? showDescriptionRequiredError
+                    ? "Ingresa una descripciÃ³n del proyecto"
+                    : `La descripciÃ³n debe tener entre ${PROJECT_DESCRIPTION_MIN_LENGTH} y ${PROJECT_DESCRIPTION_MAX_LENGTH} caracteres`
+                  : "Describe el objetivo del proyecto y cualquier detalle importante para evaluar la solicitud."
+              }
               placeholder="Texto de prueba"
               value={values.description}
-              onChange={(event) => onDescriptionChange?.(event.target.value)}
+              onChange={(event) => {
+                setHasAttemptedSubmit(false);
+                onDescriptionChange?.(event.target.value);
+              }}
               rows={5}
               minHeight={130}
               className="w-full max-w-none"

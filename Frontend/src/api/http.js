@@ -139,12 +139,21 @@ export const projectRequestsApi = {
     });
   },
 
-  uploadFile({ file, onUploadProgress, projectRequestId }) {
+  deleteFile({ fileId, projectRequestId }) {
+    return apiRequest(`/project-requests/${projectRequestId}/files/${fileId}`, {
+      method: "DELETE",
+    });
+  },
+
+  uploadFile({ file, onUploadProgress, projectRequestId, signal }) {
     const token = getAuthToken();
     const fileName = encodeURIComponent(file?.name || "archivo");
 
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
+      const abortUpload = () => {
+        request.abort();
+      };
 
       request.open(
         "POST",
@@ -179,6 +188,7 @@ export const projectRequestsApi = {
       };
 
       request.onload = () => {
+        signal?.removeEventListener("abort", abortUpload);
         let data = null;
 
         try {
@@ -206,13 +216,18 @@ export const projectRequestsApi = {
       };
 
       request.onerror = () => {
+        signal?.removeEventListener("abort", abortUpload);
         reject(new Error("No se pudo subir el archivo."));
       };
 
       request.onabort = () => {
-        reject(new Error("La subida del archivo fue cancelada."));
+        signal?.removeEventListener("abort", abortUpload);
+        const error = new Error("La subida del archivo fue cancelada.");
+        error.code = "UPLOAD_ABORTED";
+        reject(error);
       };
 
+      signal?.addEventListener("abort", abortUpload, { once: true });
       request.send(file);
     });
   },

@@ -4,7 +4,10 @@ import {
   createProjectRequest,
   updateProjectRequest,
 } from "../controllers/projectRequestController.js";
-import { uploadProjectRequestAttachment } from "../controllers/fileController.js";
+import {
+  deleteProjectRequestAttachment,
+  uploadProjectRequestAttachment,
+} from "../controllers/fileController.js";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router = Router();
@@ -20,6 +23,11 @@ router.post(
     type: "*/*",
   }),
   uploadProjectRequestAttachment,
+);
+router.delete(
+  "/:projectRequestId/files/:fileId",
+  requireAuth,
+  deleteProjectRequestAttachment,
 );
 
 export default router;
