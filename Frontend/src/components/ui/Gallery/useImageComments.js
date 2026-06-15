@@ -84,6 +84,20 @@ export function useImageComments(item, { projectId } = {}) {
 
   const comments = commentsByImage[imageKey] ?? [];
 
+  useEffect(() => {
+    function syncComments() {
+      setCommentsByImage(readStoredComments());
+    }
+
+    window.addEventListener("storage", syncComments);
+    window.addEventListener(STORAGE_EVENT, syncComments);
+
+    return () => {
+      window.removeEventListener("storage", syncComments);
+      window.removeEventListener(STORAGE_EVENT, syncComments);
+    };
+  }, []);
+
   const addComment = useCallback(
     ({ message, parentCommentId = null, selection = null }) => {
       const now = new Date().toISOString();
@@ -98,28 +112,26 @@ export function useImageComments(item, { projectId } = {}) {
         timestamp: "Ahora",
         type: parentCommentId ? "reply" : "comment",
       };
-
-      setCommentsByImage((current) => {
-        const next = {
-          ...current,
-          [imageKey]: [
-            ...(current[imageKey] ?? []),
-            {
-              ...comment,
-              createdAt: now,
-              image: {
-                id: imageKey,
-                src: item?.image ?? null,
-                title: item?.title ?? item?.label ?? "Imagen",
-              },
-              projectId: projectKey,
+      const storedComments = readStoredComments();
+      const next = {
+        ...storedComments,
+        [imageKey]: [
+          ...(storedComments[imageKey] ?? []),
+          {
+            ...comment,
+            createdAt: now,
+            image: {
+              id: imageKey,
+              src: item?.image ?? null,
+              title: item?.title ?? item?.label ?? "Imagen",
             },
-          ],
-        };
+            projectId: projectKey,
+          },
+        ],
+      };
 
-        writeStoredComments(next);
-        return next;
-      });
+      setCommentsByImage(next);
+      writeStoredComments(next);
 
       return comment;
     },
