@@ -85,9 +85,16 @@ const RECENT_ACTIVITY = [
   },
 ];
 
-function orderCommentsByThread(comments) {
+function getCommentTime(comment) {
+  const time = new Date(comment.createdAt || 0).getTime();
+
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function orderCommentsByThread(comments, { limitRootThreads } = {}) {
   const repliesByParent = new Map();
   const rootComments = [];
+  const rootIds = new Set();
 
   comments.forEach((comment) => {
     if (comment.parentCommentId) {
@@ -96,13 +103,45 @@ function orderCommentsByThread(comments) {
       return;
     }
 
+    rootIds.add(String(comment.id));
     rootComments.push(comment);
   });
 
-  return rootComments.flatMap((comment) => [
+  const sortedRootComments = [...rootComments].sort((left, right) => {
+    const leftReplies = repliesByParent.get(String(left.id)) ?? [];
+    const rightReplies = repliesByParent.get(String(right.id)) ?? [];
+    const leftTime = Math.max(
+      getCommentTime(left),
+      ...leftReplies.map(getCommentTime),
+    );
+    const rightTime = Math.max(
+      getCommentTime(right),
+      ...rightReplies.map(getCommentTime),
+    );
+
+    return rightTime - leftTime;
+  });
+  const visibleRootComments =
+    Number.isInteger(limitRootThreads) && limitRootThreads > 0
+      ? sortedRootComments.slice(0, limitRootThreads)
+      : sortedRootComments;
+  const orderedThreads = visibleRootComments.flatMap((comment) => [
     comment,
-    ...(repliesByParent.get(String(comment.id)) ?? []),
+    ...(repliesByParent.get(String(comment.id)) ?? []).sort(
+      (left, right) => getCommentTime(left) - getCommentTime(right),
+    ),
   ]);
+  const orphanReplies = comments.filter(
+    (comment) =>
+      comment.parentCommentId && !rootIds.has(String(comment.parentCommentId)),
+  );
+
+  return [
+    ...orderedThreads,
+    ...orphanReplies.sort(
+      (left, right) => getCommentTime(right) - getCommentTime(left),
+    ),
+  ];
 }
 
 function MoreIcon() {
@@ -531,7 +570,9 @@ function NotificationsDrawer({
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
   const canSubmitComments = typeof onSubmitComment === "function";
-  const orderedComments = orderCommentsByThread(comments);
+  const orderedComments = orderCommentsByThread(comments, {
+    limitRootThreads: 5,
+  });
 
   useEffect(() => {
     if (!open) {

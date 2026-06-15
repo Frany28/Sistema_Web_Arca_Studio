@@ -17,7 +17,10 @@ import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
 import fondoRestablecercontraseña from "../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
-import { useProjectComments } from "../hooks/useProjectComments.js";
+import {
+  useProjectComments,
+  useRecentProjectComments,
+} from "../hooks/useProjectComments.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
@@ -261,11 +264,32 @@ function Home() {
     ],
   });
   const commentsProjectId = ownedProjectRows[0]?.id ?? null;
-  const { drawerComments, submitComment } = useProjectComments({
-    enabled: false,
-    projectId: commentsProjectId,
+  const { drawerComments: submittedDrawerComments, submitComment } =
+    useProjectComments({
+      enabled: false,
+      projectId: commentsProjectId,
+      user,
+    });
+  const {
+    drawerComments: recentProjectComments,
+    error: recentProjectCommentsError,
+    loading: recentProjectCommentsLoading,
+  } = useRecentProjectComments({
+    enabled: ownedProjectRows.length > 0,
+    projectIds: ownedProjectRows.map((project) => project.id),
     user,
   });
+  const drawerComments = useMemo(() => {
+    const commentsById = new Map();
+
+    [...recentProjectComments, ...submittedDrawerComments].forEach((comment) => {
+      commentsById.set(String(comment.id), comment);
+    });
+
+    return Array.from(commentsById.values());
+  }, [recentProjectComments, submittedDrawerComments]);
+  const drawerCommentsError = recentProjectCommentsError;
+  const drawerCommentsLoading = recentProjectCommentsLoading;
   const notificationComments = useMemo(
     () => [...drawerComments, ...imageCommentNotifications],
     [drawerComments, imageCommentNotifications],
@@ -514,8 +538,8 @@ function Home() {
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
             comments={notificationComments}
-            commentsError=""
-            commentsLoading={false}
+            commentsError={drawerCommentsError}
+            commentsLoading={drawerCommentsLoading}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}

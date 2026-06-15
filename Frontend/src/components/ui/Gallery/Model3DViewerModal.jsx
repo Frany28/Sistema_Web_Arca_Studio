@@ -211,9 +211,16 @@ const GENERAL_COMMENTS = [
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
 
+function getCommentTime(comment) {
+  const time = new Date(comment.createdAt || 0).getTime();
+
+  return Number.isNaN(time) ? 0 : time;
+}
+
 function orderCommentsByThread(comments) {
   const repliesByParent = new Map();
   const rootComments = [];
+  const rootIds = new Set();
 
   comments.forEach((comment) => {
     if (comment.parentCommentId) {
@@ -222,13 +229,27 @@ function orderCommentsByThread(comments) {
       return;
     }
 
+    rootIds.add(String(comment.id));
     rootComments.push(comment);
   });
 
-  return rootComments.flatMap((comment) => [
+  const orderedThreads = rootComments.flatMap((comment) => [
     comment,
-    ...(repliesByParent.get(String(comment.id)) ?? []),
+    ...(repliesByParent.get(String(comment.id)) ?? []).sort(
+      (left, right) => getCommentTime(left) - getCommentTime(right),
+    ),
   ]);
+  const orphanReplies = comments.filter(
+    (comment) =>
+      comment.parentCommentId && !rootIds.has(String(comment.parentCommentId)),
+  );
+
+  return [
+    ...orderedThreads,
+    ...orphanReplies.sort(
+      (left, right) => getCommentTime(left) - getCommentTime(right),
+    ),
+  ];
 }
 
 function ReplyArrowIcon({ className }) {

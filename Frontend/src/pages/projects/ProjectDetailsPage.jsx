@@ -68,7 +68,9 @@ function toDrawerComment(comment, user) {
     id: comment.id,
     message: comment.content,
     name: getCommentAuthorLabel(comment, user),
+    createdAt: comment.createdAt,
     parentCommentId: comment.parentCommentId,
+    projectId: comment.projectId,
     timestamp: getRelativeTimeLabel(comment.createdAt),
     type: comment.type,
   };
@@ -341,8 +343,8 @@ export default function ProjectDetailsPage({
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
             comments={notificationComments}
-            commentsError=""
-            commentsLoading={false}
+            commentsError={projectCommentsError}
+            commentsLoading={projectCommentsLoading}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}

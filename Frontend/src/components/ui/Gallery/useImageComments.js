@@ -126,14 +126,14 @@ function getAuthorLabel(comment, user) {
   const author = comment.author;
 
   if (author?.id && user?.id && Number(author.id) === Number(user.id)) {
-    return "Tu";
+    return "Tú";
   }
 
   if (author?.name) {
     return author.roleCode === "architect" ? `Arq. ${author.name}` : author.name;
   }
 
-  if (comment.name === "Tu") {
+  if (comment.name === "Tu" || comment.name === "Tú") {
     return "Usuario";
   }
 
@@ -198,7 +198,7 @@ export function useImageComments(item, { projectId } = {}) {
           .slice(2, 8)}`,
         message,
         author,
-        name: "Tu",
+        name: "Tú",
         parentCommentId,
         selection,
         timestamp: "Ahora",

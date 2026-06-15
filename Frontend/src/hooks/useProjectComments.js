@@ -46,10 +46,22 @@ function toDrawerComment(comment, user) {
     id: comment.id,
     message: comment.content,
     name: getCommentAuthorLabel(comment, user),
+    createdAt: comment.createdAt,
     parentCommentId: comment.parentCommentId,
+    projectId: comment.projectId,
     timestamp: getRelativeTimeLabel(comment.createdAt),
     type: comment.type,
   };
+}
+
+function normalizeProjectIds(projectIds = []) {
+  return [
+    ...new Set(
+      projectIds
+        .map((projectId) => Number(projectId))
+        .filter((projectId) => Number.isInteger(projectId) && projectId > 0),
+    ),
+  ];
 }
 
 export function useProjectComments({ enabled = true, projectId, user }) {
@@ -135,5 +147,77 @@ export function useProjectComments({ enabled = true, projectId, user }) {
     error,
     loading,
     submitComment,
+  };
+}
+
+export function useRecentProjectComments({
+  enabled = true,
+  projectIds = [],
+  user,
+}) {
+  const projectIdsKey = useMemo(
+    () => normalizeProjectIds(projectIds).join(","),
+    [projectIds],
+  );
+  const normalizedProjectIds = useMemo(
+    () =>
+      projectIdsKey
+        ? projectIdsKey.split(",").map((projectId) => Number(projectId))
+        : [],
+    [projectIdsKey],
+  );
+  const [comments, setComments] = useState([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!enabled || normalizedProjectIds.length === 0) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    Promise.all(
+      normalizedProjectIds.map((projectId) =>
+        api.projects.listComments({ projectId }),
+      ),
+    )
+      .then((responses) => {
+        if (isMounted) {
+          setComments(
+            responses.flatMap((data) =>
+              Array.isArray(data.comments) ? data.comments : [],
+            ),
+          );
+        }
+      })
+      .catch((requestError) => {
+        if (isMounted) {
+          setError(
+            requestError.message || "No se pudieron cargar los comentarios.",
+          );
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [enabled, normalizedProjectIds]);
+
+  const drawerComments = useMemo(
+    () => comments.map((comment) => toDrawerComment(comment, user)),
+    [comments, user],
+  );
+
+  return {
+    comments,
+    drawerComments,
+    error,
+    loading,
   };
 }

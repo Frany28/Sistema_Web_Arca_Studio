@@ -11,7 +11,10 @@ import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
-import { useProjectComments } from "../../hooks/useProjectComments.js";
+import {
+  useProjectComments,
+  useRecentProjectComments,
+} from "../../hooks/useProjectComments.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -140,11 +143,32 @@ function ArchitectDashboard({ empty = false }) {
     ],
   });
   const commentsProjectId = projectRows[0]?.id ?? null;
-  const { drawerComments, submitComment } = useProjectComments({
-    enabled: false,
-    projectId: commentsProjectId,
+  const { drawerComments: submittedDrawerComments, submitComment } =
+    useProjectComments({
+      enabled: false,
+      projectId: commentsProjectId,
+      user,
+    });
+  const {
+    drawerComments: recentProjectComments,
+    error: recentProjectCommentsError,
+    loading: recentProjectCommentsLoading,
+  } = useRecentProjectComments({
+    enabled: projectRows.length > 0,
+    projectIds: projectRows.map((project) => project.id),
     user,
   });
+  const drawerComments = useMemo(() => {
+    const commentsById = new Map();
+
+    [...recentProjectComments, ...submittedDrawerComments].forEach((comment) => {
+      commentsById.set(String(comment.id), comment);
+    });
+
+    return Array.from(commentsById.values());
+  }, [recentProjectComments, submittedDrawerComments]);
+  const drawerCommentsError = recentProjectCommentsError;
+  const drawerCommentsLoading = recentProjectCommentsLoading;
   const notificationComments = useMemo(
     () => [...drawerComments, ...imageCommentNotifications],
     [drawerComments, imageCommentNotifications],
@@ -354,8 +378,8 @@ function ArchitectDashboard({ empty = false }) {
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
             comments={notificationComments}
-            commentsError=""
-            commentsLoading={false}
+            commentsError={drawerCommentsError}
+            commentsLoading={drawerCommentsLoading}
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
