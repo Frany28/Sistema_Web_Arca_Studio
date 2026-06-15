@@ -16,7 +16,7 @@ import fondoActualizarcontraseña from "../assets/fondos/Property 1=actualizar c
 import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
 import fondoRestablecercontraseña from "../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
-import { useProjectComments } from "../hooks/useProjectComments.js";
+import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
@@ -253,16 +253,11 @@ function Home() {
     () => createProjectNavigationItems(ownedProjectRows),
     [ownedProjectRows],
   );
-  const commentsProjectId = ownedProjectRows[0]?.id ?? null;
-  const {
-    drawerComments,
-    error: projectCommentsError,
-    loading: projectCommentsLoading,
-    submitComment,
-  } = useProjectComments({
-    enabled: isNotificationsDrawerOpen,
-    projectId: commentsProjectId,
-    user,
+  const imageCommentNotifications = useImageCommentNotifications({
+    projectIds: [
+      ...ownedProjectRows.map((project) => project.id),
+      "quinta-bella-vista",
+    ],
   });
 
   useEffect(() => {
@@ -403,6 +398,25 @@ function Home() {
     navigate(activity.to);
   };
 
+  const openImageComment = (comment) => {
+    const params = new URLSearchParams({ tab: "renders" });
+
+    if (comment?.imageId) {
+      params.set("imageId", comment.imageId);
+    }
+
+    if (comment?.id) {
+      params.set("commentId", comment.id);
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+  };
+
+  const handleCommentInputFocus = () => {
+    openImageComment(imageCommentNotifications[0] ?? null);
+  };
+
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
@@ -492,12 +506,13 @@ function Home() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={drawerComments}
-            commentsError={projectCommentsError}
-            commentsLoading={projectCommentsLoading}
+            comments={imageCommentNotifications}
+            commentsError=""
+            commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onSubmitComment={submitComment}
+            onCommentInputFocus={handleCommentInputFocus}
+            onCommentSelect={openImageComment}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
+import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
@@ -80,6 +81,7 @@ export default function ProjectDetailsPage({
   warrantiesProps,
 }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -94,8 +96,13 @@ export default function ProjectDetailsPage({
   const [projectCommentsError, setProjectCommentsError] = useState("");
   const [projectCommentsLoading, setProjectCommentsLoading] = useState(false);
   const [activeProjectTabIndex, setActiveProjectTabIndex] = useState(
-    initialActiveProjectTabIndex,
+    searchParams.get("tab") === "renders" ? 1 : initialActiveProjectTabIndex,
   );
+  const imageCommentNotifications = useImageCommentNotifications({
+    projectIds: resolvedProjectId
+      ? [resolvedProjectId, project.id]
+      : [project.id],
+  });
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -121,6 +128,12 @@ export default function ProjectDetailsPage({
       mediaQuery.removeEventListener("change", syncSidebarForViewport);
     };
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "renders") {
+      setActiveProjectTabIndex(1);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (resolvedProjectId) {
@@ -218,6 +231,25 @@ export default function ProjectDetailsPage({
     navigate(activity.to);
   };
 
+  const openImageComment = (comment) => {
+    const params = new URLSearchParams({ tab: "renders" });
+
+    if (comment?.imageId) {
+      params.set("imageId", comment.imageId);
+    }
+
+    if (comment?.id) {
+      params.set("commentId", comment.id);
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+  };
+
+  const handleCommentInputFocus = () => {
+    openImageComment(imageCommentNotifications[0] ?? null);
+  };
+
   const handleSubmitComment = async ({ message, parentCommentId = null }) => {
     if (!resolvedProjectId) {
       setProjectCommentsError("No se encontro el proyecto para comentar.");
@@ -249,7 +281,13 @@ export default function ProjectDetailsPage({
   let activeProjectPanel = <ProjectInfoPanel {...infoProps} />;
 
   if (activeProjectTabIndex === 1) {
-    activeProjectPanel = <ProjectRendersPanel />;
+    activeProjectPanel = (
+      <ProjectRendersPanel
+        focusedCommentId={searchParams.get("commentId")}
+        focusedImageId={searchParams.get("imageId")}
+        projectId={resolvedProjectId}
+      />
+    );
   } else if (activeProjectTabIndex === 2) {
     activeProjectPanel = <ProjectDocumentsPanel documents={project.documents} />;
   } else if (activeProjectTabIndex === 3) {
@@ -301,14 +339,13 @@ export default function ProjectDetailsPage({
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={projectComments.map((comment) =>
-              toDrawerComment(comment, user),
-            )}
-            commentsError={projectCommentsError}
-            commentsLoading={projectCommentsLoading}
+            comments={imageCommentNotifications}
+            commentsError=""
+            commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onSubmitComment={handleSubmitComment}
+            onCommentInputFocus={handleCommentInputFocus}
+            onCommentSelect={openImageComment}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

@@ -537,6 +537,9 @@ function VideoGallerySection({ items, onOpenGallery, onOpenVideo }) {
 }
 
 export default function ProjectRendersPanel({
+  focusedCommentId,
+  focusedImageId,
+  projectId,
   renderGallery = PROJECT_RENDER_GALLERY,
   videoGallery = PROJECT_VIDEO_GALLERY,
 }) {
@@ -596,6 +599,20 @@ export default function ProjectRendersPanel({
     };
   }, [activeRender, activeRenderId]);
 
+  useEffect(() => {
+    if (!focusedImageId || !renderGallery.length) {
+      return;
+    }
+
+    const focusedImage = renderGallery.find(
+      (item) => String(item.id) === String(focusedImageId),
+    );
+
+    if (focusedImage) {
+      setSelectedGalleryImage(focusedImage);
+    }
+  }, [focusedImageId, renderGallery]);
+
   if (!activeRender) {
     return (
       <>
@@ -616,6 +633,7 @@ export default function ProjectRendersPanel({
         <GalleryImagesModal
           visible={isImageGalleryModalOpen}
           items={renderGallery}
+          projectId={projectId}
           onClose={() => setIsImageGalleryModalOpen(false)}
         />
         <GalleryVideosModal
@@ -627,6 +645,7 @@ export default function ProjectRendersPanel({
         <Model3DViewerModal
           visible={Boolean(selectedModel3D)}
           item={selectedModel3D}
+          projectId={projectId}
           onClose={() => setSelectedModel3D(null)}
         />
         <VideoViewerModal
@@ -635,9 +654,11 @@ export default function ProjectRendersPanel({
           onClose={() => setSelectedGalleryVideo(null)}
         />
         <ImageViewerModal
+          focusedCommentId={focusedCommentId}
           visible={Boolean(selectedGalleryImage)}
           items={renderGallery}
           initialItem={selectedGalleryImage}
+          projectId={projectId}
           onClose={() => setSelectedGalleryImage(null)}
         />
       </>
@@ -676,6 +697,7 @@ export default function ProjectRendersPanel({
       <GalleryImagesModal
         visible={isImageGalleryModalOpen}
         items={renderGallery}
+        projectId={projectId}
         onClose={() => setIsImageGalleryModalOpen(false)}
       />
       <GalleryVideosModal
@@ -687,6 +709,7 @@ export default function ProjectRendersPanel({
       <Model3DViewerModal
         visible={Boolean(selectedModel3D)}
         item={selectedModel3D}
+        projectId={projectId}
         onClose={() => setSelectedModel3D(null)}
       />
       <VideoViewerModal
@@ -695,9 +718,11 @@ export default function ProjectRendersPanel({
         onClose={() => setSelectedGalleryVideo(null)}
       />
       <ImageViewerModal
+        focusedCommentId={focusedCommentId}
         visible={Boolean(selectedGalleryImage)}
         items={renderGallery}
         initialItem={selectedGalleryImage}
+        projectId={projectId}
         onClose={() => setSelectedGalleryImage(null)}
       />
     </>

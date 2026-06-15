@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
+import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
@@ -26,6 +27,9 @@ export default function EmptyProjectRendersExample() {
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
   const [activeProjectTabIndex, setActiveProjectTabIndex] = useState(1);
+  const imageCommentNotifications = useImageCommentNotifications({
+    projectIds: ["quinta-bella-vista"],
+  });
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -82,6 +86,25 @@ export default function EmptyProjectRendersExample() {
     navigate(activity.to);
   };
 
+  const openImageComment = (comment) => {
+    const params = new URLSearchParams({ tab: "renders" });
+
+    if (comment?.imageId) {
+      params.set("imageId", comment.imageId);
+    }
+
+    if (comment?.id) {
+      params.set("commentId", comment.id);
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+  };
+
+  const handleCommentInputFocus = () => {
+    openImageComment(imageCommentNotifications[0] ?? null);
+  };
+
   const activeProjectPanel =
     activeProjectTabIndex === 1 ? (
       <ProjectRendersPanel renderGallery={[]} videoGallery={[]} />
@@ -130,8 +153,13 @@ export default function EmptyProjectRendersExample() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
+            comments={imageCommentNotifications}
+            commentsError=""
+            commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
+            onCommentInputFocus={handleCommentInputFocus}
+            onCommentSelect={openImageComment}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

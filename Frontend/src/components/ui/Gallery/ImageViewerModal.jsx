@@ -5,6 +5,7 @@ import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
+import { useImageComments } from "./useImageComments.js";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -132,9 +133,11 @@ function ImageCarouselControl({ items, activeIndex, onSelect, onPrevious, onNext
 }
 
 export default function ImageViewerModal({
+  focusedCommentId,
   visible = false,
   items = [],
   initialItem,
+  projectId,
   onClose,
 }) {
   const galleryItems = useMemo(() => normalizeItems(items), [items]);
@@ -158,6 +161,19 @@ export default function ImageViewerModal({
   const imageTimeoutRef = useRef(null);
 
   const displayItem = galleryItems[displayIndex];
+  const { addComment, comments } = useImageComments(displayItem, { projectId });
+  const [pendingSelection, setPendingSelection] = useState(null);
+  const drawerComments = useMemo(() => {
+    if (!focusedCommentId) {
+      return comments;
+    }
+
+    return [...comments].sort((left, right) => {
+      if (String(left.id) === String(focusedCommentId)) return -1;
+      if (String(right.id) === String(focusedCommentId)) return 1;
+      return 0;
+    });
+  }, [comments, focusedCommentId]);
 
   useEffect(() => {
     window.clearTimeout(closeTimeoutRef.current);
@@ -168,6 +184,7 @@ export default function ImageViewerModal({
       setDisplayIndex(initialIndex);
       setIsImageVisible(true);
       setIsActive(false);
+      setPendingSelection(null);
       setShouldRender(true);
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = window.requestAnimationFrame(() => {
@@ -199,6 +216,7 @@ export default function ImageViewerModal({
 
     imageTimeoutRef.current = window.setTimeout(() => {
       setDisplayIndex(activeIndex);
+      setPendingSelection(null);
       window.requestAnimationFrame(() => setIsImageVisible(true));
     }, IMAGE_TRANSITION_MS);
 
@@ -267,6 +285,26 @@ export default function ImageViewerModal({
     );
   };
 
+  const handleSelectionChange = (selection) => {
+    setPendingSelection({
+      ...selection,
+      image: {
+        id: displayItem.id,
+        src: displayItem.image,
+        title: displayItem.title,
+      },
+      imageSrc: displayItem.image,
+    });
+  };
+
+  const handleSubmitComment = ({ message, parentCommentId, selection }) => {
+    addComment({ message, parentCommentId, selection });
+
+    if (!parentCommentId) {
+      setPendingSelection(null);
+    }
+  };
+
   return createPortal(
     <div
       className={clsx(
@@ -306,7 +344,11 @@ export default function ImageViewerModal({
                 : "scale-[1.01] opacity-0",
             )}
           >
-            <ImageHighlighter imageSrc={displayItem.image} />
+            <ImageHighlighter
+            annotations={comments.filter((comment) => comment.selection)}
+              imageSrc={displayItem.image}
+              onSelectionChange={handleSelectionChange}
+            />
           </div>
 
           <div className="pointer-events-none absolute inset-0 bg-[rgba(42,41,41,0.18)]" />
@@ -347,7 +389,12 @@ export default function ImageViewerModal({
           )}
           onClick={(event) => event.stopPropagation()}
         >
-          <GeneralCommentsDrawer />
+          <GeneralCommentsDrawer
+            comments={drawerComments}
+            pendingSelection={pendingSelection}
+            onClearSelection={() => setPendingSelection(null)}
+            onSubmitComment={handleSubmitComment}
+          />
         </div>
       </section>
     </div>,

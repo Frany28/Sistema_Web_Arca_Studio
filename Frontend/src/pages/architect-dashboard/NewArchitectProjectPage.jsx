@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
+import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
@@ -22,6 +23,9 @@ function NewArchitectProjectPage() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
+  const imageCommentNotifications = useImageCommentNotifications({
+    projectIds: ["quinta-bella-vista"],
+  });
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -78,6 +82,25 @@ function NewArchitectProjectPage() {
     navigate(activity.to);
   };
 
+  const openImageComment = (comment) => {
+    const params = new URLSearchParams({ tab: "renders" });
+
+    if (comment?.imageId) {
+      params.set("imageId", comment.imageId);
+    }
+
+    if (comment?.id) {
+      params.set("commentId", comment.id);
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+  };
+
+  const handleCommentInputFocus = () => {
+    openImageComment(imageCommentNotifications[0] ?? null);
+  };
+
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
@@ -121,8 +144,13 @@ function NewArchitectProjectPage() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
+            comments={imageCommentNotifications}
+            commentsError=""
+            commentsLoading={false}
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
+            onCommentInputFocus={handleCommentInputFocus}
+            onCommentSelect={openImageComment}
           />
         </div>
       </div>

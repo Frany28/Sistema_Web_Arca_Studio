@@ -175,15 +175,20 @@ function SendIcon() {
 
 function CommentCard({
   id,
+  image,
+  imageComment = false,
   name,
+  onSelect,
   timestamp,
   message,
+  selection,
   type = "comment",
   showReplyAction = false,
   onMoreClick,
   onReplyClick,
 }) {
   const isReply = type === "reply";
+  const isInteractive = typeof onSelect === "function";
 
   return (
     <div
@@ -199,7 +204,33 @@ function CommentCard({
       ) : null}
 
       <div className="flex flex-1 flex-col gap-[8px]">
-        <article className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
+        <article
+          className={clsx(
+            "relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]",
+            isInteractive &&
+              "cursor-pointer transition-colors hover:border-[var(--color-neutral-300)]",
+          )}
+          role={isInteractive ? "button" : undefined}
+          tabIndex={isInteractive ? 0 : undefined}
+          onClick={(event) => {
+            if (
+              event.target instanceof Element &&
+              event.target.closest("[data-reply-interaction='true']")
+            ) {
+              return;
+            }
+
+            onSelect?.();
+          }}
+          onKeyDown={(event) => {
+            if (!isInteractive || (event.key !== "Enter" && event.key !== " ")) {
+              return;
+            }
+
+            event.preventDefault();
+            onSelect?.();
+          }}
+        >
           <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
               <Avatar size="S" style="Icon" theme="Brand 1" decorative />
@@ -227,6 +258,10 @@ function CommentCard({
           <p className="text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
             {message}
           </p>
+
+          {imageComment && selection ? (
+            <ImageCommentPreview image={image} selection={selection} />
+          ) : null}
         </article>
 
         {showReplyAction ? (
@@ -234,12 +269,43 @@ function CommentCard({
             id={`reply-action-${id}`}
             type="button"
             onClick={onReplyClick}
-            className="w-fit"
+            className="w-fit cursor-pointer"
             data-reply-interaction="true"
           >
             <ReplyButton />
           </button>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ImageCommentPreview({ image, selection }) {
+  const pixels = selection.imagePixels ?? selection.displayPixels;
+
+  if (!pixels) {
+    return null;
+  }
+
+  return (
+    <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+      <div className="size-[44px] shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]">
+        {image?.src ? (
+          <img
+            src={image.src}
+            alt=""
+            className="h-full w-full object-cover"
+            aria-hidden="true"
+          />
+        ) : null}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
+          {image?.title || "Imagen comentada"}
+        </p>
+        <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
+          x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
+        </p>
       </div>
     </div>
   );
@@ -279,6 +345,7 @@ function ReplyComposer({ disabled = false, onSubmit, placeholder = "Escribe tu m
 function MessageInput({
   disabled = false,
   multiline = false,
+  onFocus,
   onSubmit,
   placeholder,
 }) {
@@ -306,6 +373,7 @@ function MessageInput({
         minHeight={104}
         rows={4}
         className="!max-w-none"
+        onFocus={onFocus}
         onChange={(event) => setTextAreaValue(event.target.value)}
       />
       <div className="flex justify-end">
@@ -313,7 +381,7 @@ function MessageInput({
           type="button"
           aria-label="Enviar comentario"
           disabled={!trimmedValue || disabled}
-          className="flex size-8 items-center justify-center rounded-[8px] text-[var(--color-neutral-300)] transition-colors duration-200 hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex size-8 cursor-pointer items-center justify-center rounded-[8px] text-[var(--color-neutral-300)] transition-colors duration-200 hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
           onClick={handleSubmit}
         >
           <SendIcon />
@@ -331,6 +399,7 @@ function MessageInput({
             value={textAreaValue}
             disabled={disabled}
             className="min-w-0 flex-1 border-0 bg-transparent text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none placeholder:text-[var(--color-text-100)]"
+            onFocus={onFocus}
             onChange={(event) => setTextAreaValue(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
@@ -343,7 +412,7 @@ function MessageInput({
             type="button"
             aria-label="Enviar mensaje"
             disabled={!trimmedValue || disabled}
-            className="flex shrink-0 items-center justify-center text-[var(--color-neutral-300)] transition-colors duration-200 hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex cursor-pointer shrink-0 items-center justify-center text-[var(--color-neutral-300)] transition-colors duration-200 hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
             onClick={handleSubmit}
           >
             <SendIcon />
@@ -429,11 +498,14 @@ function NotificationsDrawer({
   commentsLoading = false,
   recentActivity = RECENT_ACTIVITY,
   onActivitySelect,
+  onCommentInputFocus,
+  onCommentSelect,
   onSubmitComment,
   ...props
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
+  const canRedirectCommentInput = typeof onCommentInputFocus === "function";
   const canSubmitComments = typeof onSubmitComment === "function";
 
   useEffect(() => {
@@ -507,8 +579,11 @@ function NotificationsDrawer({
         <section className="flex w-[280px] max-w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] pb-[24px]">
           <MessageInput
             multiline
-            disabled={commentsLoading || !canSubmitComments}
+            disabled={
+              commentsLoading || (!canSubmitComments && !canRedirectCommentInput)
+            }
             placeholder="Escribe algo..."
+            onFocus={onCommentInputFocus}
             onSubmit={(message) => handleCommentSubmit(message)}
           />
 
@@ -531,6 +606,9 @@ function NotificationsDrawer({
                   {...item}
                   showReplyAction={visibleReplyAction === item.id}
                   onMoreClick={() => handleMoreClick(item.id)}
+                  onSelect={
+                    onCommentSelect ? () => onCommentSelect(item) : undefined
+                  }
                   onReplyClick={() => handleReplyClick(item.id)}
                 />
 

@@ -73,6 +73,7 @@ function GalleryMosaic({ items, onSelectImage }) {
 export default function GalleryImagesModal({
   visible = false,
   items = [],
+  projectId,
   title = "Galería de Imágenes",
   onClose,
   className,
@@ -273,6 +274,7 @@ export default function GalleryImagesModal({
         visible={Boolean(selectedImage)}
         items={items}
         initialItem={selectedImage}
+        projectId={projectId}
         onClose={() => setSelectedImage(null)}
       />
     </Modal>

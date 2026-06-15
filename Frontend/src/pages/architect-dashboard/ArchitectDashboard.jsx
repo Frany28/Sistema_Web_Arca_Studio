@@ -10,7 +10,7 @@ import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
-import { useProjectComments } from "../../hooks/useProjectComments.js";
+import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -132,16 +132,11 @@ function ArchitectDashboard({ empty = false }) {
     () => createNavigationItems(projectRows),
     [projectRows],
   );
-  const commentsProjectId = projectRows[0]?.id ?? null;
-  const {
-    drawerComments,
-    error: projectCommentsError,
-    loading: projectCommentsLoading,
-    submitComment,
-  } = useProjectComments({
-    enabled: isNotificationsDrawerOpen,
-    projectId: commentsProjectId,
-    user,
+  const imageCommentNotifications = useImageCommentNotifications({
+    projectIds: [
+      ...projectRows.map((project) => project.id),
+      "quinta-bella-vista",
+    ],
   });
 
   useEffect(() => {
@@ -235,6 +230,25 @@ function ArchitectDashboard({ empty = false }) {
 
     setIsNotificationsDrawerOpen(false);
     navigate(activity.to);
+  };
+
+  const openImageComment = (comment) => {
+    const params = new URLSearchParams({ tab: "renders" });
+
+    if (comment?.imageId) {
+      params.set("imageId", comment.imageId);
+    }
+
+    if (comment?.id) {
+      params.set("commentId", comment.id);
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+  };
+
+  const handleCommentInputFocus = () => {
+    openImageComment(imageCommentNotifications[0] ?? null);
   };
 
   const handlePublicationChange = async (project) => {
@@ -332,12 +346,13 @@ function ArchitectDashboard({ empty = false }) {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={drawerComments}
-            commentsError={projectCommentsError}
-            commentsLoading={projectCommentsLoading}
+            comments={imageCommentNotifications}
+            commentsError=""
+            commentsLoading={false}
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onSubmitComment={submitComment}
+            onCommentInputFocus={handleCommentInputFocus}
+            onCommentSelect={openImageComment}
           />
         </div>
       </div>

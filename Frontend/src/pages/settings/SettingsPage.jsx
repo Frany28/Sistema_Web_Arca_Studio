@@ -7,6 +7,7 @@ import AuthToast, {
   AuthToastLockIcon,
 } from "../../components/ui/AuthToast/AuthToast.jsx";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
+import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
@@ -64,6 +65,9 @@ export default function SettingsPage() {
   const [supportDescription, setSupportDescription] = useState("");
   const [supportToastTrigger, setSupportToastTrigger] = useState(0);
   const [passwordToastTrigger, setPasswordToastTrigger] = useState(0);
+  const imageCommentNotifications = useImageCommentNotifications({
+    projectIds: ["quinta-bella-vista"],
+  });
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -128,6 +132,25 @@ export default function SettingsPage() {
 
     setIsNotificationsDrawerOpen(false);
     navigate(activity.to);
+  };
+
+  const openImageComment = (comment) => {
+    const params = new URLSearchParams({ tab: "renders" });
+
+    if (comment?.imageId) {
+      params.set("imageId", comment.imageId);
+    }
+
+    if (comment?.id) {
+      params.set("commentId", comment.id);
+    }
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+  };
+
+  const handleCommentInputFocus = () => {
+    openImageComment(imageCommentNotifications[0] ?? null);
   };
 
   const passwordRequirements = [
@@ -275,8 +298,13 @@ export default function SettingsPage() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
+            comments={imageCommentNotifications}
+            commentsError=""
+            commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
+            onCommentInputFocus={handleCommentInputFocus}
+            onCommentSelect={openImageComment}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

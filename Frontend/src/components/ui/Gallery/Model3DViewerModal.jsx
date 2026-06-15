@@ -7,6 +7,7 @@ import Button from "../../ui/Button/Button.jsx";
 import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
+import { useImageComments } from "./useImageComments.js";
 
 function CloseIcon({ className }) {
   return (
@@ -261,12 +262,20 @@ function CommentCard({
   author,
   time,
   body,
+  image,
+  message,
+  name,
+  selection,
+  timestamp,
   type = "comment",
   showReplyAction = false,
   onMoreClick,
   onReplyClick,
 }) {
   const isReply = type === "reply";
+  const displayAuthor = author ?? name;
+  const displayTime = time ?? timestamp;
+  const displayBody = body ?? message;
 
   return (
     <div
@@ -287,20 +296,20 @@ function CommentCard({
             <div className="flex min-w-0 items-center gap-[8px]">
               <AvatarLabel
                 size="S"
-                label={author}
+                label={displayAuthor}
                 showSubtitle={false}
                 avatarTheme="Neutral"
                 avatarContent="Icon"
                 avatarDecorative
               />
               <span className="shrink-0 text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-                {time}
+                {displayTime}
               </span>
             </div>
 
             <button
               type="button"
-              aria-label={`Mostrar acciones de ${author}`}
+              aria-label={`Mostrar acciones de ${displayAuthor}`}
               aria-expanded={showReplyAction}
               aria-controls={`image-reply-action-${id}`}
               className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[var(--radius-2)] p-[8px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
@@ -312,15 +321,19 @@ function CommentCard({
           </div>
 
           <p className="text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
-            {body}
+            {displayBody}
           </p>
+
+          {selection ? (
+            <SelectionPreview image={image} selection={selection} compact />
+          ) : null}
         </article>
 
         {showReplyAction ? (
           <button
             id={`image-reply-action-${id}`}
             type="button"
-            className="w-fit"
+            className="w-fit cursor-pointer"
             data-reply-interaction="true"
             onClick={onReplyClick}
           >
@@ -332,21 +345,127 @@ function CommentCard({
   );
 }
 
-function MessageInput({ placeholder, multiline = false }) {
+function SelectionPreview({
+  compact = false,
+  image,
+  onClear,
+  selection,
+}) {
+  if (!selection) {
+    return null;
+  }
+
+  const pixels = selection.imagePixels ?? selection.displayPixels;
+  const naturalSize = selection.naturalSize ?? {
+    height: pixels?.height || 1,
+    width: pixels?.width || 1,
+  };
+  const imageSrc = image?.src ?? selection.imageSrc;
+  const safeWidth = Math.max(pixels?.width || 1, 1);
+  const safeHeight = Math.max(pixels?.height || 1, 1);
+  const bgSize = imageSrc
+    ? `${(naturalSize.width / safeWidth) * 100}% ${(naturalSize.height / safeHeight) * 100}%`
+    : undefined;
+  const bgPosition = imageSrc
+    ? `${naturalSize.width === safeWidth ? 0 : (pixels.x / (naturalSize.width - safeWidth)) * 100}% ${
+        naturalSize.height === safeHeight
+          ? 0
+          : (pixels.y / (naturalSize.height - safeHeight)) * 100
+      }%`
+    : undefined;
+
+  return (
+    <div className="flex items-center gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+      <div
+        className={clsx(
+          "shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]",
+          compact ? "size-[44px]" : "size-[56px]",
+        )}
+        style={
+          imageSrc
+            ? {
+                backgroundImage: `url(${imageSrc})`,
+                backgroundPosition: bgPosition,
+                backgroundRepeat: "no-repeat",
+                backgroundSize: bgSize,
+              }
+            : undefined
+        }
+        aria-hidden="true"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
+          Area seleccionada
+        </p>
+        <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
+          x:{pixels?.x ?? 0}px y:{pixels?.y ?? 0}px w:{pixels?.width ?? 0}px h:
+          {pixels?.height ?? 0}px
+        </p>
+      </div>
+      {onClear ? (
+        <button
+          type="button"
+          className="shrink-0 cursor-pointer rounded-[6px] px-[6px] py-[4px] text-[10px] leading-[12px] text-[var(--color-text-200)] hover:bg-[var(--color-neutral-200)]"
+          onClick={onClear}
+        >
+          Quitar
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function MessageInput({
+  onClearSelection,
+  onSubmit,
+  pendingSelection,
+  placeholder,
+  multiline = false,
+}) {
   const [textAreaValue, setTextAreaValue] = useState("");
+  const trimmedValue = textAreaValue.trim();
+
+  function handleSubmit() {
+    if (!trimmedValue) {
+      return;
+    }
+
+    onSubmit?.(trimmedValue);
+    setTextAreaValue("");
+  }
 
   return multiline ? (
-    <TextArea
-      label="Comentarios Generales"
-      placeholder={placeholder}
-      value={textAreaValue}
-      showHint={false}
-      showLabelInfo={false}
-      minHeight={104}
-      rows={4}
-      className="!max-w-none"
-      onChange={(event) => setTextAreaValue(event.target.value)}
-    />
+    <div className="flex flex-col gap-[8px]">
+      {pendingSelection ? (
+        <SelectionPreview
+          image={pendingSelection.image}
+          selection={pendingSelection}
+          onClear={onClearSelection}
+        />
+      ) : null}
+      <TextArea
+        label="Comentarios Generales"
+        placeholder={placeholder}
+        value={textAreaValue}
+        showHint={false}
+        showLabelInfo={false}
+        minHeight={104}
+        rows={4}
+        className="!max-w-none"
+        onChange={(event) => setTextAreaValue(event.target.value)}
+      />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          aria-label="Enviar comentario"
+          disabled={!trimmedValue}
+          className="flex size-8 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-neutral-300)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={handleSubmit}
+        >
+          <SendIcon className="size-5" />
+        </button>
+      </div>
+    </div>
   ) : (
     <div className="flex w-full items-start gap-[4px]">
       <ReplyArrowIcon />
@@ -355,13 +474,23 @@ function MessageInput({ placeholder, multiline = false }) {
         <input
           type="text"
           placeholder={placeholder}
+          value={textAreaValue}
           className="min-w-0 flex-1 border-0 bg-transparent text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none placeholder:text-[var(--color-text-100)]"
+          onChange={(event) => setTextAreaValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              handleSubmit();
+            }
+          }}
         />
 
         <button
           type="button"
           aria-label="Enviar mensaje"
-          className="flex size-5 shrink-0 items-center justify-center text-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"
+          disabled={!trimmedValue}
+          className="flex size-5 cursor-pointer shrink-0 items-center justify-center text-[var(--color-neutral-300)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={handleSubmit}
         >
           <SendIcon className="size-5" />
         </button>
@@ -370,15 +499,20 @@ function MessageInput({ placeholder, multiline = false }) {
   );
 }
 
-function ReplyComposer({ placeholder = "Escribe tu mensaje..." }) {
+function ReplyComposer({ onSubmit, placeholder = "Escribe tu mensaje..." }) {
   return (
     <div data-reply-interaction="true">
-      <MessageInput placeholder={placeholder} />
+      <MessageInput placeholder={placeholder} onSubmit={onSubmit} />
     </div>
   );
 }
 
-export function GeneralCommentsDrawer() {
+export function GeneralCommentsDrawer({
+  comments = [],
+  onClearSelection,
+  onSubmitComment,
+  pendingSelection,
+}) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
 
@@ -420,13 +554,31 @@ export function GeneralCommentsDrawer() {
     setActiveReplyComposer(commentId);
   }
 
+  function handleCommentSubmit(message, parentCommentId = null) {
+    onSubmitComment?.({
+      message,
+      parentCommentId,
+      selection: parentCommentId ? null : pendingSelection,
+    });
+
+    if (parentCommentId) {
+      setActiveReplyComposer(null);
+    }
+  }
+
   return (
     <aside className="flex h-full w-full shrink-0 flex-col rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px]">
       <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <MessageInput multiline placeholder="Escribe algo..." />
+        <MessageInput
+          multiline
+          pendingSelection={pendingSelection}
+          placeholder="Escribe algo..."
+          onClearSelection={onClearSelection}
+          onSubmit={(message) => handleCommentSubmit(message)}
+        />
 
         <div className="flex flex-col gap-[8px]">
-          {[].map((comment) => (
+          {comments.map((comment) => (
             <div key={comment.id} className="flex flex-col gap-[8px]">
               <CommentCard
                 {...comment}
@@ -435,7 +587,11 @@ export function GeneralCommentsDrawer() {
                 onReplyClick={() => handleReplyClick(comment.id)}
               />
 
-              {activeReplyComposer === comment.id ? <ReplyComposer /> : null}
+              {activeReplyComposer === comment.id ? (
+                <ReplyComposer
+                  onSubmit={(message) => handleCommentSubmit(message, comment.id)}
+                />
+              ) : null}
             </div>
           ))}
         </div>
@@ -444,12 +600,19 @@ export function GeneralCommentsDrawer() {
   );
 }
 
-export default function Model3DViewerModal({ visible = false, item, onClose }) {
+export default function Model3DViewerModal({
+  visible = false,
+  item,
+  projectId,
+  onClose,
+}) {
   const [shouldRender, setShouldRender] = useState(visible);
   const [isActive, setIsActive] = useState(false);
   const [displayItem, setDisplayItem] = useState(item);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
+  const { addComment, comments } = useImageComments(displayItem, { projectId });
+  const [pendingSelection, setPendingSelection] = useState(null);
 
   const buttonGroupItems = useMemo(
     () => [
@@ -537,6 +700,25 @@ export default function Model3DViewerModal({ visible = false, item, onClose }) {
     transitionTimingFunction: MODAL_EASING,
   };
 
+  function handleSelectionChange(selection) {
+    setPendingSelection({
+      ...selection,
+      image: {
+        id: displayItem.id,
+        src: displayItem.image,
+        title: displayItem.title,
+      },
+      imageSrc: displayItem.image,
+    });
+  }
+
+  function handleSubmitComment({ message, parentCommentId, selection }) {
+    addComment({ message, parentCommentId, selection });
+    if (!parentCommentId) {
+      setPendingSelection(null);
+    }
+  }
+
   return createPortal(
     <div
       className={clsx(
@@ -568,7 +750,11 @@ export default function Model3DViewerModal({ visible = false, item, onClose }) {
           )}
           onClick={(event) => event.stopPropagation()}
         >
-          <ImageHighlighter imageSrc={displayItem.image} />
+          <ImageHighlighter
+            annotations={comments.filter((comment) => comment.selection)}
+            imageSrc={displayItem.image}
+            onSelectionChange={handleSelectionChange}
+          />
 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
 
@@ -603,7 +789,12 @@ export default function Model3DViewerModal({ visible = false, item, onClose }) {
           )}
           onClick={(event) => event.stopPropagation()}
         >
-          <GeneralCommentsDrawer />
+          <GeneralCommentsDrawer
+            comments={comments}
+            pendingSelection={pendingSelection}
+            onClearSelection={() => setPendingSelection(null)}
+            onSubmitComment={handleSubmitComment}
+          />
         </div>
       </section>
     </div>,
