@@ -149,10 +149,6 @@ export default function SettingsPage() {
     navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
   };
 
-  const handleCommentInputFocus = () => {
-    openImageComment(imageCommentNotifications[0] ?? null);
-  };
-
   const passwordRequirements = [
     {
       id: "uppercase",
@@ -303,7 +299,6 @@ export default function SettingsPage() {
             commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onCommentInputFocus={handleCommentInputFocus}
             onCommentSelect={openImageComment}
           />
           <ProjectRequestModal

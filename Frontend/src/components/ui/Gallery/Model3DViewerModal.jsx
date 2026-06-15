@@ -60,14 +60,14 @@ function SendIcon({ className }) {
       aria-hidden="true"
     >
       <path
-        d="M17.5 2.5L9.167 10.833"
+        d="M7.92473 3.52462L15.0581 7.09129C18.2581 8.69129 18.2581 11.308 15.0581 12.908L7.92473 16.4746C3.12473 18.8746 1.1664 16.908 3.5664 12.1163L4.2914 10.6746C4.47473 10.308 4.47473 9.69962 4.2914 9.33296L3.5664 7.88296C1.1664 3.09129 3.13306 1.12462 7.92473 3.52462Z"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M17.5 2.5L12.197 17.5L9.167 10.833L2.5 7.803L17.5 2.5Z"
+        d="M4.53345 10H9.03345"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -453,6 +453,12 @@ function MessageInput({
         rows={4}
         className="!max-w-none"
         onChange={(event) => setTextAreaValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            handleSubmit();
+          }
+        }}
       />
       <div className="flex justify-end">
         <button

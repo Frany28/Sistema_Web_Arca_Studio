@@ -17,6 +17,7 @@ import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
 import fondoRestablecercontraseña from "../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
+import { useProjectComments } from "../hooks/useProjectComments.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
@@ -259,6 +260,12 @@ function Home() {
       "quinta-bella-vista",
     ],
   });
+  const commentsProjectId = ownedProjectRows[0]?.id ?? null;
+  const { submitComment } = useProjectComments({
+    enabled: false,
+    projectId: commentsProjectId,
+    user,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -413,10 +420,6 @@ function Home() {
     navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
   };
 
-  const handleCommentInputFocus = () => {
-    openImageComment(imageCommentNotifications[0] ?? null);
-  };
-
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
@@ -511,8 +514,8 @@ function Home() {
             commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onCommentInputFocus={handleCommentInputFocus}
             onCommentSelect={openImageComment}
+            onSubmitComment={submitComment}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

@@ -246,10 +246,6 @@ export default function ProjectDetailsPage({
     navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
   };
 
-  const handleCommentInputFocus = () => {
-    openImageComment(imageCommentNotifications[0] ?? null);
-  };
-
   const handleSubmitComment = async ({ message, parentCommentId = null }) => {
     if (!resolvedProjectId) {
       setProjectCommentsError("No se encontro el proyecto para comentar.");
@@ -344,8 +340,8 @@ export default function ProjectDetailsPage({
             commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onCommentInputFocus={handleCommentInputFocus}
             onCommentSelect={openImageComment}
+            onSubmitComment={handleSubmitComment}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

@@ -11,6 +11,7 @@ import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
+import { useProjectComments } from "../../hooks/useProjectComments.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -138,6 +139,12 @@ function ArchitectDashboard({ empty = false }) {
       "quinta-bella-vista",
     ],
   });
+  const commentsProjectId = projectRows[0]?.id ?? null;
+  const { submitComment } = useProjectComments({
+    enabled: false,
+    projectId: commentsProjectId,
+    user,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -247,10 +254,6 @@ function ArchitectDashboard({ empty = false }) {
     navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
   };
 
-  const handleCommentInputFocus = () => {
-    openImageComment(imageCommentNotifications[0] ?? null);
-  };
-
   const handlePublicationChange = async (project) => {
     const nextIsPublic = !project.isPublic;
     const data = await api.projects.updatePublication({
@@ -351,8 +354,8 @@ function ArchitectDashboard({ empty = false }) {
             commentsLoading={false}
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onCommentInputFocus={handleCommentInputFocus}
             onCommentSelect={openImageComment}
+            onSubmitComment={submitComment}
           />
         </div>
       </div>

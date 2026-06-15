@@ -375,6 +375,12 @@ function MessageInput({
         className="!max-w-none"
         onFocus={onFocus}
         onChange={(event) => setTextAreaValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            handleSubmit();
+          }
+        }}
       />
       <div className="flex justify-end">
         <button
@@ -498,14 +504,12 @@ function NotificationsDrawer({
   commentsLoading = false,
   recentActivity = RECENT_ACTIVITY,
   onActivitySelect,
-  onCommentInputFocus,
   onCommentSelect,
   onSubmitComment,
   ...props
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
-  const canRedirectCommentInput = typeof onCommentInputFocus === "function";
   const canSubmitComments = typeof onSubmitComment === "function";
 
   useEffect(() => {
@@ -579,11 +583,8 @@ function NotificationsDrawer({
         <section className="flex w-[280px] max-w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] pb-[24px]">
           <MessageInput
             multiline
-            disabled={
-              commentsLoading || (!canSubmitComments && !canRedirectCommentInput)
-            }
+            disabled={commentsLoading || !canSubmitComments}
             placeholder="Escribe algo..."
-            onFocus={onCommentInputFocus}
             onSubmit={(message) => handleCommentSubmit(message)}
           />
 

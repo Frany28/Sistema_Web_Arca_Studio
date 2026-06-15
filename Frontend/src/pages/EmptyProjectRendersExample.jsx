@@ -101,10 +101,6 @@ export default function EmptyProjectRendersExample() {
     navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
   };
 
-  const handleCommentInputFocus = () => {
-    openImageComment(imageCommentNotifications[0] ?? null);
-  };
-
   const activeProjectPanel =
     activeProjectTabIndex === 1 ? (
       <ProjectRendersPanel renderGallery={[]} videoGallery={[]} />
@@ -158,7 +154,6 @@ export default function EmptyProjectRendersExample() {
             commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onCommentInputFocus={handleCommentInputFocus}
             onCommentSelect={openImageComment}
           />
           <ProjectRequestModal
