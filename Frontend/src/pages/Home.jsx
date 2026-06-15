@@ -253,17 +253,18 @@ function Home() {
       ),
     [projectRows, user?.clientId],
   );
+  const visibleProjectRows = useMemo(
+    () => [...ownedProjectRows, ...publicProjectRows],
+    [ownedProjectRows, publicProjectRows],
+  );
   const navigationItems = useMemo(
     () => createProjectNavigationItems(ownedProjectRows),
     [ownedProjectRows],
   );
   const imageCommentNotifications = useImageCommentNotifications({
-    projectIds: [
-      ...ownedProjectRows.map((project) => project.id),
-      "quinta-bella-vista",
-    ],
+    projectIds: visibleProjectRows.map((project) => project.id),
   });
-  const commentsProjectId = ownedProjectRows[0]?.id ?? null;
+  const commentsProjectId = visibleProjectRows[0]?.id ?? null;
   const {
     drawerComments: submittedDrawerComments,
     submitComment,
@@ -282,8 +283,8 @@ function Home() {
     loading: recentProjectCommentsLoading,
     refresh: refreshRecentComments,
   } = useRecentProjectComments({
-    enabled: ownedProjectRows.length > 0,
-    projectIds: ownedProjectRows.map((project) => project.id),
+    enabled: visibleProjectRows.length > 0,
+    projectIds: visibleProjectRows.map((project) => project.id),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
     user,
   });

@@ -316,7 +316,7 @@ function CommentCard({
   onSelectionClick,
 }) {
   const isReply = type === "reply";
-  const displayAuthor = author ?? name;
+  const displayAuthor = name ?? author;
   const displayTime = time ?? timestamp;
   const displayBody = body ?? message;
   const resolveString = (value) => {
