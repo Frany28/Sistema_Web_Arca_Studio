@@ -6,6 +6,10 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function isFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function getNaturalSelection(box, imageElement, containerRect) {
   const naturalWidth = imageElement?.naturalWidth || containerRect.width;
   const naturalHeight = imageElement?.naturalHeight || containerRect.height;
@@ -45,6 +49,15 @@ function getRenderedBoxFromNatural(selection, layout) {
     return null;
   }
 
+  if (
+    !isFiniteNumber(natural.x) ||
+    !isFiniteNumber(natural.y) ||
+    !isFiniteNumber(natural.width) ||
+    !isFiniteNumber(natural.height)
+  ) {
+    return null;
+  }
+
   const scale = Math.max(
     layout.width / naturalWidth,
     layout.height / naturalHeight,
@@ -54,12 +67,25 @@ function getRenderedBoxFromNatural(selection, layout) {
   const offsetX = (layout.width - renderedWidth) / 2;
   const offsetY = (layout.height - renderedHeight) / 2;
 
-  return {
+  const renderedBox = {
     height: natural.height * scale,
     width: natural.width * scale,
     x1: natural.x * scale + offsetX,
     y1: natural.y * scale + offsetY,
   };
+
+  if (
+    !isFiniteNumber(renderedBox.x1) ||
+    !isFiniteNumber(renderedBox.y1) ||
+    !isFiniteNumber(renderedBox.width) ||
+    !isFiniteNumber(renderedBox.height) ||
+    renderedBox.width <= 0 ||
+    renderedBox.height <= 0
+  ) {
+    return null;
+  }
+
+  return renderedBox;
 }
 
 function SelectionBox({ box, subtle = false }) {

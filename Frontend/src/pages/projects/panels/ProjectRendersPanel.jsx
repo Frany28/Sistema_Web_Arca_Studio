@@ -604,13 +604,28 @@ export default function ProjectRendersPanel({
       return;
     }
 
-    const focusedImage = renderGallery.find(
-      (item) => String(item.id) === String(focusedImageId),
-    );
+    const focusedImage = renderGallery.find((item) => {
+      const normalizedFocusedImageId = String(focusedImageId);
 
-    if (focusedImage) {
-      setSelectedGalleryImage(focusedImage);
+      return (
+        String(item.id) === normalizedFocusedImageId ||
+        String(item.title) === normalizedFocusedImageId ||
+        String(item.label) === normalizedFocusedImageId ||
+        String(item.image) === normalizedFocusedImageId
+      );
+    });
+
+    if (!focusedImage) {
+      return undefined;
     }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setSelectedGalleryImage(focusedImage);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [focusedImageId, renderGallery]);
 
   if (!activeRender) {

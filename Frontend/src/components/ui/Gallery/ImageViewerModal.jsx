@@ -345,7 +345,7 @@ export default function ImageViewerModal({
             )}
           >
             <ImageHighlighter
-            annotations={comments.filter((comment) => comment.selection)}
+              annotations={comments.filter((comment) => comment.selection)}
               imageSrc={displayItem.image}
               onSelectionChange={handleSelectionChange}
             />
