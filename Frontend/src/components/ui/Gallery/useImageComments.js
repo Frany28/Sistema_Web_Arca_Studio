@@ -182,7 +182,6 @@ export function useImageCommentNotifications({ projectIds = [] } = {}) {
 
         return projectIdSet.has(getProjectKey(comment.projectId));
       })
-      .filter((comment) => comment.type === "comment")
       .sort((left, right) => {
         return (
           new Date(right.createdAt || 0).getTime() -

@@ -608,7 +608,9 @@ function NotificationsDrawer({
                   showReplyAction={visibleReplyAction === item.id}
                   onMoreClick={() => handleMoreClick(item.id)}
                   onSelect={
-                    onCommentSelect ? () => onCommentSelect(item) : undefined
+                    item.imageComment && onCommentSelect
+                      ? () => onCommentSelect(item)
+                      : undefined
                   }
                   onReplyClick={() => handleReplyClick(item.id)}
                 />
