@@ -1,10 +1,11 @@
 import {
   canAccessProjectComments,
-  createGeneralProjectComment,
-  listGeneralProjectComments,
+  createProjectCommentRecord,
+  listProjectComments,
 } from "../repositories/projectCommentRepository.js";
 
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
+const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "viewer3d"]);
 
 function parseProjectId(req) {
   const projectId = Number(req.params.projectId);
@@ -22,6 +23,26 @@ function parseParentCommentId(value) {
   return Number.isInteger(parentCommentId) && parentCommentId > 0
     ? parentCommentId
     : Number.NaN;
+}
+
+function parseCommentType(value) {
+  const commentType = String(value || "general").trim();
+
+  return ALLOWED_COMMENT_TYPES.has(commentType) ? commentType : null;
+}
+
+function parseTargetId(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  return String(value).trim() || null;
+}
+
+function parsePlainObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value
+    : null;
 }
 
 export async function getProjectComments(req, res, next) {
@@ -46,7 +67,7 @@ export async function getProjectComments(req, res, next) {
       return;
     }
 
-    const comments = await listGeneralProjectComments(projectId, req.user);
+    const comments = await listProjectComments(projectId, req.user);
 
     res.status(200).json({ comments });
   } catch (error) {
@@ -68,6 +89,26 @@ export async function createProjectComment(req, res, next) {
 
     const content = String(req.body?.content || "").trim();
     const parentCommentId = parseParentCommentId(req.body?.parentCommentId);
+    const commentType = parseCommentType(req.body?.commentType);
+    const targetId = parseTargetId(req.body?.targetId);
+    const image = parsePlainObject(req.body?.image);
+    const selection = parsePlainObject(req.body?.selection);
+
+    if (!commentType) {
+      res.status(400).json({
+        code: "INVALID_COMMENT_TYPE",
+        message: "El tipo de comentario no es valido.",
+      });
+      return;
+    }
+
+    if (commentType !== "general" && !targetId) {
+      res.status(400).json({
+        code: "COMMENT_TARGET_REQUIRED",
+        message: "El comentario necesita un recurso asociado.",
+      });
+      return;
+    }
 
     if (!content) {
       res.status(400).json({
@@ -93,10 +134,19 @@ export async function createProjectComment(req, res, next) {
       return;
     }
 
-    const comment = await createGeneralProjectComment({
+    const comment = await createProjectCommentRecord({
+      commentType,
       content,
       parentCommentId,
       projectId,
+      targetId,
+      targetMetadata:
+        commentType === "general"
+          ? null
+          : {
+              image,
+              selection,
+            },
       user: req.user,
     });
 

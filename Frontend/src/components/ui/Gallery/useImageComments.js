@@ -1,77 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { api } from "../../../api/http.js";
 import { useAuth } from "../../../auth/AuthContext.jsx";
 
-const STORAGE_KEY = "arca.image-comments.v1";
-const STORAGE_EVENT = "arca:image-comments-updated";
-const DEFAULT_PROJECT_ID = "quinta-bella-vista";
+const LEGACY_STORAGE_KEY = "arca.image-comments.v1";
+const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "viewer3d"]);
 
 function getImageKey(item) {
   return String(item?.id ?? item?.image ?? item?.title ?? "image");
 }
 
-function hasAuthor(comment) {
-  return Boolean(
-    comment?.author &&
-    (comment.author.id || comment.author.email || comment.author.name),
-  );
-}
-
-function sanitizeStoredComments(value) {
-  let changed = false;
-  const nextComments = {};
-
-  Object.entries(value && typeof value === "object" ? value : {}).forEach(
-    ([imageId, comments]) => {
-      if (!Array.isArray(comments)) {
-        changed = true;
-        return;
-      }
-
-      const authoredComments = comments.filter((comment) => hasAuthor(comment));
-
-      if (authoredComments.length !== comments.length) {
-        changed = true;
-      }
-
-      if (authoredComments.length > 0) {
-        nextComments[imageId] = authoredComments;
-      }
-    },
-  );
-
-  return { changed, comments: nextComments };
-}
-
-function readStoredComments() {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore blocked localStorage; the database remains the source of truth.
-  }
-
-  return {};
-}
-
-function writeStoredComments() {
+function clearLegacyStoredComments() {
   if (typeof window === "undefined") {
     return;
   }
 
   try {
-    window.localStorage.removeItem(STORAGE_KEY);
-    window.dispatchEvent(new CustomEvent(STORAGE_EVENT));
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch {
     // Ignore blocked localStorage; the database remains the source of truth.
   }
-}
-
-function getProjectKey(projectId) {
-  return String(projectId ?? DEFAULT_PROJECT_ID);
 }
 
 function getRelativeTimeLabel(value) {
@@ -103,20 +51,6 @@ function getRelativeTimeLabel(value) {
   return `Hace ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
 }
 
-function getStoredAuthor(user) {
-  if (!user) {
-    return null;
-  }
-
-  return {
-    email: user.email ?? null,
-    id: user.id ?? null,
-    name:
-      user.name ?? [user.firstName, user.lastName].filter(Boolean).join(" "),
-    roleCode: user.role?.code ?? user.roleCode ?? user.role ?? null,
-  };
-}
-
 function getAuthorLabel(comment, user) {
   const author = comment.author;
 
@@ -135,11 +69,11 @@ function getAuthorLabel(comment, user) {
     (authorId && userId && Number(authorId) === Number(userId)) ||
     (authorEmail && userEmail && authorEmail === userEmail) ||
     (authorName && userName && authorName === userName) ||
-    comment.name === "Tú" ||
+    comment.name === "TÃº" ||
     comment.name === "Tu";
 
   if (isCurrentUser) {
-    return "Tú";
+    return "TÃº";
   }
 
   if (author?.name) {
@@ -154,9 +88,71 @@ function getAuthorLabel(comment, user) {
 function decorateComment(comment, user) {
   return {
     ...comment,
+    imageComment: MULTIMEDIA_COMMENT_TYPES.has(comment.commentType),
+    imageId: comment.targetId || comment.imageId,
+    message: comment.message ?? comment.content,
     name: getAuthorLabel(comment, user),
     timestamp: getRelativeTimeLabel(comment.createdAt) || comment.timestamp,
   };
+}
+
+function normalizeProjectId(projectId) {
+  const numericProjectId = Number(projectId);
+
+  return Number.isInteger(numericProjectId) && numericProjectId > 0
+    ? numericProjectId
+    : null;
+}
+
+function isMatchingTarget(comment, { commentType, targetId }) {
+  return (
+    comment.commentType === commentType && String(comment.targetId) === targetId
+  );
+}
+
+function useProjectCommentRows(projectIds) {
+  const [comments, setComments] = useState([]);
+
+  useEffect(() => {
+    clearLegacyStoredComments();
+
+    if (projectIds.length === 0) {
+      setComments([]);
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    function loadComments() {
+      Promise.all(
+        projectIds.map((projectId) => api.projects.listComments({ projectId })),
+      )
+        .then((responses) => {
+          if (isMounted) {
+            setComments(
+              responses.flatMap((data) =>
+                Array.isArray(data.comments) ? data.comments : [],
+              ),
+            );
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setComments([]);
+          }
+        });
+    }
+
+    loadComments();
+    const refreshInterval = window.setInterval(loadComments, 5000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(refreshInterval);
+    };
+  }, [projectIds]);
+
+  return [comments, setComments];
 }
 
 export function getCommentImageKey(item) {
@@ -164,86 +160,67 @@ export function getCommentImageKey(item) {
 }
 
 export function getStoredImageComments() {
-  return readStoredComments();
+  clearLegacyStoredComments();
+  return {};
 }
 
-export function useImageComments(item, { projectId } = {}) {
+export function useImageComments(item, { commentType = "image", projectId } = {}) {
   const { user } = useAuth();
   const imageKey = useMemo(() => getImageKey(item), [item]);
-  const projectKey = getProjectKey(projectId);
-  const [commentsByImage, setCommentsByImage] = useState(() =>
-    readStoredComments(),
+  const resolvedProjectId = normalizeProjectId(projectId);
+  const projectIds = useMemo(
+    () => (resolvedProjectId ? [resolvedProjectId] : []),
+    [resolvedProjectId],
   );
+  const [projectComments, setProjectComments] = useProjectCommentRows(projectIds);
 
   const comments = useMemo(
     () =>
-      (commentsByImage[imageKey] ?? []).map((comment) =>
-        decorateComment(comment, user),
-      ),
-    [commentsByImage, imageKey, user],
+      projectComments
+        .filter((comment) =>
+          isMatchingTarget(comment, { commentType, targetId: imageKey }),
+        )
+        .map((comment) => decorateComment(comment, user)),
+    [commentType, imageKey, projectComments, user],
   );
 
-  useEffect(() => {
-    function syncComments() {
-      setCommentsByImage(readStoredComments());
-    }
-
-    window.addEventListener("storage", syncComments);
-    window.addEventListener(STORAGE_EVENT, syncComments);
-
-    return () => {
-      window.removeEventListener("storage", syncComments);
-      window.removeEventListener(STORAGE_EVENT, syncComments);
-    };
-  }, []);
-
   const addComment = useCallback(
-    ({ message, parentCommentId = null, selection = null }) => {
-      const author = getStoredAuthor(user);
-
-      if (!hasAuthor({ author })) {
+    async ({ message, parentCommentId = null, selection = null }) => {
+      if (!resolvedProjectId) {
         return null;
       }
 
-      const now = new Date().toISOString();
-      const comment = {
-        id: `image-comment-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 8)}`,
-        message,
-        author,
-        name: "Tú",
+      const data = await api.projects.createComment({
+        commentType,
+        content: message,
+        image: {
+          id: imageKey,
+          src: item?.image ?? null,
+          title: item?.title ?? item?.label ?? "Imagen",
+        },
         parentCommentId,
+        projectId: resolvedProjectId,
         selection,
-        timestamp: "Ahora",
-        type: parentCommentId ? "reply" : "comment",
-      };
-      const storedComments = readStoredComments();
-      const next = {
-        ...storedComments,
-        [imageKey]: [
-          ...(storedComments[imageKey] ?? []),
-          {
-            ...comment,
-            createdAt: now,
-            image: {
-              id: imageKey,
-              src: item?.image ?? null,
-              title: item?.title ?? item?.label ?? "Imagen",
-            },
-            projectId: projectKey,
-          },
-        ],
-      };
+        targetId: imageKey,
+      });
 
-      const { comments: sanitizedNext } = sanitizeStoredComments(next);
+      const comment = data?.comment || null;
 
-      setCommentsByImage(sanitizedNext);
-      writeStoredComments(sanitizedNext);
+      if (comment) {
+        setProjectComments((current) => [...current, comment]);
+      }
 
       return comment;
     },
-    [imageKey, item?.image, item?.label, item?.title, projectKey, user],
+    [
+      commentType,
+      imageKey,
+      item?.image,
+      item?.label,
+      item?.title,
+      resolvedProjectId,
+      setProjectComments,
+    ],
   );
 
   return {
@@ -254,54 +231,35 @@ export function useImageComments(item, { projectId } = {}) {
 
 export function useImageCommentNotifications({ projectIds = [] } = {}) {
   const { user } = useAuth();
-  const projectIdSet = useMemo(
-    () => new Set(projectIds.map((projectId) => getProjectKey(projectId))),
+  const projectIdsKey = useMemo(
+    () =>
+      [
+        ...new Set(
+          projectIds
+            .map(normalizeProjectId)
+            .filter((projectId) => Number.isInteger(projectId)),
+        ),
+      ].join(","),
     [projectIds],
   );
-  const [commentsByImage, setCommentsByImage] = useState(() =>
-    readStoredComments(),
+  const normalizedProjectIds = useMemo(
+    () =>
+      projectIdsKey
+        ? projectIdsKey.split(",").map((projectId) => Number(projectId))
+        : [],
+    [projectIdsKey],
   );
-
-  useEffect(() => {
-    function syncComments() {
-      setCommentsByImage(readStoredComments());
-    }
-
-    window.addEventListener("storage", syncComments);
-    window.addEventListener(STORAGE_EVENT, syncComments);
-
-    return () => {
-      window.removeEventListener("storage", syncComments);
-      window.removeEventListener(STORAGE_EVENT, syncComments);
-    };
-  }, []);
+  const [comments] = useProjectCommentRows(normalizedProjectIds);
 
   return useMemo(() => {
-    return Object.entries(commentsByImage)
-      .flatMap(([imageId, comments]) =>
-        (Array.isArray(comments) ? comments : []).map((comment) => ({
-          ...comment,
-          imageId,
-        })),
-      )
-      .filter((comment) => {
-        if (!projectIdSet.size) {
-          return false;
-        }
-
-        return projectIdSet.has(getProjectKey(comment.projectId));
-      })
+    return comments
+      .filter((comment) => MULTIMEDIA_COMMENT_TYPES.has(comment.commentType))
       .sort((left, right) => {
         return (
           new Date(right.createdAt || 0).getTime() -
           new Date(left.createdAt || 0).getTime()
         );
       })
-      .map((comment) => ({
-        ...comment,
-        imageComment: true,
-        name: getAuthorLabel(comment, user),
-        timestamp: getRelativeTimeLabel(comment.createdAt),
-      }));
-  }, [commentsByImage, projectIdSet, user]);
+      .map((comment) => decorateComment(comment, user));
+  }, [comments, user]);
 }

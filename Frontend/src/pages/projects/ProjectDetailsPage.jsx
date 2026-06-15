@@ -123,7 +123,9 @@ export default function ProjectDetailsPage({
       : [project.id],
   });
   const notificationComments = [
-    ...projectComments.map((comment) => toDrawerComment(comment, user)),
+    ...projectComments
+      .filter((comment) => (comment.commentType || "general") === "general")
+      .map((comment) => toDrawerComment(comment, user)),
     ...imageCommentNotifications,
   ];
 

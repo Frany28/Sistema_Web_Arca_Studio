@@ -161,7 +161,10 @@ export default function ImageViewerModal({
   const imageTimeoutRef = useRef(null);
 
   const displayItem = galleryItems[displayIndex];
-  const { addComment, comments } = useImageComments(displayItem, { projectId });
+  const { addComment, comments } = useImageComments(displayItem, {
+    commentType: "image",
+    projectId,
+  });
   const [pendingSelection, setPendingSelection] = useState(null);
   const drawerComments = useMemo(() => {
     if (!focusedCommentId) {
@@ -297,8 +300,8 @@ export default function ImageViewerModal({
     });
   };
 
-  const handleSubmitComment = ({ message, parentCommentId, selection }) => {
-    const comment = addComment({ message, parentCommentId, selection });
+  const handleSubmitComment = async ({ message, parentCommentId, selection }) => {
+    const comment = await addComment({ message, parentCommentId, selection });
 
     if (comment && !parentCommentId) {
       setPendingSelection(null);

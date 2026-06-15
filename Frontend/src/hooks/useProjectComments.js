@@ -192,7 +192,10 @@ export function useProjectComments({ enabled = true, projectId, user }) {
   }, [projectId]);
 
   const drawerComments = useMemo(
-    () => comments.map((comment) => toDrawerComment(comment, user)),
+    () =>
+      comments
+        .filter((comment) => (comment.commentType || "general") === "general")
+        .map((comment) => toDrawerComment(comment, user)),
     [comments, user],
   );
 
@@ -295,7 +298,10 @@ export function useRecentProjectComments({
   }, [normalizedProjectIds]);
 
   const drawerComments = useMemo(
-    () => comments.map((comment) => toDrawerComment(comment, user)),
+    () =>
+      comments
+        .filter((comment) => (comment.commentType || "general") === "general")
+        .map((comment) => toDrawerComment(comment, user)),
     [comments, user],
   );
 

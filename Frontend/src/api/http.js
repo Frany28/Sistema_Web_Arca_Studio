@@ -120,9 +120,24 @@ export const projectsApi = {
     return apiRequest(`/projects/${projectId}/comments`);
   },
 
-  createComment({ content, parentCommentId = null, projectId }) {
+  createComment({
+    commentType,
+    content,
+    image,
+    parentCommentId = null,
+    projectId,
+    selection,
+    targetId,
+  }) {
     return apiRequest(`/projects/${projectId}/comments`, {
-      body: JSON.stringify({ content, parentCommentId }),
+      body: JSON.stringify({
+        commentType,
+        content,
+        image,
+        parentCommentId,
+        selection,
+        targetId,
+      }),
       method: "POST",
     });
   },

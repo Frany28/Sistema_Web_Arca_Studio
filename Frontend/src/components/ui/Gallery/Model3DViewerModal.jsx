@@ -611,15 +611,20 @@ export function GeneralCommentsDrawer({
     setActiveReplyComposer(commentId);
   }
 
-  function handleCommentSubmit(message, parentCommentId = null) {
-    onSubmitComment?.({
-      message,
-      parentCommentId,
-      selection: parentCommentId ? null : pendingSelection,
-    });
+  async function handleCommentSubmit(message, parentCommentId = null) {
+    try {
+      await onSubmitComment?.({
+        message,
+        parentCommentId,
+        selection: parentCommentId ? null : pendingSelection,
+      });
 
-    if (parentCommentId) {
-      setActiveReplyComposer(null);
+      if (parentCommentId) {
+        setActiveReplyComposer(null);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn("Comment submit failed:", error);
     }
   }
 
@@ -670,7 +675,10 @@ export default function Model3DViewerModal({
   const [displayItem, setDisplayItem] = useState(item);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
-  const { addComment, comments } = useImageComments(displayItem, { projectId });
+  const { addComment, comments } = useImageComments(displayItem, {
+    commentType: "viewer3d",
+    projectId,
+  });
   const [pendingSelection, setPendingSelection] = useState(null);
 
   const buttonGroupItems = useMemo(
@@ -771,8 +779,8 @@ export default function Model3DViewerModal({
     });
   }
 
-  function handleSubmitComment({ message, parentCommentId, selection }) {
-    const comment = addComment({ message, parentCommentId, selection });
+  async function handleSubmitComment({ message, parentCommentId, selection }) {
+    const comment = await addComment({ message, parentCommentId, selection });
     if (comment && !parentCommentId) {
       setPendingSelection(null);
     }
