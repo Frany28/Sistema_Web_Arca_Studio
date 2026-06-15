@@ -261,11 +261,15 @@ function Home() {
     ],
   });
   const commentsProjectId = ownedProjectRows[0]?.id ?? null;
-  const { submitComment } = useProjectComments({
+  const { drawerComments, submitComment } = useProjectComments({
     enabled: false,
     projectId: commentsProjectId,
     user,
   });
+  const notificationComments = useMemo(
+    () => [...drawerComments, ...imageCommentNotifications],
+    [drawerComments, imageCommentNotifications],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -509,7 +513,7 @@ function Home() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={imageCommentNotifications}
+            comments={notificationComments}
             commentsError=""
             commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}

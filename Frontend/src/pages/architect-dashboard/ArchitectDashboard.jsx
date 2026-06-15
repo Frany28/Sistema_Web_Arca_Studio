@@ -140,11 +140,15 @@ function ArchitectDashboard({ empty = false }) {
     ],
   });
   const commentsProjectId = projectRows[0]?.id ?? null;
-  const { submitComment } = useProjectComments({
+  const { drawerComments, submitComment } = useProjectComments({
     enabled: false,
     projectId: commentsProjectId,
     user,
   });
+  const notificationComments = useMemo(
+    () => [...drawerComments, ...imageCommentNotifications],
+    [drawerComments, imageCommentNotifications],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -349,7 +353,7 @@ function ArchitectDashboard({ empty = false }) {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={imageCommentNotifications}
+            comments={notificationComments}
             commentsError=""
             commentsLoading={false}
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}

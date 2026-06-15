@@ -103,6 +103,10 @@ export default function ProjectDetailsPage({
       ? [resolvedProjectId, project.id]
       : [project.id],
   });
+  const notificationComments = [
+    ...projectComments.map((comment) => toDrawerComment(comment, user)),
+    ...imageCommentNotifications,
+  ];
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -335,7 +339,7 @@ export default function ProjectDetailsPage({
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={imageCommentNotifications}
+            comments={notificationComments}
             commentsError=""
             commentsLoading={false}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
