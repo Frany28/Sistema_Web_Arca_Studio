@@ -130,6 +130,10 @@ function ArchitectDashboard({ empty = false }) {
     () => projects.map((project, index) => toProjectRow(project, index, user)),
     [projects, user],
   );
+  const commentProjectRows = useMemo(
+    () => projectRows.filter((project) => project.editable),
+    [projectRows],
+  );
   const projectGroups = useMemo(
     () => groupProjects(projectRows),
     [projectRows],
@@ -139,12 +143,9 @@ function ArchitectDashboard({ empty = false }) {
     [projectRows],
   );
   const imageCommentNotifications = useImageCommentNotifications({
-    projectIds: [
-      ...projectRows.map((project) => project.id),
-      "quinta-bella-vista",
-    ],
+    projectIds: commentProjectRows.map((project) => project.id),
   });
-  const commentsProjectId = projectRows[0]?.id ?? null;
+  const commentsProjectId = commentProjectRows[0]?.id ?? null;
   const {
     drawerComments: submittedDrawerComments,
     submitComment,
@@ -163,8 +164,8 @@ function ArchitectDashboard({ empty = false }) {
     loading: recentProjectCommentsLoading,
     refresh: refreshRecentComments,
   } = useRecentProjectComments({
-    enabled: projectRows.length > 0,
-    projectIds: projectRows.map((project) => project.id),
+    enabled: commentProjectRows.length > 0,
+    projectIds: commentProjectRows.map((project) => project.id),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
     user,
   });
