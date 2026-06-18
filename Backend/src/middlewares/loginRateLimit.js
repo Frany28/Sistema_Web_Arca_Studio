@@ -12,7 +12,8 @@ function getClientIp(req) {
 
 function getRateLimitKey(req) {
   const email = String(req.body?.email || "").trim().toLowerCase();
-  return `${getClientIp(req)}:${email}`;
+  const identity = email || (req.user?.id ? `user-${req.user.id}` : "anonymous");
+  return `${getClientIp(req)}:${identity}`;
 }
 
 export function loginRateLimit(req, res, next) {

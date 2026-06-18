@@ -100,6 +100,19 @@ export const authApi = {
     });
   },
 
+  async changePassword({ currentPassword, newPassword }) {
+    const data = await apiRequest("/auth/change-password", {
+      body: JSON.stringify({ currentPassword, newPassword }),
+      method: "POST",
+    });
+
+    if (data?.token) {
+      setAuthToken(data.token);
+    }
+
+    return data;
+  },
+
   logout() {
     return apiRequest("/auth/logout", {
       method: "POST",

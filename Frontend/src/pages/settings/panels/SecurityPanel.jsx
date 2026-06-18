@@ -10,6 +10,8 @@ export default function SecurityPanel({
   setConfirmPassword,
   passwordRequirements,
   onSubmit,
+  isSubmitting = false,
+  validationErrors = {},
 }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-4">
@@ -22,9 +24,16 @@ export default function SecurityPanel({
           showHint={false}
           size="S"
           type="Password"
-          state={currentPassword ? "Filled" : "Default"}
+          state={
+            validationErrors.currentPassword
+              ? "Error"
+              : currentPassword
+                ? "Filled"
+                : "Default"
+          }
           value={currentPassword}
           onChange={(event) => setCurrentPassword(event.target.value)}
+          disabled={isSubmitting}
         />
         <div className="w-[320px]" />
       </div>
@@ -38,13 +47,20 @@ export default function SecurityPanel({
           showHint={false}
           size="S"
           type="Password"
-          state={newPassword ? "Filled" : "Default"}
+          state={
+            validationErrors.newPassword
+              ? "Error"
+              : newPassword
+                ? "Filled"
+                : "Default"
+          }
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
           showPasswordStrength
           passwordRequirements={passwordRequirements}
           passwordHintTitle="Debe contener al menos:"
           className="w-[320px] max-w-none"
+          disabled={isSubmitting}
         />
         <Input
           label="Confirmar contraseña"
@@ -54,10 +70,17 @@ export default function SecurityPanel({
           showHint={false}
           size="S"
           type="Password"
-          state={confirmPassword ? "Filled" : "Default"}
+          state={
+            validationErrors.confirmPassword
+              ? "Error"
+              : confirmPassword
+                ? "Filled"
+                : "Default"
+          }
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           className="w-[320px] max-w-none"
+          disabled={isSubmitting}
         />
       </div>
       <div className="flex w-[664px] max-w-full items-end justify-end gap-[24px] ">
@@ -70,6 +93,7 @@ export default function SecurityPanel({
           showRightIcon={false}
           className="shrink-0"
           onClick={onSubmit}
+          disabled={isSubmitting}
         >
           Cambiar contraseña
         </Button>

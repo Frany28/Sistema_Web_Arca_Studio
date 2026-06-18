@@ -119,6 +119,22 @@ export async function findActiveUserById(id) {
   return toSafeUser(result.rows[0]);
 }
 
+export async function findActiveUserCredentialsById(id) {
+  const result = await query(
+    `
+      select id, password_hash
+      from public.users
+      where id = $1
+        and status = 'active'
+        and deleted_at is null
+      limit 1
+    `,
+    [id],
+  );
+
+  return result.rows[0] || null;
+}
+
 export async function updateLastLoginAt(id) {
   await query(
     `

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import AuthToast, {
@@ -64,7 +65,9 @@ export default function SettingsPage() {
   const [supportSubject, setSupportSubject] = useState("");
   const [supportDescription, setSupportDescription] = useState("");
   const [supportToastTrigger, setSupportToastTrigger] = useState(0);
-  const [passwordToastTrigger, setPasswordToastTrigger] = useState(0);
+  const [passwordToast, setPasswordToast] = useState(null);
+  const [passwordValidationErrors, setPasswordValidationErrors] = useState({});
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: ["quinta-bella-vista"],
   });
@@ -172,6 +175,67 @@ export default function SettingsPage() {
     },
   ];
 
+  const handlePasswordChange = async () => {
+    const newPasswordIsValid = passwordRequirements.every((requirement) =>
+      requirement.test(newPassword),
+    );
+    const validationErrors = {
+      currentPassword: !currentPassword,
+      newPassword: !newPasswordIsValid || newPassword === currentPassword,
+      confirmPassword:
+        !confirmPassword || confirmPassword !== newPassword,
+    };
+
+    setPasswordValidationErrors(validationErrors);
+
+    if (Object.values(validationErrors).some(Boolean)) {
+      setPasswordToast({
+        trigger: Date.now(),
+        title: "No se pudo cambiar la contraseña",
+        description:
+          newPassword === currentPassword && currentPassword
+            ? "La nueva contraseña debe ser diferente a la actual."
+            : "Verifica la contraseña actual, los requisitos y la confirmación.",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      await api.auth.changePassword({
+        currentPassword,
+        newPassword,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordValidationErrors({});
+      setPasswordToast({
+        trigger: Date.now(),
+        title: "Contraseña restablecida",
+        description:
+          "Tu contraseña ha sido actualizada con éxito. Por razones de seguridad, por favor verifica la actividad reciente.",
+      });
+    } catch (error) {
+      setPasswordValidationErrors((current) => ({
+        ...current,
+        currentPassword: error.code === "CURRENT_PASSWORD_INCORRECT",
+        newPassword:
+          error.code === "INVALID_PASSWORD" ||
+          error.code === "PASSWORD_UNCHANGED",
+      }));
+      setPasswordToast({
+        trigger: Date.now(),
+        title: "No se pudo cambiar la contraseña",
+        description:
+          error.message || "Intenta nuevamente en unos minutos.",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   let activePanel = (
     <ProfilePanel
       profileName={profileName}
@@ -192,13 +256,33 @@ export default function SettingsPage() {
     activePanel = (
       <SecurityPanel
         currentPassword={currentPassword}
-        setCurrentPassword={setCurrentPassword}
+        setCurrentPassword={(value) => {
+          setCurrentPassword(value);
+          setPasswordValidationErrors((current) => ({
+            ...current,
+            currentPassword: false,
+          }));
+        }}
         newPassword={newPassword}
-        setNewPassword={setNewPassword}
+        setNewPassword={(value) => {
+          setNewPassword(value);
+          setPasswordValidationErrors((current) => ({
+            ...current,
+            newPassword: false,
+          }));
+        }}
         confirmPassword={confirmPassword}
-        setConfirmPassword={setConfirmPassword}
+        setConfirmPassword={(value) => {
+          setConfirmPassword(value);
+          setPasswordValidationErrors((current) => ({
+            ...current,
+            confirmPassword: false,
+          }));
+        }}
         passwordRequirements={passwordRequirements}
-        onSubmit={() => setPasswordToastTrigger((current) => current + 1)}
+        onSubmit={handlePasswordChange}
+        isSubmitting={isChangingPassword}
+        validationErrors={passwordValidationErrors}
       />
     );
   } else if (activeSettingsTabId === "preferences") {
@@ -264,9 +348,9 @@ export default function SettingsPage() {
             autoHideMs={4200}
           />
           <AuthToast
-            trigger={passwordToastTrigger > 0 ? passwordToastTrigger : null}
-            title="Contraseña restablecida"
-            description="Tu contraseña ha sido actualizada con éxito. Por razones de seguridad, por favor verifica la actividad reciente."
+            trigger={passwordToast?.trigger ?? null}
+            title={passwordToast?.title ?? ""}
+            description={passwordToast?.description ?? ""}
             leading={<AuthToastLockIcon />}
             autoHideMs={4200}
           />

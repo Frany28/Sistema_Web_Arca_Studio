@@ -4,6 +4,7 @@ import { authConfig } from "../config/auth.js";
 import {
   findUserByEmail,
   findActiveUserById,
+  findActiveUserCredentialsById,
   sanitizeUser,
   updateLastLoginAt,
   updateUserPassword,
@@ -162,6 +163,73 @@ export function me(req, res) {
 export function logout(_req, res) {
   res.setHeader("Set-Cookie", buildExpiredSessionCookie());
   res.status(204).end();
+}
+
+export async function changePassword(req, res, next) {
+  try {
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+
+    if (
+      !currentPassword ||
+      currentPassword.length > 256 ||
+      !isValidPassword(newPassword) ||
+      newPassword.length > 256
+    ) {
+      res.status(400).json({
+        code: "INVALID_PASSWORD",
+        message:
+          "La nueva contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un carácter especial.",
+      });
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      res.status(400).json({
+        code: "PASSWORD_UNCHANGED",
+        message: "La nueva contraseña debe ser diferente a la actual.",
+      });
+      return;
+    }
+
+    const credentials = await findActiveUserCredentialsById(req.user.id);
+    const currentPasswordMatches =
+      typeof credentials?.password_hash === "string" &&
+      (await bcrypt.compare(currentPassword, credentials.password_hash));
+
+    if (!currentPasswordMatches) {
+      res.status(401).json({
+        code: "CURRENT_PASSWORD_INCORRECT",
+        message: "La contraseña actual es incorrecta.",
+      });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await updateUserPassword(req.user.id, passwordHash);
+    const token = createAuthToken(
+      {
+        email: req.user.email,
+        role: req.user.role.code,
+        sub: String(req.user.id),
+      },
+      {
+        expiresInSeconds: authConfig.tokenExpiresInSeconds,
+        secret: authConfig.tokenSecret,
+      },
+    );
+
+    res.setHeader(
+      "Set-Cookie",
+      buildSessionCookie(token, authConfig.tokenExpiresInSeconds),
+    );
+    res.status(200).json({
+      message: "Tu contraseña ha sido actualizada con éxito.",
+      token,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
 export async function forgotPassword(req, res, next) {
