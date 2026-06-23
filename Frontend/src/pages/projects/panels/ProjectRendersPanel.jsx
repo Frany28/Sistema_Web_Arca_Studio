@@ -88,12 +88,16 @@ function EmptyRenderOverview() {
 function RenderLoadingState({ image, progress }) {
   return (
     <div className="relative h-full w-full overflow-hidden rounded-[var(--radius-3)]">
-      <img
-        src={image}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-        aria-hidden="true"
-      />
+      {image ? (
+        <img
+          src={image}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          aria-hidden="true"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-[var(--color-neutral-200)]" />
+      )}
       <div className="absolute inset-0 rounded-[var(--radius-3)] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px]" />
 
       <div className="absolute left-1/2 top-1/2 flex w-[280px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[4px]">
@@ -115,6 +119,8 @@ function RenderLoadingState({ image, progress }) {
 }
 
 function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
+  const hasPreviewImage = Boolean(activeRender.image);
+
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
       <button
@@ -126,12 +132,21 @@ function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
       >
         {isLoading ? (
           <RenderLoadingState image={activeRender.image} progress={progress} />
-        ) : (
+        ) : hasPreviewImage ? (
           <img
             src={activeRender.image}
             alt={activeRender.title}
             className="h-full w-full object-cover"
           />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-[8px] bg-[var(--color-neutral-200)] px-[24px] text-center">
+            <span className="text-heading-4 text-[var(--color-text-300)]">
+              Modelo 3D
+            </span>
+            <span className="max-w-[360px] text-body-3 text-[var(--color-text-100)]">
+              {activeRender.title}
+            </span>
+          </div>
         )}
       </button>
 
@@ -143,6 +158,8 @@ function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
 }
 
 function RenderThumbnail({ item, selected, onSelect }) {
+  const hasPreviewImage = Boolean(item.image);
+
   return (
     <button
       type="button"
@@ -155,11 +172,15 @@ function RenderThumbnail({ item, selected, onSelect }) {
       )}
       aria-pressed={selected}
     >
-      <img
-        src={item.image}
-        alt={item.title}
-        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
-      />
+      {hasPreviewImage ? (
+        <img
+          src={item.image}
+          alt={item.title}
+          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+        />
+      ) : (
+        <div className="h-full w-full bg-[var(--color-neutral-200)]" />
+      )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.12)_35%,rgba(0,0,0,0.52)_100%)]" />
       <span className="absolute inset-x-[8px] bottom-[8px] text-heading-8 text-[var(--color-neutral-100-uniform)]">
         {item.title}
@@ -236,8 +257,15 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage = () => {} })
     );
   }
 
-  const topRow = [items[1], items[2], items[4]].filter(Boolean);
-  const bottomRow = [items[3], items[5], items[1]].filter(Boolean);
+  const preferredPreviewItems = [
+    items[1],
+    items[2],
+    items[4],
+    items[3],
+    items[5],
+    items[1],
+  ].filter(Boolean);
+  const previewItems = preferredPreviewItems.length ? preferredPreviewItems : items;
 
   return (
     <div className="flex w-full flex-col gap-[16px]">
@@ -259,60 +287,10 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage = () => {} })
         </Button>
       </div>
 
-      <div className="flex w-full flex-col gap-[16px] max-[1024px]:hidden">
-        <div className="flex w-full items-center gap-[16px]">
-          {topRow[0] ? (
-            <SharedGalleryImageCard
-              item={topRow[0]}
-              onClick={() => onSelectImage(topRow[0])}
-              className="w-[204px] shrink-0"
-            />
-          ) : null}
-          {topRow[1] ? (
-            <SharedGalleryImageCard
-              item={topRow[1]}
-              onClick={() => onSelectImage(topRow[1])}
-              className="min-w-0 flex-1"
-            />
-          ) : null}
-          {topRow[2] ? (
-            <SharedGalleryImageCard
-              item={topRow[2]}
-              onClick={() => onSelectImage(topRow[2])}
-              className="min-w-0 flex-1"
-            />
-          ) : null}
-        </div>
-
-        <div className="flex w-full items-center gap-[16px]">
-          {bottomRow[0] ? (
-            <SharedGalleryImageCard
-              item={bottomRow[0]}
-              onClick={() => onSelectImage(bottomRow[0])}
-              className="min-w-0 flex-1"
-            />
-          ) : null}
-          {bottomRow[1] ? (
-            <SharedGalleryImageCard
-              item={bottomRow[1]}
-              onClick={() => onSelectImage(bottomRow[1])}
-              className="min-w-0 flex-1"
-            />
-          ) : null}
-          {bottomRow[2] ? (
-            <SharedGalleryImageCard
-              item={bottomRow[2]}
-              onClick={() => onSelectImage(bottomRow[2])}
-              className="w-[204px] shrink-0"
-            />
-          ) : null}
-        </div>
-      </div>
-
-      <div className="hidden w-full grid-cols-2 gap-[16px] max-[1024px]:grid max-[640px]:grid-cols-1">
-        {items.slice(1).map((item) => (
+      <div className="grid w-full grid-cols-3 gap-[16px] max-[1024px]:grid-cols-2 max-[640px]:grid-cols-1">
+        {previewItems.map((item, index) => (
           <SharedGalleryImageCard
-            key={`gallery-mobile-${item.id}`}
+            key={`gallery-preview-${item.id}-${index}`}
             item={item}
             onClick={() => onSelectImage(item)}
             className="w-full"
@@ -330,11 +308,23 @@ function VideoPreviewCard({ item, onClick }) {
       onClick={onClick}
       className="group relative h-[385px] w-full cursor-pointer overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)] transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
     >
-      <img
-        src={item.image}
-        alt={item.label}
-        className="h-full w-full object-cover"
-      />
+      {item.video ? (
+        <video
+          src={item.video}
+          poster={item.image || undefined}
+          className="h-full w-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+          aria-label={item.label ?? item.title}
+        />
+      ) : (
+        <img
+          src={item.image}
+          alt={item.label}
+          className="h-full w-full object-cover"
+        />
+      )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_44%,rgba(0,0,0,0.56)_100%)]" />
 
       <div className="absolute left-1/2 top-1/2 flex size-[48px] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-[var(--color-neutral-100-uniform)]">
@@ -361,11 +351,23 @@ function VideoListItem({ item, active, onSelect }) {
       )}
     >
       <div className="group relative h-[90px] w-[150px] shrink-0 overflow-hidden rounded-[var(--radius-1)] shadow-[var(--shadow-e2)]">
-        <img
-          src={item.image}
-          alt={item.label}
-          className="h-full w-full object-cover"
-        />
+        {item.video ? (
+          <video
+            src={item.video}
+            poster={item.image || undefined}
+            className="h-full w-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+            aria-label={item.label ?? item.title}
+          />
+        ) : (
+          <img
+            src={item.image}
+            alt={item.label}
+            className="h-full w-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_44%,rgba(0,0,0,0.56)_100%)]" />
         <div className="absolute left-1/2 top-1/2 flex size-[20px] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-[var(--color-neutral-100-uniform)]">
           <PlayIcon className="size-5" />
@@ -539,11 +541,15 @@ function VideoGallerySection({ items, onOpenGallery, onOpenVideo }) {
 export default function ProjectRendersPanel({
   focusedCommentId,
   focusedImageId,
+  modelGallery,
   projectId,
   renderGallery = PROJECT_RENDER_GALLERY,
   videoGallery = PROJECT_VIDEO_GALLERY,
 }) {
-  const [activeRenderId, setActiveRenderId] = useState(renderGallery[0]?.id);
+  const resolvedModelGallery = modelGallery ?? renderGallery;
+  const [activeRenderId, setActiveRenderId] = useState(
+    resolvedModelGallery[0]?.id,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(43);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
@@ -551,12 +557,17 @@ export default function ProjectRendersPanel({
   const [selectedModel3D, setSelectedModel3D] = useState(null);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(null);
   const [selectedGalleryVideo, setSelectedGalleryVideo] = useState(null);
+  const selectedActiveRenderId = resolvedModelGallery.some(
+    (item) => item.id === activeRenderId,
+  )
+    ? activeRenderId
+    : resolvedModelGallery[0]?.id;
 
   const activeRender = useMemo(
     () =>
-      renderGallery.find((item) => item.id === activeRenderId) ??
-      renderGallery[0],
-    [activeRenderId, renderGallery],
+      resolvedModelGallery.find((item) => item.id === selectedActiveRenderId) ??
+      resolvedModelGallery[0],
+    [resolvedModelGallery, selectedActiveRenderId],
   );
 
   useEffect(() => {
@@ -597,7 +608,7 @@ export default function ProjectRendersPanel({
       window.clearInterval(intervalId);
       window.clearTimeout(timeoutId);
     };
-  }, [activeRender, activeRenderId]);
+  }, [activeRender, selectedActiveRenderId]);
 
   useEffect(() => {
     if (!focusedImageId || !renderGallery.length) {
@@ -616,7 +627,51 @@ export default function ProjectRendersPanel({
     });
 
     if (!focusedImage) {
-      return undefined;
+      const focusedModel = resolvedModelGallery.find((item) => {
+        const normalizedFocusedImageId = String(focusedImageId);
+
+        return (
+          String(item.id) === normalizedFocusedImageId ||
+          String(item.title) === normalizedFocusedImageId ||
+          String(item.label) === normalizedFocusedImageId ||
+          String(item.image) === normalizedFocusedImageId ||
+          String(item.modelUrl) === normalizedFocusedImageId
+        );
+      });
+
+      if (!focusedModel) {
+        const focusedVideo = videoGallery.find((item) => {
+          const normalizedFocusedImageId = String(focusedImageId);
+
+          return (
+            String(item.id) === normalizedFocusedImageId ||
+            String(item.title) === normalizedFocusedImageId ||
+            String(item.label) === normalizedFocusedImageId ||
+            String(item.image) === normalizedFocusedImageId ||
+            String(item.video) === normalizedFocusedImageId
+          );
+        });
+
+        if (!focusedVideo) {
+          return undefined;
+        }
+
+        const frameId = window.requestAnimationFrame(() => {
+          setSelectedGalleryVideo(focusedVideo);
+        });
+
+        return () => {
+          window.cancelAnimationFrame(frameId);
+        };
+      }
+
+      const frameId = window.requestAnimationFrame(() => {
+        setSelectedModel3D(focusedModel);
+      });
+
+      return () => {
+        window.cancelAnimationFrame(frameId);
+      };
     }
 
     const frameId = window.requestAnimationFrame(() => {
@@ -626,7 +681,7 @@ export default function ProjectRendersPanel({
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [focusedImageId, renderGallery]);
+  }, [focusedImageId, renderGallery, resolvedModelGallery, videoGallery]);
 
   if (!activeRender) {
     return (
@@ -666,6 +721,7 @@ export default function ProjectRendersPanel({
         <VideoViewerModal
           visible={Boolean(selectedGalleryVideo)}
           item={selectedGalleryVideo}
+          projectId={projectId}
           onClose={() => setSelectedGalleryVideo(null)}
         />
         <ImageViewerModal
@@ -691,8 +747,8 @@ export default function ProjectRendersPanel({
             onOpenModel={() => setSelectedModel3D(activeRender)}
           />
           <RenderThumbnailRail
-            items={renderGallery}
-            activeRenderId={activeRenderId}
+            items={resolvedModelGallery}
+            activeRenderId={selectedActiveRenderId}
             onSelect={setActiveRenderId}
           />
         </div>
@@ -730,6 +786,7 @@ export default function ProjectRendersPanel({
       <VideoViewerModal
         visible={Boolean(selectedGalleryVideo)}
         item={selectedGalleryVideo}
+        projectId={projectId}
         onClose={() => setSelectedGalleryVideo(null)}
       />
       <ImageViewerModal

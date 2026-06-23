@@ -66,10 +66,79 @@ function formatFileSize(size) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function isImageFile(file) {
+  const fileType = String(file?.fileType || "").toLowerCase();
+  const extension = String(file?.extension || "").toLowerCase();
+
+  return fileType.startsWith("image/") || ["jpeg", "jpg", "png", "webp"].includes(extension);
+}
+
+function isVideoFile(file) {
+  const fileType = String(file?.fileType || "").toLowerCase();
+  const extension = String(file?.extension || "").toLowerCase();
+
+  return fileType.startsWith("video/") || ["mp4", "webm", "mov"].includes(extension);
+}
+
+function isModelFile(file) {
+  const fileType = String(file?.fileType || "").toLowerCase();
+  const extension = String(file?.extension || "").toLowerCase();
+
+  return (
+    fileType === "model/gltf-binary" ||
+    fileType === "model/gltf+json" ||
+    ["glb", "gltf"].includes(extension)
+  );
+}
+
+function formatFileDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function toMediaFileItem(file, { fallbackImage, project }) {
+  const title = file.title || file.name || "Archivo";
+  const uploadedAt = formatFileDate(file.createdAt);
+
+  return {
+    author: project.assignedArchitect?.name || project.client?.name || "ARCA Studio",
+    extension: file.extension,
+    fileType: file.fileType,
+    fileUrl: file.fileUrl,
+    id: `project-file-${file.id}`,
+    image: isImageFile(file) ? file.fileUrl : fallbackImage || null,
+    label: title,
+    modelUrl: isModelFile(file) ? file.fileUrl : null,
+    size: formatFileSize(file.size),
+    title,
+    uploadedAt,
+    video: isVideoFile(file) ? file.fileUrl : null,
+  };
+}
+
 function toProjectPresentation(project) {
   const progressValue = Number(project?.progress) || 0;
-  const documents = (project?.files || [])
-    .filter((file) => file.fileType !== "model/gltf-binary")
+  const projectFiles = project?.files || [];
+  const imageFiles = projectFiles.filter(isImageFile);
+  const firstImageUrl = imageFiles.find((file) => file.fileUrl)?.fileUrl || null;
+  const renderGallery = imageFiles
+    .filter((file) => file.fileUrl)
+    .map((file) => toMediaFileItem(file, { project }));
+  const videoGallery = projectFiles
+    .filter((file) => isVideoFile(file) && file.fileUrl)
+    .map((file) => toMediaFileItem(file, { fallbackImage: firstImageUrl, project }));
+  const modelGallery = projectFiles
+    .filter((file) => isModelFile(file) && file.fileUrl)
+    .map((file) => toMediaFileItem(file, { fallbackImage: firstImageUrl, project }));
+  const documents = projectFiles
+    .filter((file) => !isImageFile(file) && !isVideoFile(file) && !isModelFile(file))
     .map((file) => ({
       fileType: String(file.extension || "FILE").toUpperCase(),
       fileUrl: file.fileUrl,
@@ -78,13 +147,7 @@ function toProjectPresentation(project) {
       owner:
         project.assignedArchitect?.name || project.client?.name || "ARCA Studio",
       size: formatFileSize(file.size),
-      uploadedAt: file.createdAt
-        ? new Intl.DateTimeFormat("es-ES", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }).format(new Date(file.createdAt))
-        : "",
+      uploadedAt: formatFileDate(file.createdAt),
     }));
 
   return {
@@ -96,6 +159,9 @@ function toProjectPresentation(project) {
     stages: createProjectStages(progressValue),
     title: project?.name || "Proyecto",
     documents,
+    modelGallery,
+    renderGallery,
+    videoGallery,
   };
 }
 
@@ -432,7 +498,10 @@ export default function ProjectDetailsPage({
       <ProjectRendersPanel
         focusedCommentId={searchParams.get("commentId")}
         focusedImageId={searchParams.get("imageId")}
+        modelGallery={presentedProject.modelGallery}
         projectId={resolvedProjectId}
+        renderGallery={presentedProject.renderGallery}
+        videoGallery={presentedProject.videoGallery}
       />
     );
   } else if (activeProjectTabIndex === 2) {

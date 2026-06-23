@@ -812,6 +812,7 @@ export default function Model3DViewerModal({
     transitionDuration: `${MODAL_TRANSITION_MS}ms`,
     transitionTimingFunction: MODAL_EASING,
   };
+  const hasPreviewImage = Boolean(displayItem.image);
 
   function handleSelectionChange(selection) {
     setFocusedSelectionCommentId(null);
@@ -864,12 +865,44 @@ export default function Model3DViewerModal({
           )}
           onClick={(event) => event.stopPropagation()}
         >
-          <ImageHighlighter
-            annotations={comments.filter((comment) => comment.selection)}
-            focusedAnnotationId={focusedSelectionCommentId}
-            imageSrc={displayItem.image}
-            onSelectionChange={handleSelectionChange}
-          />
+          {hasPreviewImage ? (
+            <ImageHighlighter
+              annotations={comments.filter((comment) => comment.selection)}
+              focusedAnnotationId={focusedSelectionCommentId}
+              imageSrc={displayItem.image}
+              onSelectionChange={handleSelectionChange}
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-[16px] bg-[var(--color-neutral-200)] px-[24px] text-center">
+              <div className="flex max-w-[420px] flex-col gap-[6px]">
+                <h3 className="text-heading-4 text-[var(--color-text-300)]">
+                  {displayItem.title}
+                </h3>
+                <p className="text-body-3 text-[var(--color-text-100)]">
+                  Archivo de modelo 3D cargado desde S3.
+                </p>
+              </div>
+              {displayItem.modelUrl || displayItem.fileUrl ? (
+                <Button
+                  theme="Primary"
+                  type="Solid"
+                  size="M"
+                  fitContent
+                  showLeftIcon={false}
+                  showRightIcon={false}
+                  onClick={() => {
+                    window.open(
+                      displayItem.modelUrl || displayItem.fileUrl,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
+                  }}
+                >
+                  Abrir archivo 3D
+                </Button>
+              ) : null}
+            </div>
+          )}
 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
 
@@ -890,10 +923,12 @@ export default function Model3DViewerModal({
             className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
           />
 
-          <ButtonGroup
-            items={buttonGroupItems}
-            className="absolute bottom-[12px] right-[12px] [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
-          />
+          {hasPreviewImage ? (
+            <ButtonGroup
+              items={buttonGroupItems}
+              className="absolute bottom-[12px] right-[12px] [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
+            />
+          ) : null}
         </div>
 
         <div

@@ -48,12 +48,24 @@ function PlayIcon({ className }) {
 function VideoThumb({ item }) {
   return (
     <div className="relative h-[60px] w-[99px] shrink-0 overflow-hidden rounded-[var(--radius-1)] shadow-[var(--shadow-e2)] max-[560px]:h-[72px] max-[560px]:w-[120px]">
-      <img
-        src={item.image}
-        alt=""
-        className="h-full w-full object-cover"
-        aria-hidden="true"
-      />
+      {item.video ? (
+        <video
+          src={item.video}
+          poster={item.image || undefined}
+          className="h-full w-full object-cover"
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+      ) : (
+        <img
+          src={item.image}
+          alt=""
+          className="h-full w-full object-cover"
+          aria-hidden="true"
+        />
+      )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.16)_42%,rgba(0,0,0,0.60)_100%)]" />
       <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-[var(--color-neutral-100-uniform)]">
         <PlayIcon className="size-5" />

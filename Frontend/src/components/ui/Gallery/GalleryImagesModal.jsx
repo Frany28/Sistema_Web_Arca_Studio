@@ -27,45 +27,17 @@ function CloseIcon({ className }) {
   );
 }
 
-function chunkItems(items, size) {
-  const rows = [];
-
-  for (let index = 0; index < items.length; index += size) {
-    rows.push(items.slice(index, index + size));
-  }
-
-  return rows;
-}
-
 function GalleryMosaic({ items, onSelectImage }) {
-  const rows = useMemo(() => chunkItems(items, 3), [items]);
-
   return (
-    <div className="flex w-full flex-col gap-[16px]">
-      {rows.map((row, rowIndex) => {
-        const isEvenRow = rowIndex % 2 === 0;
-
-        return (
-          <div
-            key={`gallery-modal-row-${rowIndex}`}
-            className="flex w-full items-center gap-[16px] max-[900px]:grid max-[900px]:grid-cols-2 max-[520px]:grid-cols-1"
-          >
-            {row.map((item, itemIndex) => {
-              const isSmallCard = isEvenRow ? itemIndex === 0 : itemIndex === 2;
-
-              return (
-                <GalleryImageCard
-                  key={item.id ?? `${rowIndex}-${itemIndex}`}
-                  item={item}
-                  size={isSmallCard ? "small" : "fluid"}
-                  onClick={() => onSelectImage(item)}
-                  className="max-[900px]:w-full"
-                />
-              );
-            })}
-          </div>
-        );
-      })}
+    <div className="grid w-full grid-cols-3 gap-[16px] max-[900px]:grid-cols-2 max-[520px]:grid-cols-1">
+      {items.map((item, itemIndex) => (
+        <GalleryImageCard
+          key={item.id ?? `gallery-modal-${itemIndex}`}
+          item={item}
+          size="full"
+          onClick={() => onSelectImage(item)}
+        />
+      ))}
     </div>
   );
 }

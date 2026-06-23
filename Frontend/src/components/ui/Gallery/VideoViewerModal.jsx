@@ -4,6 +4,7 @@ import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
+import { useImageComments } from "./useImageComments.js";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -126,12 +127,21 @@ function PlaybackBar() {
   );
 }
 
-export default function VideoViewerModal({ visible = false, item, onClose }) {
+export default function VideoViewerModal({
+  visible = false,
+  item,
+  projectId,
+  onClose,
+}) {
   const [shouldRender, setShouldRender] = useState(visible);
   const [isActive, setIsActive] = useState(false);
   const [displayItem, setDisplayItem] = useState(item);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
+  const { addComment, comments } = useImageComments(displayItem, {
+    commentType: "video",
+    projectId,
+  });
 
   useEffect(() => {
     window.clearTimeout(closeTimeoutRef.current);
@@ -178,6 +188,10 @@ export default function VideoViewerModal({ visible = false, item, onClose }) {
     transitionTimingFunction: MODAL_EASING,
   };
 
+  async function handleSubmitComment({ message, parentCommentId }) {
+    await addComment({ message, parentCommentId });
+  }
+
   return createPortal(
     <div
       className={clsx(
@@ -214,6 +228,7 @@ export default function VideoViewerModal({ visible = false, item, onClose }) {
               src={displayItem.video}
               poster={displayItem.image}
               className="absolute inset-0 h-full w-full object-cover"
+              controls
               aria-label={displayItem.title}
             />
           ) : (
@@ -245,7 +260,7 @@ export default function VideoViewerModal({ visible = false, item, onClose }) {
             className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
           />
 
-          <PlaybackBar />
+          {!displayItem.video ? <PlaybackBar /> : null}
         </div>
 
         <div
@@ -256,7 +271,10 @@ export default function VideoViewerModal({ visible = false, item, onClose }) {
           )}
           onClick={(event) => event.stopPropagation()}
         >
-          <GeneralCommentsDrawer />
+          <GeneralCommentsDrawer
+            comments={comments}
+            onSubmitComment={handleSubmitComment}
+          />
         </div>
       </section>
     </div>,
