@@ -410,7 +410,7 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
   };
 }
 
-export async function getProjectFileObject({ fileName }) {
+export async function getProjectFileObject({ fileName, range }) {
   const storageConfig = getSupabaseStorageConfig();
   const s3Client = getSupabaseS3Client();
 
@@ -418,6 +418,7 @@ export async function getProjectFileObject({ fileName }) {
     new GetObjectCommand({
       Bucket: storageConfig.bucket,
       Key: fileName,
+      Range: range,
     }),
   );
 }

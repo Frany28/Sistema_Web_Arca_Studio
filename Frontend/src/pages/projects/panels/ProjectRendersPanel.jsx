@@ -137,15 +137,27 @@ function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
               alt={activeRender.title}
               camera-controls
               auto-rotate
-              shadow-intensity="0.9"
-              exposure="1"
+              camera-orbit="180deg 74deg 115%"
+              min-camera-orbit="auto 18deg 70%"
+              max-camera-orbit="auto 88deg 280%"
+              field-of-view="28deg"
+              min-field-of-view="18deg"
+              max-field-of-view="45deg"
+              environment-image="legacy"
+              shadow-intensity="0.65"
+              shadow-softness="0.85"
+              exposure="0.28"
+              tone-mapping="commerce"
               interaction-prompt="none"
               loading="eager"
               reveal="auto"
               style={{
-                backgroundColor: "var(--color-neutral-200)",
+                background:
+                  "radial-gradient(circle at 50% 43%, #3a3a3a 0%, #262626 44%, #121212 100%)",
+                backgroundColor: "#171717",
                 display: "block",
                 height: "100%",
+                "--poster-color": "transparent",
                 width: "100%",
               }}
             />

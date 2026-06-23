@@ -222,8 +222,21 @@ export async function streamProjectFile(req, res, next) {
       return;
     }
 
-    const object = await getProjectFileObject({ fileName: file.fileName });
+    const range = req.headers.range;
+    const object = await getProjectFileObject({
+      fileName: file.fileName,
+      range,
+    });
     const contentType = object.ContentType || file.fileType || "application/octet-stream";
+
+    if (range && object.ContentRange) {
+      res.status(206);
+      res.setHeader("Content-Range", object.ContentRange);
+      res.setHeader("Accept-Ranges", "bytes");
+    } else {
+      res.status(200);
+      res.setHeader("Accept-Ranges", "bytes");
+    }
 
     res.setHeader("Content-Type", contentType);
     res.setHeader("Cache-Control", "private, max-age=300");
@@ -232,8 +245,10 @@ export async function streamProjectFile(req, res, next) {
       `inline; filename="${encodeURIComponent(file.originalName)}"`,
     );
 
-    if (object.ContentLength || file.fileSize) {
-      res.setHeader("Content-Length", object.ContentLength || file.fileSize);
+    if (object.ContentLength) {
+      res.setHeader("Content-Length", object.ContentLength);
+    } else if (!range && file.fileSize) {
+      res.setHeader("Content-Length", file.fileSize);
     }
 
     object.Body.pipe(res);
