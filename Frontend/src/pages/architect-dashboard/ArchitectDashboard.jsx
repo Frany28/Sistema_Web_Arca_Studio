@@ -269,12 +269,16 @@ function ArchitectDashboard({ empty = false }) {
     }
 
     if (item?.id?.startsWith("project-")) {
-      navigate("/proyectos/quinta-bella-vista");
+      const projectId = Number(item.id.replace("project-", ""));
+
+      if (Number.isInteger(projectId)) {
+        navigate(`/proyectos/${projectId}`);
+      }
       return;
     }
 
     if (item?.id === "more-projects") {
-      navigate("/proyectos/quinta-bella-vista");
+      navigate("/dashboard-arquitecto");
       return;
     }
 
@@ -304,7 +308,11 @@ function ArchitectDashboard({ empty = false }) {
     }
 
     setIsNotificationsDrawerOpen(false);
-    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+    const targetProjectId = comment?.projectId || commentProjectRows[0]?.id;
+
+    if (targetProjectId) {
+      navigate(`/proyectos/${targetProjectId}?${params.toString()}`);
+    }
   };
 
   const handlePublicationChange = async (project) => {

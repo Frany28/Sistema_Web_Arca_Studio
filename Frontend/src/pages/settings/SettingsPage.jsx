@@ -113,13 +113,21 @@ export default function SettingsPage() {
       return;
     }
 
-    if (item?.id === "project-1" || item?.id === "project-2") {
-      navigate("/proyectos/quinta-bella-vista");
+    if (item?.id?.startsWith("project-")) {
+      const projectId = Number(item.id.replace("project-", ""));
+
+      if (Number.isInteger(projectId)) {
+        navigate(`/proyectos/${projectId}`);
+      }
       return;
     }
 
     if (item?.id === "more-projects") {
-      navigate("/proyectos/quinta-bella-vista");
+      navigate(
+        user?.role === "client"
+          ? "/dashboard-clientes"
+          : "/dashboard-arquitecto",
+      );
       return;
     }
 

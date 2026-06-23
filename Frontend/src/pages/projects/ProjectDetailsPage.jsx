@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
@@ -21,6 +21,83 @@ import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 
 const TABLET_BREAKPOINT_PX = 768;
+const PROJECT_TYPE_LABELS = {
+  commercial: "Comercial",
+  corporate: "Corporativo",
+  residential: "Residencial",
+  stands_exhibitions: "Stands y exhibiciones",
+};
+
+function createProjectStages(progressValue) {
+  const stages = [
+    { id: "survey", threshold: 25, title: "Levantamiento" },
+    { id: "design", threshold: 50, title: "Propuesta de Diseño" },
+    { id: "execution", threshold: 75, title: "Ejecución" },
+    { id: "handoff", threshold: 100, title: "Entrega Final" },
+  ];
+  const activeStageIndex = stages.findIndex(
+    (stage) => progressValue < stage.threshold,
+  );
+
+  return stages.map((stage, index) => {
+    if (progressValue >= stage.threshold) {
+      return { ...stage, status: "Completado", tone: "completed" };
+    }
+
+    if (index === activeStageIndex) {
+      return { ...stage, status: "En proceso", tone: "active" };
+    }
+
+    return { ...stage, status: "Pendiente", tone: "pending" };
+  });
+}
+
+function formatFileSize(size) {
+  if (!Number.isFinite(Number(size))) {
+    return "";
+  }
+
+  const bytes = Number(size);
+
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(Math.round(bytes / 1024), 1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function toProjectPresentation(project) {
+  const progressValue = Number(project?.progress) || 0;
+  const documents = (project?.files || [])
+    .filter((file) => file.fileType !== "model/gltf-binary")
+    .map((file) => ({
+      fileType: String(file.extension || "FILE").toUpperCase(),
+      fileUrl: file.fileUrl,
+      id: file.id,
+      name: file.title,
+      owner:
+        project.assignedArchitect?.name || project.client?.name || "ARCA Studio",
+      size: formatFileSize(file.size),
+      uploadedAt: file.createdAt
+        ? new Intl.DateTimeFormat("es-ES", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }).format(new Date(file.createdAt))
+        : "",
+    }));
+
+  return {
+    ...project,
+    category: `Proyecto ${
+      PROJECT_TYPE_LABELS[project?.projectType] || project?.projectType || ""
+    }`.trim(),
+    progressValue,
+    stages: createProjectStages(progressValue),
+    title: project?.name || "Proyecto",
+    documents,
+  };
+}
 
 function getRelativeTimeLabel(value) {
   const date = new Date(value);
@@ -102,13 +179,14 @@ function toDrawerComment(comment, user) {
 }
 
 export default function ProjectDetailsPage({
-  project = PROJECT_DETAIL_DATA,
+  project: providedProject = null,
   initialActiveProjectTabIndex = 0,
   infoProps,
   trackingProps,
   warrantiesProps,
 }) {
   const navigate = useNavigate();
+  const { projectId: routeProjectId } = useParams();
   const [searchParams] = useSearchParams();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
@@ -117,9 +195,16 @@ export default function ProjectDetailsPage({
     useState(false);
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
-  const [resolvedProjectId, setResolvedProjectId] = useState(
-    Number.isInteger(Number(project.id)) ? Number(project.id) : null,
-  );
+  const parsedRouteProjectId = Number(routeProjectId);
+  const initialProjectId = Number.isInteger(Number(providedProject?.id))
+    ? Number(providedProject.id)
+    : Number.isInteger(parsedRouteProjectId)
+      ? parsedRouteProjectId
+      : null;
+  const [project, setProject] = useState(providedProject);
+  const [projectError, setProjectError] = useState("");
+  const [projectLoading, setProjectLoading] = useState(!providedProject);
+  const [resolvedProjectId, setResolvedProjectId] = useState(initialProjectId);
   const [projectComments, setProjectComments] = useState([]);
   const [projectCommentsError, setProjectCommentsError] = useState("");
   const [projectCommentsLoading, setProjectCommentsLoading] = useState(false);
@@ -127,9 +212,7 @@ export default function ProjectDetailsPage({
     searchParams.get("tab") === "renders" ? 1 : initialActiveProjectTabIndex,
   );
   const imageCommentNotifications = useImageCommentNotifications({
-    projectIds: resolvedProjectId
-      ? [resolvedProjectId, project.id]
-      : [project.id],
+    projectIds: resolvedProjectId ? [resolvedProjectId] : [],
   });
   const notificationComments = [
     ...projectComments
@@ -170,35 +253,44 @@ export default function ProjectDetailsPage({
   }, [searchParams]);
 
   useEffect(() => {
-    if (resolvedProjectId) {
+    if (providedProject || !initialProjectId) {
+      if (!providedProject && !initialProjectId) {
+        setProjectError("El identificador del proyecto no es válido.");
+        setProjectLoading(false);
+      }
       return undefined;
     }
 
     let isMounted = true;
+    setProjectLoading(true);
+    setProjectError("");
 
     api.projects
-      .list()
+      .getById({ projectId: initialProjectId })
       .then((data) => {
-        if (!isMounted) {
-          return;
-        }
-
-        const projects = Array.isArray(data.projects) ? data.projects : [];
-        const matchingProject =
-          projects.find((item) => item.name === project.title) || projects[0];
-
-        setResolvedProjectId(matchingProject?.id ?? null);
-      })
-      .catch(() => {
         if (isMounted) {
-          setResolvedProjectId(null);
+          setProject(data.project || null);
+          setResolvedProjectId(data.project?.id || initialProjectId);
+        }
+      })
+      .catch((error) => {
+        if (isMounted) {
+          setProject(null);
+          setProjectError(
+            error.message || "No se pudo cargar la información del proyecto.",
+          );
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setProjectLoading(false);
         }
       });
 
     return () => {
       isMounted = false;
     };
-  }, [project.title, resolvedProjectId]);
+  }, [initialProjectId, providedProject]);
 
   useEffect(() => {
     if (!isNotificationsDrawerOpen || !resolvedProjectId) {
@@ -253,13 +345,21 @@ export default function ProjectDetailsPage({
       return;
     }
 
-    if (item?.id === "project-1" || item?.id === "project-2") {
-      navigate("/proyectos/quinta-bella-vista");
+    if (item?.id?.startsWith("project-")) {
+      const selectedProjectId = Number(item.id.replace("project-", ""));
+
+      if (Number.isInteger(selectedProjectId)) {
+        navigate(`/proyectos/${selectedProjectId}`);
+      }
       return;
     }
 
     if (item?.id === "more-projects") {
-      navigate("/proyectos/quinta-bella-vista");
+      navigate(
+        user?.role === "client"
+          ? "/dashboard-clientes"
+          : "/dashboard-arquitecto",
+      );
       return;
     }
 
@@ -289,7 +389,7 @@ export default function ProjectDetailsPage({
     }
 
     setIsNotificationsDrawerOpen(false);
-    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+    navigate(`/proyectos/${resolvedProjectId}?${params.toString()}`);
   };
 
   const handleSubmitComment = async ({ message, parentCommentId = null }) => {
@@ -320,7 +420,12 @@ export default function ProjectDetailsPage({
     }
   };
 
-  let activeProjectPanel = <ProjectInfoPanel {...infoProps} />;
+  const presentedProject = project
+    ? toProjectPresentation(project)
+    : PROJECT_DETAIL_DATA;
+  let activeProjectPanel = (
+    <ProjectInfoPanel {...infoProps} project={project} />
+  );
 
   if (activeProjectTabIndex === 1) {
     activeProjectPanel = (
@@ -332,7 +437,7 @@ export default function ProjectDetailsPage({
     );
   } else if (activeProjectTabIndex === 2) {
     activeProjectPanel = (
-      <ProjectDocumentsPanel documents={project.documents} />
+      <ProjectDocumentsPanel documents={presentedProject.documents} />
     );
   } else if (activeProjectTabIndex === 3) {
     activeProjectPanel = <ProjectTrackingPanel {...trackingProps} />;
@@ -346,7 +451,9 @@ export default function ProjectDetailsPage({
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
         <SideNavigation
-          activeItemId="project-1"
+          activeItemId={
+            resolvedProjectId ? `project-${resolvedProjectId}` : undefined
+          }
           expanded={isSidebarExpanded}
           userName={currentUser.name}
           userEmail={currentUser.email}
@@ -372,12 +479,24 @@ export default function ProjectDetailsPage({
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[48px] px-[48px] pb-[24px] pt-0">
-            <ProjectOverviewHeader project={project} />
-            <ProjectDetailTabMenu
-              activeIndex={activeProjectTabIndex}
-              onChange={setActiveProjectTabIndex}
-            />
-            {activeProjectPanel}
+            {projectLoading ? (
+              <p className="py-[48px] text-body-3 text-[var(--color-text-200)]">
+                Cargando proyecto...
+              </p>
+            ) : projectError ? (
+              <p className="py-[48px] text-body-3 text-[var(--color-danger-100)]">
+                {projectError}
+              </p>
+            ) : (
+              <>
+                <ProjectOverviewHeader project={presentedProject} />
+                <ProjectDetailTabMenu
+                  activeIndex={activeProjectTabIndex}
+                  onChange={setActiveProjectTabIndex}
+                />
+                {activeProjectPanel}
+              </>
+            )}
           </div>
 
           <NotificationsDrawer

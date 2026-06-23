@@ -207,7 +207,7 @@ function ProjectRow({ project }) {
         showLeftIcon={false}
         showRightIcon={false}
         className="shrink-0"
-        onClick={() => navigate("/proyectos/quinta-bella-vista")}
+        onClick={() => navigate(`/proyectos/${project.id}`)}
       >
         Ver Proyecto
       </Button>
@@ -431,12 +431,16 @@ function Home() {
     }
 
     if (item?.id?.startsWith("project-")) {
-      navigate("/proyectos/quinta-bella-vista");
+      const projectId = Number(item.id.replace("project-", ""));
+
+      if (Number.isInteger(projectId)) {
+        navigate(`/proyectos/${projectId}`);
+      }
       return;
     }
 
     if (item?.id === "more-projects") {
-      navigate("/proyectos/quinta-bella-vista");
+      navigate("/dashboard-clientes");
       return;
     }
 
@@ -466,7 +470,11 @@ function Home() {
     }
 
     setIsNotificationsDrawerOpen(false);
-    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+    const targetProjectId = comment?.projectId || commentsProjectId;
+
+    if (targetProjectId) {
+      navigate(`/proyectos/${targetProjectId}?${params.toString()}`);
+    }
   };
 
   return (

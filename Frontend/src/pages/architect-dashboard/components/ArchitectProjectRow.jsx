@@ -12,7 +12,7 @@ function ArchitectProjectRow({
   const navigate = useNavigate();
 
   const handleOpenProject = () => {
-    navigate("/proyectos/quinta-bella-vista");
+    navigate(`/proyectos/${project.id}`);
   };
 
   return (

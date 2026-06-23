@@ -7,7 +7,7 @@ async function addLocationColumns(tableName) {
     alter table public.${tableName}
     add column if not exists location_latitude numeric(10,7),
     add column if not exists location_longitude numeric(10,7),
-    add column if not exists google_place_id varchar,
+    add column if not exists provider_place_id varchar,
     add column if not exists formatted_address varchar
   `);
 }
@@ -24,7 +24,7 @@ try {
       and column_name in (
         'location_latitude',
         'location_longitude',
-        'google_place_id',
+        'provider_place_id',
         'formatted_address'
       )
     order by table_name, column_name

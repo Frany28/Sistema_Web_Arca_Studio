@@ -6,19 +6,6 @@ export const SIDE_NAVIGATION_DEFAULT_ITEMS = [
     wrapperHeight: "44px",
   },
   {
-    id: "project-1",
-    label: "Proyecto 1",
-    icon: "project",
-    wrapperHeight: "56px",
-  },
-  {
-    id: "project-2",
-    label: "Proyecto 2",
-    icon: "project",
-    trailingIcon: "window",
-    wrapperHeight: "44px",
-  },
-  {
     id: "more-projects",
     label: "Ver más proyectos",
     icon: "discover",

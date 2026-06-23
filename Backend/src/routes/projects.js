@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import {
+  getProjectDetail,
   getMyProjects,
   updateProjectPublication,
 } from "../controllers/projectController.js";
@@ -13,6 +14,12 @@ import { requireAuth, requirePermissions } from "../middlewares/auth.js";
 const router = Router();
 
 router.get("/", requireAuth, requirePermissions("projects.read"), getMyProjects);
+router.get(
+  "/:projectId",
+  requireAuth,
+  requirePermissions("projects.read"),
+  getProjectDetail,
+);
 router.get("/:projectId/comments", requireAuth, getProjectComments);
 router.post("/:projectId/comments", requireAuth, createProjectComment);
 router.patch(

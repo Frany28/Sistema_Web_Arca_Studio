@@ -1,4 +1,5 @@
 import {
+  findProjectDetailForUser,
   listProjectsForUser,
   updateProjectVisibility,
 } from "../repositories/projectRepository.js";
@@ -10,6 +11,34 @@ export async function getMyProjects(req, res, next) {
     res.status(200).json({
       projects,
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getProjectDetail(req, res, next) {
+  try {
+    const projectId = Number(req.params?.projectId);
+
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_ID",
+        message: "Proyecto invalido.",
+      });
+      return;
+    }
+
+    const project = await findProjectDetailForUser(projectId, req.user);
+
+    if (!project) {
+      res.status(404).json({
+        code: "PROJECT_NOT_FOUND",
+        message: "Proyecto no encontrado.",
+      });
+      return;
+    }
+
+    res.status(200).json({ project });
   } catch (error) {
     next(error);
   }

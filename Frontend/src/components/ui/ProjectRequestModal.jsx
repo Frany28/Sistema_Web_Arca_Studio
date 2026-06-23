@@ -21,7 +21,7 @@ function ProjectRequestModal({
     projectLocationFormattedAddress: "",
     projectLocationLatitude: null,
     projectLocationLongitude: null,
-    projectLocationPlaceId: null,
+    projectLocationProviderPlaceId: null,
     description: "",
     hasBlueprints: "No",
     selectedProjectTypeId: "",
@@ -43,7 +43,7 @@ function ProjectRequestModal({
         projectLocationFormattedAddress: "",
         projectLocationLatitude: null,
         projectLocationLongitude: null,
-        projectLocationPlaceId: null,
+        projectLocationProviderPlaceId: null,
         description: "",
         hasBlueprints: "No",
         selectedProjectTypeId: "",
@@ -320,7 +320,7 @@ function ProjectRequestModal({
           projectLocationFormattedAddress: location.formattedAddress,
           projectLocationLatitude: location.latitude,
           projectLocationLongitude: location.longitude,
-          projectLocationPlaceId: location.placeId,
+          projectLocationProviderPlaceId: location.placeId,
         }));
       }}
       onDescriptionChange={(description) => {

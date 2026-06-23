@@ -1,10 +1,6 @@
 import Accordion from "../../../components/ui/Accordion/Accordion.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
-import {
-  PROJECT_DETAIL_DATA,
-  TECHNICAL_ACCORDIONS,
-} from "../projectDetailsData.js";
 
 function InfoEmptyState({ title, description, className = "" }) {
   return (
@@ -21,8 +17,8 @@ function InfoEmptyState({ title, description, className = "" }) {
   );
 }
 
-function MapEmbed({ empty = false }) {
-  if (empty) {
+function MapEmbed({ coordinates, empty = false }) {
+  if (empty || !coordinates) {
     return (
       <div className="flex h-[300px] w-[1104px] max-w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)]">
         <InfoEmptyState
@@ -34,11 +30,15 @@ function MapEmbed({ empty = false }) {
     );
   }
 
+  const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
+    `${coordinates.latitude},${coordinates.longitude}`,
+  )}&z=15&output=embed`;
+
   return (
     <div className="flex h-[300px] w-[1104px] max-w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
       <iframe
         title="Mapa del proyecto"
-        src="https://maps.google.com/maps?q=10.6653,-71.6026&z=15&output=embed"
+        src={mapUrl}
         loading="lazy"
         className="h-full w-full border-0"
         referrerPolicy="no-referrer-when-downgrade"
@@ -47,19 +47,46 @@ function MapEmbed({ empty = false }) {
   );
 }
 
-function OverviewMetrics({ empty = false }) {
+function formatArea(value, unit) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  const unitLabels = {
+    m2: "m²",
+    sqm: "m²",
+    square_meters: "m²",
+  };
+
+  return `${value} ${unitLabels[unit] || unit || "m²"}`;
+}
+
+function getProjectTypeLabel(value) {
+  const labels = {
+    commercial: "Comercial",
+    corporate: "Corporativo",
+    residential: "Residencial",
+    stands_exhibitions: "Stands y exhibiciones",
+  };
+
+  return labels[value] || value || "-";
+}
+
+function OverviewMetrics({ project, empty = false }) {
   const overviewPairs = [
     {
       label: "Tipo",
-      value: empty ? "-" : PROJECT_DETAIL_DATA.overview[0].value,
+      value: empty ? "-" : getProjectTypeLabel(project?.projectType),
     },
     {
-      label: PROJECT_DETAIL_DATA.overview[1].label,
-      value: empty ? "-" : PROJECT_DETAIL_DATA.overview[1].value,
+      label: "Área General",
+      value: empty ? "-" : formatArea(project?.generalArea, project?.areaUnit),
     },
     {
-      label: PROJECT_DETAIL_DATA.overview[2].label,
-      value: empty ? "-" : PROJECT_DETAIL_DATA.overview[2].value,
+      label: "Área de Construcción",
+      value: empty
+        ? "-"
+        : formatArea(project?.constructionArea, project?.areaUnit),
     },
   ];
 
@@ -79,14 +106,14 @@ function OverviewMetrics({ empty = false }) {
   );
 }
 
-function LocationRow({ empty = false }) {
+function LocationRow({ project, empty = false }) {
   return (
     <div className="flex w-full items-center justify-between border-b border-[var(--color-neutral-200)] py-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
-        {PROJECT_DETAIL_DATA.location.label}
+        Ubicación
       </span>
       <span className="text-body-4 font-medium text-[var(--color-text-300)]">
-        {empty ? "-" : PROJECT_DETAIL_DATA.location.value}
+        {empty ? "-" : project?.locationFormattedAddress || project?.location || "-"}
       </span>
     </div>
   );
@@ -146,14 +173,19 @@ function TechnicalAccordionDescription({ content }) {
   return <p className="text-body-4 text-[var(--color-text-200)]">{content}</p>;
 }
 
-function TechnicalSpecificationsSection({ empty = false }) {
+function TechnicalSpecificationsSection({
+  empty = false,
+  technicalSpecifications = [],
+}) {
+  const isEmpty = empty || technicalSpecifications.length === 0;
+
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
         Especificaciones Técnicas
       </span>
 
-      {empty ? (
+      {isEmpty ? (
         <InfoEmptyState
           title="Aún no hay información"
           description="Esta sección describe las herramientas y tecnologías utilizadas en el proyecto, asegurando transparencia."
@@ -161,30 +193,41 @@ function TechnicalSpecificationsSection({ empty = false }) {
         />
       ) : (
         <div className="flex flex-col gap-[12px]">
-          {TECHNICAL_ACCORDIONS.map((accordion) => (
+          {technicalSpecifications.map((specification) => {
+            const content = specification.items?.length
+              ? specification.items.map((item) => item.content)
+              : specification.description;
+
+            return (
             <Accordion
-              key={accordion.id}
-              title={accordion.title}
+              key={specification.id}
+              title={specification.title}
               description={
-                <TechnicalAccordionDescription content={accordion.description} />
+                <TechnicalAccordionDescription content={content} />
               }
-              defaultOpen={accordion.defaultOpen}
+              defaultOpen={specification.defaultOpen}
               interactive
               className="rounded-[var(--radius-2)]"
               rightIcon={<QuestionTooltipIcon />}
             />
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function RequirementsSection({ empty = false }) {
+function RequirementsSection({ empty = false, requirements = [] }) {
+  const requirementLabels = requirements.map(
+    (requirement) => requirement.description,
+  );
+  const midpoint = Math.ceil(requirementLabels.length / 2);
   const requirementColumns = [
-    PROJECT_DETAIL_DATA.requirements.slice(0, 4),
-    PROJECT_DETAIL_DATA.requirements.slice(4, 8),
+    requirementLabels.slice(0, midpoint),
+    requirementLabels.slice(midpoint),
   ];
+  const isEmpty = empty || requirementLabels.length === 0;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
@@ -192,7 +235,7 @@ function RequirementsSection({ empty = false }) {
         Requerimientos
       </span>
 
-      {empty ? (
+      {isEmpty ? (
         <InfoEmptyState
           title="Aún no hay requerimientos"
           description="Esta sección detalla las características especificadas para el proyecto."
@@ -238,16 +281,22 @@ function KeyDocumentsSection({ empty = false }) {
   );
 }
 
-export default function ProjectInfoPanel({ empty = false }) {
+export default function ProjectInfoPanel({ empty = false, project }) {
   return (
     <section className="flex w-full flex-col gap-[24px]">
-      <OverviewMetrics empty={empty} />
-      <LocationRow empty={empty} />
-      <MapEmbed empty={empty} />
+      <OverviewMetrics empty={empty} project={project} />
+      <LocationRow empty={empty} project={project} />
+      <MapEmbed empty={empty} coordinates={project?.locationCoordinates} />
 
       <div className="flex w-full items-start gap-[16px] max-[1024px]:flex-col">
-        <TechnicalSpecificationsSection empty={empty} />
-        <RequirementsSection empty={empty} />
+        <TechnicalSpecificationsSection
+          empty={empty}
+          technicalSpecifications={project?.technicalSpecifications}
+        />
+        <RequirementsSection
+          empty={empty}
+          requirements={project?.requirements}
+        />
       </div>
 
       {empty ? <KeyDocumentsSection empty /> : null}

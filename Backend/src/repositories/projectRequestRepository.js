@@ -36,7 +36,7 @@ function toProjectRequest(row) {
     createdAt: row.created_at,
     description: row.description,
     formattedAddress: row.formatted_address,
-    googlePlaceId: row.google_place_id,
+    providerPlaceId: row.provider_place_id,
     hasPlans: Boolean(row.has_plans),
     id: Number(row.id),
     location: row.location,
@@ -146,7 +146,7 @@ export async function createProjectRequestForUser(user, payload) {
         verification_expires_at,
         location_latitude,
         location_longitude,
-        google_place_id,
+        provider_place_id,
         formatted_address
       )
       values (
@@ -180,7 +180,7 @@ export async function createProjectRequestForUser(user, payload) {
         created_at,
         location_latitude,
         location_longitude,
-        google_place_id,
+        provider_place_id,
         formatted_address
     `,
     [
@@ -196,7 +196,7 @@ export async function createProjectRequestForUser(user, payload) {
       hashVerificationCode(payload.code),
       toNullableNumber(payload.projectLocationLatitude),
       toNullableNumber(payload.projectLocationLongitude),
-      toNullableString(payload.projectLocationPlaceId),
+      toNullableString(payload.projectLocationProviderPlaceId),
       toNullableString(payload.projectLocationFormattedAddress),
     ],
   );
@@ -223,7 +223,7 @@ export async function updateProjectRequestForUser(projectRequestId, user, payloa
         reference_link = $9,
         location_latitude = $10,
         location_longitude = $11,
-        google_place_id = $12,
+        provider_place_id = $12,
         formatted_address = $13,
         status = case
           when $16::boolean then 'pending_review'::project_request_status
@@ -257,7 +257,7 @@ export async function updateProjectRequestForUser(projectRequestId, user, payloa
         created_at,
         location_latitude,
         location_longitude,
-        google_place_id,
+        provider_place_id,
         formatted_address
     `,
     [
@@ -272,7 +272,7 @@ export async function updateProjectRequestForUser(projectRequestId, user, payloa
       toNullableString(payload.referenceLink),
       toNullableNumber(payload.projectLocationLatitude),
       toNullableNumber(payload.projectLocationLongitude),
-      toNullableString(payload.projectLocationPlaceId),
+      toNullableString(payload.projectLocationProviderPlaceId),
       toNullableString(payload.projectLocationFormattedAddress),
       shouldUpdateVerificationCode,
       hashVerificationCode(payload.code),

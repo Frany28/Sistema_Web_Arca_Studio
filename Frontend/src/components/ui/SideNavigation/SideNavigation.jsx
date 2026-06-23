@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
+import { api } from "../../../api/http.js";
+import { useAuth } from "../../../auth/AuthContext.jsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import AvatarLabel from "../AvatarLabel/AvatarLabel.jsx";
 import Button from "../Button/Button.jsx";
@@ -316,9 +318,23 @@ function clearPointerFocus(event) {
   event.currentTarget.blur();
 }
 
+function createProjectItems(projects) {
+  return [
+    SIDE_NAVIGATION_DEFAULT_ITEMS[0],
+    ...projects.slice(0, 2).map((project) => ({
+      id: `project-${project.id}`,
+      label: project.name,
+      icon: "project",
+      trailingIcon: project.isPublic ? "window" : undefined,
+      wrapperHeight: "56px",
+    })),
+    ...SIDE_NAVIGATION_DEFAULT_ITEMS.slice(1),
+  ];
+}
+
 function SideNavigation({
   className,
-  items = SIDE_NAVIGATION_DEFAULT_PROPS.items,
+  items,
   activeItemId = SIDE_NAVIGATION_DEFAULT_PROPS.activeItemId,
   defaultActiveItemId = SIDE_NAVIGATION_DEFAULT_PROPS.defaultActiveItemId,
   expanded,
@@ -338,12 +354,18 @@ function SideNavigation({
   "aria-label": ariaLabel = SIDE_NAVIGATION_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
+  const { user } = useAuth();
   const [searchValue, setSearchValue] = useState("");
   const [internalActiveItemId, setInternalActiveItemId] =
     useState(defaultActiveItemId);
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
-  const normalizedItems =
-    Array.isArray(items) && items.length > 0
+  const [loadedItems, setLoadedItems] = useState(
+    SIDE_NAVIGATION_DEFAULT_ITEMS,
+  );
+  const usesSharedProjectItems = items === undefined;
+  const normalizedItems = usesSharedProjectItems
+    ? loadedItems
+    : Array.isArray(items)
       ? items
       : SIDE_NAVIGATION_DEFAULT_ITEMS;
   const isActiveControlled =
@@ -369,6 +391,42 @@ function SideNavigation({
         .includes(normalizedQuery),
     );
   }, [normalizedItems, searchValue]);
+
+  useEffect(() => {
+    if (!usesSharedProjectItems || !user) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    api.projects
+      .list()
+      .then((data) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const projects = Array.isArray(data.projects) ? data.projects : [];
+        const visibleProjects =
+          user.role === "client" && user.clientId
+            ? projects.filter(
+                (project) =>
+                  Number(project.client?.id) === Number(user.clientId),
+              )
+            : projects;
+
+        setLoadedItems(createProjectItems(visibleProjects));
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLoadedItems(SIDE_NAVIGATION_DEFAULT_ITEMS);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, usesSharedProjectItems]);
 
   const handleSearchChange = (event) => {
     setSearchValue(event.target.value);

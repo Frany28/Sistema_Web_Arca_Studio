@@ -129,6 +129,10 @@ export const projectsApi = {
     return apiRequest("/projects");
   },
 
+  getById({ projectId }) {
+    return apiRequest(`/projects/${projectId}`);
+  },
+
   listComments({ projectId }) {
     return apiRequest(`/projects/${projectId}/comments`);
   },
