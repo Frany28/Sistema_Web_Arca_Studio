@@ -3,7 +3,7 @@ import CircleProgressBarLabel from "../../../components/ui/CircleProgressBarLabe
 function getStageToneClasses(tone) {
   if (tone === "active") {
     return {
-      border: "border-[var(--color-accent-300)]",
+      bar: "bg-[var(--color-accent-300)]",
       title: "text-[var(--color-text-300)]",
       status: "text-[var(--color-text-300)]",
     };
@@ -11,14 +11,14 @@ function getStageToneClasses(tone) {
 
   if (tone === "completed") {
     return {
-      border: "border-[var(--color-accent-300)]",
+      bar: "bg-[var(--color-accent-300)]",
       title: "text-[var(--color-text-200)]",
       status: "text-[var(--color-text-100)]",
     };
   }
 
   return {
-    border: "border-[var(--color-neutral-200)]",
+    bar: "bg-[var(--color-neutral-200)]",
     title: "text-[var(--color-text-100)]",
     status: "text-[var(--color-neutral-400)]",
   };
@@ -26,7 +26,10 @@ function getStageToneClasses(tone) {
 
 export default function ProjectOverviewHeader({ project }) {
   return (
-    <section className="flex w-full flex-col gap-[16px]">
+    <section
+      key={project.id}
+      className="flex w-full flex-col gap-[16px]"
+    >
       <div className="flex w-full items-start justify-between gap-[24px]">
         <div className="flex min-w-0 flex-col gap-[4px]">
           <h1 className="text-heading-3 text-[var(--color-text-50)]">
@@ -48,16 +51,21 @@ export default function ProjectOverviewHeader({ project }) {
       </div>
 
       <div className="flex w-full gap-[24px]">
-        {project.stages.map((stage) => {
+        {project.stages.map((stage, index) => {
           const toneClasses = getStageToneClasses(stage.tone);
 
           return (
             <div
               key={stage.id}
-              className={`flex min-w-0 flex-1 flex-col gap-[4px] border-t-[4px] pt-[16px] ${toneClasses.border}`}
+              className="flex min-w-0 flex-1 flex-col gap-[4px]"
             >
+              <div
+                className={`project-stage-progress-line h-[4px] w-full ${toneClasses.bar}`}
+                style={{ animationDelay: `${120 + index * 100}ms` }}
+                aria-hidden="true"
+              />
               <p
-                className={`text-[16px] leading-[19px] tracking-[-0.5px] ${toneClasses.title}`}
+                className={`mt-[12px] text-[16px] leading-[19px] tracking-[-0.5px] ${toneClasses.title}`}
               >
                 {stage.title}
               </p>
