@@ -91,6 +91,18 @@ function normalizeProjectIds(projectIds = []) {
   ];
 }
 
+function upsertCommentById(comments, comment) {
+  if (!comment?.id) {
+    return comments;
+  }
+
+  const exists = comments.some((current) => current.id === comment.id);
+
+  return exists
+    ? comments.map((current) => (current.id === comment.id ? comment : current))
+    : [...comments, comment];
+}
+
 export function useProjectComments({
   enabled = true,
   projectId,
@@ -134,32 +146,30 @@ export function useProjectComments({
         }
       });
 
-    const refreshInterval =
-      refreshIntervalMs > 0
-        ? window.setInterval(() => {
-            api.projects
-              .listComments({ projectId })
-              .then((data) => {
-                if (isMounted) {
-                  setComments(Array.isArray(data.comments) ? data.comments : []);
-                }
-              })
-              .catch((requestError) => {
-                if (isMounted) {
-                  setError(
-                    requestError.message ||
-                      "No se pudieron cargar los comentarios.",
-                  );
-                }
-              });
-          }, refreshIntervalMs)
-        : null;
+    const unsubscribe = api.projects.subscribeToEvents({
+      projectId,
+      onCommentCreated: (comment) => {
+        if (isMounted) {
+          setComments((current) => upsertCommentById(current, comment));
+        }
+      },
+      onError: () => {
+        if (refreshIntervalMs > 0 && isMounted) {
+          api.projects
+            .listComments({ projectId })
+            .then((data) => {
+              if (isMounted) {
+                setComments(Array.isArray(data.comments) ? data.comments : []);
+              }
+            })
+            .catch(() => {});
+        }
+      },
+    });
 
     return () => {
       isMounted = false;
-      if (refreshInterval) {
-        window.clearInterval(refreshInterval);
-      }
+      unsubscribe();
     };
   }, [enabled, projectId, refreshIntervalMs]);
 
@@ -204,7 +214,7 @@ export function useProjectComments({
         });
 
         if (data && data.comment) {
-          setComments((current) => [...current, data.comment]);
+          setComments((current) => upsertCommentById(current, data.comment));
         }
       } catch (requestError) {
         setError(requestError.message || "No se pudo guardar el comentario.");
@@ -310,39 +320,20 @@ export function useRecentProjectComments({
         }
       });
 
-    const refreshInterval =
-      refreshIntervalMs > 0
-        ? window.setInterval(() => {
-            Promise.all(
-              normalizedProjectIds.map((projectId) =>
-                api.projects.listComments({ projectId }),
-              ),
-            )
-              .then((responses) => {
-                if (isMounted) {
-                  setComments(
-                    responses.flatMap((data) =>
-                      Array.isArray(data.comments) ? data.comments : [],
-                    ),
-                  );
-                }
-              })
-              .catch((requestError) => {
-                if (isMounted) {
-                  setError(
-                    requestError.message ||
-                      "No se pudieron cargar los comentarios.",
-                  );
-                }
-              });
-          }, refreshIntervalMs)
-        : null;
+    const unsubscribers = normalizedProjectIds.map((projectId) =>
+      api.projects.subscribeToEvents({
+        projectId,
+        onCommentCreated: (comment) => {
+          if (isMounted) {
+            setComments((current) => upsertCommentById(current, comment));
+          }
+        },
+      }),
+    );
 
     return () => {
       isMounted = false;
-      if (refreshInterval) {
-        window.clearInterval(refreshInterval);
-      }
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
   }, [enabled, normalizedProjectIds, refreshIntervalMs]);
 

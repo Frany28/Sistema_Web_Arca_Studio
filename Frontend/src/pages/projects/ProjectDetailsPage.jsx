@@ -66,6 +66,18 @@ function formatFileSize(size) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function upsertCommentById(comments, comment) {
+  if (!comment?.id) {
+    return comments;
+  }
+
+  const exists = comments.some((current) => current.id === comment.id);
+
+  return exists
+    ? comments.map((current) => (current.id === comment.id ? comment : current))
+    : [...comments, comment];
+}
+
 function isImageFile(file) {
   const fileType = String(file?.fileType || "").toLowerCase();
   const extension = String(file?.extension || "").toLowerCase();
@@ -419,11 +431,18 @@ export default function ProjectDetailsPage({
 
     loadProjectComments({ showLoading: true });
 
-    const refreshInterval = window.setInterval(loadProjectComments, 5000);
+    const unsubscribe = api.projects.subscribeToEvents({
+      projectId: resolvedProjectId,
+      onCommentCreated: (comment) => {
+        if (isMounted) {
+          setProjectComments((current) => upsertCommentById(current, comment));
+        }
+      },
+    });
 
     return () => {
       isMounted = false;
-      window.clearInterval(refreshInterval);
+      unsubscribe();
     };
   }, [isNotificationsDrawerOpen, resolvedProjectId]);
 
@@ -497,7 +516,7 @@ export default function ProjectDetailsPage({
       });
 
       if (data.comment) {
-        setProjectComments((current) => [...current, data.comment]);
+        setProjectComments((current) => upsertCommentById(current, data.comment));
       }
     } catch (error) {
       setProjectCommentsError(

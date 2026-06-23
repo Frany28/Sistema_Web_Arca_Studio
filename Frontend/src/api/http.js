@@ -141,6 +141,40 @@ export const projectsApi = {
     return apiRequest(`/projects/${projectId}/comments`);
   },
 
+  subscribeToEvents({ projectId, onCommentCreated, onError }) {
+    const token = getAuthToken();
+    const params = new URLSearchParams();
+
+    if (token) {
+      params.set("access_token", token);
+    }
+
+    const query = params.toString();
+    const eventSource = new EventSource(
+      getApiUrl(`/projects/${projectId}/events${query ? `?${query}` : ""}`),
+      { withCredentials: true },
+    );
+
+    eventSource.addEventListener("project.comment.created", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.comment) {
+          onCommentCreated?.(data.comment);
+        }
+      } catch {
+        // Ignore malformed realtime events and keep the stream open.
+      }
+    });
+
+    eventSource.onerror = (event) => {
+      onError?.(event);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  },
+
   createComment({
     commentType,
     content,

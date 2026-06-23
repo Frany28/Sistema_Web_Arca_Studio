@@ -3,6 +3,10 @@ import {
   createProjectCommentRecord,
   listProjectComments,
 } from "../repositories/projectCommentRepository.js";
+import {
+  publishProjectEvent,
+  subscribeToProjectEvents,
+} from "../services/projectEvents.js";
 
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
 const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "viewer3d"]);
@@ -158,7 +162,50 @@ export async function createProjectComment(req, res, next) {
       return;
     }
 
+    publishProjectEvent({
+      eventName: "project.comment.created",
+      payload: { comment },
+      projectId,
+    });
+
     res.status(201).json({ comment });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function streamProjectCommentEvents(req, res, next) {
+  try {
+    const projectId = parseProjectId(req);
+
+    if (!projectId) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_ID",
+        message: "Proyecto invalido.",
+      });
+      return;
+    }
+
+    const canAccess = await canAccessProjectComments(projectId, req.user);
+
+    if (!canAccess) {
+      res.status(404).json({
+        code: "PROJECT_NOT_FOUND",
+        message: "Proyecto no encontrado.",
+      });
+      return;
+    }
+
+    res.status(200);
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders?.();
+
+    const unsubscribe = subscribeToProjectEvents({ projectId, response: res });
+
+    req.on("close", unsubscribe);
   } catch (error) {
     next(error);
   }

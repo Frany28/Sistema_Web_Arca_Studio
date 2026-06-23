@@ -9,6 +9,7 @@ import { streamProjectFile } from "../controllers/fileController.js";
 import {
   createProjectComment,
   getProjectComments,
+  streamProjectCommentEvents,
 } from "../controllers/projectCommentController.js";
 import { requireAuth, requirePermissions } from "../middlewares/auth.js";
 
@@ -22,6 +23,7 @@ router.get(
   getProjectDetail,
 );
 router.get("/:projectId/comments", requireAuth, getProjectComments);
+router.get("/:projectId/events", requireAuth, streamProjectCommentEvents);
 router.post("/:projectId/comments", requireAuth, createProjectComment);
 router.get(
   "/:projectId/files/:fileId/content",

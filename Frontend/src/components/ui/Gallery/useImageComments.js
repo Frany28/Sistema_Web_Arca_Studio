@@ -119,6 +119,18 @@ function isMatchingTarget(comment, { commentType, targetId }) {
   );
 }
 
+function upsertCommentById(comments, comment) {
+  if (!comment?.id) {
+    return comments;
+  }
+
+  const exists = comments.some((current) => current.id === comment.id);
+
+  return exists
+    ? comments.map((current) => (current.id === comment.id ? comment : current))
+    : [...comments, comment];
+}
+
 function useProjectCommentRows(projectIds) {
   const [comments, setComments] = useState([]);
 
@@ -132,32 +144,38 @@ function useProjectCommentRows(projectIds) {
 
     let isMounted = true;
 
-    function loadComments() {
-      Promise.all(
-        projectIds.map((projectId) => api.projects.listComments({ projectId })),
-      )
-        .then((responses) => {
-          if (isMounted) {
-            setComments(
-              responses.flatMap((data) =>
-                Array.isArray(data.comments) ? data.comments : [],
-              ),
-            );
-          }
-        })
-        .catch(() => {
-          if (isMounted) {
-            setComments([]);
-          }
-        });
-    }
+    Promise.all(
+      projectIds.map((projectId) => api.projects.listComments({ projectId })),
+    )
+      .then((responses) => {
+        if (isMounted) {
+          setComments(
+            responses.flatMap((data) =>
+              Array.isArray(data.comments) ? data.comments : [],
+            ),
+          );
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setComments([]);
+        }
+      });
 
-    loadComments();
-    const refreshInterval = window.setInterval(loadComments, 5000);
+    const unsubscribers = projectIds.map((projectId) =>
+      api.projects.subscribeToEvents({
+        projectId,
+        onCommentCreated: (comment) => {
+          if (isMounted) {
+            setComments((current) => upsertCommentById(current, comment));
+          }
+        },
+      }),
+    );
 
     return () => {
       isMounted = false;
-      window.clearInterval(refreshInterval);
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
   }, [projectIds]);
 
@@ -216,7 +234,7 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
       const comment = data?.comment || null;
 
       if (comment) {
-        setProjectComments((current) => [...current, comment]);
+        setProjectComments((current) => upsertCommentById(current, comment));
       }
 
       return comment;
