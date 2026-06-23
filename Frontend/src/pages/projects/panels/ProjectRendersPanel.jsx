@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
+import "@google/model-viewer";
 import Button from "../../../components/ui/Button/Button.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
 import SharedGalleryImageCard from "../../../components/ui/Gallery/GalleryImageCard.jsx";
@@ -119,25 +120,56 @@ function RenderLoadingState({ image, progress }) {
 }
 
 function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
+  const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
+  const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(activeRender.image);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-      <button
-        type="button"
-        className="relative h-[398px] w-full cursor-pointer overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
-        onClick={onOpenModel}
-        disabled={isLoading}
-        aria-label={`Abrir modelo 3D ${activeRender.title}`}
-      >
+      <div className="relative h-[398px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left shadow-[var(--shadow-e2)]">
         {isLoading ? (
           <RenderLoadingState image={activeRender.image} progress={progress} />
+        ) : hasInteractiveModel ? (
+          <>
+            <model-viewer
+              src={modelSrc}
+              poster={activeRender.image || undefined}
+              alt={activeRender.title}
+              camera-controls
+              auto-rotate
+              shadow-intensity="0.9"
+              exposure="1"
+              interaction-prompt="none"
+              loading="eager"
+              reveal="auto"
+              className="h-full w-full bg-[var(--color-neutral-200)]"
+            />
+            <Button
+              theme="Primary"
+              type="Solid"
+              size="S"
+              fitContent
+              showLeftIcon={false}
+              showRightIcon={false}
+              onClick={onOpenModel}
+              className="absolute bottom-[12px] right-[12px]"
+            >
+              Comentar
+            </Button>
+          </>
         ) : hasPreviewImage ? (
-          <img
-            src={activeRender.image}
-            alt={activeRender.title}
-            className="h-full w-full object-cover"
-          />
+          <button
+            type="button"
+            className="h-full w-full cursor-pointer text-left transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
+            onClick={onOpenModel}
+            aria-label={`Abrir modelo 3D ${activeRender.title}`}
+          >
+            <img
+              src={activeRender.image}
+              alt={activeRender.title}
+              className="h-full w-full object-cover"
+            />
+          </button>
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-[8px] bg-[var(--color-neutral-200)] px-[24px] text-center">
             <span className="text-heading-4 text-[var(--color-text-300)]">
@@ -148,7 +180,7 @@ function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
             </span>
           </div>
         )}
-      </button>
+      </div>
 
       <h2 className="text-heading-4 text-[var(--color-text-300)]">
         {activeRender.title}

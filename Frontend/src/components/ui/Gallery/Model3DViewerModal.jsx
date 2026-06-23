@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
+import "@google/model-viewer";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import AvatarLabel from "../../ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../ui/Button/Button.jsx";
@@ -812,6 +813,8 @@ export default function Model3DViewerModal({
     transitionDuration: `${MODAL_TRANSITION_MS}ms`,
     transitionTimingFunction: MODAL_EASING,
   };
+  const modelSrc = displayItem.modelUrl || displayItem.fileUrl || null;
+  const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(displayItem.image);
 
   function handleSelectionChange(selection) {
@@ -865,7 +868,21 @@ export default function Model3DViewerModal({
           )}
           onClick={(event) => event.stopPropagation()}
         >
-          {hasPreviewImage ? (
+          {hasInteractiveModel ? (
+            <model-viewer
+              src={modelSrc}
+              poster={displayItem.image || undefined}
+              alt={displayItem.title}
+              camera-controls
+              auto-rotate
+              shadow-intensity="0.9"
+              exposure="1"
+              interaction-prompt="auto"
+              loading="eager"
+              reveal="auto"
+              className="absolute inset-0 h-full w-full bg-[var(--color-neutral-200)]"
+            />
+          ) : hasPreviewImage ? (
             <ImageHighlighter
               annotations={comments.filter((comment) => comment.selection)}
               focusedAnnotationId={focusedSelectionCommentId}
@@ -882,25 +899,6 @@ export default function Model3DViewerModal({
                   Archivo de modelo 3D cargado desde S3.
                 </p>
               </div>
-              {displayItem.modelUrl || displayItem.fileUrl ? (
-                <Button
-                  theme="Primary"
-                  type="Solid"
-                  size="M"
-                  fitContent
-                  showLeftIcon={false}
-                  showRightIcon={false}
-                  onClick={() => {
-                    window.open(
-                      displayItem.modelUrl || displayItem.fileUrl,
-                      "_blank",
-                      "noopener,noreferrer",
-                    );
-                  }}
-                >
-                  Abrir archivo 3D
-                </Button>
-              ) : null}
             </div>
           )}
 
@@ -923,7 +921,7 @@ export default function Model3DViewerModal({
             className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
           />
 
-          {hasPreviewImage ? (
+          {hasPreviewImage && !hasInteractiveModel ? (
             <ButtonGroup
               items={buttonGroupItems}
               className="absolute bottom-[12px] right-[12px] [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
