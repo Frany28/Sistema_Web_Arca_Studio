@@ -164,14 +164,26 @@ function Accordion({
           {title}
         </div>
 
-        {isOpenState ? (
-          <div
-            id={descriptionId}
-            className="text-body-4 text-left font-normal tracking-[-0.5px] text-[var(--color-text-200)]"
-          >
-            {description}
+        <div
+          id={descriptionId}
+          className="grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+          style={{
+            gridTemplateRows: isOpenState ? "1fr" : "0fr",
+            opacity: isOpenState ? 1 : 0,
+          }}
+          aria-hidden={!isOpenState}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div
+              className="text-body-4 pt-[8px] text-left font-normal tracking-[-0.5px] text-[var(--color-text-200)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+              style={{
+                transform: isOpenState ? "translateY(0)" : "translateY(-4px)",
+              }}
+            >
+              {description}
+            </div>
           </div>
-        ) : null}
+        </div>
       </div>
 
       {showRightIcon ? (
