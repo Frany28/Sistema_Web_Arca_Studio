@@ -125,8 +125,8 @@ function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
   const hasPreviewImage = Boolean(activeRender.image);
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-      <div className="relative h-[398px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left shadow-[var(--shadow-e2)]">
+    <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
+      <div className="relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
         {isLoading ? (
           <RenderLoadingState image={activeRender.image} progress={progress} />
         ) : hasInteractiveModel ? (
@@ -142,20 +142,13 @@ function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
               interaction-prompt="none"
               loading="eager"
               reveal="auto"
-              className="h-full w-full bg-[var(--color-neutral-200)]"
+              style={{
+                backgroundColor: "var(--color-neutral-200)",
+                display: "block",
+                height: "100%",
+                width: "100%",
+              }}
             />
-            <Button
-              theme="Primary"
-              type="Solid"
-              size="S"
-              fitContent
-              showLeftIcon={false}
-              showRightIcon={false}
-              onClick={onOpenModel}
-              className="absolute bottom-[12px] right-[12px]"
-            >
-              Comentar
-            </Button>
           </>
         ) : hasPreviewImage ? (
           <button
@@ -197,7 +190,7 @@ function RenderThumbnail({ item, selected, onSelect }) {
       type="button"
       onClick={onSelect}
       className={clsx(
-        "group relative h-[124px] w-full cursor-pointer overflow-hidden rounded-[var(--radius-2)] text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
+        "group relative h-[150px] w-full cursor-pointer overflow-hidden rounded-[var(--radius-2)] text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
         selected
           ? "ring-1 ring-[var(--color-neutral-300)]"
           : "hover:opacity-90",
@@ -223,7 +216,7 @@ function RenderThumbnail({ item, selected, onSelect }) {
 
 function RenderThumbnailRail({ items, activeRenderId, onSelect }) {
   return (
-    <aside className="flex h-[438px] w-[168px] shrink-0 flex-col overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <aside className="flex h-[480px] w-[200px] shrink-0 flex-col overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] max-[1024px]:h-auto max-[1024px]:w-full [&::-webkit-scrollbar]:hidden">
       <div className="flex flex-col gap-[12px] pr-[4px]">
         {items.map((item) => (
           <RenderThumbnail

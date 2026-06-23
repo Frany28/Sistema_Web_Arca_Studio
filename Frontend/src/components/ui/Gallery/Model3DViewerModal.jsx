@@ -880,7 +880,14 @@ export default function Model3DViewerModal({
               interaction-prompt="auto"
               loading="eager"
               reveal="auto"
-              className="absolute inset-0 h-full w-full bg-[var(--color-neutral-200)]"
+              style={{
+                backgroundColor: "var(--color-neutral-200)",
+                display: "block",
+                height: "100%",
+                inset: 0,
+                position: "absolute",
+                width: "100%",
+              }}
             />
           ) : hasPreviewImage ? (
             <ImageHighlighter
