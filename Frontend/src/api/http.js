@@ -163,8 +163,8 @@ export const projectsApi = {
     });
   },
 
-  getFileContentUrl({ fileId, projectId }) {
-    const token = getAuthToken();
+  getFileContentUrl({ accessToken, fileId, projectId }) {
+    const token = accessToken || getAuthToken();
     const params = new URLSearchParams();
 
     if (token) {

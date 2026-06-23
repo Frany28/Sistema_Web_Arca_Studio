@@ -108,7 +108,11 @@ function toMediaFileItem(file, { fallbackImage, project }) {
   const uploadedAt = formatFileDate(file.createdAt);
   const contentUrl =
     project?.id && file.id
-      ? api.projects.getFileContentUrl({ fileId: file.id, projectId: project.id })
+      ? api.projects.getFileContentUrl({
+          accessToken: project.fileAccessToken,
+          fileId: file.id,
+          projectId: project.id,
+        })
       : file.fileUrl;
 
   return {
@@ -148,6 +152,7 @@ function toProjectPresentation(project) {
       const contentUrl =
         project?.id && file.id
           ? api.projects.getFileContentUrl({
+              accessToken: project.fileAccessToken,
               fileId: file.id,
               projectId: project.id,
             })

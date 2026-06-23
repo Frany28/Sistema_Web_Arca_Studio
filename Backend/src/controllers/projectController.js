@@ -38,7 +38,12 @@ export async function getProjectDetail(req, res, next) {
       return;
     }
 
-    res.status(200).json({ project });
+    res.status(200).json({
+      project: {
+        ...project,
+        fileAccessToken: req.session?.token || null,
+      },
+    });
   } catch (error) {
     next(error);
   }
