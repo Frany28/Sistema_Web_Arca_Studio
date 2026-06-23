@@ -1,6 +1,8 @@
 import {
   deleteProjectRequestFile,
   findProjectRequestForFileUpload,
+  findProjectFileForDownload,
+  getProjectFileObject,
   uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
 
@@ -180,6 +182,61 @@ export async function deleteProjectRequestAttachment(req, res, next) {
     }
 
     res.status(200).json(deletedFile);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function streamProjectFile(req, res, next) {
+  try {
+    const projectId = Number(req.params.projectId);
+    const fileId = Number(req.params.fileId);
+
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_ID",
+        message: "El proyecto no es valido.",
+      });
+      return;
+    }
+
+    if (!Number.isInteger(fileId) || fileId <= 0) {
+      res.status(400).json({
+        code: "INVALID_FILE_ID",
+        message: "El archivo no es valido.",
+      });
+      return;
+    }
+
+    const file = await findProjectFileForDownload({
+      fileId,
+      projectId,
+      user: req.user,
+    });
+
+    if (!file) {
+      res.status(404).json({
+        code: "FILE_NOT_FOUND",
+        message: "No se encontro el archivo.",
+      });
+      return;
+    }
+
+    const object = await getProjectFileObject({ fileName: file.fileName });
+    const contentType = object.ContentType || file.fileType || "application/octet-stream";
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "private, max-age=300");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(file.originalName)}"`,
+    );
+
+    if (object.ContentLength || file.fileSize) {
+      res.setHeader("Content-Length", object.ContentLength || file.fileSize);
+    }
+
+    object.Body.pipe(res);
   } catch (error) {
     next(error);
   }

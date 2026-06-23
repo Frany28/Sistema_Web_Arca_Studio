@@ -1,4 +1,8 @@
-import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 
 import {
   buildStorageFileUrl,
@@ -346,4 +350,74 @@ export async function deleteProjectRequestFile({
   }
 
   return { deleted: true, fileId: Number(fileId) };
+}
+
+export async function findProjectFileForDownload({ fileId, projectId, user }) {
+  const params = [projectId, fileId];
+  const roleCode = user?.role?.code;
+  let accessCondition = "false";
+
+  if (roleCode === "admin") {
+    accessCondition = "true";
+  } else if (roleCode === "architect") {
+    params.push(user.id);
+    accessCondition = "(project.assigned_architect_id = $3 or project.is_public = true)";
+  } else if (roleCode === "client" && user.clientId) {
+    params.push(user.clientId);
+    accessCondition = "(project.client_id = $3 or project.is_public = true)";
+  }
+
+  const result = await query(
+    `
+      select
+        file.id,
+        file.title,
+        file.file_type,
+        version.file_name,
+        version.original_name,
+        version.file_size
+      from public.files file
+      inner join public.projects project
+        on project.id = file.project_id
+      left join public.file_versions version
+        on version.file_id = file.id
+        and version.version_number = file.current_version
+        and version.deleted_at is null
+      where file.project_id = $1
+        and file.id = $2
+        and file.deleted_at is null
+        and file.status <> 'deleted'
+        and project.deleted_at is null
+        and (${accessCondition})
+      limit 1
+    `,
+    params,
+  );
+
+  const file = result.rows[0];
+
+  if (!file?.file_name) {
+    return null;
+  }
+
+  return {
+    fileName: file.file_name,
+    fileSize: file.file_size === null ? null : Number(file.file_size),
+    fileType: file.file_type,
+    id: Number(file.id),
+    originalName: file.original_name || file.title || "archivo",
+    title: file.title,
+  };
+}
+
+export async function getProjectFileObject({ fileName }) {
+  const storageConfig = getSupabaseStorageConfig();
+  const s3Client = getSupabaseS3Client();
+
+  return s3Client.send(
+    new GetObjectCommand({
+      Bucket: storageConfig.bucket,
+      Key: fileName,
+    }),
+  );
 }

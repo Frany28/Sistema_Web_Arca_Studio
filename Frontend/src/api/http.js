@@ -20,6 +20,10 @@ export function getAuthToken() {
   }
 }
 
+export function getApiUrl(path) {
+  return `${API_BASE_URL}${path}`;
+}
+
 export function setAuthToken(token) {
   authTokenMemory = token || null;
 
@@ -157,6 +161,21 @@ export const projectsApi = {
       }),
       method: "POST",
     });
+  },
+
+  getFileContentUrl({ fileId, projectId }) {
+    const token = getAuthToken();
+    const params = new URLSearchParams();
+
+    if (token) {
+      params.set("access_token", token);
+    }
+
+    const query = params.toString();
+
+    return getApiUrl(
+      `/projects/${projectId}/files/${fileId}/content${query ? `?${query}` : ""}`,
+    );
   },
 
   updatePublication({ projectId, isPublic }) {

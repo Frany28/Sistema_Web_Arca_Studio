@@ -106,20 +106,25 @@ function formatFileDate(value) {
 function toMediaFileItem(file, { fallbackImage, project }) {
   const title = file.title || file.name || "Archivo";
   const uploadedAt = formatFileDate(file.createdAt);
+  const contentUrl =
+    project?.id && file.id
+      ? api.projects.getFileContentUrl({ fileId: file.id, projectId: project.id })
+      : file.fileUrl;
 
   return {
     author: project.assignedArchitect?.name || project.client?.name || "ARCA Studio",
     extension: file.extension,
     fileType: file.fileType,
     fileUrl: file.fileUrl,
+    fileId: file.id,
     id: `project-file-${file.id}`,
-    image: isImageFile(file) ? file.fileUrl : fallbackImage || null,
+    image: isImageFile(file) ? contentUrl : fallbackImage || null,
     label: title,
-    modelUrl: isModelFile(file) ? file.fileUrl : null,
+    modelUrl: isModelFile(file) ? contentUrl : null,
     size: formatFileSize(file.size),
     title,
     uploadedAt,
-    video: isVideoFile(file) ? file.fileUrl : null,
+    video: isVideoFile(file) ? contentUrl : null,
   };
 }
 
@@ -139,16 +144,28 @@ function toProjectPresentation(project) {
     .map((file) => toMediaFileItem(file, { fallbackImage: firstImageUrl, project }));
   const documents = projectFiles
     .filter((file) => !isImageFile(file) && !isVideoFile(file) && !isModelFile(file))
-    .map((file) => ({
-      fileType: String(file.extension || "FILE").toUpperCase(),
-      fileUrl: file.fileUrl,
-      id: file.id,
-      name: file.title,
-      owner:
-        project.assignedArchitect?.name || project.client?.name || "ARCA Studio",
-      size: formatFileSize(file.size),
-      uploadedAt: formatFileDate(file.createdAt),
-    }));
+    .map((file) => {
+      const contentUrl =
+        project?.id && file.id
+          ? api.projects.getFileContentUrl({
+              fileId: file.id,
+              projectId: project.id,
+            })
+          : file.fileUrl;
+
+      return {
+        fileType: String(file.extension || "FILE").toUpperCase(),
+        fileUrl: contentUrl,
+        id: file.id,
+        name: file.title,
+        owner:
+          project.assignedArchitect?.name ||
+          project.client?.name ||
+          "ARCA Studio",
+        size: formatFileSize(file.size),
+        uploadedAt: formatFileDate(file.createdAt),
+      };
+    });
 
   return {
     ...project,

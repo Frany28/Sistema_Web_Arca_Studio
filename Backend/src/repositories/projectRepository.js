@@ -242,6 +242,7 @@ export async function findProjectDetailForUser(projectId, user) {
             file.current_version,
             version.file_url,
             version.file_extension,
+            version.file_name,
             version.file_size,
             version.created_at
           from public.files file
@@ -269,6 +270,7 @@ export async function findProjectDetailForUser(projectId, user) {
       fileUrl: file.file_url || null,
       id: Number(file.id),
       size: file.file_size === null ? null : Number(file.file_size),
+      storageKey: file.file_name || null,
       title: file.title,
     })),
     requirements: requirementsResult.rows.map((requirement) => ({

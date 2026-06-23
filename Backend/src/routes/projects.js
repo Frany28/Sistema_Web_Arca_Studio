@@ -5,6 +5,7 @@ import {
   getMyProjects,
   updateProjectPublication,
 } from "../controllers/projectController.js";
+import { streamProjectFile } from "../controllers/fileController.js";
 import {
   createProjectComment,
   getProjectComments,
@@ -22,6 +23,12 @@ router.get(
 );
 router.get("/:projectId/comments", requireAuth, getProjectComments);
 router.post("/:projectId/comments", requireAuth, createProjectComment);
+router.get(
+  "/:projectId/files/:fileId/content",
+  requireAuth,
+  requirePermissions("projects.read"),
+  streamProjectFile,
+);
 router.patch(
   "/:projectId/publication",
   requireAuth,

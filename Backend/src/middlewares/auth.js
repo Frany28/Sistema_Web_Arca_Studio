@@ -27,6 +27,12 @@ function getBearerToken(req) {
   return token.trim();
 }
 
+function getQueryToken(req) {
+  const token = req.query?.access_token;
+
+  return typeof token === "string" && token.trim() ? token.trim() : null;
+}
+
 function isTokenOlderThanUser(payload, user) {
   if (!payload.iat || !user.updatedAt) {
     return false;
@@ -40,7 +46,8 @@ function isTokenOlderThanUser(payload, user) {
 
 async function resolveSession(req) {
   const cookies = parseCookies(req.headers.cookie);
-  const token = getBearerToken(req) || cookies[authConfig.cookieName];
+  const token =
+    getBearerToken(req) || cookies[authConfig.cookieName] || getQueryToken(req);
   const payload = verifyAuthToken(token, {
     secret: authConfig.tokenSecret,
   });
