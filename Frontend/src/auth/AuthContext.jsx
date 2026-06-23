@@ -42,6 +42,10 @@ export function AuthProvider({ children }) {
       .me()
       .then((data) => {
         if (isMounted) {
+          if (data.token) {
+            setAuthToken(data.token);
+          }
+
           setUser(normalizeUser(data.user));
         }
       })

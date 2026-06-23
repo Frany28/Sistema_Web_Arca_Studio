@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { api } from "../../api/http.js";
+import { api, setAuthToken } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
@@ -369,6 +369,10 @@ export default function ProjectDetailsPage({
       .getById({ projectId: initialProjectId })
       .then((data) => {
         if (isMounted) {
+          if (data.project?.fileAccessToken) {
+            setAuthToken(data.project.fileAccessToken);
+          }
+
           setProject(data.project || null);
           setResolvedProjectId(data.project?.id || initialProjectId);
         }

@@ -156,6 +156,7 @@ export async function login(req, res, next) {
 
 export function me(req, res) {
   res.status(200).json({
+    token: req.session?.token || null,
     user: req.user,
   });
 }
