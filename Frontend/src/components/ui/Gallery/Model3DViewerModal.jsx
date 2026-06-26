@@ -840,14 +840,14 @@ export default function Model3DViewerModal({
   return createPortal(
     <div
       className={clsx(
-        "fixed inset-0 z-[60] overflow-hidden bg-[rgba(0,0,0,0.42)] backdrop-blur-[10px] transition-opacity",
+        "fixed inset-0 z-[60] overflow-hidden bg-[#777777] transition-opacity",
         isActive ? "opacity-100" : "opacity-0",
       )}
       style={transitionStyle}
     >
       <section
         className={clsx(
-          "flex h-dvh w-dvw gap-[16px] p-[16px] transition-[opacity,transform] transform-gpu will-change-transform will-change-opacity max-[920px]:flex-col max-[920px]:overflow-y-auto",
+          "flex h-dvh w-dvw gap-[16px] p-[8px] transition-[opacity,transform] transform-gpu will-change-transform will-change-opacity max-[920px]:flex-col max-[920px]:overflow-y-auto",
           isActive
             ? "translate-y-0 scale-100 opacity-100"
             : "translate-y-[12px] scale-[0.985] opacity-0",
@@ -862,7 +862,7 @@ export default function Model3DViewerModal({
           className={clsx(
             "relative min-w-0 flex-1 overflow-hidden",
             "rounded-[var(--radius-3)] bg-[var(--color-neutral-200)]",
-            "h-[calc(100dvh-32px)]",
+            "h-[calc(100dvh-16px)]",
             "max-[920px]:h-[62dvh] max-[920px]:min-h-[360px] max-[920px]:flex-none",
             "max-[520px]:h-[58dvh] max-[520px]:min-h-[300px]",
           )}
@@ -925,6 +925,7 @@ export default function Model3DViewerModal({
           )}
 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[156px] bg-[linear-gradient(0deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0)_100%)]" />
 
           <div className="absolute left-[12px] top-[12px]">
             <MainLogo size="32px" alt="ARCA Studio" />
@@ -943,7 +944,7 @@ export default function Model3DViewerModal({
             className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
           />
 
-          {hasPreviewImage && !hasInteractiveModel ? (
+          {hasInteractiveModel || hasPreviewImage ? (
             <ButtonGroup
               items={buttonGroupItems}
               className="absolute bottom-[12px] right-[12px] [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
