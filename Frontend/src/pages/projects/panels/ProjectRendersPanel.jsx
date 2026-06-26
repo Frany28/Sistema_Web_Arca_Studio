@@ -13,8 +13,6 @@ import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 
-const RENDER_LOADING_MS = 1600;
-
 function MediaEmptyState({
   title,
   description,
@@ -88,18 +86,18 @@ function EmptyRenderOverview() {
 
 function RenderLoadingState({ image, progress }) {
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-[var(--radius-3)]">
+    <div className="pointer-events-auto absolute inset-0 z-10 h-full w-full overflow-hidden rounded-[var(--radius-3)]">
       {image ? (
         <img
           src={image}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-[-18px] h-[calc(100%+36px)] w-[calc(100%+36px)] object-cover blur-[14px] scale-105"
           aria-hidden="true"
         />
       ) : (
-        <div className="absolute inset-0 bg-[var(--color-neutral-200)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_43%,#3a3a3a_0%,#262626_44%,#121212_100%)]" />
       )}
-      <div className="absolute inset-0 rounded-[var(--radius-3)] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px]" />
+      <div className="absolute inset-0 rounded-[var(--radius-3)] bg-[rgba(0,0,0,0.58)] backdrop-blur-[12px]" />
 
       <div className="absolute left-1/2 top-1/2 flex w-[280px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[4px]">
         <div className="flex w-full items-start justify-center">
@@ -119,19 +117,71 @@ function RenderLoadingState({ image, progress }) {
   );
 }
 
-function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
+function RenderStage({
+  activeRender,
+  isLoading,
+  progress,
+  onModelError,
+  onModelLoad,
+  onModelProgress,
+  onOpenModel,
+}) {
+  const modelViewerRef = useRef(null);
   const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(activeRender.image);
 
+  useEffect(() => {
+    const modelViewer = modelViewerRef.current;
+
+    if (!modelViewer || !hasInteractiveModel) {
+      return undefined;
+    }
+
+    function handleLoad() {
+      onModelLoad?.();
+    }
+
+    function handleError() {
+      onModelError?.();
+    }
+
+    function handleProgress(event) {
+      const totalProgress = Number(event.detail?.totalProgress);
+
+      if (Number.isFinite(totalProgress)) {
+        onModelProgress?.(Math.round(totalProgress * 100));
+      }
+    }
+
+    if (modelViewer.loaded) {
+      handleLoad();
+    }
+
+    modelViewer.addEventListener("load", handleLoad);
+    modelViewer.addEventListener("error", handleError);
+    modelViewer.addEventListener("progress", handleProgress);
+
+    return () => {
+      modelViewer.removeEventListener("load", handleLoad);
+      modelViewer.removeEventListener("error", handleError);
+      modelViewer.removeEventListener("progress", handleProgress);
+    };
+  }, [
+    hasInteractiveModel,
+    modelSrc,
+    onModelError,
+    onModelLoad,
+    onModelProgress,
+  ]);
+
   return (
     <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
       <div className="relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
-        {isLoading ? (
-          <RenderLoadingState image={activeRender.image} progress={progress} />
-        ) : hasInteractiveModel ? (
+        {hasInteractiveModel ? (
           <>
             <model-viewer
+              ref={modelViewerRef}
               src={modelSrc}
               poster={activeRender.image || undefined}
               alt={activeRender.title}
@@ -161,6 +211,12 @@ function RenderStage({ activeRender, isLoading, progress, onOpenModel }) {
                 width: "100%",
               }}
             />
+            {isLoading ? (
+              <RenderLoadingState
+                image={activeRender.image}
+                progress={progress}
+              />
+            ) : null}
           </>
         ) : hasPreviewImage ? (
           <button
@@ -606,9 +662,10 @@ export default function ProjectRendersPanel({
       resolvedModelGallery[0],
     [resolvedModelGallery, selectedActiveRenderId],
   );
+  const activeModelSrc = activeRender?.modelUrl || activeRender?.fileUrl || null;
 
   useEffect(() => {
-    if (!activeRender) {
+    if (!activeRender || !activeModelSrc) {
       const frameId = window.requestAnimationFrame(() => {
         setIsLoading(false);
         setProgress(100);
@@ -621,31 +678,40 @@ export default function ProjectRendersPanel({
 
     const frameId = window.requestAnimationFrame(() => {
       setIsLoading(true);
-      setProgress(43);
+      setProgress(8);
     });
 
     const intervalId = window.setInterval(() => {
       setProgress((current) => {
-        if (current >= 100) {
-          return 100;
+        if (current >= 92) {
+          return current;
         }
 
-        return Math.min(current + 19, 100);
+        return Math.min(current + 8, 92);
       });
-    }, 240);
-
-    const timeoutId = window.setTimeout(() => {
-      window.clearInterval(intervalId);
-      setProgress(100);
-      setIsLoading(false);
-    }, RENDER_LOADING_MS);
+    }, 360);
 
     return () => {
       window.cancelAnimationFrame(frameId);
       window.clearInterval(intervalId);
-      window.clearTimeout(timeoutId);
     };
-  }, [activeRender, selectedActiveRenderId]);
+  }, [activeModelSrc, activeRender, selectedActiveRenderId]);
+
+  const handleModelLoad = useCallback(() => {
+    setProgress(100);
+    setIsLoading(false);
+  }, []);
+
+  const handleModelError = useCallback(() => {
+    setProgress(100);
+    setIsLoading(false);
+  }, []);
+
+  const handleModelProgress = useCallback((nextProgress) => {
+    setProgress((current) =>
+      Math.max(current, Math.min(Math.max(nextProgress, 8), 98)),
+    );
+  }, []);
 
   useEffect(() => {
     if (!focusedImageId || !renderGallery.length) {
@@ -781,6 +847,9 @@ export default function ProjectRendersPanel({
             activeRender={activeRender}
             isLoading={isLoading}
             progress={progress}
+            onModelError={handleModelError}
+            onModelLoad={handleModelLoad}
+            onModelProgress={handleModelProgress}
             onOpenModel={() => setSelectedModel3D(activeRender)}
           />
           <RenderThumbnailRail
