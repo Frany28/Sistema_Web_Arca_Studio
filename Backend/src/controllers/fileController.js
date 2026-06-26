@@ -229,6 +229,8 @@ export async function streamProjectFile(req, res, next) {
     });
     const contentType = object.ContentType || file.fileType || "application/octet-stream";
 
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+
     if (range && object.ContentRange) {
       res.status(206);
       res.setHeader("Content-Range", object.ContentRange);
