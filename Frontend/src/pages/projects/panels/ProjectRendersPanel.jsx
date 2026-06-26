@@ -13,6 +13,9 @@ import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 
+const MODEL_SLOW_LOADING_MS = 15000;
+const MODEL_LOAD_TIMEOUT_MS = 45000;
+
 function MediaEmptyState({
   title,
   description,
@@ -84,7 +87,20 @@ function EmptyRenderOverview() {
   );
 }
 
-function RenderLoadingState({ image, progress }) {
+function RenderLoadingState({ image, onRetry, progress, state = "loading" }) {
+  const isError = state === "error";
+  const isSlow = state === "slow";
+  const title = isError
+    ? "No se pudo cargar el modelo 3D"
+    : isSlow
+      ? "El modelo sigue cargando"
+      : "Cargando modelo 3D";
+  const description = isError
+    ? "Revisa la conexión o intenta cargar el visor nuevamente."
+    : isSlow
+      ? "El archivo puede ser pesado o tener muchas texturas."
+      : "";
+
   return (
     <div className="pointer-events-auto absolute inset-0 z-10 h-full w-full overflow-hidden rounded-[var(--radius-3)]">
       {image ? (
@@ -99,19 +115,35 @@ function RenderLoadingState({ image, progress }) {
       )}
       <div className="absolute inset-0 rounded-[var(--radius-3)] bg-[rgba(0,0,0,0.58)] backdrop-blur-[12px]" />
 
-      <div className="absolute left-1/2 top-1/2 flex w-[280px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[4px]">
+      <div className="absolute left-1/2 top-1/2 flex w-[320px] max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[8px] text-center">
         <div className="flex w-full items-start justify-center">
           <p className="text-heading-8 text-[var(--color-neutral-100-uniform)]">
-            Cargando modelo 3D
+            {title}
           </p>
         </div>
 
-        <div className="relative h-[8px] w-full overflow-hidden rounded-full bg-[var(--color-neutral-200)]">
-          <div
-            className="h-full rounded-full bg-[var(--color-accent-300)] transition-[width] duration-300 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        {description ? (
+          <p className="text-body-3 text-[rgba(255,255,255,0.78)]">
+            {description}
+          </p>
+        ) : null}
+
+        {!isError ? (
+          <div className="relative h-[8px] w-full overflow-hidden rounded-full bg-[var(--color-neutral-200)]">
+            <div
+              className="h-full rounded-full bg-[var(--color-accent-300)] transition-[width] duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="mt-[4px] h-[36px] cursor-pointer rounded-[var(--radius-2)] bg-[var(--color-neutral-100)] px-[14px] text-heading-8 text-[var(--color-text-300)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={onRetry}
+          >
+            Reintentar
+          </button>
+        )}
       </div>
     </div>
   );
@@ -120,6 +152,9 @@ function RenderLoadingState({ image, progress }) {
 function RenderStage({
   activeRender,
   isLoading,
+  loadState,
+  modelReloadKey,
+  onModelRetry,
   progress,
   onModelError,
   onModelLoad,
@@ -161,14 +196,21 @@ function RenderStage({
     modelViewer.addEventListener("load", handleLoad);
     modelViewer.addEventListener("error", handleError);
     modelViewer.addEventListener("progress", handleProgress);
+    const loadedCheckIntervalId = window.setInterval(() => {
+      if (modelViewer.loaded) {
+        handleLoad();
+      }
+    }, 250);
 
     return () => {
+      window.clearInterval(loadedCheckIntervalId);
       modelViewer.removeEventListener("load", handleLoad);
       modelViewer.removeEventListener("error", handleError);
       modelViewer.removeEventListener("progress", handleProgress);
     };
   }, [
     hasInteractiveModel,
+    modelReloadKey,
     modelSrc,
     onModelError,
     onModelLoad,
@@ -181,6 +223,7 @@ function RenderStage({
         {hasInteractiveModel ? (
           <>
             <model-viewer
+              key={`${modelSrc}-${modelReloadKey}`}
               ref={modelViewerRef}
               src={modelSrc}
               poster={activeRender.image || undefined}
@@ -214,7 +257,9 @@ function RenderStage({
             {isLoading ? (
               <RenderLoadingState
                 image={activeRender.image}
+                onRetry={onModelRetry}
                 progress={progress}
+                state={loadState}
               />
             ) : null}
           </>
@@ -644,7 +689,11 @@ export default function ProjectRendersPanel({
     resolvedModelGallery[0]?.id,
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [loadState, setLoadState] = useState("loading");
+  const [modelReloadKey, setModelReloadKey] = useState(0);
   const [progress, setProgress] = useState(43);
+  const slowLoadingTimeoutRef = useRef(null);
+  const loadTimeoutRef = useRef(null);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
   const [isVideoGalleryModalOpen, setIsVideoGalleryModalOpen] = useState(false);
   const [selectedModel3D, setSelectedModel3D] = useState(null);
@@ -664,10 +713,18 @@ export default function ProjectRendersPanel({
   );
   const activeModelSrc = activeRender?.modelUrl || activeRender?.fileUrl || null;
 
+  const clearModelLoadingTimers = useCallback(() => {
+    window.clearTimeout(slowLoadingTimeoutRef.current);
+    window.clearTimeout(loadTimeoutRef.current);
+  }, []);
+
   useEffect(() => {
+    clearModelLoadingTimers();
+
     if (!activeRender || !activeModelSrc) {
       const frameId = window.requestAnimationFrame(() => {
         setIsLoading(false);
+        setLoadState("loaded");
         setProgress(100);
       });
 
@@ -678,8 +735,22 @@ export default function ProjectRendersPanel({
 
     const frameId = window.requestAnimationFrame(() => {
       setIsLoading(true);
+      setLoadState("loading");
       setProgress(8);
     });
+
+    slowLoadingTimeoutRef.current = window.setTimeout(() => {
+      setLoadState((current) =>
+        current === "loading" ? "slow" : current,
+      );
+    }, MODEL_SLOW_LOADING_MS);
+
+    loadTimeoutRef.current = window.setTimeout(() => {
+      setIsLoading(true);
+      setLoadState((current) =>
+        current === "loading" || current === "slow" ? "error" : current,
+      );
+    }, MODEL_LOAD_TIMEOUT_MS);
 
     const intervalId = window.setInterval(() => {
       setProgress((current) => {
@@ -693,25 +764,48 @@ export default function ProjectRendersPanel({
 
     return () => {
       window.cancelAnimationFrame(frameId);
+      clearModelLoadingTimers();
       window.clearInterval(intervalId);
     };
-  }, [activeModelSrc, activeRender, selectedActiveRenderId]);
+  }, [
+    activeModelSrc,
+    activeRender,
+    clearModelLoadingTimers,
+    modelReloadKey,
+    selectedActiveRenderId,
+  ]);
 
   const handleModelLoad = useCallback(() => {
+    clearModelLoadingTimers();
     setProgress(100);
+    setLoadState("loaded");
     setIsLoading(false);
-  }, []);
+  }, [clearModelLoadingTimers]);
 
   const handleModelError = useCallback(() => {
+    clearModelLoadingTimers();
     setProgress(100);
-    setIsLoading(false);
-  }, []);
+    setLoadState("error");
+    setIsLoading(true);
+  }, [clearModelLoadingTimers]);
 
   const handleModelProgress = useCallback((nextProgress) => {
+    if (nextProgress > 0) {
+      setLoadState((current) => (current === "error" ? current : "loading"));
+    }
+
     setProgress((current) =>
       Math.max(current, Math.min(Math.max(nextProgress, 8), 98)),
     );
   }, []);
+
+  const handleModelRetry = useCallback(() => {
+    clearModelLoadingTimers();
+    setIsLoading(true);
+    setLoadState("loading");
+    setProgress(8);
+    setModelReloadKey((current) => current + 1);
+  }, [clearModelLoadingTimers]);
 
   useEffect(() => {
     if (!focusedImageId || !renderGallery.length) {
@@ -846,6 +940,9 @@ export default function ProjectRendersPanel({
           <RenderStage
             activeRender={activeRender}
             isLoading={isLoading}
+            loadState={loadState}
+            modelReloadKey={modelReloadKey}
+            onModelRetry={handleModelRetry}
             progress={progress}
             onModelError={handleModelError}
             onModelLoad={handleModelLoad}
