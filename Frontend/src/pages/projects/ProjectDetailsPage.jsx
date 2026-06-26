@@ -148,10 +148,13 @@ function toProjectPresentation(project) {
   const progressValue = Number(project?.progress) || 0;
   const projectFiles = project?.files || [];
   const imageFiles = projectFiles.filter(isImageFile);
-  const firstImageUrl = imageFiles.find((file) => file.fileUrl)?.fileUrl || null;
   const renderGallery = imageFiles
     .filter((file) => file.fileUrl)
     .map((file) => toMediaFileItem(file, { project }));
+  const firstImageUrl =
+    renderGallery.find((file) => file.image)?.image ||
+    imageFiles.find((file) => file.fileUrl)?.fileUrl ||
+    null;
   const videoGallery = projectFiles
     .filter((file) => isVideoFile(file) && file.fileUrl)
     .map((file) => toMediaFileItem(file, { fallbackImage: firstImageUrl, project }));

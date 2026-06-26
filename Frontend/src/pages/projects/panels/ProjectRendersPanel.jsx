@@ -320,6 +320,8 @@ function RenderStage({
 
 function RenderThumbnail({ item, selected, onSelect }) {
   const hasPreviewImage = Boolean(item.image);
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const showPreviewImage = hasPreviewImage && !imageLoadError;
 
   return (
     <button
@@ -333,14 +335,19 @@ function RenderThumbnail({ item, selected, onSelect }) {
       )}
       aria-pressed={selected}
     >
-      {hasPreviewImage ? (
+      {showPreviewImage ? (
         <img
           src={item.image}
           alt={item.title}
           className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+          onError={() => setImageLoadError(true)}
         />
       ) : (
-        <div className="h-full w-full bg-[var(--color-neutral-200)]" />
+        <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_50%_38%,#3a3a3a_0%,#171717_68%)] px-[12px] text-center">
+          <span className="text-heading-8 text-[var(--color-neutral-100-uniform)]">
+            Modelo 3D
+          </span>
+        </div>
       )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.12)_35%,rgba(0,0,0,0.52)_100%)]" />
       <span className="absolute inset-x-[8px] bottom-[8px] text-heading-8 text-[var(--color-neutral-100-uniform)]">
