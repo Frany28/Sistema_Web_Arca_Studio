@@ -875,24 +875,27 @@ export default function Model3DViewerModal({
               alt={displayItem.title}
               camera-controls
               auto-rotate
-              camera-orbit="180deg 74deg 115%"
-              min-camera-orbit="auto 18deg 70%"
-              max-camera-orbit="auto 88deg 280%"
-              field-of-view="28deg"
-              min-field-of-view="18deg"
-              max-field-of-view="45deg"
-              environment-image="legacy"
-              shadow-intensity="0.65"
-              shadow-softness="0.85"
-              exposure="0.28"
-              tone-mapping="commerce"
+              auto-rotate-delay="0"
+              camera-orbit="135deg 68deg 120%"
+              min-camera-orbit="auto 12deg 65%"
+              max-camera-orbit="auto 88deg 320%"
+              field-of-view="32deg"
+              min-field-of-view="16deg"
+              max-field-of-view="55deg"
+              environment-image="neutral"
+              shadow-intensity="0.9"
+              shadow-softness="0.65"
+              exposure="1"
+              tone-mapping="aces"
+              interpolation-decay="120"
               interaction-prompt="auto"
               loading="eager"
               reveal="auto"
+              touch-action="pan-y"
               style={{
                 background:
-                  "radial-gradient(circle at 50% 43%, #3a3a3a 0%, #262626 44%, #121212 100%)",
-                backgroundColor: "#171717",
+                  "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
+                backgroundColor: "#d8d6d0",
                 display: "block",
                 height: "100%",
                 inset: 0,

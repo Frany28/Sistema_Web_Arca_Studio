@@ -217,6 +217,25 @@ function RenderStage({
     onModelProgress,
   ]);
 
+  useEffect(() => {
+    const modelViewer = modelViewerRef.current;
+
+    if (!modelViewer || !hasInteractiveModel) {
+      return undefined;
+    }
+
+    function handleDoubleClick(event) {
+      event.preventDefault();
+      onOpenModel?.();
+    }
+
+    modelViewer.addEventListener("dblclick", handleDoubleClick);
+
+    return () => {
+      modelViewer.removeEventListener("dblclick", handleDoubleClick);
+    };
+  }, [hasInteractiveModel, modelSrc, onOpenModel]);
+
   return (
     <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
       <div className="relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
@@ -230,24 +249,28 @@ function RenderStage({
               alt={activeRender.title}
               camera-controls
               auto-rotate
-              camera-orbit="180deg 74deg 115%"
-              min-camera-orbit="auto 18deg 70%"
-              max-camera-orbit="auto 88deg 280%"
-              field-of-view="28deg"
-              min-field-of-view="18deg"
-              max-field-of-view="45deg"
-              environment-image="legacy"
-              shadow-intensity="0.65"
-              shadow-softness="0.85"
-              exposure="0.28"
-              tone-mapping="commerce"
+              auto-rotate-delay="0"
+              camera-orbit="135deg 68deg 120%"
+              min-camera-orbit="auto 12deg 65%"
+              max-camera-orbit="auto 88deg 320%"
+              field-of-view="32deg"
+              min-field-of-view="16deg"
+              max-field-of-view="55deg"
+              environment-image="neutral"
+              shadow-intensity="0.9"
+              shadow-softness="0.65"
+              exposure="1"
+              tone-mapping="aces"
+              interpolation-decay="120"
               interaction-prompt="none"
               loading="eager"
               reveal="auto"
+              touch-action="pan-y"
               style={{
                 background:
-                  "radial-gradient(circle at 50% 43%, #3a3a3a 0%, #262626 44%, #121212 100%)",
-                backgroundColor: "#171717",
+                  "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
+                backgroundColor: "#d8d6d0",
+                cursor: "zoom-in",
                 display: "block",
                 height: "100%",
                 "--poster-color": "transparent",
