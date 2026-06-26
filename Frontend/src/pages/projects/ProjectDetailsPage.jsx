@@ -151,16 +151,13 @@ function toProjectPresentation(project) {
   const renderGallery = imageFiles
     .filter((file) => file.fileUrl)
     .map((file) => toMediaFileItem(file, { project }));
-  const firstImageUrl =
-    renderGallery.find((file) => file.image)?.image ||
-    imageFiles.find((file) => file.fileUrl)?.fileUrl ||
-    null;
+  const firstImageUrl = renderGallery.find((file) => file.image)?.image || null;
   const videoGallery = projectFiles
     .filter((file) => isVideoFile(file) && file.fileUrl)
     .map((file) => toMediaFileItem(file, { fallbackImage: firstImageUrl, project }));
   const modelGallery = projectFiles
     .filter((file) => isModelFile(file) && file.fileUrl)
-    .map((file) => toMediaFileItem(file, { fallbackImage: firstImageUrl, project }));
+    .map((file) => toMediaFileItem(file, { project }));
   const documents = projectFiles
     .filter((file) => !isImageFile(file) && !isVideoFile(file) && !isModelFile(file))
     .map((file) => {
