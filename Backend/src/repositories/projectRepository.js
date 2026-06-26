@@ -36,6 +36,7 @@ function toProject(row) {
     generalArea: toNumber(row.general_area),
     hasPlans: Boolean(row.has_plans),
     id: Number(row.id),
+    image: row.image_url || null,
     isPublic: Boolean(row.is_public),
     location: row.location,
     locationCoordinates:
@@ -117,10 +118,25 @@ export async function listProjectsForUser(user) {
         architect.email as architect_email,
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
-        architect.profile_photo_url as architect_profile_photo_url
+        architect.profile_photo_url as architect_profile_photo_url,
+        image_version.file_url as image_url
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
+      left join lateral (
+        select version.file_url
+        from public.files file
+        inner join public.file_versions version
+          on version.file_id = file.id
+          and version.version_number = file.current_version
+          and version.deleted_at is null
+        where file.project_id = p.id
+          and file.deleted_at is null
+          and file.status <> 'deleted'
+          and file.file_type like 'image/%'
+        order by file.created_at desc, file.id desc
+        limit 1
+      ) image_version on true
       where p.deleted_at is null
         and c.deleted_at is null
         and (${accessCondition})
@@ -173,10 +189,25 @@ export async function findProjectDetailForUser(projectId, user) {
         architect.email as architect_email,
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
-        architect.profile_photo_url as architect_profile_photo_url
+        architect.profile_photo_url as architect_profile_photo_url,
+        image_version.file_url as image_url
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
+      left join lateral (
+        select version.file_url
+        from public.files file
+        inner join public.file_versions version
+          on version.file_id = file.id
+          and version.version_number = file.current_version
+          and version.deleted_at is null
+        where file.project_id = p.id
+          and file.deleted_at is null
+          and file.status <> 'deleted'
+          and file.file_type like 'image/%'
+        order by file.created_at desc, file.id desc
+        limit 1
+      ) image_version on true
       where p.id = ${projectIdParameter}
         and p.deleted_at is null
         and c.deleted_at is null
@@ -341,10 +372,25 @@ export async function updateProjectVisibility(projectId, isPublic) {
         architect.email as architect_email,
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
-        architect.profile_photo_url as architect_profile_photo_url
+        architect.profile_photo_url as architect_profile_photo_url,
+        image_version.file_url as image_url
       from updated_project p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
+      left join lateral (
+        select version.file_url
+        from public.files file
+        inner join public.file_versions version
+          on version.file_id = file.id
+          and version.version_number = file.current_version
+          and version.deleted_at is null
+        where file.project_id = p.id
+          and file.deleted_at is null
+          and file.status <> 'deleted'
+          and file.file_type like 'image/%'
+        order by file.created_at desc, file.id desc
+        limit 1
+      ) image_version on true
     `,
     [projectId, isPublic],
   );

@@ -143,7 +143,8 @@ function toProjectRow(project, index) {
   return {
     ...project,
     assigneeAvatars: getProjectAssigneeAvatars(project),
-    image: PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
+    image:
+      project.image || PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
     title: project.name,
   };
 }
