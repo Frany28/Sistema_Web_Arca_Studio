@@ -25,7 +25,7 @@ import { createAuthToken, verifyAuthToken } from "../utils/tokens.js";
 const FAKE_BCRYPT_HASH =
   "$2a$10$rN2S9IoJgP1Fx41s6fWaIOY6PksHh4EYoJ.13YZRbrxIJpV66F79i";
 const PASSWORD_RESET_ACCEPTED_RESPONSE = {
-  message: "Si el correo esta registrado, enviaremos un enlace de recuperacion.",
+  message: "Si el correo está registrado, enviaremos un enlace de recuperación.",
 };
 
 function isValidEmail(email) {

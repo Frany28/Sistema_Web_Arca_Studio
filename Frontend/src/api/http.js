@@ -65,7 +65,7 @@ async function apiRequest(path, options = {}) {
 
   if (!response.ok) {
     const error = new Error(
-      data?.message || "La API no esta disponible para esta accion.",
+      data?.message || "La API no está disponible para esta acción.",
     );
     error.status = response.status;
     error.code = data?.code || "API_ROUTE_UNAVAILABLE";

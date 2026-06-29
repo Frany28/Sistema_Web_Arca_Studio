@@ -155,7 +155,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     if (!projectType) {
       res.status(400).json({
         code: "PROJECT_TYPE_REQUIRED",
-        message: "Selecciona un tipo de proyecto valido.",
+        message: "Selecciona un tipo de proyecto válido.",
       });
       return;
     }
@@ -163,7 +163,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     if (!projectLocation) {
       res.status(400).json({
         code: "PROJECT_LOCATION_REQUIRED",
-        message: "Ingresa la ubicacion del proyecto.",
+        message: "Ingresa la ubicación del proyecto.",
       });
       return;
     }
@@ -171,7 +171,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     if (projectLocation.length > PROJECT_LOCATION_MAX_LENGTH) {
       res.status(400).json({
         code: "PROJECT_LOCATION_TOO_LONG",
-        message: `La ubicacion no puede superar ${PROJECT_LOCATION_MAX_LENGTH} caracteres.`,
+        message: `La ubicación no puede superar ${PROJECT_LOCATION_MAX_LENGTH} caracteres.`,
       });
       return;
     }
@@ -186,7 +186,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
       res.status(400).json({
         code: "INVALID_PROJECT_LOCATION_FORMAT",
         message:
-          "Ingresa una direccion valida o selecciona una ubicacion sugerida.",
+          "Ingresa una dirección válida o selecciona una ubicación sugerida.",
       });
       return;
     }
@@ -202,7 +202,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     if (description.length > PROJECT_DESCRIPTION_MAX_LENGTH) {
       res.status(400).json({
         code: "PROJECT_DESCRIPTION_TOO_LONG",
-        message: `La descripcion no puede superar ${PROJECT_DESCRIPTION_MAX_LENGTH} caracteres.`,
+        message: `La descripción no puede superar ${PROJECT_DESCRIPTION_MAX_LENGTH} caracteres.`,
       });
       return;
     }
@@ -210,7 +210,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     if (!description) {
       res.status(400).json({
         code: "PROJECT_DESCRIPTION_REQUIRED",
-        message: "Ingresa una descripcion del proyecto.",
+        message: "Ingresa una descripción del proyecto.",
       });
       return;
     }
@@ -218,7 +218,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     if (description.length < PROJECT_DESCRIPTION_MIN_LENGTH) {
       res.status(400).json({
         code: "PROJECT_DESCRIPTION_TOO_SHORT",
-        message: `La descripcion debe tener al menos ${PROJECT_DESCRIPTION_MIN_LENGTH} caracteres.`,
+        message: `La descripción debe tener al menos ${PROJECT_DESCRIPTION_MIN_LENGTH} caracteres.`,
       });
       return;
     }
@@ -234,7 +234,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     if (!isValidReferenceLink(referenceLink)) {
       res.status(400).json({
         code: "INVALID_REFERENCE_LINK",
-        message: "Ingresa un link de referencia valido.",
+        message: "Ingresa un link de referencia válido.",
       });
       return;
     }
@@ -260,7 +260,7 @@ async function validateProjectRequestPayload(req, res, options = {}) {
     ) {
       res.status(400).json({
         code: "INVALID_PROJECT_COORDINATES",
-        message: "Las coordenadas de la ubicacion no son validas.",
+        message: "Las coordenadas de la ubicación no son válidas.",
       });
       return;
     }
@@ -340,7 +340,7 @@ export async function updateProjectRequest(req, res, next) {
     if (!Number.isInteger(projectRequestId) || projectRequestId <= 0) {
       res.status(400).json({
         code: "INVALID_PROJECT_REQUEST_ID",
-        message: "La solicitud de proyecto no es valida.",
+        message: "La solicitud de proyecto no es válida.",
       });
       return;
     }
@@ -353,7 +353,7 @@ export async function updateProjectRequest(req, res, next) {
     if (!projectRequest) {
       res.status(404).json({
         code: "PROJECT_REQUEST_NOT_FOUND",
-        message: "No se encontro la solicitud de proyecto.",
+        message: "No se encontró la solicitud de proyecto.",
       });
       return;
     }
@@ -389,7 +389,7 @@ export async function updateProjectRequest(req, res, next) {
     if (!updatedProjectRequest) {
       res.status(404).json({
         code: "PROJECT_REQUEST_NOT_FOUND",
-        message: "No se encontro la solicitud de proyecto.",
+        message: "No se encontró la solicitud de proyecto.",
       });
       return;
     }

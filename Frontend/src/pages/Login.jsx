@@ -84,7 +84,7 @@ function Login() {
 
       if (error?.code === "AUTH_TOKEN_MISSING") {
         setAuthError(
-          "El backend desplegado debe actualizarse para enviar la sesion.",
+          "El backend desplegado debe actualizarse para enviar la sesión.",
         );
       } else {
         console.error(error);

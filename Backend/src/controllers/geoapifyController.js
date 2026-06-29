@@ -81,7 +81,7 @@ export async function getAddressSuggestions(req, res, next) {
     if (!apiKey) {
       res.status(500).json({
         code: "GEOAPIFY_API_KEY_MISSING",
-        message: "Geoapify no esta configurado.",
+        message: "Geoapify no está configurado.",
       });
       return;
     }
@@ -120,7 +120,7 @@ export async function getAddressSuggestions(req, res, next) {
     if (!response.ok) {
       res.status(502).json({
         code: "GEOAPIFY_REQUEST_FAILED",
-        message: "No se pudieron obtener sugerencias de ubicacion.",
+        message: "No se pudieron obtener sugerencias de ubicación.",
       });
       return;
     }

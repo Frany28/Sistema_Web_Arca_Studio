@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
 
     if (!data.token) {
       throw Object.assign(
-        new Error("El backend de autenticacion no esta actualizado."),
+        new Error("El backend de autenticación no está actualizado."),
         { code: "AUTH_TOKEN_MISSING" },
       );
     }

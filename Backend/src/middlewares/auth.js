@@ -106,7 +106,7 @@ export async function requireAuth(req, res, next) {
   if (!req.session.isAuthenticated || !req.user) {
     res.status(401).json({
       code: "UNAUTHENTICATED",
-      message: "Sesion requerida.",
+      message: "Sesión requerida.",
     });
     return;
   }
@@ -119,7 +119,7 @@ export function requireRoles(...allowedRoles) {
     if (!req.user) {
       res.status(401).json({
         code: "UNAUTHENTICATED",
-        message: "Sesion requerida.",
+        message: "Sesión requerida.",
       });
       return;
     }
@@ -127,7 +127,7 @@ export function requireRoles(...allowedRoles) {
     if (!allowedRoles.includes(req.user.role.code)) {
       res.status(403).json({
         code: "FORBIDDEN",
-        message: "No tienes permisos para realizar esta accion.",
+        message: "No tienes permisos para realizar esta acción.",
       });
       return;
     }
@@ -141,7 +141,7 @@ export function requirePermissions(...requiredPermissions) {
     if (!req.user) {
       res.status(401).json({
         code: "UNAUTHENTICATED",
-        message: "Sesion requerida.",
+        message: "Sesión requerida.",
       });
       return;
     }
@@ -154,7 +154,7 @@ export function requirePermissions(...requiredPermissions) {
     if (!hasAllPermissions) {
       res.status(403).json({
         code: "FORBIDDEN",
-        message: "No tienes permisos para realizar esta accion.",
+        message: "No tienes permisos para realizar esta acción.",
       });
       return;
     }

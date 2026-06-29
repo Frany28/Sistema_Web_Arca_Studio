@@ -2,11 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import "@google/model-viewer";
 import Button from "../../../components/ui/Button/Button.jsx";
+import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
 import SharedGalleryImageCard from "../../../components/ui/Gallery/GalleryImageCard.jsx";
 import GalleryVideosModal from "../../../components/ui/Gallery/GalleryVideosModal.jsx";
 import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.jsx";
-import Model3DViewerModal from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
+import Model3DViewerModal, {
+  Model3DViewerControls,
+} from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
@@ -217,28 +220,9 @@ function RenderStage({
     onModelProgress,
   ]);
 
-  useEffect(() => {
-    const modelViewer = modelViewerRef.current;
-
-    if (!modelViewer || !hasInteractiveModel) {
-      return undefined;
-    }
-
-    function handleDoubleClick(event) {
-      event.preventDefault();
-      onOpenModel?.();
-    }
-
-    modelViewer.addEventListener("dblclick", handleDoubleClick);
-
-    return () => {
-      modelViewer.removeEventListener("dblclick", handleDoubleClick);
-    };
-  }, [hasInteractiveModel, modelSrc, onOpenModel]);
-
   return (
     <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
-      <div className="relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
+      <div className="group relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
         {hasInteractiveModel ? (
           <>
             <model-viewer
@@ -270,7 +254,6 @@ function RenderStage({
                 background:
                   "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
                 backgroundColor: "#d8d6d0",
-                cursor: "zoom-in",
                 display: "block",
                 height: "100%",
                 "--poster-color": "transparent",
@@ -309,6 +292,19 @@ function RenderStage({
             </span>
           </div>
         )}
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.22)_0%,rgba(0,0,0,0)_100%)]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[156px] bg-[linear-gradient(0deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
+        <div className="pointer-events-none absolute left-[12px] top-[12px] z-10">
+          <MainLogo size="32px" alt="ARCA Studio" />
+        </div>
+
+        {hasInteractiveModel || hasPreviewImage ? (
+          <Model3DViewerControls
+            onExpand={onOpenModel}
+            className="absolute bottom-[12px] right-[12px] z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
+          />
+        ) : null}
       </div>
 
       <h2 className="text-heading-4 text-[var(--color-text-300)]">

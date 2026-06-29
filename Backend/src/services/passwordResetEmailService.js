@@ -26,7 +26,7 @@ function getMailFrom() {
 function createEmailServiceError(message, code, status = 502) {
   const error = new Error(message);
   error.code = code;
-  error.publicMessage = "No pudimos enviar el correo de recuperacion.";
+  error.publicMessage = "No pudimos enviar el correo de recuperación.";
   error.status = status;
   return error;
 }
@@ -122,14 +122,14 @@ export async function sendPasswordResetEmail({
           </div>
           <h1 style="font-size: 22px; margin-bottom: 12px;">Restablece tu contraseña</h1>
           <p>Recibimos una solicitud para restablecer la contraseña de ${safeEmail}.</p>
-          <p>Haz clic en el siguiente boton para continuar con el restablecimiento:</p>
+          <p>Haz clic en el siguiente botón para continuar con el restablecimiento:</p>
           <p>
             <a href="${safeResetUrl}" style="display: inline-block; padding: 12px 18px; background: #ff4438; color: #ffffff; text-decoration: none; border-radius: 8px;">
               Restablecer contraseña
             </a>
           </p>
-          <p>Este enlace vencera en ${expiresInMinutes} minutos.</p>
-          <p>Si el boton no funciona, abre este enlace:</p>
+          <p>Este enlace vencerá en ${expiresInMinutes} minutos.</p>
+          <p>Si el botón no funciona, abre este enlace:</p>
           <p><a href="${safeResetUrl}">${safeResetUrl}</a></p>
           <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
         </div>
@@ -137,7 +137,7 @@ export async function sendPasswordResetEmail({
       text: [
         "Restablece tu contraseña",
         `Visita el siguiente enlace para restablecer tu contraseña: ${resetUrl}`,
-        `Este enlace vencera en ${expiresInMinutes} minutos.`,
+        `Este enlace vencerá en ${expiresInMinutes} minutos.`,
         "Si no solicitaste este cambio, puedes ignorar este correo.",
       ].join("\n\n"),
     }),

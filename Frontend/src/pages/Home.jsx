@@ -332,7 +332,7 @@ function Home() {
 
     if (!getAuthToken()) {
       setProjects([]);
-      setProjectsError("Vuelve a iniciar sesion para sincronizar la sesion.");
+      setProjectsError("Vuelve a iniciar sesión para sincronizar la sesión.");
       setProjectsLoading(false);
       return () => {
         isMounted = false;

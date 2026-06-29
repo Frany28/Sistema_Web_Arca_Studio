@@ -35,7 +35,7 @@ function ProjectRequestValidationStep({
   return (
     <ProjectRequestModalShell
       open={open}
-      sectionTitle="Validacion"
+      sectionTitle="Validación"
       onClose={onClose}
       onPrevious={onPrevious}
       onNext={() => onNext?.(code)}
@@ -44,14 +44,14 @@ function ProjectRequestValidationStep({
     >
       <div className="flex w-full flex-col gap-[8px]">
         <Input
-          label="Codigo"
+          label="Código"
           required={false}
           showLabelInfo={false}
           showHint
           size="S"
           type="Default input"
-          placeholder="Ingresa el codigo"
-          hintText="Enviamos un codigo a tu correo"
+          placeholder="Ingresa el código"
+          hintText="Enviamos un código a tu correo"
           leftIcon={<SecurityIcon className="size-5" />}
           rightIcon={null}
           showLeftIcon

@@ -171,6 +171,44 @@ function ExpandIcon() {
   );
 }
 
+export function Model3DViewerControls({ className, onExpand }) {
+  const buttonGroupItems = useMemo(
+    () => [
+      {
+        label: "Ajustes",
+        showText: false,
+        icon: <SettingsIcon />,
+        "aria-label": "Ajustes del modelo 3D",
+      },
+      {
+        label: "Vista",
+        showText: false,
+        icon: <ViewIcon />,
+        "aria-label": "Cambiar vista del modelo 3D",
+      },
+      {
+        label: "Expandir",
+        showText: false,
+        icon: <ExpandIcon />,
+        "aria-label": "Expandir modelo 3D",
+      },
+    ],
+    [],
+  );
+
+  return (
+    <ButtonGroup
+      items={buttonGroupItems}
+      className={className}
+      onChange={(index) => {
+        if (index === 2) {
+          onExpand?.();
+        }
+      }}
+    />
+  );
+}
+
 const GENERAL_COMMENTS = [
   {
     id: "comment-1",
@@ -727,30 +765,6 @@ export default function Model3DViewerModal({
   const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
     useState(null);
 
-  const buttonGroupItems = useMemo(
-    () => [
-      {
-        label: "Ajustes",
-        showText: false,
-        icon: <SettingsIcon />,
-        "aria-label": "Ajustes del modelo 3D",
-      },
-      {
-        label: "Vista",
-        showText: false,
-        icon: <ViewIcon />,
-        "aria-label": "Cambiar vista del modelo 3D",
-      },
-      {
-        label: "Expandir",
-        showText: false,
-        icon: <ExpandIcon />,
-        "aria-label": "Expandir modelo 3D",
-      },
-    ],
-    [],
-  );
-
   useEffect(() => {
     let cancelled = false;
 
@@ -945,8 +959,7 @@ export default function Model3DViewerModal({
           />
 
           {hasInteractiveModel || hasPreviewImage ? (
-            <ButtonGroup
-              items={buttonGroupItems}
+            <Model3DViewerControls
               className="absolute bottom-[12px] right-[12px] [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
             />
           ) : null}

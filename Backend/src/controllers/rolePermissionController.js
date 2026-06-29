@@ -73,7 +73,7 @@ export async function updateRolePermissions(req, res, next) {
     if (!Array.isArray(permissionCodes)) {
       res.status(400).json({
         code: "INVALID_PERMISSION_CODES",
-        message: "permissionCodes debe ser un arreglo de codigos de permiso.",
+        message: "permissionCodes debe ser un arreglo de códigos de permiso.",
       });
       return;
     }
@@ -91,7 +91,7 @@ export async function updateRolePermissions(req, res, next) {
     if (result.error === "PERMISSIONS_NOT_FOUND") {
       res.status(400).json({
         code: "PERMISSIONS_NOT_FOUND",
-        message: "Uno o mas permisos no existen o no estan activos.",
+        message: "Uno o más permisos no existen o no están activos.",
         missingPermissionCodes: result.missingPermissionCodes,
       });
       return;
