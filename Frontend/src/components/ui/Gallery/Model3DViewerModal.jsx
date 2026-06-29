@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import "@google/model-viewer";
@@ -171,7 +171,11 @@ function ExpandIcon() {
   );
 }
 
-export function Model3DViewerControls({ className, onExpand }) {
+export function Model3DViewerControls({
+  className,
+  onExpand,
+  persistSelection = true,
+}) {
   const buttonGroupItems = useMemo(
     () => [
       {
@@ -200,12 +204,80 @@ export function Model3DViewerControls({ className, onExpand }) {
     <ButtonGroup
       items={buttonGroupItems}
       className={className}
+      persistSelection={persistSelection}
       onChange={(index) => {
         if (index === 2) {
           onExpand?.();
         }
       }}
     />
+  );
+}
+
+export function Model3DLoadingState({
+  image,
+  onRetry,
+  progress,
+  state = "loading",
+}) {
+  const isError = state === "error";
+  const isSlow = state === "slow";
+  const title = isError
+    ? "No se pudo cargar el modelo 3D"
+    : isSlow
+      ? "El modelo sigue cargando"
+      : "Cargando modelo 3D";
+  const description = isError
+    ? "Revisa la conexión o intenta cargar el visor nuevamente."
+    : isSlow
+      ? "El archivo puede ser pesado o tener muchas texturas."
+      : "";
+
+  return (
+    <div className="pointer-events-auto absolute inset-0 z-10 h-full w-full overflow-hidden rounded-[var(--radius-3)]">
+      {image ? (
+        <img
+          src={image}
+          alt=""
+          className="absolute inset-[-18px] h-[calc(100%+36px)] w-[calc(100%+36px)] object-cover blur-[14px] scale-105"
+          aria-hidden="true"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_43%,#3a3a3a_0%,#262626_44%,#121212_100%)]" />
+      )}
+      <div className="absolute inset-0 rounded-[var(--radius-3)] bg-[rgba(0,0,0,0.58)] backdrop-blur-[12px]" />
+
+      <div className="absolute left-1/2 top-1/2 flex w-[320px] max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[8px] text-center">
+        <div className="flex w-full items-start justify-center">
+          <p className="text-heading-8 text-[var(--color-neutral-100-uniform)]">
+            {title}
+          </p>
+        </div>
+
+        {description ? (
+          <p className="text-body-3 text-[rgba(255,255,255,0.78)]">
+            {description}
+          </p>
+        ) : null}
+
+        {!isError ? (
+          <div className="relative h-[8px] w-full overflow-hidden rounded-full bg-[var(--color-neutral-200)]">
+            <div
+              className="h-full rounded-full bg-[var(--color-accent-300)] transition-[width] duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="mt-[4px] h-[36px] cursor-pointer rounded-[var(--radius-2)] bg-[var(--color-neutral-100)] px-[14px] text-heading-8 text-[var(--color-text-300)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={onRetry}
+          >
+            Reintentar
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -249,6 +321,8 @@ const GENERAL_COMMENTS = [
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
+const MODEL_SLOW_LOADING_MS = 15000;
+const MODEL_LOAD_TIMEOUT_MS = 45000;
 
 function getCommentTime(comment) {
   const time = new Date(comment.createdAt || 0).getTime();
@@ -755,8 +829,15 @@ export default function Model3DViewerModal({
   const [shouldRender, setShouldRender] = useState(visible);
   const [isActive, setIsActive] = useState(false);
   const [displayItem, setDisplayItem] = useState(item);
+  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [modelLoadState, setModelLoadState] = useState("loading");
+  const [modelProgress, setModelProgress] = useState(8);
+  const [modelReloadKey, setModelReloadKey] = useState(0);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
+  const modelViewerRef = useRef(null);
+  const slowLoadingTimeoutRef = useRef(null);
+  const loadTimeoutRef = useRef(null);
   const { addComment, comments } = useImageComments(displayItem, {
     commentType: "viewer3d",
     projectId,
@@ -764,6 +845,11 @@ export default function Model3DViewerModal({
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
     useState(null);
+
+  const clearModelLoadingTimers = useCallback(() => {
+    window.clearTimeout(slowLoadingTimeoutRef.current);
+    window.clearTimeout(loadTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -779,6 +865,7 @@ export default function Model3DViewerModal({
 
         setDisplayItem(item);
         setIsActive(false);
+        setModelReloadKey(0);
         setFocusedSelectionCommentId(null);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
@@ -815,9 +902,132 @@ export default function Model3DViewerModal({
     () => () => {
       window.clearTimeout(closeTimeoutRef.current);
       window.cancelAnimationFrame(frameRef.current);
+      clearModelLoadingTimers();
     },
-    [],
+    [clearModelLoadingTimers],
   );
+
+  const modelSrc = displayItem?.modelUrl || displayItem?.fileUrl || null;
+  const hasInteractiveModel = Boolean(modelSrc);
+  const hasPreviewImage = Boolean(displayItem?.image);
+
+  useEffect(() => {
+    if (!visible || !hasInteractiveModel) {
+      setIsModelLoading(false);
+      clearModelLoadingTimers();
+      return undefined;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setIsModelLoading(true);
+      setModelLoadState("loading");
+      setModelProgress(8);
+    });
+
+    slowLoadingTimeoutRef.current = window.setTimeout(() => {
+      setModelLoadState((current) =>
+        current === "loading" ? "slow" : current,
+      );
+    }, MODEL_SLOW_LOADING_MS);
+
+    loadTimeoutRef.current = window.setTimeout(() => {
+      setIsModelLoading(true);
+      setModelLoadState((current) =>
+        current === "loading" || current === "slow" ? "error" : current,
+      );
+    }, MODEL_LOAD_TIMEOUT_MS);
+
+    const intervalId = window.setInterval(() => {
+      setModelProgress((current) => {
+        if (current >= 92) {
+          return current;
+        }
+
+        return Math.min(current + 8, 92);
+      });
+    }, 360);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearInterval(intervalId);
+      clearModelLoadingTimers();
+    };
+  }, [
+    clearModelLoadingTimers,
+    displayItem?.id,
+    hasInteractiveModel,
+    modelReloadKey,
+    modelSrc,
+    visible,
+  ]);
+
+  useEffect(() => {
+    const modelViewer = modelViewerRef.current;
+
+    if (!modelViewer || !hasInteractiveModel) {
+      return undefined;
+    }
+
+    function handleLoad() {
+      clearModelLoadingTimers();
+      setModelProgress(100);
+      setModelLoadState("loaded");
+      setIsModelLoading(false);
+    }
+
+    function handleError() {
+      clearModelLoadingTimers();
+      setModelProgress(100);
+      setModelLoadState("error");
+      setIsModelLoading(true);
+    }
+
+    function handleProgress(event) {
+      const totalProgress = Number(event.detail?.totalProgress);
+
+      if (Number.isFinite(totalProgress)) {
+        setModelLoadState((current) =>
+          current === "error" ? current : "loading",
+        );
+        setModelProgress((current) =>
+          Math.max(current, Math.min(Math.round(totalProgress * 100), 98)),
+        );
+      }
+    }
+
+    if (modelViewer.loaded) {
+      handleLoad();
+    }
+
+    modelViewer.addEventListener("load", handleLoad);
+    modelViewer.addEventListener("error", handleError);
+    modelViewer.addEventListener("progress", handleProgress);
+    const loadedCheckIntervalId = window.setInterval(() => {
+      if (modelViewer.loaded) {
+        handleLoad();
+      }
+    }, 250);
+
+    return () => {
+      window.clearInterval(loadedCheckIntervalId);
+      modelViewer.removeEventListener("load", handleLoad);
+      modelViewer.removeEventListener("error", handleError);
+      modelViewer.removeEventListener("progress", handleProgress);
+    };
+  }, [
+    clearModelLoadingTimers,
+    hasInteractiveModel,
+    modelReloadKey,
+    modelSrc,
+  ]);
+
+  function handleModelRetry() {
+    clearModelLoadingTimers();
+    setIsModelLoading(true);
+    setModelLoadState("loading");
+    setModelProgress(8);
+    setModelReloadKey((current) => current + 1);
+  }
 
   if (!shouldRender || !displayItem || typeof document === "undefined") {
     return null;
@@ -827,9 +1037,6 @@ export default function Model3DViewerModal({
     transitionDuration: `${MODAL_TRANSITION_MS}ms`,
     transitionTimingFunction: MODAL_EASING,
   };
-  const modelSrc = displayItem.modelUrl || displayItem.fileUrl || null;
-  const hasInteractiveModel = Boolean(modelSrc);
-  const hasPreviewImage = Boolean(displayItem.image);
 
   function handleSelectionChange(selection) {
     setFocusedSelectionCommentId(null);
@@ -883,41 +1090,53 @@ export default function Model3DViewerModal({
           onClick={(event) => event.stopPropagation()}
         >
           {hasInteractiveModel ? (
-            <model-viewer
-              src={modelSrc}
-              poster={displayItem.image || undefined}
-              alt={displayItem.title}
-              camera-controls
-              auto-rotate
-              auto-rotate-delay="0"
-              camera-orbit="135deg 68deg 120%"
-              min-camera-orbit="auto 4deg 18%"
-              max-camera-orbit="auto 88deg 620%"
-              field-of-view="32deg"
-              min-field-of-view="8deg"
-              max-field-of-view="70deg"
-              environment-image="neutral"
-              shadow-intensity="0.9"
-              shadow-softness="0.65"
-              exposure="1"
-              tone-mapping="aces"
-              interpolation-decay="120"
-              interaction-prompt="auto"
-              loading="eager"
-              reveal="auto"
-              touch-action="pan-y"
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
-                backgroundColor: "#d8d6d0",
-                display: "block",
-                height: "100%",
-                inset: 0,
-                position: "absolute",
-                "--poster-color": "transparent",
-                width: "100%",
-              }}
-            />
+            <>
+              <model-viewer
+                key={`${modelSrc}-${modelReloadKey}`}
+                ref={modelViewerRef}
+                src={modelSrc}
+                poster={displayItem.image || undefined}
+                alt={displayItem.title}
+                camera-controls
+                auto-rotate
+                auto-rotate-delay="0"
+                camera-orbit="135deg 68deg 120%"
+                min-camera-orbit="auto 4deg 18%"
+                max-camera-orbit="auto 88deg 620%"
+                field-of-view="32deg"
+                min-field-of-view="8deg"
+                max-field-of-view="70deg"
+                environment-image="neutral"
+                shadow-intensity="0.9"
+                shadow-softness="0.65"
+                exposure="1"
+                tone-mapping="aces"
+                interpolation-decay="120"
+                interaction-prompt="auto"
+                loading="eager"
+                reveal="auto"
+                touch-action="pan-y"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
+                  backgroundColor: "#d8d6d0",
+                  display: "block",
+                  height: "100%",
+                  inset: 0,
+                  position: "absolute",
+                  "--poster-color": "transparent",
+                  width: "100%",
+                }}
+              />
+              {isModelLoading ? (
+                <Model3DLoadingState
+                  image={displayItem.image}
+                  onRetry={handleModelRetry}
+                  progress={modelProgress}
+                  state={modelLoadState}
+                />
+              ) : null}
+            </>
           ) : hasPreviewImage ? (
             <ImageHighlighter
               annotations={comments.filter((comment) => comment.selection)}

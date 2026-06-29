@@ -302,6 +302,7 @@ function RenderStage({
         {hasInteractiveModel || hasPreviewImage ? (
           <Model3DViewerControls
             onExpand={onOpenModel}
+            persistSelection={false}
             className="absolute bottom-[12px] right-[12px] z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
           />
         ) : null}

@@ -114,13 +114,18 @@ function ButtonGroupItem({
 export function ButtonGroup({
   className,
   items,
+  persistSelection = true,
   selectedIndex = null,
   defaultSelectedIndex = null,
   onChange,
 }) {
   const [internalSelectedIndex, setInternalSelectedIndex] = useState(defaultSelectedIndex);
   const isControlled = selectedIndex !== null && selectedIndex !== undefined;
-  const activeIndex = isControlled ? selectedIndex : internalSelectedIndex;
+  const activeIndex = persistSelection
+    ? isControlled
+      ? selectedIndex
+      : internalSelectedIndex
+    : null;
 
   const normalizedItems = useMemo(
     () =>
@@ -143,7 +148,7 @@ export function ButtonGroup({
       return;
     }
 
-    if (!isControlled) {
+    if (persistSelection && !isControlled) {
       setInternalSelectedIndex(index);
     }
 
