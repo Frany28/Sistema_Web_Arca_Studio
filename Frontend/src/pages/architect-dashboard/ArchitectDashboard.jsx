@@ -144,6 +144,7 @@ function ArchitectDashboard({ empty = false }) {
   );
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: commentProjectRows.map((project) => project.id),
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
   const commentsProjectId = commentProjectRows[0]?.id ?? null;
   const {
@@ -166,7 +167,7 @@ function ArchitectDashboard({ empty = false }) {
   } = useRecentProjectComments({
     enabled: commentProjectRows.length > 0,
     projectIds: commentProjectRows.map((project) => project.id),
-    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
     user,
   });
 

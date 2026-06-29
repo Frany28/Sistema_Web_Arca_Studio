@@ -103,6 +103,32 @@ function upsertCommentById(comments, comment) {
     : [...comments, comment];
 }
 
+function sortCommentsByCreatedAt(comments) {
+  return [...comments].sort(
+    (left, right) =>
+      new Date(left.createdAt || 0).getTime() -
+      new Date(right.createdAt || 0).getTime(),
+  );
+}
+
+function mergeCommentsById(currentComments, nextComments) {
+  const commentsById = new Map();
+
+  currentComments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  nextComments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  return sortCommentsByCreatedAt(Array.from(commentsById.values()));
+}
+
 export function useProjectComments({
   enabled = true,
   projectId,
@@ -166,9 +192,30 @@ export function useProjectComments({
         }
       },
     });
+    const refreshIntervalId =
+      refreshIntervalMs > 0
+        ? window.setInterval(() => {
+            api.projects
+              .listComments({ projectId })
+              .then((data) => {
+                if (isMounted) {
+                  setComments((current) =>
+                    mergeCommentsById(
+                      current,
+                      Array.isArray(data.comments) ? data.comments : [],
+                    ),
+                  );
+                }
+              })
+              .catch(() => {});
+          }, refreshIntervalMs)
+        : null;
 
     return () => {
       isMounted = false;
+      if (refreshIntervalId) {
+        window.clearInterval(refreshIntervalId);
+      }
       unsubscribe();
     };
   }, [enabled, projectId, refreshIntervalMs]);
@@ -330,9 +377,35 @@ export function useRecentProjectComments({
         },
       }),
     );
+    const refreshIntervalId =
+      refreshIntervalMs > 0
+        ? window.setInterval(() => {
+            Promise.all(
+              normalizedProjectIds.map((projectId) =>
+                api.projects.listComments({ projectId }),
+              ),
+            )
+              .then((responses) => {
+                if (isMounted) {
+                  setComments((current) =>
+                    mergeCommentsById(
+                      current,
+                      responses.flatMap((data) =>
+                        Array.isArray(data.comments) ? data.comments : [],
+                      ),
+                    ),
+                  );
+                }
+              })
+              .catch(() => {});
+          }, refreshIntervalMs)
+        : null;
 
     return () => {
       isMounted = false;
+      if (refreshIntervalId) {
+        window.clearInterval(refreshIntervalId);
+      }
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
   }, [enabled, normalizedProjectIds, refreshIntervalMs]);

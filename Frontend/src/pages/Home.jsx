@@ -260,6 +260,7 @@ function Home() {
   );
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: ownedProjectRows.map((project) => project.id),
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
   const commentsProjectId = ownedProjectRows[0]?.id ?? null;
   const {
@@ -282,7 +283,7 @@ function Home() {
   } = useRecentProjectComments({
     enabled: ownedProjectRows.length > 0,
     projectIds: ownedProjectRows.map((project) => project.id),
-    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 0,
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
     user,
   });
 

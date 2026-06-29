@@ -131,7 +131,33 @@ function upsertCommentById(comments, comment) {
     : [...comments, comment];
 }
 
-function useProjectCommentRows(projectIds) {
+function sortCommentsByCreatedAt(comments) {
+  return [...comments].sort(
+    (left, right) =>
+      new Date(left.createdAt || 0).getTime() -
+      new Date(right.createdAt || 0).getTime(),
+  );
+}
+
+function mergeCommentsById(currentComments, nextComments) {
+  const commentsById = new Map();
+
+  currentComments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  nextComments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  return sortCommentsByCreatedAt(Array.from(commentsById.values()));
+}
+
+function useProjectCommentRows(projectIds, { refreshIntervalMs = 0 } = {}) {
   const [comments, setComments] = useState([]);
 
   useEffect(() => {
@@ -172,12 +198,38 @@ function useProjectCommentRows(projectIds) {
         },
       }),
     );
+    const refreshIntervalId =
+      refreshIntervalMs > 0
+        ? window.setInterval(() => {
+            Promise.all(
+              projectIds.map((projectId) =>
+                api.projects.listComments({ projectId }),
+              ),
+            )
+              .then((responses) => {
+                if (isMounted) {
+                  setComments((current) =>
+                    mergeCommentsById(
+                      current,
+                      responses.flatMap((data) =>
+                        Array.isArray(data.comments) ? data.comments : [],
+                      ),
+                    ),
+                  );
+                }
+              })
+              .catch(() => {});
+          }, refreshIntervalMs)
+        : null;
 
     return () => {
       isMounted = false;
+      if (refreshIntervalId) {
+        window.clearInterval(refreshIntervalId);
+      }
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
-  }, [projectIds]);
+  }, [projectIds, refreshIntervalMs]);
 
   return [comments, setComments];
 }
@@ -256,7 +308,10 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
   };
 }
 
-export function useImageCommentNotifications({ projectIds = [] } = {}) {
+export function useImageCommentNotifications({
+  projectIds = [],
+  refreshIntervalMs = 0,
+} = {}) {
   const { user } = useAuth();
   const projectIdsKey = useMemo(
     () =>
@@ -276,7 +331,9 @@ export function useImageCommentNotifications({ projectIds = [] } = {}) {
         : [],
     [projectIdsKey],
   );
-  const [comments] = useProjectCommentRows(normalizedProjectIds);
+  const [comments] = useProjectCommentRows(normalizedProjectIds, {
+    refreshIntervalMs,
+  });
 
   return useMemo(() => {
     return comments
