@@ -9,6 +9,23 @@ export default defineConfig({
   base,
   build: {
     cssMinify: "esbuild",
+    chunkSizeWarningLimit: 1100,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "model-viewer",
+              test: /[\\/]node_modules[\\/]@google[\\/]model-viewer[\\/]/,
+            },
+            {
+              name: "react-vendor",
+              test: /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/,
+            },
+          ],
+        },
+      },
+    },
   },
   plugins: [react(), tailwindcss()],
 })

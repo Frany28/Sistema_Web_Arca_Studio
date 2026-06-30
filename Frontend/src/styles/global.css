@@ -839,9 +839,9 @@
   --current-height: var(--app-current-height);
 
   /* BREAKPOINTS */
-  --breakpoint-xs: var(--app-breakpoint-mobile);
-  --breakpoint-md: var(--app-breakpoint-tablet);
-  --breakpoint-xl: var(--app-breakpoint-web);
+  --breakpoint-xs: 375px;
+  --breakpoint-md: 768px;
+  --breakpoint-xl: 1280px;
 
   /* TEXT */
   /*fuente para el texto*/

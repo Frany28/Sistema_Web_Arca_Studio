@@ -812,7 +812,7 @@ function Model3DHotspots({
         return (
           <span
             key={item.id}
-            slot={`viewer3d-comment-${item.id}`}
+            slot={`hotspot-viewer3d-comment-${item.id}`}
             data-position={point.position}
             data-normal={point.normal}
             className={clsx(
