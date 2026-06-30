@@ -548,6 +548,7 @@ function SelectionPreview({
     return null;
   }
 
+  const isViewerPoint = selection.kind === "viewer3d-point";
   const pixels = selection.imagePixels ?? selection.displayPixels;
   const naturalSize = selection.naturalSize ?? {
     height: pixels?.height || 1,
@@ -601,11 +602,12 @@ function SelectionPreview({
       />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-          Area seleccionada
+          {isViewerPoint ? "Punto del visor" : "Area seleccionada"}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-          x:{pixels?.x ?? 0}px y:{pixels?.y ?? 0}px w:{pixels?.width ?? 0}px h:
-          {pixels?.height ?? 0}px
+          {isViewerPoint
+            ? `x:${Math.round((selection.viewerPoint?.normalizedX ?? 0) * 100)}% y:${Math.round((selection.viewerPoint?.normalizedY ?? 0) * 100)}%`
+            : `x:${pixels?.x ?? 0}px y:${pixels?.y ?? 0}px w:${pixels?.width ?? 0}px h:${pixels?.height ?? 0}px`}
         </p>
       </div>
       {onClear ? (
@@ -715,6 +717,77 @@ function ReplyComposer({ onSubmit, placeholder = "Escribe tu mensaje..." }) {
   return (
     <div data-reply-interaction="true">
       <MessageInput placeholder={placeholder} onSubmit={onSubmit} />
+    </div>
+  );
+}
+
+function getViewerPointPosition(selection) {
+  if (selection?.kind === "viewer3d-point" && selection.viewerPoint) {
+    return {
+      x: selection.viewerPoint.normalizedX,
+      y: selection.viewerPoint.normalizedY,
+    };
+  }
+
+  const pixels = selection?.displayPixels ?? selection?.imagePixels;
+  const naturalSize = selection?.naturalSize;
+
+  if (!pixels || !naturalSize?.width || !naturalSize?.height) {
+    return null;
+  }
+
+  return {
+    x: (pixels.x + pixels.width / 2) / naturalSize.width,
+    y: (pixels.y + pixels.height / 2) / naturalSize.height,
+  };
+}
+
+function Model3DCommentMarkers({
+  annotations = [],
+  focusedAnnotationId = null,
+  pendingSelection = null,
+}) {
+  const markerItems = [
+    ...annotations.map((comment) => ({
+      id: comment.id,
+      active: String(comment.id) === String(focusedAnnotationId),
+      selection: comment.selection,
+    })),
+    pendingSelection
+      ? {
+          id: "pending",
+          active: true,
+          pending: true,
+          selection: pendingSelection,
+        }
+      : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[12]">
+      {markerItems.map((item) => {
+        const point = getViewerPointPosition(item.selection);
+
+        if (!point) {
+          return null;
+        }
+
+        return (
+          <span
+            key={item.id}
+            className={clsx(
+              "absolute size-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]",
+              item.active && "scale-125",
+              item.pending && "animate-pulse",
+            )}
+            style={{
+              left: `${Math.min(Math.max(point.x, 0), 1) * 100}%`,
+              top: `${Math.min(Math.max(point.y, 0), 1) * 100}%`,
+            }}
+            aria-hidden="true"
+          />
+        );
+      })}
     </div>
   );
 }
@@ -853,6 +926,7 @@ export default function Model3DViewerModal({
   const frameRef = useRef(null);
   const modelStageRef = useRef(null);
   const modelViewerRef = useRef(null);
+  const modelPointerRef = useRef(null);
   const slowLoadingTimeoutRef = useRef(null);
   const loadTimeoutRef = useRef(null);
   const { addComment, comments } = useImageComments(displayItem, {
@@ -1114,6 +1188,135 @@ export default function Model3DViewerModal({
     });
   }
 
+  function getViewerCameraSnapshot() {
+    const modelViewer = modelViewerRef.current;
+    const cameraOrbit = modelViewer?.getCameraOrbit?.();
+    const fieldOfView = modelViewer?.getFieldOfView?.();
+
+    return {
+      cameraOrbit:
+        cameraOrbit &&
+        Number.isFinite(cameraOrbit.theta) &&
+        Number.isFinite(cameraOrbit.phi) &&
+        Number.isFinite(cameraOrbit.radius)
+          ? {
+              phi: cameraOrbit.phi,
+              radius: cameraOrbit.radius,
+              theta: cameraOrbit.theta,
+            }
+          : null,
+      fieldOfView: Number.isFinite(fieldOfView) ? fieldOfView : null,
+    };
+  }
+
+  function restoreViewerCamera(selection) {
+    const modelViewer = modelViewerRef.current;
+    const viewerPoint = selection?.viewerPoint;
+
+    if (!modelViewer || !viewerPoint) {
+      return;
+    }
+
+    if (viewerPoint.cameraOrbit) {
+      const { theta, phi, radius } = viewerPoint.cameraOrbit;
+
+      modelViewer.cameraOrbit = `${theta}rad ${phi}rad ${radius}m`;
+    } else {
+      modelViewer.cameraOrbit = "135deg 68deg 120%";
+    }
+
+    modelViewer.fieldOfView = Number.isFinite(viewerPoint.fieldOfView)
+      ? `${viewerPoint.fieldOfView}rad`
+      : "32deg";
+    modelViewer.jumpCameraToGoal?.();
+  }
+
+  function handleModelPointerDown(event) {
+    if (!hasInteractiveModel || isModelLoading || event.button !== 0) {
+      return;
+    }
+
+    modelPointerRef.current = {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      time: Date.now(),
+    };
+  }
+
+  function handleModelPointerUp(event) {
+    const pointerStart = modelPointerRef.current;
+    modelPointerRef.current = null;
+
+    if (!pointerStart || !hasInteractiveModel || isModelLoading) {
+      return;
+    }
+
+    const movement = Math.hypot(
+      event.clientX - pointerStart.clientX,
+      event.clientY - pointerStart.clientY,
+    );
+
+    if (movement > 6) {
+      return;
+    }
+
+    const rect = modelStageRef.current?.getBoundingClientRect();
+
+    if (!rect?.width || !rect?.height) {
+      return;
+    }
+
+    const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
+    const y = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
+    const markerSize = 18;
+    const camera = getViewerCameraSnapshot();
+
+    setFocusedSelectionCommentId(null);
+    setPendingSelection({
+      kind: "viewer3d-point",
+      displayPixels: {
+        height: markerSize,
+        width: markerSize,
+        x: Math.round(x - markerSize / 2),
+        y: Math.round(y - markerSize / 2),
+      },
+      image: {
+        id: displayItem.id,
+        src: displayItem.image,
+        title: displayItem.title,
+      },
+      imageSrc: displayItem.image,
+      naturalSize: {
+        height: Math.round(rect.height),
+        width: Math.round(rect.width),
+      },
+      viewerPoint: {
+        cameraOrbit: camera.cameraOrbit,
+        fieldOfView: camera.fieldOfView,
+        normalizedX: x / rect.width,
+        normalizedY: y / rect.height,
+        x: Math.round(x),
+        y: Math.round(y),
+      },
+    });
+  }
+
+  function handleSelectionPreviewClick(commentId) {
+    const nextCommentId =
+      String(focusedSelectionCommentId) === String(commentId)
+        ? null
+        : commentId;
+    const comment = comments.find(
+      (currentComment) => String(currentComment.id) === String(nextCommentId),
+    );
+
+    if (comment?.selection?.kind === "viewer3d-point") {
+      restoreViewerCamera(comment.selection);
+    }
+
+    setFocusedSelectionCommentId(nextCommentId);
+  }
+
   async function handleSubmitComment({ message, parentCommentId, selection }) {
     const comment = await addComment({ message, parentCommentId, selection });
     if (comment && !parentCommentId) {
@@ -1180,6 +1383,11 @@ export default function Model3DViewerModal({
                 loading="eager"
                 reveal="auto"
                 touch-action="pan-y"
+                onPointerDown={handleModelPointerDown}
+                onPointerUp={handleModelPointerUp}
+                onPointerCancel={() => {
+                  modelPointerRef.current = null;
+                }}
                 style={{
                   background:
                     "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
@@ -1200,6 +1408,11 @@ export default function Model3DViewerModal({
                   state={modelLoadState}
                 />
               ) : null}
+              <Model3DCommentMarkers
+                annotations={comments.filter((comment) => comment.selection)}
+                focusedAnnotationId={focusedSelectionCommentId}
+                pendingSelection={pendingSelection}
+              />
             </>
           ) : hasPreviewImage ? (
             <ImageHighlighter
@@ -1265,11 +1478,7 @@ export default function Model3DViewerModal({
             focusedSelectionCommentId={focusedSelectionCommentId}
             pendingSelection={pendingSelection}
             onClearSelection={() => setPendingSelection(null)}
-            onSelectionPreviewClick={(commentId) =>
-              setFocusedSelectionCommentId((currentId) =>
-                String(currentId) === String(commentId) ? null : commentId,
-              )
-            }
+            onSelectionPreviewClick={handleSelectionPreviewClick}
             onSubmitComment={handleSubmitComment}
           />
         </div>
