@@ -749,7 +749,29 @@ function getViewerPointPosition(selection) {
   };
 }
 
-function formatModelViewerVector(vector) {
+function formatModelViewerPosition(vector) {
+  if (!vector) {
+    return null;
+  }
+
+  if (typeof vector === "string") {
+    return vector
+      .trim()
+      .split(/\s+/)
+      .map((value) => (/[a-z%]+$/i.test(value) ? value : `${value}m`))
+      .join(" ");
+  }
+
+  const { x, y, z } = vector;
+
+  if (![x, y, z].every((value) => Number.isFinite(value))) {
+    return null;
+  }
+
+  return `${x}m ${y}m ${z}m`;
+}
+
+function formatModelViewerNormal(vector) {
   if (!vector) {
     return null;
   }
@@ -769,8 +791,8 @@ function formatModelViewerVector(vector) {
 
 function getViewerModelPoint(selection) {
   const viewerPoint = selection?.viewerPoint;
-  const position = formatModelViewerVector(viewerPoint?.modelPosition);
-  const normal = formatModelViewerVector(viewerPoint?.modelNormal);
+  const position = formatModelViewerPosition(viewerPoint?.modelPosition);
+  const normal = formatModelViewerNormal(viewerPoint?.modelNormal);
 
   if (!position || !normal) {
     return null;
@@ -810,16 +832,21 @@ function Model3DHotspots({
         }
 
         return (
-          <span
+          <button
+            type="button"
             key={item.id}
             slot={`hotspot-viewer3d-comment-${item.id}`}
             data-position={point.position}
             data-normal={point.normal}
+            data-visibility-attribute="visible"
             className={clsx(
-              "pointer-events-none block size-[18px] rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)] transition-transform",
+              "pointer-events-none block size-[18px] rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] p-0 shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)] transition-[opacity,transform]",
               item.active && "scale-125",
               item.pending && "animate-pulse",
             )}
+            style={{
+              opacity: "var(--min-hotspot-opacity, 1)",
+            }}
             aria-label="Punto comentado"
           />
         );
