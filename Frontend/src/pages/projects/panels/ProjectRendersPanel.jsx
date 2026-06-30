@@ -168,10 +168,10 @@ function RenderStage({
   const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(activeRender.image);
-  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(true);
+  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(false);
 
   useEffect(() => {
-    setIsAutoRotateEnabled(true);
+    setIsAutoRotateEnabled(false);
   }, [modelSrc]);
 
   useEffect(() => {
@@ -263,7 +263,6 @@ function RenderStage({
               poster={activeRender.image || undefined}
               alt={activeRender.title}
               camera-controls
-              auto-rotate
               auto-rotate-delay="0"
               camera-orbit="135deg 68deg 120%"
               min-camera-orbit="auto 4deg 18%"

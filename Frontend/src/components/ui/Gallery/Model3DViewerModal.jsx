@@ -742,6 +742,85 @@ function getViewerPointPosition(selection) {
   };
 }
 
+function formatModelViewerVector(vector) {
+  if (!vector) {
+    return null;
+  }
+
+  if (typeof vector === "string") {
+    return vector;
+  }
+
+  const { x, y, z } = vector;
+
+  if (![x, y, z].every((value) => Number.isFinite(value))) {
+    return null;
+  }
+
+  return `${x}m ${y}m ${z}m`;
+}
+
+function getViewerModelPoint(selection) {
+  const viewerPoint = selection?.viewerPoint;
+  const position = formatModelViewerVector(viewerPoint?.modelPosition);
+  const normal = formatModelViewerVector(viewerPoint?.modelNormal);
+
+  if (!position || !normal) {
+    return null;
+  }
+
+  return { normal, position };
+}
+
+function Model3DHotspots({
+  annotations = [],
+  focusedAnnotationId = null,
+  pendingSelection = null,
+}) {
+  const hotspotItems = [
+    ...annotations.map((comment) => ({
+      id: comment.id,
+      active: String(comment.id) === String(focusedAnnotationId),
+      selection: comment.selection,
+    })),
+    pendingSelection
+      ? {
+          id: "pending",
+          active: true,
+          pending: true,
+          selection: pendingSelection,
+        }
+      : null,
+  ].filter(Boolean);
+
+  return (
+    <>
+      {hotspotItems.map((item) => {
+        const point = getViewerModelPoint(item.selection);
+
+        if (!point) {
+          return null;
+        }
+
+        return (
+          <span
+            key={item.id}
+            slot={`viewer3d-comment-${item.id}`}
+            data-position={point.position}
+            data-normal={point.normal}
+            className={clsx(
+              "pointer-events-none block size-[18px] rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)] transition-transform",
+              item.active && "scale-125",
+              item.pending && "animate-pulse",
+            )}
+            aria-label="Punto comentado"
+          />
+        );
+      })}
+    </>
+  );
+}
+
 function Model3DCommentMarkers({
   annotations = [],
   focusedAnnotationId = null,
@@ -921,7 +1000,7 @@ export default function Model3DViewerModal({
   const [modelLoadState, setModelLoadState] = useState("loading");
   const [modelProgress, setModelProgress] = useState(8);
   const [modelReloadKey, setModelReloadKey] = useState(0);
-  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(true);
+  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(false);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
   const modelStageRef = useRef(null);
@@ -957,7 +1036,7 @@ export default function Model3DViewerModal({
         setDisplayItem(item);
         setIsActive(false);
         setModelReloadKey(0);
-        setIsAutoRotateEnabled(true);
+        setIsAutoRotateEnabled(false);
         setFocusedSelectionCommentId(null);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
@@ -1260,14 +1339,21 @@ export default function Model3DViewerModal({
       return;
     }
 
-    const rect = modelStageRef.current?.getBoundingClientRect();
+    const modelViewer = modelViewerRef.current;
+    const rect = modelViewer?.getBoundingClientRect();
 
-    if (!rect?.width || !rect?.height) {
+    if (!modelViewer || !rect?.width || !rect?.height) {
       return;
     }
 
     const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
     const y = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
+    const hit = modelViewer.positionAndNormalFromPoint?.(x, y);
+
+    if (!hit?.position || !hit?.normal) {
+      return;
+    }
+
     const markerSize = 18;
     const camera = getViewerCameraSnapshot();
 
@@ -1293,6 +1379,16 @@ export default function Model3DViewerModal({
       viewerPoint: {
         cameraOrbit: camera.cameraOrbit,
         fieldOfView: camera.fieldOfView,
+        modelNormal: {
+          x: hit.normal.x,
+          y: hit.normal.y,
+          z: hit.normal.z,
+        },
+        modelPosition: {
+          x: hit.position.x,
+          y: hit.position.y,
+          z: hit.position.z,
+        },
         normalizedX: x / rect.width,
         normalizedY: y / rect.height,
         x: Math.round(x),
@@ -1365,7 +1461,6 @@ export default function Model3DViewerModal({
                 poster={displayItem.image || undefined}
                 alt={displayItem.title}
                 camera-controls
-                auto-rotate
                 auto-rotate-delay="0"
                 camera-orbit="135deg 68deg 120%"
                 min-camera-orbit="auto 4deg 18%"
@@ -1399,7 +1494,13 @@ export default function Model3DViewerModal({
                   "--poster-color": "transparent",
                   width: "100%",
                 }}
-              />
+              >
+                <Model3DHotspots
+                  annotations={comments.filter((comment) => comment.selection)}
+                  focusedAnnotationId={focusedSelectionCommentId}
+                  pendingSelection={pendingSelection}
+                />
+              </model-viewer>
               {isModelLoading ? (
                 <Model3DLoadingState
                   image={displayItem.image}
@@ -1408,11 +1509,6 @@ export default function Model3DViewerModal({
                   state={modelLoadState}
                 />
               ) : null}
-              <Model3DCommentMarkers
-                annotations={comments.filter((comment) => comment.selection)}
-                focusedAnnotationId={focusedSelectionCommentId}
-                pendingSelection={pendingSelection}
-              />
             </>
           ) : hasPreviewImage ? (
             <ImageHighlighter
