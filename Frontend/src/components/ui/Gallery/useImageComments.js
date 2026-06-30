@@ -95,8 +95,23 @@ function getAuthorLabel(comment, user) {
 }
 
 function decorateComment(comment, user) {
+  const selection = comment.selection || null;
+  const imageFromSelection = selection?.image || null;
+  const image = comment.image || imageFromSelection
+    ? {
+        ...(imageFromSelection || {}),
+        ...(comment.image || {}),
+        src:
+          comment.image?.src ||
+          imageFromSelection?.src ||
+          selection?.imageSrc ||
+          null,
+      }
+    : null;
+
   return {
     ...comment,
+    image,
     imageComment: MULTIMEDIA_COMMENT_TYPES.has(comment.commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.message ?? comment.content,

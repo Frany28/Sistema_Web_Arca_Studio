@@ -586,6 +586,9 @@ function SelectionPreview({
       <div
         className={clsx(
           "shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]",
+          isViewerPoint &&
+            !imageSrc &&
+            "relative bg-[radial-gradient(circle_at_50%_50%,rgba(255,68,49,0.42)_0%,rgba(255,68,49,0.18)_24%,rgba(42,41,41,0.95)_25%,rgba(42,41,41,0.95)_100%)]",
           compact ? "size-[44px]" : "size-[56px]",
         )}
         style={
@@ -599,7 +602,11 @@ function SelectionPreview({
             : undefined
         }
         aria-hidden="true"
-      />
+      >
+        {isViewerPoint && !imageSrc ? (
+          <span className="absolute left-1/2 top-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22)]" />
+        ) : null}
+      </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
           {isViewerPoint ? "Punto del visor" : "Area seleccionada"}
@@ -757,7 +764,7 @@ function formatModelViewerVector(vector) {
     return null;
   }
 
-  return `${x}m ${y}m ${z}m`;
+  return `${x} ${y} ${z}`;
 }
 
 function getViewerModelPoint(selection) {
@@ -845,6 +852,10 @@ function Model3DCommentMarkers({
   return (
     <div className="pointer-events-none absolute inset-0 z-[12]">
       {markerItems.map((item) => {
+        if (getViewerModelPoint(item.selection)) {
+          return null;
+        }
+
         const point = getViewerPointPosition(item.selection);
 
         if (!point) {
@@ -1255,15 +1266,17 @@ export default function Model3DViewerModal({
   };
 
   function handleSelectionChange(selection) {
+    const previewImage = displayItem.image || displayItem.poster || null;
+
     setFocusedSelectionCommentId(null);
     setPendingSelection({
       ...selection,
       image: {
         id: displayItem.id,
-        src: displayItem.image,
+        src: previewImage,
         title: displayItem.title,
       },
-      imageSrc: displayItem.image,
+      imageSrc: previewImage,
     });
   }
 
@@ -1356,6 +1369,7 @@ export default function Model3DViewerModal({
 
     const markerSize = 18;
     const camera = getViewerCameraSnapshot();
+    const previewImage = displayItem.image || displayItem.poster || null;
 
     setFocusedSelectionCommentId(null);
     setPendingSelection({
@@ -1368,10 +1382,10 @@ export default function Model3DViewerModal({
       },
       image: {
         id: displayItem.id,
-        src: displayItem.image,
+        src: previewImage,
         title: displayItem.title,
       },
-      imageSrc: displayItem.image,
+      imageSrc: previewImage,
       naturalSize: {
         height: Math.round(rect.height),
         width: Math.round(rect.width),
@@ -1509,6 +1523,11 @@ export default function Model3DViewerModal({
                   state={modelLoadState}
                 />
               ) : null}
+              <Model3DCommentMarkers
+                annotations={comments.filter((comment) => comment.selection)}
+                focusedAnnotationId={focusedSelectionCommentId}
+                pendingSelection={pendingSelection}
+              />
             </>
           ) : hasPreviewImage ? (
             <ImageHighlighter
