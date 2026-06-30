@@ -69,13 +69,21 @@ function getCommentAuthorLabel(comment, user) {
 }
 
 function toDrawerComment(comment, user) {
+  const commentType = comment.commentType || "general";
+
   return {
+    commentType,
     id: comment.id,
+    image: comment.image,
+    imageComment: ["image", "viewer3d", "video"].includes(commentType),
+    imageId: comment.targetId || comment.imageId,
     message: comment.content,
     name: getCommentAuthorLabel(comment, user),
     createdAt: comment.createdAt,
     parentCommentId: comment.parentCommentId,
     projectId: comment.projectId,
+    selection: comment.selection,
+    targetId: comment.targetId,
     timestamp: getRelativeTimeLabel(comment.createdAt),
     type: comment.type,
   };
@@ -296,9 +304,7 @@ export function useProjectComments({
 
   const drawerComments = useMemo(
     () =>
-      comments
-        .filter((comment) => (comment.commentType || "general") === "general")
-        .map((comment) => toDrawerComment(comment, user)),
+      comments.map((comment) => toDrawerComment(comment, user)),
     [comments, user],
   );
 
@@ -444,9 +450,7 @@ export function useRecentProjectComments({
 
   const drawerComments = useMemo(
     () =>
-      comments
-        .filter((comment) => (comment.commentType || "general") === "general")
-        .map((comment) => toDrawerComment(comment, user)),
+      comments.map((comment) => toDrawerComment(comment, user)),
     [comments, user],
   );
 

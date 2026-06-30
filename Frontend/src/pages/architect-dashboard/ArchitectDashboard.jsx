@@ -20,6 +20,19 @@ import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
 const TABLET_BREAKPOINT_PX = 768;
 const PROJECT_IMAGE_POOL = [standImage, projectImage];
+
+function mergeNotificationComments(comments) {
+  const commentsById = new Map();
+
+  comments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  return Array.from(commentsById.values());
+}
+
 const PROJECT_STATUS_GROUPS = [
   {
     id: "in_process",
@@ -185,7 +198,7 @@ function ArchitectDashboard({ empty = false }) {
   const drawerCommentsError = recentProjectCommentsError;
   const drawerCommentsLoading = recentProjectCommentsLoading;
   const notificationComments = useMemo(
-    () => [...drawerComments, ...imageCommentNotifications],
+    () => mergeNotificationComments([...drawerComments, ...imageCommentNotifications]),
     [drawerComments, imageCommentNotifications],
   );
 

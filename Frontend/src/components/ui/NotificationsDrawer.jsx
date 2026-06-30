@@ -247,7 +247,6 @@ function CommentCard({
   onReplyClick,
 }) {
   const isReply = type === "reply";
-  const isInteractive = typeof onSelect === "function";
   const displayName =
     name && typeof name === "object"
       ? (name.name ?? name.email ?? String(name))
@@ -268,34 +267,7 @@ function CommentCard({
 
       <div className="flex flex-1 flex-col gap-[8px]">
         <article
-          className={clsx(
-            "relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]",
-            isInteractive &&
-              "cursor-pointer transition-colors hover:border-[var(--color-neutral-300)]",
-          )}
-          role={isInteractive ? "button" : undefined}
-          tabIndex={isInteractive ? 0 : undefined}
-          onClick={(event) => {
-            if (
-              event.target instanceof Element &&
-              event.target.closest("[data-reply-interaction='true']")
-            ) {
-              return;
-            }
-
-            onSelect?.();
-          }}
-          onKeyDown={(event) => {
-            if (
-              !isInteractive ||
-              (event.key !== "Enter" && event.key !== " ")
-            ) {
-              return;
-            }
-
-            event.preventDefault();
-            onSelect?.();
-          }}
+          className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]"
         >
           <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
@@ -326,7 +298,11 @@ function CommentCard({
           </p>
 
           {imageComment && selection && !isReply ? (
-            <ImageCommentPreview image={image} selection={selection} />
+            <ImageCommentPreview
+              image={image}
+              selection={selection}
+              onSelect={onSelect}
+            />
           ) : null}
         </article>
 
@@ -346,15 +322,16 @@ function CommentCard({
   );
 }
 
-function ImageCommentPreview({ image, selection }) {
+function ImageCommentPreview({ image, onSelect, selection }) {
   const pixels = selection.imagePixels ?? selection.displayPixels;
+  const isInteractive = typeof onSelect === "function";
 
   if (!pixels) {
     return null;
   }
 
-  return (
-    <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+  const content = (
+    <>
       <div className="size-[44px] shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]">
         {image?.src ? (
           <img
@@ -373,6 +350,20 @@ function ImageCommentPreview({ image, selection }) {
           x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
         </p>
       </div>
+    </>
+  );
+
+  return isInteractive ? (
+    <button
+      type="button"
+      className="mt-[6px] flex w-full cursor-pointer items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px] text-left transition-colors hover:border-[var(--color-neutral-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)]"
+      onClick={onSelect}
+    >
+      {content}
+    </button>
+  ) : (
+    <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+      {content}
     </div>
   );
 }

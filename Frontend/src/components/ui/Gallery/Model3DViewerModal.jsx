@@ -249,7 +249,7 @@ export function Model3DLoadingState({
       : "";
 
   return (
-    <div className="pointer-events-auto absolute inset-0 z-10 h-full w-full overflow-hidden rounded-[var(--radius-3)]">
+    <div className="pointer-events-auto absolute inset-0 z-10 h-full w-full overflow-hidden">
       {image ? (
         <img
           src={image}
@@ -260,7 +260,7 @@ export function Model3DLoadingState({
       ) : (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_43%,#3a3a3a_0%,#262626_44%,#121212_100%)]" />
       )}
-      <div className="absolute inset-0 rounded-[var(--radius-3)] bg-[rgba(0,0,0,0.58)] backdrop-blur-[12px]" />
+      <div className="absolute inset-0 bg-[rgba(0,0,0,0.58)] backdrop-blur-[12px]" />
 
       <div className="absolute left-1/2 top-1/2 flex w-[320px] max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[8px] text-center">
         <div className="flex w-full items-start justify-center">

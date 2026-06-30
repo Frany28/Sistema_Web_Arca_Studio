@@ -100,6 +100,18 @@ function mergeCommentsById(currentComments, nextComments) {
   );
 }
 
+function mergeNotificationComments(comments) {
+  const commentsById = new Map();
+
+  comments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  return Array.from(commentsById.values());
+}
+
 function isImageFile(file) {
   const fileType = String(file?.fileType || "").toLowerCase();
   const extension = String(file?.extension || "").toLowerCase();
@@ -288,13 +300,21 @@ function getCommentAuthorLabel(comment, user) {
 }
 
 function toDrawerComment(comment, user) {
+  const commentType = comment.commentType || "general";
+
   return {
+    commentType,
     id: comment.id,
+    image: comment.image,
+    imageComment: ["image", "viewer3d", "video"].includes(commentType),
+    imageId: comment.targetId || comment.imageId,
     message: comment.content,
     name: getCommentAuthorLabel(comment, user),
     createdAt: comment.createdAt,
     parentCommentId: comment.parentCommentId,
     projectId: comment.projectId,
+    selection: comment.selection,
+    targetId: comment.targetId,
     timestamp: getRelativeTimeLabel(comment.createdAt),
     type: comment.type,
   };
@@ -337,12 +357,10 @@ export default function ProjectDetailsPage({
     projectIds: resolvedProjectId ? [resolvedProjectId] : [],
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
-  const notificationComments = [
-    ...projectComments
-      .filter((comment) => (comment.commentType || "general") === "general")
-      .map((comment) => toDrawerComment(comment, user)),
+  const notificationComments = mergeNotificationComments([
+    ...projectComments.map((comment) => toDrawerComment(comment, user)),
     ...imageCommentNotifications,
-  ];
+  ]);
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",

@@ -28,6 +28,18 @@ const COLLAPSED_SIDEBAR_WIDTH = 76;
 const TABLET_BREAKPOINT_PX = 768;
 const PROJECT_IMAGE_POOL = [fondoVariante2, fondoNotificacion];
 
+function mergeNotificationComments(comments) {
+  const commentsById = new Map();
+
+  comments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  return Array.from(commentsById.values());
+}
+
 const PROJECT_SHOWCASE_ITEMS = [
   {
     id: "aura-stand-1",
@@ -303,7 +315,7 @@ function Home() {
   const drawerCommentsLoading =
     recentProjectCommentsLoading || submittedCommentsLoading;
   const notificationComments = useMemo(
-    () => [...drawerComments, ...imageCommentNotifications],
+    () => mergeNotificationComments([...drawerComments, ...imageCommentNotifications]),
     [drawerComments, imageCommentNotifications],
   );
 
