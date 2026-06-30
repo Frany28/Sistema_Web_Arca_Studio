@@ -78,6 +78,28 @@ function upsertCommentById(comments, comment) {
     : [...comments, comment];
 }
 
+function mergeCommentsById(currentComments, nextComments) {
+  const commentsById = new Map();
+
+  currentComments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  nextComments.forEach((comment) => {
+    if (comment?.id) {
+      commentsById.set(String(comment.id), comment);
+    }
+  });
+
+  return Array.from(commentsById.values()).sort(
+    (left, right) =>
+      new Date(left.createdAt || 0).getTime() -
+      new Date(right.createdAt || 0).getTime(),
+  );
+}
+
 function isImageFile(file) {
   const fileType = String(file?.fileType || "").toLowerCase();
   const extension = String(file?.extension || "").toLowerCase();
@@ -313,6 +335,7 @@ export default function ProjectDetailsPage({
   );
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: resolvedProjectId ? [resolvedProjectId] : [],
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
   const notificationComments = [
     ...projectComments
@@ -397,7 +420,8 @@ export default function ProjectDetailsPage({
   }, [initialProjectId, providedProject]);
 
   useEffect(() => {
-    if (!isNotificationsDrawerOpen || !resolvedProjectId) {
+    if (!resolvedProjectId) {
+      setProjectComments([]);
       return undefined;
     }
 
@@ -415,7 +439,11 @@ export default function ProjectDetailsPage({
         .then((data) => {
           if (isMounted) {
             setProjectComments(
-              Array.isArray(data.comments) ? data.comments : [],
+              (current) =>
+                mergeCommentsById(
+                  current,
+                  Array.isArray(data.comments) ? data.comments : [],
+                ),
             );
           }
         })
@@ -443,9 +471,14 @@ export default function ProjectDetailsPage({
         }
       },
     });
+    const refreshIntervalId = window.setInterval(
+      () => loadProjectComments(),
+      isNotificationsDrawerOpen ? 5000 : 15000,
+    );
 
     return () => {
       isMounted = false;
+      window.clearInterval(refreshIntervalId);
       unsubscribe();
     };
   }, [isNotificationsDrawerOpen, resolvedProjectId]);

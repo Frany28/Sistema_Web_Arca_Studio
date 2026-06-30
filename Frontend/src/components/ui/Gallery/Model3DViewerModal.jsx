@@ -173,8 +173,11 @@ function ExpandIcon() {
 
 export function Model3DViewerControls({
   className,
+  onSettings,
+  onView,
   onExpand,
   persistSelection = true,
+  selectedIndex = null,
 }) {
   const buttonGroupItems = useMemo(
     () => [
@@ -182,22 +185,25 @@ export function Model3DViewerControls({
         label: "Ajustes",
         showText: false,
         icon: <SettingsIcon />,
+        disabled: !onSettings,
         "aria-label": "Ajustes del modelo 3D",
       },
       {
         label: "Vista",
         showText: false,
         icon: <ViewIcon />,
+        disabled: !onView,
         "aria-label": "Cambiar vista del modelo 3D",
       },
       {
         label: "Expandir",
         showText: false,
         icon: <ExpandIcon />,
+        disabled: !onExpand,
         "aria-label": "Expandir modelo 3D",
       },
     ],
-    [],
+    [onExpand, onSettings, onView],
   );
 
   return (
@@ -205,7 +211,16 @@ export function Model3DViewerControls({
       items={buttonGroupItems}
       className={className}
       persistSelection={persistSelection}
+      selectedIndex={selectedIndex}
       onChange={(index) => {
+        if (index === 0) {
+          onSettings?.();
+        }
+
+        if (index === 1) {
+          onView?.();
+        }
+
         if (index === 2) {
           onExpand?.();
         }
@@ -833,8 +848,10 @@ export default function Model3DViewerModal({
   const [modelLoadState, setModelLoadState] = useState("loading");
   const [modelProgress, setModelProgress] = useState(8);
   const [modelReloadKey, setModelReloadKey] = useState(0);
+  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(true);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
+  const modelStageRef = useRef(null);
   const modelViewerRef = useRef(null);
   const slowLoadingTimeoutRef = useRef(null);
   const loadTimeoutRef = useRef(null);
@@ -866,6 +883,7 @@ export default function Model3DViewerModal({
         setDisplayItem(item);
         setIsActive(false);
         setModelReloadKey(0);
+        setIsAutoRotateEnabled(true);
         setFocusedSelectionCommentId(null);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
@@ -910,6 +928,12 @@ export default function Model3DViewerModal({
   const modelSrc = displayItem?.modelUrl || displayItem?.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(displayItem?.image);
+
+  useEffect(() => {
+    if (modelViewerRef.current) {
+      modelViewerRef.current.autoRotate = isAutoRotateEnabled;
+    }
+  }, [isAutoRotateEnabled, modelReloadKey]);
 
   useEffect(() => {
     if (!visible || !hasInteractiveModel) {
@@ -1029,6 +1053,45 @@ export default function Model3DViewerModal({
     setModelReloadKey((current) => current + 1);
   }
 
+  function handleToggleAutoRotate() {
+    if (!hasInteractiveModel) {
+      return;
+    }
+
+    setIsAutoRotateEnabled((current) => !current);
+  }
+
+  function handleResetCameraView() {
+    const modelViewer = modelViewerRef.current;
+
+    if (!modelViewer || !hasInteractiveModel) {
+      return;
+    }
+
+    modelViewer.cameraOrbit = "135deg 68deg 120%";
+    modelViewer.fieldOfView = "32deg";
+    modelViewer.jumpCameraToGoal?.();
+  }
+
+  async function handleToggleFullscreen() {
+    const stage = modelStageRef.current;
+
+    if (!stage) {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen?.();
+        return;
+      }
+
+      await stage.requestFullscreen?.();
+    } catch {
+      // Ignore fullscreen denials; browser may block them outside trusted gestures.
+    }
+  }
+
   if (!shouldRender || !displayItem || typeof document === "undefined") {
     return null;
   }
@@ -1080,6 +1143,7 @@ export default function Model3DViewerModal({
         onClick={onClose}
       >
         <div
+          ref={modelStageRef}
           className={clsx(
             "relative min-w-0 flex-1 overflow-hidden",
             "rounded-[var(--radius-3)] bg-[var(--color-neutral-200)]",
@@ -1160,7 +1224,7 @@ export default function Model3DViewerModal({
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[156px] bg-[linear-gradient(0deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0)_100%)]" />
 
-          <div className="absolute left-[12px] top-[12px]">
+          <div className="absolute left-[12px] top-[12px] z-20">
             <MainLogo size="32px" alt="ARCA Studio" />
           </div>
 
@@ -1174,12 +1238,16 @@ export default function Model3DViewerModal({
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar modelo 3D"
             onClick={onClose}
-            className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
+            className="absolute right-[8px] top-[8px] z-20 size-9 text-[var(--color-text-200)]"
           />
 
           {hasInteractiveModel || hasPreviewImage ? (
             <Model3DViewerControls
-              className="absolute bottom-[12px] right-[12px] [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
+              onExpand={handleToggleFullscreen}
+              onSettings={hasInteractiveModel ? handleToggleAutoRotate : null}
+              onView={hasInteractiveModel ? handleResetCameraView : null}
+              selectedIndex={2}
+              className="absolute bottom-[12px] right-[12px] z-20 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
             />
           ) : null}
         </div>

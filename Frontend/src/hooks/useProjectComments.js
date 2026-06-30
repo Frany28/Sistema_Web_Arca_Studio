@@ -340,6 +340,9 @@ export function useRecentProjectComments({
 
     let isMounted = true;
 
+    setLoading(true);
+    setError("");
+
     Promise.all(
       normalizedProjectIds.map((projectId) =>
         api.projects.listComments({ projectId }),

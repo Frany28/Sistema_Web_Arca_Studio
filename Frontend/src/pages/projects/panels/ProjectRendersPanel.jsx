@@ -168,6 +168,17 @@ function RenderStage({
   const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(activeRender.image);
+  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(true);
+
+  useEffect(() => {
+    setIsAutoRotateEnabled(true);
+  }, [modelSrc]);
+
+  useEffect(() => {
+    if (modelViewerRef.current) {
+      modelViewerRef.current.autoRotate = isAutoRotateEnabled;
+    }
+  }, [isAutoRotateEnabled, modelReloadKey]);
 
   useEffect(() => {
     const modelViewer = modelViewerRef.current;
@@ -219,6 +230,26 @@ function RenderStage({
     onModelLoad,
     onModelProgress,
   ]);
+
+  function handleToggleAutoRotate() {
+    if (!hasInteractiveModel) {
+      return;
+    }
+
+    setIsAutoRotateEnabled((current) => !current);
+  }
+
+  function handleResetCameraView() {
+    const modelViewer = modelViewerRef.current;
+
+    if (!modelViewer || !hasInteractiveModel) {
+      return;
+    }
+
+    modelViewer.cameraOrbit = "135deg 68deg 120%";
+    modelViewer.fieldOfView = "32deg";
+    modelViewer.jumpCameraToGoal?.();
+  }
 
   return (
     <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
@@ -302,6 +333,8 @@ function RenderStage({
         {hasInteractiveModel || hasPreviewImage ? (
           <Model3DViewerControls
             onExpand={onOpenModel}
+            onSettings={hasInteractiveModel ? handleToggleAutoRotate : null}
+            onView={hasInteractiveModel ? handleResetCameraView : null}
             persistSelection={false}
             className="absolute bottom-[12px] right-[12px] z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
           />
