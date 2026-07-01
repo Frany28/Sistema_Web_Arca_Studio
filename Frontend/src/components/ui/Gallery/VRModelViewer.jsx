@@ -4,7 +4,6 @@ import clsx from "clsx";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { VRButton } from "three/addons/webxr/VRButton.js";
 
 import Button from "../../ui/Button/Button.jsx";
 
@@ -39,10 +38,11 @@ export default function VRModelViewer({
   onClose,
 }) {
   const mountRef = useRef(null);
-  const vrButtonRef = useRef(null);
+  const rendererRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [isWebXRAvailable, setIsWebXRAvailable] = useState(false);
+  const [xrSession, setXrSession] = useState(null);
 
   useEffect(() => {
     if (!visible || !modelSrc || !mountRef.current) {
@@ -72,6 +72,7 @@ export default function VRModelViewer({
     renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.xr.enabled = true;
+    rendererRef.current = renderer;
     mountNode.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -90,7 +91,7 @@ export default function VRModelViewer({
     floorGrid.position.y = 0.01;
     scene.add(floorGrid);
 
-    async function setupVRButton() {
+    async function checkVRSupport() {
       const available = Boolean(
         navigator.xr && (await navigator.xr.isSessionSupported("immersive-vr")),
       );
@@ -100,17 +101,6 @@ export default function VRModelViewer({
       }
 
       setIsWebXRAvailable(available);
-      const button = VRButton.createButton(renderer);
-      button.style.position = "static";
-      button.style.width = "auto";
-      button.style.minWidth = "144px";
-      button.style.border = "0";
-      button.style.borderRadius = "8px";
-      button.style.background = available ? "#ff4431" : "#5f5f5f";
-      button.style.color = "#ffffff";
-      button.style.font = "600 13px/1 system-ui, sans-serif";
-      button.style.padding = "12px 16px";
-      vrButtonRef.current?.appendChild(button);
     }
 
     function frameModel(model) {
@@ -217,7 +207,7 @@ export default function VRModelViewer({
 
     setStatus("loading");
     setErrorMessage("");
-    setupVRButton().catch(() => {
+    checkVRSupport().catch(() => {
       setIsWebXRAvailable(false);
     });
 
@@ -247,6 +237,9 @@ export default function VRModelViewer({
 
     return () => {
       disposed = true;
+      renderer.xr.getSession()?.end?.().catch(() => {});
+      setXrSession(null);
+      rendererRef.current = null;
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
@@ -269,13 +262,53 @@ export default function VRModelViewer({
       });
 
       mountNode.replaceChildren();
-      vrButtonRef.current?.replaceChildren();
     };
   }, [modelSrc, visible]);
+
+  async function handleToggleVRSession() {
+    const renderer = rendererRef.current;
+
+    if (!renderer || !navigator.xr) {
+      setErrorMessage("Este navegador no permite iniciar modo VR.");
+      setStatus("error");
+      return;
+    }
+
+    if (xrSession) {
+      await xrSession.end();
+      return;
+    }
+
+    try {
+      const session = await navigator.xr.requestSession("immersive-vr", {
+        optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking"],
+      });
+
+      session.addEventListener(
+        "end",
+        () => {
+          setXrSession(null);
+        },
+        { once: true },
+      );
+
+      await renderer.xr.setSession(session);
+      setXrSession(session);
+    } catch {
+      setErrorMessage("No se pudo iniciar el modo VR en este dispositivo.");
+      setStatus("error");
+    }
+  }
 
   if (!visible || typeof document === "undefined") {
     return null;
   }
+
+  const usageItems = [
+    "Colocate el visor y selecciona Entrar en VR",
+    "Mira alrededor para explorar el modelo",
+    "Usa los controles del visor para desplazarte",
+  ];
 
   return createPortal(
     <div className="fixed inset-0 z-[80] bg-[#111] text-white">
@@ -300,7 +333,18 @@ export default function VRModelViewer({
           </div>
 
           <div className="flex shrink-0 items-center gap-[10px]">
-            <div ref={vrButtonRef} className="flex items-center" />
+            <Button
+              theme="Primary"
+              type="Solid"
+              size="S"
+              showLeftIcon={false}
+              showRightIcon={false}
+              disabled={!isWebXRAvailable}
+              onClick={handleToggleVRSession}
+              className="min-w-[132px]"
+            >
+              {xrSession ? "Salir de VR" : "Entrar en VR"}
+            </Button>
             <Button
               theme="Primary"
               type="Solid"
@@ -330,16 +374,17 @@ export default function VRModelViewer({
             ) : status === "error" ? (
               <p>{errorMessage}</p>
             ) : (
-              <p>
-                En escritorio puedes moverte con WASD/flechas. En un visor
-                compatible usa el boton Entrar en VR.
-              </p>
+              <ul className="list-disc space-y-[2px] pl-[16px]">
+                {usageItems.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
             )}
 
             {!isWebXRAvailable ? (
               <p className="mt-[6px] text-white/52">
-                WebXR VR requiere un navegador compatible, normalmente desde el
-                visor y con HTTPS o localhost.
+                Para usar VR necesitas abrir esta vista desde un visor o
+                navegador compatible.
               </p>
             ) : null}
           </div>
