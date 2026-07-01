@@ -3,6 +3,51 @@ import { findActiveUserById } from "../repositories/userRepository.js";
 import { parseCookies } from "../utils/cookies.js";
 import { verifyAuthToken } from "../utils/tokens.js";
 
+// Temporary testing switch: set to false to restore API auth requirements.
+const ROUTE_AUTH_DISABLED_FOR_TESTS = true;
+
+function getPublicTestUser() {
+  const id = Number(process.env.PUBLIC_TEST_USER_ID || 1);
+
+  return {
+    clientId: process.env.PUBLIC_TEST_CLIENT_ID
+      ? Number(process.env.PUBLIC_TEST_CLIENT_ID)
+      : null,
+    email: "pruebas@arca.local",
+    firstName: "Usuario",
+    id: Number.isInteger(id) && id > 0 ? id : 1,
+    lastLoginAt: null,
+    lastName: "Pruebas",
+    name: "Usuario Pruebas",
+    permissionCodes: ["projects.read", "projects.publish"],
+    permissions: [
+      {
+        code: "projects.read",
+        description: null,
+        id: 0,
+        module: "projects",
+        name: "Leer proyectos",
+      },
+      {
+        code: "projects.publish",
+        description: null,
+        id: 0,
+        module: "projects",
+        name: "Publicar proyectos",
+      },
+    ],
+    phone: "",
+    profilePhotoUrl: "",
+    role: {
+      code: "admin",
+      id: 1,
+      name: "Administrador",
+    },
+    status: "active",
+    updatedAt: null,
+  };
+}
+
 function getEmptySession() {
   return {
     isAuthenticated: false,
@@ -91,6 +136,20 @@ export async function loadSession(req, _res, next) {
 }
 
 export async function requireAuth(req, res, next) {
+  if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
+    req.session = req.session || {
+      isAuthenticated: true,
+      payload: {
+        role: "admin",
+        sub: String(process.env.PUBLIC_TEST_USER_ID || 1),
+      },
+      token: null,
+    };
+    req.user = req.user || getPublicTestUser();
+    next();
+    return;
+  }
+
   if (!req.session) {
     try {
       const { session, user } = await resolveSession(req);
@@ -116,6 +175,12 @@ export async function requireAuth(req, res, next) {
 
 export function requireRoles(...allowedRoles) {
   return (req, res, next) => {
+    if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
+      req.user = req.user || getPublicTestUser();
+      next();
+      return;
+    }
+
     if (!req.user) {
       res.status(401).json({
         code: "UNAUTHENTICATED",
@@ -138,6 +203,12 @@ export function requireRoles(...allowedRoles) {
 
 export function requirePermissions(...requiredPermissions) {
   return (req, res, next) => {
+    if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
+      req.user = req.user || getPublicTestUser();
+      next();
+      return;
+    }
+
     if (!req.user) {
       res.status(401).json({
         code: "UNAUTHENTICATED",

@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { api, setAuthToken } from "../api/http.js";
+import { ROUTE_AUTH_DISABLED_FOR_TESTS, TEST_AUTH_USER } from "./testAccess.js";
 
 const AuthContext = createContext(null);
 
@@ -32,10 +33,17 @@ export function getDefaultAuthenticatedPath(user) {
 }
 
 export function AuthProvider({ children }) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(!ROUTE_AUTH_DISABLED_FOR_TESTS);
+  const [user, setUser] = useState(
+    ROUTE_AUTH_DISABLED_FOR_TESTS ? TEST_AUTH_USER : null,
+  );
 
   useEffect(() => {
+    if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
+      setAuthToken(null);
+      return undefined;
+    }
+
     let isMounted = true;
 
     api.auth

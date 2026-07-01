@@ -9,6 +9,7 @@ import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
+import VRModelViewer from "./VRModelViewer.jsx";
 
 function CloseIcon({ className }) {
   return (
@@ -189,11 +190,11 @@ export function Model3DViewerControls({
         "aria-label": "Ajustes del modelo 3D",
       },
       {
-        label: "Vista",
+        label: "VR",
         showText: false,
         icon: <ViewIcon />,
         disabled: !onView,
-        "aria-label": "Cambiar vista del modelo 3D",
+        "aria-label": "Abrir modo VR",
       },
       {
         label: "Expandir",
@@ -1039,6 +1040,7 @@ export default function Model3DViewerModal({
   const [modelProgress, setModelProgress] = useState(8);
   const [modelReloadKey, setModelReloadKey] = useState(0);
   const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(false);
+  const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
   const modelStageRef = useRef(null);
@@ -1075,6 +1077,7 @@ export default function Model3DViewerModal({
         setIsActive(false);
         setModelReloadKey(0);
         setIsAutoRotateEnabled(false);
+        setIsVRViewerOpen(false);
         setFocusedSelectionCommentId(null);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
@@ -1252,16 +1255,12 @@ export default function Model3DViewerModal({
     setIsAutoRotateEnabled((current) => !current);
   }
 
-  function handleResetCameraView() {
-    const modelViewer = modelViewerRef.current;
-
-    if (!modelViewer || !hasInteractiveModel) {
+  function handleOpenVRViewer() {
+    if (!hasInteractiveModel) {
       return;
     }
 
-    modelViewer.cameraOrbit = "135deg 68deg 120%";
-    modelViewer.fieldOfView = "32deg";
-    modelViewer.jumpCameraToGoal?.();
+    setIsVRViewerOpen(true);
   }
 
   async function handleToggleFullscreen() {
@@ -1600,7 +1599,7 @@ export default function Model3DViewerModal({
             <Model3DViewerControls
               onExpand={handleToggleFullscreen}
               onSettings={hasInteractiveModel ? handleToggleAutoRotate : null}
-              onView={hasInteractiveModel ? handleResetCameraView : null}
+              onView={hasInteractiveModel ? handleOpenVRViewer : null}
               selectedIndex={2}
               className="absolute bottom-[12px] right-[12px] z-20 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
             />
@@ -1625,6 +1624,14 @@ export default function Model3DViewerModal({
           />
         </div>
       </section>
+
+      <VRModelViewer
+        modelSrc={modelSrc}
+        poster={displayItem.image || undefined}
+        title={displayItem.title}
+        visible={isVRViewerOpen}
+        onClose={() => setIsVRViewerOpen(false)}
+      />
     </div>,
     document.body,
   );

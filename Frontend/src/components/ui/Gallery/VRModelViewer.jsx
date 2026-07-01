@@ -1,0 +1,351 @@
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import clsx from "clsx";
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { VRButton } from "three/addons/webxr/VRButton.js";
+
+import Button from "../../ui/Button/Button.jsx";
+
+function CloseIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M5 5L15 15M15 5L5 15"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function getErrorMessage(error) {
+  return error?.message || "No se pudo cargar el modelo en modo VR.";
+}
+
+export default function VRModelViewer({
+  modelSrc,
+  poster,
+  title = "Modelo 3D",
+  visible = false,
+  onClose,
+}) {
+  const mountRef = useRef(null);
+  const vrButtonRef = useRef(null);
+  const [status, setStatus] = useState("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isWebXRAvailable, setIsWebXRAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!visible || !modelSrc || !mountRef.current) {
+      return undefined;
+    }
+
+    let disposed = false;
+    const pressedKeys = new Set();
+    const mountNode = mountRef.current;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x161616);
+
+    const camera = new THREE.PerspectiveCamera(
+      70,
+      mountNode.clientWidth / Math.max(mountNode.clientHeight, 1),
+      0.05,
+      500,
+    );
+    camera.position.set(0, 1.6, 0);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance",
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.xr.enabled = true;
+    mountNode.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 1.4, -0.01);
+    controls.update();
+
+    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.8);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    keyLight.position.set(4, 8, 6);
+    scene.add(keyLight);
+
+    const floorGrid = new THREE.GridHelper(20, 20, 0x777777, 0x333333);
+    floorGrid.position.y = 0.01;
+    scene.add(floorGrid);
+
+    async function setupVRButton() {
+      const available = Boolean(
+        navigator.xr && (await navigator.xr.isSessionSupported("immersive-vr")),
+      );
+
+      if (disposed) {
+        return;
+      }
+
+      setIsWebXRAvailable(available);
+      const button = VRButton.createButton(renderer);
+      button.style.position = "static";
+      button.style.width = "auto";
+      button.style.minWidth = "144px";
+      button.style.border = "0";
+      button.style.borderRadius = "8px";
+      button.style.background = available ? "#ff4431" : "#5f5f5f";
+      button.style.color = "#ffffff";
+      button.style.font = "600 13px/1 system-ui, sans-serif";
+      button.style.padding = "12px 16px";
+      vrButtonRef.current?.appendChild(button);
+    }
+
+    function frameModel(model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const maxDimension = Math.max(size.x, size.y, size.z, 1);
+      const scale = maxDimension > 30 ? 30 / maxDimension : 1;
+
+      model.scale.multiplyScalar(scale);
+
+      const scaledBox = new THREE.Box3().setFromObject(model);
+      const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+      const scaledMin = scaledBox.min;
+
+      model.position.sub(
+        new THREE.Vector3(scaledCenter.x, scaledMin.y, scaledCenter.z),
+      );
+
+      const framedBox = new THREE.Box3().setFromObject(model);
+      const framedSize = framedBox.getSize(new THREE.Vector3());
+      const cameraZ = Math.max(0.8, Math.min(framedSize.z * 0.12, 2.2));
+
+      camera.position.set(
+        0,
+        Math.min(Math.max(framedSize.y * 0.32, 1.35), 1.8),
+        cameraZ,
+      );
+      controls.target.set(0, camera.position.y, cameraZ - 0.01);
+      controls.update();
+
+      return center;
+    }
+
+    function handleResize() {
+      if (!mountNode.clientWidth || !mountNode.clientHeight) {
+        return;
+      }
+
+      camera.aspect = mountNode.clientWidth / mountNode.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
+    }
+
+    function handleKeyDown(event) {
+      pressedKeys.add(event.code);
+    }
+
+    function handleKeyUp(event) {
+      pressedKeys.delete(event.code);
+    }
+
+    function updateKeyboardMovement(delta) {
+      if (renderer.xr.isPresenting) {
+        return;
+      }
+
+      const speed = 2.2 * delta;
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+      forward.y = 0;
+      forward.normalize();
+
+      const right = new THREE.Vector3()
+        .crossVectors(forward, camera.up)
+        .normalize();
+      const movement = new THREE.Vector3();
+
+      if (pressedKeys.has("KeyW") || pressedKeys.has("ArrowUp")) {
+        movement.add(forward);
+      }
+
+      if (pressedKeys.has("KeyS") || pressedKeys.has("ArrowDown")) {
+        movement.sub(forward);
+      }
+
+      if (pressedKeys.has("KeyD") || pressedKeys.has("ArrowRight")) {
+        movement.add(right);
+      }
+
+      if (pressedKeys.has("KeyA") || pressedKeys.has("ArrowLeft")) {
+        movement.sub(right);
+      }
+
+      if (movement.lengthSq() > 0) {
+        movement.normalize().multiplyScalar(speed);
+        camera.position.add(movement);
+        controls.target.add(movement);
+      }
+    }
+
+    const clock = new THREE.Clock();
+
+    renderer.setAnimationLoop(() => {
+      const delta = clock.getDelta();
+      updateKeyboardMovement(delta);
+      controls.update();
+      renderer.render(scene, camera);
+    });
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    setStatus("loading");
+    setErrorMessage("");
+    setupVRButton().catch(() => {
+      setIsWebXRAvailable(false);
+    });
+
+    const loader = new GLTFLoader();
+    loader.load(
+      modelSrc,
+      (gltf) => {
+        if (disposed) {
+          return;
+        }
+
+        const model = gltf.scene;
+        frameModel(model);
+        scene.add(model);
+        setStatus("loaded");
+      },
+      undefined,
+      (error) => {
+        if (disposed) {
+          return;
+        }
+
+        setStatus("error");
+        setErrorMessage(getErrorMessage(error));
+      },
+    );
+
+    return () => {
+      disposed = true;
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      renderer.setAnimationLoop(null);
+      controls.dispose();
+      renderer.dispose();
+
+      scene.traverse((object) => {
+        object.geometry?.dispose?.();
+
+        const materials = Array.isArray(object.material)
+          ? object.material
+          : [object.material].filter(Boolean);
+        materials.forEach((material) => {
+          Object.values(material).forEach((value) => {
+            value?.isTexture && value.dispose?.();
+          });
+          material.dispose?.();
+        });
+      });
+
+      mountNode.replaceChildren();
+      vrButtonRef.current?.replaceChildren();
+    };
+  }, [modelSrc, visible]);
+
+  if (!visible || typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[80] bg-[#111] text-white">
+      {poster ? (
+        <img
+          src={poster}
+          alt=""
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 blur-[18px]"
+          aria-hidden="true"
+        />
+      ) : null}
+
+      <div className="relative flex h-dvh w-dvw flex-col">
+        <header className="flex min-h-[64px] items-center justify-between gap-[16px] border-b border-white/10 bg-black/55 px-[16px] backdrop-blur-md">
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-semibold leading-[18px]">
+              {title}
+            </p>
+            <p className="text-[12px] leading-[16px] text-white/62">
+              Prototipo VR WebXR
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-[10px]">
+            <div ref={vrButtonRef} className="flex items-center" />
+            <Button
+              theme="Primary"
+              type="Solid"
+              size="S"
+              showText={false}
+              showLeftIcon
+              showRightIcon={false}
+              iconLeft={<CloseIcon className="size-5" />}
+              aria-label="Cerrar modo VR"
+              onClick={onClose}
+              className="size-10"
+            />
+          </div>
+        </header>
+
+        <main className="relative min-h-0 flex-1">
+          <div ref={mountRef} className="absolute inset-0" />
+
+          <div
+            className={clsx(
+              "pointer-events-none absolute left-[16px] top-[16px] max-w-[360px] rounded-[8px] border border-white/10 bg-black/58 p-[12px] text-[12px] leading-[16px] text-white/74 backdrop-blur-md",
+              status === "loaded" && "opacity-80",
+            )}
+          >
+            {status === "loading" ? (
+              <p>Cargando modelo para VR...</p>
+            ) : status === "error" ? (
+              <p>{errorMessage}</p>
+            ) : (
+              <p>
+                En escritorio puedes moverte con WASD/flechas. En un visor
+                compatible usa el boton Entrar en VR.
+              </p>
+            )}
+
+            {!isWebXRAvailable ? (
+              <p className="mt-[6px] text-white/52">
+                WebXR VR requiere un navegador compatible, normalmente desde el
+                visor y con HTTPS o localhost.
+              </p>
+            ) : null}
+          </div>
+        </main>
+      </div>
+    </div>,
+    document.body,
+  );
+}
