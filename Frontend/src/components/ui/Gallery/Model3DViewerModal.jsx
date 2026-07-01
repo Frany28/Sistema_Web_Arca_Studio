@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import "@google/model-viewer";
@@ -9,7 +17,8 @@ import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
-import VRModelViewer from "./VRModelViewer.jsx";
+
+const VRModelViewer = lazy(() => import("./VRModelViewer.jsx"));
 
 function CloseIcon({ className }) {
   return (
@@ -303,10 +312,6 @@ function Model3DUsageHint() {
       <p>
         Arrastra el modelo para girarlo, usa la rueda o pellizca para acercarte
         y haz clic en un punto para dejar un comentario.
-      </p>
-      <p className="mt-[6px] text-white/56">
-        Usa Ajustes para activar rotacion, VR para abrir el modo inmersivo y
-        Expandir para verlo en pantalla completa.
       </p>
     </div>
   );
@@ -1641,13 +1646,17 @@ export default function Model3DViewerModal({
         </div>
       </section>
 
-      <VRModelViewer
-        modelSrc={modelSrc}
-        poster={displayItem.image || undefined}
-        title={displayItem.title}
-        visible={isVRViewerOpen}
-        onClose={() => setIsVRViewerOpen(false)}
-      />
+      {isVRViewerOpen ? (
+        <Suspense fallback={null}>
+          <VRModelViewer
+            modelSrc={modelSrc}
+            poster={displayItem.image || undefined}
+            title={displayItem.title}
+            visible={isVRViewerOpen}
+            onClose={() => setIsVRViewerOpen(false)}
+          />
+        </Suspense>
+      ) : null}
     </div>,
     document.body,
   );

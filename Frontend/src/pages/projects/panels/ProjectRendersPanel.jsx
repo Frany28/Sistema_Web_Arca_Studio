@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import clsx from "clsx";
 import "@google/model-viewer";
 import Button from "../../../components/ui/Button/Button.jsx";
@@ -10,7 +18,6 @@ import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.js
 import Model3DViewerModal, {
   Model3DViewerControls,
 } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
-import VRModelViewer from "../../../components/ui/Gallery/VRModelViewer.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
@@ -19,6 +26,9 @@ import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 
 const MODEL_SLOW_LOADING_MS = 15000;
 const MODEL_LOAD_TIMEOUT_MS = 45000;
+const VRModelViewer = lazy(
+  () => import("../../../components/ui/Gallery/VRModelViewer.jsx"),
+);
 
 function MediaEmptyState({
   title,
@@ -1037,13 +1047,17 @@ export default function ProjectRendersPanel({
         projectId={projectId}
         onClose={() => setSelectedModel3D(null)}
       />
-      <VRModelViewer
-        modelSrc={activeModelSrc}
-        poster={activeRender.image || undefined}
-        title={activeRender.title}
-        visible={isVRViewerOpen}
-        onClose={() => setIsVRViewerOpen(false)}
-      />
+      {isVRViewerOpen ? (
+        <Suspense fallback={null}>
+          <VRModelViewer
+            modelSrc={activeModelSrc}
+            poster={activeRender.image || undefined}
+            title={activeRender.title}
+            visible={isVRViewerOpen}
+            onClose={() => setIsVRViewerOpen(false)}
+          />
+        </Suspense>
+      ) : null}
       <VideoViewerModal
         visible={Boolean(selectedGalleryVideo)}
         item={selectedGalleryVideo}
