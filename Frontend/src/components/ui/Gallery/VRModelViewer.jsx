@@ -306,8 +306,9 @@ export default function VRModelViewer({
 
   const usageItems = [
     "Colocate el visor y selecciona Entrar en VR",
-    "Mira alrededor para explorar el modelo",
-    "Usa los controles del visor para desplazarte",
+    "Explora el modelo moviendo la vista de forma natural",
+    "Utiliza los controles del visor para desplazarte dentro del espacio",
+    "En computador, usa WASD o las flechas para moverte por la escena",
   ];
 
   return createPortal(

@@ -1625,7 +1625,7 @@ export default function Model3DViewerModal({
 
           {hasInteractiveModel || hasPreviewImage ? (
             <Model3DViewerControls
-              onExpand={handleToggleFullscreen}
+              onExpand={null}
               onSettings={hasInteractiveModel ? handleToggleAutoRotate : null}
               onView={hasInteractiveModel ? handleOpenVRViewer : null}
               selectedIndex={2}
