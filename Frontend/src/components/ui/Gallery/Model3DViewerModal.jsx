@@ -297,6 +297,21 @@ export function Model3DLoadingState({
   );
 }
 
+function Model3DUsageHint() {
+  return (
+    <div className="pointer-events-none absolute bottom-[12px] left-[12px] z-20 max-w-[360px] rounded-[8px] border border-white/10 bg-black/58 p-[12px] text-[12px] leading-[16px] text-white/74 shadow-[0_12px_32px_rgba(0,0,0,0.22)] backdrop-blur-md">
+      <p>
+        Arrastra el modelo para girarlo, usa la rueda o pellizca para acercarte
+        y haz clic en un punto para dejar un comentario.
+      </p>
+      <p className="mt-[6px] text-white/56">
+        Usa Ajustes para activar rotacion, VR para abrir el modo inmersivo y
+        Expandir para verlo en pantalla completa.
+      </p>
+    </div>
+  );
+}
+
 const GENERAL_COMMENTS = [
   {
     id: "comment-1",
@@ -1554,6 +1569,7 @@ export default function Model3DViewerModal({
                 focusedAnnotationId={focusedSelectionCommentId}
                 pendingSelection={pendingSelection}
               />
+              {!isModelLoading ? <Model3DUsageHint /> : null}
             </>
           ) : hasPreviewImage ? (
             <ImageHighlighter

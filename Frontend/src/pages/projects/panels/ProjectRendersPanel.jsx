@@ -10,6 +10,7 @@ import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.js
 import Model3DViewerModal, {
   Model3DViewerControls,
 } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
+import VRModelViewer from "../../../components/ui/Gallery/VRModelViewer.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
@@ -163,6 +164,7 @@ function RenderStage({
   onModelLoad,
   onModelProgress,
   onOpenModel,
+  onOpenVR,
 }) {
   const modelViewerRef = useRef(null);
   const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
@@ -237,18 +239,6 @@ function RenderStage({
     }
 
     setIsAutoRotateEnabled((current) => !current);
-  }
-
-  function handleResetCameraView() {
-    const modelViewer = modelViewerRef.current;
-
-    if (!modelViewer || !hasInteractiveModel) {
-      return;
-    }
-
-    modelViewer.cameraOrbit = "135deg 68deg 120%";
-    modelViewer.fieldOfView = "32deg";
-    modelViewer.jumpCameraToGoal?.();
   }
 
   return (
@@ -333,7 +323,7 @@ function RenderStage({
           <Model3DViewerControls
             onExpand={onOpenModel}
             onSettings={hasInteractiveModel ? handleToggleAutoRotate : null}
-            onView={hasInteractiveModel ? handleResetCameraView : null}
+            onView={hasInteractiveModel ? onOpenVR : null}
             persistSelection={false}
             className="absolute bottom-[12px] right-[12px] z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
           />
@@ -755,6 +745,7 @@ export default function ProjectRendersPanel({
   const loadTimeoutRef = useRef(null);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
   const [isVideoGalleryModalOpen, setIsVideoGalleryModalOpen] = useState(false);
+  const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
   const [selectedModel3D, setSelectedModel3D] = useState(null);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(null);
   const [selectedGalleryVideo, setSelectedGalleryVideo] = useState(null);
@@ -1007,6 +998,7 @@ export default function ProjectRendersPanel({
             onModelLoad={handleModelLoad}
             onModelProgress={handleModelProgress}
             onOpenModel={() => setSelectedModel3D(activeRender)}
+            onOpenVR={() => setIsVRViewerOpen(true)}
           />
           <RenderThumbnailRail
             items={resolvedModelGallery}
@@ -1044,6 +1036,13 @@ export default function ProjectRendersPanel({
         item={selectedModel3D}
         projectId={projectId}
         onClose={() => setSelectedModel3D(null)}
+      />
+      <VRModelViewer
+        modelSrc={activeModelSrc}
+        poster={activeRender.image || undefined}
+        title={activeRender.title}
+        visible={isVRViewerOpen}
+        onClose={() => setIsVRViewerOpen(false)}
       />
       <VideoViewerModal
         visible={Boolean(selectedGalleryVideo)}
