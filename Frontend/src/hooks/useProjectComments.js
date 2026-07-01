@@ -79,6 +79,9 @@ function toDrawerComment(comment, user) {
     imageId: comment.targetId || comment.imageId,
     message: comment.content,
     name: getCommentAuthorLabel(comment, user),
+    pointNumber:
+      Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
+      null,
     createdAt: comment.createdAt,
     parentCommentId: comment.parentCommentId,
     projectId: comment.projectId,

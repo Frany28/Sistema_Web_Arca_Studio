@@ -96,6 +96,8 @@ function getAuthorLabel(comment, user) {
 
 function decorateComment(comment, user) {
   const selection = comment.selection || null;
+  const pointNumber =
+    Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) || null;
   const imageFromSelection = selection?.image || null;
   const image = comment.image || imageFromSelection
     ? {
@@ -116,8 +118,58 @@ function decorateComment(comment, user) {
     imageId: comment.targetId || comment.imageId,
     message: comment.message ?? comment.content,
     name: getAuthorLabel(comment, user),
+    pointNumber,
     timestamp: getRelativeTimeLabel(comment.createdAt) || comment.timestamp,
   };
+}
+
+function withFallbackPointNumbers(comments) {
+  const nextPointNumbersByTarget = new Map();
+  const pointNumbersByRootId = new Map();
+
+  const getTargetKey = (comment) =>
+    `${comment.commentType || "image"}:${comment.targetId || comment.imageId || "target"}`;
+
+  comments.forEach((comment) => {
+    if (comment.parentCommentId || !comment.selection) {
+      return;
+    }
+
+    const targetKey = getTargetKey(comment);
+    const nextPointNumber = nextPointNumbersByTarget.get(targetKey) || 1;
+    const pointNumber = comment.pointNumber || nextPointNumber;
+    pointNumbersByRootId.set(String(comment.id), pointNumber);
+    nextPointNumbersByTarget.set(
+      targetKey,
+      Math.max(nextPointNumber, pointNumber + 1),
+    );
+  });
+
+  return comments.map((comment) => {
+    if (comment.pointNumber) {
+      return comment;
+    }
+
+    const parentPointNumber = comment.parentCommentId
+      ? pointNumbersByRootId.get(String(comment.parentCommentId))
+      : null;
+
+    if (parentPointNumber) {
+      return {
+        ...comment,
+        pointNumber: parentPointNumber,
+      };
+    }
+
+    if (!comment.parentCommentId && comment.selection) {
+      return {
+        ...comment,
+        pointNumber: pointNumbersByRootId.get(String(comment.id)) || null,
+      };
+    }
+
+    return comment;
+  });
 }
 
 function normalizeProjectId(projectId) {
@@ -270,11 +322,13 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
 
   const comments = useMemo(
     () =>
-      projectComments
-        .filter((comment) =>
-          isMatchingTarget(comment, { commentType, targetId: imageKey }),
-        )
-        .map((comment) => decorateComment(comment, user)),
+      withFallbackPointNumbers(
+        projectComments
+          .filter((comment) =>
+            isMatchingTarget(comment, { commentType, targetId: imageKey }),
+          )
+          .map((comment) => decorateComment(comment, user)),
+      ),
     [commentType, imageKey, projectComments, user],
   );
 
@@ -351,14 +405,21 @@ export function useImageCommentNotifications({
   });
 
   return useMemo(() => {
-    return comments
-      .filter((comment) => MULTIMEDIA_COMMENT_TYPES.has(comment.commentType))
-      .sort((left, right) => {
+    return withFallbackPointNumbers(
+      comments
+        .filter((comment) => MULTIMEDIA_COMMENT_TYPES.has(comment.commentType))
+        .sort((left, right) => {
+          return (
+            new Date(left.createdAt || 0).getTime() -
+            new Date(right.createdAt || 0).getTime()
+          );
+        })
+        .map((comment) => decorateComment(comment, user)),
+    ).sort((left, right) => {
         return (
           new Date(right.createdAt || 0).getTime() -
           new Date(left.createdAt || 0).getTime()
         );
-      })
-      .map((comment) => decorateComment(comment, user));
+      });
   }, [comments, user]);
 }

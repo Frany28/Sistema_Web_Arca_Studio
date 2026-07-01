@@ -132,6 +132,18 @@ function ImageCarouselControl({ items, activeIndex, onSelect, onPrevious, onNext
   );
 }
 
+function getRootCommentId(comments, commentId) {
+  if (!commentId) {
+    return null;
+  }
+
+  const comment = comments.find(
+    (currentComment) => String(currentComment.id) === String(commentId),
+  );
+
+  return comment?.parentCommentId || comment?.id || commentId;
+}
+
 export default function ImageViewerModal({
   focusedCommentId,
   visible = false,
@@ -179,6 +191,17 @@ export default function ImageViewerModal({
       return 0;
     });
   }, [comments, focusedCommentId]);
+  const annotationComments = useMemo(
+    () =>
+      comments.filter(
+        (comment) => comment.selection && !comment.parentCommentId,
+      ),
+    [comments],
+  );
+  const focusedAnnotationId = useMemo(
+    () => getRootCommentId(comments, focusedSelectionCommentId),
+    [comments, focusedSelectionCommentId],
+  );
 
   useEffect(() => {
     window.clearTimeout(closeTimeoutRef.current);
@@ -353,8 +376,8 @@ export default function ImageViewerModal({
             )}
           >
             <ImageHighlighter
-              annotations={comments.filter((comment) => comment.selection)}
-              focusedAnnotationId={focusedSelectionCommentId}
+              annotations={annotationComments}
+              focusedAnnotationId={focusedAnnotationId}
               imageSrc={displayItem.image}
               onSelectionChange={handleSelectionChange}
             />

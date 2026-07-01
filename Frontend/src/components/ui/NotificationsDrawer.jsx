@@ -238,6 +238,7 @@ function CommentCard({
   imageComment = false,
   name,
   onSelect,
+  pointNumber,
   timestamp,
   message,
   selection,
@@ -267,7 +268,25 @@ function CommentCard({
 
       <div className="flex flex-1 flex-col gap-[8px]">
         <article
-          className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]"
+          className={clsx(
+            "relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]",
+            imageComment &&
+              onSelect &&
+              "cursor-pointer transition-colors hover:border-[var(--color-neutral-300)] focus-within:ring-2 focus-within:ring-[var(--color-primary-300)]",
+          )}
+          role={imageComment && onSelect ? "button" : undefined}
+          tabIndex={imageComment && onSelect ? 0 : undefined}
+          onClick={imageComment && onSelect ? onSelect : undefined}
+          onKeyDown={
+            imageComment && onSelect
+              ? (event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelect();
+                  }
+                }
+              : undefined
+          }
         >
           <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
@@ -278,6 +297,11 @@ function CommentCard({
               <p className="text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {timestamp}
               </p>
+              {Number(pointNumber) ? (
+                <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
+                  Punto {Number(pointNumber)}
+                </span>
+              ) : null}
             </div>
 
             <button
@@ -287,7 +311,10 @@ function CommentCard({
               aria-controls={`reply-action-${id}`}
               className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-200)] transition-colors duration-200 hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
               data-reply-interaction="true"
-              onClick={onMoreClick}
+              onClick={(event) => {
+                event.stopPropagation();
+                onMoreClick?.();
+              }}
             >
               <MoreIcon />
             </button>
@@ -300,8 +327,8 @@ function CommentCard({
           {imageComment && selection && !isReply ? (
             <ImageCommentPreview
               image={image}
+              pointNumber={pointNumber}
               selection={selection}
-              onSelect={onSelect}
             />
           ) : null}
         </article>
@@ -322,17 +349,16 @@ function CommentCard({
   );
 }
 
-function ImageCommentPreview({ image, onSelect, selection }) {
+function ImageCommentPreview({ image, pointNumber, selection }) {
   const pixels = selection.imagePixels ?? selection.displayPixels;
-  const isInteractive = typeof onSelect === "function";
 
   if (!pixels) {
     return null;
   }
 
-  const content = (
-    <>
-      <div className="size-[44px] shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]">
+  return (
+    <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+      <div className="relative size-[44px] shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]">
         {image?.src ? (
           <img
             src={image.src}
@@ -341,29 +367,22 @@ function ImageCommentPreview({ image, onSelect, selection }) {
             aria-hidden="true"
           />
         ) : null}
+        {Number(pointNumber) ? (
+          <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
+            {Number(pointNumber)}
+          </span>
+        ) : null}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-          {image?.title || "Imagen comentada"}
+          {Number(pointNumber)
+            ? `Punto ${Number(pointNumber)}`
+            : image?.title || "Imagen comentada"}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
           x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
         </p>
       </div>
-    </>
-  );
-
-  return isInteractive ? (
-    <button
-      type="button"
-      className="mt-[6px] flex w-full cursor-pointer items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px] text-left transition-colors hover:border-[var(--color-neutral-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)]"
-      onClick={onSelect}
-    >
-      {content}
-    </button>
-  ) : (
-    <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
-      {content}
     </div>
   );
 }

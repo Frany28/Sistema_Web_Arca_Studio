@@ -970,6 +970,7 @@ export default function ProjectRendersPanel({
           onWatchVideo={setSelectedGalleryVideo}
         />
         <Model3DViewerModal
+          focusedCommentId={focusedCommentId}
           visible={Boolean(selectedModel3D)}
           item={selectedModel3D}
           projectId={projectId}
@@ -1042,6 +1043,7 @@ export default function ProjectRendersPanel({
         onWatchVideo={setSelectedGalleryVideo}
       />
       <Model3DViewerModal
+        focusedCommentId={focusedCommentId}
         visible={Boolean(selectedModel3D)}
         item={selectedModel3D}
         projectId={projectId}

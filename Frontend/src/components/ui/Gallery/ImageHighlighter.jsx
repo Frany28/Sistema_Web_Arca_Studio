@@ -88,6 +88,45 @@ function getRenderedBoxFromNatural(selection, layout) {
   return renderedBox;
 }
 
+function getRenderedPointFromNatural(selection, layout) {
+  const renderedBox = getRenderedBoxFromNatural(selection, layout);
+
+  if (!renderedBox) {
+    return null;
+  }
+
+  return {
+    x: renderedBox.x1 + renderedBox.width / 2,
+    y: renderedBox.y1 + renderedBox.height / 2,
+  };
+}
+
+function AnnotationPoint({ active = false, annotation, point }) {
+  const pointNumber = Number(annotation?.pointNumber) || null;
+
+  if (!point || !pointNumber) {
+    return null;
+  }
+
+  return (
+    <span
+      className={[
+        "absolute z-[20] flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full",
+        "border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)]",
+        "text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]",
+        active ? "scale-125" : "",
+      ].join(" ")}
+      style={{
+        left: point.x,
+        top: point.y,
+      }}
+      aria-hidden="true"
+    >
+      {pointNumber}
+    </span>
+  );
+}
+
 function SelectionBox({ box, subtle = false }) {
   if (!box) {
     return null;
@@ -297,6 +336,14 @@ export default function ImageHighlighter({
   const focusedAnnotationBox = focusedAnnotation
     ? getRenderedBoxFromNatural(focusedAnnotation.selection, layout)
     : null;
+  const annotationPoints = layout
+    ? annotations
+        .map((annotation) => ({
+          annotation,
+          point: getRenderedPointFromNatural(annotation.selection, layout),
+        }))
+        .filter((item) => item.point)
+    : [];
 
   return (
     <div
@@ -322,6 +369,17 @@ export default function ImageHighlighter({
       {!isActive && focusedAnnotationBox ? (
         <SelectionOverlay box={focusedAnnotationBox} />
       ) : null}
+
+      {!isActive
+        ? annotationPoints.map(({ annotation, point }) => (
+            <AnnotationPoint
+              key={annotation.id}
+              active={String(annotation.id) === String(focusedAnnotationId)}
+              annotation={annotation}
+              point={point}
+            />
+          ))
+        : null}
 
       {isActive && box && (
         <>

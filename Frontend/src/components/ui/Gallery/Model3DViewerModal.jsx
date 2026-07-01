@@ -462,6 +462,7 @@ function CommentCard({
   image,
   message,
   name,
+  pointNumber,
   selection,
   timestamp,
   type = "comment",
@@ -489,6 +490,7 @@ function CommentCard({
   const safeDisplayAuthor = resolveString(displayAuthor);
   const safeDisplayTime = resolveString(displayTime);
   const safeDisplayBody = resolveString(displayBody);
+  const safePointNumber = Number(pointNumber) || null;
 
   return (
     <div
@@ -518,6 +520,11 @@ function CommentCard({
               <span className="shrink-0 text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {safeDisplayTime}
               </span>
+              {safePointNumber && !isReply ? (
+                <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
+                  Punto {safePointNumber}
+                </span>
+              ) : null}
             </div>
 
             <button
@@ -541,6 +548,7 @@ function CommentCard({
             <SelectionPreview
               active={selectionActive}
               image={image}
+              pointNumber={pointNumber}
               selection={selection}
               compact
               onSelect={onSelectionClick}
@@ -570,6 +578,7 @@ function SelectionPreview({
   image,
   onClear,
   onSelect,
+  pointNumber,
   selection,
 }) {
   if (!selection) {
@@ -613,7 +622,7 @@ function SelectionPreview({
     >
       <div
         className={clsx(
-          "shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]",
+          "relative shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]",
           isViewerPoint &&
             !imageSrc &&
             "relative bg-[radial-gradient(circle_at_50%_50%,rgba(255,68,49,0.42)_0%,rgba(255,68,49,0.18)_24%,rgba(42,41,41,0.95)_25%,rgba(42,41,41,0.95)_100%)]",
@@ -634,10 +643,19 @@ function SelectionPreview({
         {isViewerPoint && !imageSrc ? (
           <span className="absolute left-1/2 top-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22)]" />
         ) : null}
+        {Number(pointNumber) ? (
+          <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
+            {Number(pointNumber)}
+          </span>
+        ) : null}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-          {isViewerPoint ? "Punto del visor" : "Area seleccionada"}
+          {Number(pointNumber)
+            ? `Punto ${Number(pointNumber)}`
+            : isViewerPoint
+              ? "Punto del visor"
+              : "Area seleccionada"}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
           {isViewerPoint
@@ -682,6 +700,7 @@ function MessageInput({
       {pendingSelection ? (
         <SelectionPreview
           image={pendingSelection.image}
+          pointNumber={pendingSelection.pointNumber}
           selection={pendingSelection}
           onClear={onClearSelection}
         />
@@ -838,6 +857,7 @@ function Model3DHotspots({
     ...annotations.map((comment) => ({
       id: comment.id,
       active: String(comment.id) === String(focusedAnnotationId),
+      pointNumber: comment.pointNumber,
       selection: comment.selection,
     })),
     pendingSelection
@@ -868,7 +888,7 @@ function Model3DHotspots({
             data-normal={point.normal}
             data-visibility-attribute="visible"
             className={clsx(
-              "pointer-events-none block size-[18px] rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] p-0 shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)] transition-[opacity,transform]",
+              "pointer-events-none flex size-[24px] items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] p-0 text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)] transition-[opacity,transform]",
               item.active && "scale-125",
               item.pending && "animate-pulse",
             )}
@@ -876,7 +896,9 @@ function Model3DHotspots({
               opacity: "var(--min-hotspot-opacity, 1)",
             }}
             aria-label="Punto comentado"
-          />
+          >
+            {item.pending ? "" : Number(item.pointNumber) || ""}
+          </button>
         );
       })}
     </>
@@ -892,6 +914,7 @@ function Model3DCommentMarkers({
     ...annotations.map((comment) => ({
       id: comment.id,
       active: String(comment.id) === String(focusedAnnotationId),
+      pointNumber: comment.pointNumber,
       selection: comment.selection,
     })),
     pendingSelection
@@ -921,7 +944,7 @@ function Model3DCommentMarkers({
           <span
             key={item.id}
             className={clsx(
-              "absolute size-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]",
+              "absolute flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]",
               item.active && "scale-125",
               item.pending && "animate-pulse",
             )}
@@ -930,11 +953,25 @@ function Model3DCommentMarkers({
               top: `${Math.min(Math.max(point.y, 0), 1) * 100}%`,
             }}
             aria-hidden="true"
-          />
+          >
+            {item.pending ? "" : Number(item.pointNumber) || ""}
+          </span>
         );
       })}
     </div>
   );
+}
+
+function getRootCommentId(comments, commentId) {
+  if (!commentId) {
+    return null;
+  }
+
+  const comment = comments.find(
+    (currentComment) => String(currentComment.id) === String(commentId),
+  );
+
+  return comment?.parentCommentId || comment?.id || commentId;
 }
 
 export function GeneralCommentsDrawer({
@@ -1054,6 +1091,7 @@ export function GeneralCommentsDrawer({
 }
 
 export default function Model3DViewerModal({
+  focusedCommentId,
   visible = false,
   item,
   projectId,
@@ -1079,9 +1117,20 @@ export default function Model3DViewerModal({
     commentType: "viewer3d",
     projectId,
   });
+  const annotationComments = useMemo(
+    () =>
+      comments.filter(
+        (comment) => comment.selection && !comment.parentCommentId,
+      ),
+    [comments],
+  );
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
-    useState(null);
+    useState(focusedCommentId);
+  const focusedAnnotationId = useMemo(
+    () => getRootCommentId(comments, focusedSelectionCommentId),
+    [comments, focusedSelectionCommentId],
+  );
 
   const clearModelLoadingTimers = useCallback(() => {
     window.clearTimeout(slowLoadingTimeoutRef.current);
@@ -1105,7 +1154,7 @@ export default function Model3DViewerModal({
         setModelReloadKey(0);
         setIsAutoRotateEnabled(false);
         setIsVRViewerOpen(false);
-        setFocusedSelectionCommentId(null);
+        setFocusedSelectionCommentId(focusedCommentId);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
           frameRef.current = window.requestAnimationFrame(() => {
@@ -1135,7 +1184,7 @@ export default function Model3DViewerModal({
       window.clearTimeout(closeTimeoutRef.current);
       window.cancelAnimationFrame(frameRef.current);
     };
-  }, [visible, item]);
+  }, [focusedCommentId, visible, item]);
 
   useEffect(
     () => () => {
@@ -1376,6 +1425,21 @@ export default function Model3DViewerModal({
     modelViewer.jumpCameraToGoal?.();
   }
 
+  useEffect(() => {
+    if (!focusedAnnotationId) {
+      return;
+    }
+
+    const comment = comments.find(
+      (currentComment) =>
+        String(currentComment.id) === String(focusedAnnotationId),
+    );
+
+    if (comment?.selection?.kind === "viewer3d-point") {
+      restoreViewerCamera(comment.selection);
+    }
+  }, [comments, focusedAnnotationId]);
+
   function handleModelPointerDown(event) {
     if (!hasInteractiveModel || isModelLoading || event.button !== 0) {
       return;
@@ -1563,8 +1627,8 @@ export default function Model3DViewerModal({
                 }}
               >
                 <Model3DHotspots
-                  annotations={comments.filter((comment) => comment.selection)}
-                  focusedAnnotationId={focusedSelectionCommentId}
+                  annotations={annotationComments}
+                  focusedAnnotationId={focusedAnnotationId}
                   pendingSelection={pendingSelection}
                 />
               </model-viewer>
@@ -1577,16 +1641,16 @@ export default function Model3DViewerModal({
                 />
               ) : null}
               <Model3DCommentMarkers
-                annotations={comments.filter((comment) => comment.selection)}
-                focusedAnnotationId={focusedSelectionCommentId}
+                annotations={annotationComments}
+                focusedAnnotationId={focusedAnnotationId}
                 pendingSelection={pendingSelection}
               />
               {!isModelLoading ? <Model3DUsageHint /> : null}
             </>
           ) : hasPreviewImage ? (
             <ImageHighlighter
-              annotations={comments.filter((comment) => comment.selection)}
-              focusedAnnotationId={focusedSelectionCommentId}
+              annotations={annotationComments}
+              focusedAnnotationId={focusedAnnotationId}
               imageSrc={displayItem.image}
               onSelectionChange={handleSelectionChange}
             />

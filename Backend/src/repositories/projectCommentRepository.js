@@ -27,6 +27,9 @@ function toProjectComment(row) {
     parentCommentId: row.parent_comment_id
       ? Number(row.parent_comment_id)
       : null,
+    pointNumber:
+      Number(targetMetadata?.pointNumber ?? targetMetadata?.point_number) ||
+      null,
     projectId: Number(row.project_id),
     selection: targetMetadata?.selection || null,
     status: row.status,
@@ -188,6 +191,18 @@ export async function createProjectCommentRecord({
           and pc.file_id is null
           and pc.file_version_id is null
       ),
+      target_point_number as (
+        select count(*) + 1 as point_number
+        from public.project_comments existing_pc
+        where existing_pc.project_id = $${projectIdParam}
+          and existing_pc.parent_comment_id is null
+          and existing_pc.comment_type = $${typeParam}::comment_type
+          and existing_pc.target_id is not distinct from $${targetIdParam}::text
+          and existing_pc.deleted_at is null
+          and existing_pc.status = $${statusParam}::comment_status
+          and existing_pc.file_id is null
+          and existing_pc.file_version_id is null
+      ),
       inserted_comment as (
         insert into public.project_comments (
           project_id,
@@ -216,12 +231,19 @@ export async function createProjectCommentRecord({
             else pc.target_id
           end,
           case
-            when $${parentIdParam}::bigint is null then $${targetMetadataParam}::jsonb
+            when $${parentIdParam}::bigint is null and $${typeParam}::comment_type = 'general'::comment_type then null
+            when $${parentIdParam}::bigint is null then jsonb_set(
+              coalesce($${targetMetadataParam}::jsonb, '{}'::jsonb),
+              '{pointNumber}',
+              to_jsonb(tpn.point_number),
+              true
+            )
             else pc.target_metadata
           end,
           $${statusParam}::comment_status
         from accessible_project ap
         left join parent_comment pc on true
+        cross join target_point_number tpn
         where $${parentIdParam}::bigint is null or pc.id is not null
         returning *
       )
