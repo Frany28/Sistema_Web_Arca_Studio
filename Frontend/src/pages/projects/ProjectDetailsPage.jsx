@@ -312,8 +312,10 @@ function toDrawerComment(comment, user) {
     message: comment.content,
     name: getCommentAuthorLabel(comment, user),
     pointNumber:
-      Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
-      null,
+      commentType === "viewer3d"
+        ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
+          null
+        : null,
     createdAt: comment.createdAt,
     parentCommentId: comment.parentCommentId,
     projectId: comment.projectId,

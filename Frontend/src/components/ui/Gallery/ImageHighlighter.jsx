@@ -209,6 +209,7 @@ export default function ImageHighlighter({
   focusedAnnotationId = null,
   imageSrc,
   onSelectionChange,
+  showAnnotationPoints = false,
 }) {
   const containerRef = useRef(null);
   const imageRef = useRef(null);
@@ -370,7 +371,7 @@ export default function ImageHighlighter({
         <SelectionOverlay box={focusedAnnotationBox} />
       ) : null}
 
-      {!isActive
+      {!isActive && showAnnotationPoints
         ? annotationPoints.map(({ annotation, point }) => (
             <AnnotationPoint
               key={annotation.id}

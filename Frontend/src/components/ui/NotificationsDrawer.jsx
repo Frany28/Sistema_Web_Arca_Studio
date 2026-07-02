@@ -233,6 +233,7 @@ function SendIcon() {
 }
 
 function CommentCard({
+  commentType,
   id,
   image,
   imageComment = false,
@@ -252,6 +253,10 @@ function CommentCard({
     name && typeof name === "object"
       ? (name.name ?? name.email ?? String(name))
       : name;
+  const isViewer3dComment = commentType === "viewer3d";
+  const displayPointNumber = isViewer3dComment
+    ? Number(pointNumber) || null
+    : null;
 
   return (
     <div
@@ -297,9 +302,9 @@ function CommentCard({
               <p className="text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {timestamp}
               </p>
-              {Number(pointNumber) ? (
+              {displayPointNumber ? (
                 <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
-                  Punto {Number(pointNumber)}
+                  Punto 3D {displayPointNumber}
                 </span>
               ) : null}
             </div>
@@ -326,8 +331,9 @@ function CommentCard({
 
           {imageComment && selection && !isReply ? (
             <ImageCommentPreview
+              commentType={commentType}
               image={image}
-              pointNumber={pointNumber}
+              pointNumber={displayPointNumber}
               selection={selection}
             />
           ) : null}
@@ -349,8 +355,9 @@ function CommentCard({
   );
 }
 
-function ImageCommentPreview({ image, pointNumber, selection }) {
+function ImageCommentPreview({ commentType, image, pointNumber, selection }) {
   const pixels = selection.imagePixels ?? selection.displayPixels;
+  const isViewer3dComment = commentType === "viewer3d";
 
   if (!pixels) {
     return null;
@@ -367,7 +374,7 @@ function ImageCommentPreview({ image, pointNumber, selection }) {
             aria-hidden="true"
           />
         ) : null}
-        {Number(pointNumber) ? (
+        {isViewer3dComment && Number(pointNumber) ? (
           <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
             {Number(pointNumber)}
           </span>
@@ -375,8 +382,8 @@ function ImageCommentPreview({ image, pointNumber, selection }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-          {Number(pointNumber)
-            ? `Punto ${Number(pointNumber)}`
+          {isViewer3dComment && Number(pointNumber)
+            ? `Punto 3D ${Number(pointNumber)}`
             : image?.title || "Imagen comentada"}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">

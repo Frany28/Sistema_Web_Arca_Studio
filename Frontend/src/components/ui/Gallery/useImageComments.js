@@ -97,7 +97,10 @@ function getAuthorLabel(comment, user) {
 function decorateComment(comment, user) {
   const selection = comment.selection || null;
   const pointNumber =
-    Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) || null;
+    comment.commentType === "viewer3d"
+      ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
+        null
+      : null;
   const imageFromSelection = selection?.image || null;
   const image = comment.image || imageFromSelection
     ? {
@@ -131,7 +134,11 @@ function withFallbackPointNumbers(comments) {
     `${comment.commentType || "image"}:${comment.targetId || comment.imageId || "target"}`;
 
   comments.forEach((comment) => {
-    if (comment.parentCommentId || !comment.selection) {
+    if (
+      comment.commentType !== "viewer3d" ||
+      comment.parentCommentId ||
+      !comment.selection
+    ) {
       return;
     }
 
@@ -146,7 +153,7 @@ function withFallbackPointNumbers(comments) {
   });
 
   return comments.map((comment) => {
-    if (comment.pointNumber) {
+    if (comment.commentType !== "viewer3d" || comment.pointNumber) {
       return comment;
     }
 

@@ -522,7 +522,7 @@ function CommentCard({
               </span>
               {safePointNumber && !isReply ? (
                 <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
-                  Punto {safePointNumber}
+                  Punto 3D {safePointNumber}
                 </span>
               ) : null}
             </div>
@@ -652,7 +652,7 @@ function SelectionPreview({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
           {Number(pointNumber)
-            ? `Punto ${Number(pointNumber)}`
+            ? `Punto 3D ${Number(pointNumber)}`
             : isViewerPoint
               ? "Punto del visor"
               : "Area seleccionada"}
@@ -1653,6 +1653,7 @@ export default function Model3DViewerModal({
               focusedAnnotationId={focusedAnnotationId}
               imageSrc={displayItem.image}
               onSelectionChange={handleSelectionChange}
+              showAnnotationPoints
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-[16px] bg-[var(--color-neutral-200)] px-[24px] text-center">
