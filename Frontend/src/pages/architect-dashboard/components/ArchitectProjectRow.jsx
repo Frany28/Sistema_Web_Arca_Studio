@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import AvatarGroup from "../../../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import { getProjectPath } from "../../../utils/projectRoutes.js";
 import ArchitectProjectProgress from "./ArchitectProjectProgress.jsx";
 
 function ArchitectProjectRow({
@@ -12,7 +13,7 @@ function ArchitectProjectRow({
   const navigate = useNavigate();
 
   const handleOpenProject = () => {
-    navigate(`/proyectos/${project.id}`);
+    navigate(getProjectPath(project));
   };
 
   return (

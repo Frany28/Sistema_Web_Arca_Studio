@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { api, setAuthToken } from "../../api/http.js";
@@ -19,6 +19,7 @@ import ProjectTrackingPanel from "./panels/ProjectTrackingPanel.jsx";
 import ProjectUploadFilesPanel from "./panels/ProjectUploadFilesPanel.jsx";
 import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
+import { getProjectPath } from "../../utils/projectRoutes.js";
 
 const TABLET_BREAKPOINT_PX = 768;
 const PROJECT_TYPE_LABELS = {
@@ -331,8 +332,8 @@ export default function ProjectDetailsPage({
   warrantiesProps,
 }) {
   const navigate = useNavigate();
-  const { projectId: routeProjectId } = useParams();
-  const [searchParams] = useSearchParams();
+  const { projectId: routeProjectSlug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -340,10 +341,12 @@ export default function ProjectDetailsPage({
     useState(false);
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
-  const parsedRouteProjectId = Number(routeProjectId);
+  const parsedRouteProjectId = Number(routeProjectSlug);
+  const routeUsesNumericProjectId =
+    Number.isInteger(parsedRouteProjectId) && parsedRouteProjectId > 0;
   const initialProjectId = Number.isInteger(Number(providedProject?.id))
     ? Number(providedProject.id)
-    : Number.isInteger(parsedRouteProjectId)
+    : routeUsesNumericProjectId
       ? parsedRouteProjectId
       : null;
   const [project, setProject] = useState(providedProject);
@@ -397,7 +400,7 @@ export default function ProjectDetailsPage({
   }, [searchParams]);
 
   useEffect(() => {
-    if (providedProject || !initialProjectId) {
+    if (providedProject) {
       if (!providedProject && !initialProjectId) {
         setProjectError("El identificador del proyecto no es válido.");
         setProjectLoading(false);
@@ -409,6 +412,41 @@ export default function ProjectDetailsPage({
     setProjectLoading(true);
     setProjectError("");
 
+    if (!initialProjectId) {
+      api.projects
+        .getById({ projectId: routeProjectSlug })
+        .then((data) => {
+          if (!isMounted || !data?.project) {
+            return;
+          }
+
+          if (data.project.fileAccessToken) {
+            setAuthToken(data.project.fileAccessToken);
+          }
+
+          setProject(data.project);
+          setResolvedProjectId(data.project.id);
+        })
+        .catch((error) => {
+          if (isMounted) {
+            setProject(null);
+            setResolvedProjectId(null);
+            setProjectError(
+              error.message || "No se pudo cargar la informacion del proyecto.",
+            );
+          }
+        })
+        .finally(() => {
+          if (isMounted) {
+            setProjectLoading(false);
+          }
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
     api.projects
       .getById({ projectId: initialProjectId })
       .then((data) => {
@@ -417,8 +455,15 @@ export default function ProjectDetailsPage({
             setAuthToken(data.project.fileAccessToken);
           }
 
-          setProject(data.project || null);
-          setResolvedProjectId(data.project?.id || initialProjectId);
+          const nextProject = data.project || null;
+          setProject(nextProject);
+          setResolvedProjectId(nextProject?.id || initialProjectId);
+
+          if (routeUsesNumericProjectId && nextProject) {
+            navigate(getProjectPath(nextProject, searchParams.toString()), {
+              replace: true,
+            });
+          }
         }
       })
       .catch((error) => {
@@ -438,7 +483,14 @@ export default function ProjectDetailsPage({
     return () => {
       isMounted = false;
     };
-  }, [initialProjectId, providedProject]);
+  }, [
+    initialProjectId,
+    navigate,
+    providedProject,
+    routeProjectSlug,
+    routeUsesNumericProjectId,
+    searchParams,
+  ]);
 
   useEffect(() => {
     if (!resolvedProjectId) {
@@ -514,7 +566,11 @@ export default function ProjectDetailsPage({
       const selectedProjectId = Number(item.id.replace("project-", ""));
 
       if (Number.isInteger(selectedProjectId)) {
-        navigate(`/proyectos/${selectedProjectId}`);
+        navigate(
+          project && project.id === selectedProjectId
+            ? getProjectPath(project)
+            : `/proyectos/${selectedProjectId}`,
+        );
       }
       return;
     }
@@ -554,8 +610,23 @@ export default function ProjectDetailsPage({
     }
 
     setIsNotificationsDrawerOpen(false);
-    navigate(`/proyectos/${resolvedProjectId}?${params.toString()}`);
+    navigate(
+      project
+        ? getProjectPath(project, params.toString())
+        : `/proyectos/${resolvedProjectId}?${params.toString()}`,
+    );
   };
+
+  const clearFocusedRenderComment = useCallback(() => {
+    if (!searchParams.has("imageId") && !searchParams.has("commentId")) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("imageId");
+    nextParams.delete("commentId");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handleSubmitComment = async ({ message, parentCommentId = null }) => {
     if (!resolvedProjectId) {
@@ -598,6 +669,7 @@ export default function ProjectDetailsPage({
         focusedCommentId={searchParams.get("commentId")}
         focusedImageId={searchParams.get("imageId")}
         modelGallery={presentedProject.modelGallery}
+        onClearFocusedComment={clearFocusedRenderComment}
         projectId={resolvedProjectId}
         renderGallery={presentedProject.renderGallery}
         videoGallery={presentedProject.videoGallery}

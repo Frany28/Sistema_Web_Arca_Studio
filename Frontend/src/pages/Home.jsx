@@ -21,6 +21,7 @@ import {
   useProjectComments,
   useRecentProjectComments,
 } from "../hooks/useProjectComments.js";
+import { getProjectPath } from "../utils/projectRoutes.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
@@ -220,7 +221,7 @@ function ProjectRow({ project }) {
         showLeftIcon={false}
         showRightIcon={false}
         className="shrink-0"
-        onClick={() => navigate(`/proyectos/${project.id}`)}
+        onClick={() => navigate(getProjectPath(project))}
       >
         Ver Proyecto
       </Button>
@@ -448,7 +449,13 @@ function Home() {
       const projectId = Number(item.id.replace("project-", ""));
 
       if (Number.isInteger(projectId)) {
-        navigate(`/proyectos/${projectId}`);
+        const selectedProject = ownedProjectRows.find(
+          (project) => project.id === projectId,
+        );
+
+        navigate(
+          selectedProject ? getProjectPath(selectedProject) : `/proyectos/${projectId}`,
+        );
       }
       return;
     }
@@ -487,7 +494,15 @@ function Home() {
     const targetProjectId = comment?.projectId || commentsProjectId;
 
     if (targetProjectId) {
-      navigate(`/proyectos/${targetProjectId}?${params.toString()}`);
+      const targetProject = ownedProjectRows.find(
+        (project) => project.id === Number(targetProjectId),
+      );
+
+      navigate(
+        targetProject
+          ? getProjectPath(targetProject, params.toString())
+          : `/proyectos/${targetProjectId}?${params.toString()}`,
+      );
     }
   };
 

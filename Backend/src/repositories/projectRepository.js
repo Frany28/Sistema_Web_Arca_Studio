@@ -54,6 +54,7 @@ function toProject(row) {
     name: row.name,
     progress: Number(row.progress),
     projectType: row.project_type,
+    publicSlug: row.public_slug || null,
     startDate: row.start_date,
     state: row.state || null,
     status: row.status,
@@ -90,6 +91,7 @@ export async function listProjectsForUser(user) {
         p.created_by,
         p.assigned_architect_id,
         p.name,
+        p.public_slug,
         p.description,
         p.status,
         p.start_date,
@@ -148,10 +150,14 @@ export async function listProjectsForUser(user) {
   return result.rows.map(toProject);
 }
 
-export async function findProjectDetailForUser(projectId, user) {
+async function findProjectDetailByConditionForUser({
+  conditionSql,
+  conditionValue,
+  user,
+}) {
   const { condition: accessCondition, params } = getProjectAccess(user);
-  params.push(projectId);
-  const projectIdParameter = `$${params.length}`;
+  params.push(conditionValue);
+  const conditionParameter = `$${params.length}`;
 
   const projectResult = await query(
     `
@@ -161,6 +167,7 @@ export async function findProjectDetailForUser(projectId, user) {
         p.created_by,
         p.assigned_architect_id,
         p.name,
+        p.public_slug,
         p.description,
         p.status,
         p.start_date,
@@ -208,7 +215,7 @@ export async function findProjectDetailForUser(projectId, user) {
         order by file.created_at desc, file.id desc
         limit 1
       ) image_version on true
-      where p.id = ${projectIdParameter}
+      where ${conditionSql(conditionParameter)}
         and p.deleted_at is null
         and c.deleted_at is null
         and (${accessCondition})
@@ -220,6 +227,8 @@ export async function findProjectDetailForUser(projectId, user) {
   if (!projectResult.rows[0]) {
     return null;
   }
+
+  const projectId = Number(projectResult.rows[0].id);
 
   const [requirementsResult, specificationsResult, filesResult] =
     await Promise.all([
@@ -326,6 +335,22 @@ export async function findProjectDetailForUser(projectId, user) {
   };
 }
 
+export async function findProjectDetailForUser(projectId, user) {
+  return findProjectDetailByConditionForUser({
+    conditionSql: (parameter) => `p.id = ${parameter}`,
+    conditionValue: projectId,
+    user,
+  });
+}
+
+export async function findProjectDetailByPublicSlugForUser(publicSlug, user) {
+  return findProjectDetailByConditionForUser({
+    conditionSql: (parameter) => `p.public_slug = ${parameter}`,
+    conditionValue: publicSlug,
+    user,
+  });
+}
+
 export async function updateProjectVisibility(projectId, isPublic) {
   const result = await query(
     `
@@ -344,6 +369,7 @@ export async function updateProjectVisibility(projectId, isPublic) {
         p.created_by,
         p.assigned_architect_id,
         p.name,
+        p.public_slug,
         p.description,
         p.status,
         p.start_date,

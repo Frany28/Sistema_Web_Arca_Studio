@@ -1,8 +1,10 @@
 import {
+  findProjectDetailByPublicSlugForUser,
   findProjectDetailForUser,
   listProjectsForUser,
   updateProjectVisibility,
 } from "../repositories/projectRepository.js";
+import { isValidProjectSlug } from "../utils/projectSlug.js";
 
 export async function getMyProjects(req, res, next) {
   try {
@@ -18,9 +20,12 @@ export async function getMyProjects(req, res, next) {
 
 export async function getProjectDetail(req, res, next) {
   try {
-    const projectId = Number(req.params?.projectId);
+    const projectIdentifier = String(req.params?.projectId || "").trim();
+    const projectId = Number(projectIdentifier);
+    const usesNumericProjectId =
+      Number.isInteger(projectId) && projectId > 0;
 
-    if (!Number.isInteger(projectId) || projectId <= 0) {
+    if (!usesNumericProjectId && !isValidProjectSlug(projectIdentifier)) {
       res.status(400).json({
         code: "INVALID_PROJECT_ID",
         message: "Proyecto invalido.",
@@ -28,7 +33,9 @@ export async function getProjectDetail(req, res, next) {
       return;
     }
 
-    const project = await findProjectDetailForUser(projectId, req.user);
+    const project = usesNumericProjectId
+      ? await findProjectDetailForUser(projectId, req.user)
+      : await findProjectDetailByPublicSlugForUser(projectIdentifier, req.user);
 
     if (!project) {
       res.status(404).json({

@@ -15,6 +15,7 @@ import {
   useProjectComments,
   useRecentProjectComments,
 } from "../../hooks/useProjectComments.js";
+import { getProjectPath } from "../../utils/projectRoutes.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -286,7 +287,13 @@ function ArchitectDashboard({ empty = false }) {
       const projectId = Number(item.id.replace("project-", ""));
 
       if (Number.isInteger(projectId)) {
-        navigate(`/proyectos/${projectId}`);
+        const selectedProject = projectRows.find(
+          (project) => project.id === projectId,
+        );
+
+        navigate(
+          selectedProject ? getProjectPath(selectedProject) : `/proyectos/${projectId}`,
+        );
       }
       return;
     }
@@ -325,7 +332,15 @@ function ArchitectDashboard({ empty = false }) {
     const targetProjectId = comment?.projectId || commentProjectRows[0]?.id;
 
     if (targetProjectId) {
-      navigate(`/proyectos/${targetProjectId}?${params.toString()}`);
+      const targetProject = projectRows.find(
+        (project) => project.id === Number(targetProjectId),
+      );
+
+      navigate(
+        targetProject
+          ? getProjectPath(targetProject, params.toString())
+          : `/proyectos/${targetProjectId}?${params.toString()}`,
+      );
     }
   };
 

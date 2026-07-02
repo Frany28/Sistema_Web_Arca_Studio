@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { pool, query } from "../src/config/db.js";
+import { slugifyProjectName } from "../src/utils/projectSlug.js";
 
 const examples = [
   {
@@ -78,6 +79,32 @@ async function ensureShowcaseClient() {
   return Number(result.rows[0].id);
 }
 
+async function getAvailablePublicSlug(name, currentProjectId = null) {
+  const baseSlug = slugifyProjectName(name);
+  const result = await query(
+    `
+      select public_slug
+      from public.projects
+      where public_slug is not null
+        and ($1::bigint is null or id <> $1)
+        and (public_slug = $2 or public_slug like $3)
+    `,
+    [currentProjectId, baseSlug, `${baseSlug}-%`],
+  );
+  const usedSlugs = new Set(
+    result.rows.map((row) => String(row.public_slug || "")),
+  );
+  let publicSlug = baseSlug;
+  let suffix = 2;
+
+  while (usedSlugs.has(publicSlug)) {
+    publicSlug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+
+  return publicSlug;
+}
+
 async function upsertProject(example) {
   const existing = await query(
     `
@@ -112,6 +139,10 @@ async function upsertProject(example) {
   ];
 
   if (existing.rows[0]) {
+    const publicSlug = await getAvailablePublicSlug(
+      example.name,
+      existing.rows[0].id,
+    );
     const result = await query(
       `
         update public.projects
@@ -134,11 +165,12 @@ async function upsertProject(example) {
           construction_area = $16,
           area_unit = $17,
           is_public = $18,
+          public_slug = coalesce(public_slug, $19),
           updated_at = now()
-        where id = $19
+        where id = $20
         returning id, name, is_public, assigned_architect_id
       `,
-      [...params, existing.rows[0].id],
+      [...params, publicSlug, existing.rows[0].id],
     );
 
     return {
@@ -147,6 +179,7 @@ async function upsertProject(example) {
     };
   }
 
+  const publicSlug = await getAvailablePublicSlug(example.name);
   const result = await query(
     `
       insert into public.projects (
@@ -167,15 +200,16 @@ async function upsertProject(example) {
         general_area,
         construction_area,
         area_unit,
-        is_public
+        is_public,
+        public_slug
       )
       values (
         $1, $2, $3, $4, $5, $6, $7, $8, $9,
-        $10, $11, $12, $13, $14, $15, $16, $17, $18
+        $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
       )
       returning id, name, is_public, assigned_architect_id
     `,
-    params,
+    [...params, publicSlug],
   );
 
   return {

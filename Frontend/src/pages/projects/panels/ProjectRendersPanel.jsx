@@ -739,6 +739,7 @@ export default function ProjectRendersPanel({
   focusedCommentId,
   focusedImageId,
   modelGallery,
+  onClearFocusedComment,
   projectId,
   renderGallery = PROJECT_RENDER_GALLERY,
   videoGallery = PROJECT_VIDEO_GALLERY,
@@ -867,6 +868,11 @@ export default function ProjectRendersPanel({
     setModelReloadKey((current) => current + 1);
   }, [clearModelLoadingTimers]);
 
+  const handleCloseFocusedMedia = useCallback((closeMedia) => {
+    closeMedia();
+    onClearFocusedComment?.();
+  }, [onClearFocusedComment]);
+
   useEffect(() => {
     if (!focusedImageId || !renderGallery.length) {
       return;
@@ -974,13 +980,17 @@ export default function ProjectRendersPanel({
           visible={Boolean(selectedModel3D)}
           item={selectedModel3D}
           projectId={projectId}
-          onClose={() => setSelectedModel3D(null)}
+          onClose={() =>
+            handleCloseFocusedMedia(() => setSelectedModel3D(null))
+          }
         />
         <VideoViewerModal
           visible={Boolean(selectedGalleryVideo)}
           item={selectedGalleryVideo}
           projectId={projectId}
-          onClose={() => setSelectedGalleryVideo(null)}
+          onClose={() =>
+            handleCloseFocusedMedia(() => setSelectedGalleryVideo(null))
+          }
         />
         <ImageViewerModal
           focusedCommentId={focusedCommentId}
@@ -988,7 +998,9 @@ export default function ProjectRendersPanel({
           items={renderGallery}
           initialItem={selectedGalleryImage}
           projectId={projectId}
-          onClose={() => setSelectedGalleryImage(null)}
+          onClose={() =>
+            handleCloseFocusedMedia(() => setSelectedGalleryImage(null))
+          }
         />
       </>
     );
@@ -1047,7 +1059,9 @@ export default function ProjectRendersPanel({
         visible={Boolean(selectedModel3D)}
         item={selectedModel3D}
         projectId={projectId}
-        onClose={() => setSelectedModel3D(null)}
+        onClose={() =>
+          handleCloseFocusedMedia(() => setSelectedModel3D(null))
+        }
       />
       {isVRViewerOpen ? (
         <Suspense fallback={null}>
@@ -1064,7 +1078,9 @@ export default function ProjectRendersPanel({
         visible={Boolean(selectedGalleryVideo)}
         item={selectedGalleryVideo}
         projectId={projectId}
-        onClose={() => setSelectedGalleryVideo(null)}
+        onClose={() =>
+          handleCloseFocusedMedia(() => setSelectedGalleryVideo(null))
+        }
       />
       <ImageViewerModal
         focusedCommentId={focusedCommentId}
@@ -1072,7 +1088,9 @@ export default function ProjectRendersPanel({
         items={renderGallery}
         initialItem={selectedGalleryImage}
         projectId={projectId}
-        onClose={() => setSelectedGalleryImage(null)}
+        onClose={() =>
+          handleCloseFocusedMedia(() => setSelectedGalleryImage(null))
+        }
       />
     </>
   );

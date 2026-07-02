@@ -134,7 +134,7 @@ export const projectsApi = {
   },
 
   getById({ projectId }) {
-    return apiRequest(`/projects/${projectId}`);
+    return apiRequest(`/projects/${encodeURIComponent(projectId)}`);
   },
 
   listComments({ projectId }) {
