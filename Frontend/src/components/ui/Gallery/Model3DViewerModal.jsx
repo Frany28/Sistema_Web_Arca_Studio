@@ -818,6 +818,34 @@ function formatModelViewerPosition(vector) {
   return `${x}m ${y}m ${z}m`;
 }
 
+function getFiniteVector(vector) {
+  if (!vector || typeof vector === "string") {
+    return null;
+  }
+
+  const { x, y, z } = vector;
+
+  return [x, y, z].every((value) => Number.isFinite(value))
+    ? { x, y, z }
+    : null;
+}
+
+function getModelViewerDimensionRadius(modelViewer) {
+  const dimensions = modelViewer?.getDimensions?.();
+  const values = [dimensions?.x, dimensions?.y, dimensions?.z].filter(
+    (value) => Number.isFinite(value) && value > 0,
+  );
+
+  if (!values.length) {
+    return null;
+  }
+
+  const maxDimension = Math.max(...values);
+  const minDimension = Math.min(...values);
+
+  return Math.max(maxDimension * 0.18, minDimension * 1.8, 1);
+}
+
 function formatModelViewerNormal(vector) {
   if (!vector) {
     return null;
@@ -1359,7 +1387,7 @@ export default function Model3DViewerModal({
   }
 
   useEffect(() => {
-    if (!focusedAnnotationId) {
+    if (!visible || !focusedAnnotationId) {
       return;
     }
 
@@ -1371,7 +1399,7 @@ export default function Model3DViewerModal({
     if (comment?.selection?.kind === "viewer3d-point") {
       restoreViewerCamera(comment.selection);
     }
-  }, [comments, focusedAnnotationId]);
+  }, [comments, focusedAnnotationId, isModelLoading, modelLoadState, visible]);
 
   if (!shouldRender || !displayItem || typeof document === "undefined") {
     return null;
@@ -1426,18 +1454,55 @@ export default function Model3DViewerModal({
       return;
     }
 
-    if (viewerPoint.cameraOrbit) {
-      const { theta, phi, radius } = viewerPoint.cameraOrbit;
+    const modelPosition = getFiniteVector(viewerPoint.modelPosition);
+    const savedOrbit = viewerPoint.cameraOrbit;
+    const currentOrbit = modelViewer.getCameraOrbit?.();
+    const theta = Number.isFinite(savedOrbit?.theta)
+      ? savedOrbit.theta
+      : Number.isFinite(currentOrbit?.theta)
+        ? currentOrbit.theta
+        : null;
+    const phi = Number.isFinite(savedOrbit?.phi)
+      ? savedOrbit.phi
+      : Number.isFinite(currentOrbit?.phi)
+        ? currentOrbit.phi
+        : null;
+    const closeRadius = getModelViewerDimensionRadius(modelViewer);
+    const savedRadius = Number.isFinite(savedOrbit?.radius)
+      ? savedOrbit.radius
+      : null;
+    const currentRadius = Number.isFinite(currentOrbit?.radius)
+      ? currentOrbit.radius
+      : null;
+    const radius =
+      closeRadius && savedRadius
+        ? Math.min(savedRadius, closeRadius)
+        : closeRadius || savedRadius || currentRadius;
 
+    if (modelPosition) {
+      modelViewer.cameraTarget = `${modelPosition.x}m ${modelPosition.y}m ${modelPosition.z}m`;
+    }
+
+    if (Number.isFinite(theta) && Number.isFinite(phi) && Number.isFinite(radius)) {
       modelViewer.cameraOrbit = `${theta}rad ${phi}rad ${radius}m`;
+    } else if (Number.isFinite(radius)) {
+      modelViewer.cameraOrbit = `135deg 68deg ${radius}m`;
+    } else if (viewerPoint.cameraOrbit) {
+      const { theta: savedTheta, phi: savedPhi, radius: savedOrbitRadius } =
+        viewerPoint.cameraOrbit;
+
+      modelViewer.cameraOrbit = `${savedTheta}rad ${savedPhi}rad ${savedOrbitRadius}m`;
     } else {
       modelViewer.cameraOrbit = "135deg 68deg 120%";
     }
 
     modelViewer.fieldOfView = Number.isFinite(viewerPoint.fieldOfView)
-      ? `${viewerPoint.fieldOfView}rad`
-      : "32deg";
-    modelViewer.jumpCameraToGoal?.();
+      ? `${Math.min(viewerPoint.fieldOfView, 0.55)}rad`
+      : "28deg";
+
+    window.requestAnimationFrame(() => {
+      modelViewer.jumpCameraToGoal?.();
+    });
   }
 
   function handleModelPointerDown(event) {
