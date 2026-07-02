@@ -1358,6 +1358,21 @@ export default function Model3DViewerModal({
     }
   }
 
+  useEffect(() => {
+    if (!focusedAnnotationId) {
+      return;
+    }
+
+    const comment = comments.find(
+      (currentComment) =>
+        String(currentComment.id) === String(focusedAnnotationId),
+    );
+
+    if (comment?.selection?.kind === "viewer3d-point") {
+      restoreViewerCamera(comment.selection);
+    }
+  }, [comments, focusedAnnotationId]);
+
   if (!shouldRender || !displayItem || typeof document === "undefined") {
     return null;
   }
@@ -1424,21 +1439,6 @@ export default function Model3DViewerModal({
       : "32deg";
     modelViewer.jumpCameraToGoal?.();
   }
-
-  useEffect(() => {
-    if (!focusedAnnotationId) {
-      return;
-    }
-
-    const comment = comments.find(
-      (currentComment) =>
-        String(currentComment.id) === String(focusedAnnotationId),
-    );
-
-    if (comment?.selection?.kind === "viewer3d-point") {
-      restoreViewerCamera(comment.selection);
-    }
-  }, [comments, focusedAnnotationId]);
 
   function handleModelPointerDown(event) {
     if (!hasInteractiveModel || isModelLoading || event.button !== 0) {
