@@ -939,7 +939,7 @@ function Model3DAnnotationMarker({
         type="button"
         ref={markerRef}
         className={clsx(
-          "relative flex size-[40px] appearance-none items-center justify-center rounded-full border-0 bg-transparent p-0 transition-[opacity,transform]",
+          "group relative flex size-[40px] appearance-none items-center justify-center rounded-full border-0 bg-transparent p-0 transition-[opacity,transform] duration-200 ease-out",
           item.pending
             ? "pointer-events-none"
             : "pointer-events-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-neutral-100-uniform)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-accent-300)]",
@@ -967,7 +967,7 @@ function Model3DAnnotationMarker({
         }}
         {...props}
       >
-        <span className="flex h-[24px] min-h-[24px] w-[24px] min-w-[24px] flex-none items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
+        <span className="flex h-[24px] min-h-[24px] w-[24px] min-w-[24px] flex-none items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)] transition-[box-shadow,transform,filter] duration-200 ease-out group-hover:scale-[1.08] group-hover:brightness-110 group-hover:shadow-[0_0_0_6px_rgba(255,68,49,0.18),0_4px_12px_rgba(0,0,0,0.32)] group-focus-visible:scale-[1.08]">
           {item.pending ? "" : pointNumber}
         </span>
       </button>
