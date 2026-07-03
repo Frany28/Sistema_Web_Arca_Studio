@@ -508,14 +508,7 @@ function CommentCard({
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-        <article
-          className={clsx(
-            "relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[var(--radius-2)] border bg-[var(--color-neutral-10)] p-[8px] transition-colors",
-            selectionActive
-              ? "border-[var(--color-accent-300)]"
-              : "border-[var(--color-neutral-200)]",
-          )}
-        >
+        <article className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px] transition-colors">
           <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
               <AvatarLabel
@@ -916,57 +909,85 @@ function Model3DAnnotationMarker({
   style,
   ...props
 }) {
+  const markerRef = useRef(null);
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState(null);
   const pointNumber = Number(item.pointNumber) || "";
   const tooltipText = pointNumber
     ? `${VIEWER_3D_ANNOTATION_LABEL} ${pointNumber}`
     : VIEWER_3D_ANNOTATION_LABEL;
+  const canShowTooltip =
+    tooltipOpen && !item.pending && tooltipPosition && typeof document !== "undefined";
+
+  const openTooltip = () => {
+    const rect = markerRef.current?.getBoundingClientRect();
+
+    if (!rect) {
+      return;
+    }
+
+    setTooltipPosition({
+      left: rect.right + 8,
+      top: rect.top + rect.height / 2,
+    });
+    setTooltipOpen(true);
+  };
 
   return (
-    <button
-      type="button"
-      className={clsx(
-        "relative flex size-[40px] appearance-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 transition-[opacity,transform]",
-        item.pending
-          ? "pointer-events-none"
-          : "pointer-events-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-neutral-100-uniform)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-accent-300)]",
-        active && "scale-125",
-        item.pending && "animate-pulse",
-        className,
-      )}
-      style={style}
-      aria-label={tooltipText}
-      onFocus={() => setTooltipOpen(true)}
-      onBlur={() => setTooltipOpen(false)}
-      onMouseEnter={() => setTooltipOpen(true)}
-      onMouseLeave={() => setTooltipOpen(false)}
-      onPointerDown={(event) => {
-        event.stopPropagation();
-      }}
-      onPointerUp={(event) => {
-        event.stopPropagation();
-      }}
-      onClick={(event) => {
-        event.stopPropagation();
-        if (!item.pending) {
-          onSelect?.(item.id);
-        }
-      }}
-      {...props}
-    >
-      <span className="flex size-[24px] items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
-        {item.pending ? "" : pointNumber}
-      </span>
+    <>
+      <button
+        type="button"
+        ref={markerRef}
+        className={clsx(
+          "relative flex size-[40px] appearance-none items-center justify-center rounded-full border-0 bg-transparent p-0 transition-[opacity,transform]",
+          item.pending
+            ? "pointer-events-none"
+            : "pointer-events-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-neutral-100-uniform)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-accent-300)]",
+          active && "scale-125",
+          item.pending && "animate-pulse",
+          className,
+        )}
+        style={style}
+        aria-label={tooltipText}
+        onFocus={openTooltip}
+        onBlur={() => setTooltipOpen(false)}
+        onMouseEnter={openTooltip}
+        onMouseLeave={() => setTooltipOpen(false)}
+        onPointerDown={(event) => {
+          event.stopPropagation();
+        }}
+        onPointerUp={(event) => {
+          event.stopPropagation();
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (!item.pending) {
+            onSelect?.(item.id);
+          }
+        }}
+        {...props}
+      >
+        <span className="flex h-[24px] min-h-[24px] w-[24px] min-w-[24px] flex-none items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
+          {item.pending ? "" : pointNumber}
+        </span>
+      </button>
 
-      {tooltipOpen && !item.pending ? (
-        <Tooltip
-          text={tooltipText}
-          showTip={false}
-          className="absolute left-full top-1/2 z-30 ml-[8px] -translate-y-1/2 !border-black/70 !bg-black/90 !px-[10px] !py-[8px] !shadow-[0_12px_24px_rgba(0,0,0,0.32)] [&_p]:!text-[var(--color-neutral-100-uniform)]"
-          aria-label={tooltipText}
-        />
-      ) : null}
-    </button>
+      {canShowTooltip
+        ? createPortal(
+            <Tooltip
+              text={tooltipText}
+              showTip={false}
+              className="fixed z-[80] -translate-y-1/2 !border-black/70 !bg-black/90 !px-[10px] !py-[8px] !shadow-[0_12px_24px_rgba(0,0,0,0.32)] [&_p]:!text-[var(--color-neutral-100-uniform)]"
+              style={{
+                left: `${tooltipPosition.left}px`,
+                top: `${tooltipPosition.top}px`,
+              }}
+              aria-label={tooltipText}
+            />,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 
