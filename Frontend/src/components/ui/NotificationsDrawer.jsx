@@ -46,6 +46,8 @@ const GENERAL_COMMENTS = [
   },
 ];
 
+const VIEWER_3D_ANNOTATION_LABEL = "Anotación";
+
 const RECENT_ACTIVITY = [
   {
     id: "activity-1",
@@ -304,7 +306,7 @@ function CommentCard({
               </p>
               {displayPointNumber ? (
                 <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
-                  Punto 3D {displayPointNumber}
+                  {VIEWER_3D_ANNOTATION_LABEL} {displayPointNumber}
                 </span>
               ) : null}
             </div>
@@ -383,7 +385,7 @@ function ImageCommentPreview({ commentType, image, pointNumber, selection }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
           {isViewer3dComment && Number(pointNumber)
-            ? `Punto 3D ${Number(pointNumber)}`
+            ? `${VIEWER_3D_ANNOTATION_LABEL} ${Number(pointNumber)}`
             : image?.title || "Imagen comentada"}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">

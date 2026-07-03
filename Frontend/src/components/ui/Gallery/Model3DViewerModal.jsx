@@ -15,6 +15,7 @@ import AvatarLabel from "../../ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
+import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
 
@@ -310,7 +311,7 @@ function Model3DUsageHint() {
   const items = [
     "Arrastra para girar el modelo",
     "Usa la rueda o pellizca para acercarte",
-    "Haz clic en un punto para dejar un comentario",
+    "Haz clic en el modelo para comentar",
   ];
 
   return (
@@ -366,6 +367,7 @@ const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
 const MODEL_SLOW_LOADING_MS = 15000;
 const MODEL_LOAD_TIMEOUT_MS = 45000;
+const VIEWER_3D_ANNOTATION_LABEL = "Anotación";
 
 function getCommentTime(comment) {
   const time = new Date(comment.createdAt || 0).getTime();
@@ -506,7 +508,14 @@ function CommentCard({
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-        <article className="relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
+        <article
+          className={clsx(
+            "relative flex min-w-0 flex-1 flex-col gap-[2px] rounded-[var(--radius-2)] border bg-[var(--color-neutral-10)] p-[8px] transition-colors",
+            selectionActive
+              ? "border-[var(--color-accent-300)]"
+              : "border-[var(--color-neutral-200)]",
+          )}
+        >
           <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
               <AvatarLabel
@@ -522,7 +531,7 @@ function CommentCard({
               </span>
               {safePointNumber && !isReply ? (
                 <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
-                  Punto 3D {safePointNumber}
+                  {VIEWER_3D_ANNOTATION_LABEL} {safePointNumber}
                 </span>
               ) : null}
             </div>
@@ -652,9 +661,9 @@ function SelectionPreview({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
           {Number(pointNumber)
-            ? `Punto 3D ${Number(pointNumber)}`
+            ? `${VIEWER_3D_ANNOTATION_LABEL} ${Number(pointNumber)}`
             : isViewerPoint
-              ? "Punto del visor"
+              ? "Anotación del visor"
               : "Area seleccionada"}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
@@ -777,9 +786,16 @@ function ReplyComposer({ onSubmit, placeholder = "Escribe tu mensaje..." }) {
 
 function getViewerPointPosition(selection) {
   if (selection?.kind === "viewer3d-point" && selection.viewerPoint) {
+    const x = Number(selection.viewerPoint.normalizedX);
+    const y = Number(selection.viewerPoint.normalizedY);
+
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return null;
+    }
+
     return {
-      x: selection.viewerPoint.normalizedX,
-      y: selection.viewerPoint.normalizedY,
+      x,
+      y,
     };
   }
 
@@ -790,10 +806,10 @@ function getViewerPointPosition(selection) {
     return null;
   }
 
-  return {
-    x: (pixels.x + pixels.width / 2) / naturalSize.width,
-    y: (pixels.y + pixels.height / 2) / naturalSize.height,
-  };
+  const x = (pixels.x + pixels.width / 2) / naturalSize.width;
+  const y = (pixels.y + pixels.height / 2) / naturalSize.height;
+
+  return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
 }
 
 function formatModelViewerPosition(vector) {
@@ -802,11 +818,13 @@ function formatModelViewerPosition(vector) {
   }
 
   if (typeof vector === "string") {
-    return vector
+    const position = vector
       .trim()
       .split(/\s+/)
       .map((value) => (/[a-z%]+$/i.test(value) ? value : `${value}m`))
       .join(" ");
+
+    return position ? position : null;
   }
 
   const { x, y, z } = vector;
@@ -827,6 +845,18 @@ function getFiniteVector(vector) {
 
   return [x, y, z].every((value) => Number.isFinite(value))
     ? { x, y, z }
+    : null;
+}
+
+function getFiniteCameraOrbit(orbit) {
+  if (!orbit || typeof orbit === "string") {
+    return null;
+  }
+
+  const { phi, radius, theta } = orbit;
+
+  return [phi, radius, theta].every((value) => Number.isFinite(value))
+    ? { phi, radius, theta }
     : null;
 }
 
@@ -852,7 +882,9 @@ function formatModelViewerNormal(vector) {
   }
 
   if (typeof vector === "string") {
-    return vector;
+    const normal = vector.trim();
+
+    return normal ? normal : null;
   }
 
   const { x, y, z } = vector;
@@ -876,9 +908,72 @@ function getViewerModelPoint(selection) {
   return { normal, position };
 }
 
+function Model3DAnnotationMarker({
+  active = false,
+  className,
+  item,
+  onSelect,
+  style,
+  ...props
+}) {
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const pointNumber = Number(item.pointNumber) || "";
+  const tooltipText = pointNumber
+    ? `${VIEWER_3D_ANNOTATION_LABEL} ${pointNumber}`
+    : VIEWER_3D_ANNOTATION_LABEL;
+
+  return (
+    <button
+      type="button"
+      className={clsx(
+        "relative flex size-[40px] appearance-none items-center justify-center overflow-visible rounded-full border-0 bg-transparent p-0 transition-[opacity,transform]",
+        item.pending
+          ? "pointer-events-none"
+          : "pointer-events-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-neutral-100-uniform)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-accent-300)]",
+        active && "scale-125",
+        item.pending && "animate-pulse",
+        className,
+      )}
+      style={style}
+      aria-label={tooltipText}
+      onFocus={() => setTooltipOpen(true)}
+      onBlur={() => setTooltipOpen(false)}
+      onMouseEnter={() => setTooltipOpen(true)}
+      onMouseLeave={() => setTooltipOpen(false)}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
+      onPointerUp={(event) => {
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (!item.pending) {
+          onSelect?.(item.id);
+        }
+      }}
+      {...props}
+    >
+      <span className="flex size-[24px] items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
+        {item.pending ? "" : pointNumber}
+      </span>
+
+      {tooltipOpen && !item.pending ? (
+        <Tooltip
+          text={tooltipText}
+          showTip={false}
+          className="absolute left-full top-1/2 z-30 ml-[8px] -translate-y-1/2 !border-black/70 !bg-black/90 !px-[10px] !py-[8px] !shadow-[0_12px_24px_rgba(0,0,0,0.32)] [&_p]:!text-[var(--color-neutral-100-uniform)]"
+          aria-label={tooltipText}
+        />
+      ) : null}
+    </button>
+  );
+}
+
 function Model3DHotspots({
   annotations = [],
   focusedAnnotationId = null,
+  onAnnotationSelect,
   pendingSelection = null,
 }) {
   const hotspotItems = [
@@ -908,25 +1003,19 @@ function Model3DHotspots({
         }
 
         return (
-          <button
-            type="button"
+          <Model3DAnnotationMarker
             key={item.id}
+            item={item}
             slot={`hotspot-viewer3d-comment-${item.id}`}
             data-position={point.position}
             data-normal={point.normal}
             data-visibility-attribute="visible"
-            className={clsx(
-              "pointer-events-none flex size-[24px] items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] p-0 text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)] transition-[opacity,transform]",
-              item.active && "scale-125",
-              item.pending && "animate-pulse",
-            )}
             style={{
               opacity: "var(--min-hotspot-opacity, 1)",
             }}
-            aria-label="Punto comentado"
-          >
-            {item.pending ? "" : Number(item.pointNumber) || ""}
-          </button>
+            active={item.active}
+            onSelect={onAnnotationSelect}
+          />
         );
       })}
     </>
@@ -936,6 +1025,7 @@ function Model3DHotspots({
 function Model3DCommentMarkers({
   annotations = [],
   focusedAnnotationId = null,
+  onAnnotationSelect,
   pendingSelection = null,
 }) {
   const markerItems = [
@@ -969,21 +1059,17 @@ function Model3DCommentMarkers({
         }
 
         return (
-          <span
+          <Model3DAnnotationMarker
             key={item.id}
-            className={clsx(
-              "absolute flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]",
-              item.active && "scale-125",
-              item.pending && "animate-pulse",
-            )}
+            item={item}
+            className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform"
             style={{
               left: `${Math.min(Math.max(point.x, 0), 1) * 100}%`,
               top: `${Math.min(Math.max(point.y, 0), 1) * 100}%`,
             }}
-            aria-hidden="true"
-          >
-            {item.pending ? "" : Number(item.pointNumber) || ""}
-          </span>
+            active={item.active}
+            onSelect={onAnnotationSelect}
+          />
         );
       })}
     </div>
@@ -1012,7 +1098,21 @@ export function GeneralCommentsDrawer({
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
+  const commentRefs = useRef(new Map());
   const orderedComments = orderCommentsByThread(comments);
+
+  useEffect(() => {
+    if (!focusedSelectionCommentId) {
+      return;
+    }
+
+    const element = commentRefs.current.get(String(focusedSelectionCommentId));
+
+    element?.scrollIntoView?.({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [focusedSelectionCommentId]);
 
   useEffect(() => {
     if (!visibleReplyAction && !activeReplyComposer) {
@@ -1087,7 +1187,20 @@ export function GeneralCommentsDrawer({
 
         <div className="flex flex-col gap-[8px]">
           {orderedComments.map((comment) => (
-            <div key={comment.id} className="flex flex-col gap-[8px]">
+            <div
+              key={comment.id}
+              ref={(element) => {
+                const key = String(comment.id);
+
+                if (element) {
+                  commentRefs.current.set(key, element);
+                  return;
+                }
+
+                commentRefs.current.delete(key);
+              }}
+              className="flex flex-col gap-[8px]"
+            >
               <CommentCard
                 {...comment}
                 selectionActive={
@@ -1182,7 +1295,7 @@ export default function Model3DViewerModal({
         setModelReloadKey(0);
         setIsAutoRotateEnabled(false);
         setIsVRViewerOpen(false);
-        setFocusedSelectionCommentId(focusedCommentId);
+        setPendingSelection(null);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
           frameRef.current = window.requestAnimationFrame(() => {
@@ -1212,7 +1325,13 @@ export default function Model3DViewerModal({
       window.clearTimeout(closeTimeoutRef.current);
       window.cancelAnimationFrame(frameRef.current);
     };
-  }, [focusedCommentId, visible, item]);
+  }, [visible, item]);
+
+  useEffect(() => {
+    if (visible) {
+      setFocusedSelectionCommentId(focusedCommentId);
+    }
+  }, [focusedCommentId, visible]);
 
   useEffect(
     () => () => {
@@ -1427,21 +1546,11 @@ export default function Model3DViewerModal({
 
   function getViewerCameraSnapshot() {
     const modelViewer = modelViewerRef.current;
-    const cameraOrbit = modelViewer?.getCameraOrbit?.();
+    const cameraOrbit = getFiniteCameraOrbit(modelViewer?.getCameraOrbit?.());
     const fieldOfView = modelViewer?.getFieldOfView?.();
 
     return {
-      cameraOrbit:
-        cameraOrbit &&
-        Number.isFinite(cameraOrbit.theta) &&
-        Number.isFinite(cameraOrbit.phi) &&
-        Number.isFinite(cameraOrbit.radius)
-          ? {
-              phi: cameraOrbit.phi,
-              radius: cameraOrbit.radius,
-              theta: cameraOrbit.theta,
-            }
-          : null,
+      cameraOrbit,
       fieldOfView: Number.isFinite(fieldOfView) ? fieldOfView : null,
     };
   }
@@ -1455,8 +1564,8 @@ export default function Model3DViewerModal({
     }
 
     const modelPosition = getFiniteVector(viewerPoint.modelPosition);
-    const savedOrbit = viewerPoint.cameraOrbit;
-    const currentOrbit = modelViewer.getCameraOrbit?.();
+    const savedOrbit = getFiniteCameraOrbit(viewerPoint.cameraOrbit);
+    const currentOrbit = getFiniteCameraOrbit(modelViewer.getCameraOrbit?.());
     const theta = Number.isFinite(savedOrbit?.theta)
       ? savedOrbit.theta
       : Number.isFinite(currentOrbit?.theta)
@@ -1483,15 +1592,14 @@ export default function Model3DViewerModal({
       modelViewer.cameraTarget = `${modelPosition.x}m ${modelPosition.y}m ${modelPosition.z}m`;
     }
 
-    if (Number.isFinite(theta) && Number.isFinite(phi) && Number.isFinite(radius)) {
+    if (
+      Number.isFinite(theta) &&
+      Number.isFinite(phi) &&
+      Number.isFinite(radius)
+    ) {
       modelViewer.cameraOrbit = `${theta}rad ${phi}rad ${radius}m`;
     } else if (Number.isFinite(radius)) {
       modelViewer.cameraOrbit = `135deg 68deg ${radius}m`;
-    } else if (viewerPoint.cameraOrbit) {
-      const { theta: savedTheta, phi: savedPhi, radius: savedOrbitRadius } =
-        viewerPoint.cameraOrbit;
-
-      modelViewer.cameraOrbit = `${savedTheta}rad ${savedPhi}rad ${savedOrbitRadius}m`;
     } else {
       modelViewer.cameraOrbit = "135deg 68deg 120%";
     }
@@ -1609,6 +1717,19 @@ export default function Model3DViewerModal({
     setFocusedSelectionCommentId(nextCommentId);
   }
 
+  function handleAnnotationMarkerClick(commentId) {
+    const comment = comments.find(
+      (currentComment) => String(currentComment.id) === String(commentId),
+    );
+
+    if (comment?.selection?.kind === "viewer3d-point") {
+      restoreViewerCamera(comment.selection);
+    }
+
+    setPendingSelection(null);
+    setFocusedSelectionCommentId(commentId);
+  }
+
   async function handleSubmitComment({ message, parentCommentId, selection }) {
     const comment = await addComment({ message, parentCommentId, selection });
     if (comment && !parentCommentId) {
@@ -1694,6 +1815,7 @@ export default function Model3DViewerModal({
                 <Model3DHotspots
                   annotations={annotationComments}
                   focusedAnnotationId={focusedAnnotationId}
+                  onAnnotationSelect={handleAnnotationMarkerClick}
                   pendingSelection={pendingSelection}
                 />
               </model-viewer>
@@ -1708,6 +1830,7 @@ export default function Model3DViewerModal({
               <Model3DCommentMarkers
                 annotations={annotationComments}
                 focusedAnnotationId={focusedAnnotationId}
+                onAnnotationSelect={handleAnnotationMarkerClick}
                 pendingSelection={pendingSelection}
               />
               {!isModelLoading ? <Model3DUsageHint /> : null}
