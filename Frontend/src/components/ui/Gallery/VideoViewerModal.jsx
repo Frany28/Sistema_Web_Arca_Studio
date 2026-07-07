@@ -64,6 +64,67 @@ function VolumeIcon({ className }) {
   );
 }
 
+function VolumeMutedIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M2.5 7.358V12.642C2.5 13.45 3.158 14.108 3.967 14.108H6.342L10.292 17.217C10.95 17.733 11.917 17.267 11.917 16.425V3.575C11.917 2.733 10.95 2.267 10.292 2.783L6.342 5.892H3.967C3.158 5.892 2.5 6.55 2.5 7.358Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14.167 8.333L17.5 11.667M17.5 8.333L14.167 11.667"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PlayIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M7.158 4.47C6.603 4.14 5.9 4.54 5.9 5.186v9.628c0 .646.703 1.046 1.258.717l8.12-4.814a.833.833 0 0 0 0-1.434L7.158 4.47Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function PauseIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M6.667 4.167h1.666c.46 0 .834.373.834.833v10c0 .46-.373.833-.834.833H6.667A.833.833 0 0 1 5.833 15V5c0-.46.373-.833.834-.833ZM11.667 4.167h1.666c.46 0 .834.373.834.833v10c0 .46-.373.833-.834.833h-1.666a.833.833 0 0 1-.834-.833V5c0-.46.373-.833.834-.833Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 function SettingsIcon({ className }) {
   return (
     <svg
@@ -91,37 +152,119 @@ function SettingsIcon({ className }) {
   );
 }
 
-function PlaybackBar() {
+function formatPlaybackTime(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0:00";
+  }
+
+  const totalSeconds = Math.floor(value);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function PlaybackBar({
+  currentTime,
+  duration,
+  isMuted,
+  isPlaying,
+  onFullscreen,
+  onSeek,
+  onToggleMute,
+  onTogglePlay,
+}) {
+  const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+  const progress = safeDuration
+    ? Math.min(Math.max((currentTime / safeDuration) * 100, 0), 100)
+    : 0;
+
   return (
-    <div className="absolute inset-x-[16px] bottom-[12px]">
-      <div className="relative h-[8px] w-full overflow-hidden rounded-[var(--radius-full,999px)] bg-[var(--color-neutral-200)]">
-        <div className="absolute left-0 top-1/2 h-[8px] w-[12%] -translate-y-1/2 rounded-full bg-[var(--color-text-300)]" />
+    <div className="absolute inset-x-[16px] bottom-[12px] z-20">
+      <div className="rounded-[var(--radius-3)] border border-white/10 bg-black/58 p-[12px] shadow-[0_12px_32px_rgba(0,0,0,0.28)] backdrop-blur-md">
+        <div className="flex items-center gap-[12px]">
+          <button
+            type="button"
+            aria-label={isPlaying ? "Pausar video" : "Reproducir video"}
+            className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-100-uniform)] text-[var(--color-text-300)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={onTogglePlay}
+          >
+            {isPlaying ? (
+              <PauseIcon className="size-5" />
+            ) : (
+              <PlayIcon className="size-5" />
+            )}
+          </button>
+
+          <span className="w-[42px] shrink-0 text-right text-[12px] font-medium leading-[16px] text-white/78">
+            {formatPlaybackTime(currentTime)}
+          </span>
+
+          <div className="relative h-[20px] min-w-0 flex-1">
+            <div className="pointer-events-none absolute left-0 top-1/2 h-[8px] w-full -translate-y-1/2 overflow-hidden rounded-full bg-white/24">
+              <div
+                className="h-full rounded-full bg-[var(--color-neutral-100-uniform)]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={safeDuration || 0}
+              step="0.1"
+              value={Math.min(currentTime, safeDuration || currentTime)}
+              aria-label="Progreso del video"
+              className="absolute inset-0 h-[20px] w-full cursor-pointer opacity-0"
+              disabled={!safeDuration}
+              onChange={(event) => onSeek(Number(event.target.value))}
+            />
+          </div>
+
+          <span className="w-[42px] shrink-0 text-[12px] font-medium leading-[16px] text-white/78">
+            {formatPlaybackTime(safeDuration)}
+          </span>
+        </div>
+
+        <div className="mt-[10px] flex items-center justify-between">
+          <button
+            type="button"
+            aria-label={isMuted ? "Activar sonido" : "Silenciar video"}
+            className="flex size-[40px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-white/12 text-white transition-colors hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={onToggleMute}
+          >
+            {isMuted ? (
+              <VolumeMutedIcon className="size-5" />
+            ) : (
+              <VolumeIcon className="size-5" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            aria-label="Pantalla completa"
+            className="flex size-[40px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-white/12 text-white transition-colors hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={onFullscreen}
+          >
+            <SettingsIcon className="size-5" />
+          </button>
+        </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="mt-[8px] flex items-center justify-between">
-        <Button
-          theme="Primary"
-          type="Solid"
-          size="M"
-          showText={false}
-          showLeftIcon
-          showRightIcon={false}
-          iconLeft={<VolumeIcon className="size-5" />}
-          aria-label="Volumen"
-          className="shrink-0"
-        />
+function VideoLoadingOverlay({ visible }) {
+  if (!visible) {
+    return null;
+  }
 
-        <Button
-          theme="Primary"
-          type="Solid"
-          size="M"
-          showText={false}
-          showLeftIcon
-          showRightIcon={false}
-          iconLeft={<SettingsIcon className="size-5" />}
-          aria-label="Ajustes de video"
-          className="shrink-0"
-        />
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/18">
+      <div className="flex flex-col items-center gap-[10px] rounded-[var(--radius-3)] border border-white/10 bg-black/58 px-[18px] py-[14px] text-white shadow-[0_12px_32px_rgba(0,0,0,0.28)] backdrop-blur-md">
+        <span className="size-[28px] animate-spin rounded-full border-2 border-white/28 border-t-white" />
+        <span className="text-[12px] font-medium leading-[16px]">
+          Cargando video
+        </span>
       </div>
     </div>
   );
@@ -136,8 +279,15 @@ export default function VideoViewerModal({
   const [shouldRender, setShouldRender] = useState(visible);
   const [isActive, setIsActive] = useState(false);
   const [displayItem, setDisplayItem] = useState(item);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
+  const stageRef = useRef(null);
+  const videoRef = useRef(null);
   const { addComment, comments } = useImageComments(displayItem, {
     commentType: "video",
     projectId,
@@ -149,7 +299,12 @@ export default function VideoViewerModal({
 
     if (visible && item) {
       setDisplayItem(item);
+      setCurrentTime(0);
+      setDuration(0);
       setIsActive(false);
+      setIsMuted(false);
+      setIsPlaying(false);
+      setIsVideoLoading(Boolean(item.video));
       setShouldRender(true);
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = window.requestAnimationFrame(() => {
@@ -192,6 +347,67 @@ export default function VideoViewerModal({
     await addComment({ message, parentCommentId });
   }
 
+  async function handleTogglePlay() {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    if (video.paused) {
+      setIsVideoLoading(video.readyState < 3);
+      try {
+        await video.play();
+      } catch {
+        setIsPlaying(false);
+      }
+      return;
+    }
+
+    video.pause();
+  }
+
+  function handleSeek(nextTime) {
+    const video = videoRef.current;
+
+    if (!video || !Number.isFinite(nextTime)) {
+      return;
+    }
+
+    video.currentTime = Math.min(Math.max(nextTime, 0), duration || nextTime);
+    setCurrentTime(video.currentTime);
+  }
+
+  function handleToggleMute() {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
+  }
+
+  async function handleFullscreen() {
+    const stage = stageRef.current;
+
+    if (!stage) {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen?.();
+        return;
+      }
+
+      await stage.requestFullscreen?.();
+    } catch {
+      // Fullscreen can be blocked by the browser if the gesture is not trusted.
+    }
+  }
+
   return createPortal(
     <div
       className={clsx(
@@ -214,6 +430,7 @@ export default function VideoViewerModal({
         onClick={onClose}
       >
         <div
+          ref={stageRef}
           className={clsx(
             "relative min-w-0 flex-1 overflow-hidden",
             "rounded-[var(--radius-3)] bg-[var(--color-neutral-200)]",
@@ -225,11 +442,38 @@ export default function VideoViewerModal({
         >
           {displayItem.video ? (
             <video
+              ref={videoRef}
               src={displayItem.video}
               poster={displayItem.image}
               className="absolute inset-0 h-full w-full object-cover"
-              controls
+              muted={isMuted}
+              playsInline
+              preload="metadata"
               aria-label={displayItem.title}
+              onClick={handleTogglePlay}
+              onDurationChange={(event) => {
+                setDuration(event.currentTarget.duration || 0);
+              }}
+              onLoadedData={(event) => {
+                setDuration(event.currentTarget.duration || 0);
+                setIsVideoLoading(false);
+              }}
+              onPause={() => setIsPlaying(false)}
+              onPlay={() => {
+                setIsPlaying(true);
+                setIsVideoLoading(false);
+              }}
+              onPlaying={() => {
+                setIsPlaying(true);
+                setIsVideoLoading(false);
+              }}
+              onTimeUpdate={(event) => {
+                setCurrentTime(event.currentTarget.currentTime || 0);
+              }}
+              onVolumeChange={(event) => {
+                setIsMuted(event.currentTarget.muted);
+              }}
+              onWaiting={() => setIsVideoLoading(true)}
             />
           ) : (
             <img
@@ -242,6 +486,7 @@ export default function VideoViewerModal({
           <div className="pointer-events-none absolute inset-0 bg-[rgba(42,41,41,0.18)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.26)_0%,rgba(0,0,0,0)_100%)]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[170px] bg-[linear-gradient(0deg,rgba(0,0,0,0.50)_0%,rgba(0,0,0,0)_100%)]" />
+          <VideoLoadingOverlay visible={displayItem.video && isVideoLoading} />
 
           <div className="absolute left-[12px] top-[12px]">
             <MainLogo size="32px" alt="ARCA Studio" />
@@ -260,7 +505,16 @@ export default function VideoViewerModal({
             className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
           />
 
-          {!displayItem.video ? <PlaybackBar /> : null}
+          <PlaybackBar
+            currentTime={currentTime}
+            duration={duration}
+            isMuted={isMuted}
+            isPlaying={isPlaying}
+            onFullscreen={handleFullscreen}
+            onSeek={handleSeek}
+            onToggleMute={handleToggleMute}
+            onTogglePlay={handleTogglePlay}
+          />
         </div>
 
         <div
