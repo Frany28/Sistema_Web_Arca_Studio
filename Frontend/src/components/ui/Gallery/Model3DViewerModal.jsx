@@ -711,6 +711,7 @@ function MediaReferencePreview({ imageSrc, subtitle, title }) {
 }
 
 function MessageInput({
+  focusSignal,
   mediaType = "render",
   onClearSelection,
   onSubmit,
@@ -718,8 +719,23 @@ function MessageInput({
   placeholder,
   multiline = false,
 }) {
+  const fieldRef = useRef(null);
   const [textAreaValue, setTextAreaValue] = useState("");
   const trimmedValue = textAreaValue.trim();
+
+  useEffect(() => {
+    if (!focusSignal) {
+      return;
+    }
+
+    const field = fieldRef.current?.querySelector("textarea, input");
+
+    field?.focus?.();
+    field?.scrollIntoView?.({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [focusSignal]);
 
   function handleSubmit() {
     if (!trimmedValue) {
@@ -731,7 +747,7 @@ function MessageInput({
   }
 
   return multiline ? (
-    <div className="flex flex-col gap-[8px]">
+    <div ref={fieldRef} className="flex flex-col gap-[8px]">
       {pendingSelection ? (
         <SelectionPreview
           image={pendingSelection.image}
@@ -771,7 +787,7 @@ function MessageInput({
       </div>
     </div>
   ) : (
-    <div className="flex w-full items-start gap-[4px]">
+    <div ref={fieldRef} className="flex w-full items-start gap-[4px]">
       <ReplyArrowIcon />
 
       <div className="flex min-w-0 flex-1 items-center rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[12px] py-[8px]">
@@ -1144,6 +1160,7 @@ function getRootCommentId(comments, commentId) {
 }
 
 export function GeneralCommentsDrawer({
+  composerFocusSignal,
   comments = [],
   focusedSelectionCommentId = null,
   mediaItem = null,
@@ -1235,6 +1252,7 @@ export function GeneralCommentsDrawer({
     <aside className="flex h-full w-full shrink-0 flex-col rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px]">
       <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <MessageInput
+          focusSignal={composerFocusSignal}
           multiline
           mediaType={mediaType}
           pendingSelection={pendingSelection}

@@ -92,6 +92,33 @@ function VolumeMutedIcon({ className }) {
   );
 }
 
+function CommentIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M5.417 13.333H5C3.619 13.333 2.5 12.214 2.5 10.833V5.833C2.5 4.452 3.619 3.333 5 3.333H15C16.381 3.333 17.5 4.452 17.5 5.833V10.833C17.5 12.214 16.381 13.333 15 13.333H10.833L6.667 16.667V14.583C6.667 13.893 6.107 13.333 5.417 13.333Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.667 7.5H13.333M6.667 10H10.833"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function PlayIcon({ className }) {
   return (
     <svg
@@ -187,6 +214,7 @@ function PlaybackBar({
   duration,
   isLoading,
   isMuted,
+  onCommentClick,
   onFullscreen,
   onSeek,
   onToggleMute,
@@ -285,18 +313,29 @@ function PlaybackBar({
         />
       </div>
 
-      <button
-        type="button"
-        aria-label={isMuted ? "Activar sonido" : "Silenciar video"}
-        className="absolute bottom-[12px] left-[24px] flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-        onClick={onToggleMute}
-      >
-        {isMuted ? (
-          <VolumeMutedIcon className="size-5" />
-        ) : (
-          <VolumeIcon className="size-5" />
-        )}
-      </button>
+      <div className="absolute bottom-[12px] left-[24px] flex items-center gap-[8px]">
+        <button
+          type="button"
+          aria-label={isMuted ? "Activar sonido" : "Silenciar video"}
+          className="flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+          onClick={onToggleMute}
+        >
+          {isMuted ? (
+            <VolumeMutedIcon className="size-5" />
+          ) : (
+            <VolumeIcon className="size-5" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          aria-label="Comentar video"
+          className="flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+          onClick={onCommentClick}
+        >
+          <CommentIcon className="size-5" />
+        </button>
+      </div>
 
       <button
         type="button"
@@ -324,6 +363,7 @@ export default function VideoViewerModal({
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [composerFocusSignal, setComposerFocusSignal] = useState(0);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
   const stageRef = useRef(null);
@@ -428,6 +468,10 @@ export default function VideoViewerModal({
 
     video.muted = !video.muted;
     setIsMuted(video.muted);
+  }
+
+  function handleCommentClick() {
+    setComposerFocusSignal((currentSignal) => currentSignal + 1);
   }
 
   async function handleFullscreen() {
@@ -575,6 +619,7 @@ export default function VideoViewerModal({
             duration={duration}
             isLoading={isVideoLoading}
             isMuted={isMuted}
+            onCommentClick={handleCommentClick}
             onFullscreen={handleFullscreen}
             onSeek={handleSeek}
             onToggleMute={handleToggleMute}
@@ -590,6 +635,7 @@ export default function VideoViewerModal({
           onClick={(event) => event.stopPropagation()}
         >
           <GeneralCommentsDrawer
+            composerFocusSignal={composerFocusSignal}
             comments={comments}
             mediaItem={displayItem}
             mediaType="video"
