@@ -13,9 +13,7 @@ import "@google/model-viewer";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import AvatarLabel from "../../ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../ui/Button/Button.jsx";
-import ButtonGroupItem, {
-  ButtonGroup,
-} from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
+import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
@@ -439,41 +437,26 @@ export function Model3DViewerControls({
           </div>
         ) : null}
 
-        <div className="overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)]">
-          <div className="flex items-center overflow-hidden rounded-[var(--radius-2)]">
-            {buttonGroupItems.map((item, index) => (
-              <ButtonGroupItem
-                key={`${item.label}-${index}`}
-                {...item}
-                selected={isSettingsMenuOpen && index === 0}
-                className={clsx(
-                  "min-w-[68px] flex-1 rounded-none first:rounded-l-[var(--radius-2)] last:rounded-r-[var(--radius-2)]",
-                  index > 0 && "border-l-0",
-                  item.disabled
-                    ? null
-                    : "hover:border-[var(--color-primary-100)] hover:bg-[var(--color-primary-10)] hover:text-[var(--color-text-200)]",
-                )}
-                isGrouped
-                interactive
-                onClick={() => {
-                  if (index === 0) {
-                    setIsSettingsMenuOpen((current) => !current);
-                  }
+        <ButtonGroup
+          items={buttonGroupItems}
+          persistSelection={persistSelection}
+          selectedIndex={selectedIndex}
+          onChange={(index) => {
+            if (index === 0) {
+              setIsSettingsMenuOpen((current) => !current);
+            }
 
-                  if (index === 1) {
-                    setIsSettingsMenuOpen(false);
-                    onView?.();
-                  }
+            if (index === 1) {
+              setIsSettingsMenuOpen(false);
+              onView?.();
+            }
 
-                  if (index === 2) {
-                    setIsSettingsMenuOpen(false);
-                    onExpand?.();
-                  }
-                }}
-              />
-            ))}
-          </div>
-        </div>
+            if (index === 2) {
+              setIsSettingsMenuOpen(false);
+              onExpand?.();
+            }
+          }}
+        />
       </div>
     );
   }
