@@ -16,6 +16,8 @@ import SharedGalleryImageCard from "../../../components/ui/Gallery/GalleryImageC
 import GalleryVideosModal from "../../../components/ui/Gallery/GalleryVideosModal.jsx";
 import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.jsx";
 import Model3DViewerModal, {
+  MODEL_3D_NAVIGATION_MODES,
+  MODEL_3D_TEXTURE_PRESETS,
   Model3DViewerControls,
 } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
@@ -183,17 +185,17 @@ function RenderStage({
   const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(activeRender.image);
-  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(false);
+  const [navigationMode, setNavigationMode] = useState("orbit");
+  const [texturePreset, setTexturePreset] = useState("standard");
+  const activeNavigationMode =
+    MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
+  const activeTexturePreset =
+    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.standard;
 
   useEffect(() => {
-    setIsAutoRotateEnabled(false);
+    setNavigationMode("orbit");
+    setTexturePreset("standard");
   }, [modelSrc]);
-
-  useEffect(() => {
-    if (modelViewerRef.current) {
-      modelViewerRef.current.autoRotate = isAutoRotateEnabled;
-    }
-  }, [isAutoRotateEnabled, modelReloadKey]);
 
   useEffect(() => {
     const modelViewer = modelViewerRef.current;
@@ -241,14 +243,6 @@ function RenderStage({
     onModelProgress,
   ]);
 
-  function handleToggleAutoRotate() {
-    if (!hasInteractiveModel) {
-      return;
-    }
-
-    setIsAutoRotateEnabled((current) => !current);
-  }
-
   return (
     <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
       <div className="group relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[#171717] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
@@ -262,19 +256,19 @@ function RenderStage({
               alt={activeRender.title}
               camera-controls
               auto-rotate-delay="0"
-              camera-orbit="135deg 68deg 120%"
+              camera-orbit={activeNavigationMode.cameraOrbit}
               min-camera-orbit="auto 6deg 6%"
               max-camera-orbit="auto 88deg 650%"
-              field-of-view="32deg"
+              field-of-view={activeNavigationMode.fieldOfView}
               min-field-of-view="10deg"
               max-field-of-view="70deg"
-              environment-image="neutral"
-              shadow-intensity="0.9"
-              shadow-softness="0.65"
-              exposure="1"
-              tone-mapping="aces"
+              environment-image={activeTexturePreset.environmentImage}
+              shadow-intensity={activeTexturePreset.shadowIntensity}
+              shadow-softness={activeTexturePreset.shadowSoftness}
+              exposure={activeTexturePreset.exposure}
+              tone-mapping={activeTexturePreset.toneMapping}
               interpolation-decay="120"
-              interaction-prompt="none"
+              interaction-prompt={activeNavigationMode.interactionPrompt}
               loading="eager"
               reveal="auto"
               touch-action="pan-y"
@@ -329,9 +323,12 @@ function RenderStage({
         {hasInteractiveModel || hasPreviewImage ? (
           <Model3DViewerControls
             onExpand={onOpenModel}
-            onSettings={hasInteractiveModel ? handleToggleAutoRotate : null}
+            navigationMode={navigationMode}
+            onNavigationModeChange={hasInteractiveModel ? setNavigationMode : null}
+            onTexturePresetChange={hasInteractiveModel ? setTexturePreset : null}
             onView={hasInteractiveModel ? onOpenVR : null}
             persistSelection={false}
+            texturePreset={texturePreset}
             className="absolute bottom-[12px] right-[12px] z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
           />
         ) : null}

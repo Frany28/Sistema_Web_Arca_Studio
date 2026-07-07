@@ -13,7 +13,9 @@ import "@google/model-viewer";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import AvatarLabel from "../../ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../ui/Button/Button.jsx";
-import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
+import ButtonGroupItem, {
+  ButtonGroup,
+} from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
@@ -182,21 +184,199 @@ function ExpandIcon() {
   );
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="size-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M16.25 5.625L8.125 13.75L3.75 9.375"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="size-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M7.5 4.375L13.125 10L7.5 15.625"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="size-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M12.5 4.375L6.875 10L12.5 15.625"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function Model3DSettingsMenu({
+  navigationMode,
+  onClose,
+  onNavigationModeChange,
+  onTexturePresetChange,
+  texturePreset,
+}) {
+  const [menuView, setMenuView] = useState("main");
+  const menuItemClassName =
+    "flex !h-[34px] !min-w-0 w-full items-center justify-between gap-[18px] rounded-[var(--radius-1)] !px-[8px] text-left text-body-3 text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-[rgba(255,255,255,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-neutral-100-uniform)]";
+  const mutedClassName = "text-[rgba(255,255,255,0.72)]";
+
+  const handleNavigationSelect = (nextMode) => {
+    onNavigationModeChange(nextMode);
+    onClose();
+  };
+
+  const handleTextureSelect = (nextPreset) => {
+    onTexturePresetChange(nextPreset);
+    onClose();
+  };
+
+  if (menuView === "navigation") {
+    return (
+      <div className="flex w-[224px] flex-col gap-[4px]">
+        <button
+          type="button"
+          className={clsx(menuItemClassName, "justify-start gap-[6px]")}
+          onClick={() => setMenuView("main")}
+        >
+          <ChevronLeftIcon />
+          <span>Volver</span>
+        </button>
+        <div className="h-px bg-[rgba(255,255,255,0.12)]" />
+        {Object.values(MODEL_3D_NAVIGATION_MODES).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={menuItemClassName}
+            onClick={() => handleNavigationSelect(item.id)}
+          >
+            <span className="flex items-center gap-[8px]">
+              <span className="inline-flex w-[16px] items-center justify-center">
+                {navigationMode === item.id ? <CheckIcon /> : null}
+              </span>
+              <span>{item.label}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  if (menuView === "textures") {
+    return (
+      <div className="flex w-[224px] flex-col gap-[4px]">
+        <button
+          type="button"
+          className={clsx(menuItemClassName, "justify-start gap-[6px]")}
+          onClick={() => setMenuView("main")}
+        >
+          <ChevronLeftIcon />
+          <span>Volver</span>
+        </button>
+        <div className="h-px bg-[rgba(255,255,255,0.12)]" />
+        {Object.values(MODEL_3D_TEXTURE_PRESETS).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={menuItemClassName}
+            onClick={() => handleTextureSelect(item.id)}
+          >
+            <span className="flex items-center gap-[8px]">
+              <span className="inline-flex w-[16px] items-center justify-center">
+                {texturePreset === item.id ? <CheckIcon /> : null}
+              </span>
+              <span>{item.label}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-[224px] flex-col gap-[4px]">
+      <button
+        type="button"
+        className={menuItemClassName}
+        onClick={() => setMenuView("navigation")}
+      >
+        <span className={mutedClassName}>Navegación</span>
+        <span className="flex items-center gap-[6px]">
+          <span>{MODEL_3D_NAVIGATION_MODES[navigationMode]?.label}</span>
+          <ChevronRightIcon />
+        </span>
+      </button>
+      <button
+        type="button"
+        className={menuItemClassName}
+        onClick={() => setMenuView("textures")}
+      >
+        <span className={mutedClassName}>Texturas</span>
+        <span className="flex items-center gap-[6px]">
+          <span>{MODEL_3D_TEXTURE_PRESETS[texturePreset]?.label}</span>
+          <ChevronRightIcon />
+        </span>
+      </button>
+    </div>
+  );
+}
+
 export function Model3DViewerControls({
   className,
-  onSettings,
+  navigationMode = "orbit",
+  onNavigationModeChange,
   onView,
   onExpand,
+  onTexturePresetChange,
   persistSelection = true,
   selectedIndex = null,
+  texturePreset = "standard",
 }) {
+  const settingsMenuRef = useRef(null);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const canShowSettings = Boolean(onNavigationModeChange && onTexturePresetChange);
   const buttonGroupItems = useMemo(
     () => [
       {
         label: "Ajustes",
         showText: false,
         icon: <SettingsIcon />,
-        disabled: !onSettings,
+        disabled: !canShowSettings,
         "aria-label": "Ajustes del modelo 3D",
       },
       {
@@ -214,8 +394,89 @@ export function Model3DViewerControls({
         "aria-label": "Expandir modelo 3D",
       },
     ],
-    [onExpand, onSettings, onView],
+    [canShowSettings, onExpand, onView],
   );
+
+  useEffect(() => {
+    if (!isSettingsMenuOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (settingsMenuRef.current?.contains(event.target)) {
+        return;
+      }
+
+      setIsSettingsMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isSettingsMenuOpen]);
+
+  if (canShowSettings) {
+    return (
+      <div ref={settingsMenuRef} className={clsx("relative", className)}>
+        {isSettingsMenuOpen ? (
+          <div className="absolute bottom-full right-0 z-30 mb-[8px]">
+            <Tooltip
+              content={
+                <Model3DSettingsMenu
+                  navigationMode={navigationMode}
+                  texturePreset={texturePreset}
+                  onClose={() => setIsSettingsMenuOpen(false)}
+                  onNavigationModeChange={onNavigationModeChange}
+                  onTexturePresetChange={onTexturePresetChange}
+                />
+              }
+              showTip={false}
+              className="border-[rgba(255,255,255,0.12)] bg-[rgba(20,24,27,0.88)] p-[6px] shadow-[0_12px_32px_rgba(0,0,0,0.32)] backdrop-blur-[10px]"
+              aria-label="Ajustes del modelo 3D"
+            />
+          </div>
+        ) : null}
+
+        <div className="overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)]">
+          <div className="flex items-center overflow-hidden rounded-[var(--radius-2)]">
+            {buttonGroupItems.map((item, index) => (
+              <ButtonGroupItem
+                key={`${item.label}-${index}`}
+                {...item}
+                selected={isSettingsMenuOpen && index === 0}
+                className={clsx(
+                  "min-w-[68px] flex-1 rounded-none first:rounded-l-[var(--radius-2)] last:rounded-r-[var(--radius-2)]",
+                  index > 0 && "border-l-0",
+                  item.disabled
+                    ? null
+                    : "hover:border-[var(--color-primary-100)] hover:bg-[var(--color-primary-10)] hover:text-[var(--color-text-200)]",
+                )}
+                isGrouped
+                interactive
+                onClick={() => {
+                  if (index === 0) {
+                    setIsSettingsMenuOpen((current) => !current);
+                  }
+
+                  if (index === 1) {
+                    setIsSettingsMenuOpen(false);
+                    onView?.();
+                  }
+
+                  if (index === 2) {
+                    setIsSettingsMenuOpen(false);
+                    onExpand?.();
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ButtonGroup
@@ -224,10 +485,6 @@ export function Model3DViewerControls({
       persistSelection={persistSelection}
       selectedIndex={selectedIndex}
       onChange={(index) => {
-        if (index === 0) {
-          onSettings?.();
-        }
-
         if (index === 1) {
           onView?.();
         }
@@ -370,6 +627,51 @@ const MODEL_LOAD_TIMEOUT_MS = 45000;
 const MODEL_VIEWER_BACKGROUND =
   "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)";
 const MODEL_VIEWER_BACKGROUND_COLOR = "#171717";
+export const MODEL_3D_NAVIGATION_MODES = {
+  orbit: {
+    id: "orbit",
+    label: "Órbita",
+    cameraOrbit: "135deg 68deg 120%",
+    fieldOfView: "32deg",
+    interactionPrompt: "auto",
+  },
+  firstPerson: {
+    id: "firstPerson",
+    label: "Primera persona",
+    cameraOrbit: "0deg 82deg 70%",
+    fieldOfView: "44deg",
+    interactionPrompt: "none",
+  },
+};
+export const MODEL_3D_TEXTURE_PRESETS = {
+  standard: {
+    id: "standard",
+    label: "Estándar",
+    environmentImage: "neutral",
+    shadowIntensity: "0.9",
+    shadowSoftness: "0.65",
+    exposure: "1",
+    toneMapping: "aces",
+  },
+  hd: {
+    id: "hd",
+    label: "HD",
+    environmentImage: "neutral",
+    shadowIntensity: "1",
+    shadowSoftness: "0.82",
+    exposure: "1.08",
+    toneMapping: "aces",
+  },
+  matte: {
+    id: "matte",
+    label: "Mate",
+    environmentImage: "neutral",
+    shadowIntensity: "0.55",
+    shadowSoftness: "1",
+    exposure: "0.92",
+    toneMapping: "neutral",
+  },
+};
 const VIEWER_3D_ANNOTATION_LABEL = "Anotación";
 
 function getCommentTime(comment) {
@@ -1326,7 +1628,8 @@ export default function Model3DViewerModal({
   const [modelLoadState, setModelLoadState] = useState("loading");
   const [modelProgress, setModelProgress] = useState(8);
   const [modelReloadKey, setModelReloadKey] = useState(0);
-  const [isAutoRotateEnabled, setIsAutoRotateEnabled] = useState(false);
+  const [navigationMode, setNavigationMode] = useState("orbit");
+  const [texturePreset, setTexturePreset] = useState("standard");
   const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
@@ -1374,7 +1677,8 @@ export default function Model3DViewerModal({
         setDisplayItem(item);
         setIsActive(false);
         setModelReloadKey(0);
-        setIsAutoRotateEnabled(false);
+        setNavigationMode("orbit");
+        setTexturePreset("standard");
         setIsVRViewerOpen(false);
         setPendingSelection(null);
         setShouldRender(true);
@@ -1426,12 +1730,10 @@ export default function Model3DViewerModal({
   const modelSrc = displayItem?.modelUrl || displayItem?.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(displayItem?.image);
-
-  useEffect(() => {
-    if (modelViewerRef.current) {
-      modelViewerRef.current.autoRotate = isAutoRotateEnabled;
-    }
-  }, [isAutoRotateEnabled, modelReloadKey]);
+  const activeNavigationMode =
+    MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
+  const activeTexturePreset =
+    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.standard;
 
   useEffect(() => {
     if (!visible || !hasInteractiveModel) {
@@ -1544,14 +1846,6 @@ export default function Model3DViewerModal({
     setModelLoadState("loading");
     setModelProgress(8);
     setModelReloadKey((current) => current + 1);
-  }
-
-  function handleToggleAutoRotate() {
-    if (!hasInteractiveModel) {
-      return;
-    }
-
-    setIsAutoRotateEnabled((current) => !current);
   }
 
   function handleOpenVRViewer() {
@@ -1855,19 +2149,19 @@ export default function Model3DViewerModal({
                 alt={displayItem.title}
                 camera-controls
                 auto-rotate-delay="0"
-                camera-orbit="135deg 68deg 120%"
+                camera-orbit={activeNavigationMode.cameraOrbit}
                 min-camera-orbit="auto 6deg 6%"
                 max-camera-orbit="auto 88deg 650%"
-                field-of-view="32deg"
+                field-of-view={activeNavigationMode.fieldOfView}
                 min-field-of-view="10deg"
                 max-field-of-view="70deg"
-                environment-image="neutral"
-                shadow-intensity="0.9"
-                shadow-softness="0.65"
-                exposure="1"
-                tone-mapping="aces"
+                environment-image={activeTexturePreset.environmentImage}
+                shadow-intensity={activeTexturePreset.shadowIntensity}
+                shadow-softness={activeTexturePreset.shadowSoftness}
+                exposure={activeTexturePreset.exposure}
+                tone-mapping={activeTexturePreset.toneMapping}
                 interpolation-decay="120"
-                interaction-prompt="auto"
+                interaction-prompt={activeNavigationMode.interactionPrompt}
                 loading="eager"
                 reveal="auto"
                 touch-action="pan-y"
@@ -1954,9 +2248,12 @@ export default function Model3DViewerModal({
           {hasInteractiveModel || hasPreviewImage ? (
             <Model3DViewerControls
               onExpand={null}
-              onSettings={hasInteractiveModel ? handleToggleAutoRotate : null}
+              navigationMode={navigationMode}
+              onNavigationModeChange={hasInteractiveModel ? setNavigationMode : null}
+              onTexturePresetChange={hasInteractiveModel ? setTexturePreset : null}
               onView={hasInteractiveModel ? handleOpenVRViewer : null}
               selectedIndex={2}
+              texturePreset={texturePreset}
               className="absolute bottom-[12px] right-[12px] z-20 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
             />
           ) : null}

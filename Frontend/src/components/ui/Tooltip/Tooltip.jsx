@@ -107,6 +107,7 @@ function getResolvedNodeId({ tipPosition, showSubtext, showTip }) {
 
 function TooltipBubble({
   className,
+  content,
   text,
   subtext,
   showSubtext,
@@ -133,15 +134,21 @@ function TooltipBubble({
       })}
       {...props}
     >
-      <p className="w-full whitespace-nowrap text-heading-8 text-[var(--color-text-200)]">
-        {text}
-      </p>
+      {content ? (
+        content
+      ) : (
+        <>
+          <p className="w-full whitespace-nowrap text-heading-8 text-[var(--color-text-200)]">
+            {text}
+          </p>
 
-      {showSubtext ? (
-        <p className="w-full text-body-4 text-[var(--color-text-100)]">
-          {subtext}
-        </p>
-      ) : null}
+          {showSubtext ? (
+            <p className="w-full text-body-4 text-[var(--color-text-100)]">
+              {subtext}
+            </p>
+          ) : null}
+        </>
+      )}
 
       {showTip ? (
         <span
@@ -160,6 +167,7 @@ function TooltipBubble({
 
 function Tooltip({
   className,
+  content,
   text = TOOLTIP_DEFAULT_PROPS.text,
   subtext = TOOLTIP_DEFAULT_PROPS.subtext,
   showSubtext = TOOLTIP_DEFAULT_PROPS.showSubtext,
@@ -190,6 +198,7 @@ function Tooltip({
     return (
       <TooltipBubble
         className={className}
+        content={content}
         text={text}
         subtext={subtext}
         showSubtext={showSubtext}
@@ -229,6 +238,7 @@ function Tooltip({
         >
           <TooltipBubble
             className={className}
+            content={content}
             text={text}
             subtext={subtext}
             showSubtext={showSubtext}
