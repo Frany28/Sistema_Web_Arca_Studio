@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
+import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import { useImageComments } from "./useImageComments.js";
 
@@ -91,6 +92,45 @@ function VolumeMutedIcon({ className }) {
   );
 }
 
+function PlayIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M13.812 9.07404C13.6298 8.96602 13.4223 8.90815 13.2105 8.9063C12.9987 8.90445 12.7902 8.95869 12.6061 9.06351C12.4221 9.16833 12.269 9.32 12.1626 9.50311C12.0561 9.68621 12 9.89424 12 10.106V37.894C12 38.1058 12.0561 38.3139 12.1626 38.497C12.269 38.6801 12.4221 38.8317 12.6061 38.9366C12.7902 39.0414 12.9987 39.0956 13.2105 39.0938C13.4223 39.0919 13.6298 39.0341 13.812 38.926L37.258 25.032C37.4371 24.9258 37.5854 24.7748 37.6884 24.5938C37.7915 24.4129 37.8456 24.2083 37.8456 24C37.8456 23.7918 37.7915 23.5872 37.6884 23.4062C37.5854 23.2253 37.4371 23.0743 37.258 22.968L13.812 9.07404Z"
+        stroke="currentColor"
+        strokeWidth="3.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PauseIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M17 10V38M31 10V38"
+        stroke="currentColor"
+        strokeWidth="3.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function SettingsIcon({ className }) {
   return (
     <svg
@@ -118,6 +158,30 @@ function SettingsIcon({ className }) {
   );
 }
 
+function formatPlaybackTime(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0:00";
+  }
+
+  const totalSeconds = Math.floor(value);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getPointerTime(event, duration) {
+  const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const offset = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
+  const percentage = rect.width > 0 ? offset / rect.width : 0;
+
+  return {
+    left: percentage * 100,
+    time: safeDuration * percentage,
+  };
+}
+
 function PlaybackBar({
   currentTime,
   duration,
@@ -127,17 +191,78 @@ function PlaybackBar({
   onSeek,
   onToggleMute,
 }) {
+  const touchTooltipTimeoutRef = useRef(null);
+  const [hoverTime, setHoverTime] = useState(null);
+  const [hoverLeft, setHoverLeft] = useState(0);
   const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
   const progress = safeDuration
     ? Math.min(Math.max((currentTime / safeDuration) * 100, 0), 100)
     : 0;
   const displayProgress = safeDuration ? progress : isLoading ? 12 : 0;
+  const showTimeTooltip = safeDuration > 0 && hoverTime !== null;
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(touchTooltipTimeoutRef.current);
+    },
+    [],
+  );
+
+  function updateHoverTime(event) {
+    if (!safeDuration) {
+      return;
+    }
+
+    const nextHover = getPointerTime(event, safeDuration);
+    setHoverLeft(nextHover.left);
+    setHoverTime(nextHover.time);
+  }
+
+  function handlePointerDown(event) {
+    updateHoverTime(event);
+
+    if (event.pointerType === "mouse") {
+      return;
+    }
+
+    window.clearTimeout(touchTooltipTimeoutRef.current);
+    touchTooltipTimeoutRef.current = window.setTimeout(() => {
+      setHoverTime(null);
+    }, 1200);
+  }
+
+  function handlePointerLeave() {
+    window.clearTimeout(touchTooltipTimeoutRef.current);
+    setHoverTime(null);
+  }
 
   return (
     <div className="absolute inset-x-0 bottom-0 z-20 h-[84px]">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[84px] bg-[linear-gradient(0deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
 
-      <div className="absolute left-[24px] right-[24px] top-[12px] h-[8px]">
+      <div
+        className="absolute left-[24px] right-[24px] top-[12px] h-[8px]"
+        onPointerDown={handlePointerDown}
+        onPointerEnter={updateHoverTime}
+        onPointerLeave={handlePointerLeave}
+        onPointerMove={updateHoverTime}
+      >
+        {showTimeTooltip ? (
+          <div
+            className="pointer-events-none absolute bottom-full z-40 mb-[12px] -translate-x-1/2"
+            style={{
+              left: `${Math.min(Math.max(hoverLeft, 2), 98)}%`,
+            }}
+          >
+            <Tooltip
+              text={formatPlaybackTime(hoverTime)}
+              showTip
+              tipPosition="Top center"
+              aria-label={`Tiempo ${formatPlaybackTime(hoverTime)}`}
+            />
+          </div>
+        ) : null}
+
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full bg-white/90">
           <div
             className={clsx(
@@ -197,6 +322,7 @@ export default function VideoViewerModal({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
@@ -217,6 +343,7 @@ export default function VideoViewerModal({
       setDuration(0);
       setIsActive(false);
       setIsMuted(false);
+      setIsPlaying(false);
       setIsVideoLoading(Boolean(item.video));
       setShouldRender(true);
       frameRef.current = window.requestAnimationFrame(() => {
@@ -272,6 +399,7 @@ export default function VideoViewerModal({
       try {
         await video.play();
       } catch {
+        setIsPlaying(false);
         setIsVideoLoading(false);
       }
       return;
@@ -345,6 +473,7 @@ export default function VideoViewerModal({
         <div
           ref={stageRef}
           className={clsx(
+            "group/video",
             "relative min-w-0 flex-1 overflow-hidden",
             "rounded-[var(--radius-3)] bg-[var(--color-neutral-200)]",
             "h-[calc(100dvh-32px)]",
@@ -372,8 +501,15 @@ export default function VideoViewerModal({
                 setIsVideoLoading(false);
               }}
               onCanPlay={() => setIsVideoLoading(false)}
-              onPlay={() => setIsVideoLoading(false)}
-              onPlaying={() => setIsVideoLoading(false)}
+              onPause={() => setIsPlaying(false)}
+              onPlay={() => {
+                setIsPlaying(true);
+                setIsVideoLoading(false);
+              }}
+              onPlaying={() => {
+                setIsPlaying(true);
+                setIsVideoLoading(false);
+              }}
               onTimeUpdate={(event) => {
                 setCurrentTime(event.currentTarget.currentTime || 0);
               }}
@@ -394,7 +530,30 @@ export default function VideoViewerModal({
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.26)_0%,rgba(0,0,0,0)_100%)]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[120px] bg-[linear-gradient(0deg,rgba(0,0,0,0.30)_0%,rgba(0,0,0,0)_100%)]" />
 
-          <div className="absolute left-[12px] top-[12px]">
+          {displayItem.video ? (
+            <button
+              type="button"
+              aria-label={isPlaying ? "Pausar video" : "Reproducir video"}
+              className={clsx(
+                "absolute inset-0 z-10 flex cursor-pointer items-center justify-center text-[var(--color-neutral-100-uniform)] transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent-300)]",
+                isPlaying
+                  ? "opacity-0 hover:opacity-100 focus-visible:opacity-100 group-hover/video:opacity-100"
+                  : "opacity-100",
+              )}
+              onClick={handleTogglePlay}
+            >
+              <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.24)_0%,rgba(0,0,0,0.14)_28%,rgba(0,0,0,0.04)_56%,rgba(0,0,0,0)_100%)]" />
+              <span className="relative flex size-[64px] items-center justify-center text-[var(--color-neutral-100-uniform)] drop-shadow-[0_8px_24px_rgba(0,0,0,0.34)]">
+                {isPlaying ? (
+                  <PauseIcon className="size-[56px]" />
+                ) : (
+                  <PlayIcon className="size-[56px]" />
+                )}
+              </span>
+            </button>
+          ) : null}
+
+          <div className="absolute left-[12px] top-[12px] z-30">
             <MainLogo size="32px" alt="ARCA Studio" />
           </div>
 
@@ -408,7 +567,7 @@ export default function VideoViewerModal({
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar video"
             onClick={onClose}
-            className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
+            className="absolute right-[8px] top-[8px] z-30 size-9 text-[var(--color-text-200)]"
           />
 
           <PlaybackBar
