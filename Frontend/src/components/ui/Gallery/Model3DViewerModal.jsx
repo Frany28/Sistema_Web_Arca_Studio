@@ -919,7 +919,7 @@ function getModelViewerDimensionRadius(modelViewer) {
   const maxDimension = Math.max(...values);
   const minDimension = Math.min(...values);
 
-  return Math.max(maxDimension * 0.03, minDimension * 0.3, 0.02);
+  return Math.max(maxDimension * 0.12, minDimension * 1.1, 0.35);
 }
 
 function formatModelViewerNormal(vector) {
@@ -1856,10 +1856,10 @@ export default function Model3DViewerModal({
                 camera-controls
                 auto-rotate-delay="0"
                 camera-orbit="135deg 68deg 120%"
-                min-camera-orbit="auto 1deg 0.001m"
-                max-camera-orbit="auto 179deg 100000%"
+                min-camera-orbit="auto 4deg 4%"
+                max-camera-orbit="auto 88deg 800%"
                 field-of-view="32deg"
-                min-field-of-view="1deg"
+                min-field-of-view="8deg"
                 max-field-of-view="70deg"
                 environment-image="neutral"
                 shadow-intensity="0.9"
