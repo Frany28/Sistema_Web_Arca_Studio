@@ -217,19 +217,14 @@ function RenderStage({
 
     if (modelViewer.loaded) {
       handleLoad();
+      return undefined;
     }
 
     modelViewer.addEventListener("load", handleLoad);
     modelViewer.addEventListener("error", handleError);
     modelViewer.addEventListener("progress", handleProgress);
-    const loadedCheckIntervalId = window.setInterval(() => {
-      if (modelViewer.loaded) {
-        handleLoad();
-      }
-    }, 250);
 
     return () => {
-      window.clearInterval(loadedCheckIntervalId);
       modelViewer.removeEventListener("load", handleLoad);
       modelViewer.removeEventListener("error", handleError);
       modelViewer.removeEventListener("progress", handleProgress);
@@ -773,6 +768,7 @@ export default function ProjectRendersPanel({
     [resolvedModelGallery, selectedActiveRenderId],
   );
   const activeModelSrc = activeRender?.modelUrl || activeRender?.fileUrl || null;
+  const activeRenderIdForLoading = activeRender?.id || null;
 
   const clearModelLoadingTimers = useCallback(() => {
     window.clearTimeout(slowLoadingTimeoutRef.current);
@@ -830,10 +826,9 @@ export default function ProjectRendersPanel({
     };
   }, [
     activeModelSrc,
-    activeRender,
+    activeRenderIdForLoading,
     clearModelLoadingTimers,
     modelReloadKey,
-    selectedActiveRenderId,
   ]);
 
   const handleModelLoad = useCallback(() => {

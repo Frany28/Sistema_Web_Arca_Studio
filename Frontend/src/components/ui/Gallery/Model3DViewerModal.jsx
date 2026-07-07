@@ -462,6 +462,8 @@ function CommentCard({
   time,
   body,
   image,
+  mediaItem,
+  mediaType = "render",
   message,
   name,
   pointNumber,
@@ -492,7 +494,6 @@ function CommentCard({
   const safeDisplayAuthor = resolveString(displayAuthor);
   const safeDisplayTime = resolveString(displayTime);
   const safeDisplayBody = resolveString(displayBody);
-  const safePointNumber = Number(pointNumber) || null;
 
   return (
     <div
@@ -522,11 +523,6 @@ function CommentCard({
               <span className="shrink-0 text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {safeDisplayTime}
               </span>
-              {safePointNumber && !isReply ? (
-                <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
-                  {VIEWER_3D_ANNOTATION_LABEL} {safePointNumber}
-                </span>
-              ) : null}
             </div>
 
             <button
@@ -550,10 +546,17 @@ function CommentCard({
             <SelectionPreview
               active={selectionActive}
               image={image}
+              mediaType={mediaType}
               pointNumber={pointNumber}
               selection={selection}
               compact
               onSelect={onSelectionClick}
+            />
+          ) : !isReply && mediaType === "video" ? (
+            <MediaReferencePreview
+              imageSrc={image?.src || mediaItem?.image}
+              subtitle="Vista asociada al comentario"
+              title="Video adjunto"
             />
           ) : null}
         </article>
@@ -578,6 +581,7 @@ function SelectionPreview({
   active = false,
   compact = false,
   image,
+  mediaType = "render",
   onClear,
   onSelect,
   pointNumber,
@@ -608,6 +612,16 @@ function SelectionPreview({
     : undefined;
 
   const Container = onSelect ? "button" : "div";
+  const referenceNumber = Number(pointNumber) || null;
+  const referenceTitle = referenceNumber
+    ? `Referencia ${referenceNumber}`
+    : mediaType === "image"
+      ? "Imagen marcada"
+      : "Referencia";
+  const referenceSubtitle =
+    mediaType === "image"
+      ? "Área seleccionada en la imagen"
+      : "Detalle señalado en el render";
 
   return (
     <Container
@@ -645,24 +659,18 @@ function SelectionPreview({
         {isViewerPoint && !imageSrc ? (
           <span className="absolute left-1/2 top-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22)]" />
         ) : null}
-        {Number(pointNumber) ? (
+        {referenceNumber ? (
           <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
-            {Number(pointNumber)}
+            {referenceNumber}
           </span>
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-          {Number(pointNumber)
-            ? `${VIEWER_3D_ANNOTATION_LABEL} ${Number(pointNumber)}`
-            : isViewerPoint
-              ? "Anotación del visor"
-              : "Area seleccionada"}
+          {referenceTitle}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-          {isViewerPoint
-            ? `x:${Math.round((selection.viewerPoint?.normalizedX ?? 0) * 100)}% y:${Math.round((selection.viewerPoint?.normalizedY ?? 0) * 100)}%`
-            : `x:${pixels?.x ?? 0}px y:${pixels?.y ?? 0}px w:${pixels?.width ?? 0}px h:${pixels?.height ?? 0}px`}
+          {referenceSubtitle}
         </p>
       </div>
       {onClear ? (
@@ -678,7 +686,32 @@ function SelectionPreview({
   );
 }
 
+function MediaReferencePreview({ imageSrc, subtitle, title }) {
+  if (!imageSrc) {
+    return null;
+  }
+
+  return (
+    <div className="flex w-full items-center gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px] text-left">
+      <div
+        className="relative size-[44px] shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)] bg-cover bg-center"
+        style={{ backgroundImage: `url(${imageSrc})` }}
+        aria-hidden="true"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
+          {title}
+        </p>
+        <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
+          {subtitle}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function MessageInput({
+  mediaType = "render",
   onClearSelection,
   onSubmit,
   pendingSelection,
@@ -702,6 +735,7 @@ function MessageInput({
       {pendingSelection ? (
         <SelectionPreview
           image={pendingSelection.image}
+          mediaType={mediaType}
           pointNumber={pendingSelection.pointNumber}
           selection={pendingSelection}
           onClear={onClearSelection}
@@ -1112,6 +1146,8 @@ function getRootCommentId(comments, commentId) {
 export function GeneralCommentsDrawer({
   comments = [],
   focusedSelectionCommentId = null,
+  mediaItem = null,
+  mediaType = "render",
   onClearSelection,
   onSelectionPreviewClick,
   onSubmitComment,
@@ -1200,6 +1236,7 @@ export function GeneralCommentsDrawer({
       <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <MessageInput
           multiline
+          mediaType={mediaType}
           pendingSelection={pendingSelection}
           placeholder="Escribe algo..."
           onClearSelection={onClearSelection}
@@ -1224,6 +1261,8 @@ export function GeneralCommentsDrawer({
             >
               <CommentCard
                 {...comment}
+                mediaItem={mediaItem}
+                mediaType={mediaType}
                 selectionActive={
                   String(focusedSelectionCommentId) === String(comment.id)
                 }
@@ -1459,19 +1498,14 @@ export default function Model3DViewerModal({
 
     if (modelViewer.loaded) {
       handleLoad();
+      return undefined;
     }
 
     modelViewer.addEventListener("load", handleLoad);
     modelViewer.addEventListener("error", handleError);
     modelViewer.addEventListener("progress", handleProgress);
-    const loadedCheckIntervalId = window.setInterval(() => {
-      if (modelViewer.loaded) {
-        handleLoad();
-      }
-    }, 250);
 
     return () => {
-      window.clearInterval(loadedCheckIntervalId);
       modelViewer.removeEventListener("load", handleLoad);
       modelViewer.removeEventListener("error", handleError);
       modelViewer.removeEventListener("progress", handleProgress);
@@ -1919,6 +1953,8 @@ export default function Model3DViewerModal({
           <GeneralCommentsDrawer
             comments={comments}
             focusedSelectionCommentId={focusedSelectionCommentId}
+            mediaItem={displayItem}
+            mediaType="render"
             pendingSelection={pendingSelection}
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={handleSelectionPreviewClick}

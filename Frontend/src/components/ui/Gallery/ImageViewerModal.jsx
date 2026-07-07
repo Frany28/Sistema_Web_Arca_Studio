@@ -424,6 +424,8 @@ export default function ImageViewerModal({
           <GeneralCommentsDrawer
             comments={drawerComments}
             focusedSelectionCommentId={focusedSelectionCommentId}
+            mediaItem={displayItem}
+            mediaType="image"
             pendingSelection={pendingSelection}
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={(commentId) =>

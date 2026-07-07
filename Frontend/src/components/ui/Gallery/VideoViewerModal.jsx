@@ -273,6 +273,8 @@ export default function VideoViewerModal({
         >
           <GeneralCommentsDrawer
             comments={comments}
+            mediaItem={displayItem}
+            mediaType="video"
             onSubmitComment={handleSubmitComment}
           />
         </div>
