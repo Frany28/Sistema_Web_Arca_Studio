@@ -62,6 +62,7 @@ function CloudPlusIcon({ className }) {
 }
 
 function AvatarUploadModal({
+  isSubmitting = false,
   open,
   onClose,
   onConfirm,
@@ -85,7 +86,7 @@ function AvatarUploadModal({
     }
 
     function handleKeyDown(event) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !isSubmitting) {
         onClose?.();
       }
     }
@@ -95,7 +96,7 @@ function AvatarUploadModal({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose, open]);
+  }, [isSubmitting, onClose, open]);
 
   useEffect(() => {
     if (!selectedFile || !selectedFile.type.startsWith("image/")) {
@@ -113,7 +114,7 @@ function AvatarUploadModal({
 
   const selectedFileLabel = useMemo(() => {
     if (!selectedFile) {
-      return "Formatos JPEG, PNG, PDF, hasta 50 MB.";
+      return "Formatos JPEG, PNG, WEBP, hasta 50 MB.";
     }
 
     const sizeInMb = selectedFile.size / (1024 * 1024);
@@ -132,7 +133,7 @@ function AvatarUploadModal({
   };
 
   const handleConfirm = () => {
-    if (!selectedFile) {
+    if (!selectedFile || isSubmitting) {
       return;
     }
 
@@ -143,7 +144,7 @@ function AvatarUploadModal({
     <Modal
       visible={open}
       showDialog={false}
-      onClick={onClose}
+      onClick={isSubmitting ? undefined : onClose}
       aria-modal="true"
       role="dialog"
       aria-labelledby="avatar-upload-modal-title"
@@ -158,7 +159,7 @@ function AvatarUploadModal({
               type="button"
               className="absolute right-0 top-0 inline-flex size-9 items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-100)] transition-colors duration-150 hover:bg-[var(--color-neutral-200)]/40 hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]"
               aria-label="Cerrar modal"
-              onClick={onClose}
+              onClick={isSubmitting ? undefined : onClose}
             >
               <CloseIcon className="size-3" />
             </button>
@@ -232,7 +233,7 @@ function AvatarUploadModal({
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
+                      accept=".jpg,.jpeg,.png,.webp"
                       className="hidden"
                       onChange={(event) =>
                         handleFileSelection(event.target.files)
@@ -252,6 +253,7 @@ function AvatarUploadModal({
               showLeftIcon={false}
               showRightIcon={false}
               className="min-w-0 flex-1"
+              disabled={isSubmitting}
               onClick={onClose}
             >
               Cerrar
@@ -263,7 +265,7 @@ function AvatarUploadModal({
               showLeftIcon={false}
               showRightIcon={false}
               className="min-w-0 flex-1"
-              disabled={!selectedFile}
+              disabled={!selectedFile || isSubmitting}
               onClick={handleConfirm}
             >
               Confirmar

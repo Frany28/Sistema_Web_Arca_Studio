@@ -26,6 +26,9 @@ import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 
 const MODEL_SLOW_LOADING_MS = 15000;
 const MODEL_LOAD_TIMEOUT_MS = 45000;
+const MODEL_VIEWER_BACKGROUND =
+  "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)";
+const MODEL_VIEWER_BACKGROUND_COLOR = "#171717";
 const VRModelViewer = lazy(
   () => import("../../../components/ui/Gallery/VRModelViewer.jsx"),
 );
@@ -248,7 +251,7 @@ function RenderStage({
 
   return (
     <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
-      <div className="group relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-200)] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
+      <div className="group relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[#171717] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
         {hasInteractiveModel ? (
           <>
             <model-viewer
@@ -260,10 +263,10 @@ function RenderStage({
               camera-controls
               auto-rotate-delay="0"
               camera-orbit="135deg 68deg 120%"
-              min-camera-orbit="auto 4deg 18%"
-              max-camera-orbit="auto 88deg 620%"
+              min-camera-orbit="auto 1deg 0.001m"
+              max-camera-orbit="auto 179deg 100000%"
               field-of-view="32deg"
-              min-field-of-view="8deg"
+              min-field-of-view="1deg"
               max-field-of-view="70deg"
               environment-image="neutral"
               shadow-intensity="0.9"
@@ -276,9 +279,8 @@ function RenderStage({
               reveal="auto"
               touch-action="pan-y"
               style={{
-                background:
-                  "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
-                backgroundColor: "#d8d6d0",
+                background: MODEL_VIEWER_BACKGROUND,
+                backgroundColor: MODEL_VIEWER_BACKGROUND_COLOR,
                 display: "block",
                 height: "100%",
                 "--poster-color": "transparent",

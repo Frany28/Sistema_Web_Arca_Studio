@@ -28,10 +28,12 @@ import {
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
 const TABLET_BREAKPOINT_PX = 768;
+const AVATAR_ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const AVATAR_MAX_SIZE_BYTES = 50 * 1024 * 1024;
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, updateUser, user } = useAuth();
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
@@ -42,9 +44,9 @@ export default function SettingsPage() {
 
   const [profileName, setProfileName] = useState(currentUser.name);
   const [companyName, setCompanyName] = useState("Next C.A.");
-  const [avatarSrc, setAvatarSrc] = useState("");
   const [isAvatarUploadModalOpen, setIsAvatarUploadModalOpen] =
     useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -65,6 +67,7 @@ export default function SettingsPage() {
   const [supportSubject, setSupportSubject] = useState("");
   const [supportDescription, setSupportDescription] = useState("");
   const [supportToastTrigger, setSupportToastTrigger] = useState(0);
+  const [avatarToast, setAvatarToast] = useState(null);
   const [passwordToast, setPasswordToast] = useState(null);
   const [passwordValidationErrors, setPasswordValidationErrors] = useState({});
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -96,12 +99,6 @@ export default function SettingsPage() {
       mediaQuery.removeEventListener("change", syncSidebarForViewport);
     };
   }, []);
-
-  useEffect(() => () => {
-    if (avatarSrc) {
-      URL.revokeObjectURL(avatarSrc);
-    }
-  }, [avatarSrc]);
 
   useEffect(() => {
     setProfileName(currentUser.name);
@@ -244,6 +241,54 @@ export default function SettingsPage() {
     }
   };
 
+  const handleAvatarUpload = async (file) => {
+    if (!AVATAR_ALLOWED_TYPES.has(file?.type)) {
+      setAvatarToast({
+        trigger: Date.now(),
+        title: "No se pudo actualizar el avatar",
+        description: "Sube una imagen JPG, PNG o WEBP.",
+      });
+      setIsAvatarUploadModalOpen(false);
+      return;
+    }
+
+    if (file.size > AVATAR_MAX_SIZE_BYTES) {
+      setAvatarToast({
+        trigger: Date.now(),
+        title: "No se pudo actualizar el avatar",
+        description: "La imagen no puede superar 50 MB.",
+      });
+      setIsAvatarUploadModalOpen(false);
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const data = await api.auth.uploadProfilePhoto({ file });
+
+      if (data?.user) {
+        updateUser(data.user);
+      }
+
+      setAvatarToast({
+        trigger: Date.now(),
+        title: "Avatar actualizado",
+        description: "Tu foto de perfil se actualizÃ³ correctamente.",
+      });
+      setIsAvatarUploadModalOpen(false);
+    } catch (error) {
+      setAvatarToast({
+        trigger: Date.now(),
+        title: "No se pudo actualizar el avatar",
+        description: error.message || "Intenta nuevamente en unos minutos.",
+      });
+      setIsAvatarUploadModalOpen(false);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   let activePanel = (
     <ProfilePanel
       profileName={profileName}
@@ -255,7 +300,7 @@ export default function SettingsPage() {
       secondaryPhone={currentUser.phone}
       roleLabel={currentUser.roleName}
       avatarInitials={getUserDisplay({ name: profileName }).initials}
-      avatarSrc={avatarSrc}
+      avatarSrc={currentUser.profilePhotoUrl}
       onUploadImageClick={() => setIsAvatarUploadModalOpen(true)}
     />
   );
@@ -333,6 +378,7 @@ export default function SettingsPage() {
           expanded={isSidebarExpanded}
           userName={currentUser.name}
           userEmail={currentUser.email}
+          userAvatarSrc={currentUser.profilePhotoUrl}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
@@ -359,6 +405,13 @@ export default function SettingsPage() {
             trigger={passwordToast?.trigger ?? null}
             title={passwordToast?.title ?? ""}
             description={passwordToast?.description ?? ""}
+            leading={<AuthToastLockIcon />}
+            autoHideMs={4200}
+          />
+          <AuthToast
+            trigger={avatarToast?.trigger ?? null}
+            title={avatarToast?.title ?? ""}
+            description={avatarToast?.description ?? ""}
             leading={<AuthToastLockIcon />}
             autoHideMs={4200}
           />
@@ -402,22 +455,8 @@ export default function SettingsPage() {
           <AvatarUploadModal
             open={isAvatarUploadModalOpen}
             onClose={() => setIsAvatarUploadModalOpen(false)}
-            onConfirm={(file) => {
-              if (!file.type.startsWith("image/")) {
-                setIsAvatarUploadModalOpen(false);
-                return;
-              }
-
-              const objectUrl = URL.createObjectURL(file);
-              setAvatarSrc((currentValue) => {
-                if (currentValue) {
-                  URL.revokeObjectURL(currentValue);
-                }
-
-                return objectUrl;
-              });
-              setIsAvatarUploadModalOpen(false);
-            }}
+            onConfirm={handleAvatarUpload}
+            isSubmitting={isUploadingAvatar}
           />
         </div>
       </div>

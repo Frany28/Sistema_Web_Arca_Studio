@@ -117,6 +117,72 @@ export const authApi = {
     return data;
   },
 
+  uploadProfilePhoto({ file, signal }) {
+    const token = getAuthToken();
+    const fileName = encodeURIComponent(file?.name || "avatar");
+
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      const abortUpload = () => {
+        request.abort();
+      };
+
+      request.open("POST", `${API_BASE_URL}/auth/profile-photo`);
+      request.withCredentials = true;
+      request.setRequestHeader(
+        "Content-Type",
+        file?.type || "application/octet-stream",
+      );
+      request.setRequestHeader("X-File-Name", fileName);
+
+      if (token) {
+        request.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
+
+      request.onload = () => {
+        signal?.removeEventListener("abort", abortUpload);
+        let data = null;
+
+        try {
+          data = request.responseText ? JSON.parse(request.responseText) : null;
+        } catch {
+          data = null;
+        }
+
+        if (request.status < 200 || request.status >= 300) {
+          const error = new Error(
+            data?.message || "No se pudo actualizar el avatar.",
+          );
+          error.status = request.status;
+          error.code = data?.code || "PROFILE_PHOTO_UPLOAD_FAILED";
+          reject(error);
+          return;
+        }
+
+        if (data?.token) {
+          setAuthToken(data.token);
+        }
+
+        resolve(data);
+      };
+
+      request.onerror = () => {
+        signal?.removeEventListener("abort", abortUpload);
+        reject(new Error("No se pudo actualizar el avatar."));
+      };
+
+      request.onabort = () => {
+        signal?.removeEventListener("abort", abortUpload);
+        const error = new Error("La subida del avatar fue cancelada.");
+        error.code = "UPLOAD_ABORTED";
+        reject(error);
+      };
+
+      signal?.addEventListener("abort", abortUpload, { once: true });
+      request.send(file);
+    });
+  },
+
   logout() {
     return apiRequest("/auth/logout", {
       method: "POST",

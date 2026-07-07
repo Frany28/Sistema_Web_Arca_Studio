@@ -699,6 +699,7 @@ export default function ProjectDetailsPage({
           expanded={isSidebarExpanded}
           userName={currentUser.name}
           userEmail={currentUser.email}
+          userAvatarSrc={currentUser.profilePhotoUrl}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}

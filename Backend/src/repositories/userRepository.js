@@ -157,6 +157,21 @@ export async function updateUserPassword(id, passwordHash) {
   );
 }
 
+export async function updateUserProfilePhotoUrl(id, profilePhotoUrl) {
+  await query(
+    `
+      update public.users
+      set profile_photo_url = $2, updated_at = now()
+      where id = $1
+        and status = 'active'
+        and deleted_at is null
+    `,
+    [id, profilePhotoUrl],
+  );
+
+  return findActiveUserById(id);
+}
+
 export function sanitizeUser(row) {
   return toSafeUser(row);
 }

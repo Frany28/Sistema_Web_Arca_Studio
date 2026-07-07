@@ -90,6 +90,10 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
+  const updateUser = useCallback((nextUser) => {
+    setUser(normalizeUser(nextUser));
+  }, []);
+
   useEffect(() => {
     const handleStorageEvent = (event) => {
       if (event.key === "arca_auth_logout") {
@@ -132,9 +136,10 @@ export function AuthProvider({ children }) {
       isLoading,
       login,
       logout,
+      updateUser,
       user,
     }),
-    [isLoading, login, logout, user],
+    [isLoading, login, logout, updateUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

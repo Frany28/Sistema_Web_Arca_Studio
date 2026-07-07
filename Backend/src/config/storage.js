@@ -107,6 +107,27 @@ export function buildStorageObjectKey({
   ].join("/");
 }
 
+export function buildUserProfilePhotoObjectKey({
+  originalName,
+  uploadedAt = new Date(),
+  userId,
+}) {
+  const date = uploadedAt instanceof Date ? uploadedAt : new Date(uploadedAt);
+  const year = String(date.getUTCFullYear());
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const timestamp = String(date.getTime());
+  const safeName = sanitizeStorageFileName(originalName);
+
+  return [
+    "users",
+    String(userId),
+    "profile-photo",
+    year,
+    month,
+    `${timestamp}-${safeName}`,
+  ].join("/");
+}
+
 export function buildStorageFileUrl(objectKey) {
   const { bucket } = getSupabaseStorageConfig();
 
@@ -116,4 +137,29 @@ export function buildStorageFileUrl(objectKey) {
   }
 
   return bucket ? `s3://${bucket}/${objectKey}` : objectKey;
+}
+
+export function getStorageObjectKeyFromFileUrl(fileUrl) {
+  const { bucket } = getSupabaseStorageConfig();
+  const normalizedFileUrl = String(fileUrl || "").trim();
+
+  if (!normalizedFileUrl || !bucket) {
+    return null;
+  }
+
+  const publicPrefix = process.env.SUPABASE_URL
+    ? `${process.env.SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${bucket}/`
+    : null;
+
+  if (publicPrefix && normalizedFileUrl.startsWith(publicPrefix)) {
+    return normalizedFileUrl.slice(publicPrefix.length);
+  }
+
+  const s3Prefix = `s3://${bucket}/`;
+
+  if (normalizedFileUrl.startsWith(s3Prefix)) {
+    return normalizedFileUrl.slice(s3Prefix.length);
+  }
+
+  return null;
 }

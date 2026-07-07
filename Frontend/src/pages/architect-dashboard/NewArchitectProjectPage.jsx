@@ -107,6 +107,7 @@ function NewArchitectProjectPage() {
           newOpportunityLabel="Nuevo proyecto"
           userName={currentUser.name}
           userEmail={currentUser.email}
+          userAvatarSrc={currentUser.profilePhotoUrl}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() =>

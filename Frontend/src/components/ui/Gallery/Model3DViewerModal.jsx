@@ -367,6 +367,9 @@ const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
 const MODEL_SLOW_LOADING_MS = 15000;
 const MODEL_LOAD_TIMEOUT_MS = 45000;
+const MODEL_VIEWER_BACKGROUND =
+  "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)";
+const MODEL_VIEWER_BACKGROUND_COLOR = "#171717";
 const VIEWER_3D_ANNOTATION_LABEL = "Anotación";
 
 function getCommentTime(comment) {
@@ -916,7 +919,7 @@ function getModelViewerDimensionRadius(modelViewer) {
   const maxDimension = Math.max(...values);
   const minDimension = Math.min(...values);
 
-  return Math.max(maxDimension * 0.18, minDimension * 1.8, 1);
+  return Math.max(maxDimension * 0.03, minDimension * 0.3, 0.02);
 }
 
 function formatModelViewerNormal(vector) {
@@ -1835,7 +1838,7 @@ export default function Model3DViewerModal({
           ref={modelStageRef}
           className={clsx(
             "relative min-w-0 flex-1 overflow-hidden",
-            "rounded-[var(--radius-3)] bg-[var(--color-neutral-200)]",
+            "rounded-[var(--radius-3)] bg-[#171717]",
             "h-[calc(100dvh-16px)]",
             "max-[920px]:h-[62dvh] max-[920px]:min-h-[360px] max-[920px]:flex-none",
             "max-[520px]:h-[58dvh] max-[520px]:min-h-[300px]",
@@ -1853,10 +1856,10 @@ export default function Model3DViewerModal({
                 camera-controls
                 auto-rotate-delay="0"
                 camera-orbit="135deg 68deg 120%"
-                min-camera-orbit="auto 4deg 18%"
-                max-camera-orbit="auto 88deg 620%"
+                min-camera-orbit="auto 1deg 0.001m"
+                max-camera-orbit="auto 179deg 100000%"
                 field-of-view="32deg"
-                min-field-of-view="8deg"
+                min-field-of-view="1deg"
                 max-field-of-view="70deg"
                 environment-image="neutral"
                 shadow-intensity="0.9"
@@ -1874,9 +1877,8 @@ export default function Model3DViewerModal({
                   modelPointerRef.current = null;
                 }}
                 style={{
-                  background:
-                    "radial-gradient(circle at 50% 42%, #f1f1ee 0%, #d8d6d0 38%, #8e918c 100%)",
-                  backgroundColor: "#d8d6d0",
+                  background: MODEL_VIEWER_BACKGROUND,
+                  backgroundColor: MODEL_VIEWER_BACKGROUND_COLOR,
                   display: "block",
                   height: "100%",
                   inset: 0,

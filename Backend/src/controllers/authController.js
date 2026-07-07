@@ -1,6 +1,14 @@
 import bcrypt from "bcrypt";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import { authConfig } from "../config/auth.js";
+import {
+  buildStorageFileUrl,
+  buildUserProfilePhotoObjectKey,
+  getStorageObjectKeyFromFileUrl,
+  getSupabaseS3Client,
+  getSupabaseStorageConfig,
+} from "../config/storage.js";
 import {
   findUserByEmail,
   findActiveUserById,
@@ -8,6 +16,7 @@ import {
   sanitizeUser,
   updateLastLoginAt,
   updateUserPassword,
+  updateUserProfilePhotoUrl,
 } from "../repositories/userRepository.js";
 import {
   consumePasswordResetToken,
@@ -27,6 +36,13 @@ const FAKE_BCRYPT_HASH =
 const PASSWORD_RESET_ACCEPTED_RESPONSE = {
   message: "Si el correo está registrado, enviaremos un enlace de recuperación.",
 };
+
+const PROFILE_PHOTO_ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const PROFILE_PHOTO_MAX_SIZE_BYTES = 50 * 1024 * 1024;
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -229,6 +245,154 @@ export async function changePassword(req, res, next) {
       token,
     });
   } catch (error) {
+    next(error);
+  }
+}
+
+export async function uploadProfilePhoto(req, res, next) {
+  let uploadedStorageKey = null;
+
+  try {
+    const contentType = String(req.headers["content-type"] || "")
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+    const fileBuffer = Buffer.isBuffer(req.body) ? req.body : null;
+
+    if (!PROFILE_PHOTO_ALLOWED_TYPES.has(contentType)) {
+      res.status(400).json({
+        code: "INVALID_PROFILE_PHOTO_TYPE",
+        message: "Sube una imagen JPG, PNG o WEBP.",
+      });
+      return;
+    }
+
+    if (!fileBuffer?.length) {
+      res.status(400).json({
+        code: "PROFILE_PHOTO_REQUIRED",
+        message: "Selecciona una imagen para actualizar tu avatar.",
+      });
+      return;
+    }
+
+    if (fileBuffer.length > PROFILE_PHOTO_MAX_SIZE_BYTES) {
+      res.status(413).json({
+        code: "PROFILE_PHOTO_TOO_LARGE",
+        message: "La imagen no puede superar 50 MB.",
+      });
+      return;
+    }
+
+    const storageConfig = getSupabaseStorageConfig();
+
+    if (!storageConfig.bucket) {
+      throw new Error("SUPABASE_STORAGE_BUCKET is required");
+    }
+
+    const originalName = decodeURIComponent(
+      String(req.headers["x-file-name"] || "avatar")
+        .trim()
+        .replace(/\+/g, "%20"),
+    );
+    const uploadedAt = new Date();
+    const storageKey = buildUserProfilePhotoObjectKey({
+      originalName,
+      uploadedAt,
+      userId: req.user.id,
+    });
+    const fileUrl = buildStorageFileUrl(storageKey);
+    const previousStorageKey = getStorageObjectKeyFromFileUrl(
+      req.user.profilePhotoUrl,
+    );
+    const previousProfilePhotoPrefix = `users/${req.user.id}/profile-photo/`;
+    const s3Client = getSupabaseS3Client();
+
+    await s3Client.send(
+      new PutObjectCommand({
+        Body: fileBuffer,
+        Bucket: storageConfig.bucket,
+        ContentLength: fileBuffer.length,
+        ContentType: contentType,
+        Key: storageKey,
+        Metadata: {
+          belongs_to: "user_profile_photo",
+          uploaded_by: String(req.user.id),
+          uploaded_year: String(uploadedAt.getUTCFullYear()),
+          user_id: String(req.user.id),
+        },
+      }),
+    );
+    uploadedStorageKey = storageKey;
+
+    const user = await updateUserProfilePhotoUrl(req.user.id, fileUrl);
+
+    if (!user) {
+      await s3Client
+        .send(
+          new DeleteObjectCommand({
+            Bucket: storageConfig.bucket,
+            Key: storageKey,
+          }),
+        )
+        .catch(() => {});
+      uploadedStorageKey = null;
+      res.status(404).json({
+        code: "USER_NOT_FOUND",
+        message: "No encontramos un usuario activo para actualizar.",
+      });
+      return;
+    }
+
+    const token = createAuthToken(
+      {
+        email: user.email,
+        role: user.role.code,
+        sub: String(user.id),
+      },
+      {
+        expiresInSeconds: authConfig.tokenExpiresInSeconds,
+        secret: authConfig.tokenSecret,
+      },
+    );
+
+    if (
+      previousStorageKey?.startsWith(previousProfilePhotoPrefix) &&
+      previousStorageKey !== storageKey
+    ) {
+      await s3Client
+        .send(
+          new DeleteObjectCommand({
+            Bucket: storageConfig.bucket,
+            Key: previousStorageKey,
+          }),
+        )
+        .catch(() => {});
+    }
+
+    res.setHeader(
+      "Set-Cookie",
+      buildSessionCookie(token, authConfig.tokenExpiresInSeconds),
+    );
+    res.status(200).json({
+      token,
+      user,
+    });
+    uploadedStorageKey = null;
+  } catch (error) {
+    if (uploadedStorageKey) {
+      try {
+        const storageConfig = getSupabaseStorageConfig();
+        await getSupabaseS3Client().send(
+          new DeleteObjectCommand({
+            Bucket: storageConfig.bucket,
+            Key: uploadedStorageKey,
+          }),
+        );
+      } catch {
+        // Preserve the original failure.
+      }
+    }
+
     next(error);
   }
 }
