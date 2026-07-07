@@ -93,8 +93,8 @@ function SettingsIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
@@ -123,8 +123,8 @@ function ViewIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
@@ -144,8 +144,8 @@ function ExpandIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
@@ -2237,7 +2237,7 @@ export default function Model3DViewerModal({
               onView={hasInteractiveModel ? handleOpenVRViewer : null}
               selectedIndex={2}
               texturePreset={texturePreset}
-              className="absolute bottom-[12px] right-[12px] z-20 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[12px]"
+              className="absolute bottom-[12px] right-[12px] z-20 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[16px]"
             />
           ) : null}
         </div>
