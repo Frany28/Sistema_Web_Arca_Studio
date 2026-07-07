@@ -417,7 +417,7 @@ export function Model3DViewerControls({
 
   if (canShowSettings) {
     return (
-      <div ref={settingsMenuRef} className={clsx("relative", className)}>
+      <div ref={settingsMenuRef} className={className}>
         {isSettingsMenuOpen ? (
           <div className="absolute bottom-full right-0 z-30 mb-[8px]">
             <Tooltip
