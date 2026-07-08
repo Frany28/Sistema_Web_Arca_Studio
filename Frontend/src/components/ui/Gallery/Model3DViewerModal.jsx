@@ -610,6 +610,12 @@ const MODEL_LOAD_TIMEOUT_MS = 45000;
 const MODEL_VIEWER_BACKGROUND =
   "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)";
 const MODEL_VIEWER_BACKGROUND_COLOR = "#171717";
+export const MODEL_3D_CAMERA_CONTROLS = {
+  interpolationDecay: "260",
+  orbitSensitivity: "0.68",
+  panSensitivity: "0.72",
+  zoomSensitivity: "0.24",
+};
 export const MODEL_3D_NAVIGATION_MODES = {
   orbit: {
     id: "orbit",
@@ -2133,8 +2139,8 @@ export default function Model3DViewerModal({
                 camera-controls
                 auto-rotate-delay="0"
                 camera-orbit={activeNavigationMode.cameraOrbit}
-                min-camera-orbit="auto 6deg 6%"
-                max-camera-orbit="auto 88deg 650%"
+                min-camera-orbit="auto 8deg 8%"
+                max-camera-orbit="auto 88deg 520%"
                 field-of-view={activeNavigationMode.fieldOfView}
                 min-field-of-view="10deg"
                 max-field-of-view="70deg"
@@ -2143,11 +2149,14 @@ export default function Model3DViewerModal({
                 shadow-softness={activeTexturePreset.shadowSoftness}
                 exposure={activeTexturePreset.exposure}
                 tone-mapping={activeTexturePreset.toneMapping}
-                interpolation-decay="120"
+                interpolation-decay={MODEL_3D_CAMERA_CONTROLS.interpolationDecay}
+                orbit-sensitivity={MODEL_3D_CAMERA_CONTROLS.orbitSensitivity}
+                pan-sensitivity={MODEL_3D_CAMERA_CONTROLS.panSensitivity}
+                zoom-sensitivity={MODEL_3D_CAMERA_CONTROLS.zoomSensitivity}
                 interaction-prompt={activeNavigationMode.interactionPrompt}
                 loading="eager"
                 reveal="auto"
-                touch-action="pan-y"
+                touch-action="none"
                 onPointerDown={handleModelPointerDown}
                 onPointerUp={handleModelPointerUp}
                 onPointerCancel={() => {
