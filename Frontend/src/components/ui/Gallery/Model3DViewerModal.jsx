@@ -611,10 +611,10 @@ const MODEL_VIEWER_BACKGROUND =
   "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)";
 const MODEL_VIEWER_BACKGROUND_COLOR = "#171717";
 export const MODEL_3D_CAMERA_CONTROLS = {
-  interpolationDecay: "260",
-  orbitSensitivity: "0.68",
+  interpolationDecay: "300",
+  orbitSensitivity: "0.62",
   panSensitivity: "0.72",
-  zoomSensitivity: "0.24",
+  zoomSensitivity: "0.16",
 };
 export const MODEL_3D_NAVIGATION_MODES = {
   orbit: {
@@ -1210,7 +1210,7 @@ function getModelViewerDimensionRadius(modelViewer) {
   const maxDimension = Math.max(...values);
   const minDimension = Math.min(...values);
 
-  return Math.max(maxDimension * 0.16, minDimension * 1.35, 0.5);
+  return Math.max(maxDimension * 0.08, minDimension * 0.8, 0.25);
 }
 
 function formatModelViewerNormal(vector) {
@@ -2139,10 +2139,10 @@ export default function Model3DViewerModal({
                 camera-controls
                 auto-rotate-delay="0"
                 camera-orbit={activeNavigationMode.cameraOrbit}
-                min-camera-orbit="auto 8deg 8%"
+                min-camera-orbit="auto 4deg 1.5%"
                 max-camera-orbit="auto 88deg 520%"
                 field-of-view={activeNavigationMode.fieldOfView}
-                min-field-of-view="10deg"
+                min-field-of-view="8deg"
                 max-field-of-view="70deg"
                 environment-image={activeTexturePreset.environmentImage}
                 shadow-intensity={activeTexturePreset.shadowIntensity}

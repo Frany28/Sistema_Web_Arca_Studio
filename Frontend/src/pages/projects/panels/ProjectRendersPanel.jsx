@@ -258,10 +258,10 @@ function RenderStage({
               camera-controls
               auto-rotate-delay="0"
               camera-orbit={activeNavigationMode.cameraOrbit}
-              min-camera-orbit="auto 8deg 8%"
+              min-camera-orbit="auto 4deg 1.5%"
               max-camera-orbit="auto 88deg 520%"
               field-of-view={activeNavigationMode.fieldOfView}
-              min-field-of-view="10deg"
+              min-field-of-view="8deg"
               max-field-of-view="70deg"
               environment-image={activeTexturePreset.environmentImage}
               shadow-intensity={activeTexturePreset.shadowIntensity}
