@@ -20,6 +20,7 @@ import Model3DViewerModal, {
   MODEL_3D_NAVIGATION_MODES,
   MODEL_3D_TEXTURE_PRESETS,
   Model3DViewerControls,
+  useSketchfabLikeModelWheel,
 } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
@@ -197,6 +198,8 @@ function RenderStage({
     setNavigationMode("orbit");
     setTexturePreset("standard");
   }, [modelSrc]);
+
+  useSketchfabLikeModelWheel(modelViewerRef, hasInteractiveModel && !isLoading);
 
   useEffect(() => {
     const modelViewer = modelViewerRef.current;
