@@ -195,17 +195,30 @@ function Login() {
               </Button>
             </div>
 
-            <div className="flex w-full justify-center">
+            <div className="flex w-full flex-col items-center gap-[4px]">
               <Button
                 theme="Primary"
-                type="Link"
+                type="Ghost"
                 size="M"
-                fitContent
+                fitContent={false}
                 showLeftIcon={false}
                 showRightIcon={false}
+                className="h-[41px] w-full !bg-transparent !text-[var(--color-text-300)] hover:!bg-transparent hover:!text-[var(--color-text-50)]"
                 onClick={() => navigate("/recuperar-cuenta")}
               >
                 Olvidé mi contraseña
+              </Button>
+              <Button
+                theme="Primary"
+                type="Ghost"
+                size="M"
+                fitContent={false}
+                showLeftIcon={false}
+                showRightIcon={false}
+                className="h-[41px] w-full !bg-transparent !text-[var(--color-text-300)] hover:!bg-transparent hover:!text-[var(--color-text-50)]"
+                onClick={() => navigate("/crear-cuenta")}
+              >
+                Registrarse
               </Button>
             </div>
           </form>

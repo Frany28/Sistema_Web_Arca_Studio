@@ -1,11 +1,15 @@
-import { Router } from "express";
+import express, { Router } from "express";
 
 import {
   getProjectDetail,
   getMyProjects,
   updateProjectPublication,
 } from "../controllers/projectController.js";
-import { streamProjectFile } from "../controllers/fileController.js";
+import {
+  deleteProjectAttachment,
+  streamProjectFile,
+  uploadProjectAttachment,
+} from "../controllers/fileController.js";
 import {
   createProjectComment,
   getProjectComments,
@@ -14,6 +18,7 @@ import {
 import { requireAuth, requirePermissions } from "../middlewares/auth.js";
 
 const router = Router();
+const fileUploadLimit = process.env.FILE_UPLOAD_LIMIT || "50mb";
 
 router.get("/", requireAuth, requirePermissions("projects.read"), getMyProjects);
 router.get(
@@ -25,6 +30,22 @@ router.get(
 router.get("/:projectId/comments", requireAuth, getProjectComments);
 router.get("/:projectId/events", requireAuth, streamProjectCommentEvents);
 router.post("/:projectId/comments", requireAuth, createProjectComment);
+router.post(
+  "/:projectId/files",
+  requireAuth,
+  requirePermissions("projects.files.upload"),
+  express.raw({
+    limit: fileUploadLimit,
+    type: "*/*",
+  }),
+  uploadProjectAttachment,
+);
+router.delete(
+  "/:projectId/files/:fileId",
+  requireAuth,
+  requirePermissions("projects.files.delete"),
+  deleteProjectAttachment,
+);
 router.get(
   "/:projectId/files/:fileId/content",
   requireAuth,

@@ -1,5 +1,6 @@
 export { default as ArchitectDashboard } from "./architect-dashboard/ArchitectDashboard.jsx";
 export { default as NewArchitectProjectPage } from "./architect-dashboard/NewArchitectProjectPage.jsx";
+export { default as CreateAccount } from "./CreateAccount.jsx";
 export { default as EmptyArchitectDashboardExample } from "./EmptyArchitectDashboardExample.jsx";
 export { default as EmptyProjectsExample } from "./EmptyProjectsExample.jsx";
 export { default as EmptyProjectDocumentsExample } from "./EmptyProjectDocumentsExample.jsx";

@@ -630,6 +630,22 @@ export default function ProjectDetailsPage({
     setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  const refreshProjectFiles = useCallback(async () => {
+    if (!resolvedProjectId) {
+      return;
+    }
+
+    try {
+      const data = await api.projects.getById({ projectId: resolvedProjectId });
+      if (data.project?.fileAccessToken) {
+        setAuthToken(data.project.fileAccessToken);
+      }
+      setProject(data.project || null);
+    } catch {
+      // Keep the current project visible if a background refresh fails.
+    }
+  }, [resolvedProjectId]);
+
   const handleSubmitComment = async ({ message, parentCommentId = null }) => {
     if (!resolvedProjectId) {
       setProjectCommentsError("No se encontro el proyecto para comentar.");
@@ -686,7 +702,12 @@ export default function ProjectDetailsPage({
   } else if (activeProjectTabIndex === 4) {
     activeProjectPanel = <ProjectWarrantiesPanel {...warrantiesProps} />;
   } else if (activeProjectTabIndex === 5) {
-    activeProjectPanel = <ProjectUploadFilesPanel />;
+    activeProjectPanel = (
+      <ProjectUploadFilesPanel
+        projectId={resolvedProjectId}
+        onFilesChanged={refreshProjectFiles}
+      />
+    );
   }
 
   return (

@@ -352,6 +352,312 @@ export async function deleteProjectRequestFile({
   return { deleted: true, fileId: Number(fileId) };
 }
 
+export async function findProjectForFileUpload(projectId, user) {
+  const result = await query(
+    `
+      select id, client_id, assigned_architect_id, is_public, status
+      from public.projects
+      where id = $1
+        and deleted_at is null
+      limit 1
+    `,
+    [projectId],
+  );
+  const project = result.rows[0];
+
+  if (!project) {
+    return null;
+  }
+
+  const roleCode = user?.role?.code;
+  const hasAccess =
+    roleCode === "admin" ||
+    (roleCode === "architect" &&
+      (Number(project.assigned_architect_id) === Number(user.id) ||
+        project.is_public === true)) ||
+    (roleCode === "client" &&
+      user.clientId &&
+      Number(project.client_id) === Number(user.clientId));
+
+  return hasAccess ? project : null;
+}
+
+export async function findExistingProjectFile({
+  originalName,
+  projectId,
+}) {
+  const result = await query(
+    `
+      select id, title
+      from public.files
+      where project_id = $1
+        and deleted_at is null
+        and status <> 'deleted'
+        and lower(title) = lower($2)
+      limit 1
+    `,
+    [projectId, String(originalName || "").trim()],
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function uploadProjectFile({
+  buffer,
+  contentType,
+  originalName,
+  projectId,
+  size,
+  user,
+}) {
+  const storageConfig = getSupabaseStorageConfig();
+
+  if (!storageConfig.bucket) {
+    throw new Error("SUPABASE_STORAGE_BUCKET is required");
+  }
+
+  const s3Client = getSupabaseS3Client();
+  const uploadedAt = new Date();
+  const versionNumber = 1;
+  const safeOriginalName = String(originalName || "archivo").trim();
+  const fileType = getFileType(contentType, safeOriginalName);
+  const fileExtension = getFileExtension(safeOriginalName);
+  const existingFile = await findExistingProjectFile({
+    originalName: safeOriginalName,
+    projectId,
+  });
+
+  if (existingFile) {
+    const error = new Error("Duplicate project file");
+    error.code = "DUPLICATE_PROJECT_FILE";
+    throw error;
+  }
+
+  const client = await pool.connect();
+  let uploadedStorageKey = null;
+
+  try {
+    await client.query("begin");
+
+    const fileResult = await client.query(
+      `
+        insert into public.files (
+          project_id,
+          uploaded_by,
+          title,
+          file_type,
+          current_version,
+          status
+        )
+        values ($1, $2, $3, $4, $5, $6::file_status)
+        returning id, project_id, project_request_id, uploaded_by, file_type, current_version
+      `,
+      [projectId, user.id, safeOriginalName, fileType, versionNumber, DEFAULT_FILE_STATUS],
+    );
+    const file = fileResult.rows[0];
+    const storageKey = buildStorageObjectKey({
+      belongsTo: "projects",
+      fileId: file.id,
+      originalName: safeOriginalName,
+      ownerId: user.id,
+      parentId: projectId,
+      uploadedAt,
+      versionNumber,
+    });
+    const fileUrl = buildStorageFileUrl(storageKey);
+    uploadedStorageKey = storageKey;
+
+    await s3Client.send(
+      new PutObjectCommand({
+        Body: buffer,
+        Bucket: storageConfig.bucket,
+        ContentLength: size,
+        ContentType: fileType,
+        Key: storageKey,
+        Metadata: {
+          belongs_to: "project",
+          file_id: String(file.id),
+          project_id: String(projectId),
+          uploaded_by: String(user.id),
+          uploaded_year: String(uploadedAt.getUTCFullYear()),
+        },
+      }),
+    );
+
+    const versionResult = await client.query(
+      `
+        insert into public.file_versions (
+          file_id,
+          uploaded_by,
+          version_number,
+          file_name,
+          original_name,
+          file_url,
+          file_extension,
+          file_size,
+          is_current
+        )
+        values ($1, $2, $3, $4, $5, $6, $7, $8, true)
+        returning id, version_number, file_name, original_name, file_url, file_size, created_at
+      `,
+      [
+        file.id,
+        user.id,
+        versionNumber,
+        storageKey,
+        sanitizeStorageFileName(safeOriginalName),
+        fileUrl,
+        fileExtension,
+        size,
+      ],
+    );
+
+    await client.query("commit");
+
+    const version = versionResult.rows[0];
+
+    return {
+      ...toFileUpload({
+        ...file,
+        file_name: version.file_name,
+        file_size: version.file_size,
+        file_url: version.file_url,
+        original_name: version.original_name,
+        version_id: version.id,
+        version_number: version.version_number,
+      }),
+      createdAt: version.created_at,
+      extension: fileExtension,
+      title: safeOriginalName,
+    };
+  } catch (error) {
+    await client.query("rollback");
+
+    if (uploadedStorageKey) {
+      await s3Client
+        .send(
+          new DeleteObjectCommand({
+            Bucket: storageConfig.bucket,
+            Key: uploadedStorageKey,
+          }),
+        )
+        .catch(() => {});
+    }
+
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteProjectFile({ fileId, projectId, user }) {
+  const storageConfig = getSupabaseStorageConfig();
+  const s3Client = getSupabaseS3Client();
+  const client = await pool.connect();
+  let storageKeys = [];
+
+  try {
+    await client.query("begin");
+
+    const fileResult = await client.query(
+      `
+        select f.id, f.uploaded_by, f.project_id, p.client_id, p.assigned_architect_id, p.is_public
+        from public.files f
+        inner join public.projects p
+          on p.id = f.project_id
+        where f.id = $1
+          and f.project_id = $2
+          and f.deleted_at is null
+          and f.status <> 'deleted'
+          and p.deleted_at is null
+        limit 1
+      `,
+      [fileId, projectId],
+    );
+    const file = fileResult.rows[0];
+
+    if (!file) {
+      await client.query("rollback");
+      return null;
+    }
+
+    const roleCode = user?.role?.code;
+    const hasProjectAccess =
+      roleCode === "admin" ||
+      (roleCode === "architect" &&
+        (Number(file.assigned_architect_id) === Number(user.id) ||
+          file.is_public === true)) ||
+      (roleCode === "client" &&
+        user.clientId &&
+        Number(file.client_id) === Number(user.clientId));
+    const canDelete =
+      roleCode === "admin" || Number(file.uploaded_by) === Number(user.id);
+
+    if (!hasProjectAccess || !canDelete) {
+      await client.query("rollback");
+      return null;
+    }
+
+    const versionsResult = await client.query(
+      `
+        select file_name
+        from public.file_versions
+        where file_id = $1
+          and deleted_at is null
+      `,
+      [fileId],
+    );
+    storageKeys = versionsResult.rows
+      .map((row) => row.file_name)
+      .filter(Boolean);
+
+    await client.query(
+      `
+        update public.file_versions
+        set deleted_at = now()
+        where file_id = $1
+          and deleted_at is null
+      `,
+      [fileId],
+    );
+
+    await client.query(
+      `
+        update public.files
+        set status = 'deleted'::file_status,
+            deleted_at = now(),
+            updated_at = now()
+        where id = $1
+      `,
+      [fileId],
+    );
+
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  if (storageConfig.bucket) {
+    await Promise.all(
+      storageKeys.map((storageKey) =>
+        s3Client
+          .send(
+            new DeleteObjectCommand({
+              Bucket: storageConfig.bucket,
+              Key: storageKey,
+            }),
+          )
+          .catch(() => {}),
+      ),
+    );
+  }
+
+  return { deleted: true, fileId: Number(fileId) };
+}
+
 export async function findProjectFileForDownload({ fileId, projectId, user }) {
   const params = [projectId, fileId];
   const roleCode = user?.role?.code;

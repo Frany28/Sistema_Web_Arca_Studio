@@ -10,6 +10,7 @@ import ThemeSync from "./components/ui/ThemeSync.jsx";
 const ArchitectDashboard = lazy(
   () => import("./pages/architect-dashboard/ArchitectDashboard.jsx"),
 );
+const CreateAccount = lazy(() => import("./pages/CreateAccount.jsx"));
 const EmptyArchitectDashboardExample = lazy(
   () => import("./pages/EmptyArchitectDashboardExample.jsx"),
 );
@@ -55,6 +56,7 @@ createRoot(document.getElementById("root")).render(
           <Routes>
             <Route element={<PublicOnlyRoute />}>
               <Route path="/" element={<Login />} />
+              <Route path="/crear-cuenta" element={<CreateAccount />} />
             </Route>
 
             <Route path="/cuenta-inactiva" element={<InactiveAccount />} />

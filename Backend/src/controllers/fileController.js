@@ -1,8 +1,11 @@
 import {
+  deleteProjectFile,
   deleteProjectRequestFile,
+  findProjectForFileUpload,
   findProjectRequestForFileUpload,
   findProjectFileForDownload,
   getProjectFileObject,
+  uploadProjectFile,
   uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
 
@@ -177,6 +180,133 @@ export async function deleteProjectRequestAttachment(req, res, next) {
       res.status(404).json({
         code: "FILE_NOT_FOUND",
         message: "No se encontro el archivo en esta solicitud.",
+      });
+      return;
+    }
+
+    res.status(200).json(deletedFile);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function uploadProjectAttachment(req, res, next) {
+  try {
+    const projectId = Number(req.params.projectId);
+
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_ID",
+        message: "El proyecto no es valido.",
+      });
+      return;
+    }
+
+    const project = await findProjectForFileUpload(projectId, req.user);
+
+    if (!project) {
+      res.status(404).json({
+        code: "PROJECT_NOT_FOUND",
+        message: "No se encontro el proyecto.",
+      });
+      return;
+    }
+
+    const buffer = Buffer.isBuffer(req.body) ? req.body : null;
+    const fileSize = buffer?.length || 0;
+    const originalName = getOriginalFileName(req);
+    const extension = getFileExtension(originalName);
+    const contentType = getNormalizedContentType(req.headers["content-type"]);
+
+    if (!buffer || fileSize === 0) {
+      res.status(400).json({
+        code: "FILE_REQUIRED",
+        message: "Selecciona un archivo para subir.",
+      });
+      return;
+    }
+
+    if (!originalName || originalName.length > MAX_FILE_NAME_LENGTH) {
+      res.status(400).json({
+        code: "INVALID_FILE_NAME",
+        message: `El nombre del archivo no puede superar ${MAX_FILE_NAME_LENGTH} caracteres.`,
+      });
+      return;
+    }
+
+    if (fileSize > MAX_FILE_SIZE_BYTES) {
+      res.status(413).json({
+        code: "FILE_TOO_LARGE",
+        message: "El archivo supera el tamano permitido de 50 MB.",
+      });
+      return;
+    }
+
+    if (
+      !ALLOWED_FILE_EXTENSIONS.has(extension) ||
+      !ALLOWED_FILE_TYPES.has(contentType)
+    ) {
+      res.status(415).json({
+        code: "UNSUPPORTED_FILE_TYPE",
+        message: "Solo se permiten archivos JPEG, PNG, PDF y MP4.",
+      });
+      return;
+    }
+
+    const file = await uploadProjectFile({
+      buffer,
+      contentType,
+      originalName,
+      projectId,
+      size: fileSize,
+      user: req.user,
+    });
+
+    res.status(201).json({ file });
+  } catch (error) {
+    if (error.code === "DUPLICATE_PROJECT_FILE" || error.code === "23505") {
+      res.status(409).json({
+        code: "DUPLICATE_PROJECT_FILE",
+        message: "Ese archivo ya existe en este proyecto.",
+      });
+      return;
+    }
+
+    next(error);
+  }
+}
+
+export async function deleteProjectAttachment(req, res, next) {
+  try {
+    const projectId = Number(req.params.projectId);
+    const fileId = Number(req.params.fileId);
+
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      res.status(400).json({
+        code: "INVALID_PROJECT_ID",
+        message: "El proyecto no es valido.",
+      });
+      return;
+    }
+
+    if (!Number.isInteger(fileId) || fileId <= 0) {
+      res.status(400).json({
+        code: "INVALID_FILE_ID",
+        message: "El archivo no es valido.",
+      });
+      return;
+    }
+
+    const deletedFile = await deleteProjectFile({
+      fileId,
+      projectId,
+      user: req.user,
+    });
+
+    if (!deletedFile) {
+      res.status(404).json({
+        code: "FILE_NOT_FOUND",
+        message: "No se encontro el archivo en este proyecto.",
       });
       return;
     }

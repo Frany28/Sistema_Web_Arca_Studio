@@ -3,8 +3,18 @@ import { findActiveUserById } from "../repositories/userRepository.js";
 import { parseCookies } from "../utils/cookies.js";
 import { verifyAuthToken } from "../utils/tokens.js";
 
-// Temporary testing switch: set to false to restore API auth requirements.
-const ROUTE_AUTH_DISABLED_FOR_TESTS = true;
+function parseBoolean(value, fallback = false) {
+  if (value === undefined || value === "") {
+    return fallback;
+  }
+
+  return String(value).trim().toLowerCase() === "true";
+}
+
+const ROUTE_AUTH_DISABLED_FOR_TESTS = parseBoolean(
+  process.env.ROUTE_AUTH_DISABLED_FOR_TESTS,
+  false,
+);
 
 function getPublicTestUser() {
   const id = Number(process.env.PUBLIC_TEST_USER_ID || 1);

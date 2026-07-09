@@ -10,6 +10,7 @@ import geoapifyRoutes from "./routes/geoapify.js";
 import projectRequestRoutes from "./routes/projectRequests.js";
 import projectRoutes from "./routes/projects.js";
 import routes from "./routes/index.js";
+import supportRoutes from "./routes/support.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/geoapify", geoapifyRoutes);
 app.use("/api/project-requests", projectRequestRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/support", supportRoutes);
 app.use("/api", routes);
 
 app.use("/api", (req, res) => {

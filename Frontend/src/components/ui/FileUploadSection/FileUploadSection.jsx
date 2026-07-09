@@ -4,6 +4,7 @@ import * as IconsaxIcons from "iconsax-react";
 import Button from "../Button/Button.jsx";
 import FileAttachmentIcons from "../FileAttachmentIcons.jsx";
 import ScrollBar from "../ScrollBar.jsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
   FILE_UPLOAD_SECTION_DEFAULT_FILES,
   FILE_UPLOAD_SECTION_DEFAULT_PROPS,
@@ -45,6 +46,26 @@ function TrashIcon() {
   );
 }
 
+function MoreIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="size-5"
+      aria-hidden="true"
+    >
+      <path
+        d="M4.167 10H4.176M10 10H10.009M15.833 10H15.842"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function FileUploadProgress({ progress, showValue = true, isUploading = false }) {
   const resolvedProgress = Math.min(Math.max(progress ?? 0, 0), 100);
 
@@ -69,7 +90,7 @@ function FileUploadProgress({ progress, showValue = true, isUploading = false })
   );
 }
 
-function FileUploadCard({ file, onRetryUpload }) {
+function FileUploadCard({ file, onAddFile, onRetryUpload }) {
   const isCompleted = file.status === "completed";
   const isUploading = file.status === "uploading";
   const isFailed = file.status === "failed";
@@ -80,7 +101,7 @@ function FileUploadCard({ file, onRetryUpload }) {
       className={clsx(
         "flex w-full items-start gap-[12px] rounded-[12px] border bg-[var(--color-neutral-100)] p-[16px] transition-colors duration-200",
         isFailed
-          ? "border-[var(--color-danger-100)]"
+          ? "border-[var(--color-danger-200)]"
           : "border-[var(--color-neutral-200)] dark:border-[var(--color-neutral-300)]",
       )}
     >
@@ -145,7 +166,22 @@ function FileUploadCard({ file, onRetryUpload }) {
         )}
       </div>
 
-      {!isFailed && file.onRemove ? (
+      {isCompleted ? (
+        <Tooltip text="Añadir" tipPosition="Top center" showTip>
+          <Button
+            theme="Primary"
+            type="Ghost"
+            size="S"
+            showText={false}
+            showLeftIcon
+            showRightIcon={false}
+            iconLeft={<MoreIcon />}
+            className="shrink-0"
+            aria-label="Añadir archivo"
+            onClick={onAddFile}
+          />
+        </Tooltip>
+      ) : !isFailed && file.onRemove ? (
         <Button
           theme="Primary"
           type="Ghost"
@@ -255,6 +291,10 @@ function FileUploadSection({
     element.scrollTop = maxScrollTop * nextPosition;
   }, []);
 
+  const handleChooseFiles = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   return (
     <section
       className={clsx(
@@ -321,7 +361,7 @@ function FileUploadSection({
                 fitContent
                 showLeftIcon={false}
                 showRightIcon={false}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleChooseFiles}
               >
                 {chooseFileLabel}
               </Button>
@@ -368,6 +408,7 @@ function FileUploadSection({
               <FileUploadCard
                 key={file.id}
                 file={file}
+                onAddFile={handleChooseFiles}
                 onRetryUpload={onRetryUpload}
               />
             ))}

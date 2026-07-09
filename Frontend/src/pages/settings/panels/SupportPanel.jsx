@@ -1,3 +1,6 @@
+import { useEffect, useRef, useState } from "react";
+
+import { api } from "../../../api/http.js";
 import Button from "../../../components/ui/Button/Button.jsx";
 import DropdownMenu from "../../../components/ui/DropdownMenu/DropdownMenu.jsx";
 import FileUploadSection from "../../../components/ui/FileUploadSection/FileUploadSection.jsx";
@@ -5,6 +8,53 @@ import HintText from "../../../components/ui/HintText/HintText.jsx";
 import Input from "../../../components/ui/Input/Input.jsx";
 import TextArea from "../../../components/ui/TextArea/TextArea.jsx";
 import { InfoCircleIcon } from "../settingsIcons.jsx";
+
+const ALLOWED_FILE_EXTENSIONS = new Set(["jpeg", "jpg", "mp4", "pdf", "png"]);
+const ALLOWED_FILE_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "video/mp4",
+]);
+const MAX_FILE_NAME_LENGTH = 150;
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+
+function getFileExtension(fileName) {
+  const normalized = String(fileName || "").trim().toLowerCase();
+  const lastDotIndex = normalized.lastIndexOf(".");
+
+  if (lastDotIndex <= 0 || lastDotIndex === normalized.length - 1) {
+    return "";
+  }
+
+  return normalized.slice(lastDotIndex + 1);
+}
+
+function formatFileSize(size) {
+  const bytes = Number(size) || 0;
+
+  return bytes >= 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(1)}MB`
+    : `${Math.max(Math.ceil(bytes / 1024), bytes > 0 ? 1 : 0)}KB`;
+}
+
+function getFileError(file) {
+  const extension = getFileExtension(file.name);
+
+  if (!file.name || file.name.length > MAX_FILE_NAME_LENGTH) {
+    return `El nombre del archivo no puede superar ${MAX_FILE_NAME_LENGTH} caracteres`;
+  }
+
+  if (!ALLOWED_FILE_EXTENSIONS.has(extension) || !ALLOWED_FILE_TYPES.has(file.type)) {
+    return "Solo se permiten archivos JPEG, PNG, PDF y MP4";
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return "El archivo supera el tamano permitido de 50 MB";
+  }
+
+  return "";
+}
 
 export default function SupportPanel({
   supportIssueType,
@@ -17,6 +67,17 @@ export default function SupportPanel({
   setSupportDescription,
   onSubmit,
 }) {
+  const [supportFile, setSupportFile] = useState(null);
+  const [supportError, setSupportError] = useState("");
+  const [supportRequestId, setSupportRequestId] = useState(null);
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+  const uploadControllerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      uploadControllerRef.current?.abort();
+    };
+  }, []);
   const supportIssueItems = [
     {
       id: "platform-error",
@@ -51,6 +112,157 @@ export default function SupportPanel({
   ];
   const selectedSupportIssue =
     supportIssueItems.find((item) => item.id === supportIssueType) ?? null;
+  const updateSupportFile = (nextValues) => {
+    setSupportFile((current) => (current ? { ...current, ...nextValues } : current));
+  };
+  const uploadSupportFile = async (fileItem, nextSupportRequestId) => {
+    if (!fileItem?.file || !nextSupportRequestId || fileItem.canUpload === false) {
+      return;
+    }
+
+    const controller = new AbortController();
+    uploadControllerRef.current = controller;
+    updateSupportFile({
+      errorMessage: "",
+      loadedBytes: 0,
+      progress: 0,
+      status: "uploading",
+    });
+
+    try {
+      const uploadResult = await api.support.uploadFile({
+        file: fileItem.file,
+        onUploadProgress: ({ loaded, progress, total }) => {
+          updateSupportFile({
+            loadedBytes: loaded,
+            progress,
+            totalBytes: total,
+          });
+        },
+        signal: controller.signal,
+        supportRequestId: nextSupportRequestId,
+      });
+
+      uploadControllerRef.current = null;
+      updateSupportFile({
+        loadedBytes: fileItem.file?.size || fileItem.totalBytes || 0,
+        progress: 100,
+        status: "completed",
+        uploadResult,
+      });
+    } catch (error) {
+      uploadControllerRef.current = null;
+      if (error.code === "UPLOAD_ABORTED") {
+        return;
+      }
+
+      updateSupportFile({
+        canUpload: true,
+        errorMessage: error.message || "No se pudo subir el archivo",
+        progress: 0,
+        status: "failed",
+      });
+      throw error;
+    }
+  };
+
+  const handleFilesSelected = (fileList) => {
+    const file = Array.from(fileList || [])[0];
+
+    if (!file) {
+      return;
+    }
+
+    const errorMessage = getFileError(file);
+
+    setSupportError("");
+    setSupportFile({
+      canUpload: !errorMessage,
+      errorMessage,
+      file,
+      id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+      loadedBytes: 0,
+      progress: 0,
+      status: errorMessage ? "failed" : "pending",
+      totalBytes: file.size || 0,
+      uploadResult: null,
+    });
+  };
+
+  const handleFileRemove = () => {
+    uploadControllerRef.current?.abort();
+    uploadControllerRef.current = null;
+    setSupportFile(null);
+    setSupportError("");
+  };
+
+  const handleSupportSubmit = async () => {
+    const normalizedSubject = String(supportSubject || "").trim();
+    const normalizedDescription = String(supportDescription || "").trim();
+
+    if (!supportIssueType || !normalizedSubject || !normalizedDescription) {
+      setSupportError("Completa el tipo de problema, asunto y descripcion.");
+      return;
+    }
+
+    if (supportFile?.canUpload === false) {
+      setSupportError("Elimina el archivo con errores antes de enviar.");
+      return;
+    }
+
+    setIsSubmittingSupport(true);
+    setSupportError("");
+
+    try {
+      let nextSupportRequestId = supportRequestId;
+
+      if (!nextSupportRequestId) {
+        const data = await api.support.createRequest({
+          description: normalizedDescription,
+          issueType: supportIssueType,
+          subject: normalizedSubject,
+        });
+        nextSupportRequestId = data.supportRequest?.id;
+        setSupportRequestId(nextSupportRequestId);
+      }
+
+      if (supportFile && supportFile.status !== "completed") {
+        await uploadSupportFile(supportFile, nextSupportRequestId);
+      }
+
+      setSupportFile(null);
+      setSupportRequestId(null);
+      setSupportIssueType(null);
+      setSupportSubject("");
+      setSupportDescription("");
+      onSubmit?.();
+    } catch (error) {
+      setSupportError(error.message || "No se pudo enviar la solicitud.");
+    } finally {
+      setIsSubmittingSupport(false);
+    }
+  };
+
+  const visibleSupportFiles = supportFile
+    ? [
+        {
+          currentSizeLabel: formatFileSize(
+            supportFile.status === "completed"
+              ? supportFile.totalBytes
+              : supportFile.loadedBytes,
+          ),
+          errorMessage: supportFile.errorMessage,
+          id: supportFile.id,
+          name: supportFile.file?.name || "Archivo",
+          onRemove: handleFileRemove,
+          onRetryUpload: handleSupportSubmit,
+          progress: supportFile.progress || 0,
+          status: supportFile.status || "pending",
+          totalSizeLabel: formatFileSize(supportFile.totalBytes),
+          type: supportFile.file?.type || "Archivo",
+        },
+      ]
+    : [];
 
   return (
     <div className="flex flex-1 flex-col items-center gap-4">
@@ -152,10 +364,14 @@ export default function SupportPanel({
               separatorLabel="O"
               dropLabel="Arrastra y suelta"
               formatsLabel="Formatos JPEG, PNG, PDF y MP4, hasta 50 MB."
-              files={[]}
-              showUploadedFiles={false}
+              files={visibleSupportFiles}
+              showUploadedFiles={visibleSupportFiles.length > 0}
               viewportHeight={null}
+              onFilesSelected={handleFilesSelected}
             />
+            {supportError ? (
+              <HintText state="Error" hintText={supportError} className="mt-[8px] w-full" />
+            ) : null}
           </div>
         </div>
 
@@ -169,9 +385,10 @@ export default function SupportPanel({
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
-            onClick={onSubmit}
+            disabled={isSubmittingSupport}
+            onClick={handleSupportSubmit}
           >
-            Enviar solicitud
+            {isSubmittingSupport ? "Enviando..." : "Enviar solicitud"}
           </Button>
         </div>
       </div>
