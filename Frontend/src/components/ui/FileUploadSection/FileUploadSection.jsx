@@ -210,6 +210,7 @@ function FileUploadSection({
   showUploadedFiles = FILE_UPLOAD_SECTION_DEFAULT_PROPS.showUploadedFiles,
   viewportHeight = FILE_UPLOAD_SECTION_DEFAULT_PROPS.viewportHeight,
   fileListViewportHeight = null,
+  fileInputAccept,
   onRetryUpload,
   onFilesSelected,
   "aria-label": ariaLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS["aria-label"],
@@ -369,6 +370,7 @@ function FileUploadSection({
                 ref={fileInputRef}
                 type="file"
                 multiple
+                accept={fileInputAccept}
                 className="sr-only"
                 onChange={(event) => {
                   onFilesSelected?.(event.target.files);

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import clsx from "clsx";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/ui/Modal/Modal.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import FileUploadSection from "../../../components/ui/FileUploadSection/FileUploadSection.jsx";
 
 function CloseIcon({ className }) {
   return (
@@ -28,57 +28,18 @@ function CloseIcon({ className }) {
   );
 }
 
-function CloudPlusIcon({ className }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M7.50004 16.6663H12.5C16.6667 16.6663 18.3334 14.9997 18.3334 10.833C18.3334 7.04967 16.9584 5.35801 13.75 5.04967C12.9584 2.65801 11.0417 1.66634 8.33337 1.66634C4.90837 1.66634 3.33337 3.24134 3.33337 6.66634C3.33337 6.94967 3.35004 7.22467 3.3917 7.49134C1.38337 8.44134 0.833374 10.033 0.833374 12.083C0.833374 15.4163 2.50004 16.6663 5.83337 16.6663"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 8.33301V13.333"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8.33337 10H11.6667"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function AvatarUploadModal({
   isSubmitting = false,
   open,
   onClose,
   onConfirm,
 }) {
-  const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [isDragActive, setIsDragActive] = useState(false);
 
   useEffect(() => {
     if (!open) {
       const frameId = window.requestAnimationFrame(() => {
         setSelectedFile(null);
-        setPreviewUrl("");
-        setIsDragActive(false);
       });
 
       return () => window.cancelAnimationFrame(frameId);
@@ -105,26 +66,6 @@ function AvatarUploadModal({
     };
   }, [isSubmitting, onClose, open]);
 
-  useEffect(() => {
-    if (!selectedFile || !selectedFile.type.startsWith("image/")) {
-      const frameId = window.requestAnimationFrame(() => {
-        setPreviewUrl("");
-      });
-
-      return () => window.cancelAnimationFrame(frameId);
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile);
-    const frameId = window.requestAnimationFrame(() => {
-      setPreviewUrl(objectUrl);
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [selectedFile]);
-
   const selectedFileLabel = useMemo(() => {
     if (!selectedFile) {
       return "Formatos JPEG, PNG, WEBP, hasta 50 MB.";
@@ -135,6 +76,10 @@ function AvatarUploadModal({
   }, [selectedFile]);
 
   const handleFileSelection = (fileList) => {
+    if (isSubmitting) {
+      return;
+    }
+
     const nextFile = fileList?.[0];
 
     if (!nextFile) {
@@ -142,15 +87,6 @@ function AvatarUploadModal({
     }
 
     setSelectedFile(nextFile);
-    setIsDragActive(false);
-  };
-
-  const handleChooseFile = () => {
-    if (isSubmitting) {
-      return;
-    }
-
-    fileInputRef.current?.click();
   };
 
   const handleConfirm = () => {
@@ -188,96 +124,25 @@ function AvatarUploadModal({
             <div className="flex w-full flex-col gap-[4px]">
               <h2
                 id="avatar-upload-modal-title"
-                className="w-full pr-[40px] text-heading-6 text-[var(--color-text-300)]"
+                className="w-full pr-[40px] text-[18px] font-bold leading-[22px] tracking-[-0.5px] text-[var(--color-text-300)]"
               >
                 Avatar
               </h2>
 
               <div className="w-full">
-                <div className="flex w-full flex-col gap-[16px]">
-                  <div
-                    className={clsx(
-                      "flex min-h-[337px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[24px] py-[32px] transition-colors duration-200 hover:border-[var(--color-neutral-600)] dark:hover:border-[var(--color-neutral-600)]",
-                      isDragActive
-                        ? "border-[var(--color-neutral-600)]"
-                        : "border-[var(--color-neutral-200)] dark:border-[var(--color-neutral-300)]",
-                    )}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      if (isSubmitting) {
-                        return;
-                      }
-                      setIsDragActive(true);
-                    }}
-                    onDragLeave={(event) => {
-                      event.preventDefault();
-                      if (event.currentTarget.contains(event.relatedTarget)) {
-                        return;
-                      }
-                      setIsDragActive(false);
-                    }}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      if (isSubmitting) {
-                        return;
-                      }
-                      handleFileSelection(event.dataTransfer.files);
-                    }}
-                  >
-                    <div className="rounded-[8px] border border-[var(--color-neutral-200)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)]">
-                      <div className="flex size-[40px] items-center justify-center rounded-[8px] bg-[var(--color-neutral-100)] p-[8px] text-[var(--color-text-300)]">
-                        <CloudPlusIcon className="size-5" />
-                      </div>
-                    </div>
-
-                    {previewUrl ? (
-                      <img
-                        src={previewUrl}
-                        alt="Vista previa del avatar"
-                        className="h-[96px] w-[96px] rounded-full object-cover"
-                      />
-                    ) : null}
-
-                    <div className="flex w-full flex-col items-center gap-[8px]">
-                      <div className="flex w-full flex-wrap items-center justify-center gap-[8px] text-center">
-                        <Button
-                          theme="Primary"
-                          type="Link"
-                          size="S"
-                          fitContent
-                          showLeftIcon={false}
-                          showRightIcon={false}
-                          disabled={isSubmitting}
-                          onClick={handleChooseFile}
-                        >
-                          Elige un archivo
-                        </Button>
-                        <span className="text-body-3 text-[var(--color-text-100)]">
-                          O
-                        </span>
-                        <span className="text-body-3 text-[var(--color-text-100)]">
-                          Arrastra y suelta
-                        </span>
-                      </div>
-
-                      <p className="w-full text-center text-body-3 text-[var(--color-text-100)]">
-                        {selectedFileLabel}
-                      </p>
-                    </div>
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.webp"
-                      className="sr-only"
-                      disabled={isSubmitting}
-                      onChange={(event) => {
-                        handleFileSelection(event.target.files);
-                        event.target.value = "";
-                      }}
-                    />
-                  </div>
-                </div>
+                <FileUploadSection
+                  className="w-full"
+                  title="Avatar"
+                  chooseFileLabel="Elige un archivo"
+                  separatorLabel="O"
+                  dropLabel="Arrastra y suelta"
+                  formatsLabel={selectedFileLabel}
+                  files={[]}
+                  showUploadedFiles={false}
+                  viewportHeight={null}
+                  fileInputAccept=".jpg,.jpeg,.png,.webp"
+                  onFilesSelected={handleFileSelection}
+                />
               </div>
             </div>
           </div>
