@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import clsx from "clsx";
 import Modal from "../../../components/ui/Modal/Modal.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 
@@ -74,10 +75,16 @@ function AvatarUploadModal({
 
   useEffect(() => {
     if (!open) {
-      setSelectedFile(null);
-      setPreviewUrl("");
-      setIsDragActive(false);
+      const frameId = window.requestAnimationFrame(() => {
+        setSelectedFile(null);
+        setPreviewUrl("");
+        setIsDragActive(false);
+      });
+
+      return () => window.cancelAnimationFrame(frameId);
     }
+
+    return undefined;
   }, [open]);
 
   useEffect(() => {
@@ -100,14 +107,20 @@ function AvatarUploadModal({
 
   useEffect(() => {
     if (!selectedFile || !selectedFile.type.startsWith("image/")) {
-      setPreviewUrl("");
-      return undefined;
+      const frameId = window.requestAnimationFrame(() => {
+        setPreviewUrl("");
+      });
+
+      return () => window.cancelAnimationFrame(frameId);
     }
 
     const objectUrl = URL.createObjectURL(selectedFile);
-    setPreviewUrl(objectUrl);
+    const frameId = window.requestAnimationFrame(() => {
+      setPreviewUrl(objectUrl);
+    });
 
     return () => {
+      window.cancelAnimationFrame(frameId);
       URL.revokeObjectURL(objectUrl);
     };
   }, [selectedFile]);
@@ -130,6 +143,14 @@ function AvatarUploadModal({
 
     setSelectedFile(nextFile);
     setIsDragActive(false);
+  };
+
+  const handleChooseFile = () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    fileInputRef.current?.click();
   };
 
   const handleConfirm = () => {
@@ -175,27 +196,36 @@ function AvatarUploadModal({
               <div className="w-full">
                 <div className="flex w-full flex-col gap-[16px]">
                   <div
-                    className={[
-                      "flex w-full flex-col items-center gap-[12px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[24px] py-[32px] transition-colors duration-200",
+                    className={clsx(
+                      "flex min-h-[337px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[24px] py-[32px] transition-colors duration-200 hover:border-[var(--color-neutral-600)] dark:hover:border-[var(--color-neutral-600)]",
                       isDragActive
-                        ? "border-[var(--color-primary-300)]"
-                        : "border-[var(--color-neutral-200)]",
-                    ].join(" ")}
+                        ? "border-[var(--color-neutral-600)]"
+                        : "border-[var(--color-neutral-200)] dark:border-[var(--color-neutral-300)]",
+                    )}
                     onDragOver={(event) => {
                       event.preventDefault();
+                      if (isSubmitting) {
+                        return;
+                      }
                       setIsDragActive(true);
                     }}
                     onDragLeave={(event) => {
                       event.preventDefault();
+                      if (event.currentTarget.contains(event.relatedTarget)) {
+                        return;
+                      }
                       setIsDragActive(false);
                     }}
                     onDrop={(event) => {
                       event.preventDefault();
+                      if (isSubmitting) {
+                        return;
+                      }
                       handleFileSelection(event.dataTransfer.files);
                     }}
                   >
                     <div className="rounded-[8px] border border-[var(--color-neutral-200)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)]">
-                      <div className="flex size-[40px] items-center justify-center rounded-[8px] bg-[var(--color-neutral-100)] p-[8px] text-[var(--color-text-200)]">
+                      <div className="flex size-[40px] items-center justify-center rounded-[8px] bg-[var(--color-neutral-100)] p-[8px] text-[var(--color-text-300)]">
                         <CloudPlusIcon className="size-5" />
                       </div>
                     </div>
@@ -210,13 +240,18 @@ function AvatarUploadModal({
 
                     <div className="flex w-full flex-col items-center gap-[8px]">
                       <div className="flex w-full flex-wrap items-center justify-center gap-[8px] text-center">
-                        <button
-                          type="button"
-                          className="text-body-3 text-[var(--color-text-300)] underline underline-offset-2 transition-opacity duration-150 hover:opacity-80"
-                          onClick={() => fileInputRef.current?.click()}
+                        <Button
+                          theme="Primary"
+                          type="Link"
+                          size="S"
+                          fitContent
+                          showLeftIcon={false}
+                          showRightIcon={false}
+                          disabled={isSubmitting}
+                          onClick={handleChooseFile}
                         >
                           Elige un archivo
-                        </button>
+                        </Button>
                         <span className="text-body-3 text-[var(--color-text-100)]">
                           O
                         </span>
@@ -234,10 +269,12 @@ function AvatarUploadModal({
                       ref={fileInputRef}
                       type="file"
                       accept=".jpg,.jpeg,.png,.webp"
-                      className="hidden"
-                      onChange={(event) =>
-                        handleFileSelection(event.target.files)
-                      }
+                      className="sr-only"
+                      disabled={isSubmitting}
+                      onChange={(event) => {
+                        handleFileSelection(event.target.files);
+                        event.target.value = "";
+                      }}
                     />
                   </div>
                 </div>
