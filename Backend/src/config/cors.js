@@ -115,14 +115,11 @@ function originMatches(allowedOrigin, requestOrigin) {
 
 export function getAllowedOrigins() {
   const configuredOrigins = mergeUnique([
+    ...defaultOrigins,
     ...parseList(process.env.CORS_ORIGIN),
     ...parseList(process.env.CORS_ORIGINS),
     ...parseList(process.env.FRONTEND_URL),
   ]);
-
-  if (!configuredOrigins.length) {
-    return defaultOrigins;
-  }
 
   return configuredOrigins.map(normalizeOrigin);
 }
