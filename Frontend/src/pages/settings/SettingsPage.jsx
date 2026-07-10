@@ -124,6 +124,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { logout, updateUser, user } = useAuth();
   const currentUser = getUserDisplay(user);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
@@ -158,6 +159,7 @@ export default function SettingsPage() {
   const [supportToastTrigger, setSupportToastTrigger] = useState(0);
   const [avatarToast, setAvatarToast] = useState(null);
   const [passwordToast, setPasswordToast] = useState(null);
+
   const [passwordValidationErrors, setPasswordValidationErrors] = useState({});
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const imageCommentNotifications = useImageCommentNotifications({
@@ -369,7 +371,20 @@ export default function SettingsPage() {
       });
 
       if (data?.user) {
-        updateUser(data.user);
+        const previewUrl = URL.createObjectURL(uploadFile);
+        setAvatarPreviewUrl((currentPreviewUrl) => {
+          if (currentPreviewUrl) {
+            URL.revokeObjectURL(currentPreviewUrl);
+          }
+
+          return previewUrl;
+        });
+        updateUser({
+          ...data.user,
+          profilePhotoUrl: previewUrl,
+          remoteProfilePhotoUrl:
+            data.user.profilePhotoUrl || data.user.profile_photo_url || "",
+        });
       }
 
       return data;
@@ -391,7 +406,18 @@ export default function SettingsPage() {
 
   const handleAvatarUploadConfirm = (uploadResult) => {
     if (uploadResult?.user) {
-      updateUser(uploadResult.user);
+      updateUser({
+        ...uploadResult.user,
+        profilePhotoUrl:
+          avatarPreviewUrl ||
+          uploadResult.user.profilePhotoUrl ||
+          uploadResult.user.profile_photo_url ||
+          "",
+        remoteProfilePhotoUrl:
+          uploadResult.user.profilePhotoUrl ||
+          uploadResult.user.profile_photo_url ||
+          "",
+      });
     }
 
     setAvatarToast({

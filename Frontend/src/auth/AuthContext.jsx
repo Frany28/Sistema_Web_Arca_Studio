@@ -18,6 +18,13 @@ function withProfilePhotoCacheBuster(profilePhotoUrl) {
     return "";
   }
 
+  if (
+    profilePhotoUrl.startsWith("blob:") ||
+    profilePhotoUrl.startsWith("data:")
+  ) {
+    return profilePhotoUrl;
+  }
+
   try {
     const url = new URL(profilePhotoUrl);
     url.searchParams.set("v", Date.now().toString());
