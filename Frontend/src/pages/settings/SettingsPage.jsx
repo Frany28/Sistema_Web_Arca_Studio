@@ -368,6 +368,10 @@ export default function SettingsPage() {
         signal: uploadOptions.signal,
       });
 
+      if (data?.user) {
+        updateUser(data.user);
+      }
+
       return data;
     } catch (error) {
       if (error.code === "UPLOAD_ABORTED") {

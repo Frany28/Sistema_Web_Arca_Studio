@@ -35,7 +35,9 @@ function normalizeUser(user) {
 
   return {
     ...user,
-    profilePhotoUrl: withProfilePhotoCacheBuster(user.profilePhotoUrl),
+    profilePhotoUrl: withProfilePhotoCacheBuster(
+      user.profilePhotoUrl || user.profile_photo_url,
+    ),
     role: typeof user.role === "string" ? user.role : user.role?.code,
     roleDetails: typeof user.role === "object" ? user.role : null,
   };

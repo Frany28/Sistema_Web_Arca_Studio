@@ -20,7 +20,7 @@ export function getUserDisplay(user) {
     initials: initials || "US",
     name,
     phone,
-    profilePhotoUrl: user?.profilePhotoUrl || "",
+    profilePhotoUrl: user?.profilePhotoUrl || user?.profile_photo_url || "",
     roleCode,
     roleName,
     shortName,
