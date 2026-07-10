@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
@@ -12,6 +13,21 @@ import { ROUTE_AUTH_DISABLED_FOR_TESTS, TEST_AUTH_USER } from "./testAccess.js";
 
 const AuthContext = createContext(null);
 
+function withProfilePhotoCacheBuster(profilePhotoUrl) {
+  if (!profilePhotoUrl) {
+    return "";
+  }
+
+  try {
+    const url = new URL(profilePhotoUrl);
+    url.searchParams.set("v", Date.now().toString());
+    return url.toString();
+  } catch {
+    const separator = profilePhotoUrl.includes("?") ? "&" : "?";
+    return `${profilePhotoUrl}${separator}v=${Date.now()}`;
+  }
+}
+
 function normalizeUser(user) {
   if (!user) {
     return null;
@@ -19,17 +35,10 @@ function normalizeUser(user) {
 
   return {
     ...user,
+    profilePhotoUrl: withProfilePhotoCacheBuster(user.profilePhotoUrl),
     role: typeof user.role === "string" ? user.role : user.role?.code,
     roleDetails: typeof user.role === "object" ? user.role : null,
   };
-}
-
-export function getDefaultAuthenticatedPath(user) {
-  if (user?.role === "architect" || user?.role === "admin") {
-    return "/dashboard-arquitecto";
-  }
-
-  return "/dashboard-clientes";
 }
 
 export function AuthProvider({ children }) {

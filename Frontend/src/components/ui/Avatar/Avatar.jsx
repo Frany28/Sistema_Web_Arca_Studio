@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import clsx from "clsx";
 import {
   AVATAR_DEFAULT_PROPS,
@@ -76,6 +76,7 @@ function Avatar({
   icon = null,
   ...props
 }) {
+  const [failedImageSrc, setFailedImageSrc] = useState("");
   const resolvedSize = AVATAR_SIZE_STYLES[size] ? size : AVATAR_DEFAULT_PROPS.size;
   const resolvedTheme = AVATAR_THEME_STYLES[theme]
     ? theme
@@ -86,7 +87,10 @@ function Avatar({
   const resolvedContentInput = resolvedStyle ?? content;
   const computedInitials = initials || getInitialsFromName(name);
   const normalizedInitials = normalizeInitials(computedInitials);
-  const usesImage = typeof src === "string" && src.trim().length > 0;
+  const usesImage =
+    typeof src === "string" &&
+    src.trim().length > 0 &&
+    failedImageSrc !== src;
   const resolvedContent = usesImage
     ? "Image"
     : resolvedContentInput === "Text"
@@ -114,6 +118,7 @@ function Avatar({
           alt=""
           className="size-full object-cover"
           aria-hidden="true"
+          onError={() => setFailedImageSrc(src)}
         />
       ) : null}
 

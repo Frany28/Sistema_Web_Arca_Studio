@@ -368,15 +368,6 @@ export default function SettingsPage() {
         signal: uploadOptions.signal,
       });
 
-      if (data?.user) {
-        updateUser(data.user);
-      }
-
-      setAvatarToast({
-        trigger: Date.now(),
-        title: "Avatar actualizado",
-        description: "Tu foto de perfil se actualizÃ³ correctamente.",
-      });
       return data;
     } catch (error) {
       if (error.code === "UPLOAD_ABORTED") {
@@ -394,7 +385,16 @@ export default function SettingsPage() {
     }
   };
 
-  const handleAvatarUploadConfirm = () => {
+  const handleAvatarUploadConfirm = (uploadResult) => {
+    if (uploadResult?.user) {
+      updateUser(uploadResult.user);
+    }
+
+    setAvatarToast({
+      trigger: Date.now(),
+      title: "Avatar actualizado",
+      description: "Tu foto de perfil se actualizo correctamente.",
+    });
     setIsAvatarUploadModalOpen(false);
   };
 

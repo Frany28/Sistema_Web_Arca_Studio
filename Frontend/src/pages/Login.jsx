@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { getDefaultAuthenticatedPath, useAuth } from "../auth/AuthContext.jsx";
+import { useAuth } from "../auth/AuthContext.jsx";
+import { getDefaultAuthenticatedPath } from "../auth/authRoutes.js";
 import group1Logo from "../assets/logos/Group 1.svg";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import Button from "../components/ui/Button/Button.jsx";

@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 
-import { getDefaultAuthenticatedPath, useAuth } from "./AuthContext.jsx";
+import { useAuth } from "./AuthContext.jsx";
+import { getDefaultAuthenticatedPath } from "./authRoutes.js";
 import { ROUTE_AUTH_DISABLED_FOR_TESTS } from "./testAccess.js";
 
 function ProtectedRoute({ allowedRoles }) {
