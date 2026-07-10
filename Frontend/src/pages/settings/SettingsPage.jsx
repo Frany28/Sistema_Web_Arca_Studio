@@ -241,31 +241,35 @@ export default function SettingsPage() {
     }
   };
 
-  const handleAvatarUpload = async (file) => {
+  const handleAvatarUpload = async (file, uploadOptions = {}) => {
     if (!AVATAR_ALLOWED_TYPES.has(file?.type)) {
+      const error = new Error("Sube una imagen JPG, PNG o WEBP.");
       setAvatarToast({
         trigger: Date.now(),
         title: "No se pudo actualizar el avatar",
-        description: "Sube una imagen JPG, PNG o WEBP.",
+        description: error.message,
       });
-      setIsAvatarUploadModalOpen(false);
-      return;
+      throw error;
     }
 
     if (file.size > AVATAR_MAX_SIZE_BYTES) {
+      const error = new Error("La imagen no puede superar 50 MB.");
       setAvatarToast({
         trigger: Date.now(),
         title: "No se pudo actualizar el avatar",
-        description: "La imagen no puede superar 50 MB.",
+        description: error.message,
       });
-      setIsAvatarUploadModalOpen(false);
-      return;
+      throw error;
     }
 
     setIsUploadingAvatar(true);
 
     try {
-      const data = await api.auth.uploadProfilePhoto({ file });
+      const data = await api.auth.uploadProfilePhoto({
+        file,
+        onUploadProgress: uploadOptions.onUploadProgress,
+        signal: uploadOptions.signal,
+      });
 
       if (data?.user) {
         updateUser(data.user);
@@ -276,17 +280,25 @@ export default function SettingsPage() {
         title: "Avatar actualizado",
         description: "Tu foto de perfil se actualizÃ³ correctamente.",
       });
-      setIsAvatarUploadModalOpen(false);
+      return data;
     } catch (error) {
+      if (error.code === "UPLOAD_ABORTED") {
+        throw error;
+      }
+
       setAvatarToast({
         trigger: Date.now(),
         title: "No se pudo actualizar el avatar",
         description: error.message || "Intenta nuevamente en unos minutos.",
       });
-      setIsAvatarUploadModalOpen(false);
+      throw error;
     } finally {
       setIsUploadingAvatar(false);
     }
+  };
+
+  const handleAvatarUploadConfirm = () => {
+    setIsAvatarUploadModalOpen(false);
   };
 
   let activePanel = (
@@ -455,7 +467,8 @@ export default function SettingsPage() {
           <AvatarUploadModal
             open={isAvatarUploadModalOpen}
             onClose={() => setIsAvatarUploadModalOpen(false)}
-            onConfirm={handleAvatarUpload}
+            onConfirm={handleAvatarUploadConfirm}
+            onUpload={handleAvatarUpload}
             isSubmitting={isUploadingAvatar}
           />
         </div>

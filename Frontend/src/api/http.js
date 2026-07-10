@@ -117,7 +117,7 @@ export const authApi = {
     return data;
   },
 
-  uploadProfilePhoto({ file, signal }) {
+  uploadProfilePhoto({ file, onUploadProgress, signal }) {
     const token = getAuthToken();
     const fileName = encodeURIComponent(file?.name || "avatar");
 
@@ -138,6 +138,23 @@ export const authApi = {
       if (token) {
         request.setRequestHeader("Authorization", `Bearer ${token}`);
       }
+
+      request.upload.onprogress = (event) => {
+        if (!event.lengthComputable || !event.total) {
+          return;
+        }
+
+        const progress = Math.min(
+          Math.round((event.loaded / event.total) * 100),
+          99,
+        );
+
+        onUploadProgress?.({
+          loaded: event.loaded,
+          progress,
+          total: event.total,
+        });
+      };
 
       request.onload = () => {
         signal?.removeEventListener("abort", abortUpload);
@@ -163,6 +180,11 @@ export const authApi = {
           setAuthToken(data.token);
         }
 
+        onUploadProgress?.({
+          loaded: file?.size || 0,
+          progress: 100,
+          total: file?.size || 0,
+        });
         resolve(data);
       };
 

@@ -66,17 +66,14 @@ function MoreIcon() {
   );
 }
 
-function FileUploadProgress({ progress, showValue = true, isUploading = false }) {
+function FileUploadProgress({ progress, showValue = true }) {
   const resolvedProgress = Math.min(Math.max(progress ?? 0, 0), 100);
 
   return (
     <div className="flex w-full items-center gap-[8px]">
       <div className="relative h-[8px] min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--color-neutral-200)] dark:bg-[var(--color-text-100)]">
         <div
-          className={clsx(
-            "h-full rounded-full bg-[var(--color-text-300)]",
-            isUploading && "arca-file-upload-progress-bar",
-          )}
+          className="h-full rounded-full bg-[var(--color-text-300)]"
           style={{ width: `${resolvedProgress}%` }}
         />
       </div>
@@ -160,7 +157,6 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
         ) : (
           <FileUploadProgress
             progress={file.progress}
-            isUploading={isUploading}
             showValue={isCompleted || isUploading}
           />
         )}

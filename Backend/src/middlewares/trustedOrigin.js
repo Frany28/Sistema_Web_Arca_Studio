@@ -1,4 +1,4 @@
-import { getAllowedOrigins } from "../config/cors.js";
+import { isAllowedOrigin } from "../config/cors.js";
 
 const UNSAFE_METHODS = new Set(["DELETE", "PATCH", "POST", "PUT"]);
 const isProduction = process.env.NODE_ENV === "production";
@@ -56,9 +56,7 @@ export function requireTrustedOrigin(req, res, next) {
     return;
   }
 
-  const allowedOrigins = getAllowedOrigins();
-
-  if (allowedOrigins.includes("*") || allowedOrigins.includes(requestOrigin)) {
+  if (isAllowedOrigin(requestOrigin)) {
     next();
     return;
   }
