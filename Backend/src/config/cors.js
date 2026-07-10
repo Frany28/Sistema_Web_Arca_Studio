@@ -9,53 +9,83 @@ function parseBoolean(value, fallback = false) {
   return String(value).trim().toLowerCase() === "true";
 }
 
-function getAllowedHeaders() {
-  const defaultHeaders = [
-    "Authorization",
-    "Content-Type",
-    "X-File-Name",
-    "X-Original-File-Name",
-  ];
-  const configuredHeaders = process.env.CORS_ALLOWED_HEADERS;
-
-  if (!configuredHeaders) {
-    return defaultHeaders;
+function parseList(value) {
+  if (!value) {
+    return [];
   }
 
-  const extraHeaders = configuredHeaders
+  return value
     .split(",")
-    .map((header) => header.trim())
+    .map((item) => item.trim())
     .filter(Boolean);
+}
 
-  return [...new Set([...defaultHeaders, ...extraHeaders])];
+function mergeUnique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function getAllowedHeaders() {
+  const defaultHeaders = [
+    "Accept",
+    "Authorization",
+    "Content-Type",
+    "Origin",
+    "Range",
+    "X-File-Name",
+    "X-Original-File-Name",
+    "X-Requested-With",
+  ];
+
+  return mergeUnique([
+    ...defaultHeaders,
+    ...parseList(process.env.CORS_ALLOWED_HEADERS),
+  ]);
+}
+
+function getExposedHeaders() {
+  const defaultHeaders = [
+    "Accept-Ranges",
+    "Content-Disposition",
+    "Content-Length",
+    "Content-Range",
+    "Content-Type",
+  ];
+
+  return mergeUnique([
+    ...defaultHeaders,
+    ...parseList(process.env.CORS_EXPOSED_HEADERS),
+  ]);
+}
+
+function normalizeOrigin(origin) {
+  if (origin === "*") {
+    if (isProduction) {
+      throw new Error("CORS wildcard origin is not allowed in production");
+    }
+
+    return origin;
+  }
+
+  try {
+    return new URL(origin).origin;
+  } catch {
+    throw new Error(`Invalid CORS origin: ${origin}`);
+  }
 }
 
 export function getAllowedOrigins() {
-  const configuredOrigins = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS;
+  const configuredOrigins = mergeUnique([
+    ...parseList(process.env.CORS_ORIGIN),
+    ...parseList(process.env.CORS_ORIGINS),
+    ...parseList(process.env.FRONTEND_URL),
+  ]);
 
-  if (!configuredOrigins) {
+  if (!configuredOrigins.length) {
     return defaultOrigins;
   }
 
   return configuredOrigins
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-    .map((origin) => {
-      if (origin === "*") {
-        if (isProduction) {
-          throw new Error("CORS wildcard origin is not allowed in production");
-        }
-
-        return origin;
-      }
-
-      try {
-        return new URL(origin).origin;
-      } catch {
-        throw new Error(`Invalid CORS origin: ${origin}`);
-      }
-    });
+    .map(normalizeOrigin);
 }
 
 export function corsOptions() {
@@ -69,7 +99,10 @@ export function corsOptions() {
     credentials: parseBoolean(process.env.CORS_CREDENTIALS, true),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: getAllowedHeaders(),
+    exposedHeaders: getExposedHeaders(),
+    maxAge: 86400,
     optionsSuccessStatus: 204,
+    preflightContinue: false,
     origin(origin, callback) {
       if (!origin) {
         callback(null, allowRequestsWithoutOrigin);

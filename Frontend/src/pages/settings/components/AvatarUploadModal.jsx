@@ -66,14 +66,26 @@ function AvatarUploadModal({
     };
   }, [isSubmitting, onClose, open]);
 
-  const selectedFileLabel = useMemo(() => {
+  const selectedFiles = useMemo(() => {
     if (!selectedFile) {
-      return "Formatos JPEG, PNG, WEBP, hasta 50 MB.";
+      return [];
     }
 
-    const sizeInMb = selectedFile.size / (1024 * 1024);
-    return `${selectedFile.name} (${sizeInMb.toFixed(1)} MB)`;
-  }, [selectedFile]);
+    const sizeInKb = Math.max(Math.ceil(selectedFile.size / 1024), 1);
+    const type = selectedFile.name.split(".").pop()?.toUpperCase() || "FILE";
+
+    return [
+      {
+        currentSizeLabel: `${sizeInKb}KB`,
+        id: `${selectedFile.name}-${selectedFile.lastModified}`,
+        name: selectedFile.name,
+        progress: isSubmitting ? 40 : 100,
+        status: isSubmitting ? "uploading" : "completed",
+        totalSizeLabel: `${sizeInKb}KB`,
+        type: type === "JPEG" ? "JPG" : type,
+      },
+    ];
+  }, [isSubmitting, selectedFile]);
 
   const handleFileSelection = (fileList) => {
     if (isSubmitting) {
@@ -136,9 +148,9 @@ function AvatarUploadModal({
                   chooseFileLabel="Elige un archivo"
                   separatorLabel="O"
                   dropLabel="Arrastra y suelta"
-                  formatsLabel={selectedFileLabel}
-                  files={[]}
-                  showUploadedFiles={false}
+                  formatsLabel="Formatos JPEG, PNG, WEBP, hasta 50 MB."
+                  files={selectedFiles}
+                  showUploadedFiles={selectedFiles.length > 0}
                   viewportHeight={null}
                   fileInputAccept=".jpg,.jpeg,.png,.webp"
                   onFilesSelected={handleFileSelection}
