@@ -30,6 +30,95 @@ const COLLAPSED_SIDEBAR_WIDTH = 76;
 const TABLET_BREAKPOINT_PX = 768;
 const AVATAR_ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const AVATAR_MAX_SIZE_BYTES = 50 * 1024 * 1024;
+const AVATAR_UPLOAD_MAX_BYTES = 3.5 * 1024 * 1024;
+const AVATAR_UPLOAD_MAX_DIMENSION = 1600;
+const AVATAR_UPLOAD_QUALITY_STEPS = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5];
+
+function getCompressedAvatarName(fileName = "avatar") {
+  const baseName = fileName.replace(/\.[^/.]+$/, "") || "avatar";
+  return `${baseName}.jpg`;
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+
+        reject(new Error("No se pudo optimizar la imagen."));
+      },
+      type,
+      quality,
+    );
+  });
+}
+
+function loadImageElement(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("No se pudo leer la imagen."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+async function loadAvatarImageSource(file) {
+  if (typeof createImageBitmap === "function") {
+    return createImageBitmap(file);
+  }
+
+  return loadImageElement(file);
+}
+
+async function prepareAvatarFileForUpload(file) {
+  if (!file || file.size <= AVATAR_UPLOAD_MAX_BYTES) {
+    return file;
+  }
+
+  const imageSource = await loadAvatarImageSource(file);
+  const sourceWidth = imageSource.width || imageSource.naturalWidth;
+  const sourceHeight = imageSource.height || imageSource.naturalHeight;
+  const scale = Math.min(
+    1,
+    AVATAR_UPLOAD_MAX_DIMENSION / sourceWidth,
+    AVATAR_UPLOAD_MAX_DIMENSION / sourceHeight,
+  );
+  const width = Math.max(Math.round(sourceWidth * scale), 1);
+  const height = Math.max(Math.round(sourceHeight * scale), 1);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  canvas.width = width;
+  canvas.height = height;
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(imageSource, 0, 0, width, height);
+  imageSource.close?.();
+
+  for (const quality of AVATAR_UPLOAD_QUALITY_STEPS) {
+    const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+
+    if (blob.size <= AVATAR_UPLOAD_MAX_BYTES) {
+      return new File([blob], getCompressedAvatarName(file.name), {
+        lastModified: Date.now(),
+        type: "image/jpeg",
+      });
+    }
+  }
+
+  throw new Error("No se pudo reducir la imagen lo suficiente para subirla.");
+}
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -265,8 +354,16 @@ export default function SettingsPage() {
     setIsUploadingAvatar(true);
 
     try {
+      const uploadFile = await prepareAvatarFileForUpload(file);
+
+      if (uploadOptions.signal?.aborted) {
+        const error = new Error("La subida del avatar fue cancelada.");
+        error.code = "UPLOAD_ABORTED";
+        throw error;
+      }
+
       const data = await api.auth.uploadProfilePhoto({
-        file,
+        file: uploadFile,
         onUploadProgress: uploadOptions.onUploadProgress,
         signal: uploadOptions.signal,
       });

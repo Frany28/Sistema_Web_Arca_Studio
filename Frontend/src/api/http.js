@@ -122,6 +122,13 @@ export const authApi = {
     const fileName = encodeURIComponent(file?.name || "avatar");
 
     return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        const error = new Error("La subida del avatar fue cancelada.");
+        error.code = "UPLOAD_ABORTED";
+        reject(error);
+        return;
+      }
+
       const request = new XMLHttpRequest();
       const abortUpload = () => {
         request.abort();
