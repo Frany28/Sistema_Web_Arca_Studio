@@ -124,7 +124,6 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { logout, updateUser, user } = useAuth();
   const currentUser = getUserDisplay(user);
-  const [, setAvatarPreviewUrl] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
@@ -369,23 +368,6 @@ export default function SettingsPage() {
         onUploadProgress: uploadOptions.onUploadProgress,
         signal: uploadOptions.signal,
       });
-
-      if (data?.user) {
-        const previewUrl = URL.createObjectURL(uploadFile);
-        setAvatarPreviewUrl((currentPreviewUrl) => {
-          if (currentPreviewUrl) {
-            URL.revokeObjectURL(currentPreviewUrl);
-          }
-
-          return previewUrl;
-        });
-        updateUser({
-          ...data.user,
-          profilePhotoUrl: previewUrl,
-          remoteProfilePhotoUrl:
-            data.user.profilePhotoUrl || data.user.profile_photo_url || "",
-        });
-      }
 
       return data;
     } catch (error) {

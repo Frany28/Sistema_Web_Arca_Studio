@@ -56,6 +56,24 @@ function getProfilePhotoContentType(value) {
     : "image/jpeg";
 }
 
+async function storageBodyToBuffer(body) {
+  if (!body) {
+    return Buffer.alloc(0);
+  }
+
+  if (typeof body.transformToByteArray === "function") {
+    return Buffer.from(await body.transformToByteArray());
+  }
+
+  const chunks = [];
+
+  for await (const chunk of body) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
+}
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -428,6 +446,7 @@ export async function getProfilePhotoImage(req, res, next) {
         Key: storageKey,
       }),
     );
+    const fileBuffer = await storageBodyToBuffer(object.Body);
 
     res.status(200);
     res.setHeader(
@@ -435,13 +454,9 @@ export async function getProfilePhotoImage(req, res, next) {
       getProfilePhotoContentType(object.ContentType),
     );
     res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+    res.setHeader("Content-Length", String(fileBuffer.length));
 
-    if (object.ContentLength != null) {
-      res.setHeader("Content-Length", String(object.ContentLength));
-    }
-
-    object.Body.on?.("error", next);
-    object.Body.pipe(res);
+    res.end(fileBuffer);
   } catch (error) {
     if (
       error?.name === "NoSuchKey" ||
