@@ -8,12 +8,12 @@ import {
   useState,
 } from "react";
 
-import { api, setAuthToken } from "../api/http.js";
+import { api, getApiUrl, getAuthToken, setAuthToken } from "../api/http.js";
 import { ROUTE_AUTH_DISABLED_FOR_TESTS, TEST_AUTH_USER } from "./testAccess.js";
 
 const AuthContext = createContext(null);
 
-function withProfilePhotoCacheBuster(profilePhotoUrl) {
+function buildProfilePhotoImageUrl(profilePhotoUrl) {
   if (!profilePhotoUrl) {
     return "";
   }
@@ -25,14 +25,16 @@ function withProfilePhotoCacheBuster(profilePhotoUrl) {
     return profilePhotoUrl;
   }
 
-  try {
-    const url = new URL(profilePhotoUrl);
-    url.searchParams.set("v", Date.now().toString());
-    return url.toString();
-  } catch {
-    const separator = profilePhotoUrl.includes("?") ? "&" : "?";
-    return `${profilePhotoUrl}${separator}v=${Date.now()}`;
+  const params = new URLSearchParams({
+    v: Date.now().toString(),
+  });
+  const token = getAuthToken();
+
+  if (token) {
+    params.set("access_token", token);
   }
+
+  return getApiUrl(`/auth/profile-photo/image?${params.toString()}`);
 }
 
 function normalizeUser(user) {
@@ -42,9 +44,15 @@ function normalizeUser(user) {
 
   return {
     ...user,
-    profilePhotoUrl: withProfilePhotoCacheBuster(
+    profilePhotoUrl: buildProfilePhotoImageUrl(
       user.profilePhotoUrl || user.profile_photo_url,
     ),
+    remoteProfilePhotoUrl:
+      user.remoteProfilePhotoUrl ||
+      user.remote_profile_photo_url ||
+      user.profilePhotoUrl ||
+      user.profile_photo_url ||
+      "",
     role: typeof user.role === "string" ? user.role : user.role?.code,
     roleDetails: typeof user.role === "object" ? user.role : null,
   };

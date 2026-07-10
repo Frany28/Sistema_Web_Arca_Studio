@@ -3,6 +3,7 @@ import express, { Router } from "express";
 import {
   changePassword,
   forgotPassword,
+  getProfilePhotoImage,
   login,
   logout,
   me,
@@ -20,6 +21,7 @@ router.post("/forgot-password", loginRateLimit, forgotPassword);
 router.post("/verify-reset-token", loginRateLimit, verifyResetToken);
 router.post("/reset-password", loginRateLimit, resetPassword);
 router.post("/change-password", requireAuth, loginRateLimit, changePassword);
+router.get("/profile-photo/image", requireAuth, getProfilePhotoImage);
 router.post(
   "/profile-photo",
   requireAuth,

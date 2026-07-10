@@ -1,5 +1,9 @@
 import bcrypt from "bcrypt";
-import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 
 import { authConfig } from "../config/auth.js";
 import {
@@ -43,6 +47,14 @@ const PROFILE_PHOTO_ALLOWED_TYPES = new Set([
   "image/webp",
 ]);
 const PROFILE_PHOTO_MAX_SIZE_BYTES = 50 * 1024 * 1024;
+
+function getProfilePhotoContentType(value) {
+  const contentType = String(value || "").split(";")[0].trim().toLowerCase();
+
+  return PROFILE_PHOTO_ALLOWED_TYPES.has(contentType)
+    ? contentType
+    : "image/jpeg";
+}
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -391,6 +403,55 @@ export async function uploadProfilePhoto(req, res, next) {
       } catch {
         // Preserve the original failure.
       }
+    }
+
+    next(error);
+  }
+}
+
+export async function getProfilePhotoImage(req, res, next) {
+  try {
+    const storageKey = getStorageObjectKeyFromFileUrl(req.user?.profilePhotoUrl);
+
+    if (!storageKey) {
+      res.status(404).json({
+        code: "PROFILE_PHOTO_NOT_FOUND",
+        message: "El usuario no tiene una foto de perfil cargada.",
+      });
+      return;
+    }
+
+    const storageConfig = getSupabaseStorageConfig();
+    const object = await getSupabaseS3Client().send(
+      new GetObjectCommand({
+        Bucket: storageConfig.bucket,
+        Key: storageKey,
+      }),
+    );
+
+    res.status(200);
+    res.setHeader(
+      "Content-Type",
+      getProfilePhotoContentType(object.ContentType),
+    );
+    res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+
+    if (object.ContentLength != null) {
+      res.setHeader("Content-Length", String(object.ContentLength));
+    }
+
+    object.Body.on?.("error", next);
+    object.Body.pipe(res);
+  } catch (error) {
+    if (
+      error?.name === "NoSuchKey" ||
+      error?.$metadata?.httpStatusCode === 404
+    ) {
+      res.status(404).json({
+        code: "PROFILE_PHOTO_NOT_FOUND",
+        message: "No se pudo encontrar la foto de perfil.",
+      });
+      return;
     }
 
     next(error);
