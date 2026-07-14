@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { normalizeError, ValidationError } from "../src/errors/appError.js";
-import { loginSchema, paginationSchema } from "../src/validation/schemas.js";
+import {
+  loginSchema,
+  paginationSchema,
+  projectCommentAuthorPhotoSchema,
+} from "../src/validation/schemas.js";
 
 test("login schema normalizes email and rejects short passwords", () => {
   const valid = loginSchema.parse({ body: { email: " USER@EXAMPLE.COM ", password: "Password1!" } });
@@ -11,6 +15,20 @@ test("login schema normalizes email and rejects short passwords", () => {
 
 test("pagination schema rejects invalid cursors and limits", () => {
   assert.equal(paginationSchema.safeParse({ query: { cursor: "broken", limit: 101 } }).success, false);
+});
+
+test("comment author photo route accepts only positive project and user ids", () => {
+  const valid = projectCommentAuthorPhotoSchema.parse({
+    params: { projectId: "12", userId: "30" },
+  });
+
+  assert.deepEqual(valid.params, { projectId: 12, userId: 30 });
+  assert.equal(
+    projectCommentAuthorPhotoSchema.safeParse({
+      params: { projectId: "12", userId: "0" },
+    }).success,
+    false,
+  );
 });
 
 test("central errors preserve fields and hide unknown messages", () => {

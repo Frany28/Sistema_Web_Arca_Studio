@@ -1,6 +1,7 @@
+const viteEnv = import.meta.env || {};
 const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? "http://localhost:3000/api" : "/api")
+  viteEnv.VITE_API_URL ||
+  (viteEnv.DEV ? "http://localhost:3000/api" : "/api")
 ).replace(/\/$/, "");
 const AUTH_TOKEN_STORAGE_KEY = "arca_auth_token";
 let authTokenMemory = null;

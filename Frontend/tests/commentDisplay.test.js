@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { setAuthToken } from "../src/api/http.js";
 import {
+  buildCommentAuthorAvatarUrl,
   decorateCommentForDisplay,
   getCommentableProjectsForUser,
   getObservationTypeLabel,
@@ -72,7 +74,7 @@ test("display decoration includes current author, role, avatar and project", () 
   assert.equal(decorated.observationTypeLabel, "Observación sobre imagen");
 });
 
-test("other authors keep their full name, role and stored avatar", () => {
+test("other authors use the authenticated project avatar endpoint", () => {
   const decorated = decorateCommentForDisplay(
     {
       author: {
@@ -90,5 +92,42 @@ test("other authors keep their full name, role and stored avatar", () => {
 
   assert.equal(decorated.name, "María Gómez");
   assert.equal(decorated.authorRoleLabel, "Cliente");
-  assert.equal(decorated.avatarSrc, "client-avatar");
+  assert.equal(
+    decorated.avatarSrc,
+    "/api/projects/1/comment-authors/30/profile-photo",
+  );
+});
+
+test("author avatar endpoint requires a stored photo and valid identifiers", () => {
+  assert.equal(
+    buildCommentAuthorAvatarUrl({
+      author: { id: 30, profilePhotoUrl: "stored-photo" },
+      projectId: 1,
+    }),
+    "/api/projects/1/comment-authors/30/profile-photo",
+  );
+  assert.equal(
+    buildCommentAuthorAvatarUrl({ author: { id: 30 }, projectId: 1 }),
+    "",
+  );
+  assert.equal(
+    buildCommentAuthorAvatarUrl({
+      author: { id: 30, profilePhotoUrl: "stored-photo" },
+    }),
+    "",
+  );
+});
+
+test("author avatar endpoint carries the current authentication token", () => {
+  setAuthToken("token for image");
+
+  assert.equal(
+    buildCommentAuthorAvatarUrl({
+      author: { id: 30, profilePhotoUrl: "stored-photo" },
+      projectId: 1,
+    }),
+    "/api/projects/1/comment-authors/30/profile-photo?access_token=token+for+image",
+  );
+
+  setAuthToken(null);
 });

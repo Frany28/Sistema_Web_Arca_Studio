@@ -1,5 +1,32 @@
+import { getApiUrl, getAuthToken } from "../api/http.js";
+
 function normalizeIdentityValue(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+export function buildCommentAuthorAvatarUrl(comment) {
+  const authorUserId = Number(comment?.author?.id);
+  const projectId = Number(comment?.projectId);
+
+  if (
+    !comment?.author?.profilePhotoUrl ||
+    !Number.isInteger(authorUserId) ||
+    authorUserId <= 0 ||
+    !Number.isInteger(projectId) ||
+    projectId <= 0
+  ) {
+    return "";
+  }
+
+  const params = new URLSearchParams();
+  const token = getAuthToken();
+
+  if (token) params.set("access_token", token);
+
+  const query = params.toString();
+  return getApiUrl(
+    `/projects/${projectId}/comment-authors/${authorUserId}/profile-photo${query ? `?${query}` : ""}`,
+  );
 }
 
 export function isCommentFromCurrentUser(comment, user) {
@@ -28,7 +55,7 @@ export function getCommentAuthorAvatarSrc(comment, user) {
     return user?.profilePhotoUrl || comment?.author?.profilePhotoUrl || "";
   }
 
-  return comment?.author?.profilePhotoUrl || comment?.avatarSrc || "";
+  return buildCommentAuthorAvatarUrl(comment) || comment?.avatarSrc || "";
 }
 
 export const OBSERVATION_TYPE_LABELS = Object.freeze({

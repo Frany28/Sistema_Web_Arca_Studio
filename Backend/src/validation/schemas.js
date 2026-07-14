@@ -14,6 +14,13 @@ export const paginationSchema = z.object({
 
 export const projectIdSchema = z.object({ params: z.object({ projectId: positiveId }) });
 
+export const projectCommentAuthorPhotoSchema = z.object({
+  params: z.object({
+    projectId: positiveId,
+    userId: positiveId,
+  }),
+});
+
 export const commentSchema = z.object({
   params: z.object({ projectId: positiveId }),
   body: z.object({

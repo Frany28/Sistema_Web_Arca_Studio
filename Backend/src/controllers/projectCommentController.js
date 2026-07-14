@@ -3,6 +3,7 @@ import {
   createProjectCommentRecord,
   listProjectComments,
 } from "../repositories/projectCommentRepository.js";
+import { getProjectCommentAuthorProfilePhoto } from "../services/profilePhotoService.js";
 import {
   publishProjectEvent,
   subscribeToProjectEvents,
@@ -79,6 +80,27 @@ export async function getProjectComments(req, res, next) {
     const page = await listProjectComments(projectId, req.user, { cursor, limit: parsePageLimit(query?.limit) });
 
     res.status(200).json({ comments: page.items, nextCursor: page.nextCursor });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function streamProjectCommentAuthorProfilePhoto(req, res, next) {
+  try {
+    const photo = await getProjectCommentAuthorProfilePhoto({
+      authorUserId: req.params.userId,
+      projectId: req.params.projectId,
+      user: req.user,
+    });
+
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Content-Type", photo.contentType);
+    res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+    if (photo.contentLength !== undefined) {
+      res.setHeader("Content-Length", String(photo.contentLength));
+    }
+    photo.body.on?.("error", next);
+    photo.body.pipe(res.status(200));
   } catch (error) {
     next(error);
   }

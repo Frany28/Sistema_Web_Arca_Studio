@@ -90,6 +90,41 @@ export async function canAccessProjectComments(projectId, user) {
   return Boolean(result.rows[0]);
 }
 
+export async function findProjectCommentAuthorProfilePhoto(
+  projectId,
+  authorUserId,
+  user,
+) {
+  const access = getProjectAccessCondition(user);
+  const projectIdParam = access.params.length + 1;
+  const authorUserIdParam = access.params.length + 2;
+  const statusParam = access.params.length + 3;
+  const result = await query(
+    `
+      select u.profile_photo_url
+      from public.projects p
+      inner join public.users u
+        on u.id = $${authorUserIdParam}
+       and u.deleted_at is null
+      where p.id = $${projectIdParam}
+        and p.deleted_at is null
+        and (${access.sql})
+        and exists (
+          select 1
+          from public.project_comments pc
+          where pc.project_id = p.id
+            and pc.user_id = u.id
+            and pc.deleted_at is null
+            and pc.status = $${statusParam}::comment_status
+        )
+      limit 1
+    `,
+    [...access.params, projectId, authorUserId, ACTIVE_COMMENT_STATUS],
+  );
+
+  return result.rows[0]?.profile_photo_url || null;
+}
+
 export async function listProjectComments(projectId, user, { cursor = null, limit = 25 } = {}) {
   const access = getProjectAccessCondition(user);
   const result = await query(

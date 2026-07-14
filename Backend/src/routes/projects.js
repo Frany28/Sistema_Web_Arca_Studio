@@ -13,12 +13,17 @@ import {
 import {
   createProjectComment,
   getProjectComments,
+  streamProjectCommentAuthorProfilePhoto,
   streamProjectCommentEvents,
 } from "../controllers/projectCommentController.js";
 import { requireAuth, requirePermissions } from "../middlewares/auth.js";
 import { commentRateLimit, uploadRateLimit } from "../middlewares/actionRateLimits.js";
 import { validate } from "../middlewares/validate.js";
-import { commentSchema, paginationSchema } from "../validation/schemas.js";
+import {
+  commentSchema,
+  paginationSchema,
+  projectCommentAuthorPhotoSchema,
+} from "../validation/schemas.js";
 
 const router = Router();
 
@@ -30,6 +35,12 @@ router.get(
   getProjectDetail,
 );
 router.get("/:projectId/comments", requireAuth, validate(paginationSchema), getProjectComments);
+router.get(
+  "/:projectId/comment-authors/:userId/profile-photo",
+  requireAuth,
+  validate(projectCommentAuthorPhotoSchema),
+  streamProjectCommentAuthorProfilePhoto,
+);
 router.get("/:projectId/events", requireAuth, streamProjectCommentEvents);
 router.post("/:projectId/comments", requireAuth, commentRateLimit, validate(commentSchema), createProjectComment);
 router.post(
