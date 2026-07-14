@@ -354,7 +354,7 @@ function Home() {
     }
 
     api.projects
-      .list()
+      .listAll()
       .then((data) => {
         if (isMounted) {
           setProjects(data.projects || []);

@@ -166,7 +166,7 @@ export function useProjectComments({
     setError("");
 
     api.projects
-      .listComments({ projectId })
+      .listAllComments({ projectId })
       .then((data) => {
         if (isMounted) {
           setComments(Array.isArray(data.comments) ? data.comments : []);
@@ -195,7 +195,7 @@ export function useProjectComments({
       onError: () => {
         if (refreshIntervalMs > 0 && isMounted) {
           api.projects
-            .listComments({ projectId })
+            .listAllComments({ projectId })
             .then((data) => {
               if (isMounted) {
                 setComments(Array.isArray(data.comments) ? data.comments : []);
@@ -209,7 +209,7 @@ export function useProjectComments({
       refreshIntervalMs > 0
         ? window.setInterval(() => {
             api.projects
-              .listComments({ projectId })
+              .listAllComments({ projectId })
               .then((data) => {
                 if (isMounted) {
                   setComments((current) =>
@@ -295,7 +295,7 @@ export function useProjectComments({
     setError("");
 
     try {
-      const data = await api.projects.listComments({ projectId });
+      const data = await api.projects.listAllComments({ projectId });
 
       setComments(Array.isArray(data.comments) ? data.comments : []);
     } catch (requestError) {
@@ -356,7 +356,7 @@ export function useRecentProjectComments({
 
     Promise.all(
       normalizedProjectIds.map((projectId) =>
-        api.projects.listComments({ projectId }),
+        api.projects.listAllComments({ projectId }),
       ),
     )
       .then((responses) => {
@@ -396,7 +396,7 @@ export function useRecentProjectComments({
         ? window.setInterval(() => {
             Promise.all(
               normalizedProjectIds.map((projectId) =>
-                api.projects.listComments({ projectId }),
+                api.projects.listAllComments({ projectId }),
               ),
             )
               .then((responses) => {
@@ -435,7 +435,7 @@ export function useRecentProjectComments({
     try {
       const responses = await Promise.all(
         normalizedProjectIds.map((projectId) =>
-          api.projects.listComments({ projectId }),
+          api.projects.listAllComments({ projectId }),
         ),
       );
 

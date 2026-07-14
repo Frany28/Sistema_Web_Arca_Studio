@@ -12,6 +12,7 @@ import projectRequestRoutes from "./routes/projectRequests.js";
 import projectRoutes from "./routes/projects.js";
 import routes from "./routes/index.js";
 import supportRoutes from "./routes/support.js";
+import { normalizeError } from "./errors/appError.js";
 
 const app = express();
 
@@ -40,15 +41,17 @@ app.use("/api", (req, res) => {
 });
 
 app.use((error, _req, res, _next) => {
+  const normalized = normalizeError(error);
   console.error("Unhandled request error", {
     code: error.code,
     message: error.message,
     name: error.name,
   });
 
-  res.status(error.status || 500).json({
-    code: error.code || "INTERNAL_SERVER_ERROR",
-    message: error.publicMessage || "Ocurrio un error inesperado.",
+  res.status(normalized.status).json({
+    code: normalized.code,
+    message: normalized.message,
+    ...(normalized.fields ? { fields: normalized.fields } : {}),
   });
 });
 

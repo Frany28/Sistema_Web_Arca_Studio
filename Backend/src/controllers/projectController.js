@@ -9,9 +9,10 @@ import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
 export async function getMyProjects(req, res, next) {
   try {
-    const limit = parsePageLimit(req.query?.limit);
-    const cursor = decodeCursor(req.query?.cursor);
-    if (req.query?.cursor && !cursor) return res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor inválido." });
+    const query = req.validatedQuery || req.query;
+    const limit = parsePageLimit(query?.limit);
+    const cursor = decodeCursor(query?.cursor);
+    if (query?.cursor && !cursor) return res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor inválido." });
     const page = await listProjectsForUser(req.user, { cursor, limit });
 
     res.status(200).json({

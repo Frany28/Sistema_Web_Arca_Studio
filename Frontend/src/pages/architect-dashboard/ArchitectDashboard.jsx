@@ -237,7 +237,7 @@ function ArchitectDashboard({ empty = false }) {
     }
 
     api.projects
-      .list()
+      .listAll()
       .then((data) => {
         if (isMounted) {
           setProjects(data.projects || []);

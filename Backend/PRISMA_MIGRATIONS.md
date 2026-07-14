@@ -46,6 +46,8 @@ No usar `prisma db push` ni `prisma migrate reset` sobre bases con datos. No usa
 
 Prisma mantiene su historial en la tabla `_prisma_migrations`. Los antiguos archivos SQL independientes fueron retirados porque sus cambios ya forman parte del baseline; desde ahora la única fuente de migraciones es `prisma/migrations`.
 
+El comando `pnpm verify` valida el esquema, confirma el estado de migraciones, ejecuta las pruebas del backend y construye el frontend. Requiere acceso a la base configurada para consultar el estado.
+
 ## Despliegue futuro en VPS
 
 Durante el despliegue:

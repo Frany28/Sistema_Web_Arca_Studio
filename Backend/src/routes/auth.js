@@ -13,10 +13,12 @@ import {
 } from "../controllers/authController.js";
 import { requireAuth } from "../middlewares/auth.js";
 import { loginRateLimit } from "../middlewares/loginRateLimit.js";
+import { validate } from "../middlewares/validate.js";
+import { loginSchema } from "../validation/schemas.js";
 
 const router = Router();
 
-router.post("/login", loginRateLimit, login);
+router.post("/login", loginRateLimit, validate(loginSchema), login);
 router.post("/forgot-password", loginRateLimit, forgotPassword);
 router.post("/verify-reset-token", loginRateLimit, verifyResetToken);
 router.post("/reset-password", loginRateLimit, resetPassword);

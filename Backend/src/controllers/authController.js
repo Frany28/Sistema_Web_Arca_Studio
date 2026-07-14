@@ -30,7 +30,7 @@ import {
 import { serializeCookie } from "../utils/cookies.js";
 import { createAuthToken, verifyAuthToken } from "../utils/tokens.js";
 import { invalidateCachedUser } from "../services/userSessionCache.js";
-import { getUploadStream } from "../utils/uploadStream.js";
+import { prepareUpload, uploadPolicies } from "../services/fileUploadService.js";
 
 const FAKE_BCRYPT_HASH =
   "$2a$10$rN2S9IoJgP1Fx41s6fWaIOY6PksHh4EYoJ.13YZRbrxIJpV66F79i";
@@ -38,17 +38,10 @@ const PASSWORD_RESET_ACCEPTED_RESPONSE = {
   message: "Si el correo está registrado, enviaremos un enlace de recuperación.",
 };
 
-const PROFILE_PHOTO_ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
-const PROFILE_PHOTO_MAX_SIZE_BYTES = 50 * 1024 * 1024;
-
 function getProfilePhotoContentType(value) {
   const contentType = String(value || "").split(";")[0].trim().toLowerCase();
 
-  return PROFILE_PHOTO_ALLOWED_TYPES.has(contentType)
+  return uploadPolicies.avatar.types.has(contentType)
     ? contentType
     : "image/jpeg";
 }
@@ -263,19 +256,7 @@ export async function uploadProfilePhoto(req, res, next) {
   let uploadedStorageKey = null;
 
   try {
-    const contentType = String(req.headers["content-type"] || "")
-      .split(";")[0]
-      .trim()
-      .toLowerCase();
-    const { body: fileStream, size: fileSize } = getUploadStream(req, PROFILE_PHOTO_MAX_SIZE_BYTES);
-
-    if (!PROFILE_PHOTO_ALLOWED_TYPES.has(contentType)) {
-      res.status(400).json({
-        code: "INVALID_PROFILE_PHOTO_TYPE",
-        message: "Sube una imagen JPG, PNG o WEBP.",
-      });
-      return;
-    }
+    const { body: fileStream, contentType, originalName, size: fileSize } = prepareUpload(req, uploadPolicies.avatar, { fallbackName: "avatar.jpg" });
 
     const storageConfig = getSupabaseStorageConfig();
 
@@ -283,11 +264,6 @@ export async function uploadProfilePhoto(req, res, next) {
       throw new Error("SUPABASE_STORAGE_BUCKET is required");
     }
 
-    const originalName = decodeURIComponent(
-      String(req.headers["x-file-name"] || "avatar")
-        .trim()
-        .replace(/\+/g, "%20"),
-    );
     const uploadedAt = new Date();
     const storageKey = buildUserProfilePhotoObjectKey({
       originalName,

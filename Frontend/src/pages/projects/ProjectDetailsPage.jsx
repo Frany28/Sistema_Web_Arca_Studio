@@ -416,7 +416,7 @@ export default function ProjectDetailsPage({
 
     if (!initialProjectId) {
       api.projects
-        .getById({ projectId: routeProjectSlug })
+        .getByIdAllFiles({ projectId: routeProjectSlug })
         .then((data) => {
           if (!isMounted || !data?.project) {
             return;
@@ -450,7 +450,7 @@ export default function ProjectDetailsPage({
     }
 
     api.projects
-      .getById({ projectId: initialProjectId })
+      .getByIdAllFiles({ projectId: initialProjectId })
       .then((data) => {
         if (isMounted) {
           if (data.project?.fileAccessToken) {
@@ -510,7 +510,7 @@ export default function ProjectDetailsPage({
       setProjectCommentsError("");
 
       api.projects
-        .listComments({ projectId: resolvedProjectId })
+        .listAllComments({ projectId: resolvedProjectId })
         .then((data) => {
           if (isMounted) {
             setProjectComments(
@@ -636,7 +636,7 @@ export default function ProjectDetailsPage({
     }
 
     try {
-      const data = await api.projects.getById({ projectId: resolvedProjectId });
+      const data = await api.projects.getByIdAllFiles({ projectId: resolvedProjectId });
       if (data.project?.fileAccessToken) {
         setAuthToken(data.project.fileAccessToken);
       }

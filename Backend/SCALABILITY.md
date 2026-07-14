@@ -17,7 +17,7 @@ La revisión estática no permite certificar 100 usuarios concurrentes. El siste
 | Media | La foto de perfil se descarga y concatena completamente en memoria. | Consumo de memoria evitable durante descargas concurrentes. |
 | Media | No había timeout explícito de consulta ni telemetría por request. | Saturaciones y consultas lentas eran difíciles de detectar. |
 
-Ya se añadieron streaming de archivos, cursores, caché local de autorización, límites acotados, protección concurrente de comentarios, timeouts, telemetría y apagado ordenado. Redis y el bus distribuido quedan deliberadamente pendientes para el despliegue multiproceso en VPS.
+Ya se añadieron streaming de archivos, cursores, caché local de autorización, límites acotados, protección concurrente de comentarios, timeouts, telemetría y apagado ordenado. Redis y el bus distribuido quedan deliberadamente pendientes para el despliegue multiproceso en VPS. La validación usa Zod, los uploads comparten una política central y el frontend recorre páginas mediante cursores sin duplicar resultados.
 
 ## Preparación de staging
 

@@ -8,50 +8,7 @@ import {
   uploadProjectFile,
   uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
-import { getUploadStream } from "../utils/uploadStream.js";
-
-const MAX_FILE_SIZE_BYTES = Number(
-  process.env.FILE_UPLOAD_MAX_BYTES || 50 * 1024 * 1024,
-);
-const MAX_FILE_NAME_LENGTH = 150;
-const ALLOWED_FILE_EXTENSIONS = new Set(["jpeg", "jpg", "mp4", "pdf", "png"]);
-const ALLOWED_FILE_TYPES = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "video/mp4",
-]);
-
-function getFileExtension(fileName) {
-  const normalized = String(fileName || "").trim().toLowerCase();
-  const lastDotIndex = normalized.lastIndexOf(".");
-
-  if (lastDotIndex <= 0 || lastDotIndex === normalized.length - 1) {
-    return "";
-  }
-
-  return normalized.slice(lastDotIndex + 1);
-}
-
-function getNormalizedContentType(value) {
-  return String(value || "")
-    .split(";")[0]
-    .trim()
-    .toLowerCase();
-}
-
-function getOriginalFileName(req) {
-  const headerValue =
-    req.headers["x-file-name"] ||
-    req.headers["x-original-file-name"] ||
-    "archivo";
-
-  try {
-    return decodeURIComponent(String(headerValue));
-  } catch {
-    return String(headerValue);
-  }
-}
+import { runUpload, uploadPolicies } from "../services/fileUploadService.js";
 
 export async function uploadProjectRequestAttachment(req, res, next) {
   try {
@@ -78,46 +35,7 @@ export async function uploadProjectRequestAttachment(req, res, next) {
       return;
     }
 
-    const { body, size: fileSize } = getUploadStream(req, MAX_FILE_SIZE_BYTES);
-    const originalName = getOriginalFileName(req);
-    const extension = getFileExtension(originalName);
-    const contentType = getNormalizedContentType(req.headers["content-type"]);
-
-    if (!originalName || originalName.length > MAX_FILE_NAME_LENGTH) {
-      res.status(400).json({
-        code: "INVALID_FILE_NAME",
-        message: `El nombre del archivo no puede superar ${MAX_FILE_NAME_LENGTH} caracteres.`,
-      });
-      return;
-    }
-
-    if (fileSize > MAX_FILE_SIZE_BYTES) {
-      res.status(413).json({
-        code: "FILE_TOO_LARGE",
-        message: "El archivo supera el tamano permitido de 50 MB.",
-      });
-      return;
-    }
-
-    if (
-      !ALLOWED_FILE_EXTENSIONS.has(extension) ||
-      !ALLOWED_FILE_TYPES.has(contentType)
-    ) {
-      res.status(415).json({
-        code: "UNSUPPORTED_FILE_TYPE",
-        message: "Solo se permiten archivos JPEG, PNG, PDF y MP4.",
-      });
-      return;
-    }
-
-    const file = await uploadProjectRequestFile({
-      body,
-      contentType,
-      originalName,
-      projectRequestId,
-      size: fileSize,
-      user: req.user,
-    });
+    const file = await runUpload({ req, policy: uploadPolicies.document, operation: (upload) => uploadProjectRequestFile({ ...upload, projectRequestId, user: req.user }) });
 
     res.status(201).json({ file });
   } catch (error) {
@@ -204,46 +122,7 @@ export async function uploadProjectAttachment(req, res, next) {
       return;
     }
 
-    const { body, size: fileSize } = getUploadStream(req, MAX_FILE_SIZE_BYTES);
-    const originalName = getOriginalFileName(req);
-    const extension = getFileExtension(originalName);
-    const contentType = getNormalizedContentType(req.headers["content-type"]);
-
-    if (!originalName || originalName.length > MAX_FILE_NAME_LENGTH) {
-      res.status(400).json({
-        code: "INVALID_FILE_NAME",
-        message: `El nombre del archivo no puede superar ${MAX_FILE_NAME_LENGTH} caracteres.`,
-      });
-      return;
-    }
-
-    if (fileSize > MAX_FILE_SIZE_BYTES) {
-      res.status(413).json({
-        code: "FILE_TOO_LARGE",
-        message: "El archivo supera el tamano permitido de 50 MB.",
-      });
-      return;
-    }
-
-    if (
-      !ALLOWED_FILE_EXTENSIONS.has(extension) ||
-      !ALLOWED_FILE_TYPES.has(contentType)
-    ) {
-      res.status(415).json({
-        code: "UNSUPPORTED_FILE_TYPE",
-        message: "Solo se permiten archivos JPEG, PNG, PDF y MP4.",
-      });
-      return;
-    }
-
-    const file = await uploadProjectFile({
-      body,
-      contentType,
-      originalName,
-      projectId,
-      size: fileSize,
-      user: req.user,
-    });
+    const file = await runUpload({ req, policy: uploadPolicies.document, operation: (upload) => uploadProjectFile({ ...upload, projectId, user: req.user }) });
 
     res.status(201).json({ file });
   } catch (error) {

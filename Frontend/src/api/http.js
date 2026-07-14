@@ -75,6 +75,21 @@ async function apiRequest(path, options = {}) {
   return data;
 }
 
+async function collectCursorPages(fetchPage, collectionKey, limit = 100) {
+  const items = [];
+  const ids = new Set();
+  let cursor = null;
+  do {
+    const page = await fetchPage({ cursor, limit });
+    for (const item of page?.[collectionKey] || []) {
+      const key = String(item?.id ?? `${items.length}`);
+      if (!ids.has(key)) { ids.add(key); items.push(item); }
+    }
+    cursor = page?.nextCursor || null;
+  } while (cursor);
+  return { [collectionKey]: items, nextCursor: null };
+}
+
 export const authApi = {
   login({ email, password }) {
     return apiRequest("/auth/login", {
@@ -232,8 +247,33 @@ export const projectsApi = {
     return apiRequest(`/projects${query ? `?${query}` : ""}`);
   },
 
-  getById({ projectId }) {
-    return apiRequest(`/projects/${encodeURIComponent(projectId)}`);
+  listAll() {
+    return collectCursorPages((page) => projectsApi.list(page), "projects");
+  },
+
+  getById({ filesCursor, filesLimit, projectId }) {
+    const params = new URLSearchParams();
+    if (filesCursor) params.set("filesCursor", filesCursor);
+    if (filesLimit) params.set("filesLimit", String(filesLimit));
+    const query = params.toString();
+    return apiRequest(`/projects/${encodeURIComponent(projectId)}${query ? `?${query}` : ""}`);
+  },
+
+  async getByIdAllFiles({ projectId }) {
+    let cursor = null;
+    let project = null;
+    const files = [];
+    const ids = new Set();
+    do {
+      const data = await projectsApi.getById({ filesCursor: cursor, filesLimit: 100, projectId });
+      project ||= data.project;
+      for (const file of data.project?.files || []) {
+        const key = String(file.id);
+        if (!ids.has(key)) { ids.add(key); files.push(file); }
+      }
+      cursor = data.project?.filesNextCursor || null;
+    } while (cursor);
+    return { project: { ...project, files, filesNextCursor: null } };
   },
 
   listComments({ cursor, limit, projectId }) {
@@ -242,6 +282,10 @@ export const projectsApi = {
     if (limit) params.set("limit", String(limit));
     const query = params.toString();
     return apiRequest(`/projects/${projectId}/comments${query ? `?${query}` : ""}`);
+  },
+
+  listAllComments({ projectId }) {
+    return collectCursorPages((page) => projectsApi.listComments({ ...page, projectId }), "comments");
   },
 
   subscribeToEvents({ projectId, onCommentCreated, onError }) {

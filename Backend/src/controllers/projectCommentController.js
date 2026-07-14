@@ -73,9 +73,10 @@ export async function getProjectComments(req, res, next) {
       return;
     }
 
-    const cursor = decodeCursor(req.query?.cursor);
-    if (req.query?.cursor && !cursor) return res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor inválido." });
-    const page = await listProjectComments(projectId, req.user, { cursor, limit: parsePageLimit(req.query?.limit) });
+    const query = req.validatedQuery || req.query;
+    const cursor = decodeCursor(query?.cursor);
+    if (query?.cursor && !cursor) return res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor inválido." });
+    const page = await listProjectComments(projectId, req.user, { cursor, limit: parsePageLimit(query?.limit) });
 
     res.status(200).json({ comments: page.items, nextCursor: page.nextCursor });
   } catch (error) {

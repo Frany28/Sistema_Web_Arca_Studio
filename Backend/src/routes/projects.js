@@ -17,19 +17,21 @@ import {
 } from "../controllers/projectCommentController.js";
 import { requireAuth, requirePermissions } from "../middlewares/auth.js";
 import { commentRateLimit, uploadRateLimit } from "../middlewares/actionRateLimits.js";
+import { validate } from "../middlewares/validate.js";
+import { commentSchema, paginationSchema } from "../validation/schemas.js";
 
 const router = Router();
 
-router.get("/", requireAuth, requirePermissions("projects.read"), getMyProjects);
+router.get("/", requireAuth, requirePermissions("projects.read"), validate(paginationSchema), getMyProjects);
 router.get(
   "/:projectId",
   requireAuth,
   requirePermissions("projects.read"),
   getProjectDetail,
 );
-router.get("/:projectId/comments", requireAuth, getProjectComments);
+router.get("/:projectId/comments", requireAuth, validate(paginationSchema), getProjectComments);
 router.get("/:projectId/events", requireAuth, streamProjectCommentEvents);
-router.post("/:projectId/comments", requireAuth, commentRateLimit, createProjectComment);
+router.post("/:projectId/comments", requireAuth, commentRateLimit, validate(commentSchema), createProjectComment);
 router.post(
   "/:projectId/files",
   requireAuth,

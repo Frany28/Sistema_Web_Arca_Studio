@@ -245,7 +245,7 @@ function useProjectCommentRows(projectIds, { refreshIntervalMs = 0 } = {}) {
     let isMounted = true;
 
     Promise.all(
-      projectIds.map((projectId) => api.projects.listComments({ projectId })),
+      projectIds.map((projectId) => api.projects.listAllComments({ projectId })),
     )
       .then((responses) => {
         if (isMounted) {
@@ -277,7 +277,7 @@ function useProjectCommentRows(projectIds, { refreshIntervalMs = 0 } = {}) {
         ? window.setInterval(() => {
             Promise.all(
               projectIds.map((projectId) =>
-                api.projects.listComments({ projectId }),
+                api.projects.listAllComments({ projectId }),
               ),
             )
               .then((responses) => {
