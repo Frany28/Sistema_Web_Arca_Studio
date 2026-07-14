@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "../../api/http.js";
@@ -8,7 +8,11 @@ import AuthToast, {
   AuthToastLockIcon,
 } from "../../components/ui/AuthToast/AuthToast.jsx";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
-import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
+import { useRecentProjectComments } from "../../hooks/useProjectComments.js";
+import {
+  getCommentableProjectsForUser,
+  getProjectNamesById,
+} from "../../utils/commentDisplay.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
@@ -161,9 +165,55 @@ export default function SettingsPage() {
 
   const [passwordValidationErrors, setPasswordValidationErrors] = useState({});
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const imageCommentNotifications = useImageCommentNotifications({
-    projectIds: ["quinta-bella-vista"],
+  const [projects, setProjects] = useState([]);
+  const [projectsError, setProjectsError] = useState("");
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const commentableProjects = useMemo(
+    () => getCommentableProjectsForUser(projects, user),
+    [projects, user],
+  );
+  const projectNamesById = useMemo(
+    () => getProjectNamesById(commentableProjects),
+    [commentableProjects],
+  );
+  const {
+    drawerComments: projectObservations,
+    error: observationsError,
+    loading: observationsLoading,
+    refresh: refreshObservations,
+  } = useRecentProjectComments({
+    enabled: commentableProjects.length > 0,
+    projectIds: commentableProjects.map((project) => project.id),
+    projectNamesById,
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
+    user,
   });
+
+  useEffect(() => {
+    let isMounted = true;
+    setProjectsLoading(true);
+    setProjectsError("");
+
+    api.projects
+      .listAll()
+      .then((data) => {
+        if (isMounted) setProjects(Array.isArray(data.projects) ? data.projects : []);
+      })
+      .catch((error) => {
+        if (isMounted) setProjectsError(error.message || "No se pudieron cargar los proyectos.");
+      })
+      .finally(() => {
+        if (isMounted) setProjectsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (isNotificationsDrawerOpen) refreshObservations?.();
+  }, [isNotificationsDrawerOpen, refreshObservations]);
 
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -233,6 +283,15 @@ export default function SettingsPage() {
   };
 
   const openImageComment = (comment) => {
+    const sourceProject = commentableProjects.find(
+      (project) => String(project.id) === String(comment?.projectId),
+    );
+    const projectRouteId = sourceProject?.publicSlug || sourceProject?.id;
+
+    if (!projectRouteId) {
+      return;
+    }
+
     const params = new URLSearchParams({ tab: "renders" });
 
     if (comment?.imageId) {
@@ -244,7 +303,7 @@ export default function SettingsPage() {
     }
 
     setIsNotificationsDrawerOpen(false);
-    navigate(`/proyectos/quinta-bella-vista?${params.toString()}`);
+    navigate(`/proyectos/${encodeURIComponent(projectRouteId)}?${params.toString()}`);
   };
 
   const passwordRequirements = [
@@ -555,9 +614,9 @@ export default function SettingsPage() {
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
-            comments={imageCommentNotifications}
-            commentsError=""
-            commentsLoading={false}
+            comments={projectObservations}
+            commentsError={projectsError || observationsError}
+            commentsLoading={projectsLoading || observationsLoading}
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}

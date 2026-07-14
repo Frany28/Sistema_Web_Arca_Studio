@@ -15,6 +15,7 @@ import {
   useProjectComments,
   useRecentProjectComments,
 } from "../../hooks/useProjectComments.js";
+import { getProjectNamesById } from "../../utils/commentDisplay.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
@@ -158,6 +159,7 @@ function ArchitectDashboard({ empty = false }) {
   );
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: commentProjectRows.map((project) => project.id),
+    projectNamesById: getProjectNamesById(commentProjectRows),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
   const commentsProjectId = commentProjectRows[0]?.id ?? null;
@@ -181,6 +183,7 @@ function ArchitectDashboard({ empty = false }) {
   } = useRecentProjectComments({
     enabled: commentProjectRows.length > 0,
     projectIds: commentProjectRows.map((project) => project.id),
+    projectNamesById: getProjectNamesById(commentProjectRows),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
     user,
   });

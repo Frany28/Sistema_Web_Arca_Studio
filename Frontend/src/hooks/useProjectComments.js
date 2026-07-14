@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/http.js";
-import { getCommentAuthorAvatarSrc } from "../utils/commentDisplay.js";
+import { decorateCommentForDisplay } from "../utils/commentDisplay.js";
 
 function getRelativeTimeLabel(value) {
   const date = new Date(value);
@@ -32,55 +32,17 @@ function getRelativeTimeLabel(value) {
   return `Hace ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
 }
 
-function getCommentAuthorLabel(comment, user) {
-  const author = comment.author;
-
-  const authorId = author?.id == null ? "" : String(author.id);
-  const authorEmail = String(author?.email || "")
-    .trim()
-    .toLowerCase();
-  const authorName = String(
-    author?.name ||
-      [author?.firstName, author?.lastName].filter(Boolean).join(" "),
-  )
-    .trim()
-    .toLowerCase();
-  const userId = user?.id == null ? "" : String(user.id);
-  const userEmail = String(user?.email || "")
-    .trim()
-    .toLowerCase();
-  const userName = String(
-    user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(" "),
-  )
-    .trim()
-    .toLowerCase();
-
-  const isCurrentUser =
-    (authorId && userId && authorId === userId) ||
-    (authorEmail && userEmail && authorEmail === userEmail) ||
-    (authorName && userName && authorName === userName);
-
-  if (isCurrentUser) {
-    return "Tú";
-  }
-
-  const name = author?.name || comment.name || "Usuario";
-
-  return author?.roleCode === "architect" ? `Arq. ${name}` : name;
-}
-
-function toDrawerComment(comment, user) {
+function toDrawerComment(comment, user, projectNamesById = {}) {
   const commentType = comment.commentType || "general";
 
   return {
-    avatarSrc: getCommentAuthorAvatarSrc(comment, user),
+    ...decorateCommentForDisplay(comment, user, projectNamesById),
     commentType,
     id: comment.id,
     image: comment.image,
     imageComment: ["image", "viewer3d", "video"].includes(commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.content,
-    name: getCommentAuthorLabel(comment, user),
     pointNumber:
       commentType === "viewer3d"
         ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
@@ -177,7 +139,7 @@ export function useProjectComments({
       .catch((requestError) => {
         if (isMounted) {
           setError(
-            requestError.message || "No se pudieron cargar los comentarios.",
+            requestError.message || "No se pudieron cargar las observaciones.",
           );
         }
       })
@@ -279,7 +241,7 @@ export function useProjectComments({
           setComments((current) => upsertCommentById(current, data.comment));
         }
       } catch (requestError) {
-        setError(requestError.message || "No se pudo guardar el comentario.");
+        setError(requestError.message || "No se pudo guardar la observación.");
         throw requestError;
       } finally {
         setLoading(false);
@@ -302,7 +264,7 @@ export function useProjectComments({
       setComments(Array.isArray(data.comments) ? data.comments : []);
     } catch (requestError) {
       setError(
-        requestError.message || "No se pudieron cargar los comentarios.",
+        requestError.message || "No se pudieron cargar las observaciones.",
       );
     } finally {
       setLoading(false);
@@ -328,6 +290,7 @@ export function useProjectComments({
 export function useRecentProjectComments({
   enabled = true,
   projectIds = [],
+  projectNamesById = {},
   refreshIntervalMs = 0,
   user,
 }) {
@@ -348,7 +311,12 @@ export function useRecentProjectComments({
 
   useEffect(() => {
     if (!enabled || normalizedProjectIds.length === 0) {
-      return undefined;
+      const resetId = window.setTimeout(() => {
+        setComments([]);
+        setError("");
+        setLoading(false);
+      }, 0);
+      return () => window.clearTimeout(resetId);
     }
 
     let isMounted = true;
@@ -373,7 +341,7 @@ export function useRecentProjectComments({
       .catch((requestError) => {
         if (isMounted) {
           setError(
-            requestError.message || "No se pudieron cargar los comentarios.",
+            requestError.message || "No se pudieron cargar las observaciones.",
           );
         }
       })
@@ -448,7 +416,7 @@ export function useRecentProjectComments({
       );
     } catch (requestError) {
       setError(
-        requestError.message || "No se pudieron cargar los comentarios.",
+        requestError.message || "No se pudieron cargar las observaciones.",
       );
     } finally {
       setLoading(false);
@@ -457,8 +425,8 @@ export function useRecentProjectComments({
 
   const drawerComments = useMemo(
     () =>
-      comments.map((comment) => toDrawerComment(comment, user)),
-    [comments, user],
+      comments.map((comment) => toDrawerComment(comment, user, projectNamesById)),
+    [comments, projectNamesById, user],
   );
 
   return {

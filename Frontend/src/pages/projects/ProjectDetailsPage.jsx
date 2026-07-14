@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, setAuthToken } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
-import { getCommentAuthorAvatarSrc } from "../../utils/commentDisplay.js";
+import { decorateCommentForDisplay } from "../../utils/commentDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
@@ -264,55 +264,17 @@ function getRelativeTimeLabel(value) {
   return `Hace ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
 }
 
-function getCommentAuthorLabel(comment, user) {
-  const author = comment.author;
-
-  const authorId = author?.id == null ? "" : String(author.id);
-  const authorEmail = String(author?.email || "")
-    .trim()
-    .toLowerCase();
-  const authorName = String(
-    author?.name ||
-      [author?.firstName, author?.lastName].filter(Boolean).join(" "),
-  )
-    .trim()
-    .toLowerCase();
-  const userId = user?.id == null ? "" : String(user.id);
-  const userEmail = String(user?.email || "")
-    .trim()
-    .toLowerCase();
-  const userName = String(
-    user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(" "),
-  )
-    .trim()
-    .toLowerCase();
-
-  const isCurrentUser =
-    (authorId && userId && authorId === userId) ||
-    (authorEmail && userEmail && authorEmail === userEmail) ||
-    (authorName && userName && authorName === userName);
-
-  if (isCurrentUser) {
-    return "Tú";
-  }
-
-  const name = author?.name || comment.name || "Usuario";
-
-  return author?.roleCode === "architect" ? `Arq. ${name}` : name;
-}
-
 function toDrawerComment(comment, user) {
   const commentType = comment.commentType || "general";
 
   return {
-    avatarSrc: getCommentAuthorAvatarSrc(comment, user),
+    ...decorateCommentForDisplay(comment, user),
     commentType,
     id: comment.id,
     image: comment.image,
     imageComment: ["image", "viewer3d", "video"].includes(commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.content,
-    name: getCommentAuthorLabel(comment, user),
     pointNumber:
       commentType === "viewer3d"
         ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
@@ -527,7 +489,7 @@ export default function ProjectDetailsPage({
         .catch((error) => {
           if (isMounted) {
             setProjectCommentsError(
-              error.message || "No se pudieron cargar los comentarios.",
+              error.message || "No se pudieron cargar las observaciones.",
             );
           }
         })
@@ -669,7 +631,7 @@ export default function ProjectDetailsPage({
       }
     } catch (error) {
       setProjectCommentsError(
-        error.message || "No se pudo guardar el comentario.",
+        error.message || "No se pudo guardar la observación.",
       );
     } finally {
       setProjectCommentsLoading(false);

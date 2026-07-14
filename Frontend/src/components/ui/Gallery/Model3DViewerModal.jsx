@@ -661,7 +661,7 @@ export const MODEL_3D_TEXTURE_PRESETS = {
     toneMapping: "neutral",
   },
 };
-const VIEWER_3D_ANNOTATION_LABEL = "Anotación";
+const VISUAL_REFERENCE_LABEL = "Referencia";
 
 function getCommentTime(comment) {
   const time = new Date(comment.createdAt || 0).getTime();
@@ -754,6 +754,7 @@ function CommentCard({
   id,
   author,
   avatarSrc,
+  authorRoleLabel,
   time,
   body,
   image,
@@ -761,7 +762,9 @@ function CommentCard({
   mediaType = "render",
   message,
   name,
+  observationTypeLabel,
   pointNumber,
+  projectName,
   selection,
   timestamp,
   type = "comment",
@@ -818,6 +821,9 @@ function CommentCard({
                 avatarAlt={safeDisplayAuthor}
                 avatarDecorative={false}
               />
+              <span className="shrink-0 rounded-full bg-[var(--color-neutral-200)] px-[6px] py-[2px] text-[9px] font-medium leading-[11px] text-[var(--color-text-200)]">
+                {authorRoleLabel || "Usuario"}
+              </span>
               <span className="shrink-0 text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {safeDisplayTime}
               </span>
@@ -834,6 +840,11 @@ function CommentCard({
             >
               <MoreIcon className="size-5" />
             </button>
+          </div>
+
+          <div className="flex min-w-0 items-center gap-[6px] text-[10px] leading-[12px] text-[var(--color-text-100)]">
+            <span>{observationTypeLabel || "Observación en modelo 3D"}</span>
+            {projectName ? <><span aria-hidden="true">•</span><span className="truncate">{projectName}</span></> : null}
           </div>
 
           <p className="text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
@@ -853,7 +864,7 @@ function CommentCard({
           ) : !isReply && mediaType === "video" ? (
             <MediaReferencePreview
               imageSrc={image?.src || mediaItem?.image}
-              subtitle="Vista asociada al comentario"
+              subtitle="Vista asociada a la observación"
               title="Video adjunto"
             />
           ) : null}
@@ -912,14 +923,14 @@ function SelectionPreview({
   const Container = onSelect ? "button" : "div";
   const referenceNumber = Number(pointNumber) || null;
   const referenceTitle = referenceNumber
-    ? `Referencia ${referenceNumber}`
+    ? `${VISUAL_REFERENCE_LABEL} ${referenceNumber}`
     : mediaType === "image"
-      ? "Imagen marcada"
-      : "Referencia";
+      ? "Referencia visual"
+      : VISUAL_REFERENCE_LABEL;
   const referenceSubtitle =
     mediaType === "image"
-      ? "Área seleccionada en la imagen"
-      : "Detalle señalado en el render";
+      ? "Área señalada en la imagen"
+      : "Punto señalado en el modelo 3D";
 
   return (
     <Container
@@ -1056,7 +1067,7 @@ function MessageInput({
         />
       ) : null}
       <TextArea
-        label="Comentarios Generales"
+        label="Observación general"
         placeholder={placeholder}
         value={textAreaValue}
         showHint={false}
@@ -1075,7 +1086,7 @@ function MessageInput({
       <div className="flex justify-end">
         <button
           type="button"
-          aria-label="Enviar comentario"
+          aria-label="Enviar observación"
           disabled={!trimmedValue}
           className="flex size-8 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-neutral-300)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
           onClick={handleSubmit}

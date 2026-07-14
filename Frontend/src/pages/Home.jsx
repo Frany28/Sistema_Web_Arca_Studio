@@ -21,6 +21,7 @@ import {
   useProjectComments,
   useRecentProjectComments,
 } from "../hooks/useProjectComments.js";
+import { getProjectNamesById } from "../utils/commentDisplay.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
@@ -273,6 +274,7 @@ function Home() {
   );
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: ownedProjectRows.map((project) => project.id),
+    projectNamesById: getProjectNamesById(ownedProjectRows),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
   const commentsProjectId = ownedProjectRows[0]?.id ?? null;
@@ -296,6 +298,7 @@ function Home() {
   } = useRecentProjectComments({
     enabled: ownedProjectRows.length > 0,
     projectIds: ownedProjectRows.map((project) => project.id),
+    projectNamesById: getProjectNamesById(ownedProjectRows),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
     user,
   });

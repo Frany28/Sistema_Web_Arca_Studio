@@ -18,7 +18,7 @@ export const commentSchema = z.object({
   params: z.object({ projectId: positiveId }),
   body: z.object({
     commentType: z.enum(["general", "image", "video", "viewer3d"]).default("general"),
-    content: z.string().trim().min(1, "Escribe un comentario.").max(2000),
+    content: z.string().trim().min(1, "Escribe una observación.").max(2000),
     parentCommentId: positiveId.nullish(),
     targetId: z.union([z.string(), z.number()]).nullish(),
     image: z.record(z.string(), z.unknown()).nullish(),

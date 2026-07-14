@@ -29,9 +29,9 @@ export const COMMENT_PANEL_DEFAULT_ITEMS = [
 ];
 
 export const COMMENT_PANEL_DEFAULT_PROPS = {
-  title: "Comentarios",
+  title: "Observaciones",
   actionLabel: "Marcar todo como leído",
-  footerLabel: "Ver todos los comentarios",
+  footerLabel: "Ver todas las observaciones",
   items: COMMENT_PANEL_DEFAULT_ITEMS,
 };
 

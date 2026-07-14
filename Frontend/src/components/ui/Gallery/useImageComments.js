@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "../../../api/http.js";
 import { useAuth } from "../../../auth/AuthContext.jsx";
-import { getCommentAuthorAvatarSrc } from "../../../utils/commentDisplay.js";
+import { decorateCommentForDisplay } from "../../../utils/commentDisplay.js";
 
 const LEGACY_STORAGE_KEY = "arca.image-comments.v1";
 const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "viewer3d"]);
@@ -52,50 +52,7 @@ function getRelativeTimeLabel(value) {
   return `Hace ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
 }
 
-function getAuthorLabel(comment, user) {
-  const author = comment.author;
-
-  const authorId = author?.id == null ? "" : String(author.id);
-  const authorEmail = String(author?.email || "")
-    .trim()
-    .toLowerCase();
-  const authorName = String(
-    author?.name ||
-      [author?.firstName, author?.lastName].filter(Boolean).join(" "),
-  )
-    .trim()
-    .toLowerCase();
-  const userId = user?.id == null ? "" : String(user.id);
-  const userEmail = String(user?.email || "")
-    .trim()
-    .toLowerCase();
-  const userName = String(
-    user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(" "),
-  )
-    .trim()
-    .toLowerCase();
-
-  const isCurrentUser =
-    (authorId && userId && authorId === userId) ||
-    (authorEmail && userEmail && authorEmail === userEmail) ||
-    (authorName && userName && authorName === userName) ||
-    comment.name === "Tú" ||
-    comment.name === "Tu";
-
-  if (isCurrentUser) {
-    return "Tú";
-  }
-
-  if (author?.name) {
-    return author.roleCode === "architect"
-      ? `Arq. ${author.name}`
-      : author.name;
-  }
-
-  return comment.name || "Usuario";
-}
-
-function decorateComment(comment, user) {
+function decorateComment(comment, user, projectNamesById = {}) {
   const selection = comment.selection || null;
   const pointNumber =
     comment.commentType === "viewer3d"
@@ -117,12 +74,11 @@ function decorateComment(comment, user) {
 
   return {
     ...comment,
-    avatarSrc: getCommentAuthorAvatarSrc(comment, user),
+    ...decorateCommentForDisplay(comment, user, projectNamesById),
     image,
     imageComment: MULTIMEDIA_COMMENT_TYPES.has(comment.commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.message ?? comment.content,
-    name: getAuthorLabel(comment, user),
     pointNumber,
     timestamp: getRelativeTimeLabel(comment.createdAt) || comment.timestamp,
   };
@@ -388,6 +344,7 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
 
 export function useImageCommentNotifications({
   projectIds = [],
+  projectNamesById = {},
   refreshIntervalMs = 0,
 } = {}) {
   const { user } = useAuth();
@@ -423,12 +380,12 @@ export function useImageCommentNotifications({
             new Date(right.createdAt || 0).getTime()
           );
         })
-        .map((comment) => decorateComment(comment, user)),
+        .map((comment) => decorateComment(comment, user, projectNamesById)),
     ).sort((left, right) => {
         return (
           new Date(right.createdAt || 0).getTime() -
           new Date(left.createdAt || 0).getTime()
         );
       });
-  }, [comments, user]);
+  }, [comments, projectNamesById, user]);
 }

@@ -60,8 +60,8 @@ export default function PreferencesPanel({
       <PreferenceItem
         className="border-b border-[var(--color-neutral-200)]"
         icon={<BellIcon className="size-5" />}
-        title="Notificaciones de comentarios"
-        description="Recibir notificaciones de nuevos comentarios."
+        title="Notificaciones de observaciones"
+        description="Recibir notificaciones de nuevas observaciones."
         rightContent={
           <Toggle
             size="S"

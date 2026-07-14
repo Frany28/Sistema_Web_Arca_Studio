@@ -181,6 +181,9 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 ## Datos, paginación y tiempo real
 
 - Todo componente conectado a datos dinámicos (por ejemplo, comentarios, avatares, notificaciones o actividad) debe conservar y renderizar los campos relacionados en todas sus transformaciones, variantes y puntos de uso. Una actualización debe propagarse tanto para clientes como para arquitectos, administradores y cualquier rol existente, en desarrollo, pruebas y producción; no se permiten datos de demostración ni valores visuales fijos cuando exista una fuente real conectada.
+- Las conversaciones del proyecto se denominan **Observaciones**. Sus tipos visibles son “Observación general”, “Observación sobre imagen”, “Observación sobre video” y “Observación en modelo 3D”; las marcas sobre contenido se denominan “Referencia visual” o “Referencia N”. Los valores internos de API pueden conservar `general`, `image`, `video` y `viewer3d`.
+- Cliente y arquitecto solo pueden visualizar observaciones cuando comparten el mismo proyecto: el cliente pertenece al proyecto y el arquitecto está asignado a él. Que un proyecto sea público no concede acceso a sus observaciones. El administrador conserva visibilidad global.
+- Todo panel agregado de observaciones debe obtener IDs numéricos desde los proyectos autorizados, mostrar el proyecto de origen y mantenerse actualizado mediante SSE o refresco periódico. Se prohíben IDs, slugs y observaciones de demostración cuando exista una fuente real.
 - Reutilizar las utilidades de paginación del frontend para combinar páginas y eliminar duplicados.
 - Reiniciar cursores al cambiar usuario, proyecto o filtros.
 - Impedir peticiones duplicadas durante una carga.

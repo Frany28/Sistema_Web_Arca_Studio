@@ -106,7 +106,7 @@ export async function createProjectComment(req, res, next) {
     if (!commentType) {
       res.status(400).json({
         code: "INVALID_COMMENT_TYPE",
-        message: "El tipo de comentario no es valido.",
+        message: "El tipo de observación no es válido.",
       });
       return;
     }
@@ -114,7 +114,7 @@ export async function createProjectComment(req, res, next) {
     if (!parentCommentId && commentType !== "general" && !targetId) {
       res.status(400).json({
         code: "COMMENT_TARGET_REQUIRED",
-        message: "El comentario necesita un recurso asociado.",
+        message: "La observación necesita un recurso asociado.",
       });
       return;
     }
@@ -122,7 +122,7 @@ export async function createProjectComment(req, res, next) {
     if (!content) {
       res.status(400).json({
         code: "COMMENT_CONTENT_REQUIRED",
-        message: "Escribe un comentario.",
+        message: "Escribe una observación.",
       });
       return;
     }
@@ -130,7 +130,7 @@ export async function createProjectComment(req, res, next) {
     if (content.length > COMMENT_CONTENT_MAX_LENGTH) {
       res.status(400).json({
         code: "COMMENT_CONTENT_TOO_LONG",
-        message: `El comentario no puede superar ${COMMENT_CONTENT_MAX_LENGTH} caracteres.`,
+        message: `La observación no puede superar ${COMMENT_CONTENT_MAX_LENGTH} caracteres.`,
       });
       return;
     }
@@ -138,7 +138,7 @@ export async function createProjectComment(req, res, next) {
     if (Number.isNaN(parentCommentId)) {
       res.status(400).json({
         code: "INVALID_PARENT_COMMENT_ID",
-        message: "El comentario a responder no es valido.",
+        message: "La observación a responder no es válida.",
       });
       return;
     }
@@ -162,7 +162,7 @@ export async function createProjectComment(req, res, next) {
     if (!comment) {
       res.status(404).json({
         code: "PROJECT_OR_COMMENT_NOT_FOUND",
-        message: "No se encontro el proyecto o comentario a responder.",
+        message: "No se encontró el proyecto o la observación a responder.",
       });
       return;
     }
@@ -176,7 +176,7 @@ export async function createProjectComment(req, res, next) {
     res.status(201).json({ comment });
   } catch (error) {
     if (error.code === "23505") {
-      res.status(409).json({ code: "COMMENT_CONFLICT", message: "Otro comentario fue creado simultáneamente. Intenta de nuevo." });
+      res.status(409).json({ code: "COMMENT_CONFLICT", message: "Otra observación fue creada simultáneamente. Intenta de nuevo." });
       return;
     }
     next(error);

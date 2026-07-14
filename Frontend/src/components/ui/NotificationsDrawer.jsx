@@ -46,7 +46,7 @@ const GENERAL_COMMENTS = [
   },
 ];
 
-const VIEWER_3D_ANNOTATION_LABEL = "Anotación";
+const VISUAL_REFERENCE_LABEL = "Referencia";
 
 const RECENT_ACTIVITY = [
   {
@@ -236,13 +236,16 @@ function SendIcon() {
 
 function CommentCard({
   avatarSrc,
+  authorRoleLabel,
   commentType,
   id,
   image,
   imageComment = false,
   name,
+  observationTypeLabel,
   onSelect,
   pointNumber,
+  projectName,
   timestamp,
   message,
   selection,
@@ -310,12 +313,15 @@ function CommentCard({
               <p className="text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
                 {displayName}
               </p>
+              <span className="shrink-0 rounded-full bg-[var(--color-neutral-200)] px-[6px] py-[2px] text-[9px] font-medium leading-[11px] text-[var(--color-text-200)]">
+                {authorRoleLabel || "Usuario"}
+              </span>
               <p className="text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {timestamp}
               </p>
               {displayPointNumber ? (
                 <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
-                  {VIEWER_3D_ANNOTATION_LABEL} {displayPointNumber}
+                  {VISUAL_REFERENCE_LABEL} {displayPointNumber}
                 </span>
               ) : null}
             </div>
@@ -334,6 +340,11 @@ function CommentCard({
             >
               <MoreIcon />
             </button>
+          </div>
+
+          <div className="flex min-w-0 items-center gap-[6px] text-[10px] leading-[12px] text-[var(--color-text-100)]">
+            <span>{observationTypeLabel || "Observación general"}</span>
+            {projectName ? <><span aria-hidden="true">•</span><span className="truncate">{projectName}</span></> : null}
           </div>
 
           <p className="text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
@@ -394,8 +405,8 @@ function ImageCommentPreview({ commentType, image, pointNumber, selection }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
           {isViewer3dComment && Number(pointNumber)
-            ? `${VIEWER_3D_ANNOTATION_LABEL} ${Number(pointNumber)}`
-            : image?.title || "Imagen comentada"}
+            ? `${VISUAL_REFERENCE_LABEL} ${Number(pointNumber)}`
+            : "Referencia visual"}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
           x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
@@ -462,7 +473,7 @@ function MessageInput({
   return multiline ? (
     <div className="flex flex-col gap-[8px]">
       <TextArea
-        label="Comentarios Generales"
+        label="Observación general"
         placeholder={placeholder}
         value={textAreaValue}
         disabled={disabled}
@@ -483,7 +494,7 @@ function MessageInput({
       <div className="flex justify-end">
         <button
           type="button"
-          aria-label="Enviar comentario"
+          aria-label="Enviar observación"
           disabled={!trimmedValue || disabled}
           className="flex size-8 cursor-pointer items-center justify-center rounded-[8px] text-[var(--color-neutral-300)] transition-colors duration-200 hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
           onClick={handleSubmit}
@@ -697,7 +708,6 @@ function NotificationsDrawer({
     } catch (err) {
       // Error will be reflected via props `commentsError` from the caller;
       // prevent unhandled rejection from breaking the UI.
-      // eslint-disable-next-line no-console
       console.warn("Comment submit failed:", err);
     } finally {
       if (parentCommentId) {
@@ -732,7 +742,7 @@ function NotificationsDrawer({
           <div className="flex flex-col gap-[8px]">
             {commentsLoading && comments.length === 0 ? (
               <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-100)]">
-                Cargando comentarios...
+                Cargando observaciones...
               </p>
             ) : null}
 

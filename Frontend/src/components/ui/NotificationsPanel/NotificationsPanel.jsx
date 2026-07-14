@@ -4,9 +4,9 @@ import ListItem from "../ListItem/ListItem.jsx";
 
 function CommentPanel({
   className,
-  title = "Comentarios",
+  title = "Observaciones",
   actionLabel = "Marcar todo como leído",
-  footerLabel = "Ver todos los comentarios",
+  footerLabel = "Ver todas las observaciones",
   items = [],
   onHeaderAction,
   onFooterAction,
