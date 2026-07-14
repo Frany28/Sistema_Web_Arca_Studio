@@ -661,8 +661,6 @@ export const MODEL_3D_TEXTURE_PRESETS = {
     toneMapping: "neutral",
   },
 };
-const VISUAL_REFERENCE_LABEL = "Referencia";
-
 function getCommentTime(comment) {
   const time = new Date(comment.createdAt || 0).getTime();
 
@@ -754,7 +752,6 @@ function CommentCard({
   id,
   author,
   avatarSrc,
-  authorRoleLabel,
   time,
   body,
   image,
@@ -764,7 +761,6 @@ function CommentCard({
   name,
   observationTypeLabel,
   pointNumber,
-  projectName,
   selection,
   timestamp,
   type = "comment",
@@ -821,9 +817,6 @@ function CommentCard({
                 avatarAlt={safeDisplayAuthor}
                 avatarDecorative={false}
               />
-              <span className="shrink-0 rounded-full bg-[var(--color-neutral-200)] px-[6px] py-[2px] text-[9px] font-medium leading-[11px] text-[var(--color-text-200)]">
-                {authorRoleLabel || "Usuario"}
-              </span>
               <span className="shrink-0 text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {safeDisplayTime}
               </span>
@@ -842,11 +835,6 @@ function CommentCard({
             </button>
           </div>
 
-          <div className="flex min-w-0 items-center gap-[6px] text-[10px] leading-[12px] text-[var(--color-text-100)]">
-            <span>{observationTypeLabel || "Observación en modelo 3D"}</span>
-            {projectName ? <><span aria-hidden="true">•</span><span className="truncate">{projectName}</span></> : null}
-          </div>
-
           <p className="text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
             {displayBody}
           </p>
@@ -856,6 +844,7 @@ function CommentCard({
               active={selectionActive}
               image={image}
               mediaType={mediaType}
+              observationTitle={observationTypeLabel}
               pointNumber={pointNumber}
               selection={selection}
               compact
@@ -891,6 +880,7 @@ function SelectionPreview({
   compact = false,
   image,
   mediaType = "render",
+  observationTitle,
   onClear,
   onSelect,
   pointNumber,
@@ -922,11 +912,13 @@ function SelectionPreview({
 
   const Container = onSelect ? "button" : "div";
   const referenceNumber = Number(pointNumber) || null;
-  const referenceTitle = referenceNumber
-    ? `${VISUAL_REFERENCE_LABEL} ${referenceNumber}`
-    : mediaType === "image"
-      ? "Referencia visual"
-      : VISUAL_REFERENCE_LABEL;
+  const referenceTitle =
+    observationTitle ||
+    (mediaType === "image"
+      ? "Observación sobre imagen"
+      : mediaType === "video"
+        ? "Observación sobre video"
+        : "Observación en modelo 3D");
   const referenceSubtitle =
     mediaType === "image"
       ? "Área señalada en la imagen"

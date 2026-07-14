@@ -46,8 +46,6 @@ const GENERAL_COMMENTS = [
   },
 ];
 
-const VISUAL_REFERENCE_LABEL = "Referencia";
-
 const RECENT_ACTIVITY = [
   {
     id: "activity-1",
@@ -236,7 +234,6 @@ function SendIcon() {
 
 function CommentCard({
   avatarSrc,
-  authorRoleLabel,
   commentType,
   id,
   image,
@@ -313,17 +310,9 @@ function CommentCard({
               <p className="text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
                 {displayName}
               </p>
-              <span className="shrink-0 rounded-full bg-[var(--color-neutral-200)] px-[6px] py-[2px] text-[9px] font-medium leading-[11px] text-[var(--color-text-200)]">
-                {authorRoleLabel || "Usuario"}
-              </span>
               <p className="text-[10px] font-normal leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {timestamp}
               </p>
-              {displayPointNumber ? (
-                <span className="shrink-0 rounded-full bg-[var(--color-accent-300)] px-[7px] py-[2px] text-[10px] font-semibold leading-[12px] text-[var(--color-neutral-100-uniform)]">
-                  {VISUAL_REFERENCE_LABEL} {displayPointNumber}
-                </span>
-              ) : null}
             </div>
 
             <button
@@ -342,10 +331,11 @@ function CommentCard({
             </button>
           </div>
 
-          <div className="flex min-w-0 items-center gap-[6px] text-[10px] leading-[12px] text-[var(--color-text-100)]">
-            <span>{observationTypeLabel || "Observación general"}</span>
-            {projectName ? <><span aria-hidden="true">•</span><span className="truncate">{projectName}</span></> : null}
-          </div>
+          {projectName ? (
+            <p className="truncate text-[10px] leading-[12px] text-[var(--color-text-100)]">
+              {projectName}
+            </p>
+          ) : null}
 
           <p className="text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
             {message}
@@ -355,6 +345,7 @@ function CommentCard({
             <ImageCommentPreview
               commentType={commentType}
               image={image}
+              observationTypeLabel={observationTypeLabel}
               pointNumber={displayPointNumber}
               selection={selection}
             />
@@ -377,7 +368,13 @@ function CommentCard({
   );
 }
 
-function ImageCommentPreview({ commentType, image, pointNumber, selection }) {
+function ImageCommentPreview({
+  commentType,
+  image,
+  observationTypeLabel,
+  pointNumber,
+  selection,
+}) {
   const pixels = selection.imagePixels ?? selection.displayPixels;
   const isViewer3dComment = commentType === "viewer3d";
 
@@ -404,9 +401,10 @@ function ImageCommentPreview({ commentType, image, pointNumber, selection }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-          {isViewer3dComment && Number(pointNumber)
-            ? `${VISUAL_REFERENCE_LABEL} ${Number(pointNumber)}`
-            : "Referencia visual"}
+          {observationTypeLabel ||
+            (isViewer3dComment
+              ? "Observación en modelo 3D"
+              : "Observación sobre imagen")}
         </p>
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
           x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
