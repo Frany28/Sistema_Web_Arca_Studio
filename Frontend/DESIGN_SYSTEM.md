@@ -180,6 +180,7 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 
 ## Datos, paginación y tiempo real
 
+
 - Todo componente conectado a datos dinámicos (por ejemplo, comentarios, avatares, notificaciones o actividad) debe conservar y renderizar los campos relacionados en todas sus transformaciones, variantes y puntos de uso. Una actualización debe propagarse tanto para clientes como para arquitectos, administradores y cualquier rol existente, en desarrollo, pruebas y producción; no se permiten datos de demostración ni valores visuales fijos cuando exista una fuente real conectada.
 - Las conversaciones del proyecto se denominan **Observaciones**. Sus tipos visibles son “Observación general”, “Observación sobre imagen”, “Observación sobre video” y “Observación en modelo 3D”. Los valores internos de API pueden conservar `general`, `image`, `video` y `viewer3d`.
 - Las tarjetas muestran avatar, nombre del autor, fecha, contenido y, cuando corresponda, proyecto de origen. El tipo no se repite como texto secundario bajo el autor: se utiliza como título de la previsualización asociada. Los números de referencia solo aparecen dentro del marcador visual. El rol puede conservarse en el modelo para permisos o lógica, pero no debe renderizarse en la tarjeta para evitar truncamiento y ruido visual.

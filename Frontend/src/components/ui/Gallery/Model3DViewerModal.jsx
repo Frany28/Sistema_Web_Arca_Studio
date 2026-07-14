@@ -16,10 +16,12 @@ import Button from "../../ui/Button/Button.jsx";
 import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
+import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
 
 const VRModelViewer = lazy(() => import("./VRModelViewer.jsx"));
+const VIEWER_3D_OBSERVATION_LABEL = getObservationTypeLabel("viewer3d");
 
 function CloseIcon({ className }) {
   return (
@@ -1344,8 +1346,8 @@ function Model3DAnnotationMarker({
   const [tooltipPosition, setTooltipPosition] = useState(null);
   const pointNumber = Number(item.pointNumber) || "";
   const tooltipText = pointNumber
-    ? `${VIEWER_3D_ANNOTATION_LABEL} ${pointNumber}`
-    : VIEWER_3D_ANNOTATION_LABEL;
+    ? `${VIEWER_3D_OBSERVATION_LABEL} ${pointNumber}`
+    : VIEWER_3D_OBSERVATION_LABEL;
   const canShowTooltip =
     tooltipOpen && !item.pending && tooltipPosition && typeof document !== "undefined";
 
