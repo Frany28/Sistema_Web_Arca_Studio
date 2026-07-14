@@ -331,7 +331,7 @@ function CommentCard({
             </button>
           </div>
 
-          {projectName ? (
+          {projectName && (!imageComment || isReply) ? (
             <p className="truncate text-[10px] leading-[12px] text-[var(--color-text-100)]">
               {projectName}
             </p>
@@ -347,6 +347,7 @@ function CommentCard({
               image={image}
               observationTypeLabel={observationTypeLabel}
               pointNumber={displayPointNumber}
+              projectName={projectName}
               selection={selection}
             />
           ) : null}
@@ -373,6 +374,7 @@ function ImageCommentPreview({
   image,
   observationTypeLabel,
   pointNumber,
+  projectName,
   selection,
 }) {
   const pixels = selection.imagePixels ?? selection.displayPixels;
@@ -406,6 +408,11 @@ function ImageCommentPreview({
               ? "Observación en modelo 3D"
               : "Observación sobre imagen")}
         </p>
+        {projectName ? (
+          <p className="truncate text-[10px] font-medium leading-[12px] text-[var(--color-text-200)]">
+            {projectName}
+          </p>
+        ) : null}
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
           x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
         </p>
