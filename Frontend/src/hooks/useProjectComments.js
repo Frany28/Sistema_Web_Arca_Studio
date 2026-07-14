@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/http.js";
+import { getCommentAuthorAvatarSrc } from "../utils/commentDisplay.js";
 
 function getRelativeTimeLabel(value) {
   const date = new Date(value);
@@ -72,6 +73,7 @@ function toDrawerComment(comment, user) {
   const commentType = comment.commentType || "general";
 
   return {
+    avatarSrc: getCommentAuthorAvatarSrc(comment, user),
     commentType,
     id: comment.id,
     image: comment.image,

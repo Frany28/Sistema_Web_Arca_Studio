@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "../../../api/http.js";
 import { useAuth } from "../../../auth/AuthContext.jsx";
+import { getCommentAuthorAvatarSrc } from "../../../utils/commentDisplay.js";
 
 const LEGACY_STORAGE_KEY = "arca.image-comments.v1";
 const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "viewer3d"]);
@@ -116,6 +117,7 @@ function decorateComment(comment, user) {
 
   return {
     ...comment,
+    avatarSrc: getCommentAuthorAvatarSrc(comment, user),
     image,
     imageComment: MULTIMEDIA_COMMENT_TYPES.has(comment.commentType),
     imageId: comment.targetId || comment.imageId,

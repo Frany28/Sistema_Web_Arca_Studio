@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, setAuthToken } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
+import { getCommentAuthorAvatarSrc } from "../../utils/commentDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
@@ -304,6 +305,7 @@ function toDrawerComment(comment, user) {
   const commentType = comment.commentType || "general";
 
   return {
+    avatarSrc: getCommentAuthorAvatarSrc(comment, user),
     commentType,
     id: comment.id,
     image: comment.image,

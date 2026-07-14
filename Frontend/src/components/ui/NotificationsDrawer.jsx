@@ -235,6 +235,7 @@ function SendIcon() {
 }
 
 function CommentCard({
+  avatarSrc,
   commentType,
   id,
   image,
@@ -297,7 +298,15 @@ function CommentCard({
         >
           <div className="flex w-full items-start pr-[28px]">
             <div className="flex min-w-0 items-center gap-[8px]">
-              <Avatar size="S" style="Icon" theme="Brand 1" decorative />
+              <Avatar
+                size="S"
+                content={avatarSrc ? "Image" : "Text"}
+                theme="Brand 1"
+                name={displayName}
+                src={avatarSrc}
+                alt={displayName}
+                decorative={false}
+              />
               <p className="text-[12px] font-normal leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
                 {displayName}
               </p>

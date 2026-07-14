@@ -180,6 +180,7 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 
 ## Datos, paginación y tiempo real
 
+- Todo componente conectado a datos dinámicos (por ejemplo, comentarios, avatares, notificaciones o actividad) debe conservar y renderizar los campos relacionados en todas sus transformaciones, variantes y puntos de uso. Una actualización debe propagarse tanto para clientes como para arquitectos, administradores y cualquier rol existente, en desarrollo, pruebas y producción; no se permiten datos de demostración ni valores visuales fijos cuando exista una fuente real conectada.
 - Reutilizar las utilidades de paginación del frontend para combinar páginas y eliminar duplicados.
 - Reiniciar cursores al cambiar usuario, proyecto o filtros.
 - Impedir peticiones duplicadas durante una carga.

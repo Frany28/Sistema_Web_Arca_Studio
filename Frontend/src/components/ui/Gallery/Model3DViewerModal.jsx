@@ -753,6 +753,7 @@ function ReplyButton() {
 function CommentCard({
   id,
   author,
+  avatarSrc,
   time,
   body,
   image,
@@ -811,8 +812,11 @@ function CommentCard({
                 label={safeDisplayAuthor}
                 showSubtitle={false}
                 avatarTheme="Neutral"
-                avatarContent="Icon"
-                avatarDecorative
+                avatarContent={avatarSrc ? "Image" : "Text"}
+                avatarName={safeDisplayAuthor}
+                avatarSrc={avatarSrc}
+                avatarAlt={safeDisplayAuthor}
+                avatarDecorative={false}
               />
               <span className="shrink-0 text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
                 {safeDisplayTime}

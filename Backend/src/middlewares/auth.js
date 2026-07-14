@@ -3,6 +3,7 @@ import { findActiveUserById } from "../repositories/userRepository.js";
 import { parseCookies } from "../utils/cookies.js";
 import { verifyAuthToken } from "../utils/tokens.js";
 import { cacheUser, getCachedUser } from "../services/userSessionCache.js";
+import { isTokenOlderThanUser } from "../utils/sessionFreshness.js";
 
 function parseBoolean(value, fallback = false) {
   if (value === undefined || value === "") {
@@ -87,17 +88,6 @@ function getQueryToken(req) {
   const token = req.query?.access_token;
 
   return typeof token === "string" && token.trim() ? token.trim() : null;
-}
-
-function isTokenOlderThanUser(payload, user) {
-  if (!payload.iat || !user.updatedAt) {
-    return false;
-  }
-
-  const tokenIssuedAt = Number(payload.iat) * 1000;
-  const userUpdatedAt = new Date(user.updatedAt).getTime();
-
-  return userUpdatedAt > tokenIssuedAt + 1000;
 }
 
 async function resolveSession(req) {
