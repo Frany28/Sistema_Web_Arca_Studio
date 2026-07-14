@@ -345,6 +345,9 @@ export async function uploadProfilePhoto(req, res, next) {
 
 export async function getProfilePhotoImage(req, res, next) {
   try {
+    // Helmet defaults this header to same-origin. The authenticated image route
+    // must also be embeddable when the frontend and API use different origins.
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     const storageKey = getStorageObjectKeyFromFileUrl(req.user?.profilePhotoUrl);
 
     if (!storageKey) {

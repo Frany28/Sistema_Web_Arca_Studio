@@ -161,5 +161,27 @@ export function getStorageObjectKeyFromFileUrl(fileUrl) {
     return normalizedFileUrl.slice(s3Prefix.length);
   }
 
+  try {
+    const url = new URL(normalizedFileUrl);
+    const pathSegments = url.pathname.split("/").filter(Boolean);
+    const objectSegmentIndex = pathSegments.findIndex(
+      (segment, index) =>
+        segment === "object" && pathSegments[index - 1] === "v1",
+    );
+    const visibility = pathSegments[objectSegmentIndex + 1];
+    const urlBucket = pathSegments[objectSegmentIndex + 2];
+
+    if (
+      objectSegmentIndex >= 0 &&
+      (visibility === "public" || visibility === "sign") &&
+      decodeURIComponent(urlBucket || "") === bucket
+    ) {
+      const encodedKey = pathSegments.slice(objectSegmentIndex + 3).join("/");
+      return encodedKey ? decodeURIComponent(encodedKey) : null;
+    }
+  } catch {
+    // Non-URL values are not valid persisted storage references.
+  }
+
   return null;
 }
