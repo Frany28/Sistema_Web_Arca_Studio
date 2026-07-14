@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import { Router } from "express";
 
 import {
   createProjectRequest,
@@ -9,19 +9,16 @@ import {
   uploadProjectRequestAttachment,
 } from "../controllers/fileController.js";
 import { requireAuth } from "../middlewares/auth.js";
+import { requestRateLimit, uploadRateLimit } from "../middlewares/actionRateLimits.js";
 
 const router = Router();
-const fileUploadLimit = process.env.FILE_UPLOAD_LIMIT || "50mb";
 
-router.post("/", requireAuth, createProjectRequest);
-router.patch("/:projectRequestId", requireAuth, updateProjectRequest);
+router.post("/", requireAuth, requestRateLimit, createProjectRequest);
+router.patch("/:projectRequestId", requireAuth, requestRateLimit, updateProjectRequest);
 router.post(
   "/:projectRequestId/files",
   requireAuth,
-  express.raw({
-    limit: fileUploadLimit,
-    type: "*/*",
-  }),
+  uploadRateLimit,
   uploadProjectRequestAttachment,
 );
 router.delete(

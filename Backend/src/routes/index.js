@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { query } from "../config/db.js";
+import { isShuttingDown } from "../services/lifecycle.js";
 
 const router = Router();
 
@@ -11,6 +12,10 @@ router.get("/health", (_req, res) => {
 });
 
 router.get("/health/database", async (_req, res) => {
+  if (isShuttingDown()) {
+    res.status(503).json({ status: "shutting_down", service: "arca-studio-backend" });
+    return;
+  }
   try {
     const result = await query("select now() as timestamp");
 

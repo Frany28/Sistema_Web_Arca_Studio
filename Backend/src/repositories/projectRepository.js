@@ -1,4 +1,5 @@
 import { query } from "../config/db.js";
+import { pageResult } from "../utils/pagination.js";
 
 function toNumber(value) {
   return value === null || value === undefined ? null : Number(value);
@@ -80,8 +81,11 @@ function getProjectAccess(user, projectAlias = "p") {
   return { condition, params };
 }
 
-export async function listProjectsForUser(user) {
+export async function listProjectsForUser(user, { cursor = null, limit = 25 } = {}) {
   const { condition: accessCondition, params } = getProjectAccess(user);
+  const cursorDateParam = params.length + 1;
+  const cursorIdParam = params.length + 2;
+  const limitParam = params.length + 3;
 
   const result = await query(
     `
@@ -142,18 +146,22 @@ export async function listProjectsForUser(user) {
       where p.deleted_at is null
         and c.deleted_at is null
         and (${accessCondition})
+        and ($${cursorDateParam}::timestamptz is null or (p.updated_at, p.id) < ($${cursorDateParam}::timestamptz, $${cursorIdParam}::bigint))
       order by p.updated_at desc, p.id desc
+      limit $${limitParam}
     `,
-    params,
+    [...params, cursor?.[0] || null, cursor?.[1] || null, limit + 1],
   );
 
-  return result.rows.map(toProject);
+  return pageResult(result.rows, limit, toProject, (row) => [row.updated_at, String(row.id)]);
 }
 
 async function findProjectDetailByConditionForUser({
   conditionSql,
   conditionValue,
   user,
+  fileCursor = null,
+  fileLimit = 25,
 }) {
   const { condition: accessCondition, params } = getProjectAccess(user);
   params.push(conditionValue);
@@ -284,7 +292,8 @@ async function findProjectDetailByConditionForUser({
             version.file_extension,
             version.file_name,
             version.file_size,
-            version.created_at
+            version.created_at,
+            file.created_at as file_created_at
           from public.files file
           left join public.file_versions version
             on version.file_id = file.id
@@ -293,26 +302,31 @@ async function findProjectDetailByConditionForUser({
           where file.project_id = $1
             and file.deleted_at is null
             and file.status <> 'deleted'
+            and ($2::timestamptz is null or (file.created_at, file.id) < ($2::timestamptz, $3::bigint))
           order by file.created_at desc, file.id desc
+          limit $4
         `,
-        [projectId],
+        [projectId, fileCursor?.[0] || null, fileCursor?.[1] || null, fileLimit + 1],
       ),
     ]);
 
+  const filePage = pageResult(filesResult.rows, fileLimit, (file) => ({
+    createdAt: file.created_at,
+    currentVersion: Number(file.current_version),
+    description: file.description || null,
+    extension: file.file_extension || null,
+    fileType: file.file_type,
+    fileUrl: file.file_url || null,
+    id: Number(file.id),
+    size: file.file_size === null ? null : Number(file.file_size),
+    storageKey: file.file_name || null,
+    title: file.title,
+  }), (row) => [row.file_created_at, String(row.id)]);
+
   return {
     ...toProject(projectResult.rows[0]),
-    files: filesResult.rows.map((file) => ({
-      createdAt: file.created_at,
-      currentVersion: Number(file.current_version),
-      description: file.description || null,
-      extension: file.file_extension || null,
-      fileType: file.file_type,
-      fileUrl: file.file_url || null,
-      id: Number(file.id),
-      size: file.file_size === null ? null : Number(file.file_size),
-      storageKey: file.file_name || null,
-      title: file.title,
-    })),
+    files: filePage.items,
+    filesNextCursor: filePage.nextCursor,
     requirements: requirementsResult.rows.map((requirement) => ({
       description: requirement.description,
       id: Number(requirement.id),
@@ -335,19 +349,21 @@ async function findProjectDetailByConditionForUser({
   };
 }
 
-export async function findProjectDetailForUser(projectId, user) {
+export async function findProjectDetailForUser(projectId, user, options = {}) {
   return findProjectDetailByConditionForUser({
     conditionSql: (parameter) => `p.id = ${parameter}`,
     conditionValue: projectId,
     user,
+    ...options,
   });
 }
 
-export async function findProjectDetailByPublicSlugForUser(publicSlug, user) {
+export async function findProjectDetailByPublicSlugForUser(publicSlug, user, options = {}) {
   return findProjectDetailByConditionForUser({
     conditionSql: (parameter) => `p.public_slug = ${parameter}`,
     conditionValue: publicSlug,
     user,
+    ...options,
   });
 }
 

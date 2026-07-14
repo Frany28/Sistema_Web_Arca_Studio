@@ -6,7 +6,9 @@ import {
 import {
   publishProjectEvent,
   subscribeToProjectEvents,
+  assertProjectEventCapacity,
 } from "../services/projectEvents.js";
+import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
 const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "viewer3d"]);
@@ -71,9 +73,11 @@ export async function getProjectComments(req, res, next) {
       return;
     }
 
-    const comments = await listProjectComments(projectId, req.user);
+    const cursor = decodeCursor(req.query?.cursor);
+    if (req.query?.cursor && !cursor) return res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor inválido." });
+    const page = await listProjectComments(projectId, req.user, { cursor, limit: parsePageLimit(req.query?.limit) });
 
-    res.status(200).json({ comments });
+    res.status(200).json({ comments: page.items, nextCursor: page.nextCursor });
   } catch (error) {
     next(error);
   }
@@ -170,6 +174,10 @@ export async function createProjectComment(req, res, next) {
 
     res.status(201).json({ comment });
   } catch (error) {
+    if (error.code === "23505") {
+      res.status(409).json({ code: "COMMENT_CONFLICT", message: "Otro comentario fue creado simultáneamente. Intenta de nuevo." });
+      return;
+    }
     next(error);
   }
 }
@@ -196,6 +204,17 @@ export async function streamProjectCommentEvents(req, res, next) {
       return;
     }
 
+    try {
+      assertProjectEventCapacity({ projectId, userId: req.user.id });
+    } catch (error) {
+      if (error.code === "SSE_CONNECTION_LIMIT") {
+        res.setHeader("Retry-After", "30");
+        res.status(429).json({ code: error.code, message: "Límite de conexiones en tiempo real alcanzado." });
+        return;
+      }
+      throw error;
+    }
+
     res.status(200);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache, no-transform");
@@ -203,7 +222,16 @@ export async function streamProjectCommentEvents(req, res, next) {
     res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders?.();
 
-    const unsubscribe = subscribeToProjectEvents({ projectId, response: res });
+    let unsubscribe;
+    try {
+      unsubscribe = subscribeToProjectEvents({ projectId, response: res, userId: req.user.id });
+    } catch (error) {
+      if (error.code === "SSE_CONNECTION_LIMIT") {
+        res.end();
+        return;
+      }
+      throw error;
+    }
 
     req.on("close", unsubscribe);
   } catch (error) {

@@ -11,7 +11,12 @@
     "check:user-login": "node scripts/check-user-login.mjs",
     "user:set-status": "node scripts/set-user-status.mjs",
     "dev": "node local.js",
-    "start": "node local.js"
+    "start": "node local.js",
+    "load:smoke": "k6 run load-tests/mixed-workload.js -e PROFILE=smoke",
+    "load:mixed": "k6 run load-tests/mixed-workload.js",
+    "load:files": "k6 run load-tests/file-workload.js",
+    "load:sse": "node load-tests/sse-probe.mjs",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",

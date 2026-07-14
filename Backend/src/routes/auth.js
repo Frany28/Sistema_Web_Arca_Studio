@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import { Router } from "express";
 
 import {
   changePassword,
@@ -25,10 +25,6 @@ router.get("/profile-photo/image", requireAuth, getProfilePhotoImage);
 router.post(
   "/profile-photo",
   requireAuth,
-  express.raw({
-    limit: "50mb",
-    type: ["image/jpeg", "image/png", "image/webp"],
-  }),
   uploadProfilePhoto,
 );
 router.get("/me", requireAuth, me);

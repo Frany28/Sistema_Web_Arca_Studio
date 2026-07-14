@@ -1,18 +1,13 @@
 import bcrypt from "bcrypt";
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
 
 import { authConfig } from "../config/auth.js";
 import {
   buildStorageFileUrl,
   buildUserProfilePhotoObjectKey,
   getStorageObjectKeyFromFileUrl,
-  getSupabaseS3Client,
   getSupabaseStorageConfig,
 } from "../config/storage.js";
+import { objectStorage } from "../services/objectStorage.js";
 import {
   findUserByEmail,
   findActiveUserById,
@@ -34,6 +29,8 @@ import {
 } from "../services/passwordResetEmailService.js";
 import { serializeCookie } from "../utils/cookies.js";
 import { createAuthToken, verifyAuthToken } from "../utils/tokens.js";
+import { invalidateCachedUser } from "../services/userSessionCache.js";
+import { getUploadStream } from "../utils/uploadStream.js";
 
 const FAKE_BCRYPT_HASH =
   "$2a$10$rN2S9IoJgP1Fx41s6fWaIOY6PksHh4EYoJ.13YZRbrxIJpV66F79i";
@@ -54,24 +51,6 @@ function getProfilePhotoContentType(value) {
   return PROFILE_PHOTO_ALLOWED_TYPES.has(contentType)
     ? contentType
     : "image/jpeg";
-}
-
-async function storageBodyToBuffer(body) {
-  if (!body) {
-    return Buffer.alloc(0);
-  }
-
-  if (typeof body.transformToByteArray === "function") {
-    return Buffer.from(await body.transformToByteArray());
-  }
-
-  const chunks = [];
-
-  for await (const chunk of body) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-
-  return Buffer.concat(chunks);
 }
 
 function isValidEmail(email) {
@@ -254,6 +233,7 @@ export async function changePassword(req, res, next) {
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await updateUserPassword(req.user.id, passwordHash);
+    invalidateCachedUser(req.user.id);
     const token = createAuthToken(
       {
         email: req.user.email,
@@ -287,28 +267,12 @@ export async function uploadProfilePhoto(req, res, next) {
       .split(";")[0]
       .trim()
       .toLowerCase();
-    const fileBuffer = Buffer.isBuffer(req.body) ? req.body : null;
+    const { body: fileStream, size: fileSize } = getUploadStream(req, PROFILE_PHOTO_MAX_SIZE_BYTES);
 
     if (!PROFILE_PHOTO_ALLOWED_TYPES.has(contentType)) {
       res.status(400).json({
         code: "INVALID_PROFILE_PHOTO_TYPE",
         message: "Sube una imagen JPG, PNG o WEBP.",
-      });
-      return;
-    }
-
-    if (!fileBuffer?.length) {
-      res.status(400).json({
-        code: "PROFILE_PHOTO_REQUIRED",
-        message: "Selecciona una imagen para actualizar tu avatar.",
-      });
-      return;
-    }
-
-    if (fileBuffer.length > PROFILE_PHOTO_MAX_SIZE_BYTES) {
-      res.status(413).json({
-        code: "PROFILE_PHOTO_TOO_LARGE",
-        message: "La imagen no puede superar 50 MB.",
       });
       return;
     }
@@ -335,36 +299,25 @@ export async function uploadProfilePhoto(req, res, next) {
       req.user.profilePhotoUrl,
     );
     const previousProfilePhotoPrefix = `users/${req.user.id}/profile-photo/`;
-    const s3Client = getSupabaseS3Client();
-
-    await s3Client.send(
-      new PutObjectCommand({
-        Body: fileBuffer,
-        Bucket: storageConfig.bucket,
-        ContentLength: fileBuffer.length,
-        ContentType: contentType,
-        Key: storageKey,
-        Metadata: {
+    await objectStorage.put({
+        body: fileStream,
+        contentLength: fileSize,
+        contentType,
+        key: storageKey,
+        metadata: {
           belongs_to: "user_profile_photo",
           uploaded_by: String(req.user.id),
           uploaded_year: String(uploadedAt.getUTCFullYear()),
           user_id: String(req.user.id),
         },
-      }),
-    );
+    });
     uploadedStorageKey = storageKey;
 
     const user = await updateUserProfilePhotoUrl(req.user.id, fileUrl);
+    invalidateCachedUser(req.user.id);
 
     if (!user) {
-      await s3Client
-        .send(
-          new DeleteObjectCommand({
-            Bucket: storageConfig.bucket,
-            Key: storageKey,
-          }),
-        )
-        .catch(() => {});
+      await objectStorage.delete(storageKey).catch(() => {});
       uploadedStorageKey = null;
       res.status(404).json({
         code: "USER_NOT_FOUND",
@@ -389,14 +342,7 @@ export async function uploadProfilePhoto(req, res, next) {
       previousStorageKey?.startsWith(previousProfilePhotoPrefix) &&
       previousStorageKey !== storageKey
     ) {
-      await s3Client
-        .send(
-          new DeleteObjectCommand({
-            Bucket: storageConfig.bucket,
-            Key: previousStorageKey,
-          }),
-        )
-        .catch(() => {});
+      await objectStorage.delete(previousStorageKey).catch(() => {});
     }
 
     res.setHeader(
@@ -411,13 +357,7 @@ export async function uploadProfilePhoto(req, res, next) {
   } catch (error) {
     if (uploadedStorageKey) {
       try {
-        const storageConfig = getSupabaseStorageConfig();
-        await getSupabaseS3Client().send(
-          new DeleteObjectCommand({
-            Bucket: storageConfig.bucket,
-            Key: uploadedStorageKey,
-          }),
-        );
+        await objectStorage.delete(uploadedStorageKey);
       } catch {
         // Preserve the original failure.
       }
@@ -439,24 +379,16 @@ export async function getProfilePhotoImage(req, res, next) {
       return;
     }
 
-    const storageConfig = getSupabaseStorageConfig();
-    const object = await getSupabaseS3Client().send(
-      new GetObjectCommand({
-        Bucket: storageConfig.bucket,
-        Key: storageKey,
-      }),
-    );
-    const fileBuffer = await storageBodyToBuffer(object.Body);
-
+    const object = await objectStorage.get(storageKey);
     res.status(200);
     res.setHeader(
       "Content-Type",
       getProfilePhotoContentType(object.ContentType),
     );
     res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
-    res.setHeader("Content-Length", String(fileBuffer.length));
-
-    res.end(fileBuffer);
+    if (object.ContentLength !== undefined) res.setHeader("Content-Length", String(object.ContentLength));
+    object.Body.on?.("error", next);
+    object.Body.pipe(res);
   } catch (error) {
     if (
       error?.name === "NoSuchKey" ||
@@ -583,6 +515,7 @@ export async function resetPassword(req, res, next) {
 
     const passwordHash = await bcrypt.hash(password, 10);
     await updateUserPassword(userRecord.id, passwordHash);
+    invalidateCachedUser(userRecord.id);
 
     res.status(200).json({
       message: "Tu contraseña ha sido actualizada con éxito.",

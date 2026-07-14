@@ -8,6 +8,7 @@ import {
   uploadProjectFile,
   uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
+import { getUploadStream } from "../utils/uploadStream.js";
 
 const MAX_FILE_SIZE_BYTES = Number(
   process.env.FILE_UPLOAD_MAX_BYTES || 50 * 1024 * 1024,
@@ -77,19 +78,10 @@ export async function uploadProjectRequestAttachment(req, res, next) {
       return;
     }
 
-    const buffer = Buffer.isBuffer(req.body) ? req.body : null;
-    const fileSize = buffer?.length || 0;
+    const { body, size: fileSize } = getUploadStream(req, MAX_FILE_SIZE_BYTES);
     const originalName = getOriginalFileName(req);
     const extension = getFileExtension(originalName);
     const contentType = getNormalizedContentType(req.headers["content-type"]);
-
-    if (!buffer || fileSize === 0) {
-      res.status(400).json({
-        code: "FILE_REQUIRED",
-        message: "Selecciona un archivo para subir.",
-      });
-      return;
-    }
 
     if (!originalName || originalName.length > MAX_FILE_NAME_LENGTH) {
       res.status(400).json({
@@ -119,7 +111,7 @@ export async function uploadProjectRequestAttachment(req, res, next) {
     }
 
     const file = await uploadProjectRequestFile({
-      buffer,
+      body,
       contentType,
       originalName,
       projectRequestId,
@@ -212,19 +204,10 @@ export async function uploadProjectAttachment(req, res, next) {
       return;
     }
 
-    const buffer = Buffer.isBuffer(req.body) ? req.body : null;
-    const fileSize = buffer?.length || 0;
+    const { body, size: fileSize } = getUploadStream(req, MAX_FILE_SIZE_BYTES);
     const originalName = getOriginalFileName(req);
     const extension = getFileExtension(originalName);
     const contentType = getNormalizedContentType(req.headers["content-type"]);
-
-    if (!buffer || fileSize === 0) {
-      res.status(400).json({
-        code: "FILE_REQUIRED",
-        message: "Selecciona un archivo para subir.",
-      });
-      return;
-    }
 
     if (!originalName || originalName.length > MAX_FILE_NAME_LENGTH) {
       res.status(400).json({
@@ -254,7 +237,7 @@ export async function uploadProjectAttachment(req, res, next) {
     }
 
     const file = await uploadProjectFile({
-      buffer,
+      body,
       contentType,
       originalName,
       projectId,

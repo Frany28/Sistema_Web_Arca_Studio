@@ -5,6 +5,7 @@ import {
   listRoles,
   replaceRolePermissions,
 } from "../repositories/rolePermissionRepository.js";
+import { clearUserSessionCache } from "../services/userSessionCache.js";
 
 function parseIncludeInactive(value) {
   return String(value || "").trim().toLowerCase() === "true";
@@ -96,6 +97,8 @@ export async function updateRolePermissions(req, res, next) {
       });
       return;
     }
+
+    clearUserSessionCache();
 
     res.status(200).json({
       role: result.boundary,

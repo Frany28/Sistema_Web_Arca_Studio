@@ -3,6 +3,7 @@ import {
   findSupportRequestForUpload,
   uploadSupportRequestFile,
 } from "../repositories/supportRepository.js";
+import { getUploadStream } from "../utils/uploadStream.js";
 
 const MAX_SUPPORT_SUBJECT_LENGTH = 150;
 const MAX_SUPPORT_DESCRIPTION_LENGTH = 5000;
@@ -109,19 +110,10 @@ export async function uploadSupportRequestAttachment(req, res, next) {
       return;
     }
 
-    const buffer = Buffer.isBuffer(req.body) ? req.body : null;
-    const fileSize = buffer?.length || 0;
+    const { body, size: fileSize } = getUploadStream(req, MAX_FILE_SIZE_BYTES);
     const originalName = getOriginalFileName(req);
     const extension = getFileExtension(originalName);
     const contentType = getNormalizedContentType(req.headers["content-type"]);
-
-    if (!buffer || fileSize === 0) {
-      res.status(400).json({
-        code: "FILE_REQUIRED",
-        message: "Selecciona un archivo para subir.",
-      });
-      return;
-    }
 
     if (!originalName || originalName.length > MAX_FILE_NAME_LENGTH) {
       res.status(400).json({
@@ -151,7 +143,7 @@ export async function uploadSupportRequestAttachment(req, res, next) {
     }
 
     const file = await uploadSupportRequestFile({
-      buffer,
+      body,
       contentType,
       originalName,
       size: fileSize,

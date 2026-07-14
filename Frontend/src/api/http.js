@@ -224,16 +224,24 @@ export const authApi = {
 };
 
 export const projectsApi = {
-  list() {
-    return apiRequest("/projects");
+  list({ cursor, limit } = {}) {
+    const params = new URLSearchParams();
+    if (cursor) params.set("cursor", cursor);
+    if (limit) params.set("limit", String(limit));
+    const query = params.toString();
+    return apiRequest(`/projects${query ? `?${query}` : ""}`);
   },
 
   getById({ projectId }) {
     return apiRequest(`/projects/${encodeURIComponent(projectId)}`);
   },
 
-  listComments({ projectId }) {
-    return apiRequest(`/projects/${projectId}/comments`);
+  listComments({ cursor, limit, projectId }) {
+    const params = new URLSearchParams();
+    if (cursor) params.set("cursor", cursor);
+    if (limit) params.set("limit", String(limit));
+    const query = params.toString();
+    return apiRequest(`/projects/${projectId}/comments${query ? `?${query}` : ""}`);
   },
 
   subscribeToEvents({ projectId, onCommentCreated, onError }) {

@@ -1,4 +1,5 @@
 import { query } from "../config/db.js";
+import { pageResult } from "../utils/pagination.js";
 
 const GENERAL_COMMENT_TYPE = "general";
 const ACTIVE_COMMENT_STATUS = "active";
@@ -89,7 +90,7 @@ export async function canAccessProjectComments(projectId, user) {
   return Boolean(result.rows[0]);
 }
 
-export async function listProjectComments(projectId, user) {
+export async function listProjectComments(projectId, user, { cursor = null, limit = 25 } = {}) {
   const access = getProjectAccessCondition(user);
   const result = await query(
     `
@@ -124,12 +125,14 @@ export async function listProjectComments(projectId, user) {
         and pc.file_version_id is null
         and p.deleted_at is null
         and (${access.sql})
-      order by coalesce(pc.parent_comment_id, pc.id) asc, pc.created_at asc, pc.id asc
+        and ($${access.params.length + 3}::timestamptz is null or (pc.created_at, pc.id) > ($${access.params.length + 3}::timestamptz, $${access.params.length + 4}::bigint))
+      order by pc.created_at asc, pc.id asc
+      limit $${access.params.length + 5}
     `,
-    [...access.params, projectId, ACTIVE_COMMENT_STATUS],
+    [...access.params, projectId, ACTIVE_COMMENT_STATUS, cursor?.[0] || null, cursor?.[1] || null, limit + 1],
   );
 
-  return result.rows.map(toProjectComment);
+  return pageResult(result.rows, limit, toProjectComment, (row) => [row.created_at, String(row.id)]);
 }
 
 export async function createProjectCommentRecord({
@@ -193,6 +196,11 @@ export async function createProjectCommentRecord({
           and pc.file_id is null
           and pc.file_version_id is null
       ),
+      target_lock as materialized (
+        select pg_advisory_xact_lock(
+          hashtextextended(concat_ws(':', $${projectIdParam}::text, $${typeParam}::text, coalesce($${targetIdParam}::text, '')), 0)
+        )
+      ),
       target_point_number as (
         select count(*) + 1 as point_number
         from public.project_comments existing_pc
@@ -246,6 +254,7 @@ export async function createProjectCommentRecord({
           $${statusParam}::comment_status
         from accessible_project ap
         left join parent_comment pc on true
+        cross join target_lock
         cross join target_point_number tpn
         where $${parentIdParam}::bigint is null or pc.id is not null
         returning *

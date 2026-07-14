@@ -1,8 +1,7 @@
 import {
   DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
 } from "@aws-sdk/client-s3";
+import { objectStorage } from "../services/objectStorage.js";
 
 import {
   buildStorageFileUrl,
@@ -95,7 +94,7 @@ export async function findExistingProjectRequestFile({
 }
 
 export async function uploadProjectRequestFile({
-  buffer,
+  body,
   contentType,
   originalName,
   projectRequestId,
@@ -167,22 +166,19 @@ export async function uploadProjectRequestFile({
     const fileUrl = buildStorageFileUrl(storageKey);
     uploadedStorageKey = storageKey;
 
-    await s3Client.send(
-      new PutObjectCommand({
-        Body: buffer,
-        Bucket: storageConfig.bucket,
-        ContentLength: size,
-        ContentType: fileType,
-        Key: storageKey,
-        Metadata: {
+    await objectStorage.put({
+        body,
+        contentLength: size,
+        contentType: fileType,
+        key: storageKey,
+        metadata: {
           belongs_to: "project_request",
           file_id: String(file.id),
           project_request_id: String(projectRequestId),
           uploaded_by: String(user.id),
           uploaded_year: String(uploadedAt.getUTCFullYear()),
         },
-      }),
-    );
+    });
 
     const versionResult = await client.query(
       `
@@ -403,7 +399,7 @@ export async function findExistingProjectFile({
 }
 
 export async function uploadProjectFile({
-  buffer,
+  body,
   contentType,
   originalName,
   projectId,
@@ -467,22 +463,19 @@ export async function uploadProjectFile({
     const fileUrl = buildStorageFileUrl(storageKey);
     uploadedStorageKey = storageKey;
 
-    await s3Client.send(
-      new PutObjectCommand({
-        Body: buffer,
-        Bucket: storageConfig.bucket,
-        ContentLength: size,
-        ContentType: fileType,
-        Key: storageKey,
-        Metadata: {
+    await objectStorage.put({
+        body,
+        contentLength: size,
+        contentType: fileType,
+        key: storageKey,
+        metadata: {
           belongs_to: "project",
           file_id: String(file.id),
           project_id: String(projectId),
           uploaded_by: String(user.id),
           uploaded_year: String(uploadedAt.getUTCFullYear()),
         },
-      }),
-    );
+    });
 
     const versionResult = await client.query(
       `
@@ -717,14 +710,5 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
 }
 
 export async function getProjectFileObject({ fileName, range }) {
-  const storageConfig = getSupabaseStorageConfig();
-  const s3Client = getSupabaseS3Client();
-
-  return s3Client.send(
-    new GetObjectCommand({
-      Bucket: storageConfig.bucket,
-      Key: fileName,
-      Range: range,
-    }),
-  );
+  return objectStorage.get(fileName, { range });
 }

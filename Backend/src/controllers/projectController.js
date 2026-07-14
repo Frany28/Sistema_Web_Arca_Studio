@@ -5,13 +5,18 @@ import {
   updateProjectVisibility,
 } from "../repositories/projectRepository.js";
 import { isValidProjectSlug } from "../utils/projectSlug.js";
+import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
 export async function getMyProjects(req, res, next) {
   try {
-    const projects = await listProjectsForUser(req.user);
+    const limit = parsePageLimit(req.query?.limit);
+    const cursor = decodeCursor(req.query?.cursor);
+    if (req.query?.cursor && !cursor) return res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor inválido." });
+    const page = await listProjectsForUser(req.user, { cursor, limit });
 
     res.status(200).json({
-      projects,
+      projects: page.items,
+      nextCursor: page.nextCursor,
     });
   } catch (error) {
     next(error);
@@ -24,6 +29,12 @@ export async function getProjectDetail(req, res, next) {
     const projectId = Number(projectIdentifier);
     const usesNumericProjectId =
       Number.isInteger(projectId) && projectId > 0;
+    const fileCursor = decodeCursor(req.query?.filesCursor);
+
+    if (req.query?.filesCursor && !fileCursor) {
+      res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor de archivos inválido." });
+      return;
+    }
 
     if (!usesNumericProjectId && !isValidProjectSlug(projectIdentifier)) {
       res.status(400).json({
@@ -34,8 +45,8 @@ export async function getProjectDetail(req, res, next) {
     }
 
     const project = usesNumericProjectId
-      ? await findProjectDetailForUser(projectId, req.user)
-      : await findProjectDetailByPublicSlugForUser(projectIdentifier, req.user);
+      ? await findProjectDetailForUser(projectId, req.user, { fileCursor, fileLimit: parsePageLimit(req.query?.filesLimit) })
+      : await findProjectDetailByPublicSlugForUser(projectIdentifier, req.user, { fileCursor, fileLimit: parsePageLimit(req.query?.filesLimit) });
 
     if (!project) {
       res.status(404).json({

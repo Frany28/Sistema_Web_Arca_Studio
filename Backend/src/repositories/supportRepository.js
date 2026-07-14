@@ -1,7 +1,5 @@
-import {
-  DeleteObjectCommand,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { objectStorage } from "../services/objectStorage.js";
 
 import {
   buildStorageFileUrl,
@@ -126,7 +124,7 @@ export async function findSupportRequestForUpload(supportRequestId, user) {
 }
 
 export async function uploadSupportRequestFile({
-  buffer,
+  body,
   contentType,
   originalName,
   size,
@@ -189,22 +187,19 @@ export async function uploadSupportRequestFile({
     const fileUrl = buildStorageFileUrl(storageKey);
     uploadedStorageKey = storageKey;
 
-    await s3Client.send(
-      new PutObjectCommand({
-        Body: buffer,
-        Bucket: storageConfig.bucket,
-        ContentLength: size,
-        ContentType: fileType,
-        Key: storageKey,
-        Metadata: {
+    await objectStorage.put({
+        body,
+        contentLength: size,
+        contentType: fileType,
+        key: storageKey,
+        metadata: {
           belongs_to: "support_request",
           support_request_file_id: String(fileId),
           support_request_id: String(supportRequestId),
           uploaded_by: String(user.id),
           uploaded_year: String(uploadedAt.getUTCFullYear()),
         },
-      }),
-    );
+    });
 
     const updatedResult = await client.query(
       `

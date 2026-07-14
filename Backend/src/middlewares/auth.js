@@ -2,6 +2,7 @@ import { authConfig } from "../config/auth.js";
 import { findActiveUserById } from "../repositories/userRepository.js";
 import { parseCookies } from "../utils/cookies.js";
 import { verifyAuthToken } from "../utils/tokens.js";
+import { cacheUser, getCachedUser } from "../services/userSessionCache.js";
 
 function parseBoolean(value, fallback = false) {
   if (value === undefined || value === "") {
@@ -114,7 +115,11 @@ async function resolveSession(req) {
     };
   }
 
-  const user = await findActiveUserById(payload.sub);
+  let user = getCachedUser(payload.sub);
+  if (!user) {
+    user = await findActiveUserById(payload.sub);
+    cacheUser(payload.sub, user);
+  }
 
   if (!user || isTokenOlderThanUser(payload, user)) {
     return {
