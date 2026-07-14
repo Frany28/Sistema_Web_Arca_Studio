@@ -16,10 +16,16 @@
     "load:mixed": "k6 run load-tests/mixed-workload.js",
     "load:files": "k6 run load-tests/file-workload.js",
     "load:sse": "node load-tests/sse-probe.mjs",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "db:pull": "node scripts/prisma.mjs db pull",
+    "db:migrate:dev": "node scripts/prisma.mjs migrate dev",
+    "db:migrate:deploy": "node scripts/prisma.mjs migrate deploy",
+    "db:migrate:status": "node scripts/prisma.mjs migrate status",
+    "db:studio": "node scripts/prisma.mjs studio"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
+    "@prisma/client": "^7.8.0",
     "@supabase/supabase-js": "^2.49.4",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
@@ -30,7 +36,13 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "bcrypt"
+      "@prisma/client",
+      "@prisma/engines",
+      "bcrypt",
+      "prisma"
     ]
+  },
+  "devDependencies": {
+    "prisma": "^7.8.0"
   }
 }

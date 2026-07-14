@@ -1,5 +1,7 @@
 # Evaluación de escalabilidad del backend
 
+> Los cambios de estructura de PostgreSQL se administran desde `prisma/migrations`. El procedimiento completo está documentado en `PRISMA_MIGRATIONS.md`.
+
 ## Estado actual
 
 La revisión estática no permite certificar 100 usuarios concurrentes. El sistema debe considerarse **no validado para esa carga** hasta ejecutar las pruebas de staging y cumplir sus umbrales. La producción objetivo será un VPS; las referencias al proveedor actual describen solamente el entorno transitorio. Los riesgos principales son:

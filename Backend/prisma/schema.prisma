@@ -1,0 +1,542 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model audit_logs {
+  id          BigInt   @id @default(autoincrement())
+  user_id     BigInt?
+  action      String   @db.VarChar(100)
+  entity_type String   @db.VarChar(100)
+  entity_id   BigInt
+  description String?  @db.VarChar(255)
+  new_values  Json?
+  old_values  Json?
+  ip_address  String?  @db.VarChar(255)
+  user_agent  String?  @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  users       users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_audit_logs_user")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model clients {
+  id               BigInt             @id @default(autoincrement())
+  name             String             @db.VarChar(150)
+  company_name     String?            @db.VarChar(150)
+  document_number  String?            @db.VarChar(150)
+  email            String             @db.VarChar(150)
+  phone            String             @db.VarChar(30)
+  address          String             @db.VarChar(255)
+  city             String             @db.VarChar(100)
+  country          String             @db.VarChar(100)
+  status           client_status      @default(active)
+  notes            String?            @db.VarChar(255)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at       DateTime?          @db.Timestamptz(6)
+  project_requests project_requests[]
+  projects         projects[]
+  users            users[]
+
+  @@index([deleted_at], map: "idx_clients_deleted_at")
+  @@index([document_number], map: "idx_clients_document_number")
+  @@index([email], map: "idx_clients_email")
+  @@index([status], map: "idx_clients_status")
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model comment_anchors {
+  id                BigInt           @id @default(autoincrement())
+  comment_id        BigInt
+  anchor_type       anchor_type
+  pos_x             Decimal?         @db.Decimal(10, 4)
+  pos_y             Decimal?         @db.Decimal(10, 4)
+  pos_z             Decimal?         @db.Decimal(10, 4)
+  video_second      Decimal?         @db.Decimal(10, 2)
+  camera_state_json Json?
+  object_ref        String?          @db.VarChar(255)
+  created_at        DateTime         @default(now()) @db.Timestamptz(6)
+  project_comments  project_comments @relation(fields: [comment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_comment_anchors_comment")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model file_versions {
+  id               BigInt             @id @default(autoincrement())
+  file_id          BigInt             @unique(map: "uq_file_versions_current", where: raw("((is_current = true) AND (deleted_at IS NULL))"))
+  uploaded_by      BigInt
+  version_number   Int
+  file_name        String             @db.VarChar(255)
+  original_name    String             @db.VarChar(255)
+  file_url         String             @db.VarChar(500)
+  file_extension   String             @db.VarChar(50)
+  file_size        BigInt
+  change_note      String?            @db.VarChar(255)
+  is_current       Boolean            @default(true)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at       DateTime?          @db.Timestamptz(6)
+  files            files              @relation(fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_file_versions_file")
+  users            users              @relation(fields: [uploaded_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_file_versions_uploaded_by")
+  project_comments project_comments[]
+
+  @@unique([file_id, version_number], map: "uq_file_versions_file_version")
+  @@index([file_id], map: "idx_file_versions_file_id", where: raw("(deleted_at IS NULL)"))
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model files {
+  id                 BigInt             @id @default(autoincrement())
+  project_id         BigInt?
+  project_request_id BigInt?
+  uploaded_by        BigInt
+  title              String             @db.VarChar(255)
+  description        String?            @db.VarChar(255)
+  file_type          String             @db.VarChar(50)
+  current_version    Int?
+  status             file_status        @default(active)
+  created_at         DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at         DateTime?          @db.Timestamptz(6)
+  file_versions      file_versions?
+  projects           projects?          @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_files_project")
+  project_requests   project_requests?  @relation(fields: [project_request_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_files_project_request")
+  users              users              @relation(fields: [uploaded_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_files_uploaded_by")
+  project_comments   project_comments[]
+
+  @@index([project_id, created_at(sort: Desc), id(sort: Desc)], map: "files_project_active_cursor_idx", where: raw("(deleted_at IS NULL)"))
+  @@index([project_id], map: "idx_files_project_id", where: raw("((project_id IS NOT NULL) AND (deleted_at IS NULL))"))
+  @@index([project_request_id], map: "idx_files_project_request_id", where: raw("((project_request_id IS NOT NULL) AND (deleted_at IS NULL))"))
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model notifications {
+  id                                    BigInt    @id @default(autoincrement())
+  user_id                               BigInt
+  project_id                            BigInt?
+  created_by                            BigInt?
+  title                                 String    @db.VarChar(150)
+  message                               String
+  type                                  String    @db.VarChar(50)
+  entity_type                           String    @db.VarChar(50)
+  entity_id                             BigInt?
+  is_read                               Boolean   @default(false)
+  read_at                               DateTime? @db.Timestamptz(6)
+  created_at                            DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at                            DateTime? @db.Timestamptz(6)
+  users_notifications_created_byTousers users?    @relation("notifications_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notifications_created_by")
+  projects                              projects? @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notifications_project")
+  users_notifications_user_idTousers    users     @relation("notifications_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notifications_user")
+
+  @@index([user_id], map: "idx_notifications_user_id", where: raw("(deleted_at IS NULL)"))
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model password_recovery_tokens {
+  id           BigInt    @id @default(autoincrement())
+  user_id      BigInt
+  token_hash   String    @db.VarChar(255)
+  expires_at   DateTime  @db.Timestamptz(6)
+  used_at      DateTime? @db.Timestamptz(6)
+  requested_ip String?   @db.VarChar(45)
+  user_agent   String?   @db.VarChar(255)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  users        users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_password_recovery_tokens_user")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model permissions {
+  id               BigInt             @id @default(autoincrement())
+  code             String             @unique @db.VarChar(100)
+  name             String             @db.VarChar(150)
+  description      String?            @db.VarChar(255)
+  module           String             @db.VarChar(100)
+  is_active        Boolean            @default(true)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+
+  @@index([code], map: "idx_permissions_code")
+  @@index([is_active], map: "idx_permissions_is_active")
+  @@index([module], map: "idx_permissions_module")
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model project_comments {
+  id                     BigInt             @id @default(autoincrement())
+  project_id             BigInt
+  user_id                BigInt
+  file_id                BigInt?
+  file_version_id        BigInt?
+  parent_comment_id      BigInt?
+  comment_type           comment_type       @default(general)
+  content                String
+  status                 comment_status     @default(active)
+  created_at             DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at             DateTime?          @db.Timestamptz(6)
+  target_id              String?
+  target_metadata        Json?
+  comment_anchors        comment_anchors[]
+  files                  files?             @relation(fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_comments_file")
+  file_versions          file_versions?     @relation(fields: [file_version_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_comments_file_version")
+  project_comments       project_comments?  @relation("project_commentsToproject_comments", fields: [parent_comment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_comments_parent")
+  other_project_comments project_comments[] @relation("project_commentsToproject_comments")
+  projects               projects           @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_comments_project")
+  users                  users              @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_comments_user")
+
+  @@index([project_id], map: "idx_project_comments_project_id", where: raw("(deleted_at IS NULL)"))
+  @@index([project_id, comment_type, target_id], map: "idx_project_comments_project_type_target", where: raw("(deleted_at IS NULL)"))
+  @@index([project_id, created_at, id], map: "project_comments_active_cursor_idx", where: raw("((deleted_at IS NULL) AND (file_id IS NULL) AND (file_version_id IS NULL))"))
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_milestones {
+  id             BigInt          @id @default(autoincrement())
+  project_id     BigInt
+  stage_id       BigInt?
+  title          String          @db.VarChar(150)
+  description    String?         @db.VarChar(255)
+  due_date       DateTime        @db.Date
+  completed_at   DateTime?       @db.Timestamptz(6)
+  status         project_status  @default(pending)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime?       @db.Timestamptz(6)
+  projects       projects        @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_milestones_project")
+  project_stages project_stages? @relation(fields: [stage_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_milestones_stage")
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_progress_updates {
+  id         BigInt   @id @default(autoincrement())
+  project_id BigInt
+  updated_by BigInt
+  progress   BigInt?
+  note       String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  projects   projects @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_progress_updates_project")
+  users      users    @relation(fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_progress_updates_updated_by")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model project_requests {
+  id                                         BigInt                 @id @default(autoincrement())
+  client_id                                  BigInt
+  requested_by                               BigInt
+  project_name                               String                 @db.VarChar(150)
+  project_type                               project_type
+  location                                   String                 @db.VarChar(255)
+  description                                String?
+  has_plans                                  Boolean                @default(false)
+  general_area                               Decimal?               @db.Decimal(10, 2)
+  construction_area                          Decimal?               @db.Decimal(10, 2)
+  zoning                                     String?
+  procedures                                 String?
+  conditions                                 String?
+  equipment_used                             String?
+  reference_link                             String?                @db.VarChar(500)
+  status                                     project_request_status @default(pending_verification)
+  verification_code_hash                     String                 @db.VarChar(255)
+  verification_expires_at                    DateTime               @db.Timestamptz(6)
+  verified_at                                DateTime?              @db.Timestamptz(6)
+  reviewed_by                                BigInt?
+  reviewed_at                                DateTime?              @db.Timestamptz(6)
+  rejection_reason                           String?                @db.VarChar(255)
+  converted_project_id                       BigInt?
+  created_at                                 DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at                                 DateTime               @default(now()) @db.Timestamptz(6)
+  deleted_at                                 DateTime?              @db.Timestamptz(6)
+  location_latitude                          Decimal?               @db.Decimal(10, 7)
+  location_longitude                         Decimal?               @db.Decimal(10, 7)
+  provider_place_id                          String?                @db.VarChar
+  formatted_address                          String?                @db.VarChar
+  files                                      files[]
+  clients                                    clients                @relation(fields: [client_id], references: [id], map: "fk_project_requests_client")
+  projects                                   projects?              @relation(fields: [converted_project_id], references: [id], map: "fk_project_requests_converted_project")
+  users_project_requests_requested_byTousers users                  @relation("project_requests_requested_byTousers", fields: [requested_by], references: [id], map: "fk_project_requests_requested_by")
+  users_project_requests_reviewed_byTousers  users?                 @relation("project_requests_reviewed_byTousers", fields: [reviewed_by], references: [id], map: "fk_project_requests_reviewed_by")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_requirements {
+  id          BigInt    @id @default(autoincrement())
+  project_id  BigInt
+  description String
+  sort_order  Int       @default(0)
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at  DateTime? @db.Timestamptz(6)
+  projects    projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_project_requirements_project")
+
+  @@index([project_id, sort_order, id], map: "idx_project_requirements_project", where: raw("(deleted_at IS NULL)"))
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_stages {
+  id                 BigInt               @id @default(autoincrement())
+  project_id         BigInt
+  name               String               @db.VarChar(150)
+  description        String?              @db.VarChar(255)
+  status             project_status       @default(pending)
+  sort_order         BigInt               @default(0)
+  start_date         DateTime?            @db.Date
+  end_date           DateTime?            @db.Date
+  completed_at       DateTime?            @db.Timestamptz(6)
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
+  deleted_at         DateTime?            @db.Timestamptz(6)
+  project_milestones project_milestones[]
+  projects           projects             @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_stages_project")
+}
+
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_status_history {
+  id              BigInt   @id @default(autoincrement())
+  project_id      BigInt
+  changed_by      BigInt
+  previous_status String   @db.VarChar(50)
+  new_status      String   @db.VarChar(50)
+  note            String?  @db.VarChar(255)
+  changed_at      DateTime @default(now()) @db.Timestamptz(6)
+  users           users    @relation(fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_status_history_changed_by")
+  projects        projects @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_status_history_project")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_technical_specification_items {
+  id                               BigInt                           @id @default(autoincrement())
+  specification_id                 BigInt
+  content                          String
+  sort_order                       Int                              @default(0)
+  created_at                       DateTime                         @default(now()) @db.Timestamptz(6)
+  updated_at                       DateTime                         @default(now()) @db.Timestamptz(6)
+  deleted_at                       DateTime?                        @db.Timestamptz(6)
+  project_technical_specifications project_technical_specifications @relation(fields: [specification_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_project_technical_specification_items_specification")
+
+  @@index([specification_id, sort_order, id], map: "idx_project_technical_specification_items_spec", where: raw("(deleted_at IS NULL)"))
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model project_technical_specifications {
+  id                                    BigInt                                  @id @default(autoincrement())
+  project_id                            BigInt
+  title                                 String                                  @db.VarChar(150)
+  description                           String?
+  sort_order                            Int                                     @default(0)
+  default_open                          Boolean                                 @default(false)
+  created_at                            DateTime                                @default(now()) @db.Timestamptz(6)
+  updated_at                            DateTime                                @default(now()) @db.Timestamptz(6)
+  deleted_at                            DateTime?                               @db.Timestamptz(6)
+  project_technical_specification_items project_technical_specification_items[]
+  projects                              projects                                @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_project_technical_specifications_project")
+
+  @@index([project_id, sort_order, id], map: "idx_project_technical_specifications_project", where: raw("(deleted_at IS NULL)"))
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model projects {
+  id                                          BigInt                             @id @default(autoincrement())
+  client_id                                   BigInt
+  created_by                                  BigInt
+  assigned_architect_id                       BigInt?
+  name                                        String                             @db.VarChar(150)
+  description                                 String?
+  status                                      project_status                     @default(pending)
+  start_date                                  DateTime                           @db.Date
+  end_date                                    DateTime?                          @db.Date
+  budget                                      Decimal?                           @db.Decimal(10, 2)
+  progress                                    BigInt                             @default(0)
+  created_at                                  DateTime                           @default(now()) @db.Timestamptz(6)
+  updated_at                                  DateTime                           @default(now()) @db.Timestamptz(6)
+  deleted_at                                  DateTime?                          @db.Timestamptz(6)
+  project_type                                project_type
+  location                                    String                             @db.VarChar(255)
+  city                                        String?                            @db.VarChar(100)
+  state                                       String?                            @db.VarChar(100)
+  country                                     String?                            @db.VarChar(100)
+  has_plans                                   Boolean                            @default(false)
+  general_area                                Decimal?                           @db.Decimal(10, 2)
+  construction_area                           Decimal?                           @db.Decimal(10, 2)
+  area_unit                                   String                             @default("mts") @db.VarChar(20)
+  is_public                                   Boolean                            @default(false)
+  location_latitude                           Decimal?                           @db.Decimal(10, 7)
+  location_longitude                          Decimal?                           @db.Decimal(10, 7)
+  provider_place_id                           String?                            @db.VarChar
+  formatted_address                           String?                            @db.VarChar
+  public_slug                                 String                             @unique(map: "idx_projects_public_slug_active", where: raw("(deleted_at IS NULL)")) @db.VarChar(160)
+  files                                       files[]
+  notifications                               notifications[]
+  project_comments                            project_comments[]
+  project_milestones                          project_milestones[]
+  project_progress_updates                    project_progress_updates[]
+  project_requests                            project_requests[]
+  project_requirements                        project_requirements[]
+  project_stages                              project_stages[]
+  project_status_history                      project_status_history[]
+  project_technical_specifications            project_technical_specifications[]
+  users_projects_assigned_architect_idTousers users?                             @relation("projects_assigned_architect_idTousers", fields: [assigned_architect_id], references: [id], map: "fk_projects_assigned_architect")
+  clients                                     clients                            @relation(fields: [client_id], references: [id], map: "fk_projects_client")
+  users_projects_created_byTousers            users                              @relation("projects_created_byTousers", fields: [created_by], references: [id], map: "fk_projects_created_by")
+
+  @@index([assigned_architect_id], map: "idx_projects_assigned_architect_id")
+  @@index([client_id], map: "idx_projects_client_id")
+  @@index([created_by], map: "idx_projects_created_by")
+  @@index([deleted_at], map: "idx_projects_deleted_at")
+  @@index([start_date], map: "idx_projects_start_date")
+  @@index([status], map: "idx_projects_status")
+  @@index([updated_at(sort: Desc), id(sort: Desc)], map: "projects_active_updated_cursor_idx", where: raw("(deleted_at IS NULL)"))
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model role_permissions {
+  id            BigInt      @id @default(autoincrement())
+  role_id       BigInt
+  permission_id BigInt
+  is_active     Boolean     @default(true)
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, map: "fk_role_permissions_permission")
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, map: "fk_role_permissions_role")
+
+  @@unique([role_id, permission_id], map: "uk_role_permissions_role_permission")
+  @@index([is_active], map: "idx_role_permissions_is_active")
+  @@index([permission_id], map: "idx_role_permissions_permission_id")
+  @@index([role_id], map: "idx_role_permissions_role_id")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model roles {
+  id               BigInt             @id @default(autoincrement())
+  code             String             @unique @db.VarChar(50)
+  name             String             @db.VarChar(100)
+  description      String?            @db.VarChar(255)
+  is_active        Boolean            @default(true)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+  users            users[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  id                                                    BigInt                     @id @default(autoincrement())
+  client_id                                             BigInt?
+  role_id                                               BigInt
+  email                                                 String                     @unique @db.VarChar(150)
+  first_name                                            String                     @db.VarChar(150)
+  last_name                                             String                     @db.VarChar(150)
+  password_hash                                         String                     @db.VarChar(255)
+  profile_photo_url                                     String?                    @db.VarChar(255)
+  signature_url                                         String?                    @db.VarChar(255)
+  phone                                                 String                     @db.VarChar(30)
+  status                                                user_status                @default(active)
+  last_login_at                                         DateTime?                  @db.Timestamptz(6)
+  created_at                                            DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                                            DateTime                   @default(now()) @db.Timestamptz(6)
+  deleted_at                                            DateTime?                  @db.Timestamptz(6)
+  audit_logs                                            audit_logs[]
+  file_versions                                         file_versions[]
+  files                                                 files[]
+  notifications_notifications_created_byTousers         notifications[]            @relation("notifications_created_byTousers")
+  notifications_notifications_user_idTousers            notifications[]            @relation("notifications_user_idTousers")
+  password_recovery_tokens                              password_recovery_tokens[]
+  project_comments                                      project_comments[]
+  project_progress_updates                              project_progress_updates[]
+  project_requests_project_requests_requested_byTousers project_requests[]         @relation("project_requests_requested_byTousers")
+  project_requests_project_requests_reviewed_byTousers  project_requests[]         @relation("project_requests_reviewed_byTousers")
+  project_status_history                                project_status_history[]
+  projects_projects_assigned_architect_idTousers        projects[]                 @relation("projects_assigned_architect_idTousers")
+  projects_projects_created_byTousers                   projects[]                 @relation("projects_created_byTousers")
+  clients                                               clients?                   @relation(fields: [client_id], references: [id], map: "fk_users_client")
+  roles                                                 roles                      @relation(fields: [role_id], references: [id], map: "fk_users_role")
+
+  @@index([client_id], map: "idx_users_client_id")
+  @@index([deleted_at], map: "idx_users_deleted_at")
+  @@index([email], map: "idx_users_email")
+  @@index([role_id], map: "idx_users_role_id")
+  @@index([status], map: "idx_users_status")
+}
+
+enum anchor_type {
+  image
+  video
+  viewer3d
+}
+
+enum client_status {
+  active
+  inactive
+}
+
+enum comment_status {
+  active
+  resolved
+  deleted
+}
+
+enum comment_type {
+  general
+  image
+  video
+  viewer3d
+}
+
+enum file_status {
+  active
+  archived
+  deleted
+}
+
+enum project_request_status {
+  pending_verification
+  pending_review
+  approved
+  rejected
+  converted
+}
+
+enum project_status {
+  pending
+  in_process
+  completed
+  cancelled
+}
+
+enum project_type {
+  residential
+  commercial
+  corporate
+  stands_exhibitions
+}
+
+enum user_status {
+  active
+  inactive
+  blocked
+}
