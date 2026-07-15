@@ -1,6 +1,11 @@
 {
   "installCommand": "pnpm install",
   "buildCommand": null,
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
