@@ -11,6 +11,7 @@ import {
 } from "../../../utils/videoObservation.js";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import { useImageComments } from "./useImageComments.js";
+import { useVideoThumbnail } from "./useVideoThumbnail.js";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -403,6 +404,7 @@ export default function VideoViewerModal({
   const frameRef = useRef(null);
   const stageRef = useRef(null);
   const videoRef = useRef(null);
+  const generatedPoster = useVideoThumbnail(displayItem?.video, displayItem?.image);
   const { addComment, comments } = useImageComments(displayItem, {
     commentType: "video",
     projectId,
@@ -617,7 +619,7 @@ export default function VideoViewerModal({
             <video
               ref={videoRef}
               src={displayItem.video}
-              poster={displayItem.image}
+              poster={generatedPoster || undefined}
               className="absolute inset-0 h-full w-full cursor-pointer object-cover"
               muted={isMuted}
               playsInline
@@ -651,7 +653,7 @@ export default function VideoViewerModal({
             />
           ) : (
             <img
-              src={displayItem.image}
+              src={generatedPoster || displayItem.image}
               alt={displayItem.label ?? displayItem.title}
               className="absolute inset-0 h-full w-full object-cover"
             />
@@ -728,7 +730,7 @@ export default function VideoViewerModal({
             composerFocusSignal={composerFocusSignal}
             comments={comments}
             focusedSelectionCommentId={focusedCommentId}
-            mediaItem={displayItem}
+            mediaItem={{ ...displayItem, image: generatedPoster || displayItem.image }}
             mediaType="video"
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={(commentId) => {

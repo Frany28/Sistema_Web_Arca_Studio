@@ -22,7 +22,9 @@ import Model3DViewerModal, {
   Model3DViewerControls,
   useSketchfabLikeModelWheel,
 } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
+import Model3DThumbnail from "../../../components/ui/Gallery/Model3DThumbnail.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
+import VideoThumbnail from "../../../components/ui/Gallery/VideoThumbnail.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
@@ -349,10 +351,6 @@ function RenderStage({
 }
 
 function RenderThumbnail({ item, selected, onSelect }) {
-  const hasPreviewImage = Boolean(item.image);
-  const [imageLoadError, setImageLoadError] = useState(false);
-  const showPreviewImage = hasPreviewImage && !imageLoadError;
-
   return (
     <button
       type="button"
@@ -365,20 +363,11 @@ function RenderThumbnail({ item, selected, onSelect }) {
       )}
       aria-pressed={selected}
     >
-      {showPreviewImage ? (
-        <img
-          src={item.image}
-          alt={item.title}
-          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
-          onError={() => setImageLoadError(true)}
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_50%_38%,#3a3a3a_0%,#171717_68%)] px-[12px] text-center">
-          <span className="text-heading-8 text-[var(--color-neutral-100-uniform)]">
-            Modelo 3D
-          </span>
-        </div>
-      )}
+      <Model3DThumbnail
+        item={item}
+        alt={item.title}
+        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+      />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.12)_35%,rgba(0,0,0,0.52)_100%)]" />
       <span className="absolute inset-x-[8px] bottom-[8px] text-heading-8 text-[var(--color-neutral-100-uniform)]">
         {item.title}
@@ -506,23 +495,11 @@ function VideoPreviewCard({ item, onClick }) {
       onClick={onClick}
       className="group relative h-[385px] w-full cursor-pointer overflow-hidden rounded-[var(--radius-2)] text-left shadow-[var(--shadow-e2)] transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
     >
-      {item.video ? (
-        <video
-          src={item.video}
-          poster={item.image || undefined}
-          className="h-full w-full object-cover"
-          muted
-          playsInline
-          preload="metadata"
-          aria-label={item.label ?? item.title}
-        />
-      ) : (
-        <img
-          src={item.image}
-          alt={item.label}
-          className="h-full w-full object-cover"
-        />
-      )}
+      <VideoThumbnail
+        item={item}
+        alt={item.label ?? item.title}
+        className="h-full w-full object-cover"
+      />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_44%,rgba(0,0,0,0.56)_100%)]" />
 
       <div className="absolute left-1/2 top-1/2 flex size-[48px] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-[var(--color-neutral-100-uniform)]">
@@ -549,23 +526,11 @@ function VideoListItem({ item, active, onSelect }) {
       )}
     >
       <div className="group relative h-[90px] w-[150px] shrink-0 overflow-hidden rounded-[var(--radius-1)] shadow-[var(--shadow-e2)]">
-        {item.video ? (
-          <video
-            src={item.video}
-            poster={item.image || undefined}
-            className="h-full w-full object-cover"
-            muted
-            playsInline
-            preload="metadata"
-            aria-label={item.label ?? item.title}
-          />
-        ) : (
-          <img
-            src={item.image}
-            alt={item.label}
-            className="h-full w-full object-cover"
-          />
-        )}
+        <VideoThumbnail
+          item={item}
+          alt={item.label ?? item.title}
+          className="h-full w-full object-cover"
+        />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.10)_44%,rgba(0,0,0,0.56)_100%)]" />
         <div className="absolute left-1/2 top-1/2 flex size-[20px] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-[var(--color-neutral-100-uniform)]">
           <PlayIcon className="size-5" />
