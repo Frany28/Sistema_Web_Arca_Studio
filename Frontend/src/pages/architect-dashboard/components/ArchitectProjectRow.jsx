@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import AvatarGroup from "../../../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getProjectPath } from "../../../utils/projectRoutes.js";
 import ArchitectProjectProgress from "./ArchitectProjectProgress.jsx";
 
@@ -34,20 +35,11 @@ function ArchitectProjectRow({
           <span className="text-body-4 rounded-[var(--radius-1)] border border-[var(--color-neutral-200)] px-[8px] py-[2px] text-[var(--color-text-200)]">
             {project.isPublic ? "Publico" : "Privado"}
           </span>
-          <AvatarGroup
-            size="S"
-            items={[
-              {
-                content: "Icon",
-                theme: "Neutral",
-              },
-              {
-                content: "Text",
-                theme: "Neutral",
-                initials: "AC",
-              },
-            ]}
-          />
+          {project.assigneeAvatars?.length ? (
+            <Tooltip text={project.assigneeAvatars[0].name} tipPosition="Top center">
+              <AvatarGroup size="S" items={project.assigneeAvatars} tabIndex={0} />
+            </Tooltip>
+          ) : null}
         </div>
 
         <ArchitectProjectProgress />

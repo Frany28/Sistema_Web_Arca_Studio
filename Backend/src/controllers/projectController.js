@@ -4,6 +4,7 @@ import {
   listProjectsForUser,
   updateProjectVisibility,
 } from "../repositories/projectRepository.js";
+import { getAssignedArchitectProfilePhoto } from "../services/profilePhotoService.js";
 import { isValidProjectSlug } from "../utils/projectSlug.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
@@ -63,6 +64,26 @@ export async function getProjectDetail(req, res, next) {
         fileAccessToken: req.session?.token || null,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function streamAssignedArchitectProfilePhoto(req, res, next) {
+  try {
+    const photo = await getAssignedArchitectProfilePhoto({
+      projectId: req.params.projectId,
+      user: req.user,
+    });
+
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Content-Type", photo.contentType);
+    res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+    if (photo.contentLength !== undefined) {
+      res.setHeader("Content-Length", String(photo.contentLength));
+    }
+    photo.body.on?.("error", next);
+    photo.body.pipe(res.status(200));
   } catch (error) {
     next(error);
   }

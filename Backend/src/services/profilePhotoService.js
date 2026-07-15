@@ -1,6 +1,7 @@
 import { getStorageObjectKeyFromFileUrl } from "../config/storage.js";
 import { NotFoundError } from "../errors/appError.js";
 import { findProjectCommentAuthorProfilePhoto } from "../repositories/projectCommentRepository.js";
+import { findAssignedArchitectProfilePhotoForUser } from "../repositories/projectRepository.js";
 import { objectStorage } from "./objectStorage.js";
 import { uploadPolicies } from "./fileUploadService.js";
 
@@ -59,6 +60,15 @@ export async function getProjectCommentAuthorProfilePhoto({
   const profilePhotoUrl = await findProjectCommentAuthorProfilePhoto(
     projectId,
     authorUserId,
+    user,
+  );
+
+  return getProfilePhotoObject(profilePhotoUrl);
+}
+
+export async function getAssignedArchitectProfilePhoto({ projectId, user }) {
+  const profilePhotoUrl = await findAssignedArchitectProfilePhotoForUser(
+    projectId,
     user,
   );
 

@@ -81,6 +81,47 @@ function getProjectAccess(user, projectAlias = "p") {
   return { condition, params };
 }
 
+function getDirectProjectAccess(user, projectAlias = "p") {
+  const roleCode = user?.role?.code;
+
+  if (roleCode === "admin") return { condition: "true", params: [] };
+  if (roleCode === "architect") {
+    return {
+      condition: `${projectAlias}.assigned_architect_id = $1`,
+      params: [user.id],
+    };
+  }
+  if (roleCode === "client" && user.clientId) {
+    return {
+      condition: `${projectAlias}.client_id = $1`,
+      params: [user.clientId],
+    };
+  }
+
+  return { condition: "false", params: [] };
+}
+
+export async function findAssignedArchitectProfilePhotoForUser(projectId, user) {
+  const { condition, params } = getDirectProjectAccess(user);
+  const projectIdParam = params.length + 1;
+  const result = await query(
+    `
+      select architect.profile_photo_url
+      from public.projects p
+      inner join public.users architect
+        on architect.id = p.assigned_architect_id
+       and architect.deleted_at is null
+      where p.id = $${projectIdParam}
+        and p.deleted_at is null
+        and (${condition})
+      limit 1
+    `,
+    [...params, projectId],
+  );
+
+  return result.rows[0]?.profile_photo_url || null;
+}
+
 export async function listProjectsForUser(user, { cursor = null, limit = 25 } = {}) {
   const { condition: accessCondition, params } = getProjectAccess(user);
   const cursorDateParam = params.length + 1;

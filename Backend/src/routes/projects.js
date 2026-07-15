@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   getProjectDetail,
   getMyProjects,
+  streamAssignedArchitectProfilePhoto,
   updateProjectPublication,
 } from "../controllers/projectController.js";
 import {
@@ -23,11 +24,18 @@ import {
   commentSchema,
   paginationSchema,
   projectCommentAuthorPhotoSchema,
+  projectIdSchema,
 } from "../validation/schemas.js";
 
 const router = Router();
 
 router.get("/", requireAuth, requirePermissions("projects.read"), validate(paginationSchema), getMyProjects);
+router.get(
+  "/:projectId/assigned-architect/profile-photo",
+  requireAuth,
+  validate(projectIdSchema),
+  streamAssignedArchitectProfilePhoto,
+);
 router.get(
   "/:projectId",
   requireAuth,

@@ -12,6 +12,7 @@ import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";
 import ScrollBar from "../components/ui/ScrollBar/ScrollBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
+import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
 import fondoActualizarcontraseña from "../assets/fondos/Property 1=actualizar contraseña.png";
 import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
 import fondoRestablecercontraseña from "../assets/fondos/Property 1=restablecer contraseña.png";
@@ -23,6 +24,7 @@ import {
 } from "../hooks/useProjectComments.js";
 import { getProjectNamesById } from "../utils/commentDisplay.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
+import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
@@ -136,21 +138,8 @@ function createProjectNavigationItems(projects) {
 }
 
 function getProjectAssigneeAvatars(project) {
-  const architect = project.assignedArchitect;
-
-  if (!architect) {
-    return [];
-  }
-
-  return [
-    {
-      alt: architect.name || architect.email || "Arquitecto encargado",
-      content: "Text",
-      name: architect.name || architect.email,
-      src: architect.profilePhotoUrl,
-      theme: "Neutral",
-    },
-  ];
+  const assigneeAvatar = getProjectAssigneeAvatar(project);
+  return assigneeAvatar ? [assigneeAvatar] : [];
 }
 
 function toProjectRow(project, index) {
@@ -182,7 +171,9 @@ function ProjectRow({ project }) {
             {project.name}
           </h2>
           {project.assigneeAvatars.length ? (
-            <AvatarGroup size="S" items={project.assigneeAvatars} />
+            <Tooltip text={project.assigneeAvatars[0].name} tipPosition="Top center">
+              <AvatarGroup size="S" items={project.assigneeAvatars} tabIndex={0} />
+            </Tooltip>
           ) : null}
         </div>
 

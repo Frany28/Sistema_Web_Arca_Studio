@@ -17,6 +17,7 @@ import {
 } from "../../hooks/useProjectComments.js";
 import { getProjectNamesById } from "../../utils/commentDisplay.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
+import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -93,8 +94,11 @@ function createNavigationItems(projects) {
 }
 
 function toProjectRow(project, index, user) {
+  const assigneeAvatar = getProjectAssigneeAvatar(project);
+
   return {
     ...project,
+    assigneeAvatars: assigneeAvatar ? [assigneeAvatar] : [],
     editable:
       user?.role === "admin" || project.assignedArchitect?.id === user?.id,
     image: PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
