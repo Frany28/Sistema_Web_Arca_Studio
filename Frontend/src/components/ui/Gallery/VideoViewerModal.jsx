@@ -532,6 +532,14 @@ export default function VideoViewerModal({
 
     if (!timing) return;
 
+    if (
+      !comment.pending &&
+      String(focusedCommentId) === String(comment.id)
+    ) {
+      setFocusedCommentId(null);
+      return;
+    }
+
     videoRef.current?.pause();
     handleSeek(timing.videoTimeSeconds);
     setFocusedCommentId(comment.pending ? null : comment.id);
