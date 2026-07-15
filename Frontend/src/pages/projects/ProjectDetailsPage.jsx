@@ -151,7 +151,7 @@ function formatFileDate(value) {
   }).format(new Date(value));
 }
 
-function toMediaFileItem(file, { fallbackImage, project }) {
+function toMediaFileItem(file, { project }) {
   const title = file.title || file.name || "Archivo";
   const uploadedAt = formatFileDate(file.createdAt);
   const contentUrl =
@@ -170,7 +170,7 @@ function toMediaFileItem(file, { fallbackImage, project }) {
     fileUrl: file.fileUrl,
     fileId: file.id,
     id: `project-file-${file.id}`,
-    image: isImageFile(file) ? contentUrl : fallbackImage || null,
+    image: isImageFile(file) ? contentUrl : null,
     label: title,
     modelUrl: isModelFile(file) ? contentUrl : null,
     size: formatFileSize(file.size),
@@ -187,10 +187,9 @@ function toProjectPresentation(project) {
   const renderGallery = imageFiles
     .filter((file) => file.fileUrl)
     .map((file) => toMediaFileItem(file, { project }));
-  const firstImageUrl = renderGallery.find((file) => file.image)?.image || null;
   const videoGallery = projectFiles
     .filter((file) => isVideoFile(file) && file.fileUrl)
-    .map((file) => toMediaFileItem(file, { fallbackImage: firstImageUrl, project }));
+    .map((file) => toMediaFileItem(file, { project }));
   const modelGallery = projectFiles
     .filter((file) => isModelFile(file) && file.fileUrl)
     .map((file) => toMediaFileItem(file, { project }));

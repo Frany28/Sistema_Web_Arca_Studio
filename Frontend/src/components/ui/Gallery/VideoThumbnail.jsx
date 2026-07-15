@@ -1,7 +1,11 @@
 import { useVideoThumbnail } from "./useVideoThumbnail.js";
 
 export default function VideoThumbnail({ alt = "", className, item }) {
-  const thumbnail = useVideoThumbnail(item?.video, item?.image);
+  const thumbnail = useVideoThumbnail(item?.video, item?.poster);
+
+  if (!item?.video && item?.image) {
+    return <img src={item.image} alt={alt} className={className} />;
+  }
 
   return thumbnail ? (
     <img src={thumbnail} alt={alt} className={className} />

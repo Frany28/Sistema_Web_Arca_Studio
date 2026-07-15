@@ -404,7 +404,7 @@ export default function VideoViewerModal({
   const frameRef = useRef(null);
   const stageRef = useRef(null);
   const videoRef = useRef(null);
-  const generatedPoster = useVideoThumbnail(displayItem?.video, displayItem?.image);
+  const generatedPoster = useVideoThumbnail(displayItem?.video, displayItem?.poster);
   const { addComment, comments } = useImageComments(displayItem, {
     commentType: "video",
     projectId,
