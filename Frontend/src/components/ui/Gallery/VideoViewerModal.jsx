@@ -668,7 +668,7 @@ export default function VideoViewerModal({
               type="button"
               aria-label={isPlaying ? "Pausar video" : "Reproducir video"}
               className={clsx(
-                "absolute inset-0 z-10 flex cursor-pointer items-center justify-center text-[var(--color-neutral-100-uniform)] transition-opacity duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent-300)]",
+                "group/play absolute inset-0 z-10 flex cursor-pointer items-center justify-center text-[var(--color-neutral-100-uniform)] transition-opacity duration-200 focus-visible:outline-none",
                 isPlaying
                   ? "opacity-0 hover:opacity-100 focus-visible:opacity-100 group-hover/video:opacity-100"
                   : "opacity-100",
@@ -676,7 +676,7 @@ export default function VideoViewerModal({
               onClick={handleTogglePlay}
             >
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.24)_0%,rgba(0,0,0,0.14)_28%,rgba(0,0,0,0.04)_56%,rgba(0,0,0,0)_100%)]" />
-              <span className="relative flex size-[64px] items-center justify-center text-[var(--color-neutral-100-uniform)] drop-shadow-[0_8px_24px_rgba(0,0,0,0.34)]">
+              <span className="relative flex size-[64px] items-center justify-center rounded-full text-[var(--color-neutral-100-uniform)] drop-shadow-[0_8px_24px_rgba(0,0,0,0.34)] group-focus-visible/play:ring-2 group-focus-visible/play:ring-[var(--color-neutral-100-uniform)]">
                 {isPlaying ? (
                   <PauseIcon className="size-[56px]" />
                 ) : (
