@@ -31,6 +31,30 @@ export const commentSchema = z.object({
     image: z.record(z.string(), z.unknown()).nullish(),
     selection: z.record(z.string(), z.unknown()).nullish(),
   }).passthrough(),
+}).superRefine((value, context) => {
+  const selection = value.body.selection;
+
+  if (selection?.kind !== "video-time") return;
+
+  const timeSeconds = Number(selection.timeSeconds);
+  const durationSeconds = Number(selection.durationSeconds);
+  const isValid =
+    value.body.commentType === "video" &&
+    typeof selection.timeSeconds === "number" &&
+    typeof selection.durationSeconds === "number" &&
+    Number.isFinite(timeSeconds) &&
+    timeSeconds >= 0 &&
+    Number.isFinite(durationSeconds) &&
+    durationSeconds > 0 &&
+    timeSeconds <= durationSeconds;
+
+  if (!isValid) {
+    context.addIssue({
+      code: "custom",
+      message: "La referencia temporal del video no es válida.",
+      path: ["body", "selection"],
+    });
+  }
 });
 
 export const fileRouteSchema = z.object({

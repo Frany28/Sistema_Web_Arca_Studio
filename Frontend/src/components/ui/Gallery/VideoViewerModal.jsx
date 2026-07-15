@@ -4,6 +4,11 @@ import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
+import {
+  createVideoTimeSelection,
+  formatVideoObservationTime,
+  getVideoObservationTiming,
+} from "../../../utils/videoObservation.js";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import { useImageComments } from "./useImageComments.js";
 
@@ -214,9 +219,12 @@ function PlaybackBar({
   duration,
   isLoading,
   isMuted,
+  focusedCommentId,
+  markers = [],
   onCommentClick,
   onFullscreen,
   onSeek,
+  onMarkerClick,
   onToggleMute,
 }) {
   const touchTooltipTimeoutRef = useRef(null);
@@ -300,6 +308,31 @@ function PlaybackBar({
             style={{ width: `${displayProgress}%` }}
           />
         </div>
+        {markers.map((marker) => {
+          const markerTime = Number(marker.videoTimeSeconds);
+          const markerLeft = safeDuration
+            ? Math.min(Math.max((markerTime / safeDuration) * 100, 0), 100)
+            : 0;
+          const isActive =
+            marker.pending || String(marker.id) === String(focusedCommentId);
+
+          return (
+            <button
+              key={marker.id}
+              type="button"
+              aria-label={`${marker.pending ? "Referencia pendiente" : "Ir a la observación"} en ${formatVideoObservationTime(markerTime)}`}
+              className={clsx(
+                "absolute top-1/2 z-20 h-[16px] w-[4px] -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full bg-[var(--color-accent-300)] transition-[height,box-shadow,width] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                isActive
+                  ? "h-[20px] w-[6px] shadow-[0_0_0_3px_rgba(255,68,49,0.28)]"
+                  : "hover:h-[20px]",
+                marker.pending && "opacity-65",
+              )}
+              style={{ left: `${markerLeft}%` }}
+              onClick={() => onMarkerClick?.(marker)}
+            />
+          );
+        })}
         <input
           type="range"
           min="0"
@@ -307,7 +340,7 @@ function PlaybackBar({
           step="0.1"
           value={Math.min(currentTime, safeDuration || currentTime)}
           aria-label="Progreso del video"
-          className="absolute inset-x-0 top-1/2 h-[20px] -translate-y-1/2 cursor-pointer opacity-0 disabled:cursor-default"
+          className="absolute inset-x-0 top-1/2 z-10 h-[20px] -translate-y-1/2 cursor-pointer opacity-0 disabled:cursor-default"
           disabled={!safeDuration}
           onChange={(event) => onSeek(Number(event.target.value))}
         />
@@ -364,6 +397,8 @@ export default function VideoViewerModal({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const [composerFocusSignal, setComposerFocusSignal] = useState(0);
+  const [focusedCommentId, setFocusedCommentId] = useState(null);
+  const [pendingSelection, setPendingSelection] = useState(null);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
   const stageRef = useRef(null);
@@ -384,6 +419,8 @@ export default function VideoViewerModal({
       setIsActive(false);
       setIsMuted(false);
       setIsPlaying(false);
+      setFocusedCommentId(null);
+      setPendingSelection(null);
       setIsVideoLoading(Boolean(item.video));
       setShouldRender(true);
       frameRef.current = window.requestAnimationFrame(() => {
@@ -423,8 +460,15 @@ export default function VideoViewerModal({
     transitionTimingFunction: MODAL_EASING,
   };
 
-  async function handleSubmitComment({ message, parentCommentId }) {
-    await addComment({ message, parentCommentId });
+  async function handleSubmitComment({ message, parentCommentId, selection }) {
+    const comment = await addComment({ message, parentCommentId, selection });
+
+    if (selection && comment) {
+      setPendingSelection(null);
+      setFocusedCommentId(comment.id);
+    }
+
+    return comment;
   }
 
   async function handleTogglePlay() {
@@ -471,8 +515,43 @@ export default function VideoViewerModal({
   }
 
   function handleCommentClick() {
+    const video = videoRef.current;
+    const selection = createVideoTimeSelection(
+      video?.currentTime ?? currentTime,
+      video?.duration ?? duration,
+    );
+
+    video?.pause();
+    setPendingSelection(selection);
+    setFocusedCommentId(null);
     setComposerFocusSignal((currentSignal) => currentSignal + 1);
   }
+
+  function handleTemporalCommentSelect(comment) {
+    const timing = getVideoObservationTiming(comment?.selection || comment);
+
+    if (!timing) return;
+
+    videoRef.current?.pause();
+    handleSeek(timing.videoTimeSeconds);
+    setFocusedCommentId(comment.pending ? null : comment.id);
+  }
+
+  const temporalComments = comments.filter(
+    (comment) => !comment.parentCommentId && getVideoObservationTiming(comment.selection),
+  );
+  const pendingTiming = getVideoObservationTiming(pendingSelection);
+  const timelineMarkers = [
+    ...temporalComments,
+    pendingTiming
+      ? {
+          id: "pending-video-observation",
+          pending: true,
+          selection: pendingSelection,
+          ...pendingTiming,
+        }
+      : null,
+  ].filter(Boolean);
 
   async function handleFullscreen() {
     const stage = stageRef.current;
@@ -619,9 +698,12 @@ export default function VideoViewerModal({
             duration={duration}
             isLoading={isVideoLoading}
             isMuted={isMuted}
+            focusedCommentId={focusedCommentId}
+            markers={timelineMarkers}
             onCommentClick={handleCommentClick}
             onFullscreen={handleFullscreen}
             onSeek={handleSeek}
+            onMarkerClick={handleTemporalCommentSelect}
             onToggleMute={handleToggleMute}
           />
         </div>
@@ -637,9 +719,18 @@ export default function VideoViewerModal({
           <GeneralCommentsDrawer
             composerFocusSignal={composerFocusSignal}
             comments={comments}
+            focusedSelectionCommentId={focusedCommentId}
             mediaItem={displayItem}
             mediaType="video"
+            onClearSelection={() => setPendingSelection(null)}
+            onSelectionPreviewClick={(commentId) => {
+              const comment = comments.find(
+                (current) => String(current.id) === String(commentId),
+              );
+              handleTemporalCommentSelect(comment);
+            }}
             onSubmitComment={handleSubmitComment}
+            pendingSelection={pendingSelection}
           />
         </div>
       </section>

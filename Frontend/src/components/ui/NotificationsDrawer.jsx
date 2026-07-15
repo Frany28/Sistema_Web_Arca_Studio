@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
+import { getVideoObservationTiming } from "../../utils/videoObservation.js";
+
 import Avatar from "./Avatar/Avatar.jsx";
 import Badge from "./Badge/Badge.jsx";
 import Button from "./Button/Button.jsx";
@@ -377,8 +379,32 @@ function ImageCommentPreview({
   projectName,
   selection,
 }) {
+  const videoTiming = getVideoObservationTiming(selection);
   const pixels = selection.imagePixels ?? selection.displayPixels;
   const isViewer3dComment = commentType === "viewer3d";
+
+  if (videoTiming) {
+    return (
+      <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+        <div className="flex size-[44px] shrink-0 items-center justify-center rounded-[6px] bg-[var(--color-neutral-200)] text-[12px] font-semibold text-[var(--color-text-300)]">
+          {videoTiming.videoTimeLabel}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
+            {observationTypeLabel || "Observación sobre video"}
+          </p>
+          {projectName ? (
+            <p className="truncate text-[10px] font-medium leading-[12px] text-[var(--color-text-200)]">
+              {projectName}
+            </p>
+          ) : null}
+          <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
+            Momento {videoTiming.videoTimeLabel}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!pixels) {
     return null;

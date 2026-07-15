@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../../api/http.js";
 import { useAuth } from "../../../auth/AuthContext.jsx";
 import { decorateCommentForDisplay } from "../../../utils/commentDisplay.js";
+import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 
 const LEGACY_STORAGE_KEY = "arca.image-comments.v1";
 const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "viewer3d"]);
@@ -54,6 +55,7 @@ function getRelativeTimeLabel(value) {
 
 function decorateComment(comment, user, projectNamesById = {}) {
   const selection = comment.selection || null;
+  const videoTiming = getVideoObservationTiming(selection);
   const pointNumber =
     comment.commentType === "viewer3d"
       ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
@@ -81,6 +83,7 @@ function decorateComment(comment, user, projectNamesById = {}) {
     message: comment.message ?? comment.content,
     pointNumber,
     timestamp: getRelativeTimeLabel(comment.createdAt) || comment.timestamp,
+    ...videoTiming,
   };
 }
 

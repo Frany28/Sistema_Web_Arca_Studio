@@ -17,6 +17,7 @@ import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
+import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
 
@@ -892,6 +893,58 @@ function SelectionPreview({
     return null;
   }
 
+  const videoTiming = getVideoObservationTiming(selection);
+  const Container = onSelect ? "button" : "div";
+
+  if (videoTiming) {
+    return (
+      <Container
+        type={onSelect ? "button" : undefined}
+        className={clsx(
+          "flex w-full items-center gap-[8px] rounded-[var(--radius-2)] border bg-[var(--color-neutral-100)] p-[6px] text-left transition-colors",
+          active
+            ? "border-[var(--color-accent-300)]"
+            : "border-[var(--color-neutral-200)]",
+          onSelect &&
+            "cursor-pointer hover:border-[var(--color-neutral-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]",
+        )}
+        onClick={onSelect}
+      >
+        <div className="flex size-[44px] shrink-0 items-center justify-center rounded-[6px] bg-[var(--color-neutral-200)] text-[12px] font-semibold text-[var(--color-text-300)]">
+          {videoTiming.videoTimeLabel}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
+            {observationTitle || "Observación sobre video"}
+          </p>
+          <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
+            Momento {videoTiming.videoTimeLabel}
+          </p>
+        </div>
+        {onClear ? (
+          <span
+            role="button"
+            tabIndex={0}
+            className="shrink-0 cursor-pointer rounded-[6px] px-[6px] py-[4px] text-[10px] leading-[12px] text-[var(--color-text-200)] hover:bg-[var(--color-neutral-200)]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClear();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                onClear();
+              }
+            }}
+          >
+            Quitar
+          </span>
+        ) : null}
+      </Container>
+    );
+  }
+
   const isViewerPoint = selection.kind === "viewer3d-point";
   const pixels = selection.imagePixels ?? selection.displayPixels;
   const naturalSize = selection.naturalSize ?? {
@@ -912,7 +965,6 @@ function SelectionPreview({
       }%`
     : undefined;
 
-  const Container = onSelect ? "button" : "div";
   const referenceNumber = Number(pointNumber) || null;
   const referenceTitle =
     observationTitle ||
@@ -1061,7 +1113,13 @@ function MessageInput({
         />
       ) : null}
       <TextArea
-        label="Observación general"
+        label={
+          pendingSelection
+            ? getObservationTypeLabel(
+                mediaType === "render" ? "image" : mediaType,
+              )
+            : "Observación general"
+        }
         placeholder={placeholder}
         value={textAreaValue}
         showHint={false}
