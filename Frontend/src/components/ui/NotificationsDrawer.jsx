@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
+import { orderCommentsByThread } from "../../utils/commentDisplay.js";
 import { getVideoObservationTiming } from "../../utils/videoObservation.js";
 
 import Avatar from "./Avatar/Avatar.jsx";
@@ -86,65 +87,6 @@ const RECENT_ACTIVITY = [
     status: "En proceso",
   },
 ];
-
-function getCommentTime(comment) {
-  const time = new Date(comment.createdAt || 0).getTime();
-
-  return Number.isNaN(time) ? 0 : time;
-}
-
-function orderCommentsByThread(comments, { limitRootThreads } = {}) {
-  const repliesByParent = new Map();
-  const rootComments = [];
-  const rootIds = new Set();
-
-  comments.forEach((comment) => {
-    if (comment.parentCommentId) {
-      const key = String(comment.parentCommentId);
-      repliesByParent.set(key, [...(repliesByParent.get(key) ?? []), comment]);
-      return;
-    }
-
-    rootIds.add(String(comment.id));
-    rootComments.push(comment);
-  });
-
-  const sortedRootComments = [...rootComments].sort((left, right) => {
-    const leftReplies = repliesByParent.get(String(left.id)) ?? [];
-    const rightReplies = repliesByParent.get(String(right.id)) ?? [];
-    const leftTime = Math.max(
-      getCommentTime(left),
-      ...leftReplies.map(getCommentTime),
-    );
-    const rightTime = Math.max(
-      getCommentTime(right),
-      ...rightReplies.map(getCommentTime),
-    );
-
-    return rightTime - leftTime;
-  });
-  const visibleRootComments =
-    Number.isInteger(limitRootThreads) && limitRootThreads > 0
-      ? sortedRootComments.slice(0, limitRootThreads)
-      : sortedRootComments;
-  const orderedThreads = visibleRootComments.flatMap((comment) => [
-    comment,
-    ...(repliesByParent.get(String(comment.id)) ?? []).sort(
-      (left, right) => getCommentTime(left) - getCommentTime(right),
-    ),
-  ]);
-  const orphanReplies = comments.filter(
-    (comment) =>
-      comment.parentCommentId && !rootIds.has(String(comment.parentCommentId)),
-  );
-
-  return [
-    ...orderedThreads,
-    ...orphanReplies.sort(
-      (left, right) => getCommentTime(right) - getCommentTime(left),
-    ),
-  ];
-}
 
 function MoreIcon() {
   return (
@@ -244,7 +186,6 @@ function CommentCard({
   observationTypeLabel,
   onSelect,
   pointNumber,
-  projectName,
   timestamp,
   message,
   selection,
@@ -333,12 +274,6 @@ function CommentCard({
             </button>
           </div>
 
-          {projectName && (!imageComment || isReply) ? (
-            <p className="truncate text-[10px] leading-[12px] text-[var(--color-text-100)]">
-              {projectName}
-            </p>
-          ) : null}
-
           <p className="text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
             {message}
           </p>
@@ -349,7 +284,6 @@ function CommentCard({
               image={image}
               observationTypeLabel={observationTypeLabel}
               pointNumber={displayPointNumber}
-              projectName={projectName}
               selection={selection}
             />
           ) : null}
@@ -376,7 +310,6 @@ function ImageCommentPreview({
   image,
   observationTypeLabel,
   pointNumber,
-  projectName,
   selection,
 }) {
   const videoTiming = getVideoObservationTiming(selection);
@@ -393,11 +326,6 @@ function ImageCommentPreview({
           <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
             {observationTypeLabel || "Observación sobre video"}
           </p>
-          {projectName ? (
-            <p className="truncate text-[10px] font-medium leading-[12px] text-[var(--color-text-200)]">
-              {projectName}
-            </p>
-          ) : null}
           <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
             Momento {videoTiming.videoTimeLabel}
           </p>
@@ -434,11 +362,6 @@ function ImageCommentPreview({
               ? "Observación en modelo 3D"
               : "Observación sobre imagen")}
         </p>
-        {projectName ? (
-          <p className="truncate text-[10px] font-medium leading-[12px] text-[var(--color-text-200)]">
-            {projectName}
-          </p>
-        ) : null}
         <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
           x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
         </p>
@@ -656,7 +579,7 @@ function NotificationsDrawer({
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
   const canSubmitComments = typeof onSubmitComment === "function";
   const orderedComments = orderCommentsByThread(comments, {
-    limitRootThreads: 5,
+    limitRootThreads: 3,
   });
 
   useEffect(() => {

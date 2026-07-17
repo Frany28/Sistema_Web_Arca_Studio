@@ -88,6 +88,65 @@ export function getObservationTypeLabel(commentType) {
   return OBSERVATION_TYPE_LABELS[commentType] || OBSERVATION_TYPE_LABELS.general;
 }
 
+function getCommentTime(comment) {
+  const time = new Date(comment.createdAt || 0).getTime();
+
+  return Number.isNaN(time) ? 0 : time;
+}
+
+export function orderCommentsByThread(comments, { limitRootThreads } = {}) {
+  const repliesByParent = new Map();
+  const rootComments = [];
+  const rootIds = new Set();
+
+  comments.forEach((comment) => {
+    if (comment.parentCommentId) {
+      const key = String(comment.parentCommentId);
+      repliesByParent.set(key, [...(repliesByParent.get(key) ?? []), comment]);
+      return;
+    }
+
+    rootIds.add(String(comment.id));
+    rootComments.push(comment);
+  });
+
+  const sortedRootComments = [...rootComments].sort((left, right) => {
+    const leftReplies = repliesByParent.get(String(left.id)) ?? [];
+    const rightReplies = repliesByParent.get(String(right.id)) ?? [];
+    const leftTime = Math.max(
+      getCommentTime(left),
+      ...leftReplies.map(getCommentTime),
+    );
+    const rightTime = Math.max(
+      getCommentTime(right),
+      ...rightReplies.map(getCommentTime),
+    );
+
+    return rightTime - leftTime;
+  });
+  const visibleRootComments =
+    Number.isInteger(limitRootThreads) && limitRootThreads > 0
+      ? sortedRootComments.slice(0, limitRootThreads)
+      : sortedRootComments;
+  const orderedThreads = visibleRootComments.flatMap((comment) => [
+    comment,
+    ...(repliesByParent.get(String(comment.id)) ?? []).sort(
+      (left, right) => getCommentTime(left) - getCommentTime(right),
+    ),
+  ]);
+  const orphanReplies = comments.filter(
+    (comment) =>
+      comment.parentCommentId && !rootIds.has(String(comment.parentCommentId)),
+  );
+
+  return [
+    ...orderedThreads,
+    ...orphanReplies.sort(
+      (left, right) => getCommentTime(right) - getCommentTime(left),
+    ),
+  ];
+}
+
 export function getProjectNamesById(projects = []) {
   return Object.fromEntries(
     projects

@@ -326,7 +326,7 @@ function RenderStage({
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.22)_0%,rgba(0,0,0,0)_100%)]" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[156px] bg-[linear-gradient(0deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
         <div className="pointer-events-none absolute left-[12px] top-[12px] z-10">
-          <MainLogo size="32px" alt="ARCA Studio" />
+          <MainLogo size="32px" appearance="dark" alt="ARCA Studio" />
         </div>
 
         {hasInteractiveModel || hasPreviewImage ? (

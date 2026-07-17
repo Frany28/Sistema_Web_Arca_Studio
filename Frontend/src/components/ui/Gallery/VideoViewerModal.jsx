@@ -687,7 +687,7 @@ export default function VideoViewerModal({
           ) : null}
 
           <div className="absolute left-[12px] top-[12px] z-30">
-            <MainLogo size="32px" alt="ARCA Studio" />
+            <MainLogo size="32px" appearance="dark" alt="ARCA Studio" />
           </div>
 
           <Button

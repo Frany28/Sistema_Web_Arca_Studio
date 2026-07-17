@@ -8,6 +8,7 @@ import {
   getCommentableProjectsForUser,
   getObservationTypeLabel,
   getProjectNamesById,
+  orderCommentsByThread,
 } from "../src/utils/commentDisplay.js";
 
 const projects = [
@@ -130,4 +131,37 @@ test("author avatar endpoint carries the current authentication token", () => {
   );
 
   setAuthToken(null);
+});
+
+test("general comments show only the three conversations with latest activity", () => {
+  const comments = [
+    { id: "first", createdAt: "2026-07-10T10:00:00Z" },
+    { id: "second", createdAt: "2026-07-11T10:00:00Z" },
+    { id: "third", createdAt: "2026-07-12T10:00:00Z" },
+    { id: "fourth", createdAt: "2026-07-13T10:00:00Z" },
+  ];
+
+  assert.deepEqual(
+    orderCommentsByThread(comments, { limitRootThreads: 3 }).map(({ id }) => id),
+    ["fourth", "third", "second"],
+  );
+});
+
+test("a recent reply promotes its complete conversation and keeps replies together", () => {
+  const comments = [
+    { id: "old-root", createdAt: "2026-07-01T10:00:00Z" },
+    {
+      id: "old-reply",
+      parentCommentId: "old-root",
+      createdAt: "2026-07-15T10:00:00Z",
+    },
+    { id: "root-2", createdAt: "2026-07-14T10:00:00Z" },
+    { id: "root-3", createdAt: "2026-07-13T10:00:00Z" },
+    { id: "root-4", createdAt: "2026-07-12T10:00:00Z" },
+  ];
+
+  assert.deepEqual(
+    orderCommentsByThread(comments, { limitRootThreads: 3 }).map(({ id }) => id),
+    ["old-root", "old-reply", "root-2", "root-3"],
+  );
 });

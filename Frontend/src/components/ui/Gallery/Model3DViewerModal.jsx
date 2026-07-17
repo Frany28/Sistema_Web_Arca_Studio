@@ -2372,7 +2372,7 @@ export default function Model3DViewerModal({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[156px] bg-[linear-gradient(0deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0)_100%)]" />
 
           <div className="absolute left-[12px] top-[12px] z-20">
-            <MainLogo size="32px" alt="ARCA Studio" />
+            <MainLogo size="32px" appearance="dark" alt="ARCA Studio" />
           </div>
 
           <Button

@@ -1,18 +1,26 @@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
-import logo20 from "./SIZE=20px.svg";
-import logo20Dark from "./SIZE=20px-dark.svg";
-import logo24 from "./SIZE=24px.svg";
-import logo24Dark from "./SIZE=24px-dark.svg";
-import logo32 from "./SIZE=32px.svg";
-import logo32Dark from "./SIZE=32px-dark.svg";
-import logo48 from "./SIZE=48px.svg";
-import logo48Dark from "./SIZE=48px-dark.svg";
-import logo64 from "./SIZE=64px.svg";
-import logo64Dark from "./SIZE=64px-dark.svg";
-import logo200 from "./SIZE=200px.svg";
-import logo200Dark from "./SIZE=200px-dark.svg";
+import logo20 from "./LOGO=20px (1).svg";
+import logo20Raw from "./LOGO=20px (1).svg?raw";
+import logo24 from "./LOGO=24px (1).svg";
+import logo24Raw from "./LOGO=24px (1).svg?raw";
+import logo32 from "./LOGO=32px (1).svg";
+import logo32Raw from "./LOGO=32px (1).svg?raw";
+import logo48 from "./LOGO=48px (1).svg";
+import logo48Raw from "./LOGO=48px (1).svg?raw";
+import logo64 from "./LOGO 64px.svg";
+import logo64Raw from "./LOGO 64px.svg?raw";
+import logo200 from "./LOGO 200px.svg";
+import logo200Raw from "./LOGO 200px.svg?raw";
+
+const APPEARANCES = new Set(["auto", "light", "dark"]);
+
+function createDarkLogoSource(svg) {
+  const darkSvg = svg.replaceAll("#2A2929", "#FFFFFF");
+
+  return `data:image/svg+xml,${encodeURIComponent(darkSvg)}`;
+}
 
 const LOGO_MAP = {
   light: {
@@ -24,12 +32,12 @@ const LOGO_MAP = {
     "200px": logo200,
   },
   dark: {
-    "20px": logo20Dark,
-    "24px": logo24Dark,
-    "32px": logo32Dark,
-    "48px": logo48Dark,
-    "64px": logo64Dark,
-    "200px": logo200Dark,
+    "20px": createDarkLogoSource(logo20Raw),
+    "24px": createDarkLogoSource(logo24Raw),
+    "32px": createDarkLogoSource(logo32Raw),
+    "48px": createDarkLogoSource(logo48Raw),
+    "64px": createDarkLogoSource(logo64Raw),
+    "200px": createDarkLogoSource(logo200Raw),
   },
 };
 
@@ -46,6 +54,7 @@ function getDocumentDarkMode() {
 
 function MainLogo({
   size = "32px",
+  appearance = "auto",
   alt = "Main logo",
   className,
   imgClassName,
@@ -53,7 +62,11 @@ function MainLogo({
 }) {
   const [isDarkMode, setIsDarkMode] = useState(getDocumentDarkMode);
   const resolvedSize = LOGO_MAP.light[size] ? size : "32px";
-  const logoSrc = isDarkMode
+  const resolvedAppearance = APPEARANCES.has(appearance) ? appearance : "auto";
+  const useDarkLogo =
+    resolvedAppearance === "dark" ||
+    (resolvedAppearance === "auto" && isDarkMode);
+  const logoSrc = useDarkLogo
     ? LOGO_MAP.dark[resolvedSize]
     : LOGO_MAP.light[resolvedSize];
 
@@ -94,7 +107,8 @@ function MainLogo({
       <img
         src={logoSrc}
         alt={alt}
-        className={clsx("block h-auto max-w-full", imgClassName)}
+        className={clsx("block w-auto object-contain", imgClassName)}
+        style={{ height: resolvedSize }}
       />
     </div>
   );

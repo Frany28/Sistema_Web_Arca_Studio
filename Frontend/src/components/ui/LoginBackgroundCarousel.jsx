@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import fondoVariante2 from "../../assets/fondos/Property 1=Variant2.png";
 import fondoNotificacion from "../../assets/fondos/Property 1=notificacion.png";
 import fondoTextura from "../../assets/fondos/88c12dc848224c27f9236223c33f47621394518d.jpg";
-import logoArca from "../../assets/logos/SIZE=200px.svg";
+import MainLogo from "../../assets/logos/MainLogo.jsx";
 
 const fondoActualizarcontraseña = new URL(
   "../../assets/fondos/Property 1=actualizar contrase\u00f1a.png",
@@ -104,18 +104,16 @@ function LoginBackgroundCarousel({ images = DEFAULT_IMAGES }) {
         }}
       />
 
-      <img
-        src={logoArca}
+      <MainLogo
+        size="24px"
+        appearance="dark"
         alt="ARCA Studio"
         style={{
           position: "absolute",
           left: "50%",
           bottom: 24,
           zIndex: 2,
-          width: "130.74px",
-          height: "24px",
           transform: "translateX(-50%)",
-          objectFit: "contain",
         }}
       />
     </div>

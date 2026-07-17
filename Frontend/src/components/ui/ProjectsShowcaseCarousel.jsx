@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import projectCardLogo from "../../assets/logos/SIZE=32px-dark.svg";
+import MainLogo from "../../assets/logos/MainLogo.jsx";
 import AvatarGroup from "./AvatarGroup/AvatarGroup.jsx";
 import Button from "./Button/Button.jsx";
 
@@ -81,10 +81,11 @@ function ProjectShowcaseCard({ title, image, height, assigneeAvatars = [] }) {
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.20)_0%,rgba(0,0,0,0.10)_38%,rgba(0,0,0,0.62)_100%)]" />
 
       <div className="relative z-[1] flex w-full items-start justify-start">
-        <img
-          src={projectCardLogo}
+        <MainLogo
+          size="24px"
+          appearance="dark"
           alt="ARCA Studio"
-          className="h-[22px] w-auto shrink-0"
+          className="shrink-0"
         />
       </div>
 
