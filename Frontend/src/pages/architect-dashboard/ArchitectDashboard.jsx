@@ -18,6 +18,7 @@ import {
 import { getProjectNamesById } from "../../utils/commentDisplay.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js";
+import { groupProjectsByStatus } from "../../utils/projectStatusGroups.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -35,33 +36,6 @@ function mergeNotificationComments(comments) {
 
   return Array.from(commentsById.values());
 }
-
-const PROJECT_STATUS_GROUPS = [
-  {
-    id: "in_process",
-    status: "En Progreso",
-    badgeClassName:
-      "border-[var(--color-info-10)] bg-[var(--color-info-10)] text-[var(--color-info-100)]",
-  },
-  {
-    id: "in_review",
-    status: "En Revision",
-    badgeClassName:
-      "border-[var(--color-primary-10)] bg-[var(--color-primary-10)] text-[var(--color-text-300)]",
-  },
-  {
-    id: "pending_approval",
-    status: "En espera de Aprobacion",
-    badgeClassName:
-      "border-[var(--color-neutral-600)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)]",
-  },
-  {
-    id: "finished",
-    status: "Finalizados",
-    badgeClassName:
-      "border-[var(--color-success-10)] bg-[var(--color-success-10)] text-[var(--color-success-200)]",
-  },
-];
 
 function createNavigationItems(projects) {
   return [
@@ -106,25 +80,6 @@ function toProjectRow(project, index, user) {
   };
 }
 
-function groupProjects(projects) {
-  const fallbackGroup = PROJECT_STATUS_GROUPS[0];
-
-  return PROJECT_STATUS_GROUPS.map((group) => ({
-    ...group,
-    projects: projects.filter((project) => project.status === group.id),
-  }))
-    .concat({
-      ...fallbackGroup,
-      id: "other",
-      projects: projects.filter(
-        (project) =>
-          !PROJECT_STATUS_GROUPS.some((group) => group.id === project.status),
-      ),
-      status: "Otros",
-    })
-    .filter((group) => group.projects.length > 0);
-}
-
 function ArchitectDashboard({ empty = false }) {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -154,7 +109,7 @@ function ArchitectDashboard({ empty = false }) {
     [projectRows],
   );
   const projectGroups = useMemo(
-    () => groupProjects(projectRows),
+    () => groupProjectsByStatus(projectRows),
     [projectRows],
   );
   const navigationItems = useMemo(

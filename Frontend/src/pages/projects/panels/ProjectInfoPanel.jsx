@@ -1,6 +1,7 @@
 import Accordion from "../../../components/ui/Accordion/Accordion.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
+import { getProjectTypeLabel } from "../../../utils/projectTypeDisplay.js";
 
 function InfoEmptyState({ title, description, className = "" }) {
   return (
@@ -59,17 +60,6 @@ function formatArea(value, unit) {
   };
 
   return `${value} ${unitLabels[unit] || unit || "m²"}`;
-}
-
-function getProjectTypeLabel(value) {
-  const labels = {
-    commercial: "Comercial",
-    corporate: "Corporativo",
-    residential: "Residencial",
-    stands_exhibitions: "Stands y exhibiciones",
-  };
-
-  return labels[value] || value || "-";
 }
 
 function OverviewMetrics({ project, empty = false }) {

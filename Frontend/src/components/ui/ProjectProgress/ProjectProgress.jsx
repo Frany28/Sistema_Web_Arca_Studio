@@ -27,14 +27,19 @@ const PROJECT_STEPS = [
   },
 ];
 
-function ArchitectProjectProgress() {
+function ProjectProgress({ className }) {
   return (
-    <div className="grid w-full grid-cols-1 gap-[16px] sm:grid-cols-3 sm:gap-[24px]">
+    <div
+      className={clsx(
+        "grid w-full grid-cols-1 gap-[16px] sm:grid-cols-3 sm:gap-[24px]",
+        className,
+      )}
+    >
       {PROJECT_STEPS.map((step) => (
         <div
           key={step.id}
           className={clsx(
-            "flex min-w-0 flex-col gap-[2px] border-t-[4px] pt-[12px]",
+            "flex min-w-[95px] flex-col gap-[2px] border-t-[4px] pt-[12px]",
             step.complete
               ? "border-[var(--color-accent-300)]"
               : "border-[var(--color-neutral-200)]",
@@ -52,4 +57,4 @@ function ArchitectProjectProgress() {
   );
 }
 
-export default ArchitectProjectProgress;
+export default ProjectProgress;

@@ -21,15 +21,9 @@ import ProjectUploadFilesPanel from "./panels/ProjectUploadFilesPanel.jsx";
 import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
+import { getProjectTypeDisplay } from "../../utils/projectTypeDisplay.js";
 
 const TABLET_BREAKPOINT_PX = 768;
-const PROJECT_TYPE_LABELS = {
-  commercial: "Comercial",
-  corporate: "Corporativo",
-  residential: "Residencial",
-  stands_exhibitions: "Stands y exhibiciones",
-};
-
 function createProjectStages(progressValue) {
   const stages = [
     { id: "survey", threshold: 25, title: "Levantamiento" },
@@ -221,9 +215,7 @@ function toProjectPresentation(project) {
 
   return {
     ...project,
-    category: `Proyecto ${
-      PROJECT_TYPE_LABELS[project?.projectType] || project?.projectType || ""
-    }`.trim(),
+    category: getProjectTypeDisplay(project?.projectType),
     progressValue,
     stages: createProjectStages(progressValue),
     title: project?.name || "Proyecto",

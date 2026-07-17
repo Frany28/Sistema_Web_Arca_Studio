@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import AvatarGroup from "../../../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
+import ProjectProgress from "../../../components/ui/ProjectProgress/ProjectProgress.jsx";
 import { getProjectPath } from "../../../utils/projectRoutes.js";
-import ArchitectProjectProgress from "./ArchitectProjectProgress.jsx";
 
 function ArchitectProjectRow({
   canManagePublication = false,
@@ -42,7 +42,7 @@ function ArchitectProjectRow({
           ) : null}
         </div>
 
-        <ArchitectProjectProgress />
+        <ProjectProgress />
       </div>
 
       <div className="flex shrink-0 items-center gap-[8px]">

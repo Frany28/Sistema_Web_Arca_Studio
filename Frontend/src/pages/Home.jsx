@@ -1,21 +1,21 @@
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api, getAuthToken } from "../api/http.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
+import Badge from "../components/ui/Badge/Badge.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
+import ProjectProgress from "../components/ui/ProjectProgress/ProjectProgress.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";
 import ScrollBar from "../components/ui/ScrollBar/ScrollBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
-import fondoActualizarcontraseña from "../assets/fondos/Property 1=actualizar contraseña.png";
 import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
-import fondoRestablecercontraseña from "../assets/fondos/Property 1=restablecer contraseña.png";
 import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import {
@@ -25,12 +25,31 @@ import {
 import { getProjectNamesById } from "../utils/commentDisplay.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
 import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
+import { groupProjectsByStatus } from "../utils/projectStatusGroups.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
 const TABLET_BREAKPOINT_PX = 768;
 const PROJECT_IMAGE_POOL = [fondoVariante2, fondoNotificacion];
+const PROJECT_REQUEST_EXAMPLES = [
+  {
+    id: "request-stand-nexar-2026",
+    title: "Stand Nexar 2026",
+    assigneeAvatars: [
+      { content: "Icon", name: "ARCA Studio", theme: "Neutral" },
+      { content: "Text", initials: "AC", name: "Arquitecto coordinador", theme: "Neutral" },
+    ],
+  },
+  {
+    id: "request-savory-motion",
+    title: "Savory Motion",
+    assigneeAvatars: [
+      { content: "Icon", name: "ARCA Studio", theme: "Neutral" },
+      { content: "Text", initials: "AC", name: "Arquitecto coordinador", theme: "Neutral" },
+    ],
+  },
+];
 
 function mergeNotificationComments(comments) {
   const commentsById = new Map();
@@ -43,69 +62,6 @@ function mergeNotificationComments(comments) {
 
   return Array.from(commentsById.values());
 }
-
-const PROJECT_SHOWCASE_ITEMS = [
-  {
-    id: "aura-stand-1",
-    title: "Stand Aura 2026",
-    image: fondoVariante2,
-  },
-  {
-    id: "aura-kitchen-1",
-    title: "Stand Aura 2026",
-    image: fondoNotificacion,
-  },
-  {
-    id: "aura-bathroom-1",
-    title: "Stand Aura 2026",
-    image: fondoActualizarcontraseña,
-  },
-  {
-    id: "aura-living-1",
-    title: "Stand Aura 2026",
-    image: fondoRestablecercontraseña,
-  },
-  {
-    id: "aura-kitchen-2",
-    title: "Stand Aura 2026",
-    image: fondoNotificacion,
-  },
-  {
-    id: "aura-bathroom-2",
-    title: "Stand Aura 2026",
-    image: fondoActualizarcontraseña,
-  },
-  {
-    id: "aura-stand-2",
-    title: "Stand Aura 2026",
-    image: fondoVariante2,
-  },
-  {
-    id: "aura-kitchen-3",
-    title: "Stand Aura 2026",
-    image: fondoNotificacion,
-  },
-  {
-    id: "aura-bathroom-3",
-    title: "Stand Aura 2026",
-    image: fondoActualizarcontraseña,
-  },
-  {
-    id: "aura-living-2",
-    title: "Stand Aura 2026",
-    image: fondoRestablecercontraseña,
-  },
-  {
-    id: "aura-kitchen-4",
-    title: "Stand Aura 2026",
-    image: fondoNotificacion,
-  },
-  {
-    id: "aura-bathroom-4",
-    title: "Stand Aura 2026",
-    image: fondoActualizarcontraseña,
-  },
-];
 
 function createProjectNavigationItems(projects) {
   return [
@@ -156,7 +112,7 @@ function ProjectRow({ project }) {
   const navigate = useNavigate();
 
   return (
-    <article className="flex items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px]">
+    <article className="flex flex-col gap-[16px] border-b border-[var(--color-neutral-200)] px-0 py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
       <div className="h-[80px] w-[140px] shrink-0 overflow-hidden rounded-[var(--radius-2)]">
         <img
           src={project.image}
@@ -167,7 +123,7 @@ function ProjectRow({ project }) {
 
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
         <div className="flex items-center gap-[8px]">
-          <h2 className="text-heading-4 text-[var(--color-text-50)]">
+          <h2 className="min-w-0 truncate text-heading-4 text-[var(--color-text-50)]">
             {project.name}
           </h2>
           {project.assigneeAvatars.length ? (
@@ -177,32 +133,7 @@ function ProjectRow({ project }) {
           ) : null}
         </div>
 
-        <div className="flex w-full items-center gap-[24px]">
-          <div className="flex min-w-0 flex-1 flex-col gap-[2px] border-t-[4px] border-[var(--color-accent-300)] pt-[12px]">
-            <p className="text-body-3 text-[var(--color-text-200)]">
-              Levantamiento
-            </p>
-            <p className="text-body-4 text-[var(--color-text-100)]">
-              Completado
-            </p>
-          </div>
-
-          <div className="flex min-w-0 flex-1 flex-col gap-[2px] border-t-[4px] border-[var(--color-accent-300)] pt-[12px]">
-            <p className="text-body-3 text-[var(--color-text-300)]">Diseño</p>
-            <p className="text-body-4 text-[var(--color-text-300)]">
-              En proceso
-            </p>
-          </div>
-
-          <div className="flex min-w-0 flex-1 flex-col gap-[2px] border-t-[4px] border-[var(--color-neutral-200)] pt-[12px]">
-            <p className="text-body-3 text-[var(--color-text-100)]">
-              Ejecución
-            </p>
-            <p className="text-body-4 text-[var(--color-neutral-400)]">
-              Pendiente
-            </p>
-          </div>
-        </div>
+        <ProjectProgress />
       </div>
 
       <Button
@@ -221,6 +152,152 @@ function ProjectRow({ project }) {
   );
 }
 
+function ImagePlaceholderIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="size-6"
+      aria-hidden="true"
+    >
+      <path
+        d="M8.5 10.5C9.60457 10.5 10.5 9.60457 10.5 8.5C10.5 7.39543 9.60457 6.5 8.5 6.5C7.39543 6.5 6.5 7.39543 6.5 8.5C6.5 9.60457 7.39543 10.5 8.5 10.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M3.5 15.5L7.3 12.1C8.05 11.43 9.2 11.47 9.9 12.19L11.3 13.64L14.25 10.69C14.96 9.98 16.11 9.98 16.82 10.69L20.5 14.37"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function ProjectRequestRow({ request }) {
+  return (
+    <article className="flex flex-col gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
+      <div className="flex h-[91px] w-[160px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] bg-[color-mix(in_srgb,var(--color-neutral-300)_10%,transparent)] text-[var(--color-text-100)]">
+        <ImagePlaceholderIcon />
+      </div>
+
+      <div className="flex min-w-[300px] flex-1 flex-col gap-[8px] max-sm:min-w-0">
+        <div className="flex min-w-0 items-center gap-[8px]">
+          <h2 className="min-w-0 truncate text-heading-4 text-[var(--color-text-50)]">
+            {request.title}
+          </h2>
+          <Tooltip text="Equipo ARCA Studio" tipPosition="Top center">
+            <AvatarGroup
+              size="S"
+              items={request.assigneeAvatars}
+              tabIndex={0}
+            />
+          </Tooltip>
+        </div>
+
+        <ProjectProgress />
+      </div>
+
+      <Button
+        theme="Primary"
+        type="Solid"
+        size="M"
+        fitContent
+        showLeftIcon={false}
+        showRightIcon={false}
+        disabled
+        className="shrink-0"
+      >
+        Revisar solicitud
+      </Button>
+    </article>
+  );
+}
+
+function ProjectStatusGroup({ group }) {
+  return (
+    <section className="flex flex-col">
+      <div className="flex items-center gap-[8px]">
+        <p className="text-body-3 text-[var(--color-text-300)]">Proyectos</p>
+        <Badge
+          label={group.status}
+          theme={group.badgeTheme}
+          variation="Simple"
+          size="S"
+        />
+      </div>
+      <div className="flex flex-col">
+        {group.projects.map((project) => (
+          <ProjectRow key={project.id} project={project} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function useSyncedScrollBar(contentKey) {
+  const containerRef = useRef(null);
+  const [position, setPosition] = useState(0);
+  const [length, setLength] = useState(1);
+
+  const syncMetrics = useCallback(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const maxScroll = Math.max(container.scrollHeight - container.clientHeight, 0);
+    setLength(
+      Math.min(container.clientHeight / Math.max(container.scrollHeight, 1), 1),
+    );
+    setPosition(maxScroll > 0 ? container.scrollTop / maxScroll : 0);
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return undefined;
+    }
+
+    const frameId = window.requestAnimationFrame(syncMetrics);
+    const resizeObserver = new ResizeObserver(syncMetrics);
+    resizeObserver.observe(container);
+    window.addEventListener("resize", syncMetrics);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", syncMetrics);
+    };
+  }, [contentKey, syncMetrics]);
+
+  const changePosition = useCallback((nextPosition) => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const maxScroll = Math.max(container.scrollHeight - container.clientHeight, 0);
+    container.scrollTo({ top: maxScroll * nextPosition, behavior: "auto" });
+    setPosition(nextPosition);
+  }, []);
+
+  return {
+    containerRef,
+    length,
+    onScroll: syncMetrics,
+    position,
+    setPosition: changePosition,
+  };
+}
+
 function Home() {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -230,12 +307,9 @@ function Home() {
     useState(false);
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [scrollLength, setScrollLength] = useState(1);
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(true);
-  const projectsContainerRef = useRef(null);
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
     day: "numeric",
@@ -259,6 +333,26 @@ function Home() {
       ),
     [projectRows, user?.clientId],
   );
+  const projectGroups = useMemo(
+    () => groupProjectsByStatus(ownedProjectRows),
+    [ownedProjectRows],
+  );
+  const {
+    containerRef: projectsContainerRef,
+    length: projectScrollLength,
+    onScroll: handleProjectScroll,
+    position: projectScrollPosition,
+    setPosition: setProjectScrollPosition,
+  } = useSyncedScrollBar(
+    projectGroups.map((group) => `${group.id}:${group.projects.length}`).join("|"),
+  );
+  const {
+    containerRef: requestsContainerRef,
+    length: requestScrollLength,
+    onScroll: handleRequestScroll,
+    position: requestScrollPosition,
+    setPosition: setRequestScrollPosition,
+  } = useSyncedScrollBar(PROJECT_REQUEST_EXAMPLES.length);
   const navigationItems = useMemo(
     () => createProjectNavigationItems(ownedProjectRows),
     [ownedProjectRows],
@@ -370,51 +464,6 @@ function Home() {
       isMounted = false;
     };
   }, [user]);
-
-  useEffect(() => {
-    const container = projectsContainerRef.current;
-
-    if (!container) {
-      return;
-    }
-
-    const maxScroll = Math.max(
-      container.scrollHeight - container.clientHeight,
-      0,
-    );
-    container.scrollTo({
-      top: maxScroll * scrollPosition,
-      behavior: "auto",
-    });
-  }, [scrollPosition]);
-
-  useEffect(() => {
-    const container = projectsContainerRef.current;
-
-    if (!container) {
-      return undefined;
-    }
-
-    function syncScrollMetrics() {
-      const nextLength = Math.min(
-        container.clientHeight / Math.max(container.scrollHeight, 1),
-        1,
-      );
-      const maxScroll = Math.max(
-        container.scrollHeight - container.clientHeight,
-        1,
-      );
-      setScrollLength(nextLength);
-      setScrollPosition(container.scrollTop / maxScroll);
-    }
-
-    syncScrollMetrics();
-    window.addEventListener("resize", syncScrollMetrics);
-
-    return () => {
-      window.removeEventListener("resize", syncScrollMetrics);
-    };
-  }, [ownedProjectRows.length]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -531,23 +580,18 @@ function Home() {
             className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
           />
 
-          <div className="mx-auto flex w-full max-w-[1200px] px-[48px] py-[16px]">
+          <div className="mx-auto flex w-full max-w-[1200px] px-[16px] py-[16px] sm:px-[24px] lg:px-[48px]">
             <p className="text-heading-6 w-full text-[var(--color-text-300)]">
               Bienvenido, {currentUser.shortName}
             </p>
           </div>
 
-          <div className="mx-auto flex w-full max-w-[1200px] items-start gap-[4px] px-[48px] pb-[16px]">
+          <div className="mx-auto flex w-full max-w-[1200px] items-start gap-[4px] px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">
             <div
               ref={projectsContainerRef}
               className="flex-1 overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               style={{ maxHeight: "232px" }}
-              onScroll={(event) => {
-                const { scrollTop, scrollHeight, clientHeight } =
-                  event.currentTarget;
-                const maxScroll = Math.max(scrollHeight - clientHeight, 1);
-                setScrollPosition(scrollTop / maxScroll);
-              }}
+              onScroll={handleProjectScroll}
             >
               {projectsLoading ? (
                 <p className="text-body-3 py-[24px] text-[var(--color-text-200)]">
@@ -557,10 +601,12 @@ function Home() {
                 <p className="text-body-3 py-[24px] text-[var(--color-danger-100)]">
                   {projectsError}
                 </p>
-              ) : ownedProjectRows.length ? (
-                ownedProjectRows.map((project) => (
-                  <ProjectRow key={project.id} project={project} />
-                ))
+              ) : projectGroups.length ? (
+                <div className="flex flex-col gap-[24px]">
+                  {projectGroups.map((group) => (
+                    <ProjectStatusGroup key={group.id} group={group} />
+                  ))}
+                </div>
               ) : (
                 <p className="text-body-3 py-[24px] text-[var(--color-text-200)]">
                   No tienes proyectos asignados.
@@ -570,18 +616,51 @@ function Home() {
 
             <ScrollBar
               height={232}
-              length={scrollLength}
-              position={scrollPosition}
+              length={projectScrollLength}
+              position={projectScrollPosition}
               interactive
-              onPositionChange={setScrollPosition}
+              onPositionChange={setProjectScrollPosition}
               className="shrink-0"
             />
           </div>
 
+          <section className="mx-auto flex w-full max-w-[1200px] flex-col px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">
+            <div className="flex items-center pb-[4px]">
+              <Badge
+                label="Solicitudes"
+                theme="Brand 1"
+                variation="Simple"
+                size="S"
+              />
+            </div>
+
+            <div className="flex w-full items-start gap-[4px]">
+              <div
+                ref={requestsContainerRef}
+                className="min-w-0 flex-1 overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                style={{ maxHeight: "122px" }}
+                onScroll={handleRequestScroll}
+              >
+                {PROJECT_REQUEST_EXAMPLES.map((request) => (
+                  <ProjectRequestRow key={request.id} request={request} />
+                ))}
+              </div>
+
+              <ScrollBar
+                height={122}
+                length={requestScrollLength}
+                position={requestScrollPosition}
+                interactive
+                onPositionChange={setRequestScrollPosition}
+                className="shrink-0"
+              />
+            </div>
+          </section>
+
           {publicProjectRows.length ? (
-            <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[24px]">
+            <div className="mx-auto flex w-full max-w-[1200px] px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">
               <ProjectsShowcaseCarousel
-                title="Proyectos publicos"
+                title="Ver más proyectos"
                 items={publicProjectRows}
               />
             </div>
