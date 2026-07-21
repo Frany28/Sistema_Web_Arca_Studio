@@ -7,6 +7,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Badge from "../components/ui/Badge/Badge.jsx";
+import AuthToast, { AuthToastLockIcon } from "../components/ui/AuthToast/AuthToast.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
@@ -281,6 +282,17 @@ function Home() {
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const [registrationToast] = useState(() => {
+    try {
+      if (window.sessionStorage.getItem("arca_registration_complete") === "true") {
+        window.sessionStorage.removeItem("arca_registration_complete");
+        return Date.now();
+      }
+    } catch {
+      // The dashboard remains usable when session storage is unavailable.
+    }
+    return null;
+  });
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
     day: "numeric",
@@ -522,6 +534,12 @@ function Home() {
 
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
+      <AuthToast
+        trigger={registrationToast}
+        title="Cuenta creada"
+        description="Tu correo fue verificado y tu cuenta está lista."
+        leading={<AuthToastLockIcon />}
+      />
       <div className="flex min-h-screen w-full items-stretch">
         <SideNavigation
           activeItemId="dashboard"

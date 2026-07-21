@@ -33,9 +33,10 @@ model clients {
   document_number  String?            @db.VarChar(150)
   email            String             @db.VarChar(150)
   phone            String             @db.VarChar(30)
-  address          String             @db.VarChar(255)
-  city             String             @db.VarChar(100)
-  country          String             @db.VarChar(100)
+  address          String?            @db.VarChar(255)
+  city             String?            @db.VarChar(100)
+  country          String?            @db.VarChar(100)
+  referral_source  String?            @db.VarChar(30)
   status           client_status      @default(active)
   notes            String?            @db.VarChar(255)
   created_at       DateTime           @default(now()) @db.Timestamptz(6)
@@ -481,6 +482,24 @@ model users {
   @@index([email], map: "idx_users_email")
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
+}
+
+/// Pending, single-use email registrations. Runtime access uses parameterized SQL.
+model user_registrations {
+  id              BigInt    @id @default(autoincrement())
+  first_name      String    @db.VarChar(150)
+  last_name       String    @db.VarChar(150)
+  email           String    @db.VarChar(150)
+  phone           String    @unique(map: "user_registrations_phone_key") @db.VarChar(30)
+  company_name    String?   @db.VarChar(150)
+  referral_source String    @db.VarChar(30)
+  token_hash      String    @db.VarChar(64)
+  expires_at      DateTime  @db.Timestamptz(6)
+  used_at         DateTime? @db.Timestamptz(6)
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([expires_at], map: "idx_user_registrations_expires_at")
 }
 
 enum anchor_type {

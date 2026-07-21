@@ -116,6 +116,24 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
+  const completeRegistration = useCallback(async (payload) => {
+    const data = await api.auth.completeRegistration(payload);
+    if (!data?.token || !data?.user) {
+      throw Object.assign(new Error("No se pudo crear la sesión."), {
+        code: "AUTH_TOKEN_MISSING",
+      });
+    }
+    setAuthToken(data.token);
+    const nextUser = normalizeUser(data.user);
+    try {
+      window.sessionStorage.setItem("arca_registration_complete", "true");
+    } catch {
+      // The authenticated redirect still succeeds in restricted contexts.
+    }
+    setUser(nextUser);
+    return nextUser;
+  }, []);
+
   const updateUser = useCallback((nextUser) => {
     setUser(normalizeUser(nextUser));
   }, []);
@@ -160,12 +178,13 @@ export function AuthProvider({ children }) {
     () => ({
       isAuthenticated: Boolean(user),
       isLoading,
+      completeRegistration,
       login,
       logout,
       updateUser,
       user,
     }),
-    [isLoading, login, logout, updateUser, user],
+    [completeRegistration, isLoading, login, logout, updateUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

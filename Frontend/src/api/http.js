@@ -70,6 +70,7 @@ async function apiRequest(path, options = {}) {
     );
     error.status = response.status;
     error.code = data?.code || "API_ROUTE_UNAVAILABLE";
+    error.fields = data?.fields || null;
     throw error;
   }
 
@@ -92,6 +93,36 @@ async function collectCursorPages(fetchPage, collectionKey, limit = 100) {
 }
 
 export const authApi = {
+  startRegistration(payload) {
+    return apiRequest("/auth/registration/start", {
+      body: JSON.stringify(payload),
+      method: "POST",
+    });
+  },
+
+  resendRegistration({ email }) {
+    return apiRequest("/auth/registration/resend", {
+      body: JSON.stringify({ email }),
+      method: "POST",
+    });
+  },
+
+  verifyRegistration({ token }) {
+    return apiRequest("/auth/registration/verify", {
+      body: JSON.stringify({ token }),
+      method: "POST",
+    });
+  },
+
+  async completeRegistration(payload) {
+    const data = await apiRequest("/auth/registration/complete", {
+      body: JSON.stringify(payload),
+      method: "POST",
+    });
+    if (data?.token) setAuthToken(data.token);
+    return data;
+  },
+
   login({ email, password }) {
     return apiRequest("/auth/login", {
       body: JSON.stringify({ email, password }),

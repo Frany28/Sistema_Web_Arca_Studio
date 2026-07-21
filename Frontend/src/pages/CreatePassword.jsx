@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { api } from "../api/http.js";
+import { useAuth } from "../auth/AuthContext.jsx";
 import group1Logo from "../assets/logos/Group 1.svg";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import Button from "../components/ui/Button/Button.jsx";
@@ -21,12 +23,36 @@ function getPasswordState(value, touched) {
 
 function CreatePassword() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token") || "";
+  const { completeRegistration } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [touched, setTouched] = useState({
     password: false,
     confirmPassword: false,
   });
+  const [tokenState, setTokenState] = useState("loading");
+  const [tokenError, setTokenError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    if (!token) {
+      setTokenState("error");
+      setTokenError("No encontramos un enlace de registro válido.");
+      return undefined;
+    }
+    api.auth.verifyRegistration({ token })
+      .then(() => { if (active) setTokenState("valid"); })
+      .catch((error) => {
+        if (!active) return;
+        setTokenState("error");
+        setTokenError(error.message);
+      });
+    return () => { active = false; };
+  }, [token]);
 
   const passwordIsValid = PASSWORD_REQUIREMENT_RULES.every((requirement) =>
     requirement.test(password),
@@ -47,15 +73,27 @@ function CreatePassword() {
     return passwordsMatch ? "Filled" : "Error";
   }, [confirmPassword, passwordsMatch, touched.confirmPassword]);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setTouched({ password: true, confirmPassword: true });
 
-    if (!passwordIsValid || !passwordsMatch) {
+    if (!passwordIsValid || !passwordsMatch || tokenState !== "valid") {
       return;
     }
-
-    navigate("/");
+    setIsSubmitting(true);
+    setFormError("");
+    try {
+      await completeRegistration({ token, password, passwordConfirmation: confirmPassword });
+      navigate("/dashboard-clientes", { replace: true, state: { registrationComplete: true } });
+    } catch (error) {
+      setFormError(error.message);
+      if (error.code === "INVALID_REGISTRATION_TOKEN") {
+        setTokenState("error");
+        setTokenError(error.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -73,6 +111,15 @@ function CreatePassword() {
                 Crear cuenta
               </h1>
             </div>
+
+            {tokenState !== "valid" ? (
+              <div className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] p-[16px] text-body-3 text-[var(--color-text-300)]">
+                <p className="m-0">{tokenState === "loading" ? "Validando enlace..." : tokenError}</p>
+                {tokenState === "error" ? (
+                  <Button theme="Primary" type="Link" size="S" fitContent showLeftIcon={false} showRightIcon={false} onClick={() => navigate("/crear-cuenta")}>Solicitar un nuevo enlace</Button>
+                ) : null}
+              </div>
+            ) : null}
 
             <Input
               label="Crear contraseña"
@@ -124,9 +171,12 @@ function CreatePassword() {
               showLeftIcon={false}
               showRightIcon={false}
               className="w-full"
+              disabled={isSubmitting || tokenState !== "valid"}
             >
-              Registrarse
+              {isSubmitting ? "Creando cuenta..." : "Registrarse"}
             </Button>
+
+            {formError ? <p className="text-body-4 m-0 text-[var(--color-danger-100)]">{formError}</p> : null}
 
             <Button
               theme="Primary"

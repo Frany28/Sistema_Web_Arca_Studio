@@ -60,7 +60,7 @@ function isValidPassword(password) {
   );
 }
 
-function buildSessionCookie(token, maxAge) {
+export function buildSessionCookie(token, maxAge) {
   return serializeCookie(authConfig.cookieName, token, {
     httpOnly: true,
     maxAge,

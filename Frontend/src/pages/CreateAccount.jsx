@@ -3,16 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { Buildings, Sms, User } from "iconsax-react";
 
 import group1Logo from "../assets/logos/Group 1.svg";
+import { api } from "../api/http.js";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
+import AuthToast, { AuthToastMailIcon } from "../components/ui/AuthToast/AuthToast.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import HorizontalTabMenu from "../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
 import Input from "../components/ui/Input/Input.jsx";
 
 const referralItems = ["Instagram", "Referido", "WhatsApp", "Otro"];
+const referralValues = ["instagram", "referred", "whatsapp", "other"];
 
-function FieldIcon({ icon: Icon }) {
+function FieldIcon({ icon }) {
+  const ResolvedIcon = icon;
   return (
-    <Icon
+    <ResolvedIcon
       size="20"
       variant="Linear"
       color="currentColor"
@@ -42,8 +46,12 @@ function CreateAccount() {
   const [phone, setPhone] = useState("");
   const [referralIndex, setReferralIndex] = useState(0);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [toast, setToast] = useState(null);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (
@@ -55,13 +63,44 @@ function CreateAccount() {
       event.currentTarget.reportValidity();
       return;
     }
+    setIsSubmitting(true);
+    setFieldErrors({});
+    try {
+      await api.auth.startRegistration({
+        fullName,
+        email,
+        company,
+        phone,
+        referralSource: referralValues[referralIndex],
+      });
+      setShowEmailVerification(true);
+    } catch (error) {
+      const errors = { ...(error.fields || {}) };
+      if (error.code === "EMAIL_ALREADY_EXISTS") errors.email = error.message;
+      if (error.code === "PHONE_ALREADY_EXISTS") errors.phone = error.message;
+      setFieldErrors(errors);
+      setToast({ id: Date.now(), title: "No pudimos continuar", description: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    setShowEmailVerification(true);
+  const handleResend = async () => {
+    setIsResending(true);
+    try {
+      const result = await api.auth.resendRegistration({ email });
+      setToast({ id: Date.now(), title: "Correo reenviado", description: result.message });
+    } catch (error) {
+      setToast({ id: Date.now(), title: "No pudimos reenviar", description: error.message });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (showEmailVerification) {
     return (
       <AuthLayout>
+        <AuthToast trigger={toast?.id} title={toast?.title || ""} description={toast?.description || ""} leading={<AuthToastMailIcon />} />
         <section className="box-border flex w-full max-w-[579px] shrink-0 items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
           <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
             <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
@@ -96,8 +135,10 @@ function CreateAccount() {
                 showLeftIcon={false}
                 showRightIcon={false}
                 className="w-full sm:flex-1"
+                disabled={isResending}
+                onClick={handleResend}
               >
-                Reenviar correo
+                {isResending ? "Reenviando..." : "Reenviar correo"}
               </Button>
               <Button
                 theme="Primary"
@@ -107,7 +148,7 @@ function CreateAccount() {
                 showLeftIcon={false}
                 showRightIcon={false}
                 className="w-full sm:flex-1"
-                onClick={() => navigate("/crear-contrasena")}
+                onClick={() => navigate("/")}
               >
                 Entendido
               </Button>
@@ -125,6 +166,7 @@ function CreateAccount() {
 
   return (
     <AuthLayout>
+      <AuthToast trigger={toast?.id} title={toast?.title || ""} description={toast?.description || ""} />
       <section className="box-border flex w-full max-w-[579px] shrink-0 items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
         <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
           <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
@@ -144,9 +186,10 @@ function CreateAccount() {
               type="Default input"
               size="S"
               value={fullName}
-              state={getInputState(fullName)}
+              state={fieldErrors["body.fullName"] ? "Error" : getInputState(fullName)}
               placeholder="Escribe tu nombre y apellido"
-              showHint={false}
+              showHint={Boolean(fieldErrors["body.fullName"])}
+              hintText={fieldErrors["body.fullName"]}
               showLabelInfo={false}
               required
               showRightIcon={false}
@@ -160,9 +203,10 @@ function CreateAccount() {
               type="Default input"
               size="S"
               value={email}
-              state={getInputState(email)}
+              state={fieldErrors.email || fieldErrors["body.email"] ? "Error" : getInputState(email)}
               placeholder="ejemplo@dominio.com"
-              showHint={false}
+              showHint={Boolean(fieldErrors.email || fieldErrors["body.email"])}
+              hintText={fieldErrors.email || fieldErrors["body.email"]}
               showLabelInfo={false}
               required
               showRightIcon={false}
@@ -192,11 +236,12 @@ function CreateAccount() {
               type="Phone number"
               size="S"
               value={phone}
-              state={getInputState(phone)}
+              state={fieldErrors.phone || fieldErrors["body.phone"] ? "Error" : getInputState(phone)}
               placeholder="(414) 1234-5678"
               countryCode="VE"
               countryPrefix="+58"
-              showHint={false}
+              showHint={Boolean(fieldErrors.phone || fieldErrors["body.phone"])}
+              hintText={fieldErrors.phone || fieldErrors["body.phone"]}
               showLabelInfo={false}
               required
               showRightIcon={false}
@@ -228,8 +273,9 @@ function CreateAccount() {
               showLeftIcon={false}
               showRightIcon={false}
               className="w-full"
+              disabled={isSubmitting}
             >
-              Continuar
+              {isSubmitting ? "Enviando..." : "Continuar"}
             </Button>
 
             <Button
