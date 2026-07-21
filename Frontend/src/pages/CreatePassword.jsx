@@ -5,6 +5,7 @@ import { api } from "../api/http.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import group1Logo from "../assets/logos/Group 1.svg";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
+import ExpiredLinkCard from "../components/ExpiredLinkCard.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import Input from "../components/ui/Input/Input.jsx";
 import { PASSWORD_REQUIREMENT_RULES } from "../components/ui/Input/inputConfig.js";
@@ -33,7 +34,6 @@ function CreatePassword() {
     confirmPassword: false,
   });
   const [tokenState, setTokenState] = useState("loading");
-  const [tokenError, setTokenError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -41,15 +41,13 @@ function CreatePassword() {
     let active = true;
     if (!token) {
       setTokenState("error");
-      setTokenError("No encontramos un enlace de registro válido.");
       return undefined;
     }
     api.auth.verifyRegistration({ token })
       .then(() => { if (active) setTokenState("valid"); })
-      .catch((error) => {
+      .catch(() => {
         if (!active) return;
         setTokenState("error");
-        setTokenError(error.message);
       });
     return () => { active = false; };
   }, [token]);
@@ -89,18 +87,29 @@ function CreatePassword() {
       setFormError(error.message);
       if (error.code === "INVALID_REGISTRATION_TOKEN") {
         setTokenState("error");
-        setTokenError(error.message);
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (tokenState === "error") {
+    return (
+      <AuthLayout>
+        <ExpiredLinkCard
+          description="Por motivos de seguridad, el enlace para crear tu cuenta ya no es válido."
+          onReturnToLogin={() => navigate("/")}
+          onRequestNewLink={() => navigate("/crear-cuenta")}
+        />
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout>
       <section className="box-border flex w-full max-w-[579px] shrink-0 items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
         <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
-          <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
+          <form noValidate onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
             <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
               <img
                 src={group1Logo}
@@ -112,12 +121,9 @@ function CreatePassword() {
               </h1>
             </div>
 
-            {tokenState !== "valid" ? (
+            {tokenState === "loading" ? (
               <div className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] p-[16px] text-body-3 text-[var(--color-text-300)]">
-                <p className="m-0">{tokenState === "loading" ? "Validando enlace..." : tokenError}</p>
-                {tokenState === "error" ? (
-                  <Button theme="Primary" type="Link" size="S" fitContent showLeftIcon={false} showRightIcon={false} onClick={() => navigate("/crear-cuenta")}>Solicitar un nuevo enlace</Button>
-                ) : null}
+                <p className="m-0">Validando enlace...</p>
               </div>
             ) : null}
 

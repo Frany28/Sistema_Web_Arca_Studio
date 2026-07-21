@@ -35,7 +35,27 @@ function isValidEmail(value) {
 }
 
 function hasValidPhone(value) {
-  return String(value).replace(/\D/g, "").length >= 7;
+  let digits = String(value).replace(/\D/g, "");
+  if (digits.startsWith("58")) digits = digits.slice(2);
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  return digits.length === 10;
+}
+
+function getCreateAccountErrors({ email, fullName, phone }) {
+  const errors = {};
+  const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
+
+  if (nameParts.length < 2) {
+    errors["body.fullName"] = "Ingresa tu nombre y apellido.";
+  }
+  if (!isValidEmail(email)) {
+    errors.email = "Ingresa un correo electrónico válido.";
+  }
+  if (!hasValidPhone(phone)) {
+    errors.phone = "Ingresa un número de teléfono válido.";
+  }
+
+  return errors;
 }
 
 function CreateAccount() {
@@ -53,14 +73,19 @@ function CreateAccount() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const validationErrors = getCreateAccountErrors({
+      email,
+      fullName,
+      phone,
+    });
 
-    if (
-      !fullName.trim() ||
-      !isValidEmail(email) ||
-      !hasValidPhone(phone) ||
-      !event.currentTarget.checkValidity()
-    ) {
-      event.currentTarget.reportValidity();
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setToast({
+        id: Date.now(),
+        title: "Revisa tus datos",
+        description: "Completa correctamente los campos obligatorios.",
+      });
       return;
     }
     setIsSubmitting(true);
@@ -169,7 +194,7 @@ function CreateAccount() {
       <AuthToast trigger={toast?.id} title={toast?.title || ""} description={toast?.description || ""} />
       <section className="box-border flex w-full max-w-[579px] shrink-0 items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
         <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
-          <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
+          <form noValidate onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
             <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
               <img
                 src={group1Logo}
@@ -195,7 +220,13 @@ function CreateAccount() {
               showRightIcon={false}
               leftIcon={<FieldIcon icon={User} />}
               className="w-full max-w-none"
-              onChange={(event) => setFullName(event.target.value)}
+              onChange={(event) => {
+                setFullName(event.target.value);
+                setFieldErrors((current) => ({
+                  ...current,
+                  "body.fullName": undefined,
+                }));
+              }}
             />
 
             <Input
@@ -212,7 +243,14 @@ function CreateAccount() {
               showRightIcon={false}
               leftIcon={<FieldIcon icon={Sms} />}
               className="w-full max-w-none"
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setFieldErrors((current) => ({
+                  ...current,
+                  email: undefined,
+                  "body.email": undefined,
+                }));
+              }}
             />
 
             <Input
@@ -246,7 +284,14 @@ function CreateAccount() {
               required
               showRightIcon={false}
               className="w-full max-w-none"
-              onChange={(event) => setPhone(event.target.value)}
+              onChange={(event) => {
+                setPhone(event.target.value);
+                setFieldErrors((current) => ({
+                  ...current,
+                  phone: undefined,
+                  "body.phone": undefined,
+                }));
+              }}
             />
 
             <div className="flex w-full flex-col items-start gap-[8px]">
