@@ -11,6 +11,7 @@ const ArchitectDashboard = lazy(
   () => import("./pages/architect-dashboard/ArchitectDashboard.jsx"),
 );
 const CreateAccount = lazy(() => import("./pages/CreateAccount.jsx"));
+const CreatePassword = lazy(() => import("./pages/CreatePassword.jsx"));
 const EmptyArchitectDashboardExample = lazy(
   () => import("./pages/EmptyArchitectDashboardExample.jsx"),
 );
@@ -57,6 +58,7 @@ createRoot(document.getElementById("root")).render(
             <Route element={<PublicOnlyRoute />}>
               <Route path="/" element={<Login />} />
               <Route path="/crear-cuenta" element={<CreateAccount />} />
+              <Route path="/crear-contrasena" element={<CreatePassword />} />
             </Route>
 
             <Route path="/cuenta-inactiva" element={<InactiveAccount />} />

@@ -62,7 +62,7 @@ function CreateAccount() {
   if (showEmailVerification) {
     return (
       <AuthLayout>
-        <section className="flex w-full max-w-[579px] items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
+        <section className="box-border flex w-full max-w-[579px] shrink-0 items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
           <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
             <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
               <img
@@ -107,7 +107,7 @@ function CreateAccount() {
                 showLeftIcon={false}
                 showRightIcon={false}
                 className="w-full sm:flex-1"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/crear-contrasena")}
               >
                 Entendido
               </Button>
@@ -125,7 +125,7 @@ function CreateAccount() {
 
   return (
     <AuthLayout>
-      <section className="flex w-full max-w-[579px] items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
+      <section className="box-border flex w-full max-w-[579px] shrink-0 items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
         <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
           <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[16px]">
             <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
@@ -134,7 +134,7 @@ function CreateAccount() {
                 alt="ARCA Studio"
                 className="h-[48px] w-[50.64px] object-contain"
               />
-              <h1 className="text-heading-3 m-0 self-stretch whitespace-nowrap text-[var(--color-text-300)] max-sm:text-[40px] max-sm:leading-[46px]">
+              <h1 className="text-heading-3 m-0 self-stretch text-[var(--color-text-300)] max-sm:text-[40px] max-sm:leading-[46px]">
                 Crear cuenta
               </h1>
             </div>
