@@ -26,6 +26,14 @@ function getInputState(value) {
   return String(value ?? "").trim() ? "Filled" : "Default";
 }
 
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
+}
+
+function hasValidPhone(value) {
+  return String(value).replace(/\D/g, "").length >= 7;
+}
+
 function CreateAccount() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
@@ -33,10 +41,87 @@ function CreateAccount() {
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [referralIndex, setReferralIndex] = useState(0);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (
+      !fullName.trim() ||
+      !isValidEmail(email) ||
+      !hasValidPhone(phone) ||
+      !event.currentTarget.checkValidity()
+    ) {
+      event.currentTarget.reportValidity();
+      return;
+    }
+
+    setShowEmailVerification(true);
   };
+
+  if (showEmailVerification) {
+    return (
+      <AuthLayout>
+        <section className="flex w-full max-w-[579px] items-center rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] shadow-[var(--shadow-e2)]">
+          <div className="flex w-full flex-col items-start justify-center gap-[16px] p-[24px] sm:p-[40px] lg:p-[56px]">
+            <div className="flex w-full flex-col items-start gap-[8px] border-b border-[var(--color-neutral-200)] pb-[16px]">
+              <img
+                src={group1Logo}
+                alt="ARCA Studio"
+                className="h-[48px] w-[50.64px] object-contain"
+              />
+              <h1 className="text-heading-3 m-0 text-[var(--color-text-300)] max-sm:text-[40px] max-sm:leading-[46px]">
+                Verifica tu correo electrónico
+              </h1>
+            </div>
+
+            <div className="flex w-full flex-col items-start gap-[4px] text-[var(--color-text-300)]">
+              <p className="text-heading-6 m-0">
+                Antes de continuar, necesitamos confirmar tu dirección de
+                correo electrónico.
+              </p>
+              <p className="text-body-2 m-0">
+                Hemos enviado un enlace de verificación a tu bandeja de
+                entrada. Una vez confirmado, podrás crear tu contraseña y
+                acceder a tu cuenta.
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col gap-[8px] sm:flex-row">
+              <Button
+                theme="Primary"
+                type="Outline"
+                size="L"
+                fitContent={false}
+                showLeftIcon={false}
+                showRightIcon={false}
+                className="w-full sm:flex-1"
+              >
+                Reenviar correo
+              </Button>
+              <Button
+                theme="Primary"
+                type="Solid"
+                size="L"
+                fitContent={false}
+                showLeftIcon={false}
+                showRightIcon={false}
+                className="w-full sm:flex-1"
+                onClick={() => navigate("/")}
+              >
+                Entendido
+              </Button>
+            </div>
+
+            <p className="text-body-2 m-0 w-full text-center text-[var(--color-text-200)]">
+              ¿No encuentras el correo? Revisa tu carpeta de spam o solicita
+              un nuevo enlace.
+            </p>
+          </div>
+        </section>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout>
