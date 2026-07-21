@@ -726,17 +726,19 @@ export default function ProjectDetailsPage({
                 {projectError}
               </p>
             ) : (
-              <div
-                key={`${presentedProject.id}-${activeProjectTabIndex}`}
-                className="content-reveal flex w-full flex-col gap-[48px]"
-              >
+              <>
                 <ProjectOverviewHeader project={presentedProject} />
                 <ProjectDetailTabMenu
                   activeIndex={activeProjectTabIndex}
                   onChange={setActiveProjectTabIndex}
                 />
-                {activeProjectPanel}
-              </div>
+                <div
+                  key={`${presentedProject.id}-${activeProjectTabIndex}`}
+                  className="content-reveal w-full"
+                >
+                  {activeProjectPanel}
+                </div>
+              </>
             )}
           </div>
 
