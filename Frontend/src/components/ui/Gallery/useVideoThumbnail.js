@@ -70,9 +70,10 @@ function captureVideoThumbnail(videoSrc) {
   return request;
 }
 
-export function useVideoThumbnail(videoSrc, providedPoster = "") {
+export function useVideoThumbnailState(videoSrc, providedPoster = "") {
   const [generatedThumbnail, setGeneratedThumbnail] = useState({
     source: "",
+    status: "loading",
     thumbnail: "",
   });
 
@@ -83,21 +84,45 @@ export function useVideoThumbnail(videoSrc, providedPoster = "") {
     captureVideoThumbnail(videoSrc)
       .then((nextThumbnail) => {
         if (active) {
-          setGeneratedThumbnail({ source: videoSrc, thumbnail: nextThumbnail });
+          setGeneratedThumbnail({
+            source: videoSrc,
+            status: "loaded",
+            thumbnail: nextThumbnail,
+          });
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) {
+          setGeneratedThumbnail({
+            source: videoSrc,
+            status: "error",
+            thumbnail: "",
+          });
+        }
+      });
 
     return () => {
       active = false;
     };
   }, [providedPoster, videoSrc]);
 
-  return (
+  const thumbnail =
     providedPoster ||
     thumbnailCache.get(videoSrc) ||
     (generatedThumbnail.source === videoSrc
       ? generatedThumbnail.thumbnail
-      : "")
-  );
+      : "");
+  const status = thumbnail
+    ? "loaded"
+    : !videoSrc
+      ? "error"
+      : generatedThumbnail.source === videoSrc
+        ? generatedThumbnail.status
+        : "loading";
+
+  return { status, thumbnail };
+}
+
+export function useVideoThumbnail(videoSrc, providedPoster = "") {
+  return useVideoThumbnailState(videoSrc, providedPoster).thumbnail;
 }

@@ -134,8 +134,10 @@ Cuando se añadan animaciones, respetar `prefers-reduced-motion`, como ya hace e
 ### Cargas de datos
 
 - Cada carga de contenido debe usar el componente compartido `Loader` con un preset que reproduzca la geometría del componente final; no se permiten skeletons genéricos sin relación con el contenido.
-- La animación estándar es un shimmer suave basado en tokens y debe respetar `prefers-reduced-motion`.
+- La animación estándar es un shimmer amplio, tenue y lento (aproximadamente 2.2 s), basado en tokens de tema y compatible con `prefers-reduced-motion`; no debe producir destellos blancos ni cambios bruscos de opacidad.
 - Loader, contenido, estado vacío y error son estados mutuamente excluyentes. Las listas usan `count` para aproximar la cantidad visible de elementos.
+- Todo componente que dependa de datos o recursos debe definir un skeleton con sus dimensiones finales para evitar saltos de layout. Imágenes, portadas, miniaturas y reproductores usan presets de medios ajustados a su relación de aspecto.
+- Una sección sin API puede mostrar un skeleton permanente únicamente si se documenta que todavía no existe una fuente real. En ese caso no se muestran datos de demostración ni scrollbar de contenido cargado.
 - El flujo completo de autenticación queda excluido del skeleton global y conserva sus mensajes y estados de botón propios.
 - Los visores interactivos 3D y VR conservan sus loaders especializados; las miniaturas estáticas 3D sí utilizan el preset correspondiente.
 - Uploads con porcentaje real conservan su barra de progreso en lugar de superponer otro loader.

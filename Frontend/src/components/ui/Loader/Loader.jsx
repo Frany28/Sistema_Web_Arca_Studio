@@ -24,6 +24,55 @@ function ProjectRowSkeleton() {
   );
 }
 
+function RequestRowSkeleton() {
+  return (
+    <div className="flex w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
+      <SkeletonBlock className="h-[91px] w-full shrink-0 rounded-[var(--radius-2)] sm:w-[160px]" />
+      <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
+        <div className="flex items-center gap-[8px]">
+          <SkeletonBlock className="h-[24px] w-[min(240px,68%)] rounded-[var(--radius-1)]" />
+          <SkeletonBlock className="size-[24px] rounded-[var(--radius-full)]" />
+          <SkeletonBlock className="size-[24px] rounded-[var(--radius-full)]" />
+        </div>
+        <SkeletonBlock className="h-[8px] w-full rounded-[var(--radius-full)]" />
+        <SkeletonBlock className="h-[12px] w-[124px] rounded-[var(--radius-1)]" />
+      </div>
+      <SkeletonBlock className="h-[41px] w-[144px] shrink-0 rounded-[var(--radius-2)]" />
+    </div>
+  );
+}
+
+function ActivityItemSkeleton() {
+  return (
+    <div className="flex w-full items-start gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
+      <SkeletonBlock className="size-[32px] shrink-0 rounded-[var(--radius-full)]" />
+      <div className="flex min-w-0 flex-1 flex-col gap-[7px]">
+        <SkeletonBlock className="h-[13px] w-full rounded-[var(--radius-1)]" />
+        <SkeletonBlock className="h-[11px] w-2/3 rounded-[var(--radius-1)]" />
+        <div className="flex items-center gap-[6px]">
+          <SkeletonBlock className="size-[18px] rounded-[var(--radius-1)]" />
+          <SkeletonBlock className="h-[9px] w-[72px] rounded-[var(--radius-1)]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VideoStageSkeleton() {
+  return (
+    <div className="relative size-full overflow-hidden rounded-[inherit]">
+      <SkeletonBlock className="size-full rounded-[inherit]" />
+      <div className="absolute inset-x-[20px] bottom-[20px] flex flex-col gap-[10px]">
+        <SkeletonBlock className="h-[6px] w-full rounded-[var(--radius-full)]" />
+        <div className="flex justify-between">
+          <SkeletonBlock className="h-[16px] w-[92px] rounded-[var(--radius-1)]" />
+          <SkeletonBlock className="h-[16px] w-[128px] rounded-[var(--radius-1)]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CommentCardSkeleton() {
   return (
     <div className="flex w-full flex-col gap-[10px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
@@ -67,7 +116,13 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = Array.from({ length: itemCount }, (_, index) => <CommentCardSkeleton key={index} />);
   } else if (preset === "projectDetail") {
     content = <ProjectDetailSkeleton />;
-  } else if (preset === "media" || preset === "modelThumbnail") {
+  } else if (preset === "requestRow") {
+    content = Array.from({ length: itemCount }, (_, index) => <RequestRowSkeleton key={index} />);
+  } else if (preset === "activityItem") {
+    content = Array.from({ length: itemCount }, (_, index) => <ActivityItemSkeleton key={index} />);
+  } else if (preset === "videoStage") {
+    content = <VideoStageSkeleton />;
+  } else if (preset === "media" || preset === "modelThumbnail" || preset === "videoThumbnail") {
     content = <SkeletonBlock className="size-full rounded-[inherit]" />;
   } else if (preset === "upload") {
     content = (

@@ -288,15 +288,21 @@
 }
 
 .skeleton-shimmer {
-  background-color: var(--color-neutral-200);
-  background-image: linear-gradient(
-    100deg,
-    transparent 20%,
-    color-mix(in srgb, var(--color-neutral-1000) 42%, transparent) 50%,
-    transparent 80%
+  background-color: color-mix(
+    in srgb,
+    var(--color-neutral-200) 82%,
+    var(--color-neutral-100) 18%
   );
-  background-size: 220% 100%;
-  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  background-image: linear-gradient(
+    105deg,
+    transparent 12%,
+    color-mix(in srgb, var(--color-neutral-700) 16%, transparent) 38%,
+    color-mix(in srgb, var(--color-neutral-1000) 24%, transparent) 50%,
+    color-mix(in srgb, var(--color-neutral-700) 16%, transparent) 62%,
+    transparent 88%
+  );
+  background-size: 260% 100%;
+  animation: skeleton-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

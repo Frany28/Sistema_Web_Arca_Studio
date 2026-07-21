@@ -32,24 +32,7 @@ import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
 const TABLET_BREAKPOINT_PX = 768;
-const PROJECT_REQUEST_EXAMPLES = [
-  {
-    id: "request-stand-nexar-2026",
-    title: "Stand Nexar 2026",
-    assigneeAvatars: [
-      { content: "Icon", name: "ARCA Studio", theme: "Neutral" },
-      { content: "Text", initials: "AC", name: "Arquitecto coordinador", theme: "Neutral" },
-    ],
-  },
-  {
-    id: "request-savory-motion",
-    title: "Savory Motion",
-    assigneeAvatars: [
-      { content: "Icon", name: "ARCA Studio", theme: "Neutral" },
-      { content: "Text", initials: "AC", name: "Arquitecto coordinador", theme: "Neutral" },
-    ],
-  },
-];
+const REQUEST_SKELETON_COUNT = 2;
 
 function mergeNotificationComments(comments) {
   const commentsById = new Map();
@@ -145,47 +128,6 @@ function ProjectRow({ project }) {
         onClick={() => navigate(getProjectPath(project))}
       >
         Ver Proyecto
-      </Button>
-    </article>
-  );
-}
-
-function ProjectRequestRow({ request }) {
-  return (
-    <article className="flex flex-col gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
-      <ProjectImage
-        alt={request.title}
-        className="h-[91px] w-[160px] shrink-0 rounded-[var(--radius-2)]"
-      />
-
-      <div className="flex min-w-[300px] flex-1 flex-col gap-[8px] max-sm:min-w-0">
-        <div className="flex min-w-0 items-center gap-[8px]">
-          <h2 className="min-w-0 truncate text-heading-4 text-[var(--color-text-50)]">
-            {request.title}
-          </h2>
-          <Tooltip text="Equipo ARCA Studio" tipPosition="Top center">
-            <AvatarGroup
-              size="S"
-              items={request.assigneeAvatars}
-              tabIndex={0}
-            />
-          </Tooltip>
-        </div>
-
-        <ProjectProgress />
-      </div>
-
-      <Button
-        theme="Primary"
-        type="Solid"
-        size="M"
-        fitContent
-        showLeftIcon={false}
-        showRightIcon={false}
-        disabled
-        className="shrink-0"
-      >
-        Revisar solicitud
       </Button>
     </article>
   );
@@ -330,13 +272,6 @@ function Home() {
   } = useSyncedScrollBar(
     projectGroups.map((group) => `${group.id}:${group.projects.length}`).join("|"),
   );
-  const {
-    containerRef: requestsContainerRef,
-    length: requestScrollLength,
-    onScroll: handleRequestScroll,
-    position: requestScrollPosition,
-    setPosition: setRequestScrollPosition,
-  } = useSyncedScrollBar(PROJECT_REQUEST_EXAMPLES.length);
   const navigationItems = useMemo(
     () => createProjectNavigationItems(ownedProjectRows),
     [ownedProjectRows],
@@ -631,24 +566,15 @@ function Home() {
 
             <div className="flex w-full items-start gap-[4px]">
               <div
-                ref={requestsContainerRef}
                 className="min-w-0 flex-1 overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 style={{ maxHeight: "122px" }}
-                onScroll={handleRequestScroll}
               >
-                {PROJECT_REQUEST_EXAMPLES.map((request) => (
-                  <ProjectRequestRow key={request.id} request={request} />
-                ))}
+                <Loader
+                  preset="requestRow"
+                  count={REQUEST_SKELETON_COUNT}
+                  label="Cargando solicitudes"
+                />
               </div>
-
-              <ScrollBar
-                height={122}
-                length={requestScrollLength}
-                position={requestScrollPosition}
-                interactive
-                onPositionChange={setRequestScrollPosition}
-                className="shrink-0"
-              />
             </div>
           </section>
 

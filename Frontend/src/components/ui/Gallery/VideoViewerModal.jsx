@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
+import Loader from "../Loader/Loader.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import {
   createVideoTimeSelection,
@@ -658,6 +659,14 @@ export default function VideoViewerModal({
               className="absolute inset-0 h-full w-full object-cover"
             />
           )}
+
+          {displayItem.video && isVideoLoading ? (
+            <Loader
+              preset="videoStage"
+              label="Cargando video"
+              className="absolute inset-0 z-20"
+            />
+          ) : null}
 
           <div className="pointer-events-none absolute inset-0 bg-[rgba(42,41,41,0.18)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.26)_0%,rgba(0,0,0,0)_100%)]" />

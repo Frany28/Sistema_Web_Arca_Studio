@@ -1,13 +1,23 @@
-import { useVideoThumbnail } from "./useVideoThumbnail.js";
+import Loader from "../Loader/Loader.jsx";
+import { useVideoThumbnailState } from "./useVideoThumbnail.js";
 
 export default function VideoThumbnail({ alt = "", className, item }) {
-  const thumbnail = useVideoThumbnail(item?.video, item?.poster);
+  const { status, thumbnail } = useVideoThumbnailState(
+    item?.video,
+    item?.poster,
+  );
 
   if (!item?.video && item?.image) {
     return <img src={item.image} alt={alt} className={className} />;
   }
 
-  return thumbnail ? (
+  return status === "loading" ? (
+    <Loader
+      preset="videoThumbnail"
+      label={`Cargando ${alt || "miniatura de video"}`}
+      className={className}
+    />
+  ) : thumbnail ? (
     <img src={thumbnail} alt={alt} className={className} />
   ) : (
     <span

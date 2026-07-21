@@ -571,6 +571,7 @@ function NotificationsDrawer({
   commentsError = "",
   commentsLoading = false,
   recentActivity = RECENT_ACTIVITY,
+  recentActivityLoading = true,
   onActivitySelect,
   onCommentSelect,
   onSubmitComment,
@@ -734,7 +735,13 @@ function NotificationsDrawer({
           </h3>
 
           <div className="flex flex-col gap-[8px]">
-            {recentActivity.map((item) => (
+            {recentActivityLoading ? (
+              <Loader
+                preset="activityItem"
+                count={3}
+                label="Cargando actividad reciente"
+              />
+            ) : recentActivity.map((item) => (
               <ActivityItem
                 key={item.id}
                 {...item}
