@@ -42,43 +42,45 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
         <Loader
           preset="modelThumbnail"
           label={`Cargando ${alt}`}
-          className="absolute inset-0 z-[1] bg-[var(--color-neutral-10)]"
+          className="pointer-events-none absolute inset-0 z-[1] bg-[var(--color-neutral-10)]"
         />
       ) : null}
       <model-viewer
-      src={modelSrc}
-      alt={alt}
-      class="size-full"
-      camera-orbit="35deg 72deg 105%"
-      field-of-view="30deg"
-      interaction-prompt="none"
-      loading="lazy"
-      reveal="auto"
-      shadow-intensity="1"
-      shadow-softness="0.8"
-      exposure="1"
-      tone-mapping="neutral"
-      style={{
-        background:
-          "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)",
-        display: "block",
-      }}
-      onError={() => setFailedSource(modelSrc)}
-      onLoad={(event) => {
-        const modelViewer = event.currentTarget;
-        setLoadedSource(modelSrc);
+        src={modelSrc}
+        alt={alt}
+        class="absolute inset-0 size-full"
+        camera-orbit="35deg 72deg 105%"
+        field-of-view="30deg"
+        interaction-prompt="none"
+        loading="eager"
+        reveal="auto"
+        shadow-intensity="1"
+        shadow-softness="0.8"
+        exposure="1"
+        tone-mapping="neutral"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)",
+          display: "block",
+          height: "100%",
+          width: "100%",
+        }}
+        onError={() => setFailedSource(modelSrc)}
+        onLoad={(event) => {
+          const modelViewer = event.currentTarget;
+          setLoadedSource(modelSrc);
 
-        try {
-          const thumbnail = modelViewer.toDataURL?.("image/webp", 0.82);
+          try {
+            const thumbnail = modelViewer.toDataURL?.("image/webp", 0.82);
 
-          if (thumbnail) {
-            modelThumbnailCache.set(modelSrc, thumbnail);
-            setCapture({ source: modelSrc, thumbnail });
+            if (thumbnail) {
+              modelThumbnailCache.set(modelSrc, thumbnail);
+              setCapture({ source: modelSrc, thumbnail });
+            }
+          } catch {
+            // Keep the loaded static model as the visual fallback.
           }
-        } catch {
-          // Keep the loaded static model as the visual fallback.
-        }
-      }}
+        }}
       />
     </span>
   );

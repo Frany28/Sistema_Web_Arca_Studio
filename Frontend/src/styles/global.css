@@ -305,6 +305,28 @@
   animation: skeleton-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+.skeleton-shimmer[data-skeleton-tone="text"] {
+  background-color: color-mix(
+    in srgb,
+    var(--color-neutral-300) 84%,
+    var(--color-neutral-200) 16%
+  );
+}
+
+.skeleton-shimmer[data-skeleton-tone="muted"] {
+  background-color: color-mix(
+    in srgb,
+    var(--color-neutral-200) 68%,
+    transparent 32%
+  );
+  background-image: linear-gradient(
+    105deg,
+    transparent 18%,
+    color-mix(in srgb, var(--color-neutral-700) 10%, transparent) 50%,
+    transparent 82%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer {
     animation: none;

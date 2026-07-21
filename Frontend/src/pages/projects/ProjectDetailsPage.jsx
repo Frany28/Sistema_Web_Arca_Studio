@@ -25,6 +25,14 @@ import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getProjectTypeDisplay } from "../../utils/projectTypeDisplay.js";
 
 const TABLET_BREAKPOINT_PX = 768;
+const PROJECT_DETAIL_LOADER_SECTIONS = [
+  "info",
+  "renders",
+  "documents",
+  "tracking",
+  "warranties",
+  "upload",
+];
 function createProjectStages(progressValue) {
   const stages = [
     { id: "survey", threshold: 25, title: "Levantamiento" },
@@ -710,6 +718,7 @@ export default function ProjectDetailsPage({
             {projectLoading ? (
               <Loader
                 preset="projectDetail"
+                section={PROJECT_DETAIL_LOADER_SECTIONS[activeProjectTabIndex] || "info"}
                 label="Cargando proyecto"
               />
             ) : projectError ? (
