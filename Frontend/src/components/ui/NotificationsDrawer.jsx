@@ -696,7 +696,11 @@ function NotificationsDrawer({
 
           <div className="flex flex-col gap-[8px]">
             {commentsLoading ? (
-              <Loader variant="compact" label="Cargando observaciones" />
+              <Loader
+                preset="commentCard"
+                count={3}
+                label="Cargando observaciones"
+              />
             ) : orderedComments.map((item) => (
               <div key={item.id} className="flex flex-col gap-[8px]">
                 <CommentCard

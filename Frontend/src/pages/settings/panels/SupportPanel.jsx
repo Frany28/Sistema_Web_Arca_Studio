@@ -381,8 +381,7 @@ export default function SupportPanel({
         <div className="flex w-full flex-col items-end gap-[var(--spacing-gap-2)]">
           {isSubmittingSupport ? (
             <Loader
-              variant="compact"
-              align="center"
+              preset="action"
               label="Enviando solicitud de soporte"
             />
           ) : null}

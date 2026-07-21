@@ -29,8 +29,7 @@ function ProjectImage({ alt = "", className, imageClassName, src }) {
     >
       {status === IMAGE_STATUS.LOADING ? (
         <Loader
-          variant="inline"
-          align="center"
+          preset="media"
           label={`Cargando ${alt || "imagen"}`}
           className="absolute inset-0 z-[1]"
         />

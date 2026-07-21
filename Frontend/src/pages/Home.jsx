@@ -585,7 +585,7 @@ function Home() {
             >
               {projectsLoading ? (
                 <Loader
-                  variant="responsive"
+                  preset="projectRow"
                   count={3}
                   label="Cargando proyectos"
                   className="min-h-[232px] py-[24px]"

@@ -9,7 +9,6 @@ import AuthToast, { AuthToastMailIcon } from "../components/ui/AuthToast/AuthToa
 import Button from "../components/ui/Button/Button.jsx";
 import HorizontalTabMenu from "../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
 import Input from "../components/ui/Input/Input.jsx";
-import Loader from "../components/ui/Loader/Loader.jsx";
 
 const referralItems = ["Instagram", "Referido", "WhatsApp", "Otro"];
 const referralValues = ["instagram", "referred", "whatsapp", "other"];
@@ -310,10 +309,6 @@ function CreateAccount() {
               />
             </div>
 
-            {isSubmitting ? (
-              <Loader variant="compact" label="Enviando solicitud de cuenta" />
-            ) : null}
-
             <Button
               htmlType="submit"
               theme="Primary"
@@ -325,7 +320,7 @@ function CreateAccount() {
               className="w-full"
               disabled={isSubmitting}
             >
-              Continuar
+              {isSubmitting ? "Enviando..." : "Continuar"}
             </Button>
 
             <Button

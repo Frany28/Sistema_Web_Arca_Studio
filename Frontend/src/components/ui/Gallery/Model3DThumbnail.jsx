@@ -40,8 +40,7 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
     <span className={`${className || ""} relative block overflow-hidden`}>
       {loadedSource !== modelSrc ? (
         <Loader
-          variant="inline"
-          align="center"
+          preset="modelThumbnail"
           label={`Cargando ${alt}`}
           className="absolute inset-0 z-[1] bg-[var(--color-neutral-10)]"
         />

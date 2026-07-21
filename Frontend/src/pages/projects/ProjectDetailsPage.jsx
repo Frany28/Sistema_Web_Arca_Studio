@@ -701,9 +701,8 @@ export default function ProjectDetailsPage({
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[48px] px-[48px] pb-[24px] pt-0">
             {projectLoading ? (
               <Loader
-                variant="responsive"
+                preset="projectDetail"
                 label="Cargando proyecto"
-                className="py-[48px]"
               />
             ) : projectError ? (
               <p className="py-[48px] text-body-3 text-[var(--color-danger-100)]">

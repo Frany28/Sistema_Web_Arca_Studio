@@ -87,8 +87,7 @@ export default function SecurityPanel({
       <div className="flex w-[664px] max-w-full items-end justify-end gap-[24px] ">
         {isSubmitting ? (
           <Loader
-            variant="compact"
-            align="center"
+            preset="action"
             label="Cambiando contraseÃ±a"
           />
         ) : null}

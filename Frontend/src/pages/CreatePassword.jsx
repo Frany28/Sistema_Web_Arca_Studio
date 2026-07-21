@@ -8,7 +8,6 @@ import AuthLayout from "../components/layout/AuthLayout.jsx";
 import ExpiredLinkCard from "../components/ExpiredLinkCard.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import Input from "../components/ui/Input/Input.jsx";
-import Loader from "../components/ui/Loader/Loader.jsx";
 import { PASSWORD_REQUIREMENT_RULES } from "../components/ui/Input/inputConfig.js";
 
 function getPasswordState(value, touched) {
@@ -123,11 +122,9 @@ function CreatePassword() {
             </div>
 
             {tokenState === "loading" ? (
-              <Loader
-                variant="compact"
-                label="Validando enlace"
-                className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] p-[16px]"
-              />
+              <div className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] p-[16px] text-body-3 text-[var(--color-text-300)]">
+                <p className="m-0">Validando enlace...</p>
+              </div>
             ) : null}
 
             <Input
@@ -171,10 +168,6 @@ function CreatePassword() {
               }
             />
 
-            {isSubmitting ? (
-              <Loader variant="compact" label="Creando cuenta" />
-            ) : null}
-
             <Button
               htmlType="submit"
               theme="Primary"
@@ -186,7 +179,7 @@ function CreatePassword() {
               className="w-full"
               disabled={isSubmitting || tokenState !== "valid"}
             >
-              Registrarse
+              {isSubmitting ? "Creando cuenta..." : "Registrarse"}
             </Button>
 
             {formError ? <p className="text-body-4 m-0 text-[var(--color-danger-100)]">{formError}</p> : null}

@@ -3,7 +3,6 @@ import clsx from "clsx";
 import * as IconsaxIcons from "iconsax-react";
 import Button from "../Button/Button.jsx";
 import FileAttachmentIcons from "../FileAttachmentIcons.jsx";
-import Loader from "../Loader/Loader.jsx";
 import ScrollBar from "../ScrollBar.jsx";
 import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
@@ -156,15 +155,10 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
             {file.onRetryUpload || onRetryUpload ? "Intenta de nuevo" : "Eliminar"}
           </Button>
         ) : (
-          <div className="flex flex-col gap-[var(--spacing-gap-2)]">
-            {isUploading ? (
-              <Loader variant="inline" label={`Subiendo ${file.name}`} />
-            ) : null}
-            <FileUploadProgress
-              progress={file.progress}
-              showValue={isCompleted || isUploading}
-            />
-          </div>
+          <FileUploadProgress
+            progress={file.progress}
+            showValue={isCompleted || isUploading}
+          />
         )}
       </div>
 

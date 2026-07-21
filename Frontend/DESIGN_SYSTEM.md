@@ -133,13 +133,12 @@ Cuando se añadan animaciones, respetar `prefers-reduced-motion`, como ya hace e
 
 ### Cargas de datos
 
-- El loader reemplaza el contenido correspondiente durante la carga: no debe mostrarse al mismo tiempo que datos anteriores, estados vacíos o errores.
-- Las listas deben usar `count` para aproximar su estructura final. Los visores interactivos 3D y VR conservan sus loaders especializados; esta excepción no incluye miniaturas 3D.
-
-- Toda carga remota de datos debe representarse con el componente compartido `Loader`; no se permiten textos de carga aislados, pantallas vacías ni esqueletos pulse creados localmente para este fin.
-- El loader conserva siempre la composición de círculo y dos líneas. Usar `default` en áreas amplias, `compact` en drawers y formularios, y `responsive` cuando el tamaño deba cambiar entre móvil y tablet/web.
-- La alineación se controla mediante `align` y el recurso cargado se describe con `label`, sin duplicar mensajes visibles junto al componente.
-- Los indicadores especializados se conservan únicamente cuando comunican progreso o estados propios de uploads, imágenes, video, audio o modelos 3D.
+- Cada carga de contenido debe usar el componente compartido `Loader` con un preset que reproduzca la geometría del componente final; no se permiten skeletons genéricos sin relación con el contenido.
+- La animación estándar es un shimmer suave basado en tokens y debe respetar `prefers-reduced-motion`.
+- Loader, contenido, estado vacío y error son estados mutuamente excluyentes. Las listas usan `count` para aproximar la cantidad visible de elementos.
+- El flujo completo de autenticación queda excluido del skeleton global y conserva sus mensajes y estados de botón propios.
+- Los visores interactivos 3D y VR conservan sus loaders especializados; las miniaturas estáticas 3D sí utilizan el preset correspondiente.
+- Uploads con porcentaje real conservan su barra de progreso en lugar de superponer otro loader.
 
 ### Imágenes de proyectos
 

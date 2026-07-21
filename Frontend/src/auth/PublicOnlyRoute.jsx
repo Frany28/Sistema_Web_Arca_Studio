@@ -1,6 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
 
-import Loader from "../components/ui/Loader/Loader.jsx";
 import { useAuth } from "./AuthContext.jsx";
 import { getDefaultAuthenticatedPath } from "./authRoutes.js";
 import { ROUTE_AUTH_DISABLED_FOR_TESTS } from "./testAccess.js";
@@ -13,14 +12,7 @@ function PublicOnlyRoute() {
   }
 
   if (isLoading) {
-    return (
-      <Loader
-        variant="responsive"
-        align="center"
-        label="Verificando sesión"
-        className="min-h-screen"
-      />
-    );
+    return null;
   }
 
   if (isAuthenticated) {
