@@ -7,7 +7,7 @@ import Loader from "../Loader/Loader.jsx";
 const IMAGE_STATUS = { ERROR: "error", LOADED: "loaded", LOADING: "loading" };
 
 /** Shared loading and error state for every project cover and thumbnail. */
-function ProjectImage({ alt = "", className, imageClassName, src }) {
+function ProjectImage({ alt = "", className, imageClassName, onStatusChange, src }) {
   const [imageState, setImageState] = useState({
     src,
     status: src ? IMAGE_STATUS.LOADING : IMAGE_STATUS.ERROR,
@@ -55,10 +55,14 @@ function ProjectImage({ alt = "", className, imageClassName, src }) {
             status === IMAGE_STATUS.LOADED ? "opacity-100" : "opacity-0",
             imageClassName,
           )}
-          onLoad={() =>
-            setImageState({ src, status: IMAGE_STATUS.LOADED })
-          }
-          onError={() => setImageState({ src, status: IMAGE_STATUS.ERROR })}
+          onLoad={() => {
+            setImageState({ src, status: IMAGE_STATUS.LOADED });
+            onStatusChange?.(IMAGE_STATUS.LOADED);
+          }}
+          onError={() => {
+            setImageState({ src, status: IMAGE_STATUS.ERROR });
+            onStatusChange?.(IMAGE_STATUS.ERROR);
+          }}
         />
       ) : null}
     </div>

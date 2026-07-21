@@ -41,6 +41,14 @@ function ChevronRightIcon({ className }) {
 }
 
 function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
+  const imageSrc = project.image || standAuraImage;
+  const [imageState, setImageState] = useState({
+    source: imageSrc,
+    status: "loading",
+  });
+  const imageStatus = imageState.source === imageSrc
+    ? imageState.status
+    : "loading";
   const realAssignees = Array.isArray(project.assigneeAvatars)
     ? project.assigneeAvatars.slice(0, 1)
     : [];
@@ -54,22 +62,25 @@ function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
       style={{ height: `${cardHeight}px` }}
     >
       <ProjectImage
-        src={project.image || standAuraImage}
+        src={imageSrc}
         alt={project.title}
-        className="absolute inset-0 size-full"
+        className="!absolute inset-0 !size-full"
         imageClassName="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+        onStatusChange={(status) => setImageState({ source: imageSrc, status })}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.20)_0%,rgba(0,0,0,0.04)_48%,rgba(0,0,0,0.58)_100%)]" />
+      {imageStatus === "loaded" ? (
+        <>
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.20)_0%,rgba(0,0,0,0.04)_48%,rgba(0,0,0,0.58)_100%)]" />
 
-      <MainLogo
-        size="20px"
-        appearance="auto"
-        alt="ARCA Studio"
-        className="absolute left-[16px] top-[16px] z-[1] h-[20px] w-[109px]"
-        imgClassName="size-full"
-      />
+          <MainLogo
+            size="20px"
+            appearance="auto"
+            alt="ARCA Studio"
+            className="absolute left-[16px] top-[16px] z-[1] h-[20px] w-[109px]"
+            imgClassName="size-full"
+          />
 
-      <div className="relative z-[1] flex min-w-0 flex-col">
+          <div className="relative z-[1] flex min-w-0 flex-col">
         <h3 className="truncate text-heading-4 text-[var(--color-neutral-100-uniform)]">
           {project.title}
         </h3>
@@ -100,7 +111,9 @@ function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
             Ver más
           </Button>
         </div>
-      </div>
+          </div>
+        </>
+      ) : null}
     </article>
   );
 }
