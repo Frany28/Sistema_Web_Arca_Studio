@@ -201,14 +201,13 @@ function toProjectPresentation(project) {
           : file.fileUrl;
 
       return {
+        createdAt: file.createdAt,
         fileType: String(file.extension || "FILE").toUpperCase(),
         fileUrl: contentUrl,
         id: file.id,
         name: file.title,
-        owner:
-          project.assignedArchitect?.name ||
-          project.client?.name ||
-          "ARCA Studio",
+        owner: file.uploadedBy?.name || "ARCA Studio",
+        ownerAvatarSrc: file.uploadedBy?.profilePhotoUrl || null,
         size: formatFileSize(file.size),
         uploadedAt: formatFileDate(file.createdAt),
       };
@@ -310,6 +309,9 @@ export default function ProjectDetailsPage({
   const [project, setProject] = useState(providedProject);
   const [projectError, setProjectError] = useState("");
   const [projectLoading, setProjectLoading] = useState(!providedProject);
+  const [filesSynchronizedAt, setFilesSynchronizedAt] = useState(() =>
+    providedProject ? new Date().toISOString() : null,
+  );
   const [resolvedProjectId, setResolvedProjectId] = useState(initialProjectId);
   const [projectComments, setProjectComments] = useState([]);
   const [projectCommentsError, setProjectCommentsError] = useState("");
@@ -383,6 +385,7 @@ export default function ProjectDetailsPage({
           }
 
           setProject(data.project);
+          setFilesSynchronizedAt(new Date().toISOString());
           setResolvedProjectId(data.project.id);
         })
         .catch((error) => {
@@ -415,6 +418,7 @@ export default function ProjectDetailsPage({
 
           const nextProject = data.project || null;
           setProject(nextProject);
+          setFilesSynchronizedAt(new Date().toISOString());
           setResolvedProjectId(nextProject?.id || initialProjectId);
 
           if (routeUsesNumericProjectId && nextProject) {
@@ -597,6 +601,7 @@ export default function ProjectDetailsPage({
         setAuthToken(data.project.fileAccessToken);
       }
       setProject(data.project || null);
+      setFilesSynchronizedAt(new Date().toISOString());
     } catch {
       // Keep the current project visible if a background refresh fails.
     }
@@ -651,7 +656,10 @@ export default function ProjectDetailsPage({
     );
   } else if (activeProjectTabIndex === 2) {
     activeProjectPanel = (
-      <ProjectDocumentsPanel documents={presentedProject.documents} />
+      <ProjectDocumentsPanel
+        documents={presentedProject.documents}
+        lastSynchronizedAt={filesSynchronizedAt}
+      />
     );
   } else if (activeProjectTabIndex === 3) {
     activeProjectPanel = <ProjectTrackingPanel {...trackingProps} />;

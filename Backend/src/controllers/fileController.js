@@ -9,6 +9,7 @@ import {
   uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
 import { runUpload, uploadPolicies } from "../services/fileUploadService.js";
+import { getAllowedOrigins } from "../config/cors.js";
 
 export async function uploadProjectRequestAttachment(req, res, next) {
   try {
@@ -221,6 +222,12 @@ export async function streamProjectFile(req, res, next) {
     });
     const contentType = object.ContentType || file.fileType || "application/octet-stream";
 
+    const frameAncestors = getAllowedOrigins().filter((origin) => origin !== "*");
+    res.removeHeader("X-Frame-Options");
+    res.setHeader(
+      "Content-Security-Policy",
+      `frame-ancestors 'self' ${frameAncestors.join(" ")}`,
+    );
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
     if (range && object.ContentRange) {

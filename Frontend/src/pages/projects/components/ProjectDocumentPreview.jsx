@@ -1,47 +1,161 @@
-export default function ProjectDocumentPreview({ document }) {
+import { useEffect, useMemo, useState } from "react";
+
+import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
+import Loader from "../../../components/ui/Loader/Loader.jsx";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
+
+const MIN_ZOOM = 75;
+const MAX_ZOOM = 200;
+const ZOOM_STEP = 25;
+
+function getPdfPageCount(buffer) {
+  const source = new TextDecoder("latin1").decode(buffer);
+  const matches = source.match(/\/Type\s*\/Page\b/g);
+  return Math.max(matches?.length || 1, 1);
+}
+
+function ViewerButton({ children, disabled, label, onClick }) {
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden rounded-b-[var(--radius-3)] bg-[var(--color-primary-300)]">
-      <aside className="w-[50px] shrink-0 bg-[var(--color-primary-300)]" />
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={label}
+      onClick={onClick}
+      className="flex size-[22px] items-center justify-center rounded-[var(--radius-1)] text-[12px] text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-black/25 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
 
-      <div className="flex min-w-0 flex-1 justify-center overflow-auto bg-[var(--color-primary-300)] px-[36px] py-[36px]">
-        <div className="min-h-[520px] w-full max-w-[488px] bg-[var(--color-neutral-100-uniform)] px-[56px] py-[64px] text-[#111] shadow-[0_1px_3px_rgba(0,0,0,0.18)]">
-          <h2 className="mb-[28px] text-[14px] font-bold leading-[20px]">
-            Propuesta de Sistema Web para la Gestión y Visualización de
-            Proyectos Arquitectónicos
-          </h2>
+export default function ProjectDocumentPreview({ document }) {
+  const source = document?.fileUrl || "";
+  const isPdf = String(document?.fileType || "").toUpperCase() === "PDF";
+  const [loadState, setLoadState] = useState({
+    pageCount: 1,
+    source,
+    status: source && isPdf ? "loading" : "unsupported",
+  });
+  const [viewState, setViewState] = useState({ page: 1, source, zoom: 100 });
+  const [retryKey, setRetryKey] = useState(0);
+  const status = loadState.source === source
+    ? loadState.status
+    : source && isPdf
+      ? "loading"
+      : "unsupported";
+  const pageCount = loadState.source === source ? loadState.pageCount : 1;
+  const page = viewState.source === source ? viewState.page : 1;
+  const zoom = viewState.source === source ? viewState.zoom : 100;
 
-          <h3 className="mb-[16px] text-[14px] font-bold leading-[20px]">
-            1. Descripción general
-          </h3>
+  useEffect(() => {
+    if (!source || !isPdf) return undefined;
 
-          <p className="mb-[14px] text-[11px] leading-[17px]">
-            El sistema propuesto es una plataforma web integral diseñada para
-            gestionar, visualizar y controlar proyectos arquitectónicos,
-            combinando la administración técnica de documentos con una
-            experiencia visual orientada al cliente.
-          </p>
+    const controller = new AbortController();
 
-          <p className="mb-[10px] text-[11px] leading-[17px]">
-            A diferencia de soluciones tradicionales centradas únicamente en
-            almacenamiento de archivos, esta plataforma transforma la gestión de
-            proyectos en un entorno estratégico que permite:
-          </p>
+    fetch(source, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("DOCUMENT_LOAD_FAILED");
+        return response.arrayBuffer();
+      })
+      .then((buffer) => {
+        setLoadState({
+          pageCount: getPdfPageCount(buffer),
+          source,
+          status: "loaded",
+        });
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          setLoadState({ pageCount: 1, source, status: "error" });
+        }
+      });
 
-          <ul className="mb-[14px] list-disc space-y-[6px] pl-[18px] text-[11px] leading-[16px]">
-            <li>Control total de versiones de documentos técnicos</li>
-            <li>Visualización del avance de obra</li>
-            <li>Presentación profesional de proyectos para clientes</li>
-            <li>Trazabilidad completa de acciones</li>
-            <li>Centralización de la información en un solo sistema</li>
-          </ul>
+    return () => controller.abort();
+  }, [isPdf, retryKey, source]);
 
-          <p className="text-[11px] leading-[17px]">
-            Documento seleccionado: {document?.name}
-          </p>
-        </div>
+  const viewerUrl = useMemo(() => {
+    if (!source) return "";
+    return `${source}#page=${page}&zoom=${zoom}&toolbar=0&navpanes=0&view=FitH`;
+  }, [page, source, zoom]);
+
+  const updatePage = (nextPage) => {
+    const normalizedPage = Math.min(Math.max(Number(nextPage) || 1, 1), pageCount);
+    setViewState({ page: normalizedPage, source, zoom });
+  };
+  const updateZoom = (nextZoom) => {
+    const normalizedZoom = Math.min(Math.max(nextZoom, MIN_ZOOM), MAX_ZOOM);
+    setViewState({ page, source, zoom: normalizedZoom });
+  };
+
+  if (status === "loading") {
+    return <Loader preset="documentPreview" label="Cargando documento" />;
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex min-h-[554px] items-center justify-center rounded-b-[var(--radius-3)] bg-[var(--color-primary-300)] px-[24px]">
+        <EmptyState
+          title="No se pudo cargar el documento"
+          description="Comprueba tu conexión e inténtalo nuevamente."
+          size="S"
+          showFeaturedIcon
+          showActions
+          showSecondaryAction={false}
+          primaryActionLabel="Reintentar"
+          onPrimaryAction={() => {
+            setLoadState({ pageCount: 1, source, status: "loading" });
+            setRetryKey((current) => current + 1);
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (status === "unsupported") {
+    return (
+      <div className="flex min-h-[554px] items-center justify-center rounded-b-[var(--radius-3)] bg-[var(--color-primary-300)] px-[24px]">
+        <EmptyState
+          title="Vista previa no disponible"
+          description="Este formato no puede visualizarse dentro del navegador."
+          size="S"
+          showFeaturedIcon
+          showActions={false}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="flex min-h-[554px] min-w-0 flex-1 flex-col overflow-hidden rounded-b-[var(--radius-3)] bg-[var(--color-primary-300)]"
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      <div className="flex h-[34px] shrink-0 items-center justify-center gap-[8px] bg-[#333] px-[16px] text-[10px] text-[var(--color-neutral-100-uniform)]">
+        <input
+          type="number"
+          min="1"
+          max={pageCount}
+          value={page}
+          aria-label="Página actual"
+          onChange={(event) => updatePage(event.target.value)}
+          className="h-[18px] w-[30px] rounded-[2px] bg-[#111] px-[4px] text-center outline-none"
+        />
+        <span>/</span>
+        <span>{pageCount}</span>
+        <span className="mx-[4px] text-[var(--color-neutral-300)]">|</span>
+        <ViewerButton label="Alejar" disabled={zoom <= MIN_ZOOM} onClick={() => updateZoom(zoom - ZOOM_STEP)}>−</ViewerButton>
+        <span className="min-w-[42px] rounded-[2px] bg-[#111] px-[4px] py-[2px] text-center">{zoom}%</span>
+        <ViewerButton label="Acercar" disabled={zoom >= MAX_ZOOM} onClick={() => updateZoom(zoom + ZOOM_STEP)}>+</ViewerButton>
       </div>
 
-      <aside className="w-[50px] shrink-0 bg-[var(--color-primary-300)]" />
+      <iframe
+        key={`${source}-${page}-${zoom}`}
+        src={viewerUrl}
+        title={`Vista previa de ${getFileDisplayName(document?.name)}`}
+        sandbox="allow-same-origin"
+        tabIndex={-1}
+        className="pointer-events-none min-h-[520px] w-full flex-1 select-none border-0 bg-[var(--color-primary-300)]"
+      />
     </div>
   );
 }

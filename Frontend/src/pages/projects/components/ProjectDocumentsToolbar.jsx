@@ -44,7 +44,13 @@ function ArrowSwapIcon({ className }) {
   );
 }
 
-export default function ProjectDocumentsToolbar({ disabled = false }) {
+export default function ProjectDocumentsToolbar({
+  disabled = false,
+  onQueryChange,
+  onToggleSort,
+  query = "",
+  sortDirection = "desc",
+}) {
   return (
     <div className="flex w-full items-start justify-center gap-[12px] border-b border-[var(--color-neutral-200)] pb-[16px]">
       <Input
@@ -56,6 +62,8 @@ export default function ProjectDocumentsToolbar({ disabled = false }) {
         required={false}
         placeholder="Buscar..."
         disabled={disabled}
+        value={query}
+        onChange={(event) => onQueryChange?.(event.target.value)}
         className="min-w-0 flex-1 gap-0"
         aria-label="Buscar documentos"
       />
@@ -69,7 +77,9 @@ export default function ProjectDocumentsToolbar({ disabled = false }) {
         showRightIcon={false}
         iconLeft={<ArrowSwapIcon className="size-5" />}
         disabled={disabled}
-        aria-label="Ordenar documentos"
+        aria-label={sortDirection === "desc" ? "Ordenar del más antiguo al más reciente" : "Ordenar del más reciente al más antiguo"}
+        aria-pressed={sortDirection === "asc"}
+        onClick={onToggleSort}
         className="shrink-0"
       />
     </div>

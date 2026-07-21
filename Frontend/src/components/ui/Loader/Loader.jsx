@@ -73,6 +73,17 @@ function VideoStageSkeleton() {
   );
 }
 
+function DocumentPreviewSkeleton() {
+  return (
+    <div className="flex min-h-[554px] w-full flex-col overflow-hidden rounded-b-[var(--radius-3)] bg-[var(--color-primary-300)]">
+      <SkeletonBlock className="h-[34px] w-full rounded-none opacity-50" />
+      <div className="flex flex-1 justify-center px-[36px] py-[36px]">
+        <SkeletonBlock className="min-h-[486px] w-full max-w-[488px] rounded-[var(--radius-1)]" />
+      </div>
+    </div>
+  );
+}
+
 function CommentCardSkeleton() {
   return (
     <div className="flex w-full flex-col gap-[10px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
@@ -122,6 +133,8 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = Array.from({ length: itemCount }, (_, index) => <ActivityItemSkeleton key={index} />);
   } else if (preset === "videoStage") {
     content = <VideoStageSkeleton />;
+  } else if (preset === "documentPreview") {
+    content = <DocumentPreviewSkeleton />;
   } else if (preset === "media" || preset === "modelThumbnail" || preset === "videoThumbnail") {
     content = <SkeletonBlock className="size-full rounded-[inherit]" />;
   } else if (preset === "upload") {

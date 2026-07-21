@@ -152,6 +152,8 @@ function EmptyState({
   description = EMPTY_STATE_DEFAULT_PROPS.description,
   primaryActionLabel = EMPTY_STATE_DEFAULT_PROPS.primaryActionLabel,
   secondaryActionLabel = EMPTY_STATE_DEFAULT_PROPS.secondaryActionLabel,
+  onPrimaryAction,
+  onSecondaryAction,
   size = EMPTY_STATE_DEFAULT_PROPS.size,
   showFeaturedIcon = EMPTY_STATE_DEFAULT_PROPS.showFeaturedIcon,
   showActions = EMPTY_STATE_DEFAULT_PROPS.showActions,
@@ -300,6 +302,7 @@ function EmptyState({
                 className={secondaryButtonClass}
                 showLeftIcon={false}
                 showRightIcon={false}
+                onClick={onSecondaryAction}
               >
                 {secondaryActionLabel}
               </Button>
@@ -313,6 +316,7 @@ function EmptyState({
               className={primaryButtonClass}
               showLeftIcon={false}
               showRightIcon={false}
+              onClick={onPrimaryAction}
             >
               {primaryActionLabel}
             </Button>

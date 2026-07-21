@@ -8,6 +8,7 @@ import ProjectDocumentListCard from "../components/ProjectDocumentListCard.jsx";
 import ProjectDocumentPreview from "../components/ProjectDocumentPreview.jsx";
 import ProjectDocumentsToolbar from "../components/ProjectDocumentsToolbar.jsx";
 import { PROJECT_DETAIL_DATA } from "../projectDetailsData.js";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 
 const EMPTY_DOCUMENT_PREVIEW = {
   id: "empty-document-preview",
@@ -105,30 +106,62 @@ function ProgressSection({ icon, children }) {
   );
 }
 
+function getSynchronizationLabel(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sin información";
+  const minutes = Math.max(Math.floor((Date.now() - date.getTime()) / 60000), 0);
+  if (minutes < 1) return "Ahora";
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function ProjectDocumentsPanel({
   documents = PROJECT_DETAIL_DATA.documents,
+  lastSynchronizedAt = null,
 }) {
   const hasDocuments = documents.length > 0;
   const listViewportRef = useRef(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState(
     documents[0]?.id,
   );
+  const [query, setQuery] = useState("");
+  const [sortDirection, setSortDirection] = useState("desc");
   const [scrollState, setScrollState] = useState({
     length: 1,
     position: 0,
     height: 480,
   });
 
+  const visibleDocuments = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("es");
+    return [...documents]
+      .filter((document) =>
+        getFileDisplayName(document.name)
+          .toLocaleLowerCase("es")
+          .includes(normalizedQuery),
+      )
+      .sort((left, right) => {
+        const leftTime = new Date(left.createdAt || 0).getTime();
+        const rightTime = new Date(right.createdAt || 0).getTime();
+        return sortDirection === "desc" ? rightTime - leftTime : leftTime - rightTime;
+      });
+  }, [documents, query, sortDirection]);
+  const hasVisibleDocuments = visibleDocuments.length > 0;
+
   const selectedDocument = useMemo(() => {
-    if (!hasDocuments) {
-      return EMPTY_DOCUMENT_PREVIEW;
-    }
+    if (!hasVisibleDocuments) return null;
 
     return (
-      documents.find((document) => document.id === selectedDocumentId) ??
-      documents[0]
+      visibleDocuments.find((document) => document.id === selectedDocumentId) ??
+      visibleDocuments[0]
     );
-  }, [documents, hasDocuments, selectedDocumentId]);
+  }, [hasVisibleDocuments, selectedDocumentId, visibleDocuments]);
 
   const syncScrollState = useCallback(() => {
     const element = listViewportRef.current;
@@ -172,7 +205,7 @@ export default function ProjectDocumentsPanel({
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [documents, syncScrollState]);
+  }, [visibleDocuments, syncScrollState]);
 
   useEffect(() => {
     if (!listViewportRef.current || typeof ResizeObserver === "undefined") {
@@ -198,29 +231,15 @@ export default function ProjectDocumentsPanel({
               : "bg-[var(--color-neutral-10)]",
           )}
         >
-          <ProjectDocumentCard document={selectedDocument} />
+          <ProjectDocumentCard document={selectedDocument || EMPTY_DOCUMENT_PREVIEW} />
 
-          {hasDocuments ? (
-            <>
-              <div className="flex h-[34px] items-center gap-[12px] bg-[#333] px-[178px] text-[10px] text-[var(--color-neutral-100-uniform)] max-[720px]:px-[24px]">
-                <span className="rounded-[2px] bg-[#111] px-[4px]">1</span>
-                <span>/</span>
-                <span>8</span>
-                <span className="text-[var(--color-neutral-300)]">|</span>
-                <span>-</span>
-                <span className="rounded-[2px] bg-[#111] px-[4px]">
-                  100%
-                </span>
-                <span>+</span>
-              </div>
-
-              <ProjectDocumentPreview document={selectedDocument} />
-            </>
+          {hasVisibleDocuments ? (
+            <ProjectDocumentPreview document={selectedDocument} />
           ) : (
             <div className="flex min-h-[426px] flex-1 items-center justify-center border-t border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] px-[24px]">
               <EmptyState
-                title="Sin documentos"
-                description="No hay archivos disponibles. Carga archivos para ver una vista previa aquí."
+                title={hasDocuments ? "No se encontraron documentos" : "Sin documentos"}
+                description={hasDocuments ? "Prueba con otro término de búsqueda." : "No hay archivos disponibles. Carga archivos para ver una vista previa aquí."}
                 size="S"
                 showFeaturedIcon
                 showActions
@@ -233,9 +252,17 @@ export default function ProjectDocumentsPanel({
         </div>
 
         <aside className="flex min-h-0 flex-col">
-          <ProjectDocumentsToolbar disabled={!hasDocuments} />
+          <ProjectDocumentsToolbar
+            disabled={!hasDocuments}
+            query={query}
+            sortDirection={sortDirection}
+            onQueryChange={setQuery}
+            onToggleSort={() =>
+              setSortDirection((current) => current === "desc" ? "asc" : "desc")
+            }
+          />
 
-          {hasDocuments ? (
+          {hasVisibleDocuments ? (
           <div className="flex flex-col gap-[12px] py-[12px]">
             <p className="text-heading-8 text-[var(--color-text-200)]">
               Selecciona un documento para ver la previsualización
@@ -247,7 +274,7 @@ export default function ProjectDocumentsPanel({
                 className="flex max-h-[480px] min-w-0 flex-1 flex-col gap-[12px] overflow-y-auto pr-[8px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 onScroll={syncScrollState}
               >
-                {documents.map((document) => (
+                {visibleDocuments.map((document) => (
                   <ProjectDocumentListCard
                     key={document.id}
                     document={document}
@@ -271,8 +298,8 @@ export default function ProjectDocumentsPanel({
           ) : (
             <div className="flex min-h-[443px] items-center justify-center px-[16px]">
               <EmptyState
-                title="No se encontraron documentos"
-                description="Aquí encontrarás todos los documentos importantes sobre este proyecto."
+                title={hasDocuments ? "No se encontraron documentos" : "Sin documentos"}
+                description={hasDocuments ? "Prueba con otro término de búsqueda." : "Aquí encontrarás todos los documentos importantes sobre este proyecto."}
                 size="S"
                 showFeaturedIcon
                 showActions
@@ -287,9 +314,7 @@ export default function ProjectDocumentsPanel({
 
       <div className="flex w-full items-center gap-[24px] max-[760px]:flex-col max-[760px]:items-start">
         <ProgressSection icon={<CloudAddIcon className="size-4" />}>
-          {hasDocuments
-            ? "Última sincronización: hace 2 horas"
-            : "Última sincronización: Sin información"}
+          {`Última sincronización: ${hasDocuments ? getSynchronizationLabel(lastSynchronizedAt) : "Sin información"}`}
         </ProgressSection>
         <ProgressSection icon={<TickCircleIcon className="size-4" />}>
           {hasDocuments

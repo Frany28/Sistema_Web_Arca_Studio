@@ -1,42 +1,7 @@
 import clsx from "clsx";
 import AvatarLabel from "../../../components/ui/AvatarLabel/AvatarLabel.jsx";
-import Button from "../../../components/ui/Button/Button.jsx";
 import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
-
-function ExportIcon({ className }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M11.667 8.333L17.5 2.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M18.333 6.667V1.667H13.333"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.167 1.667H7.5C3.333 1.667 1.667 3.333 1.667 7.5V12.5C1.667 16.667 3.333 18.333 7.5 18.333H12.5C16.667 18.333 18.333 16.667 18.333 12.5V10.833"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export default function ProjectDocumentCard({ document }) {
   if (!document) {
@@ -82,30 +47,15 @@ export default function ProjectDocumentCard({ document }) {
           label={document.owner}
           showSubtitle={false}
           avatarTheme="Neutral"
-          avatarContent="Icon"
-          avatarDecorative
+          avatarContent={document.ownerAvatarSrc ? "Image" : "Text"}
+          avatarSrc={document.ownerAvatarSrc}
+          avatarName={document.owner}
+          avatarDecorative={false}
           className="shrink-0"
           textClassName="text-[var(--color-text-300)]"
         />
       ) : null}
 
-      <Button
-        theme="Primary"
-        type="Outline"
-        size="S"
-        fitContent
-        showLeftIcon
-        showRightIcon={false}
-        iconLeft={<ExportIcon className="size-5" />}
-        className={clsx(
-          "shrink-0",
-          isEmptyState &&
-            "border-[var(--color-neutral-400)] bg-transparent text-[var(--color-neutral-400)]",
-        )}
-        disabled={isEmptyState}
-      >
-        Abrir
-      </Button>
     </article>
   );
 }

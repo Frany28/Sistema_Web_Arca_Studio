@@ -334,12 +334,19 @@ async function findProjectDetailByConditionForUser({
             version.file_name,
             version.file_size,
             version.created_at,
-            file.created_at as file_created_at
+            file.created_at as file_created_at,
+            uploader.id as uploader_id,
+            uploader.first_name as uploader_first_name,
+            uploader.last_name as uploader_last_name,
+            uploader.profile_photo_url as uploader_profile_photo_url
           from public.files file
           left join public.file_versions version
             on version.file_id = file.id
             and version.version_number = file.current_version
             and version.deleted_at is null
+          left join public.users uploader
+            on uploader.id = file.uploaded_by
+            and uploader.deleted_at is null
           where file.project_id = $1
             and file.deleted_at is null
             and file.status <> 'deleted'
@@ -362,6 +369,13 @@ async function findProjectDetailByConditionForUser({
     size: file.file_size === null ? null : Number(file.file_size),
     storageKey: file.file_name || null,
     title: file.title,
+    uploadedBy: file.uploader_id
+      ? {
+          id: Number(file.uploader_id),
+          name: `${file.uploader_first_name || ""} ${file.uploader_last_name || ""}`.trim(),
+          profilePhotoUrl: file.uploader_profile_photo_url || null,
+        }
+      : null,
   }), (row) => [row.file_created_at, String(row.id)]);
 
   return {
