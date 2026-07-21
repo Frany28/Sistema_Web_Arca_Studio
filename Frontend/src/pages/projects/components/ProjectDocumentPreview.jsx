@@ -152,7 +152,6 @@ export default function ProjectDocumentPreview({ document }) {
         key={`${source}-${page}-${zoom}`}
         src={viewerUrl}
         title={`Vista previa de ${getFileDisplayName(document?.name)}`}
-        sandbox="allow-same-origin"
         tabIndex={-1}
         className="pointer-events-none min-h-[520px] w-full flex-1 select-none border-0 bg-[var(--color-primary-300)]"
       />
