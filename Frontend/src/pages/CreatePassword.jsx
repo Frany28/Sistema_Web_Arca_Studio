@@ -171,6 +171,10 @@ function CreatePassword() {
               }
             />
 
+            {isSubmitting ? (
+              <Loader variant="compact" label="Creando cuenta" />
+            ) : null}
+
             <Button
               htmlType="submit"
               theme="Primary"
@@ -182,7 +186,7 @@ function CreatePassword() {
               className="w-full"
               disabled={isSubmitting || tokenState !== "valid"}
             >
-              {isSubmitting ? "Creando cuenta..." : "Registrarse"}
+              Registrarse
             </Button>
 
             {formError ? <p className="text-body-4 m-0 text-[var(--color-danger-100)]">{formError}</p> : null}

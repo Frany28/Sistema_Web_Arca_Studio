@@ -1,5 +1,6 @@
 import Input from "../../../components/ui/Input/Input.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import Loader from "../../../components/ui/Loader/Loader.jsx";
 
 export default function SecurityPanel({
   currentPassword,
@@ -84,6 +85,13 @@ export default function SecurityPanel({
         />
       </div>
       <div className="flex w-[664px] max-w-full items-end justify-end gap-[24px] ">
+        {isSubmitting ? (
+          <Loader
+            variant="compact"
+            align="center"
+            label="Cambiando contraseÃ±a"
+          />
+        ) : null}
         <Button
           theme="Primary"
           type="Solid"

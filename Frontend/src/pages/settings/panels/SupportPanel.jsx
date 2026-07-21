@@ -6,6 +6,7 @@ import DropdownMenu from "../../../components/ui/DropdownMenu/DropdownMenu.jsx";
 import FileUploadSection from "../../../components/ui/FileUploadSection/FileUploadSection.jsx";
 import HintText from "../../../components/ui/HintText/HintText.jsx";
 import Input from "../../../components/ui/Input/Input.jsx";
+import Loader from "../../../components/ui/Loader/Loader.jsx";
 import TextArea from "../../../components/ui/TextArea/TextArea.jsx";
 import { InfoCircleIcon } from "../settingsIcons.jsx";
 
@@ -377,7 +378,14 @@ export default function SupportPanel({
 
         <div className="h-px w-full bg-[var(--color-neutral-200)]" />
 
-        <div className="flex w-full justify-end">
+        <div className="flex w-full flex-col items-end gap-[var(--spacing-gap-2)]">
+          {isSubmittingSupport ? (
+            <Loader
+              variant="compact"
+              align="center"
+              label="Enviando solicitud de soporte"
+            />
+          ) : null}
           <Button
             theme="Primary"
             type="Solid"
@@ -388,7 +396,7 @@ export default function SupportPanel({
             disabled={isSubmittingSupport}
             onClick={handleSupportSubmit}
           >
-            {isSubmittingSupport ? "Enviando..." : "Enviar solicitud"}
+            Enviar solicitud
           </Button>
         </div>
       </div>

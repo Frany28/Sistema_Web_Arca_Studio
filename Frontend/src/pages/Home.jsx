@@ -586,8 +586,9 @@ function Home() {
               {projectsLoading ? (
                 <Loader
                   variant="responsive"
+                  count={3}
                   label="Cargando proyectos"
-                  className="py-[24px]"
+                  className="min-h-[232px] py-[24px]"
                 />
               ) : projectsError ? (
                 <p className="text-body-3 py-[24px] text-[var(--color-danger-100)]">
@@ -606,14 +607,16 @@ function Home() {
               )}
             </div>
 
-            <ScrollBar
-              height={232}
-              length={projectScrollLength}
-              position={projectScrollPosition}
-              interactive
-              onPositionChange={setProjectScrollPosition}
-              className="shrink-0"
-            />
+            {!projectsLoading ? (
+              <ScrollBar
+                height={232}
+                length={projectScrollLength}
+                position={projectScrollPosition}
+                interactive
+                onPositionChange={setProjectScrollPosition}
+                className="shrink-0"
+              />
+            ) : null}
           </div>
 
           <section className="mx-auto flex w-full max-w-[1200px] flex-col px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">

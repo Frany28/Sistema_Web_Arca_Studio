@@ -359,8 +359,13 @@ function ArchitectDashboard({ empty = false }) {
           </div>
 
           {projectsLoading ? (
-            <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">
-              <Loader variant="responsive" label="Cargando proyectos" />
+            <div className="mx-auto flex min-h-[360px] w-full max-w-[1200px] px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
+              <Loader
+                variant="responsive"
+                count={3}
+                align="center"
+                label="Cargando proyectos"
+              />
             </div>
           ) : projectsError ? (
             <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">

@@ -8,6 +8,7 @@ import AuthToast, {
   AuthToastMailIcon,
 } from "../components/ui/AuthToast/AuthToast.jsx";
 import Input from "../components/ui/Input/Input.jsx";
+import Loader from "../components/ui/Loader/Loader.jsx";
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
@@ -118,6 +119,10 @@ function RecoverAccount() {
               }}
             />
 
+            {isSubmitting ? (
+              <Loader variant="compact" label="Enviando enlace de recuperaciÃ³n" />
+            ) : null}
+
             <Button
               htmlType="submit"
               theme="Primary"
@@ -129,7 +134,7 @@ function RecoverAccount() {
               className="w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Enviando..." : "Enviar enlace"}
+              Enviar enlace
             </Button>
           </form>
         </div>

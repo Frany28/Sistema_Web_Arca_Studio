@@ -10,6 +10,7 @@ import AuthToast, {
   AuthToastLockIcon,
 } from "../components/ui/AuthToast/AuthToast.jsx";
 import Input from "../components/ui/Input/Input.jsx";
+import Loader from "../components/ui/Loader/Loader.jsx";
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
@@ -178,6 +179,10 @@ function Login() {
               <p className="text-body-4 text-[var(--color-danger-100)]">
                 {authError}
               </p>
+            ) : null}
+
+            {isSubmitting ? (
+              <Loader variant="compact" label="Iniciando sesiÃ³n" />
             ) : null}
 
             <div className="w-full">

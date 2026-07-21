@@ -7,6 +7,7 @@ import AuthLayout from "../components/layout/AuthLayout.jsx";
 import ExpiredLinkCard from "../components/ExpiredLinkCard.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import Input from "../components/ui/Input/Input.jsx";
+import Loader from "../components/ui/Loader/Loader.jsx";
 
 const PASSWORD_REQUIREMENTS = [
   {
@@ -198,14 +199,18 @@ function NewPassword() {
               </h1>
             </div>
 
-            {(validationError || isValidatingToken) && (
+            {isValidatingToken ? (
+              <Loader
+                variant="compact"
+                label="Validando enlace de recuperación"
+                className="rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-white p-[16px]"
+              />
+            ) : validationError ? (
               <div className="w-full rounded-[var(--radius-4)] border border-[var(--color-neutral-200)] bg-white p-[16px] text-[var(--color-text-300)]">
                 <p className="m-0 text-sm text-[var(--color-text-300)]">
-                  {isValidatingToken
-                    ? "Validando enlace de recuperación..."
-                    : validationError}
+                  {validationError}
                 </p>
-                {!isValidatingToken && validationError && (
+                {validationError && (
                   <p className="mt-[8px] text-sm">
                     <a
                       href="/recuperar-cuenta"
@@ -216,7 +221,7 @@ function NewPassword() {
                   </p>
                 )}
               </div>
-            )}
+            ) : null}
 
             <Input
               label="Nueva contraseña"

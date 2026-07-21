@@ -2,6 +2,8 @@ import { useState } from "react";
 import * as IconsaxIcons from "iconsax-react";
 import clsx from "clsx";
 
+import Loader from "../Loader/Loader.jsx";
+
 const IMAGE_STATUS = { ERROR: "error", LOADED: "loaded", LOADING: "loading" };
 
 /** Shared loading and error state for every project cover and thumbnail. */
@@ -25,7 +27,16 @@ function ProjectImage({ alt = "", className, imageClassName, src }) {
       )}
       data-image-status={status}
     >
-      {status !== IMAGE_STATUS.LOADED ? (
+      {status === IMAGE_STATUS.LOADING ? (
+        <Loader
+          variant="inline"
+          align="center"
+          label={`Cargando ${alt || "imagen"}`}
+          className="absolute inset-0 z-[1]"
+        />
+      ) : null}
+
+      {status === IMAGE_STATUS.ERROR ? (
         <div
           className="absolute inset-0 flex items-center justify-center text-[var(--color-text-100)]"
           aria-hidden="true"

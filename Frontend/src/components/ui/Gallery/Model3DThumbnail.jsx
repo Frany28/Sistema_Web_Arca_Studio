@@ -2,6 +2,7 @@ import { useState } from "react";
 import "@google/model-viewer";
 
 import { getModel3DSource } from "../../../utils/model3DThumbnail.js";
+import Loader from "../Loader/Loader.jsx";
 
 const modelThumbnailCache = new Map();
 
@@ -9,6 +10,7 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
   const modelSrc = getModel3DSource(item);
   const [capture, setCapture] = useState({ source: "", thumbnail: "" });
   const [failedSource, setFailedSource] = useState("");
+  const [loadedSource, setLoadedSource] = useState("");
   const generatedThumbnail =
     modelThumbnailCache.get(modelSrc) ||
     (capture.source === modelSrc ? capture.thumbnail : "");
@@ -35,10 +37,19 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
   }
 
   return (
-    <model-viewer
+    <span className={`${className || ""} relative block overflow-hidden`}>
+      {loadedSource !== modelSrc ? (
+        <Loader
+          variant="inline"
+          align="center"
+          label={`Cargando ${alt}`}
+          className="absolute inset-0 z-[1] bg-[var(--color-neutral-10)]"
+        />
+      ) : null}
+      <model-viewer
       src={modelSrc}
       alt={alt}
-      class={className}
+      class="size-full"
       camera-orbit="35deg 72deg 105%"
       field-of-view="30deg"
       interaction-prompt="none"
@@ -56,6 +67,7 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
       onError={() => setFailedSource(modelSrc)}
       onLoad={(event) => {
         const modelViewer = event.currentTarget;
+        setLoadedSource(modelSrc);
 
         try {
           const thumbnail = modelViewer.toDataURL?.("image/webp", 0.82);
@@ -68,6 +80,7 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
           // Keep the loaded static model as the visual fallback.
         }
       }}
-    />
+      />
+    </span>
   );
 }
