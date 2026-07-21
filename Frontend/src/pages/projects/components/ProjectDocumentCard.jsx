@@ -2,6 +2,7 @@ import clsx from "clsx";
 import AvatarLabel from "../../../components/ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 
 function ExportIcon({ className }) {
   return (
@@ -64,7 +65,7 @@ export default function ProjectDocumentCard({ document }) {
                 : "text-[var(--color-text-300)]",
             )}
           >
-            {document.name}
+            {getFileDisplayName(document.name)}
           </p>
           {!isEmptyState ? (
             <p className="truncate text-body-3 text-[var(--color-text-100)]">

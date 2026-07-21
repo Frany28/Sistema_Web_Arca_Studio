@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import * as IconsaxIcons from "iconsax-react";
 import Button from "../Button/Button.jsx";
 import FileAttachmentIcons from "../FileAttachmentIcons.jsx";
@@ -107,7 +108,7 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
       <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
         <div className="flex w-full flex-col items-start leading-none tracking-[-0.5px]">
           <span className="w-full text-[14px] leading-[17px] font-medium text-[var(--color-text-300)]">
-            {file.name}
+            {getFileDisplayName(file.name)}
           </span>
 
           {isFailed ? (

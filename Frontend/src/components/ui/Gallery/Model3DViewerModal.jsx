@@ -17,6 +17,7 @@ import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
@@ -2359,7 +2360,7 @@ export default function Model3DViewerModal({
             <div className="flex h-full w-full flex-col items-center justify-center gap-[16px] bg-[var(--color-neutral-200)] px-[24px] text-center">
               <div className="flex max-w-[420px] flex-col gap-[6px]">
                 <h3 className="text-heading-4 text-[var(--color-text-300)]">
-                  {displayItem.title}
+                  {getFileDisplayName(displayItem.title)}
                 </h3>
                 <p className="text-body-3 text-[var(--color-text-100)]">
                   Archivo de modelo 3D cargado desde S3.

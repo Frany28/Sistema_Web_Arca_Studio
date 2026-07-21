@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 
 function MoreIcon({ className }) {
   return (
@@ -49,7 +50,7 @@ export default function ProjectDocumentListCard({
 
         <div className="flex min-w-0 flex-col">
           <p className="truncate text-heading-8 text-[var(--color-text-300)]">
-            {document.name}
+            {getFileDisplayName(document.name)}
           </p>
           <p className="truncate text-body-3 text-[var(--color-text-100)]">
             {document.size}

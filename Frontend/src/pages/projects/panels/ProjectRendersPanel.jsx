@@ -29,6 +29,7 @@ import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 
 const MODEL_SLOW_LOADING_MS = 15000;
 const MODEL_LOAD_TIMEOUT_MS = 45000;
@@ -318,7 +319,7 @@ function RenderStage({
               Modelo 3D
             </span>
             <span className="max-w-[360px] text-body-3 text-[var(--color-text-100)]">
-              {activeRender.title}
+              {getFileDisplayName(activeRender.title)}
             </span>
           </div>
         )}
@@ -344,7 +345,7 @@ function RenderStage({
       </div>
 
       <h2 className="text-heading-4 text-[var(--color-text-300)]">
-        {activeRender.title}
+        {getFileDisplayName(activeRender.title)}
       </h2>
     </div>
   );
@@ -370,7 +371,7 @@ function RenderThumbnail({ item, selected, onSelect }) {
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.12)_35%,rgba(0,0,0,0.52)_100%)]" />
       <span className="absolute inset-x-[8px] bottom-[8px] text-heading-8 text-[var(--color-neutral-100-uniform)]">
-        {item.title}
+        {getFileDisplayName(item.title)}
       </span>
     </button>
   );
@@ -508,7 +509,7 @@ function VideoPreviewCard({ item, onClick }) {
 
       <div className="absolute bottom-0 left-0 p-[10px]">
         <span className="text-heading-8 text-[var(--color-neutral-100-uniform)]">
-          {item.label}
+          {getFileDisplayName(item.label ?? item.title)}
         </span>
       </div>
     </button>
@@ -539,7 +540,7 @@ function VideoListItem({ item, active, onSelect }) {
 
       <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
         <p className="truncate text-heading-8 text-[var(--color-text-300)]">
-          {item.title}
+          {getFileDisplayName(item.title)}
         </p>
         <p className="text-body-3 text-[var(--color-text-100)]">
           {item.uploadedAt}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
+import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import AvatarLabel from "../AvatarLabel/AvatarLabel.jsx";
 import Button from "../Button/Button.jsx";
 import Modal from "../Modal/Modal.jsx";
@@ -66,7 +67,7 @@ function VideoGalleryModalRow({ item, onWatchVideo }) {
 
         <div className="flex min-w-0 flex-col">
           <h3 className="truncate text-heading-8 text-[var(--color-text-300)]">
-            {item.title}
+            {getFileDisplayName(item.title)}
           </h3>
           <p className="text-body-3 text-[var(--color-text-100)]">
             {item.size}
