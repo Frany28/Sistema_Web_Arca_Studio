@@ -76,7 +76,7 @@ function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
             size="20px"
             appearance="auto"
             alt="ARCA Studio"
-            className="absolute left-[16px] top-[16px] z-[1] h-[20px] w-[109px]"
+            className="relative z-[1] h-[20px] w-[109px] shrink-0 self-start"
             imgClassName="size-full"
           />
 
