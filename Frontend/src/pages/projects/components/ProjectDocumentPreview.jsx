@@ -35,6 +35,7 @@ export default function ProjectDocumentPreview({ document }) {
     pageCount: 1,
     source,
     status: source && isPdf ? "loading" : "unsupported",
+    viewerSource: "",
   });
   const [viewState, setViewState] = useState({ page: 1, source, zoom: 100 });
   const [retryKey, setRetryKey] = useState(0);
@@ -51,6 +52,7 @@ export default function ProjectDocumentPreview({ document }) {
     if (!source || !isPdf) return undefined;
 
     const controller = new AbortController();
+    let objectUrl = "";
 
     fetch(source, { signal: controller.signal })
       .then((response) => {
@@ -58,25 +60,37 @@ export default function ProjectDocumentPreview({ document }) {
         return response.arrayBuffer();
       })
       .then((buffer) => {
+        objectUrl = URL.createObjectURL(
+          new Blob([buffer], { type: "application/pdf" }),
+        );
         setLoadState({
           pageCount: getPdfPageCount(buffer),
           source,
           status: "loaded",
+          viewerSource: objectUrl,
         });
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
-          setLoadState({ pageCount: 1, source, status: "error" });
+          setLoadState({
+            pageCount: 1,
+            source,
+            status: "error",
+            viewerSource: "",
+          });
         }
       });
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [isPdf, retryKey, source]);
 
   const viewerUrl = useMemo(() => {
-    if (!source) return "";
-    return `${source}#page=${page}&zoom=${zoom}&toolbar=0&navpanes=0&view=FitH`;
-  }, [page, source, zoom]);
+    if (!loadState.viewerSource || loadState.source !== source) return "";
+    return `${loadState.viewerSource}#page=${page}&zoom=${zoom}&toolbar=0&navpanes=0&view=FitH`;
+  }, [loadState.source, loadState.viewerSource, page, source, zoom]);
 
   const updatePage = (nextPage) => {
     const normalizedPage = Math.min(Math.max(Number(nextPage) || 1, 1), pageCount);
@@ -103,7 +117,12 @@ export default function ProjectDocumentPreview({ document }) {
           showSecondaryAction={false}
           primaryActionLabel="Reintentar"
           onPrimaryAction={() => {
-            setLoadState({ pageCount: 1, source, status: "loading" });
+            setLoadState({
+              pageCount: 1,
+              source,
+              status: "loading",
+              viewerSource: "",
+            });
             setRetryKey((current) => current + 1);
           }}
         />
