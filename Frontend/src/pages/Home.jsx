@@ -11,12 +11,11 @@ import Button from "../components/ui/Button/Button.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import ProjectProgress from "../components/ui/ProjectProgress/ProjectProgress.jsx";
+import ProjectImage from "../components/ui/ProjectImage/ProjectImage.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";
 import ScrollBar from "../components/ui/ScrollBar/ScrollBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
-import fondoNotificacion from "../assets/fondos/Property 1=notificacion.png";
-import fondoVariante2 from "../assets/fondos/Property 1=Variant2.png";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import {
   useProjectComments,
@@ -31,7 +30,6 @@ import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
 const TABLET_BREAKPOINT_PX = 768;
-const PROJECT_IMAGE_POOL = [fondoVariante2, fondoNotificacion];
 const PROJECT_REQUEST_EXAMPLES = [
   {
     id: "request-stand-nexar-2026",
@@ -98,12 +96,11 @@ function getProjectAssigneeAvatars(project) {
   return assigneeAvatar ? [assigneeAvatar] : [];
 }
 
-function toProjectRow(project, index) {
+function toProjectRow(project) {
   return {
     ...project,
     assigneeAvatars: getProjectAssigneeAvatars(project),
-    image:
-      project.image || PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
+    image: project.image,
     title: project.name,
   };
 }
@@ -113,13 +110,12 @@ function ProjectRow({ project }) {
 
   return (
     <article className="flex flex-col gap-[16px] border-b border-[var(--color-neutral-200)] px-0 py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
-      <div className="h-[80px] w-[140px] shrink-0 overflow-hidden rounded-[var(--radius-2)]">
-        <img
-          src={project.image}
-          alt={project.name}
-          className="h-full w-full object-cover"
-        />
-      </div>
+      <ProjectImage
+        src={project.image}
+        alt={project.name}
+        className="h-[80px] w-[140px] shrink-0 rounded-[var(--radius-2)]"
+        imageClassName="object-cover"
+      />
 
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
         <div className="flex items-center gap-[8px]">
@@ -152,38 +148,13 @@ function ProjectRow({ project }) {
   );
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="size-6"
-      aria-hidden="true"
-    >
-      <path
-        d="M8.5 10.5C9.60457 10.5 10.5 9.60457 10.5 8.5C10.5 7.39543 9.60457 6.5 8.5 6.5C7.39543 6.5 6.5 7.39543 6.5 8.5C6.5 9.60457 7.39543 10.5 8.5 10.5Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M3.5 15.5L7.3 12.1C8.05 11.43 9.2 11.47 9.9 12.19L11.3 13.64L14.25 10.69C14.96 9.98 16.11 9.98 16.82 10.69L20.5 14.37"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 function ProjectRequestRow({ request }) {
   return (
     <article className="flex flex-col gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
-      <div className="flex h-[91px] w-[160px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] bg-[color-mix(in_srgb,var(--color-neutral-300)_10%,transparent)] text-[var(--color-text-100)]">
-        <ImagePlaceholderIcon />
-      </div>
+      <ProjectImage
+        alt={request.title}
+        className="h-[91px] w-[160px] shrink-0 rounded-[var(--radius-2)]"
+      />
 
       <div className="flex min-w-[300px] flex-1 flex-col gap-[8px] max-sm:min-w-0">
         <div className="flex min-w-0 items-center gap-[8px]">
@@ -318,7 +289,7 @@ function Home() {
   const formattedTodayLabel =
     todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
   const projectRows = useMemo(
-    () => projects.map((project, index) => toProjectRow(project, index)),
+    () => projects.map((project) => toProjectRow(project)),
     [projects],
   );
   const ownedProjectRows = useMemo(

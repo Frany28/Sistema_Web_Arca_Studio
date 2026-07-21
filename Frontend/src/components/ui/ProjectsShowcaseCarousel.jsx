@@ -9,6 +9,7 @@ import {
 } from "../../utils/projectTypeDisplay.js";
 import AvatarGroup from "./AvatarGroup/AvatarGroup.jsx";
 import Button from "./Button/Button.jsx";
+import ProjectImage from "./ProjectImage/ProjectImage.jsx";
 import Tooltip from "./Tooltip/Tooltip.jsx";
 
 const CARD_GAP = 24;
@@ -51,10 +52,11 @@ function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
       className="group relative flex min-w-0 flex-col justify-between overflow-hidden rounded-[var(--radius-2)] p-[16px] shadow-[var(--shadow-e1)]"
       style={{ height: `${cardHeight}px` }}
     >
-      <img
+      <ProjectImage
         src={project.image}
         alt={project.title}
-        className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+        className="absolute inset-0 size-full"
+        imageClassName="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.20)_0%,rgba(0,0,0,0.04)_48%,rgba(0,0,0,0.58)_100%)]" />
 

@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { api, getAuthToken } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
-import projectImage from "../../assets/fondos/Project Image.png";
-import standImage from "../../assets/fondos/Property 1=Variant2.png";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
@@ -23,7 +21,6 @@ import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
 const TABLET_BREAKPOINT_PX = 768;
-const PROJECT_IMAGE_POOL = [standImage, projectImage];
 
 function mergeNotificationComments(comments) {
   const commentsById = new Map();
@@ -67,7 +64,7 @@ function createNavigationItems(projects) {
   ];
 }
 
-function toProjectRow(project, index, user) {
+function toProjectRow(project, user) {
   const assigneeAvatar = getProjectAssigneeAvatar(project);
 
   return {
@@ -75,7 +72,7 @@ function toProjectRow(project, index, user) {
     assigneeAvatars: assigneeAvatar ? [assigneeAvatar] : [],
     editable:
       user?.role === "admin" || project.assignedArchitect?.id === user?.id,
-    image: PROJECT_IMAGE_POOL[index % PROJECT_IMAGE_POOL.length],
+    image: project.image,
     title: project.name,
   };
 }
@@ -101,7 +98,7 @@ function ArchitectDashboard({ empty = false }) {
   const formattedTodayLabel =
     todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
   const projectRows = useMemo(
-    () => projects.map((project, index) => toProjectRow(project, index, user)),
+    () => projects.map((project) => toProjectRow(project, user)),
     [projects, user],
   );
   const commentProjectRows = useMemo(

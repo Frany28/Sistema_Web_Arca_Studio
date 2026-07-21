@@ -131,6 +131,13 @@ Cuando se añadan animaciones, respetar `prefers-reduced-motion`, como ya hace e
 
 ## Estados obligatorios de una pantalla
 
+### Imágenes de proyectos
+
+- Toda portada o miniatura de proyecto debe usar el componente compartido `ProjectImage`.
+- Mientras una imagen carga, si no tiene URL o si la descarga falla, debe conservar el mismo espacio y mostrar el placeholder neutral con el icono de imagen centrado.
+- No sustituir una imagen ausente por una portada de demostración. El contenido real reemplaza el placeholder únicamente después de cargar correctamente.
+- Esta regla aplica a dashboards, solicitudes y tarjetas públicas de proyectos; no aplica a logos, avatares ni visores multimedia, que tienen estados especializados.
+
 Toda vista que dependa de datos debe diseñar explícitamente:
 
 - carga inicial;

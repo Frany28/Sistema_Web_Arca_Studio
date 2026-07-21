@@ -1,0 +1,58 @@
+import { useState } from "react";
+import * as IconsaxIcons from "iconsax-react";
+import clsx from "clsx";
+
+const IMAGE_STATUS = { ERROR: "error", LOADED: "loaded", LOADING: "loading" };
+
+/** Shared loading and error state for every project cover and thumbnail. */
+function ProjectImage({ alt = "", className, imageClassName, src }) {
+  const [imageState, setImageState] = useState({
+    src,
+    status: src ? IMAGE_STATUS.LOADING : IMAGE_STATUS.ERROR,
+  });
+  const ImageIcon = IconsaxIcons.Image;
+  const status = !src
+    ? IMAGE_STATUS.ERROR
+    : imageState.src === src
+      ? imageState.status
+      : IMAGE_STATUS.LOADING;
+
+  return (
+    <div
+      className={clsx(
+        "relative overflow-hidden bg-[var(--color-neutral-10)]",
+        className,
+      )}
+      data-image-status={status}
+    >
+      {status !== IMAGE_STATUS.LOADED ? (
+        <div
+          className="absolute inset-0 flex items-center justify-center text-[var(--color-text-100)]"
+          aria-hidden="true"
+        >
+          {ImageIcon ? (
+            <ImageIcon size="24" color="currentColor" variant="Linear" />
+          ) : null}
+        </div>
+      ) : null}
+
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className={clsx(
+            "size-full transition-opacity duration-200",
+            status === IMAGE_STATUS.LOADED ? "opacity-100" : "opacity-0",
+            imageClassName,
+          )}
+          onLoad={() =>
+            setImageState({ src, status: IMAGE_STATUS.LOADED })
+          }
+          onError={() => setImageState({ src, status: IMAGE_STATUS.ERROR })}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export default ProjectImage;

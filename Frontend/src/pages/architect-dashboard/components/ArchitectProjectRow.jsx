@@ -4,6 +4,7 @@ import AvatarGroup from "../../../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import ProjectProgress from "../../../components/ui/ProjectProgress/ProjectProgress.jsx";
+import ProjectImage from "../../../components/ui/ProjectImage/ProjectImage.jsx";
 import { getProjectPath } from "../../../utils/projectRoutes.js";
 
 function ArchitectProjectRow({
@@ -19,13 +20,12 @@ function ArchitectProjectRow({
 
   return (
     <article className="flex flex-col gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
-      <div className="h-[80px] w-[140px] shrink-0 overflow-hidden rounded-[var(--radius-2)]">
-        <img
-          src={project.image}
-          alt={project.title}
-          className="h-full w-full object-cover"
-        />
-      </div>
+      <ProjectImage
+        src={project.image}
+        alt={project.title}
+        className="h-[80px] w-[140px] shrink-0 rounded-[var(--radius-2)]"
+        imageClassName="object-cover"
+      />
 
       <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
         <div className="flex min-w-0 items-center gap-[8px]">
