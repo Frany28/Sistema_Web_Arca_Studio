@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import MainLogo from "../../assets/logos/MainLogo.jsx";
+import standAuraImage from "../../assets/fondos/stand-aura-2026.png";
 import {
   buildShowcasePages,
   getProjectTypeDisplay,
@@ -53,16 +54,16 @@ function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
       style={{ height: `${cardHeight}px` }}
     >
       <ProjectImage
-        src={project.image}
+        src={project.image || standAuraImage}
         alt={project.title}
         className="absolute inset-0 size-full"
-        imageClassName="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+        imageClassName="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.20)_0%,rgba(0,0,0,0.04)_48%,rgba(0,0,0,0.58)_100%)]" />
 
       <MainLogo
         size="20px"
-        appearance="light"
+        appearance="auto"
         alt="ARCA Studio"
         className="absolute left-[16px] top-[16px] z-[1] h-[20px] w-[109px]"
         imgClassName="size-full"
