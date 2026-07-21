@@ -89,7 +89,12 @@ function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
         </p>
 
         <div className="flex min-h-[41px] w-full min-w-0 items-center justify-between gap-[12px]">
-          <Tooltip text={assigneeNames} tipPosition="Top center">
+          <Tooltip
+            text={assigneeNames}
+            tipPosition="Top center"
+            showTip
+            portal
+          >
             <AvatarGroup
               size="S"
               items={displayAssignees}

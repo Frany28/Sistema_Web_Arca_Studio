@@ -682,51 +682,55 @@ function NotificationsDrawer({
     >
       <div className="flex min-h-0 flex-1 flex-col gap-[24px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <section className="flex w-[280px] max-w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] pb-[24px]">
-          <MessageInput
-            multiline
-            disabled={commentsLoading || !canSubmitComments}
-            placeholder="Escribe algo..."
-            onSubmit={(message) => handleCommentSubmit(message)}
-          />
-
-          {commentsError ? (
-            <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-danger-100)]">
-              {commentsError}
-            </p>
-          ) : null}
-
-          <div className="flex flex-col gap-[8px]">
-            {commentsLoading ? (
-              <Loader
-                preset="commentCard"
-                count={3}
-                label="Cargando observaciones"
+          {commentsLoading ? (
+            <Loader
+              preset="commentCard"
+              count={3}
+              label="Cargando observaciones"
+            />
+          ) : (
+            <div className="content-reveal flex flex-col gap-[16px]">
+              <MessageInput
+                multiline
+                disabled={!canSubmitComments}
+                placeholder="Escribe algo..."
+                onSubmit={(message) => handleCommentSubmit(message)}
               />
-            ) : orderedComments.map((item) => (
-              <div key={item.id} className="flex flex-col gap-[8px]">
-                <CommentCard
-                  {...item}
-                  showReplyAction={visibleReplyAction === item.id}
-                  onMoreClick={() => handleMoreClick(item.id)}
-                  onSelect={
-                    item.imageComment && onCommentSelect
-                      ? () => onCommentSelect(item)
-                      : undefined
-                  }
-                  onReplyClick={() => handleReplyClick(item.id)}
-                />
 
-                {activeReplyComposer === item.id ? (
-                  <ReplyComposer
-                    disabled={commentsLoading || !canSubmitComments}
-                    onSubmit={(message) =>
-                      handleCommentSubmit(message, item)
-                    }
-                  />
-                ) : null}
+              {commentsError ? (
+                <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-danger-100)]">
+                  {commentsError}
+                </p>
+              ) : null}
+
+              <div className="flex flex-col gap-[8px]">
+                {orderedComments.map((item) => (
+                  <div key={item.id} className="flex flex-col gap-[8px]">
+                    <CommentCard
+                      {...item}
+                      showReplyAction={visibleReplyAction === item.id}
+                      onMoreClick={() => handleMoreClick(item.id)}
+                      onSelect={
+                        item.imageComment && onCommentSelect
+                          ? () => onCommentSelect(item)
+                          : undefined
+                      }
+                      onReplyClick={() => handleReplyClick(item.id)}
+                    />
+
+                    {activeReplyComposer === item.id ? (
+                      <ReplyComposer
+                        disabled={!canSubmitComments}
+                        onSubmit={(message) =>
+                          handleCommentSubmit(message, item)
+                        }
+                      />
+                    ) : null}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </section>
 
         <section className="flex w-[280px] max-w-full flex-col gap-[8px]">
@@ -741,15 +745,19 @@ function NotificationsDrawer({
                 count={3}
                 label="Cargando actividad reciente"
               />
-            ) : recentActivity.map((item) => (
-              <ActivityItem
-                key={item.id}
-                {...item}
-                onSelect={
-                  onActivitySelect ? () => onActivitySelect(item) : undefined
-                }
-              />
-            ))}
+            ) : (
+              <div className="content-reveal flex flex-col gap-[8px]">
+                {recentActivity.map((item) => (
+                  <ActivityItem
+                    key={item.id}
+                    {...item}
+                    onSelect={
+                      onActivitySelect ? () => onActivitySelect(item) : undefined
+                    }
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </div>

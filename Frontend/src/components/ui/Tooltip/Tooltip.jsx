@@ -1,4 +1,5 @@
-import { useId, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { TOOLTIP_DEFAULT_PROPS, TOOLTIP_POSITIONS } from "./tooltipConfig.js";
 
@@ -105,6 +106,22 @@ function getResolvedNodeId({ tipPosition, showSubtext, showTip }) {
   return TOOLTIP_NODE_IDS.base;
 }
 
+function getPortalPosition(anchor, tipPosition) {
+  const rect = anchor.getBoundingClientRect();
+  const positions = {
+    Right: { left: rect.right + 12, top: rect.top + rect.height / 2, transform: "translateY(-50%)" },
+    Left: { left: rect.left - 12, top: rect.top + rect.height / 2, transform: "translate(-100%, -50%)" },
+    "Top center": { left: rect.left + rect.width / 2, top: rect.top - 12, transform: "translate(-50%, -100%)" },
+    "Top right": { left: rect.right, top: rect.top - 12, transform: "translateY(-100%)" },
+    "Top left": { left: rect.left, top: rect.top - 12, transform: "translateY(-100%)" },
+    "Bottom center": { left: rect.left + rect.width / 2, top: rect.bottom + 12, transform: "translateX(-50%)" },
+    "Bottom right": { left: rect.right, top: rect.bottom + 12, transform: "translateX(-100%)" },
+    "Bottom left": { left: rect.left, top: rect.bottom + 12, transform: "none" },
+  };
+
+  return positions[tipPosition];
+}
+
 function TooltipBubble({
   className,
   content,
@@ -177,14 +194,38 @@ function Tooltip({
   defaultOpen = TOOLTIP_DEFAULT_PROPS.defaultOpen,
   children,
   onOpenChange,
+  portal = false,
   "aria-label": ariaLabel = TOOLTIP_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const [portalPosition, setPortalPosition] = useState(null);
+  const anchorRef = useRef(null);
   const tooltipId = useId();
   const isOpenControlled = typeof open === "boolean";
   const resolvedOpen = isOpenControlled ? open : internalOpen;
   const resolvedPosition = getResolvedPosition(tipPosition);
+
+  useLayoutEffect(() => {
+    if (!portal || !resolvedOpen || !anchorRef.current) {
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      if (anchorRef.current) {
+        setPortalPosition(getPortalPosition(anchorRef.current, resolvedPosition));
+      }
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [portal, resolvedOpen, resolvedPosition]);
 
   const setTooltipOpen = (nextOpen) => {
     if (!isOpenControlled) {
@@ -213,6 +254,7 @@ function Tooltip({
 
   return (
     <span
+      ref={anchorRef}
       className="relative inline-flex"
       onMouseEnter={() => setTooltipOpen(true)}
       onMouseLeave={() => setTooltipOpen(false)}
@@ -229,7 +271,26 @@ function Tooltip({
         {children}
       </span>
 
-      {resolvedOpen ? (
+      {resolvedOpen && portal && portalPosition && typeof document !== "undefined" ? createPortal(
+        <span
+          className="pointer-events-none fixed z-[1000]"
+          style={portalPosition}
+        >
+          <TooltipBubble
+            className={className}
+            content={content}
+            text={text}
+            subtext={subtext}
+            showSubtext={showSubtext}
+            showTip={showTip}
+            tipPosition={resolvedPosition}
+            tooltipId={tooltipId}
+            aria-label={ariaLabel}
+            {...props}
+          />
+        </span>,
+        document.body,
+      ) : resolvedOpen && !portal ? (
         <span
           className={clsx(
             "pointer-events-none absolute z-20",

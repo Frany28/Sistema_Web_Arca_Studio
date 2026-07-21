@@ -52,7 +52,9 @@ function ProjectImage({ alt = "", className, imageClassName, onStatusChange, src
           alt={alt}
           className={clsx(
             "size-full transition-opacity duration-200",
-            status === IMAGE_STATUS.LOADED ? "opacity-100" : "opacity-0",
+            status === IMAGE_STATUS.LOADED
+              ? "content-reveal-media opacity-100"
+              : "opacity-0",
             imageClassName,
           )}
           onLoad={() => {

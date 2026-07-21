@@ -530,7 +530,7 @@ function Home() {
                   {projectsError}
                 </p>
               ) : projectGroups.length ? (
-                <div className="flex flex-col gap-[24px]">
+                <div className="content-reveal flex flex-col gap-[24px]">
                   {projectGroups.map((group) => (
                     <ProjectStatusGroup key={group.id} group={group} />
                   ))}

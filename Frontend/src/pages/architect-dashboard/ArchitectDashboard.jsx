@@ -387,7 +387,7 @@ function ArchitectDashboard({ empty = false }) {
               />
             </div>
           ) : (
-            <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[48px] px-[48px] pb-[48px]">
+            <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col gap-[48px] px-[48px] pb-[48px]">
               {projectGroups.map((group) => (
                 <ArchitectProjectGroup
                   key={group.id}

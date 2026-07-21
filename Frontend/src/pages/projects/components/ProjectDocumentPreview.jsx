@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import clsx from "clsx";
 
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
+import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 
 const MIN_ZOOM = 75;
 const MAX_ZOOM = 200;
 const ZOOM_STEP = 25;
+const MODAL_TRANSITION_MS = 320;
+const MODAL_EASING = "ease-in-out";
 
 function getPdfPageCount(buffer) {
   const source = new TextDecoder("latin1").decode(buffer);
@@ -14,9 +19,13 @@ function getPdfPageCount(buffer) {
   return Math.max(matches?.length || 1, 1);
 }
 
-function ViewerButton({ children, disabled, label, onClick }) {
+const ViewerButton = forwardRef(function ViewerButton(
+  { children, disabled, label, onClick },
+  ref,
+) {
   return (
     <button
+      ref={ref}
       type="button"
       disabled={disabled}
       aria-label={label}
@@ -25,6 +34,228 @@ function ViewerButton({ children, disabled, label, onClick }) {
     >
       {children}
     </button>
+  );
+});
+
+function ExpandIcon({ contracted = false }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="size-[14px]" aria-hidden="true">
+      {contracted ? (
+        <>
+          <path d="M8 3V8H3M12 17V12H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3.5 7.5L8 3M16.5 12.5L12 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      ) : (
+        <>
+          <path d="M7 3H3V7M13 17H17V13M17 7V3H13M3 13V17H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3.5 6.5L7 3M13 17L16.5 13.5M13 3L16.5 6.5M3.5 13.5L7 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="size-[14px]" aria-hidden="true">
+      <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PdfToolbar({
+  expandButtonRef,
+  fullscreen = false,
+  onClose,
+  onExpand,
+  page,
+  pageCount,
+  updatePage,
+  updateZoom,
+  zoom,
+}) {
+  return (
+    <div className="flex h-[34px] shrink-0 items-center justify-center overflow-x-auto bg-[#333] px-[12px] text-[10px] text-[var(--color-neutral-100-uniform)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex min-w-max items-center gap-[8px]">
+        <input
+          type="number"
+          min="1"
+          max={pageCount}
+          value={page}
+          aria-label="Página actual"
+          onChange={(event) => updatePage(event.target.value)}
+          className="h-[18px] w-[30px] rounded-[2px] bg-[#111] px-[4px] text-center outline-none"
+        />
+        <span>/</span>
+        <span>{pageCount}</span>
+        <span className="mx-[4px] text-[var(--color-neutral-300)]">|</span>
+        <ViewerButton label="Alejar" disabled={zoom <= MIN_ZOOM} onClick={() => updateZoom(zoom - ZOOM_STEP)}>−</ViewerButton>
+        <span className="min-w-[42px] rounded-[2px] bg-[#111] px-[4px] py-[2px] text-center">{zoom}%</span>
+        <ViewerButton label="Acercar" disabled={zoom >= MAX_ZOOM} onClick={() => updateZoom(zoom + ZOOM_STEP)}>+</ViewerButton>
+        <span className="mx-[4px] text-[var(--color-neutral-300)]">|</span>
+
+        {fullscreen ? (
+          <Tooltip text="Contraer visor" tipPosition="Bottom center" showTip portal>
+            <ViewerButton label="Contraer visor" onClick={onClose}>
+              <ExpandIcon contracted />
+            </ViewerButton>
+          </Tooltip>
+        ) : (
+          <Tooltip text="Ver en pantalla completa" tipPosition="Top center" showTip portal>
+            <ViewerButton ref={expandButtonRef} label="Ver en pantalla completa" onClick={onExpand}>
+              <ExpandIcon />
+            </ViewerButton>
+          </Tooltip>
+        )}
+
+        {fullscreen ? (
+          <Tooltip text="Cerrar" tipPosition="Bottom center" showTip portal>
+            <ViewerButton label="Cerrar visor" onClick={onClose}>
+              <CloseIcon />
+            </ViewerButton>
+          </Tooltip>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function PdfViewerSurface({
+  className,
+  expandButtonRef,
+  fullscreen = false,
+  onClose,
+  onExpand,
+  page,
+  pageCount,
+  source,
+  title,
+  updatePage,
+  updateZoom,
+  viewerUrl,
+  zoom,
+}) {
+  return (
+    <div
+      className={clsx(
+        "flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--color-primary-300)]",
+        className,
+      )}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      <PdfToolbar
+        expandButtonRef={expandButtonRef}
+        fullscreen={fullscreen}
+        onClose={onClose}
+        onExpand={onExpand}
+        page={page}
+        pageCount={pageCount}
+        updatePage={updatePage}
+        updateZoom={updateZoom}
+        zoom={zoom}
+      />
+      <iframe
+        key={`${source}-${page}-${zoom}-${fullscreen ? "fullscreen" : "inline"}`}
+        src={viewerUrl}
+        title={title}
+        className="min-h-0 w-full flex-1 border-0 bg-[var(--color-primary-300)]"
+      />
+    </div>
+  );
+}
+
+function DocumentFullscreenModal({ children, documentName, onClose, triggerRef, visible }) {
+  const [shouldRender, setShouldRender] = useState(visible);
+  const [isActive, setIsActive] = useState(false);
+  const closeTimeoutRef = useRef(null);
+  const frameRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    window.clearTimeout(closeTimeoutRef.current);
+    window.cancelAnimationFrame(frameRef.current);
+
+    if (visible) {
+      queueMicrotask(() => {
+        if (cancelled) return;
+        setShouldRender(true);
+        setIsActive(false);
+        frameRef.current = window.requestAnimationFrame(() => {
+          frameRef.current = window.requestAnimationFrame(() => setIsActive(true));
+        });
+      });
+    } else {
+      queueMicrotask(() => {
+        if (cancelled) return;
+        setIsActive(false);
+        closeTimeoutRef.current = window.setTimeout(() => {
+          setShouldRender(false);
+          triggerRef.current?.focus();
+        }, MODAL_TRANSITION_MS);
+      });
+    }
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(closeTimeoutRef.current);
+      window.cancelAnimationFrame(frameRef.current);
+    };
+  }, [triggerRef, visible]);
+
+  useEffect(() => {
+    if (!visible) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose, visible]);
+
+  if (!shouldRender || typeof document === "undefined") return null;
+
+  const transitionStyle = {
+    transitionDuration: `${MODAL_TRANSITION_MS}ms`,
+    transitionTimingFunction: MODAL_EASING,
+  };
+
+  return createPortal(
+    <div
+      className={clsx(
+        "fixed inset-0 z-[60] overflow-hidden bg-[rgba(0,0,0,0.42)] backdrop-blur-[10px] transition-opacity",
+        isActive ? "opacity-100" : "opacity-0",
+      )}
+      style={transitionStyle}
+      onClick={onClose}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Vista completa de ${documentName}`}
+        className={clsx(
+          "flex h-dvh w-dvw p-[16px] transition-[opacity,transform] transform-gpu will-change-transform will-change-opacity max-[1024px]:p-[12px] max-[520px]:p-[8px] motion-reduce:transform-none motion-reduce:transition-none",
+          isActive
+            ? "translate-y-0 scale-100 opacity-100"
+            : "translate-y-[12px] scale-[0.985] opacity-0",
+        )}
+        style={transitionStyle}
+      >
+        <div
+          className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[var(--radius-3)] shadow-[var(--shadow-e2)]"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <span className="pointer-events-none absolute left-[16px] top-[9px] z-[1] max-w-[28vw] truncate text-[11px] text-[var(--color-neutral-100-uniform)] max-[640px]:sr-only">
+            {documentName}
+          </span>
+          {children}
+        </div>
+      </section>
+    </div>,
+    document.body,
   );
 }
 
@@ -39,6 +270,8 @@ export default function ProjectDocumentPreview({ document }) {
   });
   const [viewState, setViewState] = useState({ page: 1, source, zoom: 100 });
   const [retryKey, setRetryKey] = useState(0);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const expandButtonRef = useRef(null);
   const status = loadState.source === source
     ? loadState.status
     : source && isPdf
@@ -47,6 +280,7 @@ export default function ProjectDocumentPreview({ document }) {
   const pageCount = loadState.source === source ? loadState.pageCount : 1;
   const page = viewState.source === source ? viewState.page : 1;
   const zoom = viewState.source === source ? viewState.zoom : 100;
+  const documentName = getFileDisplayName(document?.name);
 
   useEffect(() => {
     if (!source || !isPdf) return undefined;
@@ -89,7 +323,7 @@ export default function ProjectDocumentPreview({ document }) {
 
   const viewerUrl = useMemo(() => {
     if (!loadState.viewerSource || loadState.source !== source) return "";
-    return `${loadState.viewerSource}#page=${page}&zoom=${zoom}&toolbar=0&navpanes=0&view=FitH`;
+    return `${loadState.viewerSource}#page=${page}&zoom=${zoom}&toolbar=0&navpanes=0&scrollbar=1`;
   }, [loadState.source, loadState.viewerSource, page, source, zoom]);
 
   const updatePage = (nextPage) => {
@@ -100,6 +334,7 @@ export default function ProjectDocumentPreview({ document }) {
     const normalizedZoom = Math.min(Math.max(nextZoom, MIN_ZOOM), MAX_ZOOM);
     setViewState({ page, source, zoom: normalizedZoom });
   };
+  const closeFullscreen = useCallback(() => setIsFullscreenOpen(false), []);
 
   if (status === "loading") {
     return <Loader preset="documentPreview" label="Cargando documento" />;
@@ -145,35 +380,41 @@ export default function ProjectDocumentPreview({ document }) {
   }
 
   return (
-    <div
-      className="flex min-h-[554px] min-w-0 flex-1 flex-col overflow-hidden rounded-b-[var(--radius-3)] bg-[var(--color-primary-300)]"
-      onContextMenu={(event) => event.preventDefault()}
-    >
-      <div className="flex h-[34px] shrink-0 items-center justify-center gap-[8px] bg-[#333] px-[16px] text-[10px] text-[var(--color-neutral-100-uniform)]">
-        <input
-          type="number"
-          min="1"
-          max={pageCount}
-          value={page}
-          aria-label="Página actual"
-          onChange={(event) => updatePage(event.target.value)}
-          className="h-[18px] w-[30px] rounded-[2px] bg-[#111] px-[4px] text-center outline-none"
-        />
-        <span>/</span>
-        <span>{pageCount}</span>
-        <span className="mx-[4px] text-[var(--color-neutral-300)]">|</span>
-        <ViewerButton label="Alejar" disabled={zoom <= MIN_ZOOM} onClick={() => updateZoom(zoom - ZOOM_STEP)}>−</ViewerButton>
-        <span className="min-w-[42px] rounded-[2px] bg-[#111] px-[4px] py-[2px] text-center">{zoom}%</span>
-        <ViewerButton label="Acercar" disabled={zoom >= MAX_ZOOM} onClick={() => updateZoom(zoom + ZOOM_STEP)}>+</ViewerButton>
-      </div>
-
-      <iframe
-        key={`${source}-${page}-${zoom}`}
-        src={viewerUrl}
-        title={`Vista previa de ${getFileDisplayName(document?.name)}`}
-        tabIndex={-1}
-        className="pointer-events-none min-h-[520px] w-full flex-1 select-none border-0 bg-[var(--color-primary-300)]"
+    <>
+      <PdfViewerSurface
+        className="min-h-[554px] rounded-b-[var(--radius-3)]"
+        expandButtonRef={expandButtonRef}
+        onExpand={() => setIsFullscreenOpen(true)}
+        page={page}
+        pageCount={pageCount}
+        source={source}
+        title={`Vista previa de ${documentName}`}
+        updatePage={updatePage}
+        updateZoom={updateZoom}
+        viewerUrl={viewerUrl}
+        zoom={zoom}
       />
-    </div>
+
+      <DocumentFullscreenModal
+        documentName={documentName}
+        onClose={closeFullscreen}
+        triggerRef={expandButtonRef}
+        visible={isFullscreenOpen}
+      >
+        <PdfViewerSurface
+          className="size-full rounded-[var(--radius-3)]"
+          fullscreen
+          onClose={closeFullscreen}
+          page={page}
+          pageCount={pageCount}
+          source={source}
+          title={`Vista completa de ${documentName}`}
+          updatePage={updatePage}
+          updateZoom={updateZoom}
+          viewerUrl={viewerUrl}
+          zoom={zoom}
+        />
+      </DocumentFullscreenModal>
+    </>
   );
 }
