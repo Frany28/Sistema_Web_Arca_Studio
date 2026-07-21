@@ -8,6 +8,7 @@ import { decorateCommentForDisplay } from "../../utils/commentDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
+import Loader from "../../components/ui/Loader/Loader.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
@@ -699,9 +700,11 @@ export default function ProjectDetailsPage({
 
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[48px] px-[48px] pb-[24px] pt-0">
             {projectLoading ? (
-              <p className="py-[48px] text-body-3 text-[var(--color-text-200)]">
-                Cargando proyecto...
-              </p>
+              <Loader
+                variant="responsive"
+                label="Cargando proyecto"
+                className="py-[48px]"
+              />
             ) : projectError ? (
               <p className="py-[48px] text-body-3 text-[var(--color-danger-100)]">
                 {projectError}

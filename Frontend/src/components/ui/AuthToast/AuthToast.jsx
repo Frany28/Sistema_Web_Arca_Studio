@@ -113,7 +113,7 @@ function AuthToast({
   }
 
   return (
-    <div className="pointer-events-none fixed right-[16px] top-[16px] z-20 sm:right-[24px] sm:top-[24px]">
+    <div className="pointer-events-none fixed right-0 top-0 z-20 flex w-full justify-center p-[24px] sm:w-[375px]">
       <Notification
         title={title}
         timestamp={elapsedLabel}
@@ -122,7 +122,7 @@ function AuthToast({
         showCloseButton={false}
         showActions={false}
         visible
-        className={`pointer-events-auto w-[min(347px,calc(100vw-32px))] ${
+        className={`pointer-events-auto w-full ${
           visible ? "auth-toast auth-toast--visible" : "auth-toast"
         }`}
       />

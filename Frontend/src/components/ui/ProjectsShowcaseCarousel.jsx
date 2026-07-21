@@ -64,7 +64,7 @@ function ProjectShowcaseCard({ globalIndex, layoutMode, project }) {
         size="20px"
         appearance="dark"
         alt="ARCA Studio"
-        className="relative z-[1] shrink-0"
+        className="relative z-[1] h-[20px] w-[108.95px] shrink-0 self-start"
       />
 
       <div className="relative z-[1] flex min-w-0 flex-col">

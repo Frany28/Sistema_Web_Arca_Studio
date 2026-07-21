@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
+import Loader from "../../components/ui/Loader/Loader.jsx";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
@@ -359,9 +360,7 @@ function ArchitectDashboard({ empty = false }) {
 
           {projectsLoading ? (
             <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">
-              <p className="text-body-3 text-[var(--color-text-200)]">
-                Cargando proyectos...
-              </p>
+              <Loader variant="responsive" label="Cargando proyectos" />
             </div>
           ) : projectsError ? (
             <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">

@@ -131,6 +131,13 @@ Cuando se añadan animaciones, respetar `prefers-reduced-motion`, como ya hace e
 
 ## Estados obligatorios de una pantalla
 
+### Cargas de datos
+
+- Toda carga remota de datos debe representarse con el componente compartido `Loader`; no se permiten textos de carga aislados, pantallas vacías ni esqueletos pulse creados localmente para este fin.
+- El loader conserva siempre la composición de círculo y dos líneas. Usar `default` en áreas amplias, `compact` en drawers y formularios, y `responsive` cuando el tamaño deba cambiar entre móvil y tablet/web.
+- La alineación se controla mediante `align` y el recurso cargado se describe con `label`, sin duplicar mensajes visibles junto al componente.
+- Los indicadores especializados se conservan únicamente cuando comunican progreso o estados propios de uploads, imágenes, video, audio o modelos 3D.
+
 ### Imágenes de proyectos
 
 - Toda portada o miniatura de proyecto debe usar el componente compartido `ProjectImage`.

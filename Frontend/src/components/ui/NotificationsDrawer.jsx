@@ -8,6 +8,7 @@ import Avatar from "./Avatar/Avatar.jsx";
 import Badge from "./Badge/Badge.jsx";
 import Button from "./Button/Button.jsx";
 import FileAttachmentIcons from "./FileAttachmentIcons/FileAttachmentIcons.jsx";
+import Loader from "./Loader/Loader.jsx";
 import SideOverlayDrawer from "./SideOverlayDrawer.jsx";
 import TextArea from "./TextArea/TextArea.jsx";
 
@@ -694,10 +695,8 @@ function NotificationsDrawer({
           ) : null}
 
           <div className="flex flex-col gap-[8px]">
-            {commentsLoading && comments.length === 0 ? (
-              <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-100)]">
-                Cargando observaciones...
-              </p>
+            {commentsLoading ? (
+              <Loader variant="compact" label="Cargando observaciones" />
             ) : null}
 
             {orderedComments.map((item) => (

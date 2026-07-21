@@ -8,6 +8,7 @@ import AuthLayout from "../components/layout/AuthLayout.jsx";
 import ExpiredLinkCard from "../components/ExpiredLinkCard.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import Input from "../components/ui/Input/Input.jsx";
+import Loader from "../components/ui/Loader/Loader.jsx";
 import { PASSWORD_REQUIREMENT_RULES } from "../components/ui/Input/inputConfig.js";
 
 function getPasswordState(value, touched) {
@@ -122,9 +123,11 @@ function CreatePassword() {
             </div>
 
             {tokenState === "loading" ? (
-              <div className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] p-[16px] text-body-3 text-[var(--color-text-300)]">
-                <p className="m-0">Validando enlace...</p>
-              </div>
+              <Loader
+                variant="compact"
+                label="Validando enlace"
+                className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] p-[16px]"
+              />
             ) : null}
 
             <Input

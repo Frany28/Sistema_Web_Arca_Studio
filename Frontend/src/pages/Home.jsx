@@ -9,6 +9,7 @@ import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Badge from "../components/ui/Badge/Badge.jsx";
 import AuthToast, { AuthToastLockIcon } from "../components/ui/AuthToast/AuthToast.jsx";
 import Button from "../components/ui/Button/Button.jsx";
+import Loader from "../components/ui/Loader/Loader.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import ProjectProgress from "../components/ui/ProjectProgress/ProjectProgress.jsx";
@@ -583,9 +584,11 @@ function Home() {
               onScroll={handleProjectScroll}
             >
               {projectsLoading ? (
-                <p className="text-body-3 py-[24px] text-[var(--color-text-200)]">
-                  Cargando proyectos...
-                </p>
+                <Loader
+                  variant="responsive"
+                  label="Cargando proyectos"
+                  className="py-[24px]"
+                />
               ) : projectsError ? (
                 <p className="text-body-3 py-[24px] text-[var(--color-danger-100)]">
                   {projectsError}
