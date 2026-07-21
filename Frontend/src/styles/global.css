@@ -1,6 +1,21 @@
 /* Typography utilities */
 @import "./typography.css";
 
+html,
+body,
+#root,
+#root * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html::selection,
+body::selection,
+#root *::selection {
+  background: transparent;
+  color: inherit;
+}
+
 /* ==========================================================================
    Root Tokens
    ========================================================================== */

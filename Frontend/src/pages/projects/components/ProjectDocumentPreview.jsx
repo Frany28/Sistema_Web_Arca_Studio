@@ -1,6 +1,8 @@
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
@@ -13,11 +15,7 @@ const ZOOM_STEP = 25;
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
 
-function getPdfPageCount(buffer) {
-  const source = new TextDecoder("latin1").decode(buffer);
-  const matches = source.match(/\/Type\s*\/Page\b/g);
-  return Math.max(matches?.length || 1, 1);
-}
+GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const ViewerButton = forwardRef(function ViewerButton(
   { children, disabled, label, onClick },
@@ -120,19 +118,78 @@ function PdfToolbar({
   );
 }
 
+function PdfCanvas({ documentProxy, page, title, zoom }) {
+  const canvasRef = useRef(null);
+  const [renderingPage, setRenderingPage] = useState(null);
+
+  useEffect(() => {
+    if (!documentProxy || !canvasRef.current) return undefined;
+
+    let cancelled = false;
+    let renderTask;
+    documentProxy.getPage(page).then((pdfPage) => {
+      if (cancelled || !canvasRef.current) return;
+
+      const canvas = canvasRef.current;
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const viewport = pdfPage.getViewport({ scale: (zoom / 100) * 1.35 });
+      const context = canvas.getContext("2d", { alpha: false });
+
+      canvas.width = Math.floor(viewport.width * pixelRatio);
+      canvas.height = Math.floor(viewport.height * pixelRatio);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+      renderTask = pdfPage.render({
+        canvas,
+        canvasContext: context,
+        transform: pixelRatio === 1 ? null : [pixelRatio, 0, 0, pixelRatio, 0, 0],
+        viewport,
+      });
+
+      renderTask.promise
+        .then(() => {
+          if (!cancelled) setRenderingPage(page);
+        })
+        .catch(() => {});
+    });
+
+    return () => {
+      cancelled = true;
+      renderTask?.cancel();
+    };
+  }, [documentProxy, page, zoom]);
+
+  return (
+    <div
+      className="relative flex min-h-0 flex-1 items-start justify-center overflow-auto bg-[#d8d8d8] p-[12px] max-[520px]:p-[8px]"
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {renderingPage !== page ? (
+        <div className="pointer-events-none absolute inset-0 z-[1] skeleton-shimmer" aria-hidden="true" />
+      ) : null}
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label={`${title}, página ${page}`}
+        className="block max-w-none bg-white shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
+      />
+    </div>
+  );
+}
+
 function PdfViewerSurface({
   className,
+  documentProxy,
   expandButtonRef,
   fullscreen = false,
   onClose,
   onExpand,
   page,
   pageCount,
-  source,
   title,
   updatePage,
   updateZoom,
-  viewerUrl,
   zoom,
 }) {
   return (
@@ -154,11 +211,11 @@ function PdfViewerSurface({
         updateZoom={updateZoom}
         zoom={zoom}
       />
-      <iframe
-        key={`${source}-${page}-${zoom}-${fullscreen ? "fullscreen" : "inline"}`}
-        src={viewerUrl}
+      <PdfCanvas
+        documentProxy={documentProxy}
+        page={page}
         title={title}
-        className="min-h-0 w-full flex-1 border-0 bg-[var(--color-primary-300)]"
+        zoom={zoom}
       />
     </div>
   );
@@ -264,9 +321,9 @@ export default function ProjectDocumentPreview({ document }) {
   const isPdf = String(document?.fileType || "").toUpperCase() === "PDF";
   const [loadState, setLoadState] = useState({
     pageCount: 1,
+    documentProxy: null,
     source,
     status: source && isPdf ? "loading" : "unsupported",
-    viewerSource: "",
   });
   const [viewState, setViewState] = useState({ page: 1, source, zoom: 100 });
   const [retryKey, setRetryKey] = useState(0);
@@ -278,6 +335,9 @@ export default function ProjectDocumentPreview({ document }) {
       ? "loading"
       : "unsupported";
   const pageCount = loadState.source === source ? loadState.pageCount : 1;
+  const documentProxy = loadState.source === source
+    ? loadState.documentProxy
+    : null;
   const page = viewState.source === source ? viewState.page : 1;
   const zoom = viewState.source === source ? viewState.zoom : 100;
   const documentName = getFileDisplayName(document?.name);
@@ -286,7 +346,8 @@ export default function ProjectDocumentPreview({ document }) {
     if (!source || !isPdf) return undefined;
 
     const controller = new AbortController();
-    let objectUrl = "";
+    let cancelled = false;
+    let loadingTask;
 
     fetch(source, { signal: controller.signal })
       .then((response) => {
@@ -294,37 +355,35 @@ export default function ProjectDocumentPreview({ document }) {
         return response.arrayBuffer();
       })
       .then((buffer) => {
-        objectUrl = URL.createObjectURL(
-          new Blob([buffer], { type: "application/pdf" }),
-        );
+        loadingTask = getDocument({ data: new Uint8Array(buffer) });
+        return loadingTask.promise;
+      })
+      .then((pdfDocument) => {
+        if (cancelled) return;
         setLoadState({
-          pageCount: getPdfPageCount(buffer),
+          documentProxy: pdfDocument,
+          pageCount: pdfDocument.numPages,
           source,
           status: "loaded",
-          viewerSource: objectUrl,
         });
       })
       .catch((error) => {
-        if (error.name !== "AbortError") {
+        if (!cancelled && error.name !== "AbortError") {
           setLoadState({
+            documentProxy: null,
             pageCount: 1,
             source,
             status: "error",
-            viewerSource: "",
           });
         }
       });
 
     return () => {
+      cancelled = true;
       controller.abort();
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      loadingTask?.destroy();
     };
   }, [isPdf, retryKey, source]);
-
-  const viewerUrl = useMemo(() => {
-    if (!loadState.viewerSource || loadState.source !== source) return "";
-    return `${loadState.viewerSource}#page=${page}&zoom=${zoom}&toolbar=0&navpanes=0&scrollbar=1`;
-  }, [loadState.source, loadState.viewerSource, page, source, zoom]);
 
   const updatePage = (nextPage) => {
     const normalizedPage = Math.min(Math.max(Number(nextPage) || 1, 1), pageCount);
@@ -335,6 +394,17 @@ export default function ProjectDocumentPreview({ document }) {
     setViewState({ page, source, zoom: normalizedZoom });
   };
   const closeFullscreen = useCallback(() => setIsFullscreenOpen(false), []);
+
+  useEffect(() => {
+    const preventDocumentExport = (event) => {
+      if ((event.ctrlKey || event.metaKey) && ["p", "s"].includes(event.key.toLowerCase())) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("keydown", preventDocumentExport, true);
+    return () => window.removeEventListener("keydown", preventDocumentExport, true);
+  }, []);
 
   if (status === "loading") {
     return <Loader preset="documentPreview" label="Cargando documento" />;
@@ -353,10 +423,10 @@ export default function ProjectDocumentPreview({ document }) {
           primaryActionLabel="Reintentar"
           onPrimaryAction={() => {
             setLoadState({
+              documentProxy: null,
               pageCount: 1,
               source,
               status: "loading",
-              viewerSource: "",
             });
             setRetryKey((current) => current + 1);
           }}
@@ -383,15 +453,14 @@ export default function ProjectDocumentPreview({ document }) {
     <>
       <PdfViewerSurface
         className="min-h-[554px] rounded-b-[var(--radius-3)]"
+        documentProxy={documentProxy}
         expandButtonRef={expandButtonRef}
         onExpand={() => setIsFullscreenOpen(true)}
         page={page}
         pageCount={pageCount}
-        source={source}
         title={`Vista previa de ${documentName}`}
         updatePage={updatePage}
         updateZoom={updateZoom}
-        viewerUrl={viewerUrl}
         zoom={zoom}
       />
 
@@ -403,15 +472,14 @@ export default function ProjectDocumentPreview({ document }) {
       >
         <PdfViewerSurface
           className="size-full rounded-[var(--radius-3)]"
+          documentProxy={documentProxy}
           fullscreen
           onClose={closeFullscreen}
           page={page}
           pageCount={pageCount}
-          source={source}
           title={`Vista completa de ${documentName}`}
           updatePage={updatePage}
           updateZoom={updateZoom}
-          viewerUrl={viewerUrl}
           zoom={zoom}
         />
       </DocumentFullscreenModal>
