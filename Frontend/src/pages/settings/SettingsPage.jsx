@@ -17,6 +17,7 @@ import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import SettingsVerticalTabMenu from "../../components/ui/SettingsVerticalTabMenu.jsx";
+import TabPanel from "../../components/ui/TabPanel.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
 import PreferencesPanel from "./panels/PreferencesPanel.jsx";
 import ProfilePanel from "./panels/ProfilePanel.jsx";
@@ -607,7 +608,12 @@ export default function SettingsPage() {
                 activeItemId={activeSettingsTabId}
                 onChange={setActiveSettingsTabId}
               />
-              <div className="min-w-0 flex-1">{activePanel}</div>
+              <TabPanel
+                transitionKey={activeSettingsTabId}
+                className="min-w-0 flex-1"
+              >
+                {activePanel}
+              </TabPanel>
             </section>
           </div>
 

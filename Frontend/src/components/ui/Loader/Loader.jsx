@@ -90,6 +90,25 @@ function DocumentPreviewSkeleton() {
   );
 }
 
+function DocumentListSkeleton() {
+  return (
+    <div className="flex w-full flex-col gap-[12px]">
+      <div className="flex gap-[12px] border-b border-[var(--color-neutral-200)] pb-[16px]">
+        <SkeletonBlock className="h-[44px] min-w-0 flex-1 rounded-[var(--radius-2)]" />
+        <SkeletonBlock className="size-[44px] shrink-0 rounded-[var(--radius-2)]" delay={60} />
+      </div>
+      <SkeletonBlock className="h-[14px] w-[min(290px,88%)] rounded-[var(--radius-1)]" delay={90} tone="muted" />
+      {Array.from({ length: 3 }, (_, index) => (
+        <SkeletonBlock
+          key={index}
+          className="h-[92px] w-full rounded-[var(--radius-3)]"
+          delay={130 + index * 70}
+        />
+      ))}
+    </div>
+  );
+}
+
 function CommentCardSkeleton() {
   return (
     <div className="flex w-full flex-col gap-[10px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
@@ -217,6 +236,8 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = <VideoStageSkeleton />;
   } else if (preset === "documentPreview") {
     content = <DocumentPreviewSkeleton />;
+  } else if (preset === "documentList") {
+    content = <DocumentListSkeleton />;
   } else if (preset === "media" || preset === "modelThumbnail" || preset === "videoThumbnail") {
     content = <SkeletonBlock className="size-full rounded-[inherit]" />;
   } else if (preset === "upload") {

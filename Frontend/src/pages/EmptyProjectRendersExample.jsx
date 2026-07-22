@@ -10,6 +10,7 @@ import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 import ProjectDetailTabMenu from "./projects/components/ProjectDetailTabMenu.jsx";
+import TabPanel from "../components/ui/TabPanel.jsx";
 import ProjectOverviewHeader from "./projects/components/ProjectOverviewHeader.jsx";
 import ProjectInfoPanel from "./projects/panels/ProjectInfoPanel.jsx";
 import ProjectRendersPanel from "./projects/panels/ProjectRendersPanel.jsx";
@@ -144,7 +145,9 @@ export default function EmptyProjectRendersExample() {
               activeIndex={activeProjectTabIndex}
               onChange={setActiveProjectTabIndex}
             />
-            {activeProjectPanel}
+            <TabPanel transitionKey={activeProjectTabIndex} className="w-full">
+              {activeProjectPanel}
+            </TabPanel>
           </div>
 
           <NotificationsDrawer

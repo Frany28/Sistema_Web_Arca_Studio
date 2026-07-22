@@ -358,7 +358,7 @@ function DocumentFullscreenModal({ children, documentName, onClose, triggerRef, 
   );
 }
 
-export default function ProjectDocumentPreview({ document }) {
+export default function ProjectDocumentPreview({ document, onLoadingChange }) {
   const source = document?.fileUrl || "";
   const isPdf = String(document?.fileType || "").toUpperCase() === "PDF";
   const [loadState, setLoadState] = useState({
@@ -383,6 +383,12 @@ export default function ProjectDocumentPreview({ document }) {
   const page = viewState.source === source ? viewState.page : 1;
   const zoom = viewState.source === source ? viewState.zoom : 100;
   const documentName = getFileDisplayName(document?.name);
+
+  useEffect(() => {
+    onLoadingChange?.(status === "loading");
+
+    return () => onLoadingChange?.(false);
+  }, [onLoadingChange, status]);
 
   useEffect(() => {
     if (!source || !isPdf) return undefined;

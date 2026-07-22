@@ -9,6 +9,7 @@ import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
+import TabPanel from "../../components/ui/TabPanel.jsx";
 import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
@@ -741,12 +742,12 @@ export default function ProjectDetailsPage({
                   activeIndex={activeProjectTabIndex}
                   onChange={setActiveProjectTabIndex}
                 />
-                <div
-                  key={`${presentedProject.id}-${activeProjectTabIndex}`}
-                  className="content-reveal w-full"
+                <TabPanel
+                  transitionKey={`${presentedProject.id}-${activeProjectTabIndex}`}
+                  className="w-full"
                 >
                   {activeProjectPanel}
-                </div>
+                </TabPanel>
               </>
             )}
           </div>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import IconContainer from "../../../components/ui/IconContainer.jsx";
+import Loader from "../../../components/ui/Loader/Loader.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import ProjectDocumentCard from "../components/ProjectDocumentCard.jsx";
 import ProjectDocumentListCard from "../components/ProjectDocumentListCard.jsx";
@@ -132,6 +133,7 @@ export default function ProjectDocumentsPanel({
   );
   const [query, setQuery] = useState("");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [scrollState, setScrollState] = useState({
     length: 1,
     position: 0,
@@ -234,7 +236,10 @@ export default function ProjectDocumentsPanel({
           <ProjectDocumentCard document={selectedDocument || EMPTY_DOCUMENT_PREVIEW} />
 
           {hasVisibleDocuments ? (
-            <ProjectDocumentPreview document={selectedDocument} />
+            <ProjectDocumentPreview
+              document={selectedDocument}
+              onLoadingChange={setIsPreviewLoading}
+            />
           ) : (
             <div className="flex min-h-[426px] flex-1 items-center justify-center border-t border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] px-[24px]">
               <EmptyState
@@ -252,17 +257,24 @@ export default function ProjectDocumentsPanel({
         </div>
 
         <aside className="flex min-h-0 flex-col">
-          <ProjectDocumentsToolbar
-            disabled={!hasDocuments}
-            query={query}
-            sortDirection={sortDirection}
-            onQueryChange={setQuery}
-            onToggleSort={() =>
-              setSortDirection((current) => current === "desc" ? "asc" : "desc")
-            }
-          />
+          {isPreviewLoading ? (
+            <Loader
+              preset="documentList"
+              label="Cargando lista de documentos"
+            />
+          ) : (
+            <>
+              <ProjectDocumentsToolbar
+                disabled={!hasDocuments}
+                query={query}
+                sortDirection={sortDirection}
+                onQueryChange={setQuery}
+                onToggleSort={() =>
+                  setSortDirection((current) => current === "desc" ? "asc" : "desc")
+                }
+              />
 
-          {hasVisibleDocuments ? (
+              {hasVisibleDocuments ? (
           <div className="flex flex-col gap-[12px] py-[12px]">
             <p className="text-heading-8 text-[var(--color-text-200)]">
               Selecciona un documento para ver la previsualización
@@ -295,7 +307,7 @@ export default function ProjectDocumentsPanel({
               </div>
             </div>
           </div>
-          ) : (
+              ) : (
             <div className="flex min-h-[443px] items-center justify-center px-[16px]">
               <EmptyState
                 title={hasDocuments ? "No se encontraron documentos" : "Sin documentos"}
@@ -308,6 +320,8 @@ export default function ProjectDocumentsPanel({
                 className="h-auto min-h-[254px]"
               />
             </div>
+              )}
+            </>
           )}
         </aside>
       </div>

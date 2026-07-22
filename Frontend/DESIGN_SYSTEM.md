@@ -50,6 +50,7 @@ src/pages               páginas y coordinación de datos
 
 - Un componente de `ui` no debe conocer endpoints, rutas de negocio ni la forma completa de una respuesta de API.
 - Una página coordina datos y estados, pero debe delegar la presentación repetible.
+- Los menús de pestañas que intercambian paneles deben renderizar su contenido dentro de `TabPanel`, usando el identificador de la pestaña como `transitionKey` para mantener la transición estándar.
 - La lógica de carga, paginación y transformación compartida debe vivir en hooks o utilidades, no repetirse en cada pantalla.
 - Usar nombres PascalCase para componentes y nombres que expresen su función, no su apariencia temporal.
 
