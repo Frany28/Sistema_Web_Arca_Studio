@@ -28,15 +28,40 @@ function CloseIcon({ className }) {
 }
 
 function GalleryMosaic({ items, onSelectImage }) {
+  const desktopRowPatterns = [
+    "grid-cols-[220.515px_minmax(0,1fr)_minmax(0,1fr)]",
+    "grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220.515px]",
+    "grid-cols-[minmax(0,1fr)_220.515px_minmax(0,1fr)]",
+  ];
+  const rows = [];
+
+  for (let itemIndex = 0; itemIndex < items.length; itemIndex += 3) {
+    rows.push(items.slice(itemIndex, itemIndex + 3));
+  }
+
   return (
-    <div className="grid w-full grid-cols-3 gap-[16px] max-[900px]:grid-cols-2 max-[520px]:grid-cols-1">
-      {items.map((item, itemIndex) => (
-        <GalleryImageCard
-          key={item.id ?? `gallery-modal-${itemIndex}`}
-          item={item}
-          size="full"
-          onClick={() => onSelectImage(item)}
-        />
+    <div className="flex w-full flex-col gap-[20px] max-[900px]:gap-[16px] max-[520px]:gap-[12px]">
+      {rows.map((row, rowIndex) => (
+        <div
+          key={`gallery-row-${rowIndex}`}
+          className={clsx(
+            "grid w-full gap-[20px] max-[900px]:grid-cols-2 max-[900px]:gap-[16px] max-[520px]:grid-cols-1 max-[520px]:gap-[12px]",
+            desktopRowPatterns[rowIndex % desktopRowPatterns.length],
+          )}
+        >
+          {row.map((item, columnIndex) => {
+            const itemIndex = rowIndex * 3 + columnIndex;
+
+            return (
+              <GalleryImageCard
+                key={item.id ?? `gallery-modal-${itemIndex}`}
+                item={item}
+                size="full"
+                onClick={() => onSelectImage(item)}
+              />
+            );
+          })}
+        </div>
       ))}
     </div>
   );
@@ -182,15 +207,15 @@ export default function GalleryImagesModal({
     >
       <section
         className={clsx(
-          "flex flex-col items-start overflow-hidden w-full max-w-[956px]",
+          "flex w-[min(956px,calc(100vw-32px))] flex-col items-start overflow-hidden",
           "h-[min(769px,calc(100dvh-32px))]",
           "gap-[var(--spacing-spacing-gap-5,16px)]",
           "p-[var(--spacing-spacing-gap-6,20px)]",
           "rounded-[var(--radius-radius-3,var(--radius-3,12px))]",
           "bg-[var(--Color-neutral-100,var(--color-neutral-100,#fff))]",
           "dark:bg-[var(--color-neutral-100)]",
-          "max-[640px]:max-w-[100vw]",
-          "max-[640px]:h-[calc(100dvh-16px)]",
+          "max-[768px]:h-[calc(100dvh-24px)] max-[768px]:w-[calc(100vw-24px)]",
+          "max-[520px]:h-[calc(100dvh-16px)] max-[520px]:w-[calc(100vw-16px)]",
           "max-[640px]:p-[12px]",
           "max-[640px]:gap-[12px]",
           className,
@@ -223,9 +248,8 @@ export default function GalleryImagesModal({
           <div
             ref={viewportRef}
             className={clsx(
-              "h-full overflow-y-auto pr-[24px]",
+              "h-full overflow-y-auto",
               "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-              "max-[640px]:pr-[16px]",
             )}
             onScroll={syncScrollState}
           >
@@ -235,7 +259,7 @@ export default function GalleryImagesModal({
             />
           </div>
 
-          <div className="pointer-events-auto absolute right-0 top-0 h-full">
+          <div className="pointer-events-auto absolute right-[-20px] top-[-4px] h-full max-[640px]:right-[-12px] max-[520px]:hidden">
             <ScrollBar
               length={scrollState.length}
               position={scrollState.position}

@@ -182,8 +182,7 @@ function Modal({
       {...props}
     >
       <ModalOverlay
-        vat={resolvedOverlayVariant}
-        rian
+        variant={resolvedOverlayVariant}
         onClose={onClose}
         className={overlayClassName}
         style={transitionStyle}

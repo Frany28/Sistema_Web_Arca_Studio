@@ -49,7 +49,7 @@ function PlayIcon({ className }) {
 
 function VideoThumb({ item }) {
   return (
-    <div className="relative h-[60px] w-[99px] shrink-0 overflow-hidden rounded-[var(--radius-1)] shadow-[var(--shadow-e2)] max-[560px]:h-[72px] max-[560px]:w-[120px]">
+    <div className="relative h-[60px] w-[99px] shrink-0 overflow-hidden rounded-[var(--radius-1)] shadow-[var(--shadow-e2)] max-[520px]:h-[56px] max-[520px]:w-[92px]">
       <VideoThumbnail item={item} className="h-full w-full object-cover" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.00)_0%,rgba(0,0,0,0.16)_42%,rgba(0,0,0,0.60)_100%)]" />
       <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-[var(--color-neutral-100-uniform)]">
@@ -59,10 +59,16 @@ function VideoThumb({ item }) {
   );
 }
 
+function getUploadedAtLabel(value) {
+  if (!value) return "";
+
+  return /^Subido el\s/i.test(value) ? value : `Subido el ${value}`;
+}
+
 function VideoGalleryModalRow({ item, onWatchVideo }) {
   return (
-    <article className="grid min-h-[100px] grid-cols-[minmax(260px,1fr)_auto_auto_auto] items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-[20px] py-[20px] max-[900px]:grid-cols-[minmax(0,1fr)_auto] max-[900px]:gap-x-[16px] max-[760px]:grid-cols-1 max-[760px]:gap-y-[12px] max-[560px]:px-[12px] max-[560px]:py-[16px]">
-      <div className="flex min-w-0 items-center gap-[12px]">
+    <article className="flex min-h-[100px] w-full items-center justify-between gap-[24px] border-b border-[var(--color-neutral-200)] p-[20px] max-[760px]:flex-col max-[760px]:items-stretch max-[760px]:gap-[16px] max-[520px]:p-[12px]">
+      <div className="flex min-w-0 flex-1 items-center gap-[12px]">
         <VideoThumb item={item} />
 
         <div className="flex min-w-0 flex-col">
@@ -75,11 +81,11 @@ function VideoGalleryModalRow({ item, onWatchVideo }) {
         </div>
       </div>
 
-      <p className="whitespace-nowrap text-body-3 text-[var(--color-text-100)] max-[900px]:justify-self-end max-[760px]:justify-self-start">
-        {item.uploadedAt}
-      </p>
+      <div className="flex shrink-0 items-center gap-[24px] max-[760px]:w-full max-[760px]:justify-between max-[520px]:grid max-[520px]:grid-cols-[minmax(0,1fr)_auto] max-[520px]:gap-x-[12px] max-[520px]:gap-y-[8px]">
+        <p className="whitespace-nowrap text-body-3 text-[var(--color-text-100)] max-[520px]:col-span-2">
+          {getUploadedAtLabel(item.uploadedAt)}
+        </p>
 
-      <div className="flex min-w-0 items-center justify-end gap-[24px] max-[900px]:col-span-2 max-[900px]:justify-end max-[760px]:col-span-1 max-[760px]:justify-between max-[560px]:flex-wrap max-[560px]:gap-[12px]">
         <AvatarLabel
           size="S"
           label={item.author ?? "Armando Carroz"}
@@ -87,7 +93,7 @@ function VideoGalleryModalRow({ item, onWatchVideo }) {
           avatarTheme="Neutral"
           avatarContent="Icon"
           avatarDecorative
-          className="min-w-0"
+          className="min-w-0 max-w-[160px]"
           textClassName="truncate text-[var(--color-text-300)]"
         />
         <Button
@@ -220,6 +226,8 @@ export default function GalleryVideosModal({
       <section
         className={clsx(
           "flex h-[min(656px,calc(100dvh-32px))] w-[calc(100vw-32px)] max-w-[956px] flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)]",
+          "max-[768px]:h-[min(656px,calc(100dvh-24px))] max-[768px]:w-[calc(100vw-24px)]",
+          "max-[520px]:h-[calc(100dvh-16px)] max-[520px]:w-[calc(100vw-16px)]",
           className,
         )}
         role="dialog"
@@ -249,7 +257,7 @@ export default function GalleryVideosModal({
         <div className="relative min-h-0 w-full flex-1 overflow-hidden">
           <div
             ref={viewportRef}
-            className="h-full overflow-y-auto pr-[16px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden max-[760px]:pr-0"
+            className="h-full overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             onScroll={syncScrollState}
           >
             {items.map((item, index) => (

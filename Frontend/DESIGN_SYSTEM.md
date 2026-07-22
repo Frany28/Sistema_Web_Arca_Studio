@@ -118,6 +118,8 @@ Usar `Button` y sus propiedades existentes:
 
 No simular un botón con un `div`. Las acciones solo con icono necesitan nombre accesible mediante `aria-label`.
 
+Todo botón o control con `role="button"` que esté habilitado debe mostrar obligatoriamente `cursor: pointer`. Esta conducta se define de forma global y no debe eliminarse ni sobrescribirse con `cursor: default` o `cursor: auto`. Los controles deshabilitados deben usar `cursor: not-allowed` y declarar el estado mediante `disabled` o `aria-disabled="true"`.
+
 ### Formularios
 
 - Cada control debe tener una etiqueta visible o un nombre accesible.
