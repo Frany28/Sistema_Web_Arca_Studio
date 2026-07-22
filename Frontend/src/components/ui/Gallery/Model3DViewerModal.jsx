@@ -864,15 +864,22 @@ function CommentCard({
         </article>
 
         {showReplyAction ? (
-          <button
-            id={`image-reply-action-${id}`}
-            type="button"
-            className="w-fit cursor-pointer"
-            data-reply-interaction="true"
-            onClick={onReplyClick}
+          <Tooltip
+            text="Presiona para responder"
+            tipPosition="Top center"
+            showTip
+            portal
           >
-            <ReplyButton />
-          </button>
+            <button
+              id={`image-reply-action-${id}`}
+              type="button"
+              className="w-fit cursor-pointer"
+              data-reply-interaction="true"
+              onClick={onReplyClick}
+            >
+              <ReplyButton />
+            </button>
+          </Tooltip>
         ) : null}
       </div>
     </div>

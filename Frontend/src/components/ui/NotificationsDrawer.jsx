@@ -11,6 +11,7 @@ import FileAttachmentIcons from "./FileAttachmentIcons/FileAttachmentIcons.jsx";
 import Loader from "./Loader/Loader.jsx";
 import SideOverlayDrawer from "./SideOverlayDrawer.jsx";
 import TextArea from "./TextArea/TextArea.jsx";
+import Tooltip from "./Tooltip/Tooltip.jsx";
 
 const GENERAL_COMMENTS = [
   {
@@ -291,15 +292,22 @@ function CommentCard({
         </article>
 
         {showReplyAction ? (
-          <button
-            id={`reply-action-${id}`}
-            type="button"
-            onClick={onReplyClick}
-            className="w-fit cursor-pointer"
-            data-reply-interaction="true"
+          <Tooltip
+            text="Presiona para responder"
+            tipPosition="Top center"
+            showTip
+            portal
           >
-            <ReplyButton />
-          </button>
+            <button
+              id={`reply-action-${id}`}
+              type="button"
+              onClick={onReplyClick}
+              className="w-fit cursor-pointer"
+              data-reply-interaction="true"
+            >
+              <ReplyButton />
+            </button>
+          </Tooltip>
         ) : null}
       </div>
     </div>
