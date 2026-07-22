@@ -669,6 +669,7 @@ function DropdownMenu({
       ref={wrapperRef}
       className={clsx(
         "relative inline-flex w-full flex-col items-start",
+        resolvedOpen ? "z-[100]" : "z-0",
         className,
       )}
       {...props}
@@ -771,7 +772,7 @@ function DropdownMenu({
           id={`${menuId}-content`}
           role="menu"
           className={clsx(
-            "absolute left-0 top-full z-[2] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
+            "absolute left-0 top-full z-[110] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
             contentPaddingClassName,
             resolvedOpen ? "flex flex-col gap-[4px]" : "hidden",
             contentClassName,

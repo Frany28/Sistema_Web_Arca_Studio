@@ -445,15 +445,7 @@ function ImageGallerySection({ items, onOpenGallery, onSelectImage = () => {} })
     );
   }
 
-  const preferredPreviewItems = [
-    items[1],
-    items[2],
-    items[4],
-    items[3],
-    items[5],
-    items[1],
-  ].filter(Boolean);
-  const previewItems = preferredPreviewItems.length ? preferredPreviewItems : items;
+  const previewItems = items.slice(0, 6);
 
   return (
     <div className="flex w-full flex-col gap-[16px]">

@@ -16,6 +16,16 @@ El sistema actual está compuesto por:
 
 Los tokens y componentes existentes son la fuente de verdad. Una maqueta o valor aislado no debe crear un segundo sistema visual dentro de la aplicación.
 
+## Regla obligatoria: preservar posiciones existentes
+
+La posición, alineación, orden, tamaño y espaciado de los componentes existentes forman parte del diseño aprobado y **no deben modificarse** salvo que el usuario lo solicite de manera explícita.
+
+- Corregir datos, estados de carga, errores o comportamiento no autoriza a mover ni reordenar elementos visuales.
+- Una mejora interna de un componente debe conservar su geometría y su ubicación actuales en todos los breakpoints.
+- Las capas flotantes, menús, tooltips y modales deben respetar su anclaje, centrado y nivel de superposición existentes.
+- Si una necesidad técnica exige cambiar una posición y no existe una instrucción explícita, se debe consultar antes de implementar el cambio.
+- Cuando el usuario proporcione una nueva ubicación o un diseño de referencia, solo se modificarán los elementos indicados; el resto de la composición permanecerá intacto.
+
 ## Regla contra duplicados
 
 Antes de crear un componente:

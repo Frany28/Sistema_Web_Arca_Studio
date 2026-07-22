@@ -452,7 +452,7 @@ export default function ProjectDocumentPreview({ document }) {
   return (
     <>
       <PdfViewerSurface
-        className="min-h-[554px] rounded-b-[var(--radius-3)]"
+        className="h-[554px] min-h-[554px] max-h-[554px] rounded-b-[var(--radius-3)]"
         documentProxy={documentProxy}
         expandButtonRef={expandButtonRef}
         onExpand={() => setIsFullscreenOpen(true)}

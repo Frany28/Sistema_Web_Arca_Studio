@@ -42,6 +42,8 @@ function CloseIcon({ className }) {
 
 function Modal({
   className,
+  contentClassName,
+  dialogShellClassName: customDialogShellClassName,
   children,
   mount = MODAL_DEFAULT_PROPS.mount,
   visible = MODAL_DEFAULT_PROPS.visible,
@@ -69,25 +71,36 @@ function Modal({
   useEffect(() => {
     window.clearTimeout(closeTimeoutRef.current);
     window.cancelAnimationFrame(frameRef.current);
+    let cancelled = false;
 
     if (visible) {
-      setIsActive(false);
-      setShouldRender(true);
-      frameRef.current = window.requestAnimationFrame(() => {
+      queueMicrotask(() => {
+        if (cancelled) return;
+
+        setIsActive(false);
+        setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
-          setIsActive(true);
+          frameRef.current = window.requestAnimationFrame(() => {
+            setIsActive(true);
+          });
         });
       });
 
-      return undefined;
+      return () => {
+        cancelled = true;
+        window.cancelAnimationFrame(frameRef.current);
+      };
     }
 
-    setIsActive(false);
+    queueMicrotask(() => {
+      if (!cancelled) setIsActive(false);
+    });
     closeTimeoutRef.current = window.setTimeout(() => {
       setShouldRender(false);
     }, MODAL_TRANSITION_MS);
 
     return () => {
+      cancelled = true;
       window.clearTimeout(closeTimeoutRef.current);
       window.cancelAnimationFrame(frameRef.current);
     };
@@ -177,11 +190,18 @@ function Modal({
       />
 
       {shouldRenderDialog ? (
-        <div className={clsx("relative z-[1]", dialogShellClassName)}>
+        <div
+          className={clsx(
+            "relative z-[1]",
+            dialogShellClassName,
+            customDialogShellClassName,
+          )}
+        >
           <div
             className={clsx(
               "flex w-full flex-col items-center px-[16px] py-[24px]",
               animatedContentClassName,
+              contentClassName,
             )}
             style={transitionStyle}
           >

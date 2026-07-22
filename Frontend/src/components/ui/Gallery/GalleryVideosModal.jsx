@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import AvatarLabel from "../AvatarLabel/AvatarLabel.jsx";
@@ -122,10 +122,6 @@ export default function GalleryVideosModal({
     height: 392,
   });
 
-  const repeatedItems = useMemo(() => {
-    return items.length > 0 ? [...items, ...items] : [];
-  }, [items]);
-
   const syncScrollState = useCallback(() => {
     const element = viewportRef.current;
 
@@ -173,7 +169,7 @@ export default function GalleryVideosModal({
       document.body.style.overflow = originalOverflow;
       window.cancelAnimationFrame(frameId);
     };
-  }, [visible, repeatedItems, syncScrollState]);
+  }, [visible, items, syncScrollState]);
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -218,10 +214,12 @@ export default function GalleryVideosModal({
       showDialog
       onClose={onClose}
       className="z-50"
+      dialogShellClassName="!pb-0"
+      contentClassName="!p-0"
     >
       <section
         className={clsx(
-          "flex h-[656px] w-[956px] max-h-[calc(100dvh-48px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)]",
+          "flex h-[min(656px,calc(100dvh-32px))] w-[calc(100vw-32px)] max-w-[956px] flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)]",
           className,
         )}
         role="dialog"
@@ -254,9 +252,9 @@ export default function GalleryVideosModal({
             className="h-full overflow-y-auto pr-[16px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden max-[760px]:pr-0"
             onScroll={syncScrollState}
           >
-            {repeatedItems.map((item, index) => (
+            {items.map((item, index) => (
               <VideoGalleryModalRow
-                key={`${item.id}-${index}`}
+                key={item.id ?? `gallery-video-${index}`}
                 item={item}
                 onWatchVideo={onWatchVideo}
               />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import Button from "../../ui/Button/Button.jsx";
 import Modal from "../../ui/Modal/Modal.jsx";
@@ -59,10 +59,6 @@ export default function GalleryImagesModal({
     height: 240,
   });
 
-  const repeatedItems = useMemo(() => {
-    return [...items, ...items, ...items];
-  }, [items]);
-
   const handleClose = useCallback(() => {
     setSelectedImage(null);
     onClose?.();
@@ -118,7 +114,7 @@ export default function GalleryImagesModal({
       document.body.style.overflow = originalOverflow;
       window.cancelAnimationFrame(frameId);
     };
-  }, [visible, repeatedItems, syncScrollState]);
+  }, [visible, items, syncScrollState]);
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -142,9 +138,16 @@ export default function GalleryImagesModal({
   }, [handleClose, selectedImage, visible]);
 
   useEffect(() => {
-    if (!visible) {
-      setSelectedImage(null);
-    }
+    if (visible) return undefined;
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setSelectedImage(null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [visible]);
 
   useEffect(() => {
@@ -174,6 +177,8 @@ export default function GalleryImagesModal({
       showDialog
       onClose={handleClose}
       className="z-50"
+      dialogShellClassName="!pb-0"
+      contentClassName="!p-0"
     >
       <section
         className={clsx(
@@ -225,7 +230,7 @@ export default function GalleryImagesModal({
             onScroll={syncScrollState}
           >
             <GalleryMosaic
-              items={repeatedItems}
+              items={items}
               onSelectImage={setSelectedImage}
             />
           </div>
