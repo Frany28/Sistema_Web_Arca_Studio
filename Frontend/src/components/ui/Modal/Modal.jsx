@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import clsx from "clsx";
 import Button from "../Button/Button.jsx";
 import Checkbox from "../Checkbox.jsx";
@@ -175,7 +176,7 @@ function Modal({
         }
       : undefined;
 
-  return (
+  const modalContent = (
     <div
       className={clsx(positionClassName, "z-50 overflow-hidden", className)}
       style={style}
@@ -287,6 +288,12 @@ function Modal({
       )}
     </div>
   );
+
+  if (resolvedMount === "viewport" && typeof document !== "undefined") {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 }
 
 export default Modal;

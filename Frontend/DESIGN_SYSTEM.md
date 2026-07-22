@@ -139,6 +139,8 @@ Usar `Modal` y sus configuraciones antes de crear overlays nuevos. Toda capa deb
 - conservar la acción destructiva visualmente separada;
 - evitar que una animación sea imprescindible para comprender el estado.
 
+Los modales con `mount="viewport"` deben renderizarse mediante portal en `document.body`. No deben quedar anidados dentro de layouts, paneles o contenedores transformados, porque eso altera el sistema de referencia de `position: fixed`, desplaza el centrado y puede recortar el overlay. Solo `mount="contained"` permanece dentro del contenedor que lo invoca.
+
 Cuando se añadan animaciones, respetar `prefers-reduced-motion`, como ya hace el progreso de proyectos.
 
 ## Estados obligatorios de una pantalla
