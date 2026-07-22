@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
@@ -118,9 +118,10 @@ function PdfToolbar({
   );
 }
 
-function PdfCanvas({ documentProxy, page, title, zoom }) {
+function PdfPageCanvas({ documentProxy, page, title, zoom }) {
   const canvasRef = useRef(null);
-  const [renderingPage, setRenderingPage] = useState(null);
+  const [renderedKey, setRenderedKey] = useState("");
+  const renderKey = `${page}-${zoom}`;
 
   useEffect(() => {
     if (!documentProxy || !canvasRef.current) return undefined;
@@ -149,7 +150,7 @@ function PdfCanvas({ documentProxy, page, title, zoom }) {
 
       renderTask.promise
         .then(() => {
-          if (!cancelled) setRenderingPage(page);
+          if (!cancelled) setRenderedKey(renderKey);
         })
         .catch(() => {});
     });
@@ -158,14 +159,11 @@ function PdfCanvas({ documentProxy, page, title, zoom }) {
       cancelled = true;
       renderTask?.cancel();
     };
-  }, [documentProxy, page, zoom]);
+  }, [documentProxy, page, renderKey, zoom]);
 
   return (
-    <div
-      className="relative flex min-h-0 flex-1 items-start justify-center overflow-auto bg-[#d8d8d8] p-[12px] max-[520px]:p-[8px]"
-      onContextMenu={(event) => event.preventDefault()}
-    >
-      {renderingPage !== page ? (
+    <div className="relative shrink-0" data-pdf-page={page}>
+      {renderedKey !== renderKey ? (
         <div className="pointer-events-none absolute inset-0 z-[1] skeleton-shimmer" aria-hidden="true" />
       ) : null}
       <canvas
@@ -177,6 +175,42 @@ function PdfCanvas({ documentProxy, page, title, zoom }) {
     </div>
   );
 }
+
+const PdfPages = forwardRef(function PdfPages(
+  { documentProxy, pageCount, title, zoom },
+  ref,
+) {
+  const viewportRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    scrollToPage(nextPage) {
+      viewportRef.current
+        ?.querySelector(`[data-pdf-page="${nextPage}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+  }), []);
+
+  return (
+    <div
+      ref={viewportRef}
+      className="flex min-h-0 flex-1 flex-col items-center gap-[12px] overflow-auto bg-[#d8d8d8] p-[12px] max-[520px]:gap-[8px] max-[520px]:p-[8px]"
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {Array.from({ length: pageCount }, (_, index) => {
+        const pageNumber = index + 1;
+        return (
+          <PdfPageCanvas
+            key={pageNumber}
+            documentProxy={documentProxy}
+            page={pageNumber}
+            title={title}
+            zoom={zoom}
+          />
+        );
+      })}
+    </div>
+  );
+});
 
 function PdfViewerSurface({
   className,
@@ -192,6 +226,13 @@ function PdfViewerSurface({
   updateZoom,
   zoom,
 }) {
+  const pagesRef = useRef(null);
+  const handlePageChange = (nextPage) => {
+    const normalizedPage = Math.min(Math.max(Number(nextPage) || 1, 1), pageCount);
+    updatePage(normalizedPage);
+    pagesRef.current?.scrollToPage(normalizedPage);
+  };
+
   return (
     <div
       className={clsx(
@@ -207,13 +248,14 @@ function PdfViewerSurface({
         onExpand={onExpand}
         page={page}
         pageCount={pageCount}
-        updatePage={updatePage}
+        updatePage={handlePageChange}
         updateZoom={updateZoom}
         zoom={zoom}
       />
-      <PdfCanvas
+      <PdfPages
+        ref={pagesRef}
         documentProxy={documentProxy}
-        page={page}
+        pageCount={pageCount}
         title={title}
         zoom={zoom}
       />
