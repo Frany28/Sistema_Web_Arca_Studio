@@ -167,7 +167,16 @@ function toMediaFileItem(file, { project }) {
       : file.fileUrl;
 
   return {
-    author: project.assignedArchitect?.name || project.client?.name || "ARCA Studio",
+    author:
+      file.uploadedBy?.name ||
+      project.assignedArchitect?.name ||
+      project.client?.name ||
+      "ARCA Studio",
+    authorAvatarSrc:
+      file.uploadedBy?.profilePhotoUrl ||
+      project.assignedArchitect?.profilePhotoUrl ||
+      project.client?.profilePhotoUrl ||
+      null,
     extension: file.extension,
     fileType: file.fileType,
     fileUrl: file.fileUrl,

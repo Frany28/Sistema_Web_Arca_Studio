@@ -67,7 +67,10 @@ function getUploadedAtLabel(value) {
 
 function VideoGalleryModalRow({ item, onWatchVideo }) {
   return (
-    <article className="flex min-h-[100px] w-full items-center justify-between gap-[24px] border-b border-[var(--color-neutral-200)] p-[20px] max-[760px]:flex-col max-[760px]:items-stretch max-[760px]:gap-[16px] max-[520px]:p-[12px]">
+    <article
+      className="flex min-h-[100px] w-full cursor-pointer items-center justify-between gap-[24px] border-b border-[var(--color-neutral-200)] p-[20px] max-[760px]:min-h-[134px] max-[760px]:flex-col max-[760px]:items-stretch max-[760px]:justify-center max-[760px]:gap-[12px]"
+      onClick={() => onWatchVideo?.(item)}
+    >
       <div className="flex min-w-0 flex-1 items-center gap-[12px]">
         <VideoThumb item={item} />
 
@@ -81,8 +84,8 @@ function VideoGalleryModalRow({ item, onWatchVideo }) {
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-[24px] max-[760px]:w-full max-[760px]:justify-between max-[520px]:grid max-[520px]:grid-cols-[minmax(0,1fr)_auto] max-[520px]:gap-x-[12px] max-[520px]:gap-y-[8px]">
-        <p className="whitespace-nowrap text-body-3 text-[var(--color-text-100)] max-[520px]:col-span-2">
+      <div className="flex shrink-0 items-center gap-[24px] max-[760px]:w-full max-[760px]:justify-between">
+        <p className="whitespace-nowrap text-body-3 text-[var(--color-text-100)]">
           {getUploadedAtLabel(item.uploadedAt)}
         </p>
 
@@ -91,8 +94,10 @@ function VideoGalleryModalRow({ item, onWatchVideo }) {
           label={item.author ?? "Armando Carroz"}
           showSubtitle={false}
           avatarTheme="Neutral"
-          avatarContent="Icon"
-          avatarDecorative
+          avatarContent={item.authorAvatarSrc ? "Image" : "Icon"}
+          avatarSrc={item.authorAvatarSrc}
+          avatarAlt={item.author ?? "Armando Carroz"}
+          avatarDecorative={false}
           className="min-w-0 max-w-[160px]"
           textClassName="truncate text-[var(--color-text-300)]"
         />
@@ -103,8 +108,11 @@ function VideoGalleryModalRow({ item, onWatchVideo }) {
           fitContent
           showLeftIcon={false}
           showRightIcon={false}
-          onClick={() => onWatchVideo?.(item)}
-          className="shrink-0"
+          onClick={(event) => {
+            event.stopPropagation();
+            onWatchVideo?.(item);
+          }}
+          className="shrink-0 max-[760px]:hidden"
         >
           Ver video
         </Button>
@@ -227,7 +235,7 @@ export default function GalleryVideosModal({
         className={clsx(
           "flex h-[min(656px,calc(100dvh-32px))] w-[calc(100vw-32px)] max-w-[956px] flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)]",
           "max-[768px]:h-[min(656px,calc(100dvh-24px))] max-[768px]:w-[calc(100vw-24px)]",
-          "max-[520px]:h-[calc(100dvh-16px)] max-[520px]:w-[calc(100vw-16px)]",
+          "max-[520px]:h-[calc(100dvh-16px)] max-[520px]:w-[calc(100vw-16px)] max-[520px]:rounded-[12px]",
           className,
         )}
         role="dialog"
@@ -235,7 +243,7 @@ export default function GalleryVideosModal({
         aria-label={title}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex h-[56px] w-full shrink-0 items-center justify-between px-[20px]">
+        <header className="flex h-[56px] w-full shrink-0 items-center justify-between px-[20px] max-[520px]:h-[70px]">
           <h2 className="text-heading-8 text-[var(--color-text-300)]">
             {title}
           </h2>
