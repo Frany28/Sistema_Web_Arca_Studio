@@ -1,3 +1,5 @@
+import { sanitizePublicPayload } from "../utils/publicPayload.js";
+
 const projectClients = new Map();
 const userConnectionCounts = new Map();
 let eventSequence = 0;
@@ -10,7 +12,7 @@ function sendEvent(response, eventName, payload) {
   eventSequence += 1;
   response.write(`id: ${Date.now()}-${eventSequence}\n`);
   response.write(`event: ${eventName}\n`);
-  response.write(`data: ${JSON.stringify(payload)}\n\n`);
+  response.write(`data: ${JSON.stringify(sanitizePublicPayload(payload))}\n\n`);
 }
 
 export function subscribeToProjectEvents({ projectId, response, userId }) {

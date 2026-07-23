@@ -10,6 +10,7 @@ import {
   assertProjectEventCapacity,
 } from "../services/projectEvents.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
+import { sanitizeCommentMetadata } from "../utils/commentMetadata.js";
 import {
   createDocumentComment,
   getDocumentComments,
@@ -126,8 +127,8 @@ export async function createProjectComment(req, res, next) {
     const parentCommentId = parseParentCommentId(req.body?.parentCommentId);
     const commentType = parseCommentType(req.body?.commentType);
     const targetId = parseTargetId(req.body?.targetId);
-    const image = parsePlainObject(req.body?.image);
-    const selection = parsePlainObject(req.body?.selection);
+    const image = sanitizeCommentMetadata(parsePlainObject(req.body?.image));
+    const selection = sanitizeCommentMetadata(parsePlainObject(req.body?.selection));
     const fileId = Number(req.body?.fileId);
     const fileVersionId = Number(req.body?.fileVersionId);
 

@@ -54,6 +54,11 @@ Si una regla se utiliza en dos sitios, extraerla a un módulo compartido en luga
 
 ## Reglas de API y datos
 
+- Regla estricta de seguridad: ninguna respuesta JSON, evento SSE, log o metadato público puede exponer URLs de almacenamiento, URLs firmadas, claves de objeto ni rutas protegidas de archivos o avatares.
+- Los recursos protegidos se representan exclusivamente mediante identificadores, versión, tipo y banderas como `hasImage` o `hasProfilePhoto`. El frontend debe construir la ruta autenticada mediante el cliente API central.
+- Toda URL se elimina de las respuestas públicas por defecto. Una excepción de negocio debe declararse explícitamente en la lista permitida del saneador, validarse como entrada externa y contar con una prueba de regresión. Actualmente la única excepción autorizada es `referenceLink`.
+- Queda prohibido agregar a contratos públicos campos como `src`, `href`, `uri`, `fileUrl`, `downloadUrl`, `signedUrl`, `storageKey`, `imageSrc` o `profilePhotoUrl`.
+- Cualquier nuevo canal de salida que no utilice `res.json`, como SSE o streaming de metadatos, debe aplicar `sanitizePublicPayload` antes de serializar. El streaming binario autenticado es la única excepción.
 - Validar `body`, `params`, `query` y encabezados relevantes antes del controlador.
 - Mantener respuestas de error con `code` y `message`; usar `fields` solo para validación.
 - No devolver mensajes internos de PostgreSQL, almacenamiento ni stack traces.

@@ -16,6 +16,7 @@ import {
 } from "../../hooks/useProjectComments.js";
 import { getProjectNamesById } from "../../utils/commentDisplay.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
+import { getProjectImageSource } from "../../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js";
 import { groupProjectsByStatus } from "../../utils/projectStatusGroups.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
@@ -73,7 +74,7 @@ function toProjectRow(project, user) {
     assigneeAvatars: assigneeAvatar ? [assigneeAvatar] : [],
     editable:
       user?.role === "admin" || project.assignedArchitect?.id === user?.id,
-    image: project.image,
+    image: getProjectImageSource(project),
     title: project.name,
   };
 }

@@ -31,7 +31,7 @@ function ProjectProgress({ className }) {
   return (
     <div
       className={clsx(
-        "grid w-full grid-cols-1 gap-[16px] sm:grid-cols-3 sm:gap-[24px]",
+        "grid w-full grid-cols-3 gap-[24px]",
         className,
       )}
     >

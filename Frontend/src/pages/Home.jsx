@@ -25,6 +25,7 @@ import {
 } from "../hooks/useProjectComments.js";
 import { getProjectNamesById } from "../utils/commentDisplay.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
+import { getProjectImageSource } from "../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
 import { groupProjectsByStatus } from "../utils/projectStatusGroups.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
@@ -85,7 +86,7 @@ function toProjectRow(project) {
   return {
     ...project,
     assigneeAvatars: getProjectAssigneeAvatars(project),
-    image: project.image,
+    image: getProjectImageSource(project),
     title: project.name,
   };
 }
@@ -94,15 +95,15 @@ function ProjectRow({ project }) {
   const navigate = useNavigate();
 
   return (
-    <article className="flex flex-col gap-[16px] border-b border-[var(--color-neutral-200)] px-0 py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
+    <article className="flex flex-wrap items-center justify-end gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px]">
       <ProjectImage
         src={project.image}
         alt={project.name}
-        className="h-[80px] w-[140px] shrink-0 rounded-[var(--radius-2)]"
+        className="aspect-[140/80] min-h-[91px] min-w-[160px] flex-1 rounded-[var(--radius-2)]"
         imageClassName="object-cover"
       />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
+      <div className="flex min-w-[300px] flex-1 flex-col gap-[8px] overflow-hidden">
         <div className="flex items-center gap-[8px]">
           <h2 className="min-w-0 truncate text-heading-4 text-[var(--color-text-50)]">
             {project.name}
@@ -121,13 +122,13 @@ function ProjectRow({ project }) {
         theme="Primary"
         type="Solid"
         size="M"
-        fitContent
+        fitContent={false}
         showLeftIcon={false}
         showRightIcon={false}
-        className="shrink-0"
+        className="min-w-[105px] flex-1"
         onClick={() => navigate(getProjectPath(project))}
       >
-        Ver Proyecto
+        Ver proyecto
       </Button>
     </article>
   );
@@ -136,8 +137,7 @@ function ProjectRow({ project }) {
 function ProjectStatusGroup({ group }) {
   return (
     <section className="flex flex-col">
-      <div className="flex items-center gap-[8px]">
-        <p className="text-body-3 text-[var(--color-text-300)]">Proyectos</p>
+      <div className="flex items-center gap-[4px]">
         <Badge
           label={group.status}
           theme={group.badgeTheme}
@@ -511,11 +511,10 @@ function Home() {
             </p>
           </div>
 
-          <div className="mx-auto flex w-full max-w-[1200px] items-start gap-[4px] px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">
+          <div className="mx-auto flex w-full max-w-[1200px] items-start gap-[4px] px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
             <div
               ref={projectsContainerRef}
-              className="flex-1 overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              style={{ maxHeight: "232px" }}
+              className="max-h-none flex-1 overflow-y-visible pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] lg:max-h-[232px] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden"
               onScroll={handleProjectScroll}
             >
               {projectsLoading ? (
@@ -549,12 +548,12 @@ function Home() {
                 position={projectScrollPosition}
                 interactive
                 onPositionChange={setProjectScrollPosition}
-                className="shrink-0"
+                className="hidden shrink-0 lg:block"
               />
             ) : null}
           </div>
 
-          <section className="mx-auto flex w-full max-w-[1200px] flex-col px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">
+          <section className="mx-auto flex w-full max-w-[1200px] flex-col px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
             <div className="flex items-center pb-[4px]">
               <Badge
                 label="Solicitudes"
@@ -566,8 +565,7 @@ function Home() {
 
             <div className="flex w-full items-start gap-[4px]">
               <div
-                className="min-w-0 flex-1 overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                style={{ maxHeight: "122px" }}
+                className="max-h-none min-w-0 flex-1 overflow-y-visible pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] lg:max-h-[122px] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden"
               >
                 <Loader
                   preset="requestRow"

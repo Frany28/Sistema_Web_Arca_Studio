@@ -12,6 +12,29 @@ function getImageKey(item) {
   return String(item?.id ?? item?.image ?? item?.title ?? "image");
 }
 
+function stripResourceLinks(value) {
+  if (Array.isArray(value)) {
+    return value.map(stripResourceLinks);
+  }
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !["src", "imageSrc", "url", "fileUrl"].includes(key))
+      .map(([key, item]) => [key, stripResourceLinks(item)]),
+  );
+}
+
+function getCommentFileId(comment) {
+  const candidates = [comment?.targetId, comment?.image?.id, comment?.selection?.image?.id];
+  for (const candidate of candidates) {
+    const match = String(candidate || "").match(/(?:project-file-)?(\d+)$/);
+    if (match) return Number(match[1]);
+  }
+  return null;
+}
+
 function clearLegacyStoredComments() {
   if (typeof window === "undefined") {
     return;
@@ -55,6 +78,11 @@ function getRelativeTimeLabel(value) {
 
 function decorateComment(comment, user, projectNamesById = {}) {
   const selection = comment.selection || null;
+  const fileId = getCommentFileId(comment);
+  const protectedImageSrc =
+    fileId && comment.projectId
+      ? api.projects.getFileContentUrl({ fileId, projectId: comment.projectId })
+      : null;
   const videoTiming = getVideoObservationTiming(selection);
   const pointNumber =
     comment.commentType === "viewer3d"
@@ -70,6 +98,7 @@ function decorateComment(comment, user, projectNamesById = {}) {
           comment.image?.src ||
           imageFromSelection?.src ||
           selection?.imageSrc ||
+          protectedImageSrc ||
           null,
       }
     : null;
@@ -311,12 +340,11 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
         content: message,
         image: {
           id: imageKey,
-          src: item?.image ?? null,
           title: item?.title ?? item?.label ?? "Imagen",
         },
         parentCommentId,
         projectId: resolvedProjectId,
-        selection,
+        selection: stripResourceLinks(selection),
         targetId: imageKey,
       });
 

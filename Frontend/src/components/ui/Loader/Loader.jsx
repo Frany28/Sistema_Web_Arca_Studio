@@ -12,9 +12,9 @@ function SkeletonBlock({ className, delay = 0, style, tone = "surface" }) {
 
 function ProjectRowSkeleton() {
   return (
-    <div className="flex w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
-      <SkeletonBlock className="h-[91px] w-full shrink-0 rounded-[var(--radius-2)] sm:w-[160px]" />
-      <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
+    <div className="flex w-full flex-wrap items-center gap-[24px] border-b border-[var(--color-neutral-200)] py-[16px]">
+      <SkeletonBlock className="aspect-[140/80] min-h-[91px] min-w-[160px] flex-1 rounded-[var(--radius-2)]" />
+      <div className="flex min-w-[300px] flex-1 flex-col gap-[12px]">
         <div className="flex items-center gap-[8px]">
           <SkeletonBlock className="h-[24px] w-[min(220px,65%)] rounded-[var(--radius-1)]" />
           <SkeletonBlock className="size-[24px] rounded-[var(--radius-full)]" />
@@ -25,16 +25,16 @@ function ProjectRowSkeleton() {
           <SkeletonBlock className="h-[14px] w-[64px] rounded-[var(--radius-1)]" />
         </div>
       </div>
-      <SkeletonBlock className="h-[41px] w-[112px] shrink-0 rounded-[var(--radius-2)]" />
+      <SkeletonBlock className="h-[49px] min-w-[105px] flex-1 rounded-[var(--radius-2)]" />
     </div>
   );
 }
 
 function RequestRowSkeleton() {
   return (
-    <div className="flex w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] lg:flex-row lg:items-center lg:gap-[24px]">
-      <SkeletonBlock className="h-[91px] w-full shrink-0 rounded-[var(--radius-2)] sm:w-[160px]" />
-      <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
+    <div className="flex w-full flex-wrap items-center gap-[24px] border-b border-[var(--color-neutral-200)] py-[16px]">
+      <SkeletonBlock className="aspect-[140/80] min-h-[91px] min-w-[160px] flex-1 rounded-[var(--radius-2)]" />
+      <div className="flex min-w-[300px] flex-1 flex-col gap-[12px]">
         <div className="flex items-center gap-[8px]">
           <SkeletonBlock className="h-[24px] w-[min(240px,68%)] rounded-[var(--radius-1)]" />
           <SkeletonBlock className="size-[24px] rounded-[var(--radius-full)]" />
@@ -43,7 +43,7 @@ function RequestRowSkeleton() {
         <SkeletonBlock className="h-[8px] w-full rounded-[var(--radius-full)]" />
         <SkeletonBlock className="h-[12px] w-[124px] rounded-[var(--radius-1)]" />
       </div>
-      <SkeletonBlock className="h-[41px] w-[144px] shrink-0 rounded-[var(--radius-2)]" />
+      <SkeletonBlock className="h-[49px] min-w-[126px] flex-1 rounded-[var(--radius-2)]" />
     </div>
   );
 }

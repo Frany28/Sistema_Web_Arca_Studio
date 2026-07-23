@@ -1,4 +1,5 @@
 import { pool, query } from "../config/db.js";
+import { sanitizeCommentMetadata } from "../utils/commentMetadata.js";
 import { pageResult } from "../utils/pagination.js";
 
 const GENERAL_COMMENT_TYPE = "general";
@@ -6,7 +7,7 @@ const ACTIVE_COMMENT_STATUS = "active";
 
 function toProjectComment(row) {
   const authorName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
-  const targetMetadata = row.target_metadata || null;
+  const targetMetadata = sanitizeCommentMetadata(row.target_metadata) || null;
   const commentType = row.comment_type || GENERAL_COMMENT_TYPE;
 
   return {

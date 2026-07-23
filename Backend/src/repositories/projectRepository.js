@@ -32,7 +32,8 @@ function toProject(row) {
     generalArea: toNumber(row.general_area),
     hasPlans: Boolean(row.has_plans),
     id: Number(row.id),
-    image: row.image_url || null,
+    imageFileId: row.image_file_id ? Number(row.image_file_id) : null,
+    hasImage: Boolean(row.image_file_id),
     isPublic: Boolean(row.is_public),
     location: row.location,
     locationCoordinates:
@@ -176,12 +177,12 @@ export async function listProjectsForUser(user, { cursor = null, limit = 25 } = 
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
-        image_version.file_url as image_url
+        image_version.file_id as image_file_id
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
       left join lateral (
-        select version.file_url
+        select file.id as file_id
         from public.files file
         inner join public.file_versions version
           on version.file_id = file.id
@@ -253,12 +254,12 @@ async function findProjectDetailByConditionForUser({
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
-        image_version.file_url as image_url
+        image_version.file_id as image_file_id
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
       left join lateral (
-        select version.file_url
+        select file.id as file_id
         from public.files file
         inner join public.file_versions version
           on version.file_id = file.id
@@ -337,7 +338,6 @@ async function findProjectDetailByConditionForUser({
             file.file_type,
             file.current_version,
             version.id as current_version_id,
-            version.file_url,
             version.file_extension,
             version.file_name,
             version.file_size,
@@ -482,12 +482,12 @@ export async function updateProjectVisibility(projectId, isPublic, user) {
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
-        image_version.file_url as image_url
+        image_version.file_id as image_file_id
       from updated_project p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
       left join lateral (
-        select version.file_url
+        select file.id as file_id
         from public.files file
         inner join public.file_versions version
           on version.file_id = file.id
