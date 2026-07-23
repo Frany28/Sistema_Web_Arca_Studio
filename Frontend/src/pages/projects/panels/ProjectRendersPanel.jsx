@@ -261,6 +261,7 @@ function RenderStage({
               src={modelSrc}
               poster={activeRender.image || undefined}
               alt={activeRender.title}
+              with-credentials
               camera-controls
               auto-rotate-delay="0"
               camera-orbit={activeNavigationMode.cameraOrbit}

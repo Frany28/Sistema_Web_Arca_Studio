@@ -48,6 +48,7 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
       <model-viewer
         src={modelSrc}
         alt={alt}
+        with-credentials
         class="absolute inset-0 size-full"
         camera-orbit="35deg 72deg 105%"
         field-of-view="30deg"

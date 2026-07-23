@@ -2304,6 +2304,7 @@ export default function Model3DViewerModal({
                 src={modelSrc}
                 poster={displayItem.image || undefined}
                 alt={displayItem.title}
+                with-credentials
                 camera-controls
                 auto-rotate-delay="0"
                 camera-orbit={activeNavigationMode.cameraOrbit}
