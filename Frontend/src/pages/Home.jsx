@@ -612,7 +612,7 @@ function Home() {
         <div className="fixed inset-0 z-[80] min-[768px]:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/55"
+            className="absolute inset-0 bg-[rgba(42,41,41,0.10)] backdrop-blur-[var(--effect-blur-b1)]"
             aria-label="Cerrar navegación"
             onClick={() => setIsMobileNavigationOpen(false)}
           />

@@ -57,3 +57,39 @@ export function getXRMovementAxes(inputSources = []) {
 
   return { x: 0, y: 0 };
 }
+
+export function getXRHandedAxes(inputSources = [], handedness) {
+  const source = Array.from(inputSources).find(
+    (item) => item?.handedness === handedness && item?.gamepad?.axes,
+  );
+  const pair = getStrongestAxisPair(source?.gamepad?.axes);
+
+  return {
+    x: applyGamepadDeadzone(pair.x),
+    y: applyGamepadDeadzone(pair.y),
+  };
+}
+
+export function getSnapTurnState(
+  axis,
+  latched = false,
+  { releaseThreshold = 0.3, turnThreshold = 0.72 } = {},
+) {
+  const normalizedAxis = normalizeAxis(axis);
+
+  if (latched) {
+    return {
+      direction: 0,
+      latched: Math.abs(normalizedAxis) > releaseThreshold,
+    };
+  }
+
+  if (Math.abs(normalizedAxis) < turnThreshold) {
+    return { direction: 0, latched: false };
+  }
+
+  return {
+    direction: normalizedAxis > 0 ? -1 : 1,
+    latched: true,
+  };
+}

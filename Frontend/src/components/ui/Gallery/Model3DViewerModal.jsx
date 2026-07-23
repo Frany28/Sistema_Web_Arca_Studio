@@ -2444,7 +2444,10 @@ export default function Model3DViewerModal({
       {isVRViewerOpen ? (
         <Suspense fallback={null}>
           <VRModelViewer
+            annotations={annotationComments}
+            item={displayItem}
             modelSrc={modelSrc}
+            onSubmitObservation={handleSubmitComment}
             poster={displayItem.image || undefined}
             title={displayItem.title}
             visible={isVRViewerOpen}

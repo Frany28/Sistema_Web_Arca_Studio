@@ -6,9 +6,15 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import Button from "../../ui/Button/Button.jsx";
-import { getXRMovementAxes } from "../../../utils/vrLocomotion.js";
+import {
+  getSnapTurnState,
+  getXRHandedAxes,
+  getXRMovementAxes,
+} from "../../../utils/vrLocomotion.js";
 
 const XR_MOVEMENT_SPEED = 2.2;
+const XR_COLLISION_DISTANCE = 0.42;
+const XR_SNAP_TURN_RADIANS = THREE.MathUtils.degToRad(30);
 
 function CloseIcon({ className }) {
   return (
@@ -34,7 +40,10 @@ function getErrorMessage(error) {
 }
 
 export default function VRModelViewer({
+  annotations = [],
+  item,
   modelSrc,
+  onSubmitObservation,
   poster,
   title = "Modelo 3D",
   visible = false,
@@ -43,10 +52,17 @@ export default function VRModelViewer({
   const mountRef = useRef(null);
   const overlayRootRef = useRef(null);
   const rendererRef = useRef(null);
+  const modelRef = useRef(null);
+  const annotationGroupRef = useRef(null);
+  const pendingMarkerRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [isWebXRAvailable, setIsWebXRAvailable] = useState(false);
   const [xrSession, setXrSession] = useState(null);
+  const [modelRevision, setModelRevision] = useState(0);
+  const [pendingObservation, setPendingObservation] = useState(null);
+  const [observationMessage, setObservationMessage] = useState("");
+  const [isSubmittingObservation, setIsSubmittingObservation] = useState(false);
 
   useEffect(() => {
     if (!visible || !modelSrc || !mountRef.current) {
@@ -98,6 +114,12 @@ export default function VRModelViewer({
     const floorGrid = new THREE.GridHelper(20, 20, 0x777777, 0x333333);
     floorGrid.position.y = 0.01;
     scene.add(floorGrid);
+    const annotationGroup = new THREE.Group();
+    annotationGroup.name = "VRAnnotations";
+    annotationGroupRef.current = annotationGroup;
+    scene.add(annotationGroup);
+    const collisionRaycaster = new THREE.Raycaster();
+    const interactionRaycaster = new THREE.Raycaster();
 
     async function checkVRSupport() {
       const available = Boolean(
@@ -112,14 +134,6 @@ export default function VRModelViewer({
     }
 
     function frameModel(model) {
-      const box = new THREE.Box3().setFromObject(model);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-      const maxDimension = Math.max(size.x, size.y, size.z, 1);
-      const scale = maxDimension > 30 ? 30 / maxDimension : 1;
-
-      model.scale.multiplyScalar(scale);
-
       const scaledBox = new THREE.Box3().setFromObject(model);
       const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
       const scaledMin = scaledBox.min;
@@ -139,8 +153,117 @@ export default function VRModelViewer({
       );
       controls.target.set(0, camera.position.y, cameraZ - 0.01);
       controls.update();
+    }
 
-      return center;
+    function getModelHitFromRay(origin, direction, { floorOnly = false } = {}) {
+      const model = modelRef.current;
+      if (!model) return null;
+
+      interactionRaycaster.set(origin, direction);
+      const hits = interactionRaycaster.intersectObject(model, true);
+
+      if (!floorOnly) return hits[0] || null;
+
+      return (
+        hits.find((hit) => {
+          if (!hit.face) return false;
+          const normal = hit.face.normal
+            .clone()
+            .transformDirection(hit.object.matrixWorld);
+          return normal.y > 0.55;
+        }) || null
+      );
+    }
+
+    function createObservationFromHit(hit) {
+      const model = modelRef.current;
+      if (!model || !hit?.face) return;
+
+      const modelPosition = model.worldToLocal(hit.point.clone());
+      const worldNormal = hit.face.normal
+        .clone()
+        .transformDirection(hit.object.matrixWorld);
+      const modelNormal = worldNormal
+        .clone()
+        .transformDirection(new THREE.Matrix4().copy(model.matrixWorld).invert());
+
+      setPendingObservation({
+        kind: "viewer3d-point",
+        image: {
+          id: item?.id,
+          src: poster || null,
+          title,
+        },
+        imageSrc: poster || null,
+        viewerPoint: {
+          modelNormal: {
+            x: modelNormal.x,
+            y: modelNormal.y,
+            z: modelNormal.z,
+          },
+          modelPosition: {
+            x: modelPosition.x,
+            y: modelPosition.y,
+            z: modelPosition.z,
+          },
+        },
+      });
+    }
+
+    function teleportToHit(hit) {
+      if (!hit) return;
+      playerRig.position.x = hit.point.x;
+      playerRig.position.z = hit.point.z;
+      playerRig.position.y = hit.point.y;
+    }
+
+    const controllerCleanups = [0, 1].map((index) => {
+      const controller = renderer.xr.getController(index);
+      const rayLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, 0, -3),
+        ]),
+        new THREE.LineBasicMaterial({ color: 0xff4431 }),
+      );
+      controller.add(rayLine);
+      playerRig.add(controller);
+
+      const rayOrigin = new THREE.Vector3();
+      const rayDirection = new THREE.Vector3();
+      const pointFromController = (floorOnly) => {
+        controller.getWorldPosition(rayOrigin);
+        controller.getWorldDirection(rayDirection);
+        rayDirection.multiplyScalar(-1).normalize();
+        return getModelHitFromRay(rayOrigin, rayDirection, { floorOnly });
+      };
+      const handleSelect = () => teleportToHit(pointFromController(true));
+      const handleSqueeze = () =>
+        createObservationFromHit(pointFromController(false));
+
+      controller.addEventListener("selectstart", handleSelect);
+      controller.addEventListener("squeezestart", handleSqueeze);
+
+      return () => {
+        controller.removeEventListener("selectstart", handleSelect);
+        controller.removeEventListener("squeezestart", handleSqueeze);
+        rayLine.geometry.dispose();
+        rayLine.material.dispose();
+      };
+    });
+
+    function handleDoubleClick(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const pointer = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      interactionRaycaster.setFromCamera(pointer, camera);
+      const model = modelRef.current;
+      const hit = model
+        ? interactionRaycaster.intersectObject(model, true)[0]
+        : null;
+      createObservationFromHit(hit);
     }
 
     function handleResize() {
@@ -195,8 +318,17 @@ export default function VRModelViewer({
 
       if (movement.lengthSq() > 0) {
         movement.normalize().multiplyScalar(speed);
-        camera.position.add(movement);
-        controls.target.add(movement);
+        const origin = camera.getWorldPosition(new THREE.Vector3());
+        collisionRaycaster.set(origin, movement.clone().normalize());
+        collisionRaycaster.far = XR_COLLISION_DISTANCE;
+        const blocked =
+          modelRef.current &&
+          collisionRaycaster.intersectObject(modelRef.current, true).length > 0;
+
+        if (!blocked) {
+          camera.position.add(movement);
+          controls.target.add(movement);
+        }
       }
     }
 
@@ -204,6 +336,7 @@ export default function VRModelViewer({
     const xrRight = new THREE.Vector3();
     const xrMovement = new THREE.Vector3();
     const worldUp = new THREE.Vector3(0, 1, 0);
+    let snapTurnLatched = false;
 
     function updateXRControllerMovement(delta) {
       if (!renderer.xr.isPresenting) {
@@ -211,36 +344,54 @@ export default function VRModelViewer({
       }
 
       const session = renderer.xr.getSession();
-      const { x, y } = getXRMovementAxes(session?.inputSources);
-
-      if (!x && !y) {
-        return;
-      }
-
-      const xrCamera = renderer.xr.getCamera(camera);
-      xrCamera.getWorldDirection(xrForward);
-      xrForward.y = 0;
-
-      if (xrForward.lengthSq() < 0.0001) {
-        xrForward.set(0, 0, -1);
-      } else {
-        xrForward.normalize();
-      }
-
-      xrRight.crossVectors(xrForward, worldUp).normalize();
-      xrMovement
-        .set(0, 0, 0)
-        .addScaledVector(xrRight, x)
-        .addScaledVector(xrForward, -y);
-
-      if (xrMovement.lengthSq() > 1) {
-        xrMovement.normalize();
-      }
-
-      playerRig.position.addScaledVector(
-        xrMovement,
-        XR_MOVEMENT_SPEED * Math.min(delta, 0.05),
+      const sources = Array.from(session?.inputSources || []);
+      const hasLeftController = sources.some(
+        (source) => source?.handedness === "left" && source?.gamepad,
       );
+      const { x, y } = hasLeftController
+        ? getXRHandedAxes(sources, "left")
+        : getXRMovementAxes(sources);
+
+      if (x || y) {
+        const xrCamera = renderer.xr.getCamera(camera);
+        xrCamera.getWorldDirection(xrForward);
+        xrForward.y = 0;
+
+        if (xrForward.lengthSq() < 0.0001) {
+          xrForward.set(0, 0, -1);
+        } else {
+          xrForward.normalize();
+        }
+
+        xrRight.crossVectors(xrForward, worldUp).normalize();
+        xrMovement
+          .set(0, 0, 0)
+          .addScaledVector(xrRight, x)
+          .addScaledVector(xrForward, -y);
+
+        if (xrMovement.lengthSq() > 1) {
+          xrMovement.normalize();
+        }
+
+        const movementStep = xrMovement
+          .clone()
+          .multiplyScalar(XR_MOVEMENT_SPEED * Math.min(delta, 0.05));
+        const origin = xrCamera.getWorldPosition(new THREE.Vector3());
+        collisionRaycaster.set(origin, movementStep.clone().normalize());
+        collisionRaycaster.far = XR_COLLISION_DISTANCE;
+        const blocked =
+          modelRef.current &&
+          collisionRaycaster.intersectObject(modelRef.current, true).length > 0;
+
+        if (!blocked) playerRig.position.add(movementStep);
+      }
+
+      const rightAxes = getXRHandedAxes(sources, "right");
+      const snapTurn = getSnapTurnState(rightAxes.x, snapTurnLatched);
+      snapTurnLatched = snapTurn.latched;
+      if (snapTurn.direction) {
+        playerRig.rotateY(snapTurn.direction * XR_SNAP_TURN_RADIANS);
+      }
     }
 
     const clock = new THREE.Clock();
@@ -256,6 +407,7 @@ export default function VRModelViewer({
     window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    renderer.domElement.addEventListener("dblclick", handleDoubleClick);
 
     setStatus("loading");
     setErrorMessage("");
@@ -273,8 +425,10 @@ export default function VRModelViewer({
 
         const model = gltf.scene;
         frameModel(model);
+        modelRef.current = model;
         scene.add(model);
         setStatus("loaded");
+        setModelRevision((current) => current + 1);
       },
       undefined,
       (error) => {
@@ -295,6 +449,8 @@ export default function VRModelViewer({
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      renderer.domElement.removeEventListener("dblclick", handleDoubleClick);
+      controllerCleanups.forEach((cleanup) => cleanup());
       renderer.setAnimationLoop(null);
       controls.dispose();
       renderer.dispose();
@@ -314,8 +470,84 @@ export default function VRModelViewer({
       });
 
       mountNode.replaceChildren();
+      modelRef.current = null;
+      annotationGroupRef.current = null;
     };
-  }, [modelSrc, visible]);
+  }, [item?.id, modelSrc, poster, title, visible]);
+
+  useEffect(() => {
+    const group = annotationGroupRef.current;
+    const model = modelRef.current;
+    if (!group || !model) return;
+
+    group.children.forEach((marker) => {
+      marker.geometry?.dispose?.();
+      marker.material?.dispose?.();
+    });
+    group.clear();
+    annotations.forEach((comment) => {
+      const point = comment?.selection?.viewerPoint?.modelPosition;
+      if (![point?.x, point?.y, point?.z].every(Number.isFinite)) return;
+
+      const position = model.localToWorld(
+        new THREE.Vector3(point.x, point.y, point.z),
+      );
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.075, 16, 12),
+        new THREE.MeshStandardMaterial({
+          color: 0xff4431,
+          emissive: 0x66140c,
+          emissiveIntensity: 0.7,
+        }),
+      );
+      marker.position.copy(position);
+      marker.userData.commentId = comment.id;
+      group.add(marker);
+    });
+  }, [annotations, modelRevision]);
+
+  useEffect(() => {
+    pendingMarkerRef.current?.parent?.remove(pendingMarkerRef.current);
+    pendingMarkerRef.current?.geometry?.dispose?.();
+    pendingMarkerRef.current?.material?.dispose?.();
+    pendingMarkerRef.current = null;
+
+    const model = modelRef.current;
+    const point = pendingObservation?.viewerPoint?.modelPosition;
+    if (!model || ![point?.x, point?.y, point?.z].every(Number.isFinite)) return;
+
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 16, 12),
+      new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xff4431,
+        emissiveIntensity: 1,
+      }),
+    );
+    marker.position.copy(
+      model.localToWorld(new THREE.Vector3(point.x, point.y, point.z)),
+    );
+    annotationGroupRef.current?.add(marker);
+    pendingMarkerRef.current = marker;
+  }, [modelRevision, pendingObservation]);
+
+  async function handleObservationSubmit() {
+    const message = observationMessage.trim();
+    if (!message || !pendingObservation || !onSubmitObservation) return;
+
+    setIsSubmittingObservation(true);
+    try {
+      await onSubmitObservation({
+        message,
+        parentCommentId: null,
+        selection: pendingObservation,
+      });
+      setObservationMessage("");
+      setPendingObservation(null);
+    } finally {
+      setIsSubmittingObservation(false);
+    }
+  }
 
   async function handleToggleVRSession() {
     const renderer = rendererRef.current;
@@ -375,6 +607,9 @@ export default function VRModelViewer({
     "Explora el modelo moviendo la vista de forma natural",
     "Utiliza los controles del visor para desplazarte dentro del espacio",
     "En computador, usa WASD o las flechas para moverte por la escena",
+    "Apunta al piso y usa el gatillo para teletransportarte",
+    "Usa el agarre lateral sobre una superficie para crear una observacion",
+    "Usa el joystick derecho para girar en pasos de 30 grados",
   ];
 
   return createPortal(
@@ -462,6 +697,44 @@ export default function VRModelViewer({
               </p>
             ) : null}
           </div>
+
+          {pendingObservation ? (
+            <div className="pointer-events-auto absolute inset-x-[16px] bottom-[16px] z-20 mx-auto flex max-w-[520px] flex-col gap-[8px] rounded-[12px] border border-white/15 bg-black/75 p-[12px] backdrop-blur-md">
+              <label className="text-[13px] font-semibold" htmlFor="vr-observation">
+                Nueva observación
+              </label>
+              <textarea
+                id="vr-observation"
+                value={observationMessage}
+                onChange={(event) => setObservationMessage(event.target.value)}
+                placeholder="Describe el ajuste necesario..."
+                rows={2}
+                className="resize-none rounded-[8px] border border-white/15 bg-white/10 px-[12px] py-[10px] text-[14px] text-white outline-none placeholder:text-white/45 focus:border-[#ff4431]"
+              />
+              <div className="flex justify-end gap-[8px]">
+                <Button
+                  theme="Primary"
+                  type="Ghost"
+                  size="S"
+                  onClick={() => {
+                    setPendingObservation(null);
+                    setObservationMessage("");
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  theme="Primary"
+                  type="Solid"
+                  size="S"
+                  disabled={!observationMessage.trim() || isSubmittingObservation}
+                  onClick={handleObservationSubmit}
+                >
+                  {isSubmittingObservation ? "Guardando..." : "Guardar"}
+                </Button>
+              </div>
+            </div>
+          ) : null}
           </main>
         </div>
       </div>

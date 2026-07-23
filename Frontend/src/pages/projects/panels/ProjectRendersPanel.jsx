@@ -25,6 +25,7 @@ import Model3DViewerModal, {
 import Model3DThumbnail from "../../../components/ui/Gallery/Model3DThumbnail.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import VideoThumbnail from "../../../components/ui/Gallery/VideoThumbnail.jsx";
+import { useImageComments } from "../../../components/ui/Gallery/useImageComments.js";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
@@ -734,6 +735,13 @@ export default function ProjectRendersPanel({
   );
   const activeModelSrc = activeRender?.modelUrl || activeRender?.fileUrl || null;
   const activeRenderIdForLoading = activeRender?.id || null;
+  const {
+    addComment: addVRObservation,
+    comments: vrObservations,
+  } = useImageComments(activeRender, {
+    commentType: "viewer3d",
+    projectId,
+  });
 
   const clearModelLoadingTimers = useCallback(() => {
     window.clearTimeout(slowLoadingTimeoutRef.current);
@@ -1026,7 +1034,10 @@ export default function ProjectRendersPanel({
       {isVRViewerOpen ? (
         <Suspense fallback={null}>
           <VRModelViewer
+            annotations={vrObservations}
+            item={activeRender}
             modelSrc={activeModelSrc}
+            onSubmitObservation={addVRObservation}
             poster={activeRender.image || undefined}
             title={activeRender.title}
             visible={isVRViewerOpen}
