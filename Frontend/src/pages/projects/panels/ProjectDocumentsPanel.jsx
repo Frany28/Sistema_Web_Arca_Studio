@@ -125,6 +125,7 @@ function getSynchronizationLabel(value) {
 export default function ProjectDocumentsPanel({
   documents = PROJECT_DETAIL_DATA.documents,
   lastSynchronizedAt = null,
+  projectId,
 }) {
   const hasDocuments = documents.length > 0;
   const listViewportRef = useRef(null);
@@ -239,6 +240,7 @@ export default function ProjectDocumentsPanel({
             <ProjectDocumentPreview
               document={selectedDocument}
               onLoadingChange={setIsPreviewLoading}
+              projectId={projectId}
             />
           ) : (
             <div className="flex min-h-[426px] flex-1 items-center justify-center border-t border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] px-[24px]">

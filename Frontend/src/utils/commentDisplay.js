@@ -40,6 +40,7 @@ export const OBSERVATION_TYPE_LABELS = Object.freeze({
   image: "Observación sobre imagen",
   video: "Observación sobre video",
   viewer3d: "Observación en modelo 3D",
+  document: "Observación sobre documento",
 });
 
 export const AUTHOR_ROLE_LABELS = Object.freeze({

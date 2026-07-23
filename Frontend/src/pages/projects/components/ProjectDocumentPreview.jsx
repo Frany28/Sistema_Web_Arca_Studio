@@ -1,20 +1,23 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
-import { getDocument, GlobalWorkerOptions, TextLayer } from "pdfjs-dist";
-import "pdfjs-dist/web/pdf_viewer.css";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
+import { GeneralCommentsDrawer } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
+import { useDocumentComments } from "../../../hooks/useDocumentComments.js";
 
 const MIN_ZOOM = 75;
 const MAX_ZOOM = 200;
 const ZOOM_STEP = 25;
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
+const DOCUMENT_POINT_COMMENTS_ENABLED =
+  String(import.meta.env.VITE_DOCUMENT_POINT_COMMENTS_ENABLED || "false").toLowerCase() === "true";
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -119,9 +122,8 @@ function PdfToolbar({
   );
 }
 
-function PdfPageCanvas({ documentProxy, page, title, zoom }) {
+function PdfPageCanvas({ annotations, documentProxy, focusedId, onPointCreate, onPointSelect, page, pageCount, pendingSelection, title, zoom }) {
   const canvasRef = useRef(null);
-  const textLayerRef = useRef(null);
   const [renderedKey, setRenderedKey] = useState("");
   const renderKey = `${page}-${zoom}`;
 
@@ -130,12 +132,10 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
 
     let cancelled = false;
     let renderTask;
-    let textLayer;
     documentProxy.getPage(page).then((pdfPage) => {
-      if (cancelled || !canvasRef.current || !textLayerRef.current) return;
+      if (cancelled || !canvasRef.current) return;
 
       const canvas = canvasRef.current;
-      const textLayerElement = textLayerRef.current;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
       const viewport = pdfPage.getViewport({ scale: (zoom / 100) * 1.35 });
       const context = canvas.getContext("2d", { alpha: false });
@@ -144,16 +144,6 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
       canvas.height = Math.floor(viewport.height * pixelRatio);
       canvas.style.width = `${Math.floor(viewport.width)}px`;
       canvas.style.height = `${Math.floor(viewport.height)}px`;
-      textLayerElement.replaceChildren();
-
-      textLayer = new TextLayer({
-        container: textLayerElement,
-        textContentSource: pdfPage.streamTextContent({
-          includeMarkedContent: true,
-        }),
-        viewport,
-      });
-
       renderTask = pdfPage.render({
         canvas,
         canvasContext: context,
@@ -167,18 +157,30 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
         })
         .catch(() => {});
 
-      textLayer.render().catch(() => {});
     });
 
     return () => {
       cancelled = true;
       renderTask?.cancel();
-      textLayer?.cancel();
     };
   }, [documentProxy, page, renderKey, zoom]);
 
   return (
-    <div className="relative shrink-0" data-pdf-page={page}>
+    <div
+      className={clsx("relative shrink-0", onPointCreate && "cursor-crosshair")}
+      data-pdf-page={page}
+      onClick={(event) => {
+        if (!onPointCreate || event.target.closest("[data-document-marker]")) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        onPointCreate({
+          kind: "document-point",
+          normalizedX: (event.clientX - rect.left) / rect.width,
+          normalizedY: (event.clientY - rect.top) / rect.height,
+          pageNumber: page,
+          pageCount,
+        });
+      }}
+    >
       {renderedKey !== renderKey ? (
         <div className="pointer-events-none absolute inset-0 z-[1] skeleton-shimmer" aria-hidden="true" />
       ) : null}
@@ -188,17 +190,28 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
         aria-label={`${title}, página ${page}`}
         className="block max-w-none bg-white shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
       />
-      <div
-        ref={textLayerRef}
-        className="textLayer pdf-text-selection"
-        aria-label={`Texto seleccionable de ${title}, página ${page}`}
-      />
+      {[...annotations, ...(pendingSelection?.pageNumber === page ? [{ id: "pending", pointNumber: "", selection: pendingSelection }] : [])].map((comment) => (
+        <button
+          key={comment.id}
+          type="button"
+          data-document-marker
+          aria-label={comment.id === "pending" ? "Punto pendiente" : `Observación ${comment.pointNumber}`}
+          className={clsx(
+            "absolute z-[3] flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[var(--color-accent-300)] text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.28)]",
+            String(comment.id) === String(focusedId) && "scale-125",
+          )}
+          style={{ left: `${comment.selection.normalizedX * 100}%`, top: `${comment.selection.normalizedY * 100}%` }}
+          onClick={(event) => { event.stopPropagation(); onPointSelect?.(comment.id); }}
+        >
+          {comment.pointNumber}
+        </button>
+      ))}
     </div>
   );
 }
 
 const PdfPages = forwardRef(function PdfPages(
-  { documentProxy, pageCount, title, zoom },
+  { annotations, documentProxy, focusedId, onPointCreate, onPointSelect, pageCount, pendingSelection, title, zoom },
   ref,
 ) {
   const viewportRef = useRef(null);
@@ -221,9 +234,16 @@ const PdfPages = forwardRef(function PdfPages(
         const pageNumber = index + 1;
         return (
           <PdfPageCanvas
+            annotations={annotations.filter((comment) => comment.selection?.pageNumber === pageNumber && !comment.parentCommentId)}
             key={pageNumber}
             documentProxy={documentProxy}
+            focusedId={focusedId}
+            onPointCreate={onPointCreate}
+            onPointSelect={onPointSelect}
             page={pageNumber}
+            pageCount={pageCount}
+            pendingSelection={pendingSelection}
+            requireSelectionForRoot
             title={title}
             zoom={zoom}
           />
@@ -234,15 +254,20 @@ const PdfPages = forwardRef(function PdfPages(
 });
 
 function PdfViewerSurface({
+  annotations = [],
   className,
   documentProxy,
   expandButtonRef,
   fullscreen = false,
   onClose,
   onExpand,
+  onPointCreate,
+  onPointSelect,
   page,
   pageCount,
   title,
+  focusedId,
+  pendingSelection,
   updatePage,
   updateZoom,
   zoom,
@@ -274,9 +299,14 @@ function PdfViewerSurface({
         zoom={zoom}
       />
       <PdfPages
+        annotations={annotations}
         ref={pagesRef}
         documentProxy={documentProxy}
+        focusedId={focusedId}
+        onPointCreate={onPointCreate}
+        onPointSelect={onPointSelect}
         pageCount={pageCount}
+        pendingSelection={pendingSelection}
         title={title}
         zoom={zoom}
       />
@@ -379,7 +409,7 @@ function DocumentFullscreenModal({ children, documentName, onClose, triggerRef, 
   );
 }
 
-export default function ProjectDocumentPreview({ document, onLoadingChange }) {
+export default function ProjectDocumentPreview({ document, onLoadingChange, projectId }) {
   const source = document?.fileUrl || "";
   const isPdf = String(document?.fileType || "").toUpperCase() === "PDF";
   const [loadState, setLoadState] = useState({
@@ -391,6 +421,8 @@ export default function ProjectDocumentPreview({ document, onLoadingChange }) {
   const [viewState, setViewState] = useState({ page: 1, source, zoom: 100 });
   const [retryKey, setRetryKey] = useState(0);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [pendingSelection, setPendingSelection] = useState(null);
+  const [focusedCommentId, setFocusedCommentId] = useState(null);
   const expandButtonRef = useRef(null);
   const status = loadState.source === source
     ? loadState.status
@@ -404,6 +436,16 @@ export default function ProjectDocumentPreview({ document, onLoadingChange }) {
   const page = viewState.source === source ? viewState.page : 1;
   const zoom = viewState.source === source ? viewState.zoom : 100;
   const documentName = getFileDisplayName(document?.name);
+  const { addComment, comments } = useDocumentComments({
+    enabled: DOCUMENT_POINT_COMMENTS_ENABLED,
+    fileId: document?.id,
+    fileVersionId: document?.currentVersionId,
+    projectId,
+  });
+  const handleSubmitComment = async ({ message, parentCommentId, selection }) => {
+    const comment = await addComment({ message, parentCommentId, selection });
+    if (comment && !parentCommentId) setPendingSelection(null);
+  };
 
   useEffect(() => {
     onLoadingChange?.(status === "loading");
@@ -520,18 +562,39 @@ export default function ProjectDocumentPreview({ document, onLoadingChange }) {
 
   return (
     <>
+      <div className={clsx(DOCUMENT_POINT_COMMENTS_ENABLED && "flex h-[554px] gap-[12px]")}>
       <PdfViewerSurface
+        annotations={comments}
         className="h-[554px] min-h-[554px] max-h-[554px] rounded-b-[var(--radius-3)]"
         documentProxy={documentProxy}
         expandButtonRef={expandButtonRef}
+        focusedId={focusedCommentId}
         onExpand={() => setIsFullscreenOpen(true)}
+        onPointCreate={DOCUMENT_POINT_COMMENTS_ENABLED ? setPendingSelection : undefined}
+        onPointSelect={setFocusedCommentId}
         page={page}
         pageCount={pageCount}
+        pendingSelection={pendingSelection}
         title={`Vista previa de ${documentName}`}
         updatePage={updatePage}
         updateZoom={updateZoom}
         zoom={zoom}
       />
+      {DOCUMENT_POINT_COMMENTS_ENABLED ? (
+        <div className="h-[554px] w-[296px] shrink-0">
+          <GeneralCommentsDrawer
+            comments={comments}
+            focusedSelectionCommentId={focusedCommentId}
+            mediaItem={document}
+            mediaType="document"
+            pendingSelection={pendingSelection}
+            onClearSelection={() => setPendingSelection(null)}
+            onSelectionPreviewClick={setFocusedCommentId}
+            onSubmitComment={handleSubmitComment}
+          />
+        </div>
+      ) : null}
+      </div>
 
       <DocumentFullscreenModal
         documentName={documentName}
@@ -539,18 +602,40 @@ export default function ProjectDocumentPreview({ document, onLoadingChange }) {
         triggerRef={expandButtonRef}
         visible={isFullscreenOpen}
       >
+        <div className="flex size-full gap-[12px]">
         <PdfViewerSurface
+          annotations={comments}
           className="size-full rounded-[var(--radius-3)]"
           documentProxy={documentProxy}
+          focusedId={focusedCommentId}
           fullscreen
           onClose={closeFullscreen}
+          onPointCreate={DOCUMENT_POINT_COMMENTS_ENABLED ? setPendingSelection : undefined}
+          onPointSelect={setFocusedCommentId}
           page={page}
           pageCount={pageCount}
+          pendingSelection={pendingSelection}
           title={`Vista completa de ${documentName}`}
           updatePage={updatePage}
           updateZoom={updateZoom}
           zoom={zoom}
         />
+        {DOCUMENT_POINT_COMMENTS_ENABLED ? (
+          <div className="w-[296px] shrink-0">
+            <GeneralCommentsDrawer
+              comments={comments}
+              focusedSelectionCommentId={focusedCommentId}
+              mediaItem={document}
+              mediaType="document"
+              pendingSelection={pendingSelection}
+              requireSelectionForRoot
+              onClearSelection={() => setPendingSelection(null)}
+              onSelectionPreviewClick={setFocusedCommentId}
+              onSubmitComment={handleSubmitComment}
+            />
+          </div>
+        ) : null}
+        </div>
       </DocumentFullscreenModal>
     </>
   );

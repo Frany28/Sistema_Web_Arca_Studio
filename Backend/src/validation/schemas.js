@@ -24,15 +24,44 @@ export const projectCommentAuthorPhotoSchema = z.object({
 export const commentSchema = z.object({
   params: z.object({ projectId: positiveId }),
   body: z.object({
-    commentType: z.enum(["general", "image", "video", "viewer3d"]).default("general"),
+    commentType: z.enum(["general", "image", "video", "viewer3d", "document"]).default("general"),
     content: z.string().trim().min(1, "Escribe una observación.").max(2000),
     parentCommentId: positiveId.nullish(),
     targetId: z.union([z.string(), z.number()]).nullish(),
     image: z.record(z.string(), z.unknown()).nullish(),
     selection: z.record(z.string(), z.unknown()).nullish(),
+    fileId: positiveId.nullish(),
+    fileVersionId: positiveId.nullish(),
   }).passthrough(),
 }).superRefine((value, context) => {
   const selection = value.body.selection;
+
+  if (value.body.commentType === "document") {
+    const validPoint =
+      value.body.fileId &&
+      value.body.fileVersionId &&
+      !value.body.parentCommentId &&
+      selection?.kind === "document-point" &&
+      Number.isInteger(selection.pageNumber) &&
+      selection.pageNumber > 0 &&
+      Number.isInteger(selection.pageCount) &&
+      selection.pageCount > 0 &&
+      selection.pageNumber <= selection.pageCount &&
+      typeof selection.normalizedX === "number" &&
+      selection.normalizedX >= 0 && selection.normalizedX <= 1 &&
+      typeof selection.normalizedY === "number" &&
+      selection.normalizedY >= 0 && selection.normalizedY <= 1;
+    const validReply =
+      value.body.fileId && value.body.fileVersionId && value.body.parentCommentId && !selection;
+    if (!validPoint && !validReply) {
+      context.addIssue({
+        code: "custom",
+        message: "El punto del documento no es válido.",
+        path: ["body", "selection"],
+      });
+    }
+    return;
+  }
 
   if (selection?.kind !== "video-time") return;
 
@@ -55,6 +84,15 @@ export const commentSchema = z.object({
       path: ["body", "selection"],
     });
   }
+});
+
+export const documentCommentsSchema = z.object({
+  params: z.object({ projectId: positiveId, fileId: positiveId }),
+  query: z.object({
+    cursor,
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    fileVersionId: positiveId,
+  }),
 });
 
 export const fileRouteSchema = z.object({

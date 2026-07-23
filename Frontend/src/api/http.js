@@ -314,6 +314,8 @@ export const projectsApi = {
   createComment({
     commentType,
     content,
+    fileId,
+    fileVersionId,
     image,
     parentCommentId = null,
     projectId,
@@ -324,6 +326,8 @@ export const projectsApi = {
       body: JSON.stringify({
         commentType,
         content,
+        fileId,
+        fileVersionId,
         image,
         parentCommentId,
         selection,
@@ -331,6 +335,27 @@ export const projectsApi = {
       }),
       method: "POST",
     });
+  },
+
+  listDocumentComments({ cursor, fileId, fileVersionId, limit, projectId }) {
+    const params = new URLSearchParams({ fileVersionId: String(fileVersionId) });
+    if (cursor) params.set("cursor", cursor);
+    if (limit) params.set("limit", String(limit));
+    return apiRequest(
+      `/projects/${projectId}/files/${fileId}/comments?${params.toString()}`,
+    );
+  },
+
+  listAllDocumentComments({ fileId, fileVersionId, projectId }) {
+    return collectCursorPages(
+      (page) => projectsApi.listDocumentComments({
+        ...page,
+        fileId,
+        fileVersionId,
+        projectId,
+      }),
+      "comments",
+    );
   },
 
   getFileContentUrl({ fileId, projectId }) {

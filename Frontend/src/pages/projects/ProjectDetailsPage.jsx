@@ -214,6 +214,7 @@ function toProjectPresentation(project) {
 
       return {
         createdAt: file.createdAt,
+        currentVersionId: file.currentVersionId,
         fileType: String(file.extension || "FILE").toUpperCase(),
         fileUrl: contentUrl,
         id: file.id,
@@ -660,6 +661,7 @@ export default function ProjectDetailsPage({
       <ProjectDocumentsPanel
         documents={presentedProject.documents}
         lastSynchronizedAt={filesSynchronizedAt}
+        projectId={resolvedProjectId}
       />
     );
   } else if (activeProjectTabIndex === 3) {

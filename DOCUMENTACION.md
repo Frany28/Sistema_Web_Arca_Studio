@@ -264,6 +264,7 @@ Base: `/api/projects`
 | GET    | `/:projectId/comments`              | Auth                      | Lista comentarios                 |
 | GET    | `/:projectId/events`                | Auth                      | Stream SSE de comentarios         |
 | POST   | `/:projectId/comments`              | Auth                      | Crea comentario                   |
+| GET    | `/:projectId/files/:fileId/comments` | Auth                     | Lista observaciones de una versión de documento |
 | GET    | `/:projectId/files/:fileId/content` | Auth + `projects.read`    | Stream/descarga de archivo        |
 | PATCH  | `/:projectId/publication`           | Auth + `projects.publish` | Actualiza publicacion/visibilidad |
 

@@ -954,6 +954,7 @@ function SelectionPreview({
   }
 
   const isViewerPoint = selection.kind === "viewer3d-point";
+  const isDocumentPoint = selection.kind === "document-point";
   const pixels = selection.imagePixels ?? selection.displayPixels;
   const naturalSize = selection.naturalSize ?? {
     height: pixels?.height || 1,
@@ -980,11 +981,15 @@ function SelectionPreview({
       ? "Observación sobre imagen"
       : mediaType === "video"
         ? "Observación sobre video"
-        : "Observación en modelo 3D");
+        : mediaType === "document"
+          ? "Observación sobre documento"
+          : "Observación en modelo 3D");
   const referenceSubtitle =
     mediaType === "image"
       ? "Área señalada en la imagen"
-      : "Punto señalado en el modelo 3D";
+      : isDocumentPoint
+        ? `Punto señalado en la página ${selection.pageNumber}`
+        : "Punto señalado en el modelo 3D";
 
   return (
     <Container
@@ -1002,7 +1007,7 @@ function SelectionPreview({
       <div
         className={clsx(
           "relative shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]",
-          isViewerPoint &&
+          (isViewerPoint || isDocumentPoint) &&
             !imageSrc &&
             "relative bg-[radial-gradient(circle_at_50%_50%,rgba(255,68,49,0.42)_0%,rgba(255,68,49,0.18)_24%,rgba(42,41,41,0.95)_25%,rgba(42,41,41,0.95)_100%)]",
           compact ? "size-[44px]" : "size-[56px]",
@@ -1019,7 +1024,7 @@ function SelectionPreview({
         }
         aria-hidden="true"
       >
-        {isViewerPoint && !imageSrc ? (
+        {(isViewerPoint || isDocumentPoint) && !imageSrc ? (
           <span className="absolute left-1/2 top-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22)]" />
         ) : null}
         {referenceNumber ? (
@@ -1081,6 +1086,7 @@ function MessageInput({
   pendingSelection,
   placeholder,
   multiline = false,
+  requireSelection = false,
 }) {
   const fieldRef = useRef(null);
   const [textAreaValue, setTextAreaValue] = useState("");
@@ -1101,7 +1107,7 @@ function MessageInput({
   }, [focusSignal]);
 
   function handleSubmit() {
-    if (!trimmedValue) {
+    if (!trimmedValue || (requireSelection && !pendingSelection)) {
       return;
     }
 
@@ -1121,6 +1127,7 @@ function MessageInput({
         />
       ) : null}
       <TextArea
+        disabled={requireSelection && !pendingSelection}
         label={
           pendingSelection
             ? getObservationTypeLabel(
@@ -1128,7 +1135,7 @@ function MessageInput({
               )
             : "Observación general"
         }
-        placeholder={placeholder}
+        placeholder={requireSelection && !pendingSelection ? "Selecciona un punto en el documento" : placeholder}
         value={textAreaValue}
         showHint={false}
         showLabelInfo={false}
@@ -1147,7 +1154,7 @@ function MessageInput({
         <button
           type="button"
           aria-label="Enviar observación"
-          disabled={!trimmedValue}
+          disabled={!trimmedValue || (requireSelection && !pendingSelection)}
           className="flex size-8 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-neutral-300)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
           onClick={handleSubmit}
         >
@@ -1617,6 +1624,7 @@ export function GeneralCommentsDrawer({
   onSelectionPreviewClick,
   onSubmitComment,
   pendingSelection,
+  requireSelectionForRoot = false,
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
@@ -1704,6 +1712,7 @@ export function GeneralCommentsDrawer({
           multiline
           mediaType={mediaType}
           pendingSelection={pendingSelection}
+          requireSelection={requireSelectionForRoot}
           placeholder="Escribe algo..."
           onClearSelection={onClearSelection}
           onSubmit={(message) => handleCommentSubmit(message)}

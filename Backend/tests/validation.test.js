@@ -79,3 +79,26 @@ test("central errors preserve fields and hide unknown messages", () => {
   assert.deepEqual(validation.fields, { email: "Inválido" });
   assert.equal(normalizeError(new Error("database secret")).message, "Ocurrió un error inesperado.");
 });
+
+test("document observations require a normalized point within an existing page", () => {
+  const base = {
+    params: { projectId: "12" },
+    body: {
+      commentType: "document",
+      content: "Revisar este punto",
+      fileId: 10,
+      fileVersionId: 20,
+    },
+  };
+  const point = {
+    kind: "document-point",
+    pageCount: 4,
+    pageNumber: 2,
+    normalizedX: 0.25,
+    normalizedY: 0.75,
+  };
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: point } }).success, true);
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: { ...point, pageNumber: 5 } } }).success, false);
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: { ...point, normalizedX: 1.1 } } }).success, false);
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, parentCommentId: 30, selection: null } }).success, true);
+});

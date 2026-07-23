@@ -1,4 +1,4 @@
-import { query } from "../config/db.js";
+import { pool, query } from "../config/db.js";
 import { pageResult } from "../utils/pagination.js";
 
 const GENERAL_COMMENT_TYPE = "general";
@@ -33,6 +33,27 @@ function toProjectComment(row) {
     selection: targetMetadata?.selection || null,
     targetId: row.target_id || null,
     type: row.parent_comment_id ? "reply" : "comment",
+  };
+}
+
+function toDocumentComment(row) {
+  const comment = toProjectComment(row);
+  return {
+    ...comment,
+    fileId: Number(row.file_id),
+    fileVersionId: Number(row.file_version_id),
+    pageNumber: row.page_number === null ? null : Number(row.page_number),
+    pointNumber:
+      Number(row.target_metadata?.pointNumber ?? row.target_metadata?.point_number) || null,
+    selection:
+      row.page_number === null
+        ? null
+        : {
+            kind: "document-point",
+            normalizedX: Number(row.pos_x),
+            normalizedY: Number(row.pos_y),
+            pageNumber: Number(row.page_number),
+          },
   };
 }
 
@@ -308,4 +329,171 @@ export async function createProjectCommentRecord({
   );
 
   return result.rows[0] ? toProjectComment(result.rows[0]) : null;
+}
+
+export async function listDocumentComments({
+  cursor = null,
+  fileId,
+  fileVersionId,
+  limit = 25,
+  projectId,
+  user,
+}) {
+  const access = getProjectAccessCondition(user);
+  const offset = access.params.length;
+  const result = await query(
+    `
+      select pc.*, ca.page_number, ca.pos_x, ca.pos_y,
+        u.first_name, u.last_name,
+        (u.profile_photo_url is not null) as has_profile_photo,
+        r.code as role_code
+      from public.project_comments pc
+      inner join public.projects p on p.id = pc.project_id
+      inner join public.users u on u.id = pc.user_id
+      inner join public.roles r on r.id = u.role_id
+      left join public.comment_anchors ca
+        on ca.comment_id = coalesce(pc.parent_comment_id, pc.id)
+       and ca.anchor_type = 'document'::anchor_type
+      where pc.project_id = $${offset + 1}
+        and pc.file_id = $${offset + 2}
+        and pc.file_version_id = $${offset + 3}
+        and pc.comment_type = 'document'::comment_type
+        and pc.deleted_at is null
+        and pc.status = $${offset + 4}::comment_status
+        and p.deleted_at is null
+        and (${access.sql})
+        and ($${offset + 5}::timestamptz is null or (pc.created_at, pc.id) > ($${offset + 5}::timestamptz, $${offset + 6}::bigint))
+      order by pc.created_at asc, pc.id asc
+      limit $${offset + 7}
+    `,
+    [
+      ...access.params,
+      projectId,
+      fileId,
+      fileVersionId,
+      ACTIVE_COMMENT_STATUS,
+      cursor?.[0] || null,
+      cursor?.[1] || null,
+      limit + 1,
+    ],
+  );
+  return pageResult(result.rows, limit, toDocumentComment, (row) => [row.created_at, String(row.id)]);
+}
+
+export async function createDocumentCommentRecord({
+  content,
+  fileId,
+  fileVersionId,
+  parentCommentId = null,
+  projectId,
+  selection,
+  user,
+}) {
+  const access = getProjectAccessCondition(user);
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const params = [...access.params, projectId, fileId, fileVersionId];
+    const offset = access.params.length;
+    const target = await client.query(
+      `
+        select f.id as file_id, fv.id as file_version_id
+        from public.projects p
+        inner join public.files f
+          on f.project_id = p.id and f.id = $${offset + 2}
+         and f.deleted_at is null and f.status = 'active'::file_status
+        inner join public.file_versions fv
+          on fv.file_id = f.id and fv.id = $${offset + 3} and fv.deleted_at is null
+        where p.id = $${offset + 1} and p.deleted_at is null and (${access.sql})
+        limit 1
+      `,
+      params,
+    );
+    if (!target.rows[0]) {
+      await client.query("rollback");
+      return null;
+    }
+
+    await client.query(
+      "select pg_advisory_xact_lock(hashtextextended(concat_ws(':', $1::text, $2::text, $3::text, 'document'), 0))",
+      [projectId, fileId, fileVersionId],
+    );
+
+    let root = null;
+    if (parentCommentId) {
+      const parent = await client.query(
+        `select coalesce(parent.id, child.id) as id,
+                coalesce(parent.target_metadata, child.target_metadata) as target_metadata
+         from public.project_comments child
+         left join public.project_comments parent
+           on parent.id = child.parent_comment_id and parent.deleted_at is null
+         where child.id = $1 and child.project_id = $2 and child.file_id = $3
+           and child.file_version_id = $4 and child.comment_type = 'document'::comment_type
+           and child.deleted_at is null and child.status = 'active'::comment_status
+         limit 1`,
+        [parentCommentId, projectId, fileId, fileVersionId],
+      );
+      root = parent.rows[0] || null;
+      if (!root) {
+        await client.query("rollback");
+        return null;
+      }
+    }
+
+    const pointNumber = root
+      ? Number(root.target_metadata?.pointNumber)
+      : Number((await client.query(
+          `select coalesce(max((target_metadata->>'pointNumber')::integer), 0) + 1 as point_number from public.project_comments
+           where project_id = $1 and file_id = $2 and file_version_id = $3
+             and parent_comment_id is null and comment_type = 'document'::comment_type
+             and deleted_at is null`,
+          [projectId, fileId, fileVersionId],
+        )).rows[0].point_number);
+    const inserted = await client.query(
+      `insert into public.project_comments (
+         project_id, user_id, file_id, file_version_id, parent_comment_id,
+         comment_type, content, target_id, target_metadata, status
+       ) values ($1, $2, $3, $4, $5, 'document'::comment_type, $6, $7, $8::jsonb, 'active'::comment_status)
+       returning *`,
+      [
+        projectId,
+        user.id,
+        fileId,
+        fileVersionId,
+        root?.id || null,
+        content,
+        String(fileId),
+        JSON.stringify({ pointNumber }),
+      ],
+    );
+    const row = inserted.rows[0];
+    if (!root) {
+      await client.query(
+        `insert into public.comment_anchors
+          (comment_id, anchor_type, pos_x, pos_y, page_number)
+         values ($1, 'document'::anchor_type, $2, $3, $4)`,
+        [row.id, selection.normalizedX, selection.normalizedY, selection.pageNumber],
+      );
+    }
+    const hydrated = await client.query(
+      `select pc.*, ca.page_number, ca.pos_x, ca.pos_y,
+        u.first_name, u.last_name, (u.profile_photo_url is not null) as has_profile_photo,
+        r.code as role_code
+       from public.project_comments pc
+       inner join public.users u on u.id = pc.user_id
+       inner join public.roles r on r.id = u.role_id
+       left join public.comment_anchors ca
+         on ca.comment_id = coalesce(pc.parent_comment_id, pc.id)
+        and ca.anchor_type = 'document'::anchor_type
+       where pc.id = $1`,
+      [row.id],
+    );
+    await client.query("commit");
+    return toDocumentComment(hydrated.rows[0]);
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 }

@@ -14,6 +14,7 @@ import {
 import {
   createProjectComment,
   getProjectComments,
+  getProjectDocumentComments,
   streamProjectCommentAuthorProfilePhoto,
   streamProjectCommentEvents,
 } from "../controllers/projectCommentController.js";
@@ -22,6 +23,7 @@ import { commentRateLimit, uploadRateLimit } from "../middlewares/actionRateLimi
 import { validate } from "../middlewares/validate.js";
 import {
   commentSchema,
+  documentCommentsSchema,
   paginationSchema,
   projectCommentAuthorPhotoSchema,
   projectIdSchema,
@@ -43,6 +45,12 @@ router.get(
   getProjectDetail,
 );
 router.get("/:projectId/comments", requireAuth, validate(paginationSchema), getProjectComments);
+router.get(
+  "/:projectId/files/:fileId/comments",
+  requireAuth,
+  validate(documentCommentsSchema),
+  getProjectDocumentComments,
+);
 router.get(
   "/:projectId/comment-authors/:userId/profile-photo",
   requireAuth,

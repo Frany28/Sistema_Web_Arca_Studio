@@ -10,9 +10,13 @@ import {
   assertProjectEventCapacity,
 } from "../services/projectEvents.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
+import {
+  createDocumentComment,
+  getDocumentComments,
+} from "../services/documentCommentService.js";
 
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
-const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "viewer3d"]);
+const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "viewer3d", "document"]);
 
 function parseProjectId(req) {
   const projectId = Number(req.params.projectId);
@@ -124,6 +128,8 @@ export async function createProjectComment(req, res, next) {
     const targetId = parseTargetId(req.body?.targetId);
     const image = parsePlainObject(req.body?.image);
     const selection = parsePlainObject(req.body?.selection);
+    const fileId = Number(req.body?.fileId);
+    const fileVersionId = Number(req.body?.fileVersionId);
 
     if (!commentType) {
       res.status(400).json({
@@ -133,7 +139,11 @@ export async function createProjectComment(req, res, next) {
       return;
     }
 
-    if (!parentCommentId && commentType !== "general" && !targetId) {
+    if (
+      !parentCommentId &&
+      !["general", "document"].includes(commentType) &&
+      !targetId
+    ) {
       res.status(400).json({
         code: "COMMENT_TARGET_REQUIRED",
         message: "La observación necesita un recurso asociado.",
@@ -165,7 +175,17 @@ export async function createProjectComment(req, res, next) {
       return;
     }
 
-    const comment = await createProjectCommentRecord({
+    const comment = commentType === "document"
+      ? await createDocumentComment({
+          content,
+          fileId,
+          fileVersionId,
+          parentCommentId,
+          projectId,
+          selection,
+          user: req.user,
+        })
+      : await createProjectCommentRecord({
       commentType,
       content,
       parentCommentId,
@@ -179,7 +199,7 @@ export async function createProjectComment(req, res, next) {
               selection,
             },
       user: req.user,
-    });
+        });
 
     if (!comment) {
       res.status(404).json({
@@ -189,11 +209,13 @@ export async function createProjectComment(req, res, next) {
       return;
     }
 
-    publishProjectEvent({
-      eventName: "project.comment.created",
-      payload: { comment },
-      projectId,
-    });
+    if (commentType !== "document") {
+      publishProjectEvent({
+        eventName: "project.comment.created",
+        payload: { comment },
+        projectId,
+      });
+    }
 
     res.status(201).json({ comment });
   } catch (error) {
@@ -201,6 +223,27 @@ export async function createProjectComment(req, res, next) {
       res.status(409).json({ code: "COMMENT_CONFLICT", message: "Otra observación fue creada simultáneamente. Intenta de nuevo." });
       return;
     }
+    next(error);
+  }
+}
+
+export async function getProjectDocumentComments(req, res, next) {
+  try {
+    const projectId = Number(req.params.projectId);
+    const fileId = Number(req.params.fileId);
+    const query = req.validatedQuery || req.query;
+    const fileVersionId = Number(query.fileVersionId);
+    const cursor = decodeCursor(query.cursor);
+    const page = await getDocumentComments({
+      cursor,
+      fileId,
+      fileVersionId,
+      limit: parsePageLimit(query.limit),
+      projectId,
+      user: req.user,
+    });
+    res.status(200).json({ comments: page.items, nextCursor: page.nextCursor });
+  } catch (error) {
     next(error);
   }
 }
