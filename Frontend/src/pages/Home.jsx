@@ -95,15 +95,15 @@ function ProjectRow({ project }) {
   const navigate = useNavigate();
 
   return (
-    <article className="flex flex-wrap items-center justify-end gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px]">
+    <article className="@container/project-row grid grid-cols-1 items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px] @min-[480px]/project-row:grid-cols-[122px_minmax(0,1fr)] @min-[800px]/project-row:grid-cols-[160px_minmax(300px,1fr)_auto]">
       <ProjectImage
         src={project.image}
         alt={project.name}
-        className="aspect-[140/80] min-h-[91px] min-w-[160px] flex-1 rounded-[var(--radius-2)]"
+        className="aspect-[262/150] w-full rounded-[var(--radius-2)] @min-[480px]/project-row:aspect-[122/70] @min-[480px]/project-row:w-[122px] @min-[800px]/project-row:aspect-[160/91.4286] @min-[800px]/project-row:w-[160px]"
         imageClassName="object-cover"
       />
 
-      <div className="flex min-w-[300px] flex-1 flex-col gap-[8px] overflow-hidden">
+      <div className="flex min-w-0 flex-col gap-[8px] overflow-hidden">
         <div className="flex items-center gap-[8px]">
           <h2 className="min-w-0 truncate text-heading-4 text-[var(--color-text-50)]">
             {project.name}
@@ -125,7 +125,7 @@ function ProjectRow({ project }) {
         fitContent={false}
         showLeftIcon={false}
         showRightIcon={false}
-        className="min-w-[105px] flex-1"
+        className="w-full min-w-[105px] @min-[480px]/project-row:col-start-2 @min-[480px]/project-row:w-[123px] @min-[480px]/project-row:justify-self-end @min-[800px]/project-row:col-start-3 @min-[800px]/project-row:row-start-1"
         onClick={() => navigate(getProjectPath(project))}
       >
         Ver proyecto

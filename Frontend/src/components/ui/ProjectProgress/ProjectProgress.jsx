@@ -39,13 +39,13 @@ function ProjectProgress({ className }) {
         <div
           key={step.id}
           className={clsx(
-            "flex min-w-[95px] flex-col gap-[2px] border-t-[4px] pt-[12px]",
+            "flex min-w-0 flex-col gap-[2px] border-t-[4px] pt-[12px] sm:min-w-[95px]",
             step.complete
               ? "border-[var(--color-accent-300)]"
               : "border-[var(--color-neutral-200)]",
           )}
         >
-          <p className={clsx("text-body-3", step.titleClassName)}>
+          <p className={clsx("text-body-4 sm:text-body-3", step.titleClassName)}>
             {step.title}
           </p>
           <p className={clsx("text-body-4", step.subtitleClassName)}>

@@ -16,6 +16,30 @@ const examples = [
     name: "Casa Publica Arca",
   },
   {
+    assignedArchitectId: null,
+    budget: 47500,
+    clientId: null,
+    constructionArea: 168,
+    description:
+      "Pabellon contemporaneo para eventos y exhibiciones, con espacios modulares y jardines integrados.",
+    generalArea: 240,
+    isPublic: true,
+    location: "Valencia, Carabobo",
+    name: "Pabellon Aurora",
+  },
+  {
+    assignedArchitectId: null,
+    budget: 32800,
+    clientId: null,
+    constructionArea: 126,
+    description:
+      "Remodelacion de una terraza gastronomica con cubierta ligera, vegetacion tropical y areas sociales.",
+    generalArea: 185,
+    isPublic: true,
+    location: "Lecheria, Anzoategui",
+    name: "Terraza Origen",
+  },
+  {
     assignedArchitectId: 2,
     budget: 18500,
     clientId: 1,
@@ -222,7 +246,11 @@ try {
   const results = [];
   const showcaseClientId = await ensureShowcaseClient();
 
-  examples[0].clientId = showcaseClientId;
+  examples.forEach((example) => {
+    if (example.clientId === null) {
+      example.clientId = showcaseClientId;
+    }
+  });
 
   for (const example of examples) {
     results.push(await upsertProject(example));
