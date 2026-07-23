@@ -17,6 +17,7 @@ import ProjectImage from "../components/ui/ProjectImage/ProjectImage.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";
 import ScrollBar from "../components/ui/ScrollBar/ScrollBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
+import SideOverlayDrawer from "../components/ui/SideOverlayDrawer.jsx";
 import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import {
@@ -608,40 +609,39 @@ function Home() {
         </div>
       </div>
 
-      {isMobileNavigationOpen ? (
-        <div className="fixed inset-0 z-[80] min-[768px]:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-[rgba(42,41,41,0.10)] backdrop-blur-[var(--effect-blur-b1)]"
-            aria-label="Cerrar navegación"
-            onClick={() => setIsMobileNavigationOpen(false)}
-          />
-          <SideNavigation
-            activeItemId="dashboard"
-            expanded
-            items={navigationItems}
-            userName={currentUser.name}
-            userEmail={currentUser.email}
-            userAvatarSrc={currentUser.profilePhotoUrl}
-            onItemSelect={(item) => {
-              setIsMobileNavigationOpen(false);
-              handleSideNavigationSelect(item);
-            }}
-            onNewOpportunityClick={() => {
-              setIsMobileNavigationOpen(false);
-              setIsProjectRequestModalOpen(true);
-            }}
-            onLogoutClick={() => {
-              logout();
-              navigate("/");
-            }}
-            onExpandedChange={(expanded) => {
-              if (!expanded) setIsMobileNavigationOpen(false);
-            }}
-            className="!fixed inset-y-0 left-0 z-[81] !w-[min(312px,calc(100vw-32px))] shadow-[var(--shadow-e3)]"
-          />
-        </div>
-      ) : null}
+      <SideOverlayDrawer
+        open={isMobileNavigationOpen}
+        onClose={() => setIsMobileNavigationOpen(false)}
+        side="left"
+        widthClassName="w-[min(312px,calc(100vw-32px))]"
+        className="z-[80] min-[768px]:hidden"
+        panelClassName="rounded-none"
+      >
+        <SideNavigation
+          activeItemId="dashboard"
+          expanded
+          items={navigationItems}
+          userName={currentUser.name}
+          userEmail={currentUser.email}
+          userAvatarSrc={currentUser.profilePhotoUrl}
+          onItemSelect={(item) => {
+            setIsMobileNavigationOpen(false);
+            handleSideNavigationSelect(item);
+          }}
+          onNewOpportunityClick={() => {
+            setIsMobileNavigationOpen(false);
+            setIsProjectRequestModalOpen(true);
+          }}
+          onLogoutClick={() => {
+            logout();
+            navigate("/");
+          }}
+          onExpandedChange={(expanded) => {
+            if (!expanded) setIsMobileNavigationOpen(false);
+          }}
+          className="!h-full !min-h-full !w-full border-r-0 shadow-none"
+        />
+      </SideOverlayDrawer>
     </main>
   );
 }
