@@ -93,10 +93,6 @@ function DocumentPreviewSkeleton() {
 function DocumentListSkeleton() {
   return (
     <div className="flex w-full flex-col gap-[12px]">
-      <div className="flex gap-[12px] border-b border-[var(--color-neutral-200)] pb-[16px]">
-        <SkeletonBlock className="h-[44px] min-w-0 flex-1 rounded-[var(--radius-2)]" />
-        <SkeletonBlock className="size-[44px] shrink-0 rounded-[var(--radius-2)]" delay={60} />
-      </div>
       <SkeletonBlock className="h-[14px] w-[min(290px,88%)] rounded-[var(--radius-1)]" delay={90} tone="muted" />
       {Array.from({ length: 3 }, (_, index) => (
         <SkeletonBlock

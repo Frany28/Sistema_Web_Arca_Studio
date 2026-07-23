@@ -259,23 +259,24 @@ export default function ProjectDocumentsPanel({
         </div>
 
         <aside className="flex min-h-0 flex-col">
+          <ProjectDocumentsToolbar
+            disabled={isPreviewLoading || !hasDocuments}
+            query={query}
+            sortDirection={sortDirection}
+            onQueryChange={setQuery}
+            onToggleSort={() =>
+              setSortDirection((current) => current === "desc" ? "asc" : "desc")
+            }
+          />
+
           {isPreviewLoading ? (
             <Loader
               preset="documentList"
               label="Cargando lista de documentos"
+              className="pt-[12px]"
             />
           ) : (
             <>
-              <ProjectDocumentsToolbar
-                disabled={!hasDocuments}
-                query={query}
-                sortDirection={sortDirection}
-                onQueryChange={setQuery}
-                onToggleSort={() =>
-                  setSortDirection((current) => current === "desc" ? "asc" : "desc")
-                }
-              />
-
               {hasVisibleDocuments ? (
           <div className="flex flex-col gap-[12px] py-[12px]">
             <p className="text-heading-8 text-[var(--color-text-200)]">
