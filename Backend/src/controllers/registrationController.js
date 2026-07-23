@@ -1,6 +1,7 @@
 import { authConfig } from "../config/auth.js";
 import { buildSessionCookie } from "./authController.js";
 import * as registrationService from "../services/registrationService.js";
+import { toPublicUser } from "../repositories/userRepository.js";
 
 export async function startRegistration(req, res, next) {
   try { res.status(202).json(await registrationService.startRegistration(req.body)); } catch (error) { next(error); }
@@ -18,6 +19,6 @@ export async function completeRegistration(req, res, next) {
   try {
     const result = await registrationService.completeRegistration(req.body);
     res.setHeader("Set-Cookie", buildSessionCookie(result.token, authConfig.tokenExpiresInSeconds));
-    res.status(201).json(result);
+    res.status(201).json({ user: toPublicUser(result.user) });
   } catch (error) { next(error); }
 }

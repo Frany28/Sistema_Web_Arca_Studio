@@ -59,10 +59,7 @@ export async function getProjectDetail(req, res, next) {
     }
 
     res.status(200).json({
-      project: {
-        ...project,
-        fileAccessToken: req.session?.token || null,
-      },
+      project,
     });
   } catch (error) {
     next(error);
@@ -110,7 +107,7 @@ export async function updateProjectPublication(req, res, next) {
       return;
     }
 
-    const project = await updateProjectVisibility(projectId, isPublic);
+    const project = await updateProjectVisibility(projectId, isPublic, req.user);
 
     if (!project) {
       res.status(404).json({

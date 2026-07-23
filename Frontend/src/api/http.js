@@ -3,22 +3,8 @@ const API_BASE_URL = (
   viteEnv.VITE_API_URL ||
   (viteEnv.DEV ? "http://localhost:3000/api" : "/api")
 ).replace(/\/$/, "");
-const AUTH_TOKEN_STORAGE_KEY = "arca_auth_token";
-let authTokenMemory = null;
-
 export function getAuthToken() {
-  if (authTokenMemory) {
-    return authTokenMemory;
-  }
-
-  try {
-    return (
-      window.sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ||
-      window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
-    );
-  } catch {
-    return null;
-  }
+  return "cookie-session";
 }
 
 export function getApiUrl(path) {
@@ -26,31 +12,15 @@ export function getApiUrl(path) {
 }
 
 export function setAuthToken(token) {
-  authTokenMemory = token || null;
-
-  try {
-    if (token) {
-      window.sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
-      window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
-      return;
-    }
-
-    window.sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-  } catch {
-    // Ignore storage errors in restricted browser contexts.
-  }
+  void token;
 }
 
 async function apiRequest(path, options = {}) {
-  const token = getAuthToken();
-
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
@@ -165,7 +135,6 @@ export const authApi = {
   },
 
   uploadProfilePhoto({ file, onUploadProgress, signal }) {
-    const token = getAuthToken();
     const fileName = encodeURIComponent(file?.name || "avatar");
 
     return new Promise((resolve, reject) => {
@@ -188,10 +157,6 @@ export const authApi = {
         file?.type || "application/octet-stream",
       );
       request.setRequestHeader("X-File-Name", fileName);
-
-      if (token) {
-        request.setRequestHeader("Authorization", `Bearer ${token}`);
-      }
 
       request.upload.onprogress = (event) => {
         if (!event.lengthComputable || !event.total) {
@@ -321,16 +286,8 @@ export const projectsApi = {
   },
 
   subscribeToEvents({ projectId, onCommentCreated, onError }) {
-    const token = getAuthToken();
-    const params = new URLSearchParams();
-
-    if (token) {
-      params.set("access_token", token);
-    }
-
-    const query = params.toString();
     const eventSource = new EventSource(
-      getApiUrl(`/projects/${projectId}/events${query ? `?${query}` : ""}`),
+      getApiUrl(`/projects/${projectId}/events`),
       { withCredentials: true },
     );
 
@@ -376,19 +333,8 @@ export const projectsApi = {
     });
   },
 
-  getFileContentUrl({ accessToken, fileId, projectId }) {
-    const token = accessToken || getAuthToken();
-    const params = new URLSearchParams();
-
-    if (token) {
-      params.set("access_token", token);
-    }
-
-    const query = params.toString();
-
-    return getApiUrl(
-      `/projects/${projectId}/files/${fileId}/content${query ? `?${query}` : ""}`,
-    );
+  getFileContentUrl({ fileId, projectId }) {
+    return getApiUrl(`/projects/${projectId}/files/${fileId}/content`);
   },
 
   updatePublication({ projectId, isPublic }) {
@@ -415,7 +361,6 @@ export const projectsApi = {
 };
 
 function uploadRawFile({ file, onUploadProgress, path, signal }) {
-  const token = getAuthToken();
   const fileName = encodeURIComponent(file?.name || "archivo");
 
   return new Promise((resolve, reject) => {
@@ -431,10 +376,6 @@ function uploadRawFile({ file, onUploadProgress, path, signal }) {
       file?.type || "application/octet-stream",
     );
     request.setRequestHeader("X-File-Name", fileName);
-
-    if (token) {
-      request.setRequestHeader("Authorization", `Bearer ${token}`);
-    }
 
     request.upload.onprogress = (event) => {
       if (!event.lengthComputable || !event.total) {

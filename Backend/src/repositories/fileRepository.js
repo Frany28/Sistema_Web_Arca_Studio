@@ -26,21 +26,10 @@ function getFileType(contentType, originalName) {
 
 function toFileUpload(row) {
   return {
-    currentVersion: Number(row.current_version),
-    fileName: row.file_name,
     fileSize: Number(row.file_size),
     fileType: row.file_type,
-    fileUrl: row.file_url,
     id: Number(row.id),
     originalName: row.original_name,
-    projectId: row.project_id ? Number(row.project_id) : null,
-    projectRequestId: row.project_request_id
-      ? Number(row.project_request_id)
-      : null,
-    storageKey: row.file_name,
-    uploadedBy: Number(row.uploaded_by),
-    versionId: Number(row.version_id),
-    versionNumber: Number(row.version_number),
   };
 }
 
@@ -369,8 +358,7 @@ export async function findProjectForFileUpload(projectId, user) {
   const hasAccess =
     roleCode === "admin" ||
     (roleCode === "architect" &&
-      (Number(project.assigned_architect_id) === Number(user.id) ||
-        project.is_public === true)) ||
+      Number(project.assigned_architect_id) === Number(user.id)) ||
     (roleCode === "client" &&
       user.clientId &&
       Number(project.client_id) === Number(user.clientId));
@@ -660,10 +648,22 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
     accessCondition = "true";
   } else if (roleCode === "architect") {
     params.push(user.id);
-    accessCondition = "(project.assigned_architect_id = $3 or project.is_public = true)";
+    accessCondition = `(project.assigned_architect_id = $3 or (
+      project.is_public = true and (
+        file.file_type like 'image/%' or
+        file.file_type like 'video/%' or
+        file.file_type like 'model/%'
+      )
+    ))`;
   } else if (roleCode === "client" && user.clientId) {
     params.push(user.clientId);
-    accessCondition = "(project.client_id = $3 or project.is_public = true)";
+    accessCondition = `(project.client_id = $3 or (
+      project.is_public = true and (
+        file.file_type like 'image/%' or
+        file.file_type like 'video/%' or
+        file.file_type like 'model/%'
+      )
+    ))`;
   }
 
   const result = await query(

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { api, setAuthToken } from "../../api/http.js";
+import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import { decorateCommentForDisplay } from "../../utils/commentDisplay.js";
@@ -161,11 +161,10 @@ function toMediaFileItem(file, { project }) {
   const contentUrl =
     project?.id && file.id
       ? api.projects.getFileContentUrl({
-          accessToken: project.fileAccessToken,
           fileId: file.id,
           projectId: project.id,
         })
-      : file.fileUrl;
+      : null;
 
   return {
     author:
@@ -173,14 +172,10 @@ function toMediaFileItem(file, { project }) {
       project.assignedArchitect?.name ||
       project.client?.name ||
       "ARCA Studio",
-    authorAvatarSrc:
-      file.uploadedBy?.profilePhotoUrl ||
-      project.assignedArchitect?.profilePhotoUrl ||
-      project.client?.profilePhotoUrl ||
-      null,
+    authorAvatarSrc: null,
     extension: file.extension,
     fileType: file.fileType,
-    fileUrl: file.fileUrl,
+    fileUrl: contentUrl,
     fileId: file.id,
     id: `project-file-${file.id}`,
     image: isImageFile(file) ? contentUrl : null,
@@ -198,13 +193,13 @@ function toProjectPresentation(project) {
   const projectFiles = project?.files || [];
   const imageFiles = projectFiles.filter(isImageFile);
   const renderGallery = imageFiles
-    .filter((file) => file.fileUrl)
+    .filter((file) => file.available)
     .map((file) => toMediaFileItem(file, { project }));
   const videoGallery = projectFiles
-    .filter((file) => isVideoFile(file) && file.fileUrl)
+    .filter((file) => isVideoFile(file) && file.available)
     .map((file) => toMediaFileItem(file, { project }));
   const modelGallery = projectFiles
-    .filter((file) => isModelFile(file) && file.fileUrl)
+    .filter((file) => isModelFile(file) && file.available)
     .map((file) => toMediaFileItem(file, { project }));
   const documents = projectFiles
     .filter((file) => !isImageFile(file) && !isVideoFile(file) && !isModelFile(file))
@@ -212,11 +207,10 @@ function toProjectPresentation(project) {
       const contentUrl =
         project?.id && file.id
           ? api.projects.getFileContentUrl({
-              accessToken: project.fileAccessToken,
               fileId: file.id,
               projectId: project.id,
             })
-          : file.fileUrl;
+          : null;
 
       return {
         createdAt: file.createdAt,
@@ -225,7 +219,7 @@ function toProjectPresentation(project) {
         id: file.id,
         name: file.title,
         owner: file.uploadedBy?.name || "ARCA Studio",
-        ownerAvatarSrc: file.uploadedBy?.profilePhotoUrl || null,
+        ownerAvatarSrc: null,
         size: formatFileSize(file.size),
         uploadedAt: formatFileDate(file.createdAt),
       };
@@ -398,10 +392,6 @@ export default function ProjectDetailsPage({
             return;
           }
 
-          if (data.project.fileAccessToken) {
-            setAuthToken(data.project.fileAccessToken);
-          }
-
           setProject(data.project);
           setFilesSynchronizedAt(new Date().toISOString());
           setResolvedProjectId(data.project.id);
@@ -430,10 +420,6 @@ export default function ProjectDetailsPage({
       .getByIdAllFiles({ projectId: initialProjectId })
       .then((data) => {
         if (isMounted) {
-          if (data.project?.fileAccessToken) {
-            setAuthToken(data.project.fileAccessToken);
-          }
-
           const nextProject = data.project || null;
           setProject(nextProject);
           setFilesSynchronizedAt(new Date().toISOString());
@@ -615,9 +601,6 @@ export default function ProjectDetailsPage({
 
     try {
       const data = await api.projects.getByIdAllFiles({ projectId: resolvedProjectId });
-      if (data.project?.fileAccessToken) {
-        setAuthToken(data.project.fileAccessToken);
-      }
       setProject(data.project || null);
       setFilesSynchronizedAt(new Date().toISOString());
     } catch {

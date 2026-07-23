@@ -175,3 +175,13 @@ export async function updateUserProfilePhotoUrl(id, profilePhotoUrl) {
 export function sanitizeUser(row) {
   return toSafeUser(row);
 }
+
+export function toPublicUser(user) {
+  if (!user) return null;
+
+  const { profilePhotoUrl, ...publicUser } = user;
+  return {
+    ...publicUser,
+    hasProfilePhoto: Boolean(profilePhotoUrl),
+  };
+}

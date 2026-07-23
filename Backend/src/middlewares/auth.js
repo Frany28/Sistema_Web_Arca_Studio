@@ -16,7 +16,7 @@ function parseBoolean(value, fallback = false) {
 const ROUTE_AUTH_DISABLED_FOR_TESTS = parseBoolean(
   process.env.ROUTE_AUTH_DISABLED_FOR_TESTS,
   false,
-);
+) && process.env.NODE_ENV !== "production";
 
 function getPublicTestUser() {
   const id = Number(process.env.PUBLIC_TEST_USER_ID || 1);
@@ -84,16 +84,9 @@ function getBearerToken(req) {
   return token.trim();
 }
 
-function getQueryToken(req) {
-  const token = req.query?.access_token;
-
-  return typeof token === "string" && token.trim() ? token.trim() : null;
-}
-
 async function resolveSession(req) {
   const cookies = parseCookies(req.headers.cookie);
-  const token =
-    getBearerToken(req) || cookies[authConfig.cookieName] || getQueryToken(req);
+  const token = getBearerToken(req) || cookies[authConfig.cookieName];
   const payload = verifyAuthToken(token, {
     secret: authConfig.tokenSecret,
   });

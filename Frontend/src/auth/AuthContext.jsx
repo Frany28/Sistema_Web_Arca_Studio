@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { api, getApiUrl, getAuthToken, setAuthToken } from "../api/http.js";
+import { api, getApiUrl, setAuthToken } from "../api/http.js";
 import { ROUTE_AUTH_DISABLED_FOR_TESTS, TEST_AUTH_USER } from "./testAccess.js";
 
 const AuthContext = createContext(null);
@@ -28,12 +28,6 @@ function buildProfilePhotoImageUrl(profilePhotoUrl) {
   const params = new URLSearchParams({
     v: Date.now().toString(),
   });
-  const token = getAuthToken();
-
-  if (token) {
-    params.set("access_token", token);
-  }
-
   return getApiUrl(`/auth/profile-photo/image?${params.toString()}`);
 }
 
@@ -44,15 +38,9 @@ function normalizeUser(user) {
 
   return {
     ...user,
-    profilePhotoUrl: buildProfilePhotoImageUrl(
-      user.profilePhotoUrl || user.profile_photo_url,
-    ),
-    remoteProfilePhotoUrl:
-      user.remoteProfilePhotoUrl ||
-      user.remote_profile_photo_url ||
-      user.profilePhotoUrl ||
-      user.profile_photo_url ||
-      "",
+    profilePhotoUrl: user.hasProfilePhoto
+      ? buildProfilePhotoImageUrl("stored")
+      : "",
     role: typeof user.role === "string" ? user.role : user.role?.code,
     roleDetails: typeof user.role === "object" ? user.role : null,
   };
@@ -76,10 +64,6 @@ export function AuthProvider({ children }) {
       .me()
       .then((data) => {
         if (isMounted) {
-          if (data.token) {
-            setAuthToken(data.token);
-          }
-
           setUser(normalizeUser(data.user));
         }
       })
@@ -103,14 +87,13 @@ export function AuthProvider({ children }) {
   const login = useCallback(async ({ email, password }) => {
     const data = await api.auth.login({ email, password });
 
-    if (!data.token) {
+    if (!data.user) {
       throw Object.assign(
         new Error("El backend de autenticación no está actualizado."),
-        { code: "AUTH_TOKEN_MISSING" },
+        { code: "AUTH_SESSION_MISSING" },
       );
     }
 
-    setAuthToken(data.token);
     const nextUser = normalizeUser(data.user);
     setUser(nextUser);
     return nextUser;
@@ -118,12 +101,11 @@ export function AuthProvider({ children }) {
 
   const completeRegistration = useCallback(async (payload) => {
     const data = await api.auth.completeRegistration(payload);
-    if (!data?.token || !data?.user) {
+    if (!data?.user) {
       throw Object.assign(new Error("No se pudo crear la sesión."), {
-        code: "AUTH_TOKEN_MISSING",
+        code: "AUTH_SESSION_MISSING",
       });
     }
-    setAuthToken(data.token);
     const nextUser = normalizeUser(data.user);
     try {
       window.sessionStorage.setItem("arca_registration_complete", "true");

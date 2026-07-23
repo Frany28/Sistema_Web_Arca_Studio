@@ -16,6 +16,19 @@ body::selection,
   color: inherit;
 }
 
+/* El visor PDF necesita una capa de texto seleccionable para observaciones. */
+#root .pdf-text-selection,
+#root .pdf-text-selection * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+#root .pdf-text-selection::selection,
+#root .pdf-text-selection *::selection {
+  background: rgba(255, 214, 64, 0.5);
+  color: transparent;
+}
+
 /* Todos los controles de acción habilitados deben comunicar interactividad. */
 button:not(:disabled),
 input[type="button"]:not(:disabled),

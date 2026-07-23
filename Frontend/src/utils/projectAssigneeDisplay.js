@@ -1,4 +1,4 @@
-import { getApiUrl, getAuthToken } from "../api/http.js";
+import { getApiUrl } from "../api/http.js";
 
 export function getInitialsFromDisplayName(value) {
   const parts = String(value || "").trim().split(/\s+/).filter(Boolean);
@@ -9,14 +9,9 @@ export function getInitialsFromDisplayName(value) {
 
 export function buildAssignedArchitectAvatarUrl(project) {
   const projectId = Number(project?.id);
-  if (!project?.assignedArchitect?.profilePhotoUrl || !Number.isInteger(projectId) || projectId <= 0) return "";
+  if (!project?.assignedArchitect?.hasProfilePhoto || !Number.isInteger(projectId) || projectId <= 0) return "";
 
-  const params = new URLSearchParams();
-  const token = getAuthToken();
-  if (token) params.set("access_token", token);
-  const query = params.toString();
-
-  return getApiUrl(`/projects/${projectId}/assigned-architect/profile-photo${query ? `?${query}` : ""}`);
+  return getApiUrl(`/projects/${projectId}/assigned-architect/profile-photo`);
 }
 
 export function getProjectAssigneeAvatar(project) {

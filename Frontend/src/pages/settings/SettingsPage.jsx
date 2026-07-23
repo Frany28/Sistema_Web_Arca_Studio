@@ -450,10 +450,6 @@ export default function SettingsPage() {
     if (uploadResult?.user) {
       updateUser({
         ...uploadResult.user,
-        remoteProfilePhotoUrl:
-          uploadResult.user.profilePhotoUrl ||
-          uploadResult.user.profile_photo_url ||
-          "",
       });
     }
 

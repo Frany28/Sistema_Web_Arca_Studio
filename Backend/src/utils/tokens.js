@@ -54,10 +54,22 @@ export function verifyAuthToken(token, { secret }) {
   }
 
   try {
+    const header = JSON.parse(base64UrlDecode(encodedHeader));
     const payload = JSON.parse(base64UrlDecode(encodedBody));
     const now = Math.floor(Date.now() / 1000);
 
-    if (payload.exp && Number(payload.exp) <= now) {
+    if (
+      !header ||
+      header.alg !== "HS256" ||
+      header.typ !== "JWT" ||
+      !payload ||
+      typeof payload !== "object" ||
+      Array.isArray(payload) ||
+      !Number.isFinite(Number(payload.exp)) ||
+      Number(payload.exp) <= now ||
+      !Number.isFinite(Number(payload.iat)) ||
+      Number(payload.iat) > now + 60
+    ) {
       return null;
     }
 

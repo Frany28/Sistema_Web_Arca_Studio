@@ -231,12 +231,9 @@ export async function uploadSupportRequestFile({
       fileExtension: row.file_extension,
       fileSize: Number(row.file_size),
       fileType: row.file_type,
-      fileUrl: row.file_url,
       id: Number(row.id),
       originalName: row.original_name,
-      storageKey: row.storage_key,
       supportRequestId: Number(row.support_request_id),
-      uploadedBy: Number(row.uploaded_by),
     };
   } catch (error) {
     await client.query("rollback");

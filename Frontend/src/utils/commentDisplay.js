@@ -1,15 +1,11 @@
-import { getApiUrl, getAuthToken } from "../api/http.js";
-
-function normalizeIdentityValue(value) {
-  return String(value || "").trim().toLowerCase();
-}
+import { getApiUrl } from "../api/http.js";
 
 export function buildCommentAuthorAvatarUrl(comment) {
   const authorUserId = Number(comment?.author?.id);
   const projectId = Number(comment?.projectId);
 
   if (
-    !comment?.author?.profilePhotoUrl ||
+    !comment?.author?.hasProfilePhoto ||
     !Number.isInteger(authorUserId) ||
     authorUserId <= 0 ||
     !Number.isInteger(projectId) ||
@@ -18,14 +14,8 @@ export function buildCommentAuthorAvatarUrl(comment) {
     return "";
   }
 
-  const params = new URLSearchParams();
-  const token = getAuthToken();
-
-  if (token) params.set("access_token", token);
-
-  const query = params.toString();
   return getApiUrl(
-    `/projects/${projectId}/comment-authors/${authorUserId}/profile-photo${query ? `?${query}` : ""}`,
+    `/projects/${projectId}/comment-authors/${authorUserId}/profile-photo`,
   );
 }
 
@@ -33,26 +23,13 @@ export function isCommentFromCurrentUser(comment, user) {
   const author = comment?.author;
   const authorId = author?.id == null ? "" : String(author.id);
   const userId = user?.id == null ? "" : String(user.id);
-  const authorName = normalizeIdentityValue(
-    author?.name ||
-      [author?.firstName, author?.lastName].filter(Boolean).join(" "),
-  );
-  const userName = normalizeIdentityValue(
-    user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(" "),
-  );
-  const authorEmail = normalizeIdentityValue(author?.email);
-  const userEmail = normalizeIdentityValue(user?.email);
 
-  return Boolean(
-    (authorId && userId && authorId === userId) ||
-      (authorEmail && userEmail && authorEmail === userEmail) ||
-      (authorName && userName && authorName === userName),
-  );
+  return Boolean(authorId && userId && authorId === userId);
 }
 
 export function getCommentAuthorAvatarSrc(comment, user) {
   if (isCommentFromCurrentUser(comment, user)) {
-    return user?.profilePhotoUrl || comment?.author?.profilePhotoUrl || "";
+    return user?.profilePhotoUrl || "";
   }
 
   return buildCommentAuthorAvatarUrl(comment) || comment?.avatarSrc || "";

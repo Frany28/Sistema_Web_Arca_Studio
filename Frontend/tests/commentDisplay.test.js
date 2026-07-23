@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { setAuthToken } from "../src/api/http.js";
 import {
   buildCommentAuthorAvatarUrl,
   decorateCommentForDisplay,
@@ -81,7 +80,7 @@ test("other authors use the authenticated project avatar endpoint", () => {
       author: {
         id: 30,
         name: "María Gómez",
-        profilePhotoUrl: "client-avatar",
+        hasProfilePhoto: true,
         roleCode: "client",
       },
       commentType: "general",
@@ -102,7 +101,7 @@ test("other authors use the authenticated project avatar endpoint", () => {
 test("author avatar endpoint requires a stored photo and valid identifiers", () => {
   assert.equal(
     buildCommentAuthorAvatarUrl({
-      author: { id: 30, profilePhotoUrl: "stored-photo" },
+      author: { id: 30, hasProfilePhoto: true },
       projectId: 1,
     }),
     "/api/projects/1/comment-authors/30/profile-photo",
@@ -113,24 +112,20 @@ test("author avatar endpoint requires a stored photo and valid identifiers", () 
   );
   assert.equal(
     buildCommentAuthorAvatarUrl({
-      author: { id: 30, profilePhotoUrl: "stored-photo" },
+      author: { id: 30, hasProfilePhoto: true },
     }),
     "",
   );
 });
 
-test("author avatar endpoint carries the current authentication token", () => {
-  setAuthToken("token for image");
-
+test("author avatar endpoint relies on the HttpOnly session cookie", () => {
   assert.equal(
     buildCommentAuthorAvatarUrl({
-      author: { id: 30, profilePhotoUrl: "stored-photo" },
+      author: { id: 30, hasProfilePhoto: true },
       projectId: 1,
     }),
-    "/api/projects/1/comment-authors/30/profile-photo?access_token=token+for+image",
+    "/api/projects/1/comment-authors/30/profile-photo",
   );
-
-  setAuthToken(null);
 });
 
 test("general comments show only the three conversations with latest activity", () => {

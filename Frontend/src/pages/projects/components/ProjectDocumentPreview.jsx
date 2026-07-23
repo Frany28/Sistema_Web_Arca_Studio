@@ -1,7 +1,8 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { getDocument, GlobalWorkerOptions, TextLayer } from "pdfjs-dist";
+import "pdfjs-dist/web/pdf_viewer.css";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
@@ -120,6 +121,7 @@ function PdfToolbar({
 
 function PdfPageCanvas({ documentProxy, page, title, zoom }) {
   const canvasRef = useRef(null);
+  const textLayerRef = useRef(null);
   const [renderedKey, setRenderedKey] = useState("");
   const renderKey = `${page}-${zoom}`;
 
@@ -128,10 +130,12 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
 
     let cancelled = false;
     let renderTask;
+    let textLayer;
     documentProxy.getPage(page).then((pdfPage) => {
-      if (cancelled || !canvasRef.current) return;
+      if (cancelled || !canvasRef.current || !textLayerRef.current) return;
 
       const canvas = canvasRef.current;
+      const textLayerElement = textLayerRef.current;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
       const viewport = pdfPage.getViewport({ scale: (zoom / 100) * 1.35 });
       const context = canvas.getContext("2d", { alpha: false });
@@ -140,6 +144,15 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
       canvas.height = Math.floor(viewport.height * pixelRatio);
       canvas.style.width = `${Math.floor(viewport.width)}px`;
       canvas.style.height = `${Math.floor(viewport.height)}px`;
+      textLayerElement.replaceChildren();
+
+      textLayer = new TextLayer({
+        container: textLayerElement,
+        textContentSource: pdfPage.streamTextContent({
+          includeMarkedContent: true,
+        }),
+        viewport,
+      });
 
       renderTask = pdfPage.render({
         canvas,
@@ -153,11 +166,14 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
           if (!cancelled) setRenderedKey(renderKey);
         })
         .catch(() => {});
+
+      textLayer.render().catch(() => {});
     });
 
     return () => {
       cancelled = true;
       renderTask?.cancel();
+      textLayer?.cancel();
     };
   }, [documentProxy, page, renderKey, zoom]);
 
@@ -171,6 +187,11 @@ function PdfPageCanvas({ documentProxy, page, title, zoom }) {
         role="img"
         aria-label={`${title}, página ${page}`}
         className="block max-w-none bg-white shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
+      />
+      <div
+        ref={textLayerRef}
+        className="textLayer pdf-text-selection"
+        aria-label={`Texto seleccionable de ${title}, página ${page}`}
       />
     </div>
   );

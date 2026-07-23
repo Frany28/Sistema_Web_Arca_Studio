@@ -11,12 +11,9 @@ function toProjectComment(row) {
 
   return {
     author: {
-      email: row.email,
-      firstName: row.first_name,
+      hasProfilePhoto: Boolean(row.has_profile_photo),
       id: Number(row.user_id),
-      lastName: row.last_name,
-      name: authorName || row.email,
-      profilePhotoUrl: row.profile_photo_url || null,
+      name: authorName || "Usuario",
       roleCode: row.role_code,
     },
     commentType,
@@ -24,7 +21,6 @@ function toProjectComment(row) {
     createdAt: row.created_at,
     id: Number(row.id),
     image: targetMetadata?.image || null,
-    imageComment: ["image", "viewer3d", "video"].includes(commentType),
     parentCommentId: row.parent_comment_id
       ? Number(row.parent_comment_id)
       : null,
@@ -35,11 +31,8 @@ function toProjectComment(row) {
         : null,
     projectId: Number(row.project_id),
     selection: targetMetadata?.selection || null,
-    status: row.status,
     targetId: row.target_id || null,
-    targetMetadata,
     type: row.parent_comment_id ? "reply" : "comment",
-    updatedAt: row.updated_at,
   };
 }
 
@@ -138,13 +131,10 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
         pc.content,
         pc.target_id,
         pc.target_metadata,
-        pc.status,
         pc.created_at,
-        pc.updated_at,
-        u.email,
         u.first_name,
         u.last_name,
-        u.profile_photo_url,
+        (u.profile_photo_url is not null) as has_profile_photo,
         r.code as role_code
       from public.project_comments pc
       inner join public.projects p
@@ -303,13 +293,10 @@ export async function createProjectCommentRecord({
         ic.content,
         ic.target_id,
         ic.target_metadata,
-        ic.status,
         ic.created_at,
-        ic.updated_at,
-        u.email,
         u.first_name,
         u.last_name,
-        u.profile_photo_url,
+        (u.profile_photo_url is not null) as has_profile_photo,
         r.code as role_code
       from inserted_comment ic
       inner join public.users u

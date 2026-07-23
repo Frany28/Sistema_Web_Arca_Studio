@@ -10,23 +10,18 @@ function toProject(row) {
     areaUnit: row.area_unit,
     assignedArchitect: row.assigned_architect_id
       ? {
-          email: row.architect_email,
-          firstName: row.architect_first_name,
+          hasProfilePhoto: Boolean(row.architect_has_profile_photo),
           id: Number(row.assigned_architect_id),
-          lastName: row.architect_last_name,
           name: `${row.architect_first_name || ""} ${
             row.architect_last_name || ""
           }`.trim(),
-          profilePhotoUrl: row.architect_profile_photo_url || null,
         }
       : null,
     budget: toNumber(row.budget),
     city: row.city || null,
     client: {
-      email: row.client_email,
       id: Number(row.client_id),
       name: row.client_name,
-      phone: row.client_phone,
     },
     constructionArea: toNumber(row.construction_area),
     country: row.country || null,
@@ -101,6 +96,24 @@ function getDirectProjectAccess(user, projectAlias = "p") {
   return { condition: "false", params: [] };
 }
 
+function hasDirectProjectAccess(project, user) {
+  const roleCode = user?.role?.code;
+  if (roleCode === "admin") return true;
+  if (roleCode === "architect") {
+    return Number(project.assigned_architect_id) === Number(user.id);
+  }
+  return Boolean(
+    roleCode === "client" &&
+      user.clientId &&
+      Number(project.client_id) === Number(user.clientId),
+  );
+}
+
+function isPublicShowcaseFile(file) {
+  const type = String(file.file_type || "").toLowerCase();
+  return type.startsWith("image/") || type.startsWith("video/") || type.startsWith("model/");
+}
+
 export async function findAssignedArchitectProfilePhotoForUser(projectId, user) {
   const { condition, params } = getDirectProjectAccess(user);
   const projectIdParam = params.length + 1;
@@ -160,12 +173,9 @@ export async function listProjectsForUser(user, { cursor = null, limit = 25 } = 
         p.provider_place_id,
         p.formatted_address,
         c.name as client_name,
-        c.email as client_email,
-        c.phone as client_phone,
-        architect.email as architect_email,
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
-        architect.profile_photo_url as architect_profile_photo_url,
+        (architect.profile_photo_url is not null) as architect_has_profile_photo,
         image_version.file_url as image_url
       from public.projects p
       inner join public.clients c on c.id = p.client_id
@@ -240,12 +250,9 @@ async function findProjectDetailByConditionForUser({
         p.provider_place_id,
         p.formatted_address,
         c.name as client_name,
-        c.email as client_email,
-        c.phone as client_phone,
-        architect.email as architect_email,
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
-        architect.profile_photo_url as architect_profile_photo_url,
+        (architect.profile_photo_url is not null) as architect_has_profile_photo,
         image_version.file_url as image_url
       from public.projects p
       inner join public.clients c on c.id = p.client_id
@@ -358,22 +365,24 @@ async function findProjectDetailByConditionForUser({
       ),
     ]);
 
-  const filePage = pageResult(filesResult.rows, fileLimit, (file) => ({
+  const visibleFileRows = hasDirectProjectAccess(projectResult.rows[0], user)
+    ? filesResult.rows
+    : filesResult.rows.filter(isPublicShowcaseFile);
+  const filePage = pageResult(visibleFileRows, fileLimit, (file) => ({
+    available: Boolean(file.file_name),
     createdAt: file.created_at,
     currentVersion: Number(file.current_version),
     description: file.description || null,
     extension: file.file_extension || null,
     fileType: file.file_type,
-    fileUrl: file.file_url || null,
     id: Number(file.id),
     size: file.file_size === null ? null : Number(file.file_size),
-    storageKey: file.file_name || null,
     title: file.title,
     uploadedBy: file.uploader_id
       ? {
           id: Number(file.uploader_id),
           name: `${file.uploader_first_name || ""} ${file.uploader_last_name || ""}`.trim(),
-          profilePhotoUrl: file.uploader_profile_photo_url || null,
+          hasProfilePhoto: Boolean(file.uploader_profile_photo_url),
         }
       : null,
   }), (row) => [row.file_created_at, String(row.id)]);
@@ -422,16 +431,20 @@ export async function findProjectDetailByPublicSlugForUser(publicSlug, user, opt
   });
 }
 
-export async function updateProjectVisibility(projectId, isPublic) {
+export async function updateProjectVisibility(projectId, isPublic, user) {
+  const { condition, params } = getDirectProjectAccess(user);
+  const projectIdParam = params.length + 1;
+  const visibilityParam = params.length + 2;
   const result = await query(
     `
       with updated_project as (
         update public.projects
         set
-          is_public = $2,
+          is_public = $${visibilityParam},
           updated_at = now()
-        where id = $1
+        where id = $${projectIdParam}
           and deleted_at is null
+          and (${condition})
         returning *
       )
       select
@@ -464,12 +477,9 @@ export async function updateProjectVisibility(projectId, isPublic) {
         p.provider_place_id,
         p.formatted_address,
         c.name as client_name,
-        c.email as client_email,
-        c.phone as client_phone,
-        architect.email as architect_email,
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
-        architect.profile_photo_url as architect_profile_photo_url,
+        (architect.profile_photo_url is not null) as architect_has_profile_photo,
         image_version.file_url as image_url
       from updated_project p
       inner join public.clients c on c.id = p.client_id
@@ -489,7 +499,7 @@ export async function updateProjectVisibility(projectId, isPublic) {
         limit 1
       ) image_version on true
     `,
-    [projectId, isPublic],
+    [...params, projectId, isPublic],
   );
 
   return result.rows[0] ? toProject(result.rows[0]) : null;

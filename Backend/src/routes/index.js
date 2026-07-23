@@ -33,8 +33,8 @@ router.get("/health/database", async (_req, res) => {
 
     res.status(500).json({
       status: "error",
-      code: error.code,
-      message: error.message || "Database connection failed",
+      code: "DATABASE_UNAVAILABLE",
+      message: "Database health check failed",
     });
   }
 });

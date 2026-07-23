@@ -13,6 +13,7 @@ import {
   findActiveUserById,
   findActiveUserCredentialsById,
   sanitizeUser,
+  toPublicUser,
   updateLastLoginAt,
   updateUserPassword,
   updateUserProfilePhotoUrl,
@@ -164,8 +165,7 @@ export async function login(req, res, next) {
       buildSessionCookie(token, authConfig.tokenExpiresInSeconds),
     );
     res.status(200).json({
-      token,
-      user: safeUser,
+      user: toPublicUser(safeUser),
     });
   } catch (error) {
     next(error);
@@ -174,8 +174,7 @@ export async function login(req, res, next) {
 
 export function me(req, res) {
   res.status(200).json({
-    token: req.session?.token || null,
-    user: req.user,
+    user: toPublicUser(req.user),
   });
 }
 
@@ -245,7 +244,6 @@ export async function changePassword(req, res, next) {
     );
     res.status(200).json({
       message: "Tu contraseña ha sido actualizada con éxito.",
-      token,
     });
   } catch (error) {
     next(error);
@@ -326,8 +324,7 @@ export async function uploadProfilePhoto(req, res, next) {
       buildSessionCookie(token, authConfig.tokenExpiresInSeconds),
     );
     res.status(200).json({
-      token,
-      user,
+      user: toPublicUser(user),
     });
     uploadedStorageKey = null;
   } catch (error) {

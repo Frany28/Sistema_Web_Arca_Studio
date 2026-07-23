@@ -35,8 +35,7 @@ app.use("/api", routes);
 app.use("/api", (req, res) => {
   res.status(404).json({
     code: "API_ROUTE_NOT_FOUND",
-    message: `Cannot ${req.method} ${req.originalUrl}`,
-    service: "arca-studio-backend",
+    message: "Ruta de API no encontrada.",
   });
 });
 
