@@ -40,14 +40,19 @@ test("showcase layouts follow mobile, tablet, desktop and single-card designs", 
     mode: "mobile",
   });
   assert.deepEqual(getShowcaseLayout(768, 4), {
-    columns: 3,
-    itemsPerPage: 3,
+    columns: 2,
+    itemsPerPage: 2,
     mode: "tablet",
   });
-  assert.deepEqual(getShowcaseLayout(1279, 4), {
+  assert.deepEqual(getShowcaseLayout(1023, 4), {
+    columns: 2,
+    itemsPerPage: 2,
+    mode: "tablet",
+  });
+  assert.deepEqual(getShowcaseLayout(1024, 4), {
     columns: 3,
     itemsPerPage: 3,
-    mode: "tablet",
+    mode: "desktop",
   });
   assert.deepEqual(getShowcaseLayout(1280, 4), {
     columns: 3,

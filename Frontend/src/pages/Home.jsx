@@ -95,11 +95,11 @@ function ProjectRow({ project }) {
   const navigate = useNavigate();
 
   return (
-    <article className="@container/project-row grid grid-cols-1 items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px] @min-[480px]/project-row:grid-cols-[122px_minmax(0,1fr)] @min-[800px]/project-row:grid-cols-[160px_minmax(300px,1fr)_auto]">
+    <article className="grid grid-cols-1 items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-0 py-[16px] min-[768px]:grid-cols-[120px_minmax(0,1fr)] min-[1024px]:grid-cols-[160px_minmax(300px,1fr)_auto]">
       <ProjectImage
         src={project.image}
         alt={project.name}
-        className="aspect-[262/150] w-full rounded-[var(--radius-2)] @min-[480px]/project-row:aspect-[122/70] @min-[480px]/project-row:w-[122px] @min-[800px]/project-row:aspect-[160/91.4286] @min-[800px]/project-row:w-[160px]"
+        className="aspect-[262/150] w-full rounded-[var(--radius-2)] min-[768px]:aspect-[120/69] min-[768px]:w-[120px] min-[1024px]:aspect-[160/91.4286] min-[1024px]:w-[160px]"
         imageClassName="object-cover"
       />
 
@@ -125,7 +125,7 @@ function ProjectRow({ project }) {
         fitContent={false}
         showLeftIcon={false}
         showRightIcon={false}
-        className="w-full min-w-[105px] @min-[480px]/project-row:col-start-2 @min-[480px]/project-row:w-[123px] @min-[480px]/project-row:justify-self-end @min-[800px]/project-row:col-start-3 @min-[800px]/project-row:row-start-1"
+        className="w-full min-w-[105px] min-[768px]:col-start-2 min-[768px]:w-[123px] min-[768px]:justify-self-end min-[1024px]:col-start-3 min-[1024px]:row-start-1"
         onClick={() => navigate(getProjectPath(project))}
       >
         Ver proyecto
@@ -218,6 +218,7 @@ function Home() {
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
@@ -491,18 +492,20 @@ function Home() {
             logout();
             navigate("/");
           }}
-          className="min-h-screen shrink-0 self-stretch"
+          className="min-h-screen shrink-0 self-stretch max-[767px]:hidden min-[768px]:max-[1023px]:!w-[234px] min-[768px]:max-[1023px]:!px-[12px]"
         />
 
         <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
           <NavigationBar
             variant="utility"
+            showUtilityMenu
             utilityText={formattedTodayLabel}
+            onMenuClick={() => setIsMobileNavigationOpen(true)}
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
+            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] px-[16px] py-[16px] sm:px-[24px] lg:px-[48px]">
@@ -604,6 +607,41 @@ function Home() {
           />
         </div>
       </div>
+
+      {isMobileNavigationOpen ? (
+        <div className="fixed inset-0 z-[80] min-[768px]:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/55"
+            aria-label="Cerrar navegación"
+            onClick={() => setIsMobileNavigationOpen(false)}
+          />
+          <SideNavigation
+            activeItemId="dashboard"
+            expanded
+            items={navigationItems}
+            userName={currentUser.name}
+            userEmail={currentUser.email}
+            userAvatarSrc={currentUser.profilePhotoUrl}
+            onItemSelect={(item) => {
+              setIsMobileNavigationOpen(false);
+              handleSideNavigationSelect(item);
+            }}
+            onNewOpportunityClick={() => {
+              setIsMobileNavigationOpen(false);
+              setIsProjectRequestModalOpen(true);
+            }}
+            onLogoutClick={() => {
+              logout();
+              navigate("/");
+            }}
+            onExpandedChange={(expanded) => {
+              if (!expanded) setIsMobileNavigationOpen(false);
+            }}
+            className="!fixed inset-y-0 left-0 z-[81] !w-[min(312px,calc(100vw-32px))] shadow-[var(--shadow-e3)]"
+          />
+        </div>
+      ) : null}
     </main>
   );
 }

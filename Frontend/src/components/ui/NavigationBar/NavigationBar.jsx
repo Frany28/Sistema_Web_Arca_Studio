@@ -84,6 +84,7 @@ function NavigationBar({
   loginLabel = "Iniciar sesión",
   mobileMenuLabel = "Abrir menú",
   utilityText = "Lunes, 23 de Marzo",
+  showUtilityMenu = false,
   variant = "desktop",
   onNavChange,
   onContactClick,
@@ -123,6 +124,21 @@ function NavigationBar({
         {...props}
       >
         <div className="flex w-full flex-1 items-center justify-between">
+          {showUtilityMenu ? (
+            <Button
+              theme="Primary"
+              type="Ghost"
+              size="S"
+              showText={false}
+              showLeftIcon
+              showRightIcon={false}
+              iconLeft={<MenuIcon className="size-5" />}
+              aria-label={mobileMenuLabel}
+              className="min-[768px]:hidden"
+              onClick={onMenuClick}
+            />
+          ) : null}
+
           <span className="text-body-3 text-[var(--color-text-100)]">
             {utilityText}
           </span>

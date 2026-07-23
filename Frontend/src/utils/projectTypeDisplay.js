@@ -35,8 +35,8 @@ export function getShowcaseLayout(viewportWidth, itemCount) {
     return { columns: 1, itemsPerPage: 2, mode: "mobile" };
   }
 
-  if (viewportWidth < 1280) {
-    return { columns: 3, itemsPerPage: 3, mode: "tablet" };
+  if (viewportWidth < 1024) {
+    return { columns: 2, itemsPerPage: 2, mode: "tablet" };
   }
 
   return { columns: 3, itemsPerPage: 3, mode: "desktop" };
