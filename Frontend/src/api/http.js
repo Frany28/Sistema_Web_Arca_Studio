@@ -1,7 +1,7 @@
 const viteEnv = import.meta.env || {};
 const API_BASE_URL = (
-  viteEnv.VITE_API_URL ||
-  (viteEnv.DEV ? "http://localhost:3000/api" : "/api")
+  (viteEnv.DEV ? viteEnv.VITE_API_URL : "") ||
+  "/api"
 ).replace(/\/$/, "");
 export function getAuthToken() {
   return "cookie-session";
