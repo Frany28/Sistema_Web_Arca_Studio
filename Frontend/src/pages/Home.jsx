@@ -425,7 +425,7 @@ function Home() {
     }
 
     if (item?.id === "more-projects") {
-      navigate("/dashboard-clientes");
+      navigate("/proyectos");
       return;
     }
 

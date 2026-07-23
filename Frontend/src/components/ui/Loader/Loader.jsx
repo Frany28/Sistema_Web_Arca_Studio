@@ -195,6 +195,38 @@ function RendersPanelSkeleton() {
   return <div className="grid min-h-[480px] grid-cols-[minmax(0,1fr)_200px] gap-[16px] max-lg:grid-cols-1"><SkeletonBlock className="min-h-[480px] rounded-[var(--radius-3)]" /><div className="flex gap-[12px] lg:flex-col">{Array.from({ length: 3 }, (_, index) => <SkeletonBlock key={index} className="h-[150px] min-w-[150px] flex-1 rounded-[var(--radius-2)]" delay={index * 80} />)}</div></div>;
 }
 
+function ProjectGallerySkeleton() {
+  const columns = [
+    [479, 282, 479],
+    [282, 479, 282],
+    [479, 282, 479],
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-[24px] min-[768px]:grid-cols-2 min-[1024px]:grid-cols-3">
+        {columns.map((heights, columnIndex) => (
+          <div
+            key={columnIndex}
+            className={clsx(
+              "flex flex-col gap-[24px]",
+              columnIndex === 2 && "max-[1023px]:hidden",
+              columnIndex === 1 && "max-[767px]:hidden",
+            )}
+          >
+            {heights.map((height, index) => (
+              <SkeletonBlock
+                key={`${columnIndex}-${index}`}
+                className="w-full rounded-[var(--radius-2)]"
+                delay={(columnIndex * 3 + index) * 55}
+                style={{ height }}
+              />
+            ))}
+          </div>
+        ))}
+    </div>
+  );
+}
+
 function DocumentsPanelSkeleton() {
   return <div className="grid grid-cols-[minmax(0,1fr)_335px] gap-[20px] max-lg:grid-cols-1"><div className="overflow-hidden rounded-[var(--radius-3)]"><div className="flex h-[80px] items-center gap-[12px] bg-[var(--color-neutral-10)] px-[20px]"><SkeletonBlock className="size-[42px] rounded-[var(--radius-1)]" /><div className="flex flex-1 flex-col gap-[8px]"><SkeletonBlock className="h-[13px] w-[220px] max-w-[65%] rounded-[var(--radius-1)]" tone="text" /><SkeletonBlock className="h-[10px] w-[130px] rounded-[var(--radius-1)]" tone="muted" /></div><SkeletonBlock className="h-[30px] w-[138px] rounded-full" delay={100} /></div><SkeletonBlock className="min-h-[554px] w-full rounded-none" delay={140} /></div><div className="flex flex-col gap-[12px]"><SkeletonBlock className="h-[44px] w-full rounded-[var(--radius-2)]" />{Array.from({ length: 3 }, (_, index) => <SkeletonBlock key={index} className="h-[82px] w-full rounded-[var(--radius-2)]" delay={70 + index * 70} />)}</div></div>;
 }
@@ -222,6 +254,8 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
 
   if (preset === "commentCard") {
     content = Array.from({ length: itemCount }, (_, index) => <CommentCardSkeleton key={index} />);
+  } else if (preset === "projectGallery") {
+    content = <ProjectGallerySkeleton />;
   } else if (preset === "projectDetail") {
     content = <ProjectDetailSkeleton section={section} />;
   } else if (preset === "requestRow") {

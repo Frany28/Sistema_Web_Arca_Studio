@@ -64,7 +64,7 @@ function NewArchitectProjectPage() {
     }
 
     if (item?.id === "more-projects") {
-      navigate("/proyectos/quinta-bella-vista");
+      navigate("/proyectos");
       return;
     }
 

@@ -260,7 +260,7 @@ function ArchitectDashboard({ empty = false }) {
     }
 
     if (item?.id === "more-projects") {
-      navigate("/dashboard-arquitecto");
+      navigate("/proyectos");
       return;
     }
 

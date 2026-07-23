@@ -543,11 +543,7 @@ export default function ProjectDetailsPage({
     }
 
     if (item?.id === "more-projects") {
-      navigate(
-        user?.role === "client"
-          ? "/dashboard-clientes"
-          : "/dashboard-arquitecto",
-      );
+      navigate("/proyectos");
       return;
     }
 

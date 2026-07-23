@@ -48,7 +48,9 @@ export default function ProjectDocumentsToolbar({
   disabled = false,
   onQueryChange,
   onToggleSort,
+  placeholder = "Buscar...",
   query = "",
+  searchAriaLabel = "Buscar documentos",
   sortDirection = "desc",
 }) {
   return (
@@ -60,12 +62,12 @@ export default function ProjectDocumentsToolbar({
         showHint={false}
         showRightIcon={false}
         required={false}
-        placeholder="Buscar..."
+        placeholder={placeholder}
         disabled={disabled}
         value={query}
         onChange={(event) => onQueryChange?.(event.target.value)}
         className="min-w-0 flex-1 gap-0"
-        aria-label="Buscar documentos"
+        aria-label={searchAriaLabel}
       />
 
       <Button
