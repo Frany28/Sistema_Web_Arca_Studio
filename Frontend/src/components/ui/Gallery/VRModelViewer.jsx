@@ -6,6 +6,9 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import Button from "../../ui/Button/Button.jsx";
+import { getXRMovementAxes } from "../../../utils/vrLocomotion.js";
+
+const XR_MOVEMENT_SPEED = 2.2;
 
 function CloseIcon({ className }) {
   return (
@@ -38,6 +41,7 @@ export default function VRModelViewer({
   onClose,
 }) {
   const mountRef = useRef(null);
+  const overlayRootRef = useRef(null);
   const rendererRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -62,6 +66,10 @@ export default function VRModelViewer({
       500,
     );
     camera.position.set(0, 1.6, 0);
+    const playerRig = new THREE.Group();
+    playerRig.name = "XRPlayerRig";
+    playerRig.add(camera);
+    scene.add(playerRig);
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -192,11 +200,55 @@ export default function VRModelViewer({
       }
     }
 
+    const xrForward = new THREE.Vector3();
+    const xrRight = new THREE.Vector3();
+    const xrMovement = new THREE.Vector3();
+    const worldUp = new THREE.Vector3(0, 1, 0);
+
+    function updateXRControllerMovement(delta) {
+      if (!renderer.xr.isPresenting) {
+        return;
+      }
+
+      const session = renderer.xr.getSession();
+      const { x, y } = getXRMovementAxes(session?.inputSources);
+
+      if (!x && !y) {
+        return;
+      }
+
+      const xrCamera = renderer.xr.getCamera(camera);
+      xrCamera.getWorldDirection(xrForward);
+      xrForward.y = 0;
+
+      if (xrForward.lengthSq() < 0.0001) {
+        xrForward.set(0, 0, -1);
+      } else {
+        xrForward.normalize();
+      }
+
+      xrRight.crossVectors(xrForward, worldUp).normalize();
+      xrMovement
+        .set(0, 0, 0)
+        .addScaledVector(xrRight, x)
+        .addScaledVector(xrForward, -y);
+
+      if (xrMovement.lengthSq() > 1) {
+        xrMovement.normalize();
+      }
+
+      playerRig.position.addScaledVector(
+        xrMovement,
+        XR_MOVEMENT_SPEED * Math.min(delta, 0.05),
+      );
+    }
+
     const clock = new THREE.Clock();
 
     renderer.setAnimationLoop(() => {
       const delta = clock.getDelta();
       updateKeyboardMovement(delta);
+      updateXRControllerMovement(delta);
       controls.update();
       renderer.render(scene, camera);
     });
@@ -280,9 +332,23 @@ export default function VRModelViewer({
     }
 
     try {
-      const session = await navigator.xr.requestSession("immersive-vr", {
-        optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking"],
-      });
+      const sessionOptions = {
+        optionalFeatures: [
+          "local-floor",
+          "bounded-floor",
+          "hand-tracking",
+          "dom-overlay",
+        ],
+      };
+
+      if (overlayRootRef.current) {
+        sessionOptions.domOverlay = { root: overlayRootRef.current };
+      }
+
+      const session = await navigator.xr.requestSession(
+        "immersive-vr",
+        sessionOptions,
+      );
 
       session.addEventListener(
         "end",
@@ -312,18 +378,25 @@ export default function VRModelViewer({
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] bg-[#111] text-white">
-      {poster ? (
-        <img
-          src={poster}
-          alt=""
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 blur-[18px]"
-          aria-hidden="true"
-        />
-      ) : null}
+    <div
+      ref={overlayRootRef}
+      className={clsx(
+        "vr-dom-overlay fixed inset-0 z-[80] bg-[#111] text-white",
+        xrSession && "vr-dom-overlay-active",
+      )}
+    >
+      <div className="vr-screen-ui">
+        {poster ? (
+          <img
+            src={poster}
+            alt=""
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20 blur-[18px]"
+            aria-hidden="true"
+          />
+        ) : null}
 
-      <div className="relative flex h-dvh w-dvw flex-col">
-        <header className="flex min-h-[64px] items-center justify-between gap-[16px] border-b border-white/10 bg-black/55 px-[16px] backdrop-blur-md">
+        <div className="relative flex h-dvh w-dvw flex-col">
+          <header className="flex min-h-[64px] items-center justify-between gap-[16px] border-b border-white/10 bg-black/55 px-[16px] backdrop-blur-md">
           <div className="min-w-0">
             <p className="truncate text-[14px] font-semibold leading-[18px]">
               {title}
@@ -359,10 +432,10 @@ export default function VRModelViewer({
               className="size-10"
             />
           </div>
-        </header>
+          </header>
 
-        <main className="relative min-h-0 flex-1">
-          <div ref={mountRef} className="absolute inset-0" />
+          <main className="relative min-h-0 flex-1">
+            <div ref={mountRef} className="absolute inset-0" />
 
           <div
             className={clsx(
@@ -389,8 +462,26 @@ export default function VRModelViewer({
               </p>
             ) : null}
           </div>
-        </main>
+          </main>
+        </div>
       </div>
+
+      {xrSession ? (
+        <div className="vr-exit-control fixed right-[16px] top-[16px] z-[90]">
+          <Button
+            theme="Primary"
+            type="Solid"
+            size="S"
+            showText={false}
+            showLeftIcon
+            showRightIcon={false}
+            iconLeft={<CloseIcon className="size-5" />}
+            aria-label="Salir del modo VR"
+            onClick={handleToggleVRSession}
+            className="size-10 rounded-full bg-black/70 backdrop-blur-md"
+          />
+        </div>
+      ) : null}
     </div>,
     document.body,
   );

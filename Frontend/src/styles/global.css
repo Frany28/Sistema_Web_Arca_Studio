@@ -9,6 +9,21 @@ body,
   user-select: none;
 }
 
+.vr-dom-overlay-active {
+  background: transparent;
+  pointer-events: none;
+}
+
+.vr-dom-overlay-active .vr-screen-ui {
+  display: none;
+}
+
+.vr-dom-overlay-active .vr-exit-control {
+  pointer-events: auto;
+  right: max(16px, env(safe-area-inset-right));
+  top: max(16px, env(safe-area-inset-top));
+}
+
 html::selection,
 body::selection,
 #root *::selection {
