@@ -4,6 +4,7 @@ import clsx from "clsx";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
 import Button from "../../ui/Button/Button.jsx";
 import {
@@ -416,6 +417,7 @@ export default function VRModelViewer({
     });
 
     const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
     loader.load(
       modelSrc,
       (gltf) => {

@@ -199,11 +199,9 @@ async function uploadProjectModel({ projectName, sourcePath }) {
       contentLength: storedObject.ContentLength,
       contentType: storedObject.ContentType,
       fileId: Number(fileId),
-      fileUrl,
       originalName,
       projectId: Number(project.id),
       projectName: project.name,
-      storageKey,
       versionId: Number(versionResult.rows[0].id),
     };
   } catch (error) {
