@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import "@google/model-viewer";
 
 import { getModel3DSource } from "../../../utils/model3DThumbnail.js";
-import Loader from "../Loader/Loader.jsx";
 
 const modelThumbnailCache = new Map();
 
@@ -11,7 +10,6 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
   const modelViewerRef = useRef(null);
   const [capture, setCapture] = useState({ source: "", thumbnail: "" });
   const [failedSource, setFailedSource] = useState("");
-  const [loadedSource, setLoadedSource] = useState("");
   const generatedThumbnail =
     modelThumbnailCache.get(modelSrc) ||
     (capture.source === modelSrc ? capture.thumbnail : "");
@@ -28,8 +26,6 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
     }
 
     function handleLoad() {
-      setLoadedSource(modelSrc);
-
       try {
         const thumbnail = modelViewer.toDataURL?.("image/webp", 0.82);
 
@@ -78,13 +74,6 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
 
   return (
     <span className={`${className || ""} relative block overflow-hidden`}>
-      {loadedSource !== modelSrc ? (
-        <Loader
-          preset="modelThumbnail"
-          label={`Cargando ${alt}`}
-          className="pointer-events-none absolute inset-0 z-[1] bg-[var(--color-neutral-10)]"
-        />
-      ) : null}
       <model-viewer
         ref={modelViewerRef}
         src={modelSrc}
