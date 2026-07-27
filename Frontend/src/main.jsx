@@ -36,6 +36,7 @@ const EmptyProjectsExample = lazy(
 const Home = lazy(() => import("./pages/Home.jsx"));
 const InactiveAccount = lazy(() => import("./pages/InactiveAccount.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
+const LocalModelViewer = lazy(() => import("./pages/LocalModelViewer.jsx"));
 const NewArchitectProjectPage = lazy(
   () => import("./pages/architect-dashboard/NewArchitectProjectPage.jsx"),
 );
@@ -67,6 +68,13 @@ createRoot(document.getElementById("root")).render(
             <Route path="/cuenta-inactiva" element={<InactiveAccount />} />
             <Route path="/recuperar-cuenta" element={<RecoverAccount />} />
             <Route path="/nueva-contraseña" element={<NewPassword />} />
+
+            {import.meta.env.DEV && (
+              <Route
+                path="/modelo-ihad-meli"
+                element={<LocalModelViewer />}
+              />
+            )}
 
             <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
               <Route path="/dashboard-clientes" element={<Home />} />

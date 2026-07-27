@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Modelos 3D grandes usados solo para desarrollo local
+public/models/3D-IHAD-MELI.glb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
