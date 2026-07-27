@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import clsx from "clsx";
-import "@google/model-viewer";
+import "../../../config/modelViewer.js";
 import Button from "../../../components/ui/Button/Button.jsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
