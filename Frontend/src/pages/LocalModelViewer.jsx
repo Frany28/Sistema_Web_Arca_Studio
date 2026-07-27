@@ -5,7 +5,7 @@ import "../config/modelViewer.js";
 const localModelPath = `${String(import.meta.env.BASE_URL || "/").replace(
   /\/?$/,
   "/",
-)}models/3D-IHAD-MELI.glb`;
+)}models/3D-IHAD-MELI-web-ready.glb`;
 
 export default function LocalModelViewer() {
   const modelViewerRef = useRef(null);
@@ -55,7 +55,7 @@ export default function LocalModelViewer() {
         <header>
           <h1 className="text-heading-4">Modelo 3D IHAD MELI</h1>
           <p className="text-body-2 mt-1 text-[var(--color-text-200)]">
-            Visor local del archivo original de 128,31 MB.
+            Visor local de la copia web-compatible del modelo original.
           </p>
         </header>
 
@@ -78,7 +78,7 @@ export default function LocalModelViewer() {
               role="alert"
             >
               No se pudo cargar el modelo. Comprueba que el archivo exista en
-              Frontend/public/models/3D-IHAD-MELI.glb.
+              Frontend/public/models/3D-IHAD-MELI-web-ready.glb.
             </div>
           )}
 

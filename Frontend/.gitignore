@@ -14,6 +14,7 @@ dist-ssr
 
 # Modelos 3D grandes usados solo para desarrollo local
 public/models/3D-IHAD-MELI.glb
+public/models/3D-IHAD-MELI-web-ready.glb
 
 # Editor directories and files
 .vscode/*
