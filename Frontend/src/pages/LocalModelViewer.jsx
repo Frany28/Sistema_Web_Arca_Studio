@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import "../config/modelViewer.js";
 
@@ -8,8 +8,46 @@ const localModelPath = `${String(import.meta.env.BASE_URL || "/").replace(
 )}models/3D-IHAD-MELI.glb`;
 
 export default function LocalModelViewer() {
+  const modelViewerRef = useRef(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [status, setStatus] = useState("loading");
+
+  useEffect(() => {
+    const modelViewer = modelViewerRef.current;
+
+    if (!modelViewer) {
+      return undefined;
+    }
+
+    function handleProgress(event) {
+      const progress = Math.round(
+        (Number(event.detail?.totalProgress) || 0) * 100,
+      );
+
+      setLoadProgress(progress);
+      setStatus(progress >= 100 ? "processing" : "loading");
+    }
+
+    function handleLoad() {
+      setLoadProgress(100);
+      setStatus("ready");
+    }
+
+    function handleError(event) {
+      console.error("No se pudo cargar el modelo 3D local.", event.detail);
+      setStatus("error");
+    }
+
+    modelViewer.addEventListener("progress", handleProgress);
+    modelViewer.addEventListener("load", handleLoad);
+    modelViewer.addEventListener("error", handleError);
+
+    return () => {
+      modelViewer.removeEventListener("progress", handleProgress);
+      modelViewer.removeEventListener("load", handleLoad);
+      modelViewer.removeEventListener("error", handleError);
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] p-4 text-[var(--color-text-50)] md:p-8">
@@ -22,13 +60,15 @@ export default function LocalModelViewer() {
         </header>
 
         <div className="relative min-h-[32rem] flex-1 overflow-hidden rounded-[var(--radius-3)] border border-[var(--color-neutral-300)] bg-[var(--color-neutral-900)] shadow-[var(--shadow-e1)]">
-          {status === "loading" && (
+          {(status === "loading" || status === "processing") && (
             <div
               className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-neutral-900)] text-[var(--color-neutral-100-uniform)]"
               role="status"
               aria-live="polite"
             >
-              Cargando modelo… {loadProgress}%
+              {status === "processing"
+                ? "Procesando geometría y texturas…"
+                : `Descargando modelo… ${loadProgress}%`}
             </div>
           )}
 
@@ -43,6 +83,7 @@ export default function LocalModelViewer() {
           )}
 
           <model-viewer
+            ref={modelViewerRef}
             src={localModelPath}
             alt="Modelo arquitectónico 3D IHAD MELI"
             camera-controls
@@ -54,17 +95,6 @@ export default function LocalModelViewer() {
             interaction-prompt="auto"
             loading="eager"
             reveal="auto"
-            onProgress={(event) => {
-              const progress = Math.round(
-                (event.detail?.totalProgress || 0) * 100,
-              );
-              setLoadProgress(progress);
-            }}
-            onLoad={() => {
-              setLoadProgress(100);
-              setStatus("ready");
-            }}
-            onError={() => setStatus("error")}
             class="h-full min-h-[32rem] w-full"
             style={{
               background:
