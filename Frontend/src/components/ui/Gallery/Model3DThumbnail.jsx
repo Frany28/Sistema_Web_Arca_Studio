@@ -5,6 +5,18 @@ import { getModel3DSource } from "../../../utils/model3DThumbnail.js";
 
 const modelThumbnailCache = new Map();
 
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener("error", () => reject(reader.error), { once: true });
+    reader.addEventListener("load", () => resolve(String(reader.result || "")), {
+      once: true,
+    });
+    reader.readAsDataURL(blob);
+  });
+}
+
 export default function Model3DThumbnail({ alt = "Modelo 3D", className, item }) {
   const modelSrc = getModel3DSource(item);
   const modelViewerRef = useRef(null);
@@ -16,6 +28,7 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
 
   useEffect(() => {
     const modelViewer = modelViewerRef.current;
+    let cancelled = false;
 
     if (!modelViewer || !modelSrc) {
       return undefined;
@@ -25,11 +38,17 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
       setFailedSource(modelSrc);
     }
 
-    function handleLoad() {
+    async function handleLoad() {
       try {
-        const thumbnail = modelViewer.toDataURL?.("image/webp", 0.82);
+        const thumbnailBlob = await modelViewer.toBlob?.({
+          mimeType: "image/webp",
+          qualityArgument: 0.82,
+        });
+        const thumbnail = thumbnailBlob
+          ? await blobToDataUrl(thumbnailBlob)
+          : "";
 
-        if (thumbnail) {
+        if (!cancelled && thumbnail) {
           modelThumbnailCache.set(modelSrc, thumbnail);
           setCapture({ source: modelSrc, thumbnail });
         }
@@ -46,6 +65,7 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
     }
 
     return () => {
+      cancelled = true;
       modelViewer.removeEventListener("error", handleError);
       modelViewer.removeEventListener("load", handleLoad);
     };
