@@ -54,16 +54,23 @@ export default function VRModelViewer({
   const overlayRootRef = useRef(null);
   const rendererRef = useRef(null);
   const modelRef = useRef(null);
+  const resetViewRef = useRef(null);
+  const collisionEnabledRef = useRef(true);
   const annotationGroupRef = useRef(null);
   const pendingMarkerRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [isWebXRAvailable, setIsWebXRAvailable] = useState(false);
   const [xrSession, setXrSession] = useState(null);
+  const [collisionEnabled, setCollisionEnabled] = useState(true);
   const [modelRevision, setModelRevision] = useState(0);
   const [pendingObservation, setPendingObservation] = useState(null);
   const [observationMessage, setObservationMessage] = useState("");
   const [isSubmittingObservation, setIsSubmittingObservation] = useState(false);
+
+  useEffect(() => {
+    collisionEnabledRef.current = collisionEnabled;
+  }, [collisionEnabled]);
 
   useEffect(() => {
     if (!visible || !modelSrc || !mountRef.current) {
@@ -132,6 +139,29 @@ export default function VRModelViewer({
     const collisionRaycaster = new THREE.Raycaster();
     const interactionRaycaster = new THREE.Raycaster();
 
+    function isMovementBlocked(origin, direction, { bypass = false } = {}) {
+      const model = modelRef.current;
+
+      if (!collisionEnabledRef.current || bypass || !model) {
+        return false;
+      }
+
+      collisionRaycaster.set(origin, direction);
+      collisionRaycaster.far = XR_COLLISION_DISTANCE;
+
+      return collisionRaycaster.intersectObject(model, true).some((hit) => {
+        const materials = Array.isArray(hit.object.material)
+          ? hit.object.material
+          : [hit.object.material].filter(Boolean);
+
+        return materials.some(
+          (material) =>
+            material.visible !== false &&
+            (!material.transparent || material.opacity >= 0.35),
+        );
+      });
+    }
+
     async function checkVRSupport() {
       const available = Boolean(
         navigator.xr && (await navigator.xr.isSessionSupported("immersive-vr")),
@@ -155,15 +185,26 @@ export default function VRModelViewer({
 
       const framedBox = new THREE.Box3().setFromObject(model);
       const framedSize = framedBox.getSize(new THREE.Vector3());
-      const cameraZ = Math.max(0.8, Math.min(framedSize.z * 0.12, 2.2));
-
-      camera.position.set(
-        0,
-        Math.min(Math.max(framedSize.y * 0.32, 1.35), 1.8),
-        cameraZ,
+      const eyeHeight = Math.min(Math.max(framedSize.y * 0.18, 1.45), 1.75);
+      const exteriorDistance = Math.max(
+        Math.min(framedSize.z * 0.18, 5),
+        1.4,
       );
-      controls.target.set(0, camera.position.y, cameraZ - 0.01);
+      const cameraZ = framedBox.max.z + exteriorDistance;
+
+      camera.position.set(0, eyeHeight, cameraZ);
+      playerRig.position.set(0, 0, 0);
+      playerRig.rotation.set(0, 0, 0);
+      controls.target.set(0, eyeHeight, 0);
       controls.update();
+
+      resetViewRef.current = () => {
+        camera.position.set(0, eyeHeight, cameraZ);
+        playerRig.position.set(0, 0, 0);
+        playerRig.rotation.set(0, 0, 0);
+        controls.target.set(0, eyeHeight, 0);
+        controls.update();
+      };
     }
 
     function getModelHitFromRay(origin, direction, { floorOnly = false } = {}) {
@@ -288,6 +329,21 @@ export default function VRModelViewer({
     }
 
     function handleKeyDown(event) {
+      if (event.code === "KeyC" && !event.repeat) {
+        setCollisionEnabled((current) => !current);
+        return;
+      }
+
+      if (event.code === "KeyR" && !event.repeat) {
+        resetViewRef.current?.();
+        return;
+      }
+
+      if (event.code === "Escape" && renderer.xr.getSession()) {
+        renderer.xr.getSession().end().catch(() => {});
+        return;
+      }
+
       pressedKeys.add(event.code);
     }
 
@@ -330,11 +386,13 @@ export default function VRModelViewer({
       if (movement.lengthSq() > 0) {
         movement.normalize().multiplyScalar(speed);
         const origin = camera.getWorldPosition(new THREE.Vector3());
-        collisionRaycaster.set(origin, movement.clone().normalize());
-        collisionRaycaster.far = XR_COLLISION_DISTANCE;
-        const blocked =
-          modelRef.current &&
-          collisionRaycaster.intersectObject(modelRef.current, true).length > 0;
+        const bypassCollision =
+          pressedKeys.has("ShiftLeft") || pressedKeys.has("ShiftRight");
+        const blocked = isMovementBlocked(
+          origin,
+          movement.clone().normalize(),
+          { bypass: bypassCollision },
+        );
 
         if (!blocked) {
           camera.position.add(movement);
@@ -388,11 +446,10 @@ export default function VRModelViewer({
           .clone()
           .multiplyScalar(XR_MOVEMENT_SPEED * Math.min(delta, 0.05));
         const origin = xrCamera.getWorldPosition(new THREE.Vector3());
-        collisionRaycaster.set(origin, movementStep.clone().normalize());
-        collisionRaycaster.far = XR_COLLISION_DISTANCE;
-        const blocked =
-          modelRef.current &&
-          collisionRaycaster.intersectObject(modelRef.current, true).length > 0;
+        const blocked = isMovementBlocked(
+          origin,
+          movementStep.clone().normalize(),
+        );
 
         if (!blocked) playerRig.position.add(movementStep);
       }
@@ -458,6 +515,7 @@ export default function VRModelViewer({
       renderer.xr.getSession()?.end?.().catch(() => {});
       setXrSession(null);
       rendererRef.current = null;
+      resetViewRef.current = null;
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
@@ -619,6 +677,8 @@ export default function VRModelViewer({
     "Explora el modelo moviendo la vista de forma natural",
     "Utiliza los controles del visor para desplazarte dentro del espacio",
     "En computador, usa WASD o las flechas para moverte por la escena",
+    "Pulsa R para volver a la vista exterior y C para activar o desactivar colisiones",
+    "Mantén Shift mientras caminas para atravesar un bloqueo",
     "Apunta al piso y usa el gatillo para teletransportarte",
     "Usa el agarre lateral sobre una superficie para crear una observacion",
     "Usa el joystick derecho para girar en pasos de 30 grados",
@@ -643,7 +703,7 @@ export default function VRModelViewer({
         ) : null}
 
         <div className="relative flex h-dvh w-dvw flex-col">
-          <header className="flex min-h-[64px] items-center justify-between gap-[16px] border-b border-white/10 bg-black/55 px-[16px] backdrop-blur-md">
+          <header className="flex min-h-[64px] flex-wrap items-center justify-between gap-[10px] border-b border-white/10 bg-black/55 px-[16px] py-[8px] backdrop-blur-md">
           <div className="min-w-0">
             <p className="truncate text-[14px] font-semibold leading-[18px]">
               {title}
@@ -653,7 +713,27 @@ export default function VRModelViewer({
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-[10px]">
+          <div className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-[8px]">
+            <Button
+              theme="Primary"
+              type="Ghost"
+              size="S"
+              showLeftIcon={false}
+              showRightIcon={false}
+              onClick={() => resetViewRef.current?.()}
+            >
+              Vista exterior
+            </Button>
+            <Button
+              theme="Primary"
+              type={collisionEnabled ? "Outline" : "Solid"}
+              size="S"
+              showLeftIcon={false}
+              showRightIcon={false}
+              onClick={() => setCollisionEnabled((current) => !current)}
+            >
+              {collisionEnabled ? "Colisiones activas" : "Paso libre"}
+            </Button>
             <Button
               theme="Primary"
               type="Solid"
