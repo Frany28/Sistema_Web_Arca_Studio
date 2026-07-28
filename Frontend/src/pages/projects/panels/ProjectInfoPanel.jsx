@@ -310,7 +310,9 @@ function RecentDocumentsSection({
                 showLeftIcon={false}
                 showRightIcon={false}
                 className="ml-auto shrink-0"
-                onClick={() => onViewDocument?.(document.id)}
+                onClick={(event) =>
+                  onViewDocument?.(document, event.currentTarget)
+                }
               >
                 Ver
               </Button>

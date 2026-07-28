@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 const FILE_ATTACHMENT_ICON_VARIANTS = {
   AI: { label: "AI", color: "bg-[#FF5C00]", nodeId: "2061:23994" },
   DOC: { label: "DOC", color: "bg-[#3873FF]", nodeId: "2061:24001" },
+  DOCX: { label: "DOCX", color: "bg-[#3873FF]", nodeId: "2061:24001" },
   GIF: { label: "GIF", color: "bg-[#6E45F0]", nodeId: "2061:24008" },
   JPG: { label: "JPG", color: "bg-[#3873FF]", nodeId: "2061:24015" },
   MP4: { label: "MP4", color: "bg-[#6E45F0]", nodeId: "2061:24022" },
@@ -13,6 +14,7 @@ const FILE_ATTACHMENT_ICON_VARIANTS = {
   PSD: { label: "PSD", color: "bg-[#3873FF]", nodeId: "2061:24050" },
   SVG: { label: "SVG", color: "bg-[#3873FF]", nodeId: "2061:24057" },
   TXT: { label: "TXT", color: "bg-[#344054]", nodeId: "2061:24064" },
+  XLSX: { label: "XLSX", color: "bg-[#09AE41]", nodeId: "2061:24064" },
   OBJ: { label: "OBJ", color: "bg-[#344054]", nodeId: "2061:24071" },
   DWG: { label: "DWG", color: "bg-[#344054]", nodeId: "2061:24078" },
   CAD: { label: "DWG", color: "bg-[#344054]", nodeId: "2061:24078" },

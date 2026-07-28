@@ -1079,6 +1079,7 @@ function MediaReferencePreview({ imageSrc, subtitle, title }) {
 }
 
 function MessageInput({
+  disabled = false,
   focusSignal,
   mediaType = "render",
   onClearSelection,
@@ -1107,7 +1108,7 @@ function MessageInput({
   }, [focusSignal]);
 
   function handleSubmit() {
-    if (!trimmedValue || (requireSelection && !pendingSelection)) {
+    if (disabled || !trimmedValue || (requireSelection && !pendingSelection)) {
       return;
     }
 
@@ -1127,7 +1128,7 @@ function MessageInput({
         />
       ) : null}
       <TextArea
-        disabled={requireSelection && !pendingSelection}
+        disabled={disabled || (requireSelection && !pendingSelection)}
         label={
           pendingSelection
             ? getObservationTypeLabel(
@@ -1135,7 +1136,13 @@ function MessageInput({
               )
             : "Observación general"
         }
-        placeholder={requireSelection && !pendingSelection ? "Selecciona un punto en el documento" : placeholder}
+        placeholder={
+          disabled
+            ? placeholder
+            : requireSelection && !pendingSelection
+              ? "Selecciona un punto en el documento"
+              : placeholder
+        }
         value={textAreaValue}
         showHint={false}
         showLabelInfo={false}
@@ -1154,7 +1161,11 @@ function MessageInput({
         <button
           type="button"
           aria-label="Enviar observación"
-          disabled={!trimmedValue || (requireSelection && !pendingSelection)}
+          disabled={
+            disabled ||
+            !trimmedValue ||
+            (requireSelection && !pendingSelection)
+          }
           className="flex size-8 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-neutral-300)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
           onClick={handleSubmit}
         >
@@ -1615,6 +1626,8 @@ function getRootCommentId(comments, commentId) {
 }
 
 export function GeneralCommentsDrawer({
+  composerDisabled = false,
+  composerDisabledMessage = "",
   composerFocusSignal,
   comments = [],
   focusedSelectionCommentId = null,
@@ -1708,6 +1721,7 @@ export function GeneralCommentsDrawer({
     <aside className="flex h-full w-full shrink-0 flex-col rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px]">
       <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <MessageInput
+          disabled={composerDisabled}
           focusSignal={composerFocusSignal}
           multiline
           mediaType={mediaType}
@@ -1717,6 +1731,11 @@ export function GeneralCommentsDrawer({
           onClearSelection={onClearSelection}
           onSubmit={(message) => handleCommentSubmit(message)}
         />
+        {composerDisabled && composerDisabledMessage ? (
+          <p className="text-[12px] leading-[16px] text-[var(--color-text-100)]">
+            {composerDisabledMessage}
+          </p>
+        ) : null}
 
         <div className="flex flex-col gap-[8px]">
           {orderedComments.map((comment) => (

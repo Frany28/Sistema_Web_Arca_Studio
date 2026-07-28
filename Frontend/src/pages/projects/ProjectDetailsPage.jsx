@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { api } from "../../api/http.js";
@@ -15,6 +15,7 @@ import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.js
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
 import ProjectDetailTabMenu from "./components/ProjectDetailTabMenu.jsx";
 import ProjectOverviewHeader from "./components/ProjectOverviewHeader.jsx";
+import { ProjectDocumentViewerModal } from "./components/ProjectDocumentPreview.jsx";
 import ProjectDocumentsPanel from "./panels/ProjectDocumentsPanel.jsx";
 import ProjectInfoPanel from "./panels/ProjectInfoPanel.jsx";
 import ProjectRendersPanel from "./panels/ProjectRendersPanel.jsx";
@@ -316,6 +317,8 @@ export default function ProjectDetailsPage({
     useState(false);
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
+  const [recentDocumentModal, setRecentDocumentModal] = useState(null);
+  const recentDocumentTriggerRef = useRef(null);
   const parsedRouteProjectId = Number(routeProjectSlug);
   const routeUsesNumericProjectId =
     Number.isInteger(parsedRouteProjectId) && parsedRouteProjectId > 0;
@@ -600,16 +603,11 @@ export default function ProjectDetailsPage({
   }, [searchParams, setSearchParams]);
 
   const openRecentDocument = useCallback(
-    (documentId) => {
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.set("tab", "documents");
-      nextParams.set("fileId", String(documentId));
-      nextParams.delete("imageId");
-      nextParams.delete("commentId");
-      setSearchParams(nextParams);
-      setActiveProjectTabIndex(2);
+    (document, triggerElement) => {
+      recentDocumentTriggerRef.current = triggerElement || null;
+      setRecentDocumentModal(document);
     },
-    [searchParams, setSearchParams],
+    [],
   );
 
   const refreshProjectFiles = useCallback(async () => {
@@ -784,6 +782,13 @@ export default function ProjectDetailsPage({
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
             onSubmitComment={handleSubmitComment}
+          />
+          <ProjectDocumentViewerModal
+            document={recentDocumentModal}
+            onClose={() => setRecentDocumentModal(null)}
+            open={Boolean(recentDocumentModal)}
+            projectId={resolvedProjectId}
+            triggerRef={recentDocumentTriggerRef}
           />
           <ProjectRequestModal
             open={isProjectRequestModalOpen}

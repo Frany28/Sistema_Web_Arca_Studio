@@ -19,6 +19,66 @@ test("upload service rejects invalid types and aborted streams", async () => {
   await assert.rejects(() => runUpload({ req: request({ destroyed: true }), policy: uploadPolicies.document, operation: async () => null }), { code: "UPLOAD_ABORTED" });
 });
 
+test("document uploads accept modern Word and Excel formats", () => {
+  const docx = prepareUpload(
+    request({
+      headers: {
+        "content-length": "100",
+        "content-type":
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "x-file-name": "memoria.docx",
+      },
+    }),
+    uploadPolicies.document,
+  );
+  const xlsx = prepareUpload(
+    request({
+      headers: {
+        "content-length": "100",
+        "content-type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "x-file-name": "presupuesto.xlsx",
+      },
+    }),
+    uploadPolicies.document,
+  );
+
+  assert.equal(docx.originalName, "memoria.docx");
+  assert.equal(xlsx.originalName, "presupuesto.xlsx");
+});
+
+test("document uploads reject legacy Office and mismatched extensions", () => {
+  assert.throws(
+    () =>
+      prepareUpload(
+        request({
+          headers: {
+            "content-length": "100",
+            "content-type": "application/msword",
+            "x-file-name": "memoria.doc",
+          },
+        }),
+        uploadPolicies.document,
+      ),
+    { code: "UNSUPPORTED_FILE_TYPE" },
+  );
+  assert.throws(
+    () =>
+      prepareUpload(
+        request({
+          headers: {
+            "content-length": "100",
+            "content-type":
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "x-file-name": "memoria.xlsx",
+          },
+        }),
+        uploadPolicies.document,
+      ),
+    { code: "UNSUPPORTED_FILE_TYPE" },
+  );
+});
+
 test("operation errors remain the primary upload error", async () => {
   const failure = new Error("database failed");
   await assert.rejects(() => runUpload({ req: request(), policy: uploadPolicies.document, operation: async () => { throw failure; } }), failure);

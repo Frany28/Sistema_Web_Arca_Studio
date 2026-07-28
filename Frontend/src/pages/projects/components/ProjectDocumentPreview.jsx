@@ -1,8 +1,10 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
+import { renderAsync as renderDocx } from "docx-preview";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import * as XLSX from "xlsx";
 
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
@@ -22,7 +24,7 @@ const DOCUMENT_POINT_COMMENTS_ENABLED =
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const ViewerButton = forwardRef(function ViewerButton(
-  { children, disabled, label, onClick },
+  { children, className, disabled, label, onClick },
   ref,
 ) {
   return (
@@ -32,7 +34,10 @@ const ViewerButton = forwardRef(function ViewerButton(
       disabled={disabled}
       aria-label={label}
       onClick={onClick}
-      className="flex size-[22px] items-center justify-center rounded-[var(--radius-1)] text-[12px] text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-black/25 disabled:cursor-not-allowed disabled:opacity-40"
+      className={clsx(
+        "flex size-[22px] items-center justify-center rounded-[var(--radius-1)] text-[12px] text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-black/25 disabled:cursor-not-allowed disabled:opacity-40",
+        className,
+      )}
     >
       {children}
     </button>
@@ -398,6 +403,13 @@ function DocumentFullscreenModal({ children, documentName, onClose, triggerRef, 
           className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[var(--radius-3)] shadow-[var(--shadow-e2)]"
           onClick={(event) => event.stopPropagation()}
         >
+          <ViewerButton
+            label="Cerrar visor"
+            onClick={onClose}
+            className="absolute right-[8px] top-[8px] z-20 bg-[var(--color-primary-300)] shadow-[var(--shadow-e1)]"
+          >
+            <CloseIcon />
+          </ViewerButton>
           <span className="pointer-events-none absolute left-[16px] top-[9px] z-[1] max-w-[28vw] truncate text-[11px] text-[var(--color-neutral-100-uniform)] max-[640px]:sr-only">
             {documentName}
           </span>
@@ -409,9 +421,423 @@ function DocumentFullscreenModal({ children, documentName, onClose, triggerRef, 
   );
 }
 
+function getDocumentKind(document) {
+  const extension = String(document?.fileType || document?.extension || "")
+    .trim()
+    .toLowerCase();
+  const mime = String(document?.mimeType || "").toLowerCase();
+
+  if (extension === "pdf" || mime === "application/pdf") return "pdf";
+  if (extension === "docx" || mime.includes("wordprocessingml")) return "docx";
+  if (extension === "xlsx" || mime.includes("spreadsheetml")) return "xlsx";
+  return "unsupported";
+}
+
+function DocxViewerSurface({ data, title }) {
+  const containerRef = useRef(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!data || !containerRef.current) return undefined;
+
+    let cancelled = false;
+    containerRef.current.replaceChildren();
+    queueMicrotask(() => {
+      if (!cancelled) setError("");
+    });
+
+    renderDocx(data, containerRef.current, undefined, {
+      breakPages: true,
+      className: "arca-docx",
+      ignoreFonts: false,
+      inWrapper: true,
+      renderFooters: true,
+      renderHeaders: true,
+    }).catch(() => {
+      if (!cancelled) setError("No se pudo interpretar el documento Word.");
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
+
+  if (error) {
+    return (
+      <div className="flex size-full items-center justify-center bg-[var(--color-primary-300)] p-[24px]">
+        <EmptyState
+          title="No se pudo abrir el documento"
+          description={error}
+          size="S"
+          showFeaturedIcon
+          showActions={false}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      role="document"
+      aria-label={`Vista de ${title}`}
+      className="size-full overflow-auto bg-[var(--color-neutral-200)] p-[16px] text-[var(--color-text-300)] max-[520px]:p-[8px] [&_.docx-wrapper]:!bg-transparent [&_.docx-wrapper]:!p-0 [&_.docx]:!mb-[16px] [&_.docx]:!max-w-full [&_.docx]:shadow-[var(--shadow-e1)]"
+    />
+  );
+}
+
+function XlsxViewerSurface({ data, title }) {
+  const [activeSheetIndex, setActiveSheetIndex] = useState(0);
+  const workbook = useMemo(() => {
+    try {
+      return data ? XLSX.read(data, { type: "array" }) : null;
+    } catch {
+      return null;
+    }
+  }, [data]);
+
+  if (!workbook?.SheetNames?.length) {
+    return (
+      <div className="flex size-full items-center justify-center bg-[var(--color-primary-300)] p-[24px]">
+        <EmptyState
+          title="No se pudo abrir el libro"
+          description="El archivo Excel está dañado o no contiene hojas visibles."
+          size="S"
+          showFeaturedIcon
+          showActions={false}
+        />
+      </div>
+    );
+  }
+
+  const safeSheetIndex = Math.min(activeSheetIndex, workbook.SheetNames.length - 1);
+  const activeSheetName = workbook.SheetNames[safeSheetIndex];
+  const tableHtml = XLSX.utils.sheet_to_html(workbook.Sheets[activeSheetName], {
+    id: "project-document-workbook",
+  });
+
+  return (
+    <div className="flex size-full min-w-0 flex-col overflow-hidden bg-[var(--color-neutral-100)]">
+      <div
+        role="tablist"
+        aria-label={`Hojas de ${title}`}
+        className="flex shrink-0 gap-[4px] overflow-x-auto border-b border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[8px]"
+      >
+        {workbook.SheetNames.map((sheetName, index) => (
+          <button
+            key={sheetName}
+            type="button"
+            role="tab"
+            aria-selected={index === safeSheetIndex}
+            className={clsx(
+              "shrink-0 rounded-[var(--radius-2)] px-[12px] py-[8px] text-body-4",
+              index === safeSheetIndex
+                ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
+                : "text-[var(--color-text-100)] hover:bg-[var(--color-neutral-10)]",
+            )}
+            onClick={() => setActiveSheetIndex(index)}
+          >
+            {sheetName}
+          </button>
+        ))}
+      </div>
+      <div
+        role="region"
+        aria-label={`Hoja ${activeSheetName}`}
+        className="min-h-0 flex-1 overflow-auto p-[12px] [&_table]:border-collapse [&_td]:max-w-[360px] [&_td]:break-words [&_td]:border [&_td]:border-[var(--color-neutral-200)] [&_td]:p-[8px] [&_td]:align-top [&_th]:border [&_th]:border-[var(--color-neutral-200)] [&_th]:bg-[var(--color-neutral-10)] [&_th]:p-[8px]"
+        dangerouslySetInnerHTML={{ __html: tableHtml }}
+      />
+    </div>
+  );
+}
+
+function OfficeInlineDocumentPreview({
+  document,
+  expandButtonRef,
+  kind,
+  onExpand,
+}) {
+  const source = document?.fileUrl || "";
+  const title = getFileDisplayName(document?.name);
+  const [state, setState] = useState({
+    data: null,
+    error: "",
+    source,
+    status: "loading",
+  });
+
+  useEffect(() => {
+    if (!source) return undefined;
+
+    const controller = new AbortController();
+    let cancelled = false;
+
+    fetch(source, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("DOCUMENT_LOAD_FAILED");
+        return response.arrayBuffer();
+      })
+      .then((data) => {
+        if (!cancelled) {
+          setState({ data, error: "", source, status: "ready" });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled && error.name !== "AbortError") {
+          setState({
+            data: null,
+            error: "Comprueba tu conexión e inténtalo nuevamente.",
+            source,
+            status: "error",
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [source]);
+
+  if (state.status === "loading" || state.source !== source) {
+    return <Loader preset="documentPreview" label="Cargando documento" />;
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="flex min-h-[554px] items-center justify-center rounded-b-[var(--radius-3)] bg-[var(--color-primary-300)] px-[24px]">
+        <EmptyState
+          title="No se pudo cargar el documento"
+          description={state.error}
+          size="S"
+          showFeaturedIcon
+          showActions={false}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-[554px] min-h-[554px] max-h-[554px] min-w-0 flex-col overflow-hidden rounded-b-[var(--radius-3)]">
+      <div className="flex h-[34px] shrink-0 items-center justify-between bg-[#333] px-[12px] text-[var(--color-neutral-100-uniform)]">
+        <span className="min-w-0 truncate text-[11px]">{title}</span>
+        <Tooltip text="Ver en pantalla completa" tipPosition="Top center" showTip portal>
+          <ViewerButton
+            ref={expandButtonRef}
+            label="Ver en pantalla completa"
+            onClick={onExpand}
+          >
+            <ExpandIcon />
+          </ViewerButton>
+        </Tooltip>
+      </div>
+      <div className="min-h-0 flex-1">
+        {kind === "docx" ? (
+          <DocxViewerSurface data={state.data} title={title} />
+        ) : (
+          <XlsxViewerSurface data={state.data} title={title} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ProjectDocumentViewerModal({
+  document,
+  onClose,
+  open = false,
+  projectId,
+  triggerRef,
+}) {
+  const kind = getDocumentKind(document);
+  const source = document?.fileUrl || "";
+  const documentName = getFileDisplayName(document?.name);
+  const [loadState, setLoadState] = useState({
+    data: null,
+    documentProxy: null,
+    error: "",
+    pageCount: 1,
+    source,
+    status: open ? "loading" : "idle",
+  });
+  const [page, setPage] = useState(1);
+  const [zoom, setZoom] = useState(100);
+  const [pendingSelection, setPendingSelection] = useState(null);
+  const [focusedCommentId, setFocusedCommentId] = useState(null);
+  const { addComment, comments } = useDocumentComments({
+    enabled: open && kind === "pdf",
+    fileId: document?.id,
+    fileVersionId: document?.currentVersionId,
+    projectId,
+  });
+
+  useEffect(() => {
+    if (!open || !source || kind === "unsupported") return undefined;
+
+    const controller = new AbortController();
+    let cancelled = false;
+    let loadingTask;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoadState({
+        data: null,
+        documentProxy: null,
+        error: "",
+        pageCount: 1,
+        source,
+        status: "loading",
+      });
+      setPage(1);
+      setZoom(100);
+      setPendingSelection(null);
+      setFocusedCommentId(null);
+    });
+
+    fetch(source, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("DOCUMENT_LOAD_FAILED");
+        return response.arrayBuffer();
+      })
+      .then((buffer) => {
+        if (kind !== "pdf") return { buffer };
+        loadingTask = getDocument({ data: new Uint8Array(buffer) });
+        return loadingTask.promise.then((documentProxy) => ({
+          buffer,
+          documentProxy,
+        }));
+      })
+      .then(({ buffer, documentProxy = null }) => {
+        if (cancelled) return;
+        setLoadState({
+          data: buffer,
+          documentProxy,
+          error: "",
+          pageCount: documentProxy?.numPages || 1,
+          source,
+          status: "ready",
+        });
+      })
+      .catch((error) => {
+        if (cancelled || error.name === "AbortError") return;
+        setLoadState({
+          data: null,
+          documentProxy: null,
+          error: "Comprueba tu conexión e inténtalo nuevamente.",
+          pageCount: 1,
+          source,
+          status: "error",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      loadingTask?.destroy();
+    };
+  }, [kind, open, source]);
+
+  const handleSubmitComment = async ({
+    message,
+    parentCommentId,
+    selection,
+  }) => {
+    const comment = await addComment({ message, parentCommentId, selection });
+    if (comment && !parentCommentId) setPendingSelection(null);
+  };
+
+  let viewer = null;
+  if (kind === "unsupported") {
+    viewer = (
+      <div className="flex size-full items-center justify-center bg-[var(--color-primary-300)] p-[24px]">
+        <EmptyState
+          title="Vista previa no disponible"
+          description="Este formato no puede visualizarse dentro del navegador."
+          size="S"
+          showFeaturedIcon
+          showActions={false}
+        />
+      </div>
+    );
+  } else if (loadState.status === "loading" || loadState.source !== source) {
+    viewer = <Loader preset="documentPreview" label="Cargando documento" />;
+  } else if (loadState.status === "error") {
+    viewer = (
+      <div className="flex size-full items-center justify-center bg-[var(--color-primary-300)] p-[24px]">
+        <EmptyState
+          title="No se pudo cargar el documento"
+          description={loadState.error}
+          size="S"
+          showFeaturedIcon
+          showActions={false}
+        />
+      </div>
+    );
+  } else if (kind === "pdf") {
+    viewer = (
+      <PdfViewerSurface
+        annotations={comments}
+        className="size-full rounded-[var(--radius-3)]"
+        documentProxy={loadState.documentProxy}
+        focusedId={focusedCommentId}
+        fullscreen
+        onClose={onClose}
+        onPointCreate={setPendingSelection}
+        onPointSelect={setFocusedCommentId}
+        page={page}
+        pageCount={loadState.pageCount}
+        pendingSelection={pendingSelection}
+        title={`Vista completa de ${documentName}`}
+        updatePage={setPage}
+        updateZoom={setZoom}
+        zoom={zoom}
+      />
+    );
+  } else if (kind === "docx") {
+    viewer = <DocxViewerSurface data={loadState.data} title={documentName} />;
+  } else if (kind === "xlsx") {
+    viewer = <XlsxViewerSurface data={loadState.data} title={documentName} />;
+  }
+
+  return (
+    <DocumentFullscreenModal
+      documentName={documentName}
+      onClose={onClose}
+      triggerRef={triggerRef}
+      visible={open}
+    >
+      <div className="flex size-full min-h-0 min-w-0 gap-[12px] max-[767px]:flex-col">
+        <div className="min-h-0 min-w-0 flex-1 overflow-hidden rounded-[var(--radius-3)] max-[767px]:min-h-[52dvh]">
+          {viewer}
+        </div>
+        <div className="w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
+          <GeneralCommentsDrawer
+            comments={kind === "pdf" ? comments : []}
+            composerDisabled={kind !== "pdf"}
+            composerDisabledMessage={
+              kind !== "pdf"
+                ? "Las observaciones para documentos Word y Excel aún no están disponibles."
+                : ""
+            }
+            focusedSelectionCommentId={focusedCommentId}
+            mediaItem={document}
+            mediaType="document"
+            pendingSelection={pendingSelection}
+            requireSelectionForRoot={kind === "pdf"}
+            onClearSelection={() => setPendingSelection(null)}
+            onSelectionPreviewClick={setFocusedCommentId}
+            onSubmitComment={kind === "pdf" ? handleSubmitComment : undefined}
+          />
+        </div>
+      </div>
+    </DocumentFullscreenModal>
+  );
+}
+
 export default function ProjectDocumentPreview({ document, onLoadingChange, projectId }) {
   const source = document?.fileUrl || "";
-  const isPdf = String(document?.fileType || "").toUpperCase() === "PDF";
+  const documentKind = getDocumentKind(document);
+  const isPdf = documentKind === "pdf";
   const [loadState, setLoadState] = useState({
     pageCount: 1,
     documentProxy: null,
@@ -517,6 +943,26 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
     return () => window.removeEventListener("keydown", preventDocumentExport, true);
   }, []);
 
+  if (documentKind === "docx" || documentKind === "xlsx") {
+    return (
+      <>
+        <OfficeInlineDocumentPreview
+          document={document}
+          expandButtonRef={expandButtonRef}
+          kind={documentKind}
+          onExpand={() => setIsFullscreenOpen(true)}
+        />
+        <ProjectDocumentViewerModal
+          document={document}
+          onClose={closeFullscreen}
+          open={isFullscreenOpen}
+          projectId={projectId}
+          triggerRef={expandButtonRef}
+        />
+      </>
+    );
+  }
+
   if (status === "loading") {
     return <Loader preset="documentPreview" label="Cargando documento" />;
   }
@@ -596,47 +1042,13 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
       ) : null}
       </div>
 
-      <DocumentFullscreenModal
-        documentName={documentName}
+      <ProjectDocumentViewerModal
+        document={document}
         onClose={closeFullscreen}
+        open={isFullscreenOpen}
+        projectId={projectId}
         triggerRef={expandButtonRef}
-        visible={isFullscreenOpen}
-      >
-        <div className="flex size-full gap-[12px]">
-        <PdfViewerSurface
-          annotations={comments}
-          className="size-full rounded-[var(--radius-3)]"
-          documentProxy={documentProxy}
-          focusedId={focusedCommentId}
-          fullscreen
-          onClose={closeFullscreen}
-          onPointCreate={DOCUMENT_POINT_COMMENTS_ENABLED ? setPendingSelection : undefined}
-          onPointSelect={setFocusedCommentId}
-          page={page}
-          pageCount={pageCount}
-          pendingSelection={pendingSelection}
-          title={`Vista completa de ${documentName}`}
-          updatePage={updatePage}
-          updateZoom={updateZoom}
-          zoom={zoom}
-        />
-        {DOCUMENT_POINT_COMMENTS_ENABLED ? (
-          <div className="w-[296px] shrink-0">
-            <GeneralCommentsDrawer
-              comments={comments}
-              focusedSelectionCommentId={focusedCommentId}
-              mediaItem={document}
-              mediaType="document"
-              pendingSelection={pendingSelection}
-              requireSelectionForRoot
-              onClearSelection={() => setPendingSelection(null)}
-              onSelectionPreviewClick={setFocusedCommentId}
-              onSubmitComment={handleSubmitComment}
-            />
-          </div>
-        ) : null}
-        </div>
-      </DocumentFullscreenModal>
+      />
     </>
   );
 }
