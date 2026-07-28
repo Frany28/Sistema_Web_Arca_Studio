@@ -11,6 +11,9 @@ importers:
       '@google/model-viewer':
         specifier: ^4.3.1
         version: 4.3.1(three@0.183.2)
+      '@google/model-viewer-effects':
+        specifier: ^1.5.0
+        version: 1.5.0(@google/model-viewer@4.3.1(three@0.183.2))(three@0.183.2)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -353,6 +356,12 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@google/model-viewer-effects@1.5.0':
+    resolution: {integrity: sha512-1yWCIs66BW+MUzE9rAMP4SngTT6GIm4fqske4HUGioPa4LBZhmdD6d2aD3f7Ns9MNHIizNrgjeNK7MdaLSKdIg==}
+    engines: {node: '>=6.0.0'}
+    peerDependencies:
+      '@google/model-viewer': ^4.1.0
 
   '@google/model-viewer@4.3.1':
     resolution: {integrity: sha512-GP+inXhAtY31E8rILVmByA6z8CZZjdlNajddppyI1/j1eIaSQiZcMRaUqTFe7+jv4mzRzwKIOiKBud0apiv+WQ==}
@@ -1200,6 +1209,11 @@ packages:
     resolution: {integrity: sha512-OW/rX8O/jXnm82Ey1k44pObPtdblfiuWnrd8X7GJ7emImCOstunGbXUpp7HdBrFQX6rJzn3sPT397Wp5aCwCHg==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postprocessing@6.39.4:
+    resolution: {integrity: sha512-oAS/PjAbc/xT3OzjUrGsorJ4J064XwhVD2t0OwKLP/E8QwDMUJ0oOv6ZI1SYMtLchv4g0ySEx+JcLy92+48vlA==}
+    peerDependencies:
+      three: '>= 0.168.0 < 0.186.0'
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -1662,6 +1676,14 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
+
+  '@google/model-viewer-effects@1.5.0(@google/model-viewer@4.3.1(three@0.183.2))(three@0.183.2)':
+    dependencies:
+      '@google/model-viewer': 4.3.1(three@0.183.2)
+      lit: 3.3.3
+      postprocessing: 6.39.4(three@0.183.2)
+    transitivePeerDependencies:
+      - three
 
   '@google/model-viewer@4.3.1(three@0.183.2)':
     dependencies:
@@ -2385,6 +2407,10 @@ snapshots:
       nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  postprocessing@6.39.4(three@0.183.2):
+    dependencies:
+      three: 0.183.2
 
   prelude-ls@1.2.1: {}
 

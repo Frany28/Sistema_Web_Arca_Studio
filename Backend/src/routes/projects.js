@@ -7,6 +7,10 @@ import {
   updateProjectPublication,
 } from "../controllers/projectController.js";
 import {
+  getModelRenderSettings,
+  updateModelRenderSettings,
+} from "../controllers/modelRenderSettingsController.js";
+import {
   deleteProjectAttachment,
   streamProjectFile,
   uploadProjectAttachment,
@@ -19,7 +23,7 @@ import {
   streamProjectCommentEvents,
 } from "../controllers/projectCommentController.js";
 import { requireAuth, requirePermissions } from "../middlewares/auth.js";
-import { commentRateLimit, uploadRateLimit } from "../middlewares/actionRateLimits.js";
+import { commentRateLimit, modelSettingsRateLimit, uploadRateLimit } from "../middlewares/actionRateLimits.js";
 import { validate } from "../middlewares/validate.js";
 import {
   commentSchema,
@@ -28,6 +32,8 @@ import {
   projectDetailSchema,
   projectCommentAuthorPhotoSchema,
   projectIdSchema,
+  modelRenderSettingsParamsSchema,
+  updateModelRenderSettingsSchema,
 } from "../validation/schemas.js";
 
 const router = Router();
@@ -79,6 +85,21 @@ router.get(
   requireAuth,
   requirePermissions("projects.read"),
   streamProjectFile,
+);
+router.get(
+  "/:projectId/files/:fileId/render-settings",
+  requireAuth,
+  requirePermissions("projects.read"),
+  validate(modelRenderSettingsParamsSchema),
+  getModelRenderSettings,
+);
+router.put(
+  "/:projectId/files/:fileId/render-settings",
+  requireAuth,
+  requirePermissions("projects.files.upload"),
+  modelSettingsRateLimit,
+  validate(updateModelRenderSettingsSchema),
+  updateModelRenderSettings,
 );
 router.patch(
   "/:projectId/publication",

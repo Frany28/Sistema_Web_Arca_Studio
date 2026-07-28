@@ -15,6 +15,35 @@ export const paginationSchema = z.object({
 
 export const projectIdSchema = z.object({ params: z.object({ projectId: positiveId }) });
 
+const materialOverrideSchema = z.object({
+  category: z.enum(["glass", "metal", "emissive", "vegetation", "opaque"]).optional(),
+  excluded: z.boolean().optional(),
+  roughness: z.number().min(0).max(1).optional(),
+  metalness: z.number().min(0).max(1).optional(),
+  emissiveIntensity: z.number().min(0).max(8).optional(),
+  opacity: z.number().min(0.1).max(1).optional(),
+}).strict();
+
+export const modelRenderSettingsParamsSchema = z.object({
+  params: z.object({ projectId: positiveId, fileId: positiveId }),
+});
+
+export const updateModelRenderSettingsSchema = z.object({
+  params: z.object({ projectId: positiveId, fileId: positiveId }),
+  body: z.object({
+    profile: z.enum(["exterior", "interior", "night"]),
+    exposure: z.number().min(0.5).max(2),
+    shadowIntensity: z.number().min(0).max(3),
+    environment: z.enum(["studio", "day", "interior", "night"]),
+    materialOverrides: z.record(
+      z.string().trim().min(1).max(160),
+      materialOverrideSchema,
+    ).refine((value) => Object.keys(value).length <= 300, {
+      message: "Hay demasiados ajustes de materiales.",
+    }),
+  }).strict(),
+});
+
 const projectIdentifier = z.string().trim().refine((value) => {
   const numericValue = Number(value);
   return (
