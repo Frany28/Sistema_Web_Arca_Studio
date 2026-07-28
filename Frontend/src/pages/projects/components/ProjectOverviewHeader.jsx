@@ -1,4 +1,5 @@
 import CircleProgressBarLabel from "../../../components/ui/CircleProgressBarLabel/CircleProgressBarLabel.jsx";
+import { getVisibleProjectStages } from "../../../utils/projectOverviewStages.js";
 
 function getStageToneClasses(tone) {
   if (tone === "active") {
@@ -25,6 +26,8 @@ function getStageToneClasses(tone) {
 }
 
 export default function ProjectOverviewHeader({ project }) {
+  const visibleStages = getVisibleProjectStages(project.stages);
+
   return (
     <section
       key={project.id}
@@ -51,13 +54,13 @@ export default function ProjectOverviewHeader({ project }) {
       </div>
 
       <div className="flex w-full gap-[12px] min-[480px]:gap-[24px]">
-        {project.stages.map((stage, index) => {
+        {visibleStages.map((stage, index) => {
           const toneClasses = getStageToneClasses(stage.tone);
 
           return (
             <div
               key={stage.id}
-              className="flex min-w-0 flex-1 flex-col gap-[4px]"
+              className={`${index >= 2 ? "hidden min-[768px]:flex" : "flex"} min-w-0 flex-1 flex-col gap-[4px]`}
             >
               <div
                 className={`project-stage-progress-line h-[4px] w-full ${toneClasses.bar}`}

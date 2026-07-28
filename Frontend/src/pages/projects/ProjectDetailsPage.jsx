@@ -678,6 +678,15 @@ export default function ProjectDetailsPage({
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
+        {isSidebarExpanded ? (
+          <button
+            type="button"
+            aria-label="Cerrar navegación lateral"
+            className="fixed inset-0 z-40 cursor-pointer bg-[rgba(42,41,41,0.10)] backdrop-blur-[var(--effect-blur-b1)] min-[768px]:hidden"
+            onClick={() => setIsSidebarExpanded(false)}
+          />
+        ) : null}
+
         <SideNavigation
           activeItemId={
             resolvedProjectId ? `project-${resolvedProjectId}` : undefined
