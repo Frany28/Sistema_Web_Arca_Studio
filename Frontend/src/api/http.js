@@ -285,7 +285,7 @@ export const projectsApi = {
     return collectCursorPages((page) => projectsApi.listComments({ ...page, projectId }), "comments");
   },
 
-  subscribeToEvents({ projectId, onCommentCreated, onError }) {
+  subscribeToEvents({ projectId, onCommentCreated, onError, onRenderSettingsUpdated }) {
     const eventSource = new EventSource(
       getApiUrl(`/projects/${projectId}/events`),
       { withCredentials: true },
@@ -297,6 +297,15 @@ export const projectsApi = {
         if (data?.comment) {
           onCommentCreated?.(data.comment);
         }
+      } catch {
+        // Ignore malformed realtime events and keep the stream open.
+      }
+    });
+
+    eventSource.addEventListener("model.render-settings.updated", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data?.settings) onRenderSettingsUpdated?.(data);
       } catch {
         // Ignore malformed realtime events and keep the stream open.
       }
@@ -360,6 +369,19 @@ export const projectsApi = {
 
   getFileContentUrl({ fileId, projectId }) {
     return getApiUrl(`/projects/${projectId}/files/${fileId}/content`);
+  },
+
+  getModelRenderSettings({ fileId, projectId }) {
+    return apiRequest(
+      `/projects/${projectId}/files/${fileId}/render-settings`,
+    );
+  },
+
+  updateModelRenderSettings({ fileId, projectId, settings }) {
+    return apiRequest(
+      `/projects/${projectId}/files/${fileId}/render-settings`,
+      { body: JSON.stringify(settings), method: "PUT" },
+    );
   },
 
   updatePublication({ projectId, isPublic }) {

@@ -13,6 +13,11 @@ import {
   getXRHandedAxes,
   getXRMovementAxes,
 } from "../../../utils/vrLocomotion.js";
+import {
+  ARCHITECTURAL_PROFILES,
+  DEFAULT_ARCHITECTURAL_SETTINGS,
+  enhanceThreeArchitecturalMaterials,
+} from "../../../utils/architecturalRendering.js";
 
 const XR_MOVEMENT_SPEED = 2.2;
 const XR_COLLISION_DISTANCE = 0.42;
@@ -51,6 +56,7 @@ export default function VRModelViewer({
   modelSrc,
   onSubmitObservation,
   poster,
+  renderSettings = DEFAULT_ARCHITECTURAL_SETTINGS,
   title = "Modelo 3D",
   visible = false,
   onClose,
@@ -122,7 +128,10 @@ export default function VRModelViewer({
     renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    const activeProfile =
+      ARCHITECTURAL_PROFILES[renderSettings.profile] ||
+      ARCHITECTURAL_PROFILES.exterior;
+    renderer.toneMappingExposure = Number(renderSettings.exposure) || 1.05;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.xr.enabled = true;
@@ -141,10 +150,13 @@ export default function VRModelViewer({
     controls.target.set(0, 1.4, -0.01);
     controls.update();
 
-    const ambientLight = new THREE.HemisphereLight(0xfff1df, 0x263344, 0.82);
+    const ambientLight = new THREE.HemisphereLight(...activeProfile.hemisphere);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffd8ad, 3.15);
+    const keyLight = new THREE.DirectionalLight(
+      renderSettings.profile === "night" ? 0x9fb9e8 : 0xffd8ad,
+      Math.max(0.5, Number(renderSettings.shadowIntensity) || 1.5) * 2,
+    );
     keyLight.position.set(5, 9, 6);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.set(1024, 1024);
@@ -583,37 +595,10 @@ export default function VRModelViewer({
           renderer.capabilities.getMaxAnisotropy(),
           8,
         );
-
-        model.traverse((object) => {
-          if (!object.isMesh) return;
-
-          object.castShadow = true;
-          object.receiveShadow = true;
-
-          const materials = Array.isArray(object.material)
-            ? object.material
-            : [object.material].filter(Boolean);
-
-          materials.forEach((material) => {
-            if (material.isMeshStandardMaterial) {
-              material.envMapIntensity = Math.max(
-                material.envMapIntensity ?? 1,
-                1.18,
-              );
-            }
-
-            [
-              material.map,
-              material.normalMap,
-              material.roughnessMap,
-              material.metalnessMap,
-              material.aoMap,
-            ].forEach((texture) => {
-              if (!texture) return;
-              texture.anisotropy = maximumAnisotropy;
-              texture.needsUpdate = true;
-            });
-          });
+        enhanceThreeArchitecturalMaterials(model, {
+          materialOverrides: renderSettings.materialOverrides,
+          maximumAnisotropy,
+          profile: renderSettings.profile,
         });
 
         frameModel(model);
@@ -669,7 +654,7 @@ export default function VRModelViewer({
       modelRef.current = null;
       annotationGroupRef.current = null;
     };
-  }, [item?.id, modelSrc, poster, title, visible]);
+  }, [item?.id, modelSrc, poster, renderSettings, title, visible]);
 
   useEffect(() => {
     const group = annotationGroupRef.current;

@@ -17,6 +17,15 @@ import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
+import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
+import {
+  classifyArchitecturalMaterial,
+  enhanceModelViewerMaterials,
+  getStableMaterialKey,
+  getArchitecturalEnvironmentImage,
+} from "../../../utils/architecturalRendering.js";
+import ArchitecturalModelEffects from "./ArchitecturalModelEffects.jsx";
+import ArchitecturalSettingsPanel from "./ArchitecturalSettingsPanel.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
 import VRModelViewer from "./VRModelViewer.jsx";
@@ -1803,6 +1812,7 @@ export default function Model3DViewerModal({
   const [navigationMode, setNavigationMode] = useState("orbit");
   const [texturePreset, setTexturePreset] = useState("hd");
   const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
+  const [architecturalMaterials, setArchitecturalMaterials] = useState([]);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
   const modelStageRef = useRef(null);
@@ -1824,6 +1834,11 @@ export default function Model3DViewerModal({
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
     useState(focusedCommentId);
+  const renderSettingsState = useModelRenderSettings({
+    fileId: Number(displayItem?.id) || null,
+    projectId: Number(projectId) || null,
+  });
+  const renderSettings = renderSettingsState.settings;
   const focusedAnnotationId = useMemo(
     () => getRootCommentId(comments, focusedSelectionCommentId),
     [comments, focusedSelectionCommentId],
@@ -1970,6 +1985,14 @@ export default function Model3DViewerModal({
     }
 
     function handleLoad() {
+      enhanceModelViewerMaterials(modelViewer, renderSettings);
+      setArchitecturalMaterials(
+        (modelViewer.model?.materials || []).map((material, index) => ({
+          category: classifyArchitecturalMaterial(material.name),
+          key: getStableMaterialKey(material, index),
+          name: material.name || `Material ${index + 1}`,
+        })),
+      );
       clearModelLoadingTimers();
       setModelProgress(100);
       setModelLoadState("loaded");
@@ -2015,6 +2038,7 @@ export default function Model3DViewerModal({
     hasInteractiveModel,
     modelReloadKey,
     modelSrc,
+    renderSettings,
   ]);
 
   function handleModelRetry() {
@@ -2333,10 +2357,10 @@ export default function Model3DViewerModal({
                 field-of-view={activeNavigationMode.fieldOfView}
                 min-field-of-view="8deg"
                 max-field-of-view="70deg"
-                environment-image={activeTexturePreset.environmentImage}
-                shadow-intensity={activeTexturePreset.shadowIntensity}
+                environment-image={getArchitecturalEnvironmentImage()}
+                shadow-intensity={renderSettings.shadowIntensity}
                 shadow-softness={activeTexturePreset.shadowSoftness}
-                exposure={activeTexturePreset.exposure}
+                exposure={renderSettings.exposure}
                 tone-mapping={activeTexturePreset.toneMapping}
                 interpolation-decay={MODEL_3D_CAMERA_CONTROLS.interpolationDecay}
                 orbit-sensitivity={MODEL_3D_CAMERA_CONTROLS.orbitSensitivity}
@@ -2363,6 +2387,7 @@ export default function Model3DViewerModal({
                   width: "100%",
                 }}
               >
+                <ArchitecturalModelEffects settings={renderSettings} />
                 <Model3DHotspots
                   annotations={annotationComments}
                   focusedAnnotationId={focusedAnnotationId}
@@ -2370,6 +2395,19 @@ export default function Model3DViewerModal({
                   pendingSelection={pendingSelection}
                 />
               </model-viewer>
+              <ArchitecturalSettingsPanel
+                error={renderSettingsState.error}
+                isSaving={renderSettingsState.isSaving}
+                settings={renderSettings}
+                materials={architecturalMaterials}
+                onChange={(patch) =>
+                  renderSettingsState.setSettings((current) => ({
+                    ...current,
+                    ...patch,
+                  }))
+                }
+                onSave={() => renderSettingsState.save(renderSettings)}
+              />
               {isModelLoading ? (
                 <Model3DLoadingState
                   image={displayItem.image}
@@ -2470,6 +2508,7 @@ export default function Model3DViewerModal({
           onSubmitObservation={handleSubmitComment}
           poster={displayItem.image || undefined}
           title={displayItem.title}
+          renderSettings={renderSettings}
           visible={isVRViewerOpen}
           onClose={() => setIsVRViewerOpen(false)}
         />

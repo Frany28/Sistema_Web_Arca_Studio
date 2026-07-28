@@ -30,6 +30,15 @@ import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
+import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
+import {
+  classifyArchitecturalMaterial,
+  enhanceModelViewerMaterials,
+  getStableMaterialKey,
+  getArchitecturalEnvironmentImage,
+} from "../../../utils/architecturalRendering.js";
+import ArchitecturalModelEffects from "../../../components/ui/Gallery/ArchitecturalModelEffects.jsx";
+import ArchitecturalSettingsPanel from "../../../components/ui/Gallery/ArchitecturalSettingsPanel.jsx";
 
 const MODEL_SLOW_LOADING_MS = 15000;
 const MODEL_LOAD_TIMEOUT_MS = 45000;
@@ -181,6 +190,7 @@ function RenderStage({
   onModelProgress,
   onOpenModel,
   onOpenVR,
+  renderSettingsState,
 }) {
   const modelViewerRef = useRef(null);
   const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
@@ -188,10 +198,12 @@ function RenderStage({
   const hasPreviewImage = Boolean(activeRender.image);
   const [navigationMode, setNavigationMode] = useState("orbit");
   const [texturePreset, setTexturePreset] = useState("hd");
+  const [architecturalMaterials, setArchitecturalMaterials] = useState([]);
   const activeNavigationMode =
     MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
   const activeTexturePreset =
     MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.hd;
+  const renderSettings = renderSettingsState.settings;
 
   useEffect(() => {
     setNavigationMode("orbit");
@@ -208,6 +220,14 @@ function RenderStage({
     }
 
     function handleLoad() {
+      enhanceModelViewerMaterials(modelViewer, renderSettings);
+      setArchitecturalMaterials(
+        (modelViewer.model?.materials || []).map((material, index) => ({
+          category: classifyArchitecturalMaterial(material.name),
+          key: getStableMaterialKey(material, index),
+          name: material.name || `Material ${index + 1}`,
+        })),
+      );
       onModelLoad?.();
     }
 
@@ -244,6 +264,7 @@ function RenderStage({
     onModelError,
     onModelLoad,
     onModelProgress,
+    renderSettings,
   ]);
 
   return (
@@ -266,10 +287,10 @@ function RenderStage({
               field-of-view={activeNavigationMode.fieldOfView}
               min-field-of-view="8deg"
               max-field-of-view="70deg"
-              environment-image={activeTexturePreset.environmentImage}
-              shadow-intensity={activeTexturePreset.shadowIntensity}
+              environment-image={getArchitecturalEnvironmentImage()}
+              shadow-intensity={renderSettings.shadowIntensity}
               shadow-softness={activeTexturePreset.shadowSoftness}
-              exposure={activeTexturePreset.exposure}
+              exposure={renderSettings.exposure}
               tone-mapping={activeTexturePreset.toneMapping}
               interpolation-decay={MODEL_3D_CAMERA_CONTROLS.interpolationDecay}
               orbit-sensitivity={MODEL_3D_CAMERA_CONTROLS.orbitSensitivity}
@@ -288,6 +309,21 @@ function RenderStage({
                 "--poster-color": "transparent",
                 width: "100%",
               }}
+            >
+              <ArchitecturalModelEffects settings={renderSettings} />
+            </model-viewer>
+            <ArchitecturalSettingsPanel
+              error={renderSettingsState.error}
+              isSaving={renderSettingsState.isSaving}
+              settings={renderSettings}
+              materials={architecturalMaterials}
+              onChange={(patch) =>
+                renderSettingsState.setSettings((current) => ({
+                  ...current,
+                  ...patch,
+                }))
+              }
+              onSave={() => renderSettingsState.save(renderSettings)}
             />
             {isLoading ? (
               <RenderLoadingState
@@ -730,6 +766,10 @@ export default function ProjectRendersPanel({
     [resolvedModelGallery, selectedActiveRenderId],
   );
   const activeModelSrc = activeRender?.modelUrl || activeRender?.fileUrl || null;
+  const renderSettingsState = useModelRenderSettings({
+    fileId: Number(activeRender?.id) || null,
+    projectId: Number(projectId) || null,
+  });
   const activeRenderIdForLoading = activeRender?.id || null;
   const {
     addComment: addVRObservation,
@@ -986,6 +1026,7 @@ export default function ProjectRendersPanel({
             onModelProgress={handleModelProgress}
             onOpenModel={() => setSelectedModel3D(activeRender)}
             onOpenVR={() => setIsVRViewerOpen(true)}
+            renderSettingsState={renderSettingsState}
           />
           <RenderThumbnailRail
             items={resolvedModelGallery}
@@ -1035,6 +1076,7 @@ export default function ProjectRendersPanel({
           onSubmitObservation={addVRObservation}
           poster={activeRender.image || undefined}
           title={activeRender.title}
+          renderSettings={renderSettingsState.settings}
           visible={isVRViewerOpen}
           onClose={() => setIsVRViewerOpen(false)}
         />
