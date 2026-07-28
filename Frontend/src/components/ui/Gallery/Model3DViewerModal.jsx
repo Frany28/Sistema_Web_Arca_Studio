@@ -367,7 +367,7 @@ export function Model3DViewerControls({
   onTexturePresetChange,
   persistSelection = true,
   selectedIndex = null,
-  texturePreset = "standard",
+  texturePreset = "hd",
 }) {
   const settingsMenuRef = useRef(null);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
@@ -641,18 +641,18 @@ export const MODEL_3D_TEXTURE_PRESETS = {
     id: "standard",
     label: "Estándar",
     environmentImage: "neutral",
-    shadowIntensity: "0.9",
-    shadowSoftness: "0.65",
-    exposure: "1",
+    shadowIntensity: "1.05",
+    shadowSoftness: "0.72",
+    exposure: "1.12",
     toneMapping: "aces",
   },
   hd: {
     id: "hd",
     label: "HD",
     environmentImage: "neutral",
-    shadowIntensity: "1",
-    shadowSoftness: "0.82",
-    exposure: "1.08",
+    shadowIntensity: "1.25",
+    shadowSoftness: "0.58",
+    exposure: "1.24",
     toneMapping: "aces",
   },
   matte: {
@@ -661,7 +661,7 @@ export const MODEL_3D_TEXTURE_PRESETS = {
     environmentImage: "neutral",
     shadowIntensity: "0.55",
     shadowSoftness: "1",
-    exposure: "0.92",
+    exposure: "1.02",
     toneMapping: "neutral",
   },
 };
@@ -1800,7 +1800,7 @@ export default function Model3DViewerModal({
   const [modelProgress, setModelProgress] = useState(8);
   const [modelReloadKey, setModelReloadKey] = useState(0);
   const [navigationMode, setNavigationMode] = useState("orbit");
-  const [texturePreset, setTexturePreset] = useState("standard");
+  const [texturePreset, setTexturePreset] = useState("hd");
   const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
@@ -1849,7 +1849,7 @@ export default function Model3DViewerModal({
         setIsActive(false);
         setModelReloadKey(0);
         setNavigationMode("orbit");
-        setTexturePreset("standard");
+    setTexturePreset("hd");
         setIsVRViewerOpen(false);
         setPendingSelection(null);
         setShouldRender(true);
@@ -1904,7 +1904,7 @@ export default function Model3DViewerModal({
   const activeNavigationMode =
     MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
   const activeTexturePreset =
-    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.standard;
+    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.hd;
 
   useSketchfabLikeModelWheel(
     modelViewerRef,

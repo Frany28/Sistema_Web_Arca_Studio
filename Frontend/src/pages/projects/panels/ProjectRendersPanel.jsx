@@ -192,15 +192,15 @@ function RenderStage({
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(activeRender.image);
   const [navigationMode, setNavigationMode] = useState("orbit");
-  const [texturePreset, setTexturePreset] = useState("standard");
+  const [texturePreset, setTexturePreset] = useState("hd");
   const activeNavigationMode =
     MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
   const activeTexturePreset =
-    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.standard;
+    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.hd;
 
   useEffect(() => {
     setNavigationMode("orbit");
-    setTexturePreset("standard");
+    setTexturePreset("hd");
   }, [modelSrc]);
 
   useSketchfabLikeModelWheel(modelViewerRef, hasInteractiveModel && !isLoading);

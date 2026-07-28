@@ -96,6 +96,8 @@ export default function VRModelViewer({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.18;
     renderer.xr.enabled = true;
     rendererRef.current = renderer;
     mountNode.appendChild(renderer.domElement);
@@ -105,12 +107,20 @@ export default function VRModelViewer({
     controls.target.set(0, 1.4, -0.01);
     controls.update();
 
-    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.8);
+    const ambientLight = new THREE.HemisphereLight(0xfff4e6, 0x35445c, 1.45);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    const keyLight = new THREE.DirectionalLight(0xffe2bd, 2.6);
     keyLight.position.set(4, 8, 6);
     scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xb9d8ff, 1.15);
+    fillLight.position.set(-5, 3, 2);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    rimLight.position.set(1, 5, -6);
+    scene.add(rimLight);
 
     const floorGrid = new THREE.GridHelper(20, 20, 0x777777, 0x333333);
     floorGrid.position.y = 0.01;
