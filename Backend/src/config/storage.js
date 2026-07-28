@@ -1,4 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import { randomUUID } from "node:crypto";
 
 let s3Client = null;
 
@@ -137,6 +138,28 @@ export function buildStorageFileUrl(objectKey) {
   }
 
   return bucket ? `s3://${bucket}/${objectKey}` : objectKey;
+}
+
+export function buildModelStagingObjectKey({
+  originalName,
+  projectId,
+  uploadedAt = new Date(),
+  uploadedBy,
+}) {
+  const year = String(uploadedAt.getUTCFullYear());
+  const month = String(uploadedAt.getUTCMonth() + 1).padStart(2, "0");
+  const safeName = sanitizeStorageFileName(originalName);
+
+  return [
+    "_processing",
+    "models",
+    String(projectId),
+    String(uploadedBy),
+    year,
+    month,
+    randomUUID(),
+    safeName,
+  ].join("/");
 }
 
 export function getStorageObjectKeyFromFileUrl(fileUrl) {
