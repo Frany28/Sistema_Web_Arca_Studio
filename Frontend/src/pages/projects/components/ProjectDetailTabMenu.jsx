@@ -10,7 +10,7 @@ export default function ProjectDetailTabMenu({ activeIndex = 0, onChange }) {
       filled="off"
       interactive
       onChange={onChange}
-      className="w-full"
+      className="w-full scroll-px-[4px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label="Secciones del proyecto"
     />
   );

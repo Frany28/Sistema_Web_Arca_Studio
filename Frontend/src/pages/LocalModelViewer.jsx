@@ -8,16 +8,18 @@ const localModelPath = `${String(import.meta.env.BASE_URL || "/").replace(
 )}models/3D-IHAD-MELI-web-ready.glb`;
 
 export default function LocalModelViewer() {
-  const modelViewerRef = useRef(null);
+  const viewerMountRef = useRef(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [status, setStatus] = useState("loading");
 
   useEffect(() => {
-    const modelViewer = modelViewerRef.current;
+    const mountNode = viewerMountRef.current;
 
-    if (!modelViewer) {
+    if (!mountNode) {
       return undefined;
     }
+
+    const modelViewer = document.createElement("model-viewer");
 
     function handleProgress(event) {
       const progress = Math.round(
@@ -41,11 +43,29 @@ export default function LocalModelViewer() {
     modelViewer.addEventListener("progress", handleProgress);
     modelViewer.addEventListener("load", handleLoad);
     modelViewer.addEventListener("error", handleError);
+    modelViewer.setAttribute("alt", "Modelo arquitectónico 3D IHAD MELI");
+    modelViewer.setAttribute("camera-controls", "");
+    modelViewer.setAttribute("auto-rotate", "");
+    modelViewer.setAttribute("shadow-intensity", "1");
+    modelViewer.setAttribute("shadow-softness", "0.8");
+    modelViewer.setAttribute("exposure", "1");
+    modelViewer.setAttribute("tone-mapping", "neutral");
+    modelViewer.setAttribute("interaction-prompt", "auto");
+    modelViewer.setAttribute("loading", "eager");
+    modelViewer.setAttribute("reveal", "auto");
+    modelViewer.className = "h-full min-h-[32rem] w-full";
+    modelViewer.style.background =
+      "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)";
+    modelViewer.style.display = "block";
+    mountNode.replaceChildren(modelViewer);
+    modelViewer.setAttribute("src", localModelPath);
 
     return () => {
       modelViewer.removeEventListener("progress", handleProgress);
       modelViewer.removeEventListener("load", handleLoad);
       modelViewer.removeEventListener("error", handleError);
+      modelViewer.removeAttribute("src");
+      modelViewer.remove();
     };
   }, []);
 
@@ -82,26 +102,7 @@ export default function LocalModelViewer() {
             </div>
           )}
 
-          <model-viewer
-            ref={modelViewerRef}
-            src={localModelPath}
-            alt="Modelo arquitectónico 3D IHAD MELI"
-            camera-controls
-            auto-rotate
-            shadow-intensity="1"
-            shadow-softness="0.8"
-            exposure="1"
-            tone-mapping="neutral"
-            interaction-prompt="auto"
-            loading="eager"
-            reveal="auto"
-            class="h-full min-h-[32rem] w-full"
-            style={{
-              background:
-                "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)",
-              display: "block",
-            }}
-          />
+          <div ref={viewerMountRef} className="h-full min-h-[32rem] w-full" />
         </div>
       </section>
     </main>

@@ -30,12 +30,12 @@ export default function ProjectOverviewHeader({ project }) {
       key={project.id}
       className="flex w-full flex-col gap-[16px]"
     >
-      <div className="flex w-full items-start justify-between gap-[24px]">
+      <div className="flex w-full items-start justify-between gap-[12px] min-[768px]:gap-[24px]">
         <div className="flex min-w-0 flex-col gap-[4px]">
-          <h1 className="text-heading-3 text-[var(--color-text-50)]">
+          <h1 className="break-words text-[20px] font-bold leading-[24px] tracking-[-0.5px] text-[var(--color-text-50)] min-[768px]:text-heading-3">
             {project.title}
           </h1>
-          <p className="text-[18px] leading-[21px] tracking-[-0.5px] text-[var(--color-text-200)]">
+          <p className="break-words text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] min-[768px]:text-[18px] min-[768px]:leading-[21px]">
             {project.category}
           </p>
         </div>
@@ -50,7 +50,7 @@ export default function ProjectOverviewHeader({ project }) {
         />
       </div>
 
-      <div className="flex w-full gap-[24px]">
+      <div className="flex w-full gap-[12px] min-[480px]:gap-[24px]">
         {project.stages.map((stage, index) => {
           const toneClasses = getStageToneClasses(stage.tone);
 
@@ -65,12 +65,12 @@ export default function ProjectOverviewHeader({ project }) {
                 aria-hidden="true"
               />
               <p
-                className={`mt-[12px] text-[16px] leading-[19px] tracking-[-0.5px] ${toneClasses.title}`}
+                className={`mt-[8px] break-words text-[12px] leading-[15px] tracking-[-0.5px] min-[480px]:mt-[12px] min-[480px]:text-[14px] min-[480px]:leading-[17px] min-[768px]:text-[16px] min-[768px]:leading-[19px] ${toneClasses.title}`}
               >
                 {stage.title}
               </p>
               <p
-                className={`text-[14px] leading-[17px] tracking-[-0.5px] ${toneClasses.status}`}
+                className={`break-words text-[12px] leading-[15px] tracking-[-0.5px] min-[768px]:text-[14px] min-[768px]:leading-[17px] ${toneClasses.status}`}
               >
                 {stage.status}
               </p>

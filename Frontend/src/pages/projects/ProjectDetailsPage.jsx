@@ -306,7 +306,9 @@ export default function ProjectDetailsPage({
   const [searchParams, setSearchParams] = useSearchParams();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(
+    () => typeof window === "undefined" || window.innerWidth >= 1024,
+  );
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
@@ -691,7 +693,11 @@ export default function ProjectDetailsPage({
             logout();
             navigate("/");
           }}
-          className="min-h-screen shrink-0 self-stretch"
+          className={`min-h-screen shrink-0 self-stretch max-[767px]:fixed max-[767px]:inset-y-0 max-[767px]:left-0 max-[767px]:z-50 ${
+            isSidebarExpanded
+              ? "max-[767px]:flex"
+              : "max-[767px]:hidden"
+          }`}
         />
 
         <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
@@ -699,13 +705,15 @@ export default function ProjectDetailsPage({
             variant="utility"
             utilityText={formattedTodayLabel}
             utilityActionActive={isNotificationsDrawerOpen}
+            showUtilityMenu
+            onMenuClick={() => setIsSidebarExpanded(true)}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
+            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[32px] min-[1280px]:px-[48px]"
           />
 
-          <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[48px] px-[48px] pb-[24px] pt-0">
+          <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[24px] px-[8px] pb-[24px] pt-0 min-[480px]:px-[16px] min-[768px]:gap-[32px] min-[768px]:px-[24px] min-[1024px]:px-[32px] min-[1280px]:gap-[48px] min-[1280px]:px-[48px]">
             {projectLoading ? (
               <Loader
                 preset="projectDetail"

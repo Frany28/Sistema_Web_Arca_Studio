@@ -21,7 +21,7 @@ function InfoEmptyState({ title, description, className = "" }) {
 function MapEmbed({ coordinates, empty = false }) {
   if (empty || !coordinates) {
     return (
-      <div className="flex h-[300px] w-[1104px] max-w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)]">
+      <div className="flex h-[240px] w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] min-[480px]:h-[300px]">
         <InfoEmptyState
           title="No está disponible la ubicación"
           description="Actualiza la página e inténtalo de nuevo."
@@ -36,7 +36,7 @@ function MapEmbed({ coordinates, empty = false }) {
   )}&z=15&output=embed`;
 
   return (
-    <div className="flex h-[300px] w-[1104px] max-w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+    <div className="flex h-[240px] w-full shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] min-[480px]:h-[300px]">
       <iframe
         title="Mapa del proyecto"
         src={mapUrl}
@@ -81,13 +81,13 @@ function OverviewMetrics({ project, empty = false }) {
   ];
 
   return (
-    <div className="grid w-full grid-cols-[1fr_auto_1fr_auto_1fr_auto] items-center gap-x-[48px] border-b border-[var(--color-neutral-200)] py-[16px]">
+    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[16px] border-b border-[var(--color-neutral-200)] py-[8px] min-[768px]:grid-cols-[1fr_auto_1fr_auto_1fr_auto] min-[768px]:gap-x-[24px] min-[768px]:py-[16px] min-[1280px]:gap-x-[48px]">
       {overviewPairs.map((item) => (
         <div key={item.label} className="contents">
-          <span className="text-body-4 text-[var(--color-text-200)]">
+          <span className="min-w-0 break-words py-[8px] text-body-4 text-[var(--color-text-200)] min-[768px]:py-0">
             {item.label}
           </span>
-          <span className="justify-self-end text-body-3 font-bold text-[var(--color-text-300)]">
+          <span className="max-w-full break-words py-[8px] text-right text-body-3 font-bold text-[var(--color-text-300)] min-[768px]:py-0">
             {item.value}
           </span>
         </div>
@@ -98,11 +98,11 @@ function OverviewMetrics({ project, empty = false }) {
 
 function LocationRow({ project, empty = false }) {
   return (
-    <div className="flex w-full items-center justify-between border-b border-[var(--color-neutral-200)] py-[12px]">
+    <div className="flex w-full flex-col items-start gap-[4px] border-b border-[var(--color-neutral-200)] py-[12px] min-[480px]:flex-row min-[480px]:justify-between min-[480px]:gap-[16px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
         Ubicación
       </span>
-      <span className="text-body-4 font-medium text-[var(--color-text-300)]">
+      <span className="max-w-full break-words text-body-4 font-medium text-[var(--color-text-300)] min-[480px]:text-right">
         {empty ? "-" : project?.locationFormattedAddress || project?.location || "-"}
       </span>
     </div>
@@ -170,7 +170,7 @@ function TechnicalSpecificationsSection({
   const isEmpty = empty || technicalSpecifications.length === 0;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
         Especificaciones Técnicas
       </span>
@@ -220,7 +220,7 @@ function RequirementsSection({ empty = false, requirements = [] }) {
   const isEmpty = empty || requirementLabels.length === 0;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-[12px]">
       <span className="text-body-4 text-[var(--color-text-200)]">
         Requerimientos
       </span>
@@ -236,11 +236,11 @@ function RequirementsSection({ empty = false, requirements = [] }) {
           {requirementColumns.map((column, columnIndex) => (
             <div
               key={columnIndex}
-              className="flex min-w-[220px] flex-1 flex-col gap-[16px]"
+              className="flex min-w-0 flex-1 basis-full flex-col gap-[16px] min-[600px]:min-w-[220px] min-[600px]:basis-0"
             >
               {column.map((item, itemIndex) => (
                 <ul key={`${item}-${itemIndex}`} className="block">
-                  <li className="ms-[24px] list-disc text-[16px] font-bold leading-[19px] tracking-[-0.5px] text-[var(--color-text-200)]">
+                  <li className="ms-[24px] break-words list-disc text-[14px] font-bold leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] min-[768px]:text-[16px] min-[768px]:leading-[19px]">
                     {item}
                   </li>
                 </ul>
@@ -273,12 +273,12 @@ function KeyDocumentsSection({ empty = false }) {
 
 export default function ProjectInfoPanel({ empty = false, project }) {
   return (
-    <section className="flex w-full flex-col gap-[24px]">
+    <section className="flex w-full min-w-0 flex-col gap-[24px]">
       <OverviewMetrics empty={empty} project={project} />
       <LocationRow empty={empty} project={project} />
       <MapEmbed empty={empty} coordinates={project?.locationCoordinates} />
 
-      <div className="flex w-full items-start gap-[16px] max-[1024px]:flex-col">
+      <div className="flex w-full min-w-0 flex-col items-start gap-[24px] min-[1024px]:flex-row min-[1024px]:gap-[16px]">
         <TechnicalSpecificationsSection
           empty={empty}
           technicalSpecifications={project?.technicalSpecifications}
