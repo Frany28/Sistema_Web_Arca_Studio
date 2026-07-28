@@ -16,6 +16,10 @@ import {
 const XR_MOVEMENT_SPEED = 2.2;
 const XR_COLLISION_DISTANCE = 0.42;
 const XR_SNAP_TURN_RADIANS = THREE.MathUtils.degToRad(30);
+const ARCHITECTURAL_EYE_HEIGHT = 1.65;
+const MINIMUM_EYE_HEIGHT = 1.2;
+const MAXIMUM_EYE_HEIGHT = 2.2;
+const EYE_HEIGHT_STEP = 0.1;
 
 function CloseIcon({ className }) {
   return (
@@ -55,7 +59,10 @@ export default function VRModelViewer({
   const rendererRef = useRef(null);
   const modelRef = useRef(null);
   const resetViewRef = useRef(null);
+  const adjustEyeHeightRef = useRef(null);
   const collisionEnabledRef = useRef(true);
+  const eyeHeightRef = useRef(ARCHITECTURAL_EYE_HEIGHT);
+  const locomotionModeRef = useRef("walk");
   const annotationGroupRef = useRef(null);
   const pendingMarkerRef = useRef(null);
   const [status, setStatus] = useState("idle");
@@ -63,6 +70,8 @@ export default function VRModelViewer({
   const [isWebXRAvailable, setIsWebXRAvailable] = useState(false);
   const [xrSession, setXrSession] = useState(null);
   const [collisionEnabled, setCollisionEnabled] = useState(true);
+  const [eyeHeight, setEyeHeight] = useState(ARCHITECTURAL_EYE_HEIGHT);
+  const [locomotionMode, setLocomotionMode] = useState("walk");
   const [modelRevision, setModelRevision] = useState(0);
   const [pendingObservation, setPendingObservation] = useState(null);
   const [observationMessage, setObservationMessage] = useState("");
@@ -71,6 +80,14 @@ export default function VRModelViewer({
   useEffect(() => {
     collisionEnabledRef.current = collisionEnabled;
   }, [collisionEnabled]);
+
+  useEffect(() => {
+    eyeHeightRef.current = eyeHeight;
+  }, [eyeHeight]);
+
+  useEffect(() => {
+    locomotionModeRef.current = locomotionMode;
+  }, [locomotionMode]);
 
   useEffect(() => {
     if (!visible || !modelSrc || !mountRef.current) {
@@ -185,25 +202,45 @@ export default function VRModelViewer({
 
       const framedBox = new THREE.Box3().setFromObject(model);
       const framedSize = framedBox.getSize(new THREE.Vector3());
-      const eyeHeight = Math.min(Math.max(framedSize.y * 0.18, 1.45), 1.75);
+      const resolvedEyeHeight = eyeHeightRef.current;
       const exteriorDistance = Math.max(
         Math.min(framedSize.z * 0.18, 5),
         1.4,
       );
       const cameraZ = framedBox.max.z + exteriorDistance;
 
-      camera.position.set(0, eyeHeight, cameraZ);
+      camera.position.set(0, resolvedEyeHeight, cameraZ);
       playerRig.position.set(0, 0, 0);
       playerRig.rotation.set(0, 0, 0);
-      controls.target.set(0, eyeHeight, 0);
+      controls.target.set(0, resolvedEyeHeight, 0);
       controls.update();
 
       resetViewRef.current = () => {
-        camera.position.set(0, eyeHeight, cameraZ);
+        camera.position.set(0, eyeHeightRef.current, cameraZ);
         playerRig.position.set(0, 0, 0);
         playerRig.rotation.set(0, 0, 0);
-        controls.target.set(0, eyeHeight, 0);
+        controls.target.set(0, eyeHeightRef.current, 0);
         controls.update();
+      };
+
+      adjustEyeHeightRef.current = (nextHeight) => {
+        const clampedHeight = THREE.MathUtils.clamp(
+          nextHeight,
+          MINIMUM_EYE_HEIGHT,
+          MAXIMUM_EYE_HEIGHT,
+        );
+        const difference = clampedHeight - eyeHeightRef.current;
+        eyeHeightRef.current = clampedHeight;
+
+        if (renderer.xr.isPresenting) {
+          playerRig.position.y += difference;
+        } else {
+          camera.position.y += difference;
+          controls.target.y += difference;
+          controls.update();
+        }
+
+        setEyeHeight(clampedHeight);
       };
     }
 
@@ -339,6 +376,15 @@ export default function VRModelViewer({
         return;
       }
 
+      if (event.code === "KeyV" && !event.repeat) {
+        setLocomotionMode((current) => {
+          const nextMode = current === "walk" ? "fly" : "walk";
+          locomotionModeRef.current = nextMode;
+          return nextMode;
+        });
+        return;
+      }
+
       if (event.code === "Escape" && renderer.xr.getSession()) {
         renderer.xr.getSession().end().catch(() => {});
         return;
@@ -359,7 +405,9 @@ export default function VRModelViewer({
       const speed = 2.2 * delta;
       const forward = new THREE.Vector3();
       camera.getWorldDirection(forward);
-      forward.y = 0;
+      if (locomotionModeRef.current === "walk") {
+        forward.y = 0;
+      }
       forward.normalize();
 
       const right = new THREE.Vector3()
@@ -381,6 +429,16 @@ export default function VRModelViewer({
 
       if (pressedKeys.has("KeyA") || pressedKeys.has("ArrowLeft")) {
         movement.sub(right);
+      }
+
+      if (locomotionModeRef.current === "fly") {
+        if (pressedKeys.has("KeyE") || pressedKeys.has("Space")) {
+          movement.y += 1;
+        }
+
+        if (pressedKeys.has("KeyQ")) {
+          movement.y -= 1;
+        }
       }
 
       if (movement.lengthSq() > 0) {
@@ -420,8 +478,9 @@ export default function VRModelViewer({
       const { x, y } = hasLeftController
         ? getXRHandedAxes(sources, "left")
         : getXRMovementAxes(sources);
+      const rightAxes = getXRHandedAxes(sources, "right");
 
-      if (x || y) {
+      if (x || y || (locomotionModeRef.current === "fly" && rightAxes.y)) {
         const xrCamera = renderer.xr.getCamera(camera);
         xrCamera.getWorldDirection(xrForward);
         xrForward.y = 0;
@@ -437,6 +496,10 @@ export default function VRModelViewer({
           .set(0, 0, 0)
           .addScaledVector(xrRight, x)
           .addScaledVector(xrForward, -y);
+
+        if (locomotionModeRef.current === "fly") {
+          xrMovement.addScaledVector(worldUp, -rightAxes.y);
+        }
 
         if (xrMovement.lengthSq() > 1) {
           xrMovement.normalize();
@@ -454,7 +517,6 @@ export default function VRModelViewer({
         if (!blocked) playerRig.position.add(movementStep);
       }
 
-      const rightAxes = getXRHandedAxes(sources, "right");
       const snapTurn = getSnapTurnState(rightAxes.x, snapTurnLatched);
       snapTurnLatched = snapTurn.latched;
       if (snapTurn.direction) {
@@ -516,6 +578,7 @@ export default function VRModelViewer({
       setXrSession(null);
       rendererRef.current = null;
       resetViewRef.current = null;
+      adjustEyeHeightRef.current = null;
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
@@ -677,6 +740,7 @@ export default function VRModelViewer({
     "Explora el modelo moviendo la vista de forma natural",
     "Utiliza los controles del visor para desplazarte dentro del espacio",
     "En computador, usa WASD o las flechas para moverte por la escena",
+    "Pulsa V para alternar entre Recorrido y Vuelo; en Vuelo usa Q/E para bajar o subir",
     "Pulsa R para volver a la vista exterior y C para activar o desactivar colisiones",
     "Mantén Shift mientras caminas para atravesar un bloqueo",
     "Apunta al piso y usa el gatillo para teletransportarte",
@@ -709,11 +773,62 @@ export default function VRModelViewer({
               {title}
             </p>
             <p className="text-[12px] leading-[16px] text-white/62">
-              Prototipo VR WebXR
+              Recorrido arquitectónico VR
             </p>
           </div>
 
           <div className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-[8px]">
+            <Button
+              theme="Primary"
+              type={locomotionMode === "walk" ? "Solid" : "Outline"}
+              size="S"
+              showLeftIcon={false}
+              showRightIcon={false}
+              onClick={() =>
+                setLocomotionMode((current) => {
+                  const nextMode = current === "walk" ? "fly" : "walk";
+                  locomotionModeRef.current = nextMode;
+                  return nextMode;
+                })
+              }
+            >
+              {locomotionMode === "walk" ? "Recorrido" : "Vuelo"}
+            </Button>
+            <div
+              className="flex items-center overflow-hidden rounded-[8px] border border-white/15 bg-black/35"
+              aria-label="Altura de la vista"
+            >
+              <button
+                type="button"
+                className="flex size-8 cursor-pointer items-center justify-center text-[16px] text-white/80 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff4431]"
+                aria-label="Bajar altura de la vista"
+                onClick={() =>
+                  adjustEyeHeightRef.current?.(eyeHeight - EYE_HEIGHT_STEP)
+                }
+              >
+                −
+              </button>
+              <button
+                type="button"
+                className="h-8 min-w-[72px] cursor-pointer border-x border-white/15 px-[8px] text-[12px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff4431]"
+                title="Restablecer altura arquitectónica"
+                onClick={() =>
+                  adjustEyeHeightRef.current?.(ARCHITECTURAL_EYE_HEIGHT)
+                }
+              >
+                {eyeHeight.toFixed(2)} m
+              </button>
+              <button
+                type="button"
+                className="flex size-8 cursor-pointer items-center justify-center text-[16px] text-white/80 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff4431]"
+                aria-label="Subir altura de la vista"
+                onClick={() =>
+                  adjustEyeHeightRef.current?.(eyeHeight + EYE_HEIGHT_STEP)
+                }
+              >
+                +
+              </button>
+            </div>
             <Button
               theme="Primary"
               type="Ghost"
