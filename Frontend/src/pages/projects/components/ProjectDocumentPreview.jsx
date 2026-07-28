@@ -12,6 +12,7 @@ import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { GeneralCommentsDrawer } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import { useDocumentComments } from "../../../hooks/useDocumentComments.js";
+import ProjectDocumentCard from "./ProjectDocumentCard.jsx";
 
 const MIN_ZOOM = 75;
 const MAX_ZOOM = 200;
@@ -807,8 +808,11 @@ export function ProjectDocumentViewerModal({
       visible={open}
     >
       <div className="flex size-full min-h-0 min-w-0 gap-[12px] max-[767px]:flex-col">
-        <div className="min-h-0 min-w-0 flex-1 overflow-hidden rounded-[var(--radius-3)] max-[767px]:min-h-[52dvh]">
-          {viewer}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)] max-[767px]:min-h-[52dvh]">
+          <ProjectDocumentCard document={document} />
+          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+            {viewer}
+          </div>
         </div>
         <div className="w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
           <GeneralCommentsDrawer
