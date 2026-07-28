@@ -6,6 +6,7 @@ import {
   commentSchema,
   paginationSchema,
   projectCommentAuthorPhotoSchema,
+  projectDetailSchema,
 } from "../src/validation/schemas.js";
 
 test("login schema normalizes email and rejects short passwords", () => {
@@ -16,6 +17,37 @@ test("login schema normalizes email and rejects short passwords", () => {
 
 test("pagination schema rejects invalid cursors and limits", () => {
   assert.equal(paginationSchema.safeParse({ query: { cursor: "broken", limit: 101 } }).success, false);
+});
+
+test("project detail schema accepts ids and slugs and validates file pagination", () => {
+  assert.equal(
+    projectDetailSchema.safeParse({
+      params: { projectId: "12" },
+      query: { filesLimit: "3" },
+    }).success,
+    true,
+  );
+  assert.equal(
+    projectDetailSchema.safeParse({
+      params: { projectId: "quinta-bella-vista" },
+      query: {},
+    }).success,
+    true,
+  );
+  assert.equal(
+    projectDetailSchema.safeParse({
+      params: { projectId: "../private" },
+      query: {},
+    }).success,
+    false,
+  );
+  assert.equal(
+    projectDetailSchema.safeParse({
+      params: { projectId: "12" },
+      query: { filesLimit: 101 },
+    }).success,
+    false,
+  );
 });
 
 test("comment author photo route accepts only positive project and user ids", () => {

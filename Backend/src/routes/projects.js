@@ -25,6 +25,7 @@ import {
   commentSchema,
   documentCommentsSchema,
   paginationSchema,
+  projectDetailSchema,
   projectCommentAuthorPhotoSchema,
   projectIdSchema,
 } from "../validation/schemas.js";
@@ -42,6 +43,7 @@ router.get(
   "/:projectId",
   requireAuth,
   requirePermissions("projects.read"),
+  validate(projectDetailSchema),
   getProjectDetail,
 );
 router.get("/:projectId/comments", requireAuth, validate(paginationSchema), getProjectComments);

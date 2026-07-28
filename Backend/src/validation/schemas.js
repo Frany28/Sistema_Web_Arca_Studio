@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { decodeCursor } from "../utils/pagination.js";
+import { isValidProjectSlug } from "../utils/projectSlug.js";
 
 const positiveId = z.coerce.number().int().positive();
 const cursor = z.string().optional().refine((value) => !value || Boolean(decodeCursor(value)), "Cursor inválido.");
@@ -13,6 +14,22 @@ export const paginationSchema = z.object({
 });
 
 export const projectIdSchema = z.object({ params: z.object({ projectId: positiveId }) });
+
+const projectIdentifier = z.string().trim().refine((value) => {
+  const numericValue = Number(value);
+  return (
+    (Number.isInteger(numericValue) && numericValue > 0) ||
+    isValidProjectSlug(value)
+  );
+}, "Proyecto inválido.");
+
+export const projectDetailSchema = z.object({
+  params: z.object({ projectId: projectIdentifier }),
+  query: z.object({
+    filesCursor: cursor,
+    filesLimit: z.coerce.number().int().min(1).max(100).optional(),
+  }).passthrough(),
+});
 
 export const projectCommentAuthorPhotoSchema = z.object({
   params: z.object({

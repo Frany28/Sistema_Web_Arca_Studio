@@ -1,5 +1,8 @@
 import Accordion from "../../../components/ui/Accordion/Accordion.jsx";
+import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
+import Button from "../../../components/ui/Button/Button.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
+import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getProjectTypeLabel } from "../../../utils/projectTypeDisplay.js";
 
@@ -253,25 +256,83 @@ function RequirementsSection({ empty = false, requirements = [] }) {
   );
 }
 
-function KeyDocumentsSection({ empty = false }) {
-  return (
-    <div className="flex min-w-0 flex-1 flex-col gap-[12px]">
-      <span className="text-body-4 text-[var(--color-text-200)]">
-        Documentos Clave
-      </span>
+function RecentDocumentsSection({
+  documents = [],
+  empty = false,
+  onViewDocument,
+}) {
+  const hasDocuments = !empty && documents.length > 0;
 
-      {empty ? (
+  return (
+    <section className="flex w-full min-w-0 flex-col gap-[12px]">
+      <h2 className="sr-only">Documentos recientes</h2>
+
+      {hasDocuments ? (
+        <div className="flex w-full flex-col">
+          {documents.slice(0, 3).map((document) => (
+            <article
+              key={document.id}
+              className="flex w-full min-w-0 flex-wrap items-center gap-[12px] border-b border-[var(--color-neutral-200)] py-[16px] min-[600px]:flex-nowrap min-[768px]:gap-[24px]"
+            >
+              <div className="flex min-w-0 flex-[1_1_220px] items-center gap-[12px]">
+                <FileAttachmentIcons
+                  type={document.fileType}
+                  className="h-[40px] w-[35px] shrink-0"
+                />
+                <div className="flex min-w-0 flex-col gap-[4px]">
+                  <p className="break-words text-heading-8 text-[var(--color-text-300)] [overflow-wrap:anywhere]">
+                    {document.name || "Documento"}
+                  </p>
+                  <p className="break-words text-body-3 text-[var(--color-text-100)]">
+                    {document.size}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex min-w-0 max-w-full items-center gap-[8px]">
+                <Avatar
+                  size="S"
+                  theme="Neutral"
+                  content="Text"
+                  name={document.owner}
+                  decorative={false}
+                />
+                <span className="min-w-0 break-words text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)] [overflow-wrap:anywhere] max-[479px]:sr-only">
+                  {document.owner}
+                </span>
+              </div>
+
+              <Button
+                theme="Info"
+                type="Outline"
+                size="S"
+                fitContent
+                showLeftIcon={false}
+                showRightIcon={false}
+                className="ml-auto shrink-0"
+                onClick={() => onViewDocument?.(document.id)}
+              >
+                Ver
+              </Button>
+            </article>
+          ))}
+        </div>
+      ) : (
         <InfoEmptyState
           title="Aún no hay documentos"
           description="Actualmente no hay documentación disponible para este proyecto. Por favor, revisa más tarde."
           className="min-h-[254px]"
         />
-      ) : null}
-    </div>
+      )}
+    </section>
   );
 }
 
-export default function ProjectInfoPanel({ empty = false, project }) {
+export default function ProjectInfoPanel({
+  empty = false,
+  onViewDocument,
+  project,
+}) {
   return (
     <section className="flex w-full min-w-0 flex-col gap-[24px]">
       <OverviewMetrics empty={empty} project={project} />
@@ -289,7 +350,12 @@ export default function ProjectInfoPanel({ empty = false, project }) {
         />
       </div>
 
-      {empty ? <KeyDocumentsSection empty /> : null}
+      <RecentDocumentsSection
+        documents={project?.recentDocuments}
+        empty={empty}
+        onViewDocument={onViewDocument}
+      />
+
     </section>
   );
 }

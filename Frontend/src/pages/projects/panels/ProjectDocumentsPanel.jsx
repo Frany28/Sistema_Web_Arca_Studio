@@ -124,13 +124,17 @@ function getSynchronizationLabel(value) {
 
 export default function ProjectDocumentsPanel({
   documents = PROJECT_DETAIL_DATA.documents,
+  focusedDocumentId = null,
   lastSynchronizedAt = null,
   projectId,
 }) {
   const hasDocuments = documents.length > 0;
   const listViewportRef = useRef(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState(
-    documents[0]?.id,
+    () =>
+      documents.find(
+        (document) => String(document.id) === String(focusedDocumentId),
+      )?.id ?? documents[0]?.id,
   );
   const [query, setQuery] = useState("");
   const [sortDirection, setSortDirection] = useState("desc");

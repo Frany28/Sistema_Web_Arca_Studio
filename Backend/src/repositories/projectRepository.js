@@ -59,6 +59,39 @@ function toProject(row) {
   };
 }
 
+function toPublicProjectFile(file) {
+  return {
+    available: Boolean(file.file_name),
+    createdAt: file.created_at,
+    currentVersion: Number(file.current_version),
+    currentVersionId: file.current_version_id
+      ? Number(file.current_version_id)
+      : null,
+    description: file.description || null,
+    extension: file.file_extension || null,
+    fileType: file.file_type,
+    id: Number(file.id),
+    size: file.file_size === null ? null : Number(file.file_size),
+    title: file.title,
+    uploadedBy: file.uploader_id
+      ? {
+          id: Number(file.uploader_id),
+          name: `${file.uploader_first_name || ""} ${
+            file.uploader_last_name || ""
+          }`.trim(),
+          hasProfilePhoto: Boolean(file.uploader_profile_photo_url),
+        }
+      : null,
+  };
+}
+
+function toRecentProjectDocument(file) {
+  return toPublicProjectFile({
+    ...file,
+    created_at: file.file_created_at,
+  });
+}
+
 function getProjectAccess(user, projectAlias = "p") {
   const roleCode = user?.role?.code;
   const params = [];
@@ -287,7 +320,12 @@ async function findProjectDetailByConditionForUser({
 
   const projectId = Number(projectResult.rows[0].id);
 
-  const [requirementsResult, specificationsResult, filesResult] =
+  const [
+    requirementsResult,
+    specificationsResult,
+    filesResult,
+    recentDocumentsResult,
+  ] =
     await Promise.all([
       query(
         `
@@ -364,35 +402,63 @@ async function findProjectDetailByConditionForUser({
         `,
         [projectId, fileCursor?.[0] || null, fileCursor?.[1] || null, fileLimit + 1],
       ),
+      query(
+        `
+          select
+            file.id,
+            file.title,
+            file.description,
+            file.file_type,
+            file.current_version,
+            version.id as current_version_id,
+            version.file_extension,
+            version.file_name,
+            version.file_size,
+            version.created_at,
+            file.created_at as file_created_at,
+            uploader.id as uploader_id,
+            uploader.first_name as uploader_first_name,
+            uploader.last_name as uploader_last_name,
+            uploader.profile_photo_url as uploader_profile_photo_url
+          from public.files file
+          left join public.file_versions version
+            on version.file_id = file.id
+            and version.version_number = file.current_version
+            and version.deleted_at is null
+          left join public.users uploader
+            on uploader.id = file.uploaded_by
+            and uploader.deleted_at is null
+          where file.project_id = $1
+            and file.deleted_at is null
+            and file.status <> 'deleted'
+            and file.file_type not like 'image/%'
+            and file.file_type not like 'video/%'
+            and file.file_type not like 'model/%'
+          order by file.created_at desc, file.id desc
+          limit 3
+        `,
+        [projectId],
+      ),
     ]);
 
-  const visibleFileRows = hasDirectProjectAccess(projectResult.rows[0], user)
+  const hasDirectAccess = hasDirectProjectAccess(projectResult.rows[0], user);
+  const visibleFileRows = hasDirectAccess
     ? filesResult.rows
     : filesResult.rows.filter(isPublicShowcaseFile);
-  const filePage = pageResult(visibleFileRows, fileLimit, (file) => ({
-    available: Boolean(file.file_name),
-    createdAt: file.created_at,
-    currentVersion: Number(file.current_version),
-    currentVersionId: file.current_version_id ? Number(file.current_version_id) : null,
-    description: file.description || null,
-    extension: file.file_extension || null,
-    fileType: file.file_type,
-    id: Number(file.id),
-    size: file.file_size === null ? null : Number(file.file_size),
-    title: file.title,
-    uploadedBy: file.uploader_id
-      ? {
-          id: Number(file.uploader_id),
-          name: `${file.uploader_first_name || ""} ${file.uploader_last_name || ""}`.trim(),
-          hasProfilePhoto: Boolean(file.uploader_profile_photo_url),
-        }
-      : null,
-  }), (row) => [row.file_created_at, String(row.id)]);
+  const filePage = pageResult(
+    visibleFileRows,
+    fileLimit,
+    toPublicProjectFile,
+    (row) => [row.file_created_at, String(row.id)],
+  );
 
   return {
     ...toProject(projectResult.rows[0]),
     files: filePage.items,
     filesNextCursor: filePage.nextCursor,
+    recentDocuments: hasDirectAccess
+      ? recentDocumentsResult.rows.map(toRecentProjectDocument)
+      : [],
     requirements: requirementsResult.rows.map((requirement) => ({
       description: requirement.description,
       id: Number(requirement.id),

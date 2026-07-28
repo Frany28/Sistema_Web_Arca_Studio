@@ -1,11 +1,9 @@
 import {
-  findProjectDetailByPublicSlugForUser,
-  findProjectDetailForUser,
   listProjectsForUser,
   updateProjectVisibility,
 } from "../repositories/projectRepository.js";
+import { getProjectDetail as getProjectDetailService } from "../services/projectService.js";
 import { getAssignedArchitectProfilePhoto } from "../services/profilePhotoService.js";
-import { isValidProjectSlug } from "../utils/projectSlug.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
 export async function getMyProjects(req, res, next) {
@@ -28,27 +26,20 @@ export async function getMyProjects(req, res, next) {
 export async function getProjectDetail(req, res, next) {
   try {
     const projectIdentifier = String(req.params?.projectId || "").trim();
-    const projectId = Number(projectIdentifier);
-    const usesNumericProjectId =
-      Number.isInteger(projectId) && projectId > 0;
-    const fileCursor = decodeCursor(req.query?.filesCursor);
+    const query = req.validatedQuery || req.query;
+    const fileCursor = decodeCursor(query?.filesCursor);
 
-    if (req.query?.filesCursor && !fileCursor) {
+    if (query?.filesCursor && !fileCursor) {
       res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor de archivos inválido." });
       return;
     }
 
-    if (!usesNumericProjectId && !isValidProjectSlug(projectIdentifier)) {
-      res.status(400).json({
-        code: "INVALID_PROJECT_ID",
-        message: "Proyecto invalido.",
-      });
-      return;
-    }
-
-    const project = usesNumericProjectId
-      ? await findProjectDetailForUser(projectId, req.user, { fileCursor, fileLimit: parsePageLimit(req.query?.filesLimit) })
-      : await findProjectDetailByPublicSlugForUser(projectIdentifier, req.user, { fileCursor, fileLimit: parsePageLimit(req.query?.filesLimit) });
+    const project = await getProjectDetailService({
+      fileCursor,
+      fileLimit: parsePageLimit(query?.filesLimit),
+      projectIdentifier,
+      user: req.user,
+    });
 
     if (!project) {
       res.status(404).json({

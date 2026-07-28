@@ -201,9 +201,7 @@ function toProjectPresentation(project) {
   const modelGallery = projectFiles
     .filter((file) => isModelFile(file) && file.available)
     .map((file) => toMediaFileItem(file, { project }));
-  const documents = projectFiles
-    .filter((file) => !isImageFile(file) && !isVideoFile(file) && !isModelFile(file))
-    .map((file) => {
+  const toDocumentItem = (file) => {
       const contentUrl =
         project?.id && file.id
           ? api.projects.getFileContentUrl({
@@ -224,7 +222,11 @@ function toProjectPresentation(project) {
         size: formatFileSize(file.size),
         uploadedAt: formatFileDate(file.createdAt),
       };
-    });
+    };
+  const documents = projectFiles
+    .filter((file) => !isImageFile(file) && !isVideoFile(file) && !isModelFile(file))
+    .map(toDocumentItem);
+  const recentDocuments = (project?.recentDocuments || []).map(toDocumentItem);
 
   return {
     ...project,
@@ -233,6 +235,7 @@ function toProjectPresentation(project) {
     stages: createProjectStages(progressValue),
     title: project?.name || "Proyecto",
     documents,
+    recentDocuments,
     modelGallery,
     renderGallery,
     videoGallery,
@@ -331,9 +334,12 @@ export default function ProjectDetailsPage({
   const [projectComments, setProjectComments] = useState([]);
   const [projectCommentsError, setProjectCommentsError] = useState("");
   const [projectCommentsLoading, setProjectCommentsLoading] = useState(false);
-  const [activeProjectTabIndex, setActiveProjectTabIndex] = useState(
-    searchParams.get("tab") === "renders" ? 1 : initialActiveProjectTabIndex,
-  );
+  const [activeProjectTabIndex, setActiveProjectTabIndex] = useState(() => {
+    const requestedTab = searchParams.get("tab");
+    if (requestedTab === "renders") return 1;
+    if (requestedTab === "documents") return 2;
+    return initialActiveProjectTabIndex;
+  });
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: resolvedProjectId ? [resolvedProjectId] : [],
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
@@ -593,6 +599,19 @@ export default function ProjectDetailsPage({
     setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  const openRecentDocument = useCallback(
+    (documentId) => {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("tab", "documents");
+      nextParams.set("fileId", String(documentId));
+      nextParams.delete("imageId");
+      nextParams.delete("commentId");
+      setSearchParams(nextParams);
+      setActiveProjectTabIndex(2);
+    },
+    [searchParams, setSearchParams],
+  );
+
   const refreshProjectFiles = useCallback(async () => {
     if (!resolvedProjectId) {
       return;
@@ -639,7 +658,11 @@ export default function ProjectDetailsPage({
     ? toProjectPresentation(project)
     : PROJECT_DETAIL_DATA;
   let activeProjectPanel = (
-    <ProjectInfoPanel {...infoProps} project={project} />
+    <ProjectInfoPanel
+      {...infoProps}
+      project={presentedProject}
+      onViewDocument={openRecentDocument}
+    />
   );
 
   if (activeProjectTabIndex === 1) {
@@ -658,6 +681,7 @@ export default function ProjectDetailsPage({
     activeProjectPanel = (
       <ProjectDocumentsPanel
         documents={presentedProject.documents}
+        focusedDocumentId={searchParams.get("fileId")}
         lastSynchronizedAt={filesSynchronizedAt}
         projectId={resolvedProjectId}
       />
