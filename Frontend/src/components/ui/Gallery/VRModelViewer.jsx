@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 import Button from "../../ui/Button/Button.jsx";
 import {
@@ -121,28 +122,43 @@ export default function VRModelViewer({
     renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.9;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.xr.enabled = true;
     rendererRef.current = renderer;
     mountNode.appendChild(renderer.domElement);
+
+    const environmentGenerator = new THREE.PMREMGenerator(renderer);
+    const environmentTarget = environmentGenerator.fromScene(
+      new RoomEnvironment(),
+      0.04,
+    );
+    scene.environment = environmentTarget.texture;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.set(0, 1.4, -0.01);
     controls.update();
 
-    const ambientLight = new THREE.HemisphereLight(0xfff4e6, 0x35445c, 1.45);
+    const ambientLight = new THREE.HemisphereLight(0xfff1df, 0x263344, 0.82);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffe2bd, 2.6);
-    keyLight.position.set(4, 8, 6);
+    const keyLight = new THREE.DirectionalLight(0xffd8ad, 3.15);
+    keyLight.position.set(5, 9, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.bias = -0.00015;
+    keyLight.shadow.normalBias = 0.035;
+    keyLight.shadow.camera.near = 0.1;
+    keyLight.shadow.camera.far = 80;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0xb9d8ff, 1.15);
+    const fillLight = new THREE.DirectionalLight(0xb9d8ff, 0.78);
     fillLight.position.set(-5, 3, 2);
     scene.add(fillLight);
 
-    const rimLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    const rimLight = new THREE.DirectionalLight(0xfff4df, 1.05);
     rimLight.position.set(1, 5, -6);
     scene.add(rimLight);
 
@@ -202,6 +218,14 @@ export default function VRModelViewer({
 
       const framedBox = new THREE.Box3().setFromObject(model);
       const framedSize = framedBox.getSize(new THREE.Vector3());
+      const shadowExtent = Math.max(framedSize.x, framedSize.z, 8) * 0.58;
+      keyLight.target.position.set(0, framedSize.y * 0.28, 0);
+      scene.add(keyLight.target);
+      keyLight.shadow.camera.left = -shadowExtent;
+      keyLight.shadow.camera.right = shadowExtent;
+      keyLight.shadow.camera.top = shadowExtent;
+      keyLight.shadow.camera.bottom = -shadowExtent;
+      keyLight.shadow.camera.updateProjectionMatrix();
       const resolvedEyeHeight = eyeHeightRef.current;
       const exteriorDistance = Math.max(
         Math.min(framedSize.z * 0.18, 5),
@@ -555,6 +579,43 @@ export default function VRModelViewer({
         }
 
         const model = gltf.scene;
+        const maximumAnisotropy = Math.min(
+          renderer.capabilities.getMaxAnisotropy(),
+          8,
+        );
+
+        model.traverse((object) => {
+          if (!object.isMesh) return;
+
+          object.castShadow = true;
+          object.receiveShadow = true;
+
+          const materials = Array.isArray(object.material)
+            ? object.material
+            : [object.material].filter(Boolean);
+
+          materials.forEach((material) => {
+            if (material.isMeshStandardMaterial) {
+              material.envMapIntensity = Math.max(
+                material.envMapIntensity ?? 1,
+                1.18,
+              );
+            }
+
+            [
+              material.map,
+              material.normalMap,
+              material.roughnessMap,
+              material.metalnessMap,
+              material.aoMap,
+            ].forEach((texture) => {
+              if (!texture) return;
+              texture.anisotropy = maximumAnisotropy;
+              texture.needsUpdate = true;
+            });
+          });
+        });
+
         frameModel(model);
         modelRef.current = model;
         scene.add(model);
@@ -586,6 +647,8 @@ export default function VRModelViewer({
       controllerCleanups.forEach((cleanup) => cleanup());
       renderer.setAnimationLoop(null);
       controls.dispose();
+      environmentTarget.dispose();
+      environmentGenerator.dispose();
       renderer.dispose();
 
       scene.traverse((object) => {
