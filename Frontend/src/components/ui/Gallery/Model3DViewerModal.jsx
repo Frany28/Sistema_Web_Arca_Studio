@@ -1,6 +1,4 @@
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -21,8 +19,8 @@ import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
+import VRModelViewer from "./VRModelViewer.jsx";
 
-const VRModelViewer = lazy(() => import("./VRModelViewer.jsx"));
 const VIEWER_3D_OBSERVATION_LABEL = getObservationTypeLabel("viewer3d");
 
 function CloseIcon({ className }) {
@@ -2465,18 +2463,16 @@ export default function Model3DViewerModal({
       </section>
 
       {isVRViewerOpen ? (
-        <Suspense fallback={null}>
-          <VRModelViewer
-            annotations={annotationComments}
-            item={displayItem}
-            modelSrc={modelSrc}
-            onSubmitObservation={handleSubmitComment}
-            poster={displayItem.image || undefined}
-            title={displayItem.title}
-            visible={isVRViewerOpen}
-            onClose={() => setIsVRViewerOpen(false)}
-          />
-        </Suspense>
+        <VRModelViewer
+          annotations={annotationComments}
+          item={displayItem}
+          modelSrc={modelSrc}
+          onSubmitObservation={handleSubmitComment}
+          poster={displayItem.image || undefined}
+          title={displayItem.title}
+          visible={isVRViewerOpen}
+          onClose={() => setIsVRViewerOpen(false)}
+        />
       ) : null}
     </div>,
     document.body,
