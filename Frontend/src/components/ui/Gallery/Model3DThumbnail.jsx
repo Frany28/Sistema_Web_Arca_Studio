@@ -62,12 +62,13 @@ export default function Model3DThumbnail({ alt = "Modelo 3D", className, item })
       environment-image="neutral"
       shadow-intensity="1.2"
       shadow-softness="0.62"
-      exposure="1.2"
-      tone-mapping="aces"
+      exposure="0.84"
+      tone-mapping="commerce"
       style={{
         background:
           "radial-gradient(circle at 50% 34%, #53504c 0%, #282a2d 48%, #101113 100%)",
         display: "block",
+        filter: "saturate(1.28) contrast(1.12) brightness(0.96)",
       }}
     />
   );

@@ -288,6 +288,7 @@ function RenderStage({
                 background: MODEL_VIEWER_BACKGROUND,
                 backgroundColor: MODEL_VIEWER_BACKGROUND_COLOR,
                 display: "block",
+                filter: activeTexturePreset.filter,
                 height: "100%",
                 "--poster-color": "transparent",
                 width: "100%",

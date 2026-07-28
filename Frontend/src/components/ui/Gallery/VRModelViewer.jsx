@@ -97,7 +97,7 @@ export default function VRModelViewer({
     renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.18;
+    renderer.toneMappingExposure = 0.9;
     renderer.xr.enabled = true;
     rendererRef.current = renderer;
     mountNode.appendChild(renderer.domElement);
