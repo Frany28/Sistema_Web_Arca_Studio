@@ -247,7 +247,7 @@ model model_render_settings {
   updated_by         BigInt
   schema_version     Int      @default(1)
   profile            String   @default("exterior") @db.VarChar(20)
-  exposure           Decimal  @default(1.05) @db.Decimal(4, 2)
+  exposure           Decimal  @default(0.82) @db.Decimal(4, 2)
   shadow_intensity   Decimal  @default(1.5) @db.Decimal(4, 2)
   environment        String   @default("studio") @db.VarChar(30)
   material_overrides Json     @default("{}")

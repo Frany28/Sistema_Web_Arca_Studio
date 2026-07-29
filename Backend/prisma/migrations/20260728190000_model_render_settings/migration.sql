@@ -5,7 +5,7 @@ CREATE TABLE public.model_render_settings (
   updated_by BIGINT NOT NULL,
   schema_version INTEGER NOT NULL DEFAULT 1,
   profile VARCHAR(20) NOT NULL DEFAULT 'exterior',
-  exposure NUMERIC(4, 2) NOT NULL DEFAULT 1.05,
+  exposure NUMERIC(4, 2) NOT NULL DEFAULT 0.82,
   shadow_intensity NUMERIC(4, 2) NOT NULL DEFAULT 1.50,
   environment VARCHAR(30) NOT NULL DEFAULT 'studio',
   material_overrides JSONB NOT NULL DEFAULT '{}'::jsonb,

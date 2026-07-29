@@ -8,7 +8,7 @@ import { publishProjectEvent } from "./projectEvents.js";
 
 export const DEFAULT_RENDER_SETTINGS = Object.freeze({
   environment: "studio",
-  exposure: 1.05,
+  exposure: 0.82,
   materialOverrides: {},
   profile: "exterior",
   schemaVersion: 1,

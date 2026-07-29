@@ -1,7 +1,7 @@
 export const DEFAULT_ARCHITECTURAL_SETTINGS = Object.freeze({
   canEdit: false,
   environment: "studio",
-  exposure: 1.05,
+  exposure: 0.82,
   materialOverrides: {},
   profile: "exterior",
   schemaVersion: 1,
@@ -16,7 +16,7 @@ export function getArchitecturalEnvironmentImage() {
 export const ARCHITECTURAL_PROFILES = Object.freeze({
   exterior: {
     label: "Exterior",
-    exposure: 1.05,
+    exposure: 0.82,
     shadowIntensity: 1.5,
     ssao: 1.35,
     bloom: 0.35,
@@ -24,7 +24,7 @@ export const ARCHITECTURAL_PROFILES = Object.freeze({
   },
   interior: {
     label: "Interior",
-    exposure: 1.18,
+    exposure: 0.9,
     shadowIntensity: 1.15,
     ssao: 1.15,
     bloom: 0.45,
@@ -32,7 +32,7 @@ export const ARCHITECTURAL_PROFILES = Object.freeze({
   },
   night: {
     label: "Noche",
-    exposure: 0.92,
+    exposure: 0.72,
     shadowIntensity: 1.35,
     ssao: 1.5,
     bloom: 1.15,
