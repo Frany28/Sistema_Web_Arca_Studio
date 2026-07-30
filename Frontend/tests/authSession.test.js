@@ -7,6 +7,7 @@ import {
   restoreAuthSession,
 } from "../src/auth/authSession.js";
 import { getProtectedRouteDecision } from "../src/auth/authRouteState.js";
+import { resolveRouteAuthDisabledForTests } from "../src/auth/testAccess.js";
 
 const immediateWait = () => Promise.resolve();
 
@@ -137,5 +138,20 @@ test("protected routes never expose content before session confirmation", () => 
       role: "client",
     }),
     "content",
+  );
+});
+
+test("the authentication bypass can never be enabled in production", () => {
+  assert.equal(
+    resolveRouteAuthDisabledForTests({ dev: false, requested: true }),
+    false,
+  );
+  assert.equal(
+    resolveRouteAuthDisabledForTests({ dev: true, requested: false }),
+    false,
+  );
+  assert.equal(
+    resolveRouteAuthDisabledForTests({ dev: true, requested: true }),
+    true,
   );
 });

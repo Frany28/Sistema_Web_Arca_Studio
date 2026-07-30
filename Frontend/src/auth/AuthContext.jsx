@@ -13,7 +13,6 @@ import {
   AUTH_SESSION_STATUS,
   createAuthSessionRestorer,
 } from "./authSession.js";
-import { ROUTE_AUTH_DISABLED_FOR_TESTS, TEST_AUTH_USER } from "./testAccess.js";
 
 const AuthContext = createContext(null);
 
@@ -52,21 +51,14 @@ function normalizeUser(user) {
 
 export function AuthProvider({ children }) {
   const [sessionStatus, setSessionStatus] = useState(
-    ROUTE_AUTH_DISABLED_FOR_TESTS
-      ? AUTH_SESSION_STATUS.AUTHENTICATED
-      : AUTH_SESSION_STATUS.LOADING,
+    AUTH_SESSION_STATUS.LOADING,
   );
-  const [user, setUser] = useState(
-    ROUTE_AUTH_DISABLED_FOR_TESTS ? TEST_AUTH_USER : null,
-  );
+  const [user, setUser] = useState(null);
   const [sessionRestorer] = useState(() =>
-    ROUTE_AUTH_DISABLED_FOR_TESTS
-      ? null
-      : createAuthSessionRestorer({ fetchSession: api.auth.me }),
+    createAuthSessionRestorer({ fetchSession: api.auth.me }),
   );
 
   const restoreSession = useCallback(() => {
-    if (ROUTE_AUTH_DISABLED_FOR_TESTS) return Promise.resolve();
     setSessionStatus(AUTH_SESSION_STATUS.LOADING);
 
     return sessionRestorer
@@ -84,10 +76,6 @@ export function AuthProvider({ children }) {
   }, [sessionRestorer]);
 
   useEffect(() => {
-    if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
-      return undefined;
-    }
-
     const timeoutId = window.setTimeout(restoreSession, 0);
 
     return () => {
@@ -97,8 +85,6 @@ export function AuthProvider({ children }) {
   }, [restoreSession, sessionRestorer]);
 
   useEffect(() => {
-    if (ROUTE_AUTH_DISABLED_FOR_TESTS) return undefined;
-
     const handleOnline = () => {
       if (sessionStatus === AUTH_SESSION_STATUS.TEMPORARILY_UNAVAILABLE) {
         restoreSession();
