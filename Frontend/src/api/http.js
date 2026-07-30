@@ -3,16 +3,8 @@ const API_BASE_URL = (
   (viteEnv.DEV ? viteEnv.VITE_API_URL : "") ||
   "/api"
 ).replace(/\/$/, "");
-export function getAuthToken() {
-  return "cookie-session";
-}
-
 export function getApiUrl(path) {
   return `${API_BASE_URL}${path}`;
-}
-
-export function setAuthToken(token) {
-  void token;
 }
 
 async function apiRequest(path, options = {}) {
@@ -84,13 +76,11 @@ export const authApi = {
     });
   },
 
-  async completeRegistration(payload) {
-    const data = await apiRequest("/auth/registration/complete", {
+  completeRegistration(payload) {
+    return apiRequest("/auth/registration/complete", {
       body: JSON.stringify(payload),
       method: "POST",
     });
-    if (data?.token) setAuthToken(data.token);
-    return data;
   },
 
   login({ email, password }) {
@@ -121,17 +111,11 @@ export const authApi = {
     });
   },
 
-  async changePassword({ currentPassword, newPassword }) {
-    const data = await apiRequest("/auth/change-password", {
+  changePassword({ currentPassword, newPassword }) {
+    return apiRequest("/auth/change-password", {
       body: JSON.stringify({ currentPassword, newPassword }),
       method: "POST",
     });
-
-    if (data?.token) {
-      setAuthToken(data.token);
-    }
-
-    return data;
   },
 
   uploadProfilePhoto({ file, onUploadProgress, signal }) {
@@ -195,10 +179,6 @@ export const authApi = {
           return;
         }
 
-        if (data?.token) {
-          setAuthToken(data.token);
-        }
-
         onUploadProgress?.({
           loaded: file?.size || 0,
           progress: 100,
@@ -230,8 +210,8 @@ export const authApi = {
     });
   },
 
-  me() {
-    return apiRequest("/auth/me");
+  me({ signal } = {}) {
+    return apiRequest("/auth/me", { signal });
   },
 };
 
@@ -487,6 +467,12 @@ function uploadRawFile({ file, onUploadProgress, path, signal }) {
 }
 
 export const projectRequestsApi = {
+  list({ cursor, limit = 25 } = {}) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set("cursor", cursor);
+    return apiRequest(`/project-requests?${params.toString()}`);
+  },
+
   create(payload) {
     return apiRequest("/project-requests", {
       body: JSON.stringify(payload),

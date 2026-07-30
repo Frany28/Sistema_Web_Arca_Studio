@@ -2,7 +2,7 @@ import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api, getAuthToken } from "../api/http.js";
+import { api } from "../api/http.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
@@ -63,6 +63,12 @@ function createProjectNavigationItems(projects) {
       trailingIcon: project.isPublic ? "window" : undefined,
       wrapperHeight: "56px",
     })),
+    {
+      id: "requests",
+      label: "Solicitudes",
+      icon: "requests",
+      wrapperHeight: "44px",
+    },
     {
       id: "more-projects",
       label: "Ver mas proyectos",
@@ -130,6 +136,35 @@ function ProjectRow({ project }) {
         onClick={() => navigate(getProjectPath(project))}
       >
         Ver proyecto
+      </Button>
+    </article>
+  );
+}
+
+function ProjectRequestRow({ projectRequest, onReview }) {
+  return (
+    <article className="grid grid-cols-1 items-center gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] min-[768px]:grid-cols-[120px_minmax(0,1fr)_auto] min-[1024px]:grid-cols-[160px_minmax(300px,1fr)_auto] min-[1024px]:gap-[24px]">
+      <ProjectImage
+        alt=""
+        className="aspect-[262/150] w-full rounded-[var(--radius-2)] min-[768px]:aspect-[120/69] min-[768px]:w-[120px] min-[1024px]:aspect-[160/91.4286] min-[1024px]:w-[160px]"
+      />
+
+      <div className="flex min-w-0 flex-col gap-[8px]">
+        <h2 className="truncate text-heading-4 text-[var(--color-text-50)]">
+          {projectRequest.projectName}
+        </h2>
+        <ProjectProgress />
+      </div>
+
+      <Button
+        theme="Primary"
+        type="Solid"
+        size="M"
+        fitContent
+        className="w-full min-[768px]:w-auto"
+        onClick={() => onReview(projectRequest)}
+      >
+        Revisar solicitud
       </Button>
     </article>
   );
@@ -214,7 +249,8 @@ function useSyncedScrollBar(contentKey) {
   };
 }
 
-function Home() {
+function Home({ view = "dashboard" }) {
+  const isRequestsView = view === "requests";
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
@@ -224,6 +260,15 @@ function Home() {
     useState(false);
   const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
+  const [selectedProjectRequest, setSelectedProjectRequest] = useState(null);
+  const [projectRequests, setProjectRequests] = useState([]);
+  const [projectRequestsError, setProjectRequestsError] = useState("");
+  const [projectRequestsLoading, setProjectRequestsLoading] = useState(false);
+  const [projectRequestsLoadingMore, setProjectRequestsLoadingMore] =
+    useState(false);
+  const [projectRequestsNextCursor, setProjectRequestsNextCursor] =
+    useState(null);
+  const [projectRequestsRevision, setProjectRequestsRevision] = useState(0);
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(true);
@@ -353,15 +398,6 @@ function Home() {
       };
     }
 
-    if (!getAuthToken()) {
-      setProjects([]);
-      setProjectsError("Vuelve a iniciar sesión para sincronizar la sesión.");
-      setProjectsLoading(false);
-      return () => {
-        isMounted = false;
-      };
-    }
-
     api.projects
       .listAll()
       .then((data) => {
@@ -385,6 +421,61 @@ function Home() {
       isMounted = false;
     };
   }, [user]);
+
+  useEffect(() => {
+    if (!isRequestsView || !user) return undefined;
+
+    let isMounted = true;
+    setProjectRequestsLoading(true);
+    setProjectRequestsError("");
+
+    api.projectRequests
+      .list()
+      .then((data) => {
+        if (isMounted) {
+          setProjectRequests(data.projectRequests || []);
+          setProjectRequestsNextCursor(data.nextCursor || null);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setProjectRequests([]);
+          setProjectRequestsError("No se pudieron cargar tus solicitudes.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setProjectRequestsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isRequestsView, projectRequestsRevision, user]);
+
+  const loadMoreProjectRequests = async () => {
+    if (!projectRequestsNextCursor || projectRequestsLoadingMore) return;
+
+    setProjectRequestsLoadingMore(true);
+    setProjectRequestsError("");
+
+    try {
+      const data = await api.projectRequests.list({
+        cursor: projectRequestsNextCursor,
+      });
+      setProjectRequests((current) => {
+        const byId = new Map(current.map((item) => [String(item.id), item]));
+        (data.projectRequests || []).forEach((item) => {
+          byId.set(String(item.id), item);
+        });
+        return Array.from(byId.values());
+      });
+      setProjectRequestsNextCursor(data.nextCursor || null);
+    } catch {
+      setProjectRequestsError("No se pudieron cargar más solicitudes.");
+    } finally {
+      setProjectRequestsLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -426,6 +517,11 @@ function Home() {
 
     if (item?.id === "more-projects") {
       navigate("/proyectos");
+      return;
+    }
+
+    if (item?.id === "requests") {
+      navigate("/solicitudes");
       return;
     }
 
@@ -480,7 +576,7 @@ function Home() {
       />
       <div className="flex min-h-screen w-full items-stretch">
         <SideNavigation
-          activeItemId="dashboard"
+          activeItemId={isRequestsView ? "requests" : "dashboard"}
           expanded={isSidebarExpanded}
           items={navigationItems}
           userName={currentUser.name}
@@ -509,12 +605,28 @@ function Home() {
             className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
           />
 
-          <div className="mx-auto flex w-full max-w-[1200px] px-[16px] py-[16px] sm:px-[24px] lg:px-[48px]">
+          <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[12px] px-[16px] py-[16px] min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between sm:px-[24px] lg:px-[48px]">
             <p className="text-heading-6 w-full text-[var(--color-text-300)]">
               Bienvenido, {currentUser.shortName}
             </p>
+            {isRequestsView ? (
+              <Button
+                theme="Primary"
+                type="Solid"
+                size="M"
+                fitContent
+                className="w-full shrink-0 min-[480px]:w-auto"
+                onClick={() => {
+                  setSelectedProjectRequest(null);
+                  setIsProjectRequestModalOpen(true);
+                }}
+              >
+                Nueva oportunidad
+              </Button>
+            ) : null}
           </div>
 
+          {!isRequestsView ? (
           <div className="mx-auto flex w-full max-w-[1200px] items-start gap-[4px] px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
             <div
               ref={projectsContainerRef}
@@ -556,6 +668,7 @@ function Home() {
               />
             ) : null}
           </div>
+          ) : null}
 
           <section className="mx-auto flex w-full max-w-[1200px] flex-col px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
             <div className="flex items-center pb-[4px]">
@@ -568,14 +681,65 @@ function Home() {
             </div>
 
             <div className="flex w-full items-start gap-[4px]">
-              <div
-                className="max-h-none min-w-0 flex-1 overflow-y-visible pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] lg:max-h-[122px] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden"
-              >
+              <div className="min-w-0 flex-1 pr-[2px]">
+                {isRequestsView ? (
+                  projectRequestsLoading ? (
+                    <Loader
+                      preset="requestRow"
+                      count={REQUEST_SKELETON_COUNT}
+                      label="Cargando solicitudes"
+                    />
+                  ) : projectRequestsError && !projectRequests.length ? (
+                    <p className="text-body-3 py-[24px] text-[var(--color-danger-100)]">
+                      {projectRequestsError}
+                    </p>
+                  ) : projectRequests.length ? (
+                    <div className="content-reveal flex flex-col">
+                      <div>
+                        {projectRequests.map((projectRequest) => (
+                          <ProjectRequestRow
+                            key={projectRequest.id}
+                            projectRequest={projectRequest}
+                            onReview={(request) => {
+                              setSelectedProjectRequest(request);
+                              setIsProjectRequestModalOpen(true);
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {projectRequestsNextCursor ? (
+                        <Button
+                          theme="Primary"
+                          type="Outline"
+                          size="M"
+                          fitContent
+                          disabled={projectRequestsLoadingMore}
+                          className="mt-[16px] self-center"
+                          onClick={loadMoreProjectRequests}
+                        >
+                          {projectRequestsLoadingMore
+                            ? "Cargando..."
+                            : "Cargar más"}
+                        </Button>
+                      ) : null}
+                      {projectRequestsError ? (
+                        <p className="text-body-3 mt-[12px] text-center text-[var(--color-danger-100)]">
+                          {projectRequestsError}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="text-body-3 py-[24px] text-[var(--color-text-200)]">
+                      Aún no has realizado solicitudes.
+                    </p>
+                  )
+                ) : (
                 <Loader
                   preset="requestRow"
                   count={REQUEST_SKELETON_COUNT}
                   label="Cargando solicitudes"
                 />
+                )}
               </div>
             </div>
           </section>
@@ -601,10 +765,20 @@ function Home() {
             onSubmitComment={submitComment}
           />
           <ProjectRequestModal
+            initialRequest={selectedProjectRequest}
             open={isProjectRequestModalOpen}
-            onClose={() => setIsProjectRequestModalOpen(false)}
+            onClose={() => {
+              setIsProjectRequestModalOpen(false);
+              setSelectedProjectRequest(null);
+            }}
             onPrevious={() => setIsProjectRequestModalOpen(false)}
-            onNext={() => setIsProjectRequestModalOpen(false)}
+            onNext={() => {
+              setIsProjectRequestModalOpen(false);
+              setSelectedProjectRequest(null);
+              if (isRequestsView) {
+                setProjectRequestsRevision((current) => current + 1);
+              }
+            }}
           />
         </div>
       </div>
@@ -618,7 +792,7 @@ function Home() {
         panelClassName="rounded-none"
       >
         <SideNavigation
-          activeItemId="dashboard"
+          activeItemId={isRequestsView ? "requests" : "dashboard"}
           expanded
           items={navigationItems}
           userName={currentUser.name}

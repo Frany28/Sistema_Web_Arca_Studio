@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
+import { ElementPlus } from "iconsax-react";
 import { api } from "../../../api/http.js";
 import { useAuth } from "../../../auth/AuthContext.jsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
@@ -301,6 +302,18 @@ function LogoutIcon({ className }) {
 function getItemIcon(icon, className = "size-5 shrink-0") {
   if (icon === "dashboard") {
     return <DashboardIcon className={className} />;
+  }
+
+  if (icon === "requests") {
+    return (
+      <ElementPlus
+        className={className}
+        size="20"
+        color="currentColor"
+        variant="Linear"
+        aria-hidden="true"
+      />
+    );
   }
 
   if (icon === "discover") {

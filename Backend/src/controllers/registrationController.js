@@ -1,5 +1,5 @@
 import { authConfig } from "../config/auth.js";
-import { buildSessionCookie } from "./authController.js";
+import { buildSessionCookie } from "../utils/authCookies.js";
 import * as registrationService from "../services/registrationService.js";
 import { toPublicUser } from "../repositories/userRepository.js";
 

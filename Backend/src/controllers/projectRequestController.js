@@ -5,12 +5,32 @@ import {
   normalizeProjectType,
   updateProjectRequestForUser,
 } from "../repositories/projectRequestRepository.js";
+import { listUserProjectRequests } from "../services/projectRequestQueryService.js";
+import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
 const PROJECT_NAME_MAX_LENGTH = 150;
 const PROJECT_LOCATION_MAX_LENGTH = 255;
 const PROJECT_DESCRIPTION_MIN_LENGTH = 10;
 const PROJECT_DESCRIPTION_MAX_LENGTH = 5000;
 const PROJECT_REFERENCE_LINK_MAX_LENGTH = 500;
+
+export async function listProjectRequests(req, res, next) {
+  try {
+    const query = req.validatedQuery || req.query;
+    const page = await listUserProjectRequests({
+      cursor: decodeCursor(query.cursor),
+      limit: parsePageLimit(query.limit),
+      user: req.user,
+    });
+
+    res.status(200).json({
+      projectRequests: page.items,
+      nextCursor: page.nextCursor,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 const ADDRESS_KEYWORDS = [
   "apartamento",

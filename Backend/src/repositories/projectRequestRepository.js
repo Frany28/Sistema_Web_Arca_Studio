@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import { query } from "../config/db.js";
+import { pageResult } from "../utils/pagination.js";
 
 const PROJECT_TYPE_MAP = {
   comercial: "commercial",
@@ -60,6 +61,57 @@ function toProjectRequest(row) {
 
 export function normalizeProjectType(value) {
   return PROJECT_TYPE_MAP[value] || null;
+}
+
+export async function listProjectRequestsForUser(user, { cursor, limit }) {
+  const params = [user.clientId, user.id];
+  let cursorCondition = "";
+
+  if (cursor) {
+    params.push(cursor[0], cursor[1]);
+    cursorCondition = `
+      and (created_at, id) < ($3::timestamptz, $4::bigint)
+    `;
+  }
+
+  params.push(limit + 1);
+  const limitParameter = `$${params.length}`;
+  const result = await query(
+    `
+      select
+        id,
+        client_id,
+        requested_by,
+        project_name,
+        project_type,
+        location,
+        description,
+        has_plans,
+        reference_link,
+        status,
+        created_at,
+        location_latitude,
+        location_longitude,
+        provider_place_id,
+        formatted_address
+      from public.project_requests
+      where client_id = $1
+        and requested_by = $2
+        and deleted_at is null
+        and status in ('pending_verification', 'pending_review')
+        ${cursorCondition}
+      order by created_at desc, id desc
+      limit ${limitParameter}
+    `,
+    params,
+  );
+
+  return pageResult(
+    result.rows,
+    limit,
+    toProjectRequest,
+    (row) => [row.created_at, Number(row.id)],
+  );
 }
 
 export async function findExistingProjectNameForClient(

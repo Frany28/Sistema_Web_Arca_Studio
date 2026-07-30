@@ -1,4 +1,5 @@
 const entries = new Map();
+const inFlightLoads = new Map();
 
 function ttlMs() { return Number(process.env.AUTH_CACHE_TTL_MS || 30000); }
 function maxEntries() { return Number(process.env.AUTH_CACHE_MAX_ENTRIES || 1000); }
@@ -23,5 +24,35 @@ export function cacheUser(userId, user) {
   while (entries.size > maxEntries()) entries.delete(entries.keys().next().value);
 }
 
-export function invalidateCachedUser(userId) { entries.delete(String(userId)); }
-export function clearUserSessionCache() { entries.clear(); }
+export function getOrLoadUser(userId, loader) {
+  const cachedUser = getCachedUser(userId);
+  if (cachedUser) return Promise.resolve(cachedUser);
+
+  const key = String(userId);
+  const currentLoad = inFlightLoads.get(key);
+  if (currentLoad) return currentLoad;
+
+  const load = Promise.resolve()
+    .then(loader)
+    .then((user) => {
+      if (user) cacheUser(key, user);
+      return user;
+    })
+    .finally(() => {
+      if (inFlightLoads.get(key) === load) inFlightLoads.delete(key);
+    });
+
+  inFlightLoads.set(key, load);
+  return load;
+}
+
+export function invalidateCachedUser(userId) {
+  const key = String(userId);
+  entries.delete(key);
+  inFlightLoads.delete(key);
+}
+
+export function clearUserSessionCache() {
+  entries.clear();
+  inFlightLoads.clear();
+}

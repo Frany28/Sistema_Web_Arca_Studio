@@ -14,15 +14,24 @@ function getRequiredProductionSecret() {
   return crypto.randomBytes(32).toString("hex");
 }
 
+export function resolveAuthCookieConfig(environment = process.env) {
+  const production = environment.NODE_ENV === "production";
+  return {
+    cookieName: production
+      ? "__Host-arca_session"
+      : environment.AUTH_COOKIE_NAME || "arca_session",
+    cookieSameSite: production
+      ? "Lax"
+      : environment.AUTH_COOKIE_SAMESITE || "Lax",
+    cookieSecure:
+      production ||
+      (environment.AUTH_COOKIE_SECURE !== undefined &&
+        environment.AUTH_COOKIE_SECURE === "true"),
+  };
+}
+
 export const authConfig = {
-  cookieName:
-    process.env.AUTH_COOKIE_NAME ||
-    (isProduction ? "__Host-arca_session" : "arca_session"),
-  cookieSameSite: process.env.AUTH_COOKIE_SAMESITE || (isProduction ? "None" : "Lax"),
-  cookieSecure:
-    process.env.AUTH_COOKIE_SECURE === undefined
-      ? isProduction
-      : process.env.AUTH_COOKIE_SECURE === "true",
+  ...resolveAuthCookieConfig(),
   isProduction,
   loginRateLimitMax: Number(process.env.AUTH_LOGIN_RATE_LIMIT_MAX || 5),
   loginRateLimitWindowMs: Number(

@@ -33,6 +33,7 @@ const EmptyProjectWarrantiesExample = lazy(
 const EmptyProjectsExample = lazy(
   () => import("./pages/EmptyProjectsExample.jsx"),
 );
+const Requests = lazy(() => import("./pages/Home.jsx"));
 const Home = lazy(() => import("./pages/Home.jsx"));
 const InactiveAccount = lazy(() => import("./pages/InactiveAccount.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
@@ -78,6 +79,7 @@ createRoot(document.getElementById("root")).render(
 
             <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
               <Route path="/dashboard-clientes" element={<Home />} />
+              <Route path="/solicitudes" element={<Requests view="requests" />} />
               <Route
                 path="/dashboard-clientes-vacio"
                 element={<EmptyProjectsExample />}

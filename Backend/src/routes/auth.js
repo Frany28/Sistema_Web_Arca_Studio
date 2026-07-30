@@ -27,8 +27,14 @@ import {
   startRegistration,
   verifyRegistration,
 } from "../controllers/registrationController.js";
+import { preventAuthResponseCaching } from "../utils/authCookies.js";
 
 const router = Router();
+
+router.use((_req, res, next) => {
+  preventAuthResponseCaching(res);
+  next();
+});
 
 router.post("/login", loginRateLimit, validate(loginSchema), login);
 router.post("/registration/start", loginRateLimit, validate(startRegistrationSchema), startRegistration);

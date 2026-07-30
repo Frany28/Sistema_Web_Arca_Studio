@@ -4,7 +4,33 @@ import ProjectRequestDetailsStep from "./ProjectRequestFlow/ProjectRequestDetail
 import ProjectRequestReferencesStep from "./ProjectRequestFlow/ProjectRequestReferencesStep.jsx";
 import ProjectRequestSuccessStep from "./ProjectRequestFlow/ProjectRequestSuccessStep.jsx";
 
+const PROJECT_TYPE_IDS = {
+  commercial: "comercial",
+  corporate: "corporativo",
+  residential: "residencial",
+  stands_exhibitions: "stands",
+};
+
+function createFormValues(projectRequest) {
+  return {
+    projectRequestId: projectRequest?.id,
+    projectName: projectRequest?.projectName || "",
+    projectLocation: projectRequest?.location || "",
+    projectLocationFormattedAddress: projectRequest?.formattedAddress || "",
+    projectLocationLatitude: projectRequest?.locationCoordinates?.latitude ?? null,
+    projectLocationLongitude:
+      projectRequest?.locationCoordinates?.longitude ?? null,
+    projectLocationProviderPlaceId: projectRequest?.providerPlaceId || null,
+    description: projectRequest?.description || "",
+    hasBlueprints: projectRequest?.hasPlans ? "Yes" : "No",
+    selectedProjectTypeId: PROJECT_TYPE_IDS[projectRequest?.projectType] || "",
+    referenceLink: projectRequest?.referenceLink || "",
+    code: "",
+  };
+}
+
 function ProjectRequestModal({
+  initialRequest = null,
   open,
   onClose,
   onPrevious,
@@ -15,43 +41,23 @@ function ProjectRequestModal({
   const [submitError, setSubmitError] = useState("");
   const [referenceFiles, setReferenceFiles] = useState([]);
   const uploadControllersRef = useRef(new Map());
-  const [formValues, setFormValues] = useState({
-    projectName: "",
-    projectLocation: "",
-    projectLocationFormattedAddress: "",
-    projectLocationLatitude: null,
-    projectLocationLongitude: null,
-    projectLocationProviderPlaceId: null,
-    description: "",
-    hasBlueprints: "No",
-    selectedProjectTypeId: "",
-    referenceLink: "",
-    code: "",
-  });
+  const [formValues, setFormValues] = useState(() =>
+    createFormValues(initialRequest),
+  );
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setFormValues(createFormValues(initialRequest));
+    } else {
       uploadControllersRef.current.forEach((controller) => controller.abort());
       uploadControllersRef.current.clear();
       setStep("details");
       setIsSubmitting(false);
       setSubmitError("");
       setReferenceFiles([]);
-      setFormValues({
-        projectName: "",
-        projectLocation: "",
-        projectLocationFormattedAddress: "",
-        projectLocationLatitude: null,
-        projectLocationLongitude: null,
-        projectLocationProviderPlaceId: null,
-        description: "",
-        hasBlueprints: "No",
-        selectedProjectTypeId: "",
-        referenceLink: "",
-        code: "",
-      });
+      setFormValues(createFormValues(null));
     }
-  }, [open]);
+  }, [initialRequest, open]);
 
   const updateReferenceFile = (fileId, nextValues) => {
     setReferenceFiles((current) =>

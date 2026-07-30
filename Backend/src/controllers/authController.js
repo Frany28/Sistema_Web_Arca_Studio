@@ -28,7 +28,11 @@ import {
   hashPasswordResetToken,
   sendPasswordResetEmail,
 } from "../services/passwordResetEmailService.js";
-import { serializeCookie } from "../utils/cookies.js";
+import {
+  buildExpiredSessionCookie,
+  buildSessionCookie,
+  preventAuthResponseCaching,
+} from "../utils/authCookies.js";
 import { createAuthToken, verifyAuthToken } from "../utils/tokens.js";
 import { invalidateCachedUser } from "../services/userSessionCache.js";
 import { prepareUpload, uploadPolicies } from "../services/fileUploadService.js";
@@ -61,27 +65,6 @@ function isValidPassword(password) {
   );
 }
 
-export function buildSessionCookie(token, maxAge) {
-  return serializeCookie(authConfig.cookieName, token, {
-    httpOnly: true,
-    maxAge,
-    path: "/",
-    sameSite: authConfig.cookieSameSite,
-    secure: authConfig.cookieSecure,
-  });
-}
-
-function buildExpiredSessionCookie() {
-  return serializeCookie(authConfig.cookieName, "", {
-    expires: new Date(0),
-    httpOnly: true,
-    maxAge: 0,
-    path: "/",
-    sameSite: authConfig.cookieSameSite,
-    secure: authConfig.cookieSecure,
-  });
-}
-
 function parseResetToken(token) {
   if (!token || typeof token !== "string") {
     return null;
@@ -109,6 +92,7 @@ function parseResetToken(token) {
 
 export async function login(req, res, next) {
   try {
+    preventAuthResponseCaching(res);
     const email = String(req.body?.email || "")
       .trim()
       .toLowerCase();
@@ -173,12 +157,14 @@ export async function login(req, res, next) {
 }
 
 export function me(req, res) {
+  preventAuthResponseCaching(res);
   res.status(200).json({
     user: toPublicUser(req.user),
   });
 }
 
 export function logout(_req, res) {
+  preventAuthResponseCaching(res);
   res.setHeader("Set-Cookie", buildExpiredSessionCookie());
   res.status(204).end();
 }

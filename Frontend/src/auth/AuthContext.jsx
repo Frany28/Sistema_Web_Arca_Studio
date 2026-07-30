@@ -8,7 +8,11 @@ import {
   useState,
 } from "react";
 
-import { api, getApiUrl, setAuthToken } from "../api/http.js";
+import { api, getApiUrl } from "../api/http.js";
+import {
+  AUTH_SESSION_STATUS,
+  createAuthSessionRestorer,
+} from "./authSession.js";
 import { ROUTE_AUTH_DISABLED_FOR_TESTS, TEST_AUTH_USER } from "./testAccess.js";
 
 const AuthContext = createContext(null);
@@ -47,42 +51,63 @@ function normalizeUser(user) {
 }
 
 export function AuthProvider({ children }) {
-  const [isLoading, setIsLoading] = useState(!ROUTE_AUTH_DISABLED_FOR_TESTS);
+  const [sessionStatus, setSessionStatus] = useState(
+    ROUTE_AUTH_DISABLED_FOR_TESTS
+      ? AUTH_SESSION_STATUS.AUTHENTICATED
+      : AUTH_SESSION_STATUS.LOADING,
+  );
   const [user, setUser] = useState(
     ROUTE_AUTH_DISABLED_FOR_TESTS ? TEST_AUTH_USER : null,
   );
+  const [sessionRestorer] = useState(() =>
+    ROUTE_AUTH_DISABLED_FOR_TESTS
+      ? null
+      : createAuthSessionRestorer({ fetchSession: api.auth.me }),
+  );
+
+  const restoreSession = useCallback(() => {
+    if (ROUTE_AUTH_DISABLED_FOR_TESTS) return Promise.resolve();
+    setSessionStatus(AUTH_SESSION_STATUS.LOADING);
+
+    return sessionRestorer
+      .restore()
+      .then((result) => {
+        setUser(normalizeUser(result.user));
+        setSessionStatus(result.status);
+      })
+      .catch((error) => {
+        if (error?.name !== "AbortError") {
+          setUser(null);
+          setSessionStatus(AUTH_SESSION_STATUS.TEMPORARILY_UNAVAILABLE);
+        }
+      });
+  }, [sessionRestorer]);
 
   useEffect(() => {
     if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
-      setAuthToken(null);
       return undefined;
     }
 
-    let isMounted = true;
-
-    api.auth
-      .me()
-      .then((data) => {
-        if (isMounted) {
-          setUser(normalizeUser(data.user));
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setAuthToken(null);
-          setUser(null);
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      });
+    const timeoutId = window.setTimeout(restoreSession, 0);
 
     return () => {
-      isMounted = false;
+      window.clearTimeout(timeoutId);
+      sessionRestorer?.cancel();
     };
-  }, []);
+  }, [restoreSession, sessionRestorer]);
+
+  useEffect(() => {
+    if (ROUTE_AUTH_DISABLED_FOR_TESTS) return undefined;
+
+    const handleOnline = () => {
+      if (sessionStatus === AUTH_SESSION_STATUS.TEMPORARILY_UNAVAILABLE) {
+        restoreSession();
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [restoreSession, sessionStatus]);
 
   const login = useCallback(async ({ email, password }) => {
     const data = await api.auth.login({ email, password });
@@ -96,6 +121,7 @@ export function AuthProvider({ children }) {
 
     const nextUser = normalizeUser(data.user);
     setUser(nextUser);
+    setSessionStatus(AUTH_SESSION_STATUS.AUTHENTICATED);
     return nextUser;
   }, []);
 
@@ -113,6 +139,7 @@ export function AuthProvider({ children }) {
       // The authenticated redirect still succeeds in restricted contexts.
     }
     setUser(nextUser);
+    setSessionStatus(AUTH_SESSION_STATUS.AUTHENTICATED);
     return nextUser;
   }, []);
 
@@ -123,8 +150,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const handleStorageEvent = (event) => {
       if (event.key === "arca_auth_logout") {
-        setAuthToken(null);
         setUser(null);
+        setSessionStatus(AUTH_SESSION_STATUS.UNAUTHENTICATED);
       }
     };
 
@@ -144,8 +171,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    setAuthToken(null);
+    sessionRestorer?.cancel();
     setUser(null);
+    setSessionStatus(AUTH_SESSION_STATUS.UNAUTHENTICATED);
 
     try {
       await api.auth.logout();
@@ -154,19 +182,31 @@ export function AuthProvider({ children }) {
     }
 
     broadcastLogout();
-  }, [broadcastLogout]);
+  }, [broadcastLogout, sessionRestorer]);
 
   const value = useMemo(
     () => ({
       isAuthenticated: Boolean(user),
-      isLoading,
+      isLoading: sessionStatus === AUTH_SESSION_STATUS.LOADING,
+      isSessionUnavailable:
+        sessionStatus === AUTH_SESSION_STATUS.TEMPORARILY_UNAVAILABLE,
       completeRegistration,
       login,
       logout,
+      restoreSession,
+      sessionStatus,
       updateUser,
       user,
     }),
-    [completeRegistration, isLoading, login, logout, updateUser, user],
+    [
+      completeRegistration,
+      login,
+      logout,
+      restoreSession,
+      sessionStatus,
+      updateUser,
+      user,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api, getAuthToken } from "../api/http.js";
+import { api } from "../api/http.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import MainLogo from "../assets/logos/MainLogo.jsx";
@@ -193,7 +193,7 @@ export default function PublicProjectsGallery() {
     setLoading(true);
     setError("");
 
-    if (!user || !getAuthToken()) {
+    if (!user) {
       setProjects([]);
       setError("Vuelve a iniciar sesión para cargar los proyectos.");
       setLoading(false);

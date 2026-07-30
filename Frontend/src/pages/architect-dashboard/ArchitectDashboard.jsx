@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api, getAuthToken } from "../../api/http.js";
+import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
@@ -182,15 +182,6 @@ function ArchitectDashboard({ empty = false }) {
     setProjectsError("");
 
     if (!user) {
-      setProjectsLoading(false);
-      return () => {
-        isMounted = false;
-      };
-    }
-
-    if (!getAuthToken()) {
-      setProjects([]);
-      setProjectsError("Vuelve a iniciar sesión para sincronizar la sesión.");
       setProjectsLoading(false);
       return () => {
         isMounted = false;

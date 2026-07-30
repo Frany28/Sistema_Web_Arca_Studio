@@ -2,7 +2,7 @@ import { authConfig } from "../config/auth.js";
 import { findActiveUserById } from "../repositories/userRepository.js";
 import { parseCookies } from "../utils/cookies.js";
 import { verifyAuthToken } from "../utils/tokens.js";
-import { cacheUser, getCachedUser } from "../services/userSessionCache.js";
+import { getOrLoadUser } from "../services/userSessionCache.js";
 import { isTokenOlderThanUser } from "../utils/sessionFreshness.js";
 
 function parseBoolean(value, fallback = false) {
@@ -98,11 +98,9 @@ async function resolveSession(req) {
     };
   }
 
-  let user = getCachedUser(payload.sub);
-  if (!user) {
-    user = await findActiveUserById(payload.sub);
-    cacheUser(payload.sub, user);
-  }
+  const user = await getOrLoadUser(payload.sub, () =>
+    findActiveUserById(payload.sub),
+  );
 
   if (!user || isTokenOlderThanUser(payload, user)) {
     return {
