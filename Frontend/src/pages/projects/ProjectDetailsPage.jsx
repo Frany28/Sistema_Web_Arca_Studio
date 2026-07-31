@@ -10,7 +10,6 @@ import { useImageCommentNotifications } from "../../components/ui/Gallery/useIma
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
 import TabPanel from "../../components/ui/TabPanel.jsx";
-import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
 import ProjectDetailTabMenu from "./components/ProjectDetailTabMenu.jsx";
@@ -318,8 +317,6 @@ export default function ProjectDetailsPage({
     () => typeof window === "undefined" || window.innerWidth >= 1024,
   );
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
-    useState(false);
-  const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
   const [recentDocumentModal, setRecentDocumentModal] = useState(null);
   const recentDocumentTriggerRef = useRef(null);
@@ -739,7 +736,7 @@ export default function ProjectDetailsPage({
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() =>
             currentUser.roleCode === "client"
-              ? setIsProjectRequestModalOpen(true)
+              ? navigate("/solicitudes/nueva")
               : navigate("/dashboard-arquitecto/nuevo-proyecto")
           }
           onLogoutClick={() => {
@@ -811,12 +808,6 @@ export default function ProjectDetailsPage({
             open={Boolean(recentDocumentModal)}
             projectId={resolvedProjectId}
             triggerRef={recentDocumentTriggerRef}
-          />
-          <ProjectRequestModal
-            open={isProjectRequestModalOpen}
-            onClose={() => setIsProjectRequestModalOpen(false)}
-            onPrevious={() => setIsProjectRequestModalOpen(false)}
-            onNext={() => setIsProjectRequestModalOpen(false)}
           />
         </div>
       </div>

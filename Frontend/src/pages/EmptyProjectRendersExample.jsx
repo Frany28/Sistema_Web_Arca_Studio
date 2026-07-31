@@ -6,7 +6,6 @@ import { getUserDisplay } from "../auth/userDisplay.js";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
-import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 import ProjectDetailTabMenu from "./projects/components/ProjectDetailTabMenu.jsx";
@@ -24,8 +23,6 @@ export default function EmptyProjectRendersExample() {
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
-    useState(false);
-  const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
   const [activeProjectTabIndex, setActiveProjectTabIndex] = useState(1);
   const imageCommentNotifications = useImageCommentNotifications({
@@ -70,6 +67,11 @@ export default function EmptyProjectRendersExample() {
 
     if (item?.id === "more-projects") {
       navigate("/proyectos");
+      return;
+    }
+
+    if (item?.id === "requests") {
+      navigate("/solicitudes");
       return;
     }
 
@@ -120,7 +122,7 @@ export default function EmptyProjectRendersExample() {
           userAvatarSrc={currentUser.profilePhotoUrl}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
-          onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
+          onNewOpportunityClick={() => navigate("/solicitudes/nueva")}
           onLogoutClick={() => {
             logout();
             navigate("/");
@@ -159,12 +161,6 @@ export default function EmptyProjectRendersExample() {
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
-          />
-          <ProjectRequestModal
-            open={isProjectRequestModalOpen}
-            onClose={() => setIsProjectRequestModalOpen(false)}
-            onPrevious={() => setIsProjectRequestModalOpen(false)}
-            onNext={() => setIsProjectRequestModalOpen(false)}
           />
         </div>
       </div>

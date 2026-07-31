@@ -14,7 +14,6 @@ import {
   getProjectNamesById,
 } from "../../utils/commentDisplay.js";
 import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
-import ProjectRequestModal from "../../components/ui/ProjectRequestModal.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import SettingsVerticalTabMenu from "../../components/ui/SettingsVerticalTabMenu.jsx";
 import TabPanel from "../../components/ui/TabPanel.jsx";
@@ -135,8 +134,6 @@ export default function SettingsPage() {
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
-    useState(false);
-  const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
     useState(false);
   const [activeSettingsTabId, setActiveSettingsTabId] = useState("profile");
 
@@ -570,7 +567,7 @@ export default function SettingsPage() {
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() =>
             currentUser.roleCode === "client"
-              ? setIsProjectRequestModalOpen(true)
+              ? navigate("/solicitudes/nueva")
               : navigate("/dashboard-arquitecto/nuevo-proyecto")
           }
           onLogoutClick={() => {
@@ -641,12 +638,6 @@ export default function SettingsPage() {
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
-          />
-          <ProjectRequestModal
-            open={isProjectRequestModalOpen}
-            onClose={() => setIsProjectRequestModalOpen(false)}
-            onPrevious={() => setIsProjectRequestModalOpen(false)}
-            onNext={() => setIsProjectRequestModalOpen(false)}
           />
           <AvatarUploadModal
             open={isAvatarUploadModalOpen}

@@ -46,6 +46,7 @@ const ProjectDetails = lazy(() => import("./pages/ProjectDetails.jsx"));
 const PublicProjectsGallery = lazy(
   () => import("./pages/PublicProjectsGallery.jsx"),
 );
+const ProjectRequestPage = lazy(() => import("./pages/ProjectRequestPage.jsx"));
 const RecoverAccount = lazy(() => import("./pages/RecoverAccount.jsx"));
 const Settings = lazy(() => import("./pages/Settings.jsx"));
 
@@ -80,6 +81,7 @@ createRoot(document.getElementById("root")).render(
             <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
               <Route path="/dashboard-clientes" element={<Home />} />
               <Route path="/solicitudes" element={<Requests view="requests" />} />
+              <Route path="/solicitudes/nueva" element={<ProjectRequestPage />} />
               <Route
                 path="/dashboard-clientes-vacio"
                 element={<EmptyProjectsExample />}

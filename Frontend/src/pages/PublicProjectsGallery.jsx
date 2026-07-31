@@ -287,7 +287,7 @@ export default function PublicProjectsGallery() {
       navigate(
         isArchitect
           ? "/dashboard-arquitecto/nuevo-proyecto"
-          : "/dashboard-clientes",
+          : "/solicitudes/nueva",
       ),
     onLogoutClick: () => {
       logout();

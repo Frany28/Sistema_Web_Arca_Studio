@@ -12,7 +12,6 @@ import Button from "../components/ui/Button/Button.jsx";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import Loader from "../components/ui/Loader/Loader.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
-import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
 import ProjectProgress from "../components/ui/ProjectProgress/ProjectProgress.jsx";
 import ProjectImage from "../components/ui/ProjectImage/ProjectImage.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";
@@ -226,9 +225,6 @@ function Home({ view = "dashboard" }) {
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
-  const [isProjectRequestModalOpen, setIsProjectRequestModalOpen] =
-    useState(false);
-  const [selectedProjectRequest, setSelectedProjectRequest] = useState(null);
   const [projectRequests, setProjectRequests] = useState([]);
   const [projectRequestsError, setProjectRequestsError] = useState("");
   const [projectRequestsLoading, setProjectRequestsLoading] = useState(false);
@@ -553,7 +549,7 @@ function Home({ view = "dashboard" }) {
           userAvatarSrc={currentUser.profilePhotoUrl}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
-          onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
+          onNewOpportunityClick={() => navigate("/solicitudes/nueva")}
           onLogoutClick={() => {
             logout();
             navigate("/");
@@ -587,10 +583,7 @@ function Home({ view = "dashboard" }) {
                 showLeftIcon={false}
                 showRightIcon={false}
                 className="w-full shrink-0 min-[480px]:w-auto"
-                onClick={() => {
-                  setSelectedProjectRequest(null);
-                  setIsProjectRequestModalOpen(true);
-                }}
+                onClick={() => navigate("/solicitudes/nueva")}
               >
                 Nueva oportunidad
               </Button>
@@ -680,10 +673,7 @@ function Home({ view = "dashboard" }) {
                           <ProjectRequestRow
                             key={projectRequest.id}
                             projectRequest={projectRequest}
-                            onReview={(request) => {
-                              setSelectedProjectRequest(request);
-                              setIsProjectRequestModalOpen(true);
-                            }}
+                            onReview={(request) => navigate("/solicitudes/nueva", { state: { initialRequest: request } })}
                           />
                         ))}
                       </div>
@@ -720,10 +710,7 @@ function Home({ view = "dashboard" }) {
                       showActions
                       showSecondaryAction={false}
                       primaryActionLabel="Nueva oportunidad"
-                      onPrimaryAction={() => {
-                        setSelectedProjectRequest(null);
-                        setIsProjectRequestModalOpen(true);
-                      }}
+                      onPrimaryAction={() => navigate("/solicitudes/nueva")}
                     />
                 )}
               </div>
@@ -792,22 +779,6 @@ function Home({ view = "dashboard" }) {
             onCommentSelect={openImageComment}
             onSubmitComment={submitComment}
           />
-          <ProjectRequestModal
-            initialRequest={selectedProjectRequest}
-            open={isProjectRequestModalOpen}
-            onClose={() => {
-              setIsProjectRequestModalOpen(false);
-              setSelectedProjectRequest(null);
-            }}
-            onPrevious={() => setIsProjectRequestModalOpen(false)}
-            onNext={() => {
-              setIsProjectRequestModalOpen(false);
-              setSelectedProjectRequest(null);
-              if (isRequestsView) {
-                setProjectRequestsRevision((current) => current + 1);
-              }
-            }}
-          />
         </div>
       </div>
 
@@ -832,7 +803,7 @@ function Home({ view = "dashboard" }) {
           }}
           onNewOpportunityClick={() => {
             setIsMobileNavigationOpen(false);
-            setIsProjectRequestModalOpen(true);
+            navigate("/solicitudes/nueva");
           }}
           onLogoutClick={() => {
             logout();
