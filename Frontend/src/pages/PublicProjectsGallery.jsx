@@ -25,6 +25,7 @@ import {
   getPublicGalleryProjects,
   sortPublicProjects,
 } from "../utils/publicProjectGallery.js";
+import { getPublicGalleryColumnCount } from "../utils/publicProjectGalleryLayout.js";
 
 const TABLET_BREAKPOINT_PX = 768;
 
@@ -53,17 +54,14 @@ function getNavigationItems(projects) {
   ];
 }
 
-function getCardHeight(index, columns) {
-  const column = index % columns;
-  const row = Math.floor(index / columns);
-  return (column + row) % 2 === 0 ? 479 : 282;
+function getCardHeight(projectCount) {
+  return projectCount === 1 ? 560 : 479;
 }
 
 function getGalleryColumnCount() {
-  if (typeof window === "undefined") return 3;
-  if (window.innerWidth < 768) return 1;
-  if (window.innerWidth < 1024) return 2;
-  return 3;
+  return getPublicGalleryColumnCount(
+    typeof window === "undefined" ? 1280 : window.innerWidth,
+  );
 }
 
 function getCardAssignees(project) {
@@ -86,7 +84,7 @@ function getCardAssignees(project) {
   ];
 }
 
-function ProjectGalleryCard({ project, height, onOpen }) {
+export function ProjectGalleryCard({ project, height, onOpen }) {
   const assignees = getCardAssignees(project);
   const assigneeNames = assignees.map((item) => item.name).join(", ");
 
@@ -145,30 +143,23 @@ function ProjectGalleryCard({ project, height, onOpen }) {
   );
 }
 
-function GalleryColumns({ columns, projects }) {
+export function GalleryColumns({ columns, projects, onOpen }) {
   const navigate = useNavigate();
-  const groupedProjects = Array.from({ length: columns }, (_, column) =>
-    projects
-      .map((project, index) => ({ index, project }))
-      .filter(({ index }) => index % columns === column),
-  );
+  const effectiveColumns = Math.min(Math.max(projects.length, 1), columns);
+  const openProject = onOpen || ((item) => navigate(getProjectPath(item)));
 
   return (
     <div
       className="grid w-full gap-[24px]"
-      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      style={{ gridTemplateColumns: `repeat(${effectiveColumns}, minmax(0, 1fr))` }}
     >
-      {groupedProjects.map((items, column) => (
-        <div key={column} className="flex min-w-0 flex-col gap-[24px]">
-          {items.map(({ index, project }) => (
-            <ProjectGalleryCard
-              key={project.id}
-              project={project}
-              height={getCardHeight(index, columns)}
-              onOpen={(item) => navigate(getProjectPath(item))}
-            />
-          ))}
-        </div>
+      {projects.map((project) => (
+        <ProjectGalleryCard
+          key={project.id}
+          project={project}
+          height={getCardHeight(projects.length)}
+          onOpen={openProject}
+        />
       ))}
     </div>
   );
