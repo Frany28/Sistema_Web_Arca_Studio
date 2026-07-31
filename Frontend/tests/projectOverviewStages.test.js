@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { getVisibleProjectStages } from "../src/utils/projectOverviewStages.js";
 
-test("project overview starts at the active phase and includes at most three following phases", () => {
+test("project overview preserves the four project phases, including completed phases", () => {
   const stages = [
     { id: "brief", tone: "completed" },
     { id: "design", tone: "active" },
@@ -15,7 +15,7 @@ test("project overview starts at the active phase and includes at most three fol
 
   assert.deepEqual(
     getVisibleProjectStages(stages).map((stage) => stage.id),
-    ["design", "planning", "execution", "delivery"],
+    ["brief", "design", "planning", "execution"],
   );
 });
 
