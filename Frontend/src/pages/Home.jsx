@@ -284,6 +284,15 @@ function Home({ view = "dashboard" }) {
   } = useSyncedScrollBar(
     projectGroups.map((group) => `${group.id}:${group.projects.length}`).join("|"),
   );
+  const {
+    containerRef: requestsContainerRef,
+    length: requestScrollLength,
+    onScroll: handleRequestScroll,
+    position: requestScrollPosition,
+    setPosition: setRequestScrollPosition,
+  } = useSyncedScrollBar(
+    `${view}:${projectRequests.map((request) => request.id).join("|")}`,
+  );
   const navigationItems = useMemo(
     () => createUserSideNavigationItems(ownedProjectRows, "client"),
     [ownedProjectRows],
@@ -645,7 +654,15 @@ function Home({ view = "dashboard" }) {
             </div>
 
             <div className="flex w-full items-start gap-[4px]">
-              <div className="min-w-0 flex-1 pr-[2px]">
+              <div
+                ref={requestsContainerRef}
+                onScroll={handleRequestScroll}
+                className={`min-w-0 flex-1 pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+                  isRequestsView
+                    ? "overflow-y-visible"
+                    : "lg:max-h-[232px] lg:overflow-y-auto"
+                }`}
+              >
                 {projectRequestsLoading ? (
                     <Loader
                       preset="requestRow"
@@ -714,6 +731,16 @@ function Home({ view = "dashboard" }) {
                     />
                 )}
               </div>
+              {!isRequestsView && !projectRequestsLoading && projectRequests.length ? (
+                <ScrollBar
+                  height={232}
+                  length={requestScrollLength}
+                  position={requestScrollPosition}
+                  interactive
+                  onPositionChange={setRequestScrollPosition}
+                  className="hidden shrink-0 lg:block"
+                />
+              ) : null}
             </div>
           </section>
 
