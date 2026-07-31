@@ -143,25 +143,25 @@ export const BUTTON_VISUALS = {
 export const BUTTON_INTERACTIVE_STYLES = {
   Primary: {
     Solid:
-      "hover:border-[var(--color-primary-500)] hover:bg-[var(--color-primary-500)] focus:outline-none focus:border-[#4e4e4e] focus:bg-[var(--color-primary-300)] focus:text-[var(--color-neutral-100-uniform)]",
+      "hover:border-[var(--color-primary-500)] hover:bg-[var(--color-primary-500)] active:border-[var(--color-primary-500)] active:bg-[var(--color-primary-500)] focus:outline-none focus-visible:border-[#4e4e4e] focus-visible:bg-[var(--color-primary-300)] focus-visible:text-[var(--color-neutral-100-uniform)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-primary-10)]",
     Outline:
-      "hover:border-[var(--color-neutral-600)] hover:bg-transparent hover:text-[var(--color-text-200)] focus:outline-none focus:border-[var(--color-neutral-600)] focus:bg-transparent focus:text-[var(--color-text-200)]",
+      "hover:border-[var(--color-neutral-600)] hover:bg-transparent hover:text-[var(--color-text-200)] active:border-[var(--color-neutral-600)] active:bg-[var(--color-primary-10)] focus:outline-none focus-visible:border-[var(--color-neutral-600)] focus-visible:bg-transparent focus-visible:text-[var(--color-text-200)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-primary-10)]",
     Ghost:
-      "hover:bg-[var(--color-primary-10)] hover:text-[var(--color-text-200)] focus:outline-none focus:border-[var(--color-neutral-300)] focus:bg-transparent focus:text-[var(--color-text-200)]",
+      "hover:bg-[var(--color-primary-10)] hover:text-[var(--color-text-200)] active:bg-[var(--color-primary-10)] focus:outline-none focus-visible:border-[var(--color-neutral-300)] focus-visible:bg-transparent focus-visible:text-[var(--color-text-200)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-primary-10)]",
     Link:
-      "hover:text-[var(--color-text-50)] focus:outline-none focus:text-[var(--color-text-300)]",
+      "hover:text-[var(--color-text-50)] active:text-[var(--color-text-50)] focus:outline-none focus-visible:text-[var(--color-text-300)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-primary-10)]",
   },
   Danger: {
     Solid:
-      "hover:border-[var(--color-danger-200)] hover:bg-[var(--color-danger-200)] focus:outline-none focus:border-[var(--color-danger-100)] focus:bg-[var(--color-danger-100)] focus:text-[var(--color-neutral-100-uniform)] focus:shadow-[0_0_0_var(--stroke-2)_var(--color-danger-10)]",
+      "hover:border-[var(--color-danger-200)] hover:bg-[var(--color-danger-200)] active:border-[var(--color-danger-200)] active:bg-[var(--color-danger-200)] focus:outline-none focus-visible:border-[var(--color-danger-100)] focus-visible:bg-[var(--color-danger-100)] focus-visible:text-[var(--color-neutral-100-uniform)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-danger-10)]",
     Outline:
-      "hover:border-[var(--color-danger-200)] hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-danger-200)] focus:outline-none focus:border-[var(--color-danger-100)] focus:bg-[var(--color-neutral-100)] focus:text-[var(--color-danger-100)] focus:shadow-[0_0_0_var(--stroke-2)_var(--color-danger-10)]",
+      "hover:border-[var(--color-danger-200)] hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-danger-200)] active:border-[var(--color-danger-200)] active:text-[var(--color-danger-200)] focus:outline-none focus-visible:border-[var(--color-danger-100)] focus-visible:bg-[var(--color-neutral-100)] focus-visible:text-[var(--color-danger-100)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-danger-10)]",
   },
   Info: {
     Solid:
-      "hover:border-[var(--color-info-200)] hover:bg-[var(--color-info-200)] focus:outline-none focus:border-[var(--color-info-200)] focus:bg-[var(--color-info-100)] focus:text-[var(--color-neutral-100-uniform)] focus:shadow-[0_0_0_var(--stroke-2)_var(--color-info-10)]",
+      "hover:border-[var(--color-info-200)] hover:bg-[var(--color-info-200)] active:border-[var(--color-info-200)] active:bg-[var(--color-info-200)] focus:outline-none focus-visible:border-[var(--color-info-200)] focus-visible:bg-[var(--color-info-100)] focus-visible:text-[var(--color-neutral-100-uniform)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-info-10)]",
     Outline:
-      "hover:border-[var(--color-info-200)] hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-info-100)] focus:outline-none focus:border-[var(--color-info-200)] focus:bg-[var(--color-neutral-100)] focus:text-[var(--color-info-100)] focus:shadow-[0_0_0_var(--stroke-2)_var(--color-info-10)]",
+      "hover:border-[var(--color-info-200)] hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-info-100)] active:border-[var(--color-info-200)] active:text-[var(--color-info-200)] focus:outline-none focus-visible:border-[var(--color-info-200)] focus-visible:bg-[var(--color-neutral-100)] focus-visible:text-[var(--color-info-100)] focus-visible:shadow-[0_0_0_var(--stroke-2)_var(--color-info-10)]",
   },
 };
 

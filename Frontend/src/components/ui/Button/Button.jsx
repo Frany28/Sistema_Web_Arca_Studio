@@ -1,37 +1,9 @@
-import { useState } from "react";
 import clsx from "clsx";
 import {
   BUTTON_INTERACTIVE_STYLES,
   BUTTON_SIZE_STYLES,
   BUTTON_VISUALS,
 } from "./buttonConfig.js";
-
-function BlockIcon({ className }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={clsx("size-5 shrink-0", className)}
-      aria-hidden="true"
-    >
-      <path
-        d="M10 18.3337C14.6024 18.3337 18.3333 14.6027 18.3333 10.0003C18.3333 5.39795 14.6024 1.66699 10 1.66699C5.39762 1.66699 1.66666 5.39795 1.66666 10.0003C1.66666 14.6027 5.39762 18.3337 10 18.3337Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4.10834 15.892L15.8917 4.10864"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 function Button({
   className,
@@ -48,12 +20,9 @@ function Button({
   type = "Solid",
   htmlType = "button",
   disabled = false,
-  onFocus,
-  onBlur,
   style,
   ...props
 }) {
-  const [isInteractiveFocused, setIsInteractiveFocused] = useState(false);
   const resolvedTheme = BUTTON_VISUALS[theme] ? theme : "Primary";
   const resolvedType = BUTTON_VISUALS[resolvedTheme]?.[type] ? type : "Solid";
   const resolvedSize = BUTTON_SIZE_STYLES[size] ? size : "S";
@@ -65,10 +34,7 @@ function Button({
   const interactiveClassName =
     BUTTON_INTERACTIVE_STYLES[resolvedTheme]?.[resolvedType];
   const showFocusRing =
-    !isLink &&
-    !isDisabled &&
-    (resolvedState === "Focused" ||
-      (resolvedState === "Default" && isInteractiveFocused));
+    !isLink && !isDisabled && resolvedState === "Focused";
   const focusStyle = showFocusRing
     ? {
         outline: `var(--stroke-2) solid ${visual.FocusedOuter}`,
@@ -77,7 +43,7 @@ function Button({
     : undefined;
 
   const buttonClassName = clsx(
-    "flex items-center justify-center overflow-visible rounded-[var(--radius-2)] font-medium tracking-[-0.5px]",
+    "flex items-center justify-center overflow-visible rounded-[var(--radius-2)] font-medium tracking-[-0.5px] transition-colors duration-150 motion-reduce:transition-none",
     isDisabled ? "cursor-not-allowed" : "cursor-pointer",
     iconOnly
       ? BUTTON_SIZE_STYLES[resolvedSize].iconOnly
@@ -105,22 +71,14 @@ function Button({
         ...style,
         ...focusStyle,
       }}
-      onFocus={(event) => {
-        setIsInteractiveFocused(true);
-        onFocus?.(event);
-      }}
-      onBlur={(event) => {
-        setIsInteractiveFocused(false);
-        onBlur?.(event);
-      }}
       {...props}
     >
-      {showLeftIcon ? (
+      {showLeftIcon && iconLeft ? (
         <span
           className="inline-flex shrink-0 items-center justify-center"
           aria-hidden="true"
         >
-          {iconLeft ?? <BlockIcon />}
+          {iconLeft}
         </span>
       ) : null}
       {showText ? (
@@ -134,12 +92,12 @@ function Button({
           {children}
         </span>
       ) : null}
-      {showText && showRightIcon ? (
+      {showText && showRightIcon && iconRight ? (
         <span
           className="inline-flex shrink-0 items-center justify-center"
           aria-hidden="true"
         >
-          {iconRight ?? <BlockIcon />}
+          {iconRight}
         </span>
       ) : null}
     </button>

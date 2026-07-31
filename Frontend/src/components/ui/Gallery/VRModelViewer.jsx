@@ -971,6 +971,8 @@ export default function VRModelViewer({
                   theme="Primary"
                   type="Ghost"
                   size="S"
+                  showLeftIcon={false}
+                  showRightIcon={false}
                   onClick={() => {
                     setPendingObservation(null);
                     setObservationMessage("");
@@ -982,6 +984,8 @@ export default function VRModelViewer({
                   theme="Primary"
                   type="Solid"
                   size="S"
+                  showLeftIcon={false}
+                  showRightIcon={false}
                   disabled={!observationMessage.trim() || isSubmittingObservation}
                   onClick={handleObservationSubmit}
                 >

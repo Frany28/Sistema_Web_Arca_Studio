@@ -682,6 +682,8 @@ function Home({ view = "dashboard" }) {
                           type="Outline"
                           size="M"
                           fitContent
+                          showLeftIcon={false}
+                          showRightIcon={false}
                           disabled={projectRequestsLoadingMore}
                           className="mt-[16px] self-center"
                           onClick={loadMoreProjectRequests}
