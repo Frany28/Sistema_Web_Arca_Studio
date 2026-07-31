@@ -9,6 +9,7 @@ import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Badge from "../components/ui/Badge/Badge.jsx";
 import AuthToast, { AuthToastLockIcon } from "../components/ui/AuthToast/AuthToast.jsx";
 import Button from "../components/ui/Button/Button.jsx";
+import EmptyState from "../components/ui/EmptyState.jsx";
 import Loader from "../components/ui/Loader/Loader.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import ProjectRequestModal from "../components/ui/ProjectRequestModal.jsx";
@@ -239,6 +240,7 @@ function Home({ view = "dashboard" }) {
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const projectsRequestIdRef = useRef(0);
   const [registrationToast] = useState(() => {
     try {
       if (window.sessionStorage.getItem("arca_registration_complete") === "true") {
@@ -352,45 +354,45 @@ function Home({ view = "dashboard" }) {
     refreshSubmittedComments,
   ]);
 
-  useEffect(() => {
-    let isMounted = true;
-
+  const loadProjects = useCallback(async () => {
+    const requestId = projectsRequestIdRef.current + 1;
+    projectsRequestIdRef.current = requestId;
     setProjectsLoading(true);
     setProjectsError("");
 
     if (!user) {
+      setProjects([]);
       setProjectsLoading(false);
-      return () => {
-        isMounted = false;
-      };
+      return;
     }
 
-    api.projects
-      .listAll()
-      .then((data) => {
-        if (isMounted) {
-          setProjects(data.projects || []);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setProjects([]);
-          setProjectsError("No se pudieron cargar los proyectos.");
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setProjectsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
+    try {
+      const data = await api.projects.listAll();
+      if (projectsRequestIdRef.current === requestId) {
+        setProjects(data.projects || []);
+      }
+    } catch {
+      if (projectsRequestIdRef.current === requestId) {
+        setProjects([]);
+        setProjectsError("No se pudieron cargar los proyectos.");
+      }
+    } finally {
+      if (projectsRequestIdRef.current === requestId) {
+        setProjectsLoading(false);
+      }
+    }
   }, [user]);
 
   useEffect(() => {
-    if (!isRequestsView || !user) return undefined;
+    loadProjects();
+
+    return () => {
+      projectsRequestIdRef.current += 1;
+    };
+  }, [loadProjects]);
+
+  useEffect(() => {
+    if (!user) return undefined;
 
     let isMounted = true;
     setProjectRequestsLoading(true);
@@ -417,7 +419,7 @@ function Home({ view = "dashboard" }) {
     return () => {
       isMounted = false;
     };
-  }, [isRequestsView, projectRequestsRevision, user]);
+  }, [projectRequestsRevision, user]);
 
   const loadMoreProjectRequests = async () => {
     if (!projectRequestsNextCursor || projectRequestsLoadingMore) return;
@@ -651,17 +653,26 @@ function Home({ view = "dashboard" }) {
 
             <div className="flex w-full items-start gap-[4px]">
               <div className="min-w-0 flex-1 pr-[2px]">
-                {isRequestsView ? (
-                  projectRequestsLoading ? (
+                {projectRequestsLoading ? (
                     <Loader
                       preset="requestRow"
                       count={REQUEST_SKELETON_COUNT}
                       label="Cargando solicitudes"
                     />
                   ) : projectRequestsError && !projectRequests.length ? (
-                    <p className="text-body-3 py-[24px] text-[var(--color-danger-100)]">
-                      {projectRequestsError}
-                    </p>
+                    <EmptyState
+                      className="min-h-[320px]"
+                      title="No pudimos cargar tus solicitudes"
+                      description={projectRequestsError}
+                      size="M"
+                      showFeaturedIcon
+                      showActions
+                      showSecondaryAction={false}
+                      primaryActionLabel="Actualizar"
+                      onPrimaryAction={() =>
+                        setProjectRequestsRevision((current) => current + 1)
+                      }
+                    />
                   ) : projectRequests.length ? (
                     <div className="content-reveal flex flex-col">
                       <div>
@@ -700,29 +711,75 @@ function Home({ view = "dashboard" }) {
                       ) : null}
                     </div>
                   ) : (
-                    <p className="text-body-3 py-[24px] text-[var(--color-text-200)]">
-                      Aún no has realizado solicitudes.
-                    </p>
-                  )
-                ) : (
-                <Loader
-                  preset="requestRow"
-                  count={REQUEST_SKELETON_COUNT}
-                  label="Cargando solicitudes"
-                />
+                    <EmptyState
+                      className="min-h-[320px]"
+                      title="Tu espacio de proyectos está listo"
+                      description="Aquí podrás visualizar y dar seguimiento a tus proyectos."
+                      size="M"
+                      showFeaturedIcon
+                      showActions
+                      showSecondaryAction={false}
+                      primaryActionLabel="Nueva oportunidad"
+                      onPrimaryAction={() => {
+                        setSelectedProjectRequest(null);
+                        setIsProjectRequestModalOpen(true);
+                      }}
+                    />
                 )}
               </div>
             </div>
           </section>
 
-          {publicProjectRows.length ? (
-            <div className="mx-auto flex w-full max-w-[1200px] px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">
+          <div className="mx-auto flex w-full max-w-[1200px] px-[16px] pb-[24px] sm:px-[24px] lg:px-[48px]">
+            {projectsLoading ? (
+              <section className="flex w-full min-w-0 flex-col gap-[16px]">
+                <h2 className="text-heading-4 text-[var(--color-text-100)]">
+                  Ver más proyectos
+                </h2>
+                <Loader
+                  preset="projectShowcase"
+                  label="Cargando más proyectos"
+                />
+              </section>
+            ) : projectsError ? (
+              <section className="flex w-full min-w-0 flex-col gap-[16px]">
+                <h2 className="text-heading-4 text-[var(--color-text-100)]">
+                  Ver más proyectos
+                </h2>
+                <EmptyState
+                  title="No pudimos cargar los proyectos"
+                  description={projectsError}
+                  size="M"
+                  showFeaturedIcon
+                  showActions
+                  showSecondaryAction={false}
+                  primaryActionLabel="Actualizar"
+                  onPrimaryAction={loadProjects}
+                />
+              </section>
+            ) : publicProjectRows.length ? (
               <ProjectsShowcaseCarousel
                 title="Ver más proyectos"
                 items={publicProjectRows}
               />
-            </div>
-          ) : null}
+            ) : (
+              <section className="flex w-full min-w-0 flex-col gap-[16px]">
+                <h2 className="text-heading-4 text-[var(--color-text-100)]">
+                  Ver más proyectos
+                </h2>
+                <EmptyState
+                  title="No se encontraron proyectos"
+                  description="Aquí podrás visualizar otros proyectos que pueden interesarte."
+                  size="M"
+                  showFeaturedIcon
+                  showActions
+                  showSecondaryAction={false}
+                  primaryActionLabel="Actualizar"
+                  onPrimaryAction={loadProjects}
+                />
+              </section>
+            )}
+          </div>
 
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}

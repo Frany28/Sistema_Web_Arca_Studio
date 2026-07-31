@@ -48,6 +48,38 @@ function RequestRowSkeleton() {
   );
 }
 
+function ProjectShowcaseSkeleton() {
+  return (
+    <>
+      <div className="flex flex-col gap-[24px] min-[768px]:hidden">
+        <SkeletonBlock className="h-[465px] w-full rounded-[var(--radius-2)]" />
+        <SkeletonBlock
+          className="h-[273px] w-full rounded-[var(--radius-2)]"
+          delay={80}
+        />
+      </div>
+      <div className="hidden grid-cols-2 gap-[24px] min-[768px]:grid min-[1024px]:hidden">
+        {Array.from({ length: 2 }, (_, index) => (
+          <SkeletonBlock
+            key={index}
+            className="h-[465px] w-full rounded-[var(--radius-2)]"
+            delay={index * 80}
+          />
+        ))}
+      </div>
+      <div className="hidden grid-cols-3 gap-[24px] min-[1024px]:grid">
+        {Array.from({ length: 3 }, (_, index) => (
+          <SkeletonBlock
+            key={index}
+            className="h-[273px] w-full rounded-[var(--radius-2)]"
+            delay={index * 70}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
 function ActivityItemSkeleton() {
   return (
     <div className="flex w-full items-start gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
@@ -260,6 +292,8 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = <ProjectDetailSkeleton section={section} />;
   } else if (preset === "requestRow") {
     content = Array.from({ length: itemCount }, (_, index) => <RequestRowSkeleton key={index} />);
+  } else if (preset === "projectShowcase") {
+    content = <ProjectShowcaseSkeleton />;
   } else if (preset === "activityItem") {
     content = Array.from({ length: itemCount }, (_, index) => <ActivityItemSkeleton key={index} />);
   } else if (preset === "videoStage") {

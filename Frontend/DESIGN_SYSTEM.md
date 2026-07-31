@@ -152,6 +152,7 @@ Cuando se añadan animaciones, respetar `prefers-reduced-motion`, como ya hace e
 - Los controles que ya disponen de estado desactivado, como barras de búsqueda, filtros y botones, permanecen visibles y usan `disabled` mientras esperan datos. El `Loader` se reserva para el contenido sin representación propia durante la carga.
 - La animación estándar es un shimmer amplio, tenue y lento (aproximadamente 2.2 s), basado en tokens de tema y compatible con `prefers-reduced-motion`; no debe producir destellos blancos ni cambios bruscos de opacidad.
 - Loader, contenido, estado vacío y error son estados mutuamente excluyentes. Las listas usan `count` para aproximar la cantidad visible de elementos.
+- Ninguna sección conectada a base de datos puede desaparecer ni sustituirse por texto improvisado cuando no existan registros o falle la consulta; debe conservar su contexto y usar `EmptyState` con una acción pertinente.
 - Todo componente que dependa de datos o recursos debe definir un skeleton con sus dimensiones finales para evitar saltos de layout. Imágenes, portadas, miniaturas y reproductores usan presets de medios ajustados a su relación de aspecto.
 - Una sección sin API puede mostrar un skeleton permanente únicamente si se documenta que todavía no existe una fuente real. En ese caso no se muestran datos de demostración ni scrollbar de contenido cargado.
 - El flujo completo de autenticación queda excluido del skeleton global y conserva sus mensajes y estados de botón propios.
@@ -176,6 +177,8 @@ Toda vista que dependa de datos debe diseñar explícitamente:
 - fin de la paginación.
 
 No reemplazar la pantalla completa por un texto improvisado. Reutilizar los componentes de estado y mantener el contexto para que el usuario pueda reintentar.
+
+La colección de Solicitudes es un caso visual especial: cuando esté vacía debe usar `EmptyState` en tamaño `M`, con icono destacado, el título “Tu espacio de proyectos está listo”, la descripción “Aquí podrás visualizar y dar seguimiento a tus proyectos.” y la acción “Nueva oportunidad”.
 
 ## Responsive
 

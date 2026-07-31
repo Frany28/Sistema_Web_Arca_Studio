@@ -35,7 +35,7 @@ export default function ProjectOverviewHeader({ project }) {
     >
       <div className="flex w-full items-start justify-between gap-[12px] min-[768px]:gap-[24px]">
         <div className="flex min-w-0 flex-col gap-[4px]">
-          <h1 className="break-words text-[20px] font-bold leading-[24px] tracking-[-0.5px] text-[var(--color-text-50)] min-[768px]:text-heading-3">
+          <h1 className="break-words text-[20px] font-bold leading-[24px] tracking-[-0.5px] text-[var(--color-text-50)] min-[768px]:text-[48px] min-[768px]:leading-[58px] min-[768px]:tracking-[-1px]">
             {project.title}
           </h1>
           <p className="break-words text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] min-[768px]:text-[18px] min-[768px]:leading-[21px]">
