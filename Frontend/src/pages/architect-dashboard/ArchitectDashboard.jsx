@@ -19,6 +19,7 @@ import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getProjectImageSource } from "../../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js";
 import { groupProjectsByStatus } from "../../utils/projectStatusGroups.js";
+import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -34,36 +35,6 @@ function mergeNotificationComments(comments) {
   });
 
   return Array.from(commentsById.values());
-}
-
-function createNavigationItems(projects) {
-  return [
-    {
-      id: "dashboard",
-      label: "Panel",
-      icon: "dashboard",
-      wrapperHeight: "44px",
-    },
-    ...projects.slice(0, 2).map((project) => ({
-      id: `project-${project.id}`,
-      label: project.name,
-      icon: "project",
-      trailingIcon: project.isPublic ? "window" : undefined,
-      wrapperHeight: "56px",
-    })),
-    {
-      id: "more-projects",
-      label: "Ver mas proyectos",
-      icon: "discover",
-      wrapperHeight: "56px",
-    },
-    {
-      id: "settings",
-      label: "Configuraciones",
-      icon: "settings",
-      wrapperHeight: "56px",
-    },
-  ];
 }
 
 function toProjectRow(project, user) {
@@ -112,8 +83,8 @@ function ArchitectDashboard({ empty = false }) {
     [projectRows],
   );
   const navigationItems = useMemo(
-    () => createNavigationItems(projectRows),
-    [projectRows],
+    () => createUserSideNavigationItems(projectRows, currentUser.roleCode),
+    [currentUser.roleCode, projectRows],
   );
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: commentProjectRows.map((project) => project.id),

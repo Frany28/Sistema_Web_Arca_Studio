@@ -29,6 +29,10 @@ import {
   applyThemePreference,
   getThemePreferenceFromDocument,
 } from "./themeUtils.js";
+import {
+  createUserSideNavigationItems,
+  getDashboardPath,
+} from "../../utils/sideNavigationItems.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
@@ -173,6 +177,10 @@ export default function SettingsPage() {
     () => getCommentableProjectsForUser(projects, user),
     [projects, user],
   );
+  const navigationItems = useMemo(
+    () => createUserSideNavigationItems(projects, currentUser.roleCode),
+    [currentUser.roleCode, projects],
+  );
   const projectNamesById = useMemo(
     () => getProjectNamesById(commentableProjects),
     [commentableProjects],
@@ -247,7 +255,7 @@ export default function SettingsPage() {
 
   const handleSideNavigationSelect = (item) => {
     if (item?.id === "dashboard") {
-      navigate("/dashboard-clientes");
+      navigate(getDashboardPath(currentUser.roleCode));
       return;
     }
 
@@ -262,6 +270,11 @@ export default function SettingsPage() {
 
     if (item?.id === "more-projects") {
       navigate("/proyectos");
+      return;
+    }
+
+    if (item?.id === "requests") {
+      navigate("/solicitudes");
       return;
     }
 
@@ -544,12 +557,22 @@ export default function SettingsPage() {
         <SideNavigation
           activeItemId="settings"
           expanded={isSidebarExpanded}
+          items={navigationItems}
+          newOpportunityLabel={
+            currentUser.roleCode === "client"
+              ? "Nueva oportunidad"
+              : "Nuevo proyecto"
+          }
           userName={currentUser.name}
           userEmail={currentUser.email}
           userAvatarSrc={currentUser.profilePhotoUrl}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
-          onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
+          onNewOpportunityClick={() =>
+            currentUser.roleCode === "client"
+              ? setIsProjectRequestModalOpen(true)
+              : navigate("/dashboard-arquitecto/nuevo-proyecto")
+          }
           onLogoutClick={() => {
             logout();
             navigate("/");

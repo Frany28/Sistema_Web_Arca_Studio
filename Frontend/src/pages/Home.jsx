@@ -29,6 +29,7 @@ import { getProjectPath } from "../utils/projectRoutes.js";
 import { getProjectImageSource } from "../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
 import { groupProjectsByStatus } from "../utils/projectStatusGroups.js";
+import { createUserSideNavigationItems } from "../utils/sideNavigationItems.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
@@ -46,42 +47,6 @@ function mergeNotificationComments(comments) {
   });
 
   return Array.from(commentsById.values());
-}
-
-function createProjectNavigationItems(projects) {
-  return [
-    {
-      id: "dashboard",
-      label: "Panel",
-      icon: "dashboard",
-      wrapperHeight: "44px",
-    },
-    ...projects.slice(0, 2).map((project) => ({
-      id: `project-${project.id}`,
-      label: project.name,
-      icon: "project",
-      trailingIcon: project.isPublic ? "window" : undefined,
-      wrapperHeight: "56px",
-    })),
-    {
-      id: "requests",
-      label: "Solicitudes",
-      icon: "requests",
-      wrapperHeight: "44px",
-    },
-    {
-      id: "more-projects",
-      label: "Ver mas proyectos",
-      icon: "discover",
-      wrapperHeight: "56px",
-    },
-    {
-      id: "settings",
-      label: "Configuraciones",
-      icon: "settings",
-      wrapperHeight: "56px",
-    },
-  ];
 }
 
 function getProjectAssigneeAvatars(project) {
@@ -161,6 +126,8 @@ function ProjectRequestRow({ projectRequest, onReview }) {
         type="Solid"
         size="M"
         fitContent
+        showLeftIcon={false}
+        showRightIcon={false}
         className="w-full min-[768px]:w-auto"
         onClick={() => onReview(projectRequest)}
       >
@@ -320,7 +287,7 @@ function Home({ view = "dashboard" }) {
     projectGroups.map((group) => `${group.id}:${group.projects.length}`).join("|"),
   );
   const navigationItems = useMemo(
-    () => createProjectNavigationItems(ownedProjectRows),
+    () => createUserSideNavigationItems(ownedProjectRows, "client"),
     [ownedProjectRows],
   );
   const imageCommentNotifications = useImageCommentNotifications({
@@ -615,6 +582,8 @@ function Home({ view = "dashboard" }) {
                 type="Solid"
                 size="M"
                 fitContent
+                showLeftIcon={false}
+                showRightIcon={false}
                 className="w-full shrink-0 min-[480px]:w-auto"
                 onClick={() => {
                   setSelectedProjectRequest(null);

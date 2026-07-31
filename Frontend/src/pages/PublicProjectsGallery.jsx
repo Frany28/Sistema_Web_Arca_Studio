@@ -26,33 +26,12 @@ import {
   sortPublicProjects,
 } from "../utils/publicProjectGallery.js";
 import { getPublicGalleryColumnCount } from "../utils/publicProjectGalleryLayout.js";
+import {
+  createUserSideNavigationItems,
+  getDashboardPath,
+} from "../utils/sideNavigationItems.js";
 
 const TABLET_BREAKPOINT_PX = 768;
-
-function getNavigationItems(projects) {
-  return [
-    { id: "dashboard", label: "Panel", icon: "dashboard", wrapperHeight: "44px" },
-    ...projects.slice(0, 2).map((project) => ({
-      id: `project-${project.id}`,
-      label: project.name,
-      icon: "project",
-      trailingIcon: project.isPublic ? "window" : undefined,
-      wrapperHeight: "56px",
-    })),
-    {
-      id: "more-projects",
-      label: "Ver más proyectos",
-      icon: "discover",
-      wrapperHeight: "56px",
-    },
-    {
-      id: "settings",
-      label: "Configuraciones",
-      icon: "settings",
-      wrapperHeight: "56px",
-    },
-  ];
-}
 
 function getCardHeight(index, columns, projectCount) {
   if (projectCount === 1) return 560;
@@ -265,8 +244,8 @@ export default function PublicProjectsGallery() {
     [publicProjects, query, sortDirection],
   );
   const navigationItems = useMemo(
-    () => getNavigationItems(projects),
-    [projects],
+    () => createUserSideNavigationItems(projects, currentUser.roleCode),
+    [currentUser.roleCode, projects],
   );
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -280,7 +259,9 @@ export default function PublicProjectsGallery() {
 
   const handleNavigation = (item) => {
     if (item?.id === "dashboard") {
-      navigate(isArchitect ? "/dashboard-arquitecto" : "/dashboard-clientes");
+      navigate(getDashboardPath(currentUser.roleCode));
+    } else if (item?.id === "requests") {
+      navigate("/solicitudes");
     } else if (item?.id === "more-projects") {
       navigate("/proyectos");
     } else if (item?.id === "settings") {

@@ -25,6 +25,10 @@ import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getProjectTypeDisplay } from "../../utils/projectTypeDisplay.js";
+import {
+  createUserSideNavigationItems,
+  getDashboardPath,
+} from "../../utils/sideNavigationItems.js";
 
 const TABLET_BREAKPOINT_PX = 768;
 const PROJECT_DETAIL_LOADER_SECTIONS = [
@@ -536,7 +540,7 @@ export default function ProjectDetailsPage({
 
   const handleSideNavigationSelect = (item) => {
     if (item?.id === "dashboard") {
-      navigate("/dashboard-clientes");
+      navigate(getDashboardPath(currentUser.roleCode));
       return;
     }
 
@@ -555,6 +559,11 @@ export default function ProjectDetailsPage({
 
     if (item?.id === "more-projects") {
       navigate("/proyectos");
+      return;
+    }
+
+    if (item?.id === "requests") {
+      navigate("/solicitudes");
       return;
     }
 
@@ -714,12 +723,25 @@ export default function ProjectDetailsPage({
             resolvedProjectId ? `project-${resolvedProjectId}` : undefined
           }
           expanded={isSidebarExpanded}
+          items={createUserSideNavigationItems(
+            project ? [project] : [],
+            currentUser.roleCode,
+          )}
+          newOpportunityLabel={
+            currentUser.roleCode === "client"
+              ? "Nueva oportunidad"
+              : "Nuevo proyecto"
+          }
           userName={currentUser.name}
           userEmail={currentUser.email}
           userAvatarSrc={currentUser.profilePhotoUrl}
           onExpandedChange={setIsSidebarExpanded}
           onItemSelect={handleSideNavigationSelect}
-          onNewOpportunityClick={() => setIsProjectRequestModalOpen(true)}
+          onNewOpportunityClick={() =>
+            currentUser.roleCode === "client"
+              ? setIsProjectRequestModalOpen(true)
+              : navigate("/dashboard-arquitecto/nuevo-proyecto")
+          }
           onLogoutClick={() => {
             logout();
             navigate("/");

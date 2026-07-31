@@ -6,6 +6,12 @@ export const SIDE_NAVIGATION_DEFAULT_ITEMS = [
     wrapperHeight: "44px",
   },
   {
+    id: "requests",
+    label: "Solicitudes",
+    icon: "requests",
+    wrapperHeight: "44px",
+  },
+  {
     id: "more-projects",
     label: "Ver más proyectos",
     icon: "discover",

@@ -43,9 +43,6 @@ const NewArchitectProjectPage = lazy(
 );
 const NewPassword = lazy(() => import("./pages/NewPassword.jsx"));
 const ProjectDetails = lazy(() => import("./pages/ProjectDetails.jsx"));
-const ProjectGallerySizesExample = lazy(
-  () => import("./pages/ProjectGallerySizesExample.jsx"),
-);
 const PublicProjectsGallery = lazy(
   () => import("./pages/PublicProjectsGallery.jsx"),
 );
@@ -74,16 +71,10 @@ createRoot(document.getElementById("root")).render(
             <Route path="/nueva-contraseña" element={<NewPassword />} />
 
             {import.meta.env.DEV && (
-              <>
-                <Route
-                  path="/modelo-ihad-meli"
-                  element={<LocalModelViewer />}
-                />
-                <Route
-                  path="/ejemplos/tamanos-proyectos"
-                  element={<ProjectGallerySizesExample />}
-                />
-              </>
+              <Route
+                path="/modelo-ihad-meli"
+                element={<LocalModelViewer />}
+              />
             )}
 
             <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
