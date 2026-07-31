@@ -54,8 +54,13 @@ function getNavigationItems(projects) {
   ];
 }
 
-function getCardHeight(projectCount) {
-  return projectCount === 1 ? 560 : 479;
+function getCardHeight(index, columns, projectCount) {
+  if (projectCount === 1) return 560;
+  if (projectCount <= 3) return 479;
+
+  const column = index % columns;
+  const row = Math.floor(index / columns);
+  return (column + row) % 2 === 0 ? 479 : 282;
 }
 
 function getGalleryColumnCount() {
@@ -147,20 +152,45 @@ export function GalleryColumns({ columns, projects, onOpen }) {
   const navigate = useNavigate();
   const effectiveColumns = Math.min(Math.max(projects.length, 1), columns);
   const openProject = onOpen || ((item) => navigate(getProjectPath(item)));
+  const usesAlternatingLayout = projects.length > 3;
+  const groupedProjects = Array.from(
+    { length: effectiveColumns },
+    (_, column) =>
+      projects
+        .map((project, index) => ({ index, project }))
+        .filter(({ index }) => index % effectiveColumns === column),
+  );
 
   return (
     <div
       className="grid w-full gap-[24px]"
       style={{ gridTemplateColumns: `repeat(${effectiveColumns}, minmax(0, 1fr))` }}
     >
-      {projects.map((project) => (
-        <ProjectGalleryCard
-          key={project.id}
-          project={project}
-          height={getCardHeight(projects.length)}
-          onOpen={openProject}
-        />
-      ))}
+      {usesAlternatingLayout
+        ? groupedProjects.map((items, column) => (
+            <div key={column} className="flex min-w-0 flex-col gap-[24px]">
+              {items.map(({ index, project }) => (
+                <ProjectGalleryCard
+                  key={project.id}
+                  project={project}
+                  height={getCardHeight(
+                    index,
+                    effectiveColumns,
+                    projects.length,
+                  )}
+                  onOpen={openProject}
+                />
+              ))}
+            </div>
+          ))
+        : projects.map((project, index) => (
+            <ProjectGalleryCard
+              key={project.id}
+              project={project}
+              height={getCardHeight(index, effectiveColumns, projects.length)}
+              onOpen={openProject}
+            />
+          ))}
     </div>
   );
 }
@@ -304,10 +334,10 @@ export default function PublicProjectsGallery() {
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
+            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[48px]"
           />
 
-          <section className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col px-[16px] pb-[48px] pt-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
+          <section className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col px-[16px] pb-[48px] pt-0 min-[768px]:px-[48px]">
             <ProjectDocumentsToolbar
               disabled={loading}
               query={query}

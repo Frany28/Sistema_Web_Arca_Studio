@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import standAuraImage from "../assets/fondos/stand-aura-2026.png";
 import projectImage from "../assets/fondos/Project Image.png";
 import standImage from "../assets/fondos/Property 1=Variant2.png";
@@ -26,9 +28,27 @@ const PROJECTS = [
     image: standImage,
     client: { name: "Shaketopia" },
   },
+  {
+    id: "size-example-office",
+    name: "Oficinas Arca 2026",
+    projectType: "corporate",
+    image: projectImage,
+    client: { name: "Arca Studio" },
+  },
+  {
+    id: "size-example-home",
+    name: "Casa Origen 2026",
+    projectType: "residential",
+    image: standAuraImage,
+    client: { name: "Familia Origen" },
+  },
 ];
 
 const CASES = [
+  {
+    count: 5,
+    description: "Desde cuatro proyectos se conserva el patrón alternado original.",
+  },
   {
     count: 3,
     description: "Tres columnas uniformes de 479 px de alto.",
@@ -90,4 +110,3 @@ export default function ProjectGallerySizesExample() {
     </main>
   );
 }
-import { useEffect, useState } from "react";
