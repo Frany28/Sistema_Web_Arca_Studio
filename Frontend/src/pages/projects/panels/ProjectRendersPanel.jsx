@@ -121,14 +121,14 @@ function RenderLoadingState({ image, onRetry, progress, state = "loading" }) {
   const isError = state === "error";
   const isSlow = state === "slow";
   const title = isError
-    ? "No se pudo cargar el modelo 3D"
+    ? "No se pudo cargar la panorámica"
     : isSlow
-      ? "El modelo sigue cargando"
-      : "Cargando modelo 3D";
+      ? "La panorámica sigue cargando"
+      : "Cargando panorámica 360";
   const description = isError
     ? "Revisa la conexión o intenta cargar el visor nuevamente."
     : isSlow
-      ? "El archivo puede ser pesado o tener muchas texturas."
+      ? "La imagen panorámica puede ser pesada o la conexión puede estar lenta."
       : "";
 
   return (
@@ -747,7 +747,7 @@ export default function ProjectRendersPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [loadState, setLoadState] = useState("loading");
   const [modelReloadKey, setModelReloadKey] = useState(0);
-  const [progress, setProgress] = useState(43);
+  const [progress, setProgress] = useState(0);
   const slowLoadingTimeoutRef = useRef(null);
   const loadTimeoutRef = useRef(null);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
@@ -802,11 +802,9 @@ export default function ProjectRendersPanel({
       };
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      setIsLoading(true);
-      setLoadState("loading");
-      setProgress(8);
-    });
+    setIsLoading(true);
+    setLoadState("loading");
+    setProgress(0);
 
     slowLoadingTimeoutRef.current = window.setTimeout(() => {
       setLoadState((current) =>
@@ -821,20 +819,8 @@ export default function ProjectRendersPanel({
       );
     }, MODEL_LOAD_TIMEOUT_MS);
 
-    const intervalId = window.setInterval(() => {
-      setProgress((current) => {
-        if (current >= 92) {
-          return current;
-        }
-
-        return Math.min(current + 8, 92);
-      });
-    }, 360);
-
     return () => {
-      window.cancelAnimationFrame(frameId);
       clearModelLoadingTimers();
-      window.clearInterval(intervalId);
     };
   }, [
     activeModelSrc,
@@ -863,7 +849,7 @@ export default function ProjectRendersPanel({
     }
 
     setProgress((current) =>
-      Math.max(current, Math.min(Math.max(nextProgress, 8), 98)),
+      Math.max(current, Math.min(Math.max(nextProgress, 0), 99)),
     );
   }, []);
 
@@ -871,7 +857,7 @@ export default function ProjectRendersPanel({
     clearModelLoadingTimers();
     setIsLoading(true);
     setLoadState("loading");
-    setProgress(8);
+    setProgress(0);
     setModelReloadKey((current) => current + 1);
   }, [clearModelLoadingTimers]);
 

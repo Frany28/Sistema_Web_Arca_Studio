@@ -555,14 +555,14 @@ export function Model3DLoadingState({
   const isError = state === "error";
   const isSlow = state === "slow";
   const title = isError
-    ? "No se pudo cargar el modelo 3D"
+    ? "No se pudo cargar la panorámica"
     : isSlow
-      ? "El modelo sigue cargando"
-      : "Cargando modelo 3D";
+      ? "La panorámica sigue cargando"
+      : "Cargando panorámica 360";
   const description = isError
     ? "Revisa la conexión o intenta cargar el visor nuevamente."
     : isSlow
-      ? "El archivo puede ser pesado o tener muchas texturas."
+      ? "La imagen panorámica puede ser pesada o la conexión puede estar lenta."
       : "";
 
   return (
@@ -1814,7 +1814,7 @@ export default function Model3DViewerModal({
   const [displayItem, setDisplayItem] = useState(item);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [modelLoadState, setModelLoadState] = useState("loading");
-  const [modelProgress, setModelProgress] = useState(8);
+  const [modelProgress, setModelProgress] = useState(0);
   const [modelReloadKey, setModelReloadKey] = useState(0);
   const [navigationMode, setNavigationMode] = useState("drag");
   const [texturePreset, setTexturePreset] = useState("auto");
@@ -1941,11 +1941,9 @@ export default function Model3DViewerModal({
       return undefined;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      setIsModelLoading(true);
-      setModelLoadState("loading");
-      setModelProgress(8);
-    });
+    setIsModelLoading(true);
+    setModelLoadState("loading");
+    setModelProgress(0);
 
     slowLoadingTimeoutRef.current = window.setTimeout(() => {
       setModelLoadState((current) =>
@@ -1960,19 +1958,7 @@ export default function Model3DViewerModal({
       );
     }, MODEL_LOAD_TIMEOUT_MS);
 
-    const intervalId = window.setInterval(() => {
-      setModelProgress((current) => {
-        if (current >= 92) {
-          return current;
-        }
-
-        return Math.min(current + 8, 92);
-      });
-    }, 360);
-
     return () => {
-      window.cancelAnimationFrame(frameId);
-      window.clearInterval(intervalId);
       clearModelLoadingTimers();
     };
   }, [
@@ -2021,7 +2007,7 @@ export default function Model3DViewerModal({
           current === "error" ? current : "loading",
         );
         setModelProgress((current) =>
-          Math.max(current, Math.min(Math.round(totalProgress * 100), 98)),
+          Math.max(current, Math.min(Math.round(totalProgress * 100), 99)),
         );
       }
     }

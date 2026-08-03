@@ -13,7 +13,7 @@ class PanoramaModelViewerElement extends HTMLElement {
     this.isDragging = false;
     this.orientation = null;
     this.attachShadow({ mode: "open" });
-    this.shadowRoot.innerHTML = `<style>:host{display:block;position:relative;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none}.slots{position:absolute;inset:0;pointer-events:none}</style><div class="stage"></div><div class="slots"></div>`;
+    this.shadowRoot.innerHTML = `<style>:host{display:block;position:relative;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}.slots{position:absolute;inset:0;pointer-events:none}</style><div class="stage"></div><div class="slots"></div>`;
   }
 
   connectedCallback() {
@@ -137,7 +137,7 @@ class PanoramaModelViewerElement extends HTMLElement {
         const [left, right] = [...pointers.values()];
         const nextDistance = Math.hypot(right.x - left.x, right.y - left.y);
         if (pinchDistance) {
-          this.camera.fov = THREE.MathUtils.clamp(this.camera.fov - (nextDistance - pinchDistance) * 0.08, 25, 90);
+          this.camera.fov = THREE.MathUtils.clamp(this.camera.fov - (nextDistance - pinchDistance) * 0.08, 15, 90);
           this.camera.updateProjectionMatrix();
         }
         pinchDistance = nextDistance;
@@ -163,11 +163,11 @@ class PanoramaModelViewerElement extends HTMLElement {
     canvas.addEventListener("pointercancel", release);
     canvas.addEventListener("wheel", (event) => {
       event.preventDefault();
-      this.camera.fov = THREE.MathUtils.clamp(this.camera.fov + event.deltaY * 0.03, 25, 90);
+      this.camera.fov = THREE.MathUtils.clamp(this.camera.fov + event.deltaY * 0.03, 15, 90);
       this.camera.updateProjectionMatrix();
     }, { passive: false });
     canvas.addEventListener("dblclick", () => {
-      this.camera.fov = this.camera.fov > 45 ? 35 : 70;
+      this.camera.fov = this.camera.fov > 45 ? 28 : 70;
       this.camera.updateProjectionMatrix();
     });
   }
@@ -179,7 +179,7 @@ class PanoramaModelViewerElement extends HTMLElement {
     const controller = new AbortController();
     this.loadController = controller;
     this.loaded = false;
-    this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: 0.08 } }));
+    this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: 0 } }));
     try {
       const response = await fetch(src, {
         credentials: "include",
@@ -196,15 +196,16 @@ class PanoramaModelViewerElement extends HTMLElement {
           if (done) break;
           chunks.push(value);
           received += value.byteLength;
-          const ratio = total > 0
-            ? Math.min(received / total, 0.98)
-            : Math.min(0.08 + chunks.length * 0.02, 0.9);
+          // Downloading occupies 90% of the bar. The remaining 10% represents
+          // image decoding and the first GPU render, which happen afterwards.
+          const ratio = total > 0 ? Math.min((received / total) * 0.9, 0.9) : 0;
           this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: ratio } }));
         }
       } else {
         chunks.push(new Uint8Array(await response.arrayBuffer()));
       }
       if (controller.signal.aborted) return;
+      this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: 0.92 } }));
       const blobUrl = URL.createObjectURL(new Blob(chunks, {
         type: response.headers.get("content-type") || "image/jpeg",
       }));
@@ -214,12 +215,16 @@ class PanoramaModelViewerElement extends HTMLElement {
         texture.dispose();
         return;
       }
+      this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: 0.96 } }));
       this.texture?.dispose();
       this.texture = texture;
       texture.colorSpace = THREE.SRGBColorSpace;
       this.applyQuality();
       this.material.map = texture;
       this.material.needsUpdate = true;
+      this.renderer.render(this.scene, this.camera);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      if (controller.signal.aborted) return;
       this.loaded = true;
       this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: 1 } }));
       this.dispatchEvent(new Event("load"));
