@@ -26,6 +26,21 @@ function stripResourceLinks(value) {
   );
 }
 
+function normalizePanoramaSelection(selection, commentType) {
+  if (commentType !== "panorama" || selection?.kind !== "viewer3d-point") return selection;
+  const position = selection.viewerPoint?.modelPosition;
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+  const z = Number(position?.z);
+  const length = Math.hypot(x, y, z);
+  if (!Number.isFinite(length) || length === 0) return selection;
+  return {
+    ...selection,
+    yaw: Math.atan2(x, -z) * 180 / Math.PI,
+    pitch: Math.asin(Math.min(Math.max(y / length, -1), 1)) * 180 / Math.PI,
+  };
+}
+
 function getCommentFileId(comment) {
   const candidates = [comment?.targetId, comment?.image?.id, comment?.selection?.image?.id];
   for (const candidate of candidates) {
@@ -344,7 +359,7 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
         },
         parentCommentId,
         projectId: resolvedProjectId,
-        selection: stripResourceLinks(selection),
+        selection: stripResourceLinks(normalizePanoramaSelection(selection, commentType)),
         targetId: imageKey,
       });
 

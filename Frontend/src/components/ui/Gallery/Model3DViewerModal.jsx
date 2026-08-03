@@ -30,7 +30,7 @@ import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
 import VRModelViewer from "./VRModelViewer.jsx";
 
-const VIEWER_3D_OBSERVATION_LABEL = getObservationTypeLabel("viewer3d");
+const VIEWER_3D_OBSERVATION_LABEL = getObservationTypeLabel("panorama");
 
 function CloseIcon({ className }) {
   return (
@@ -1821,7 +1821,7 @@ export default function Model3DViewerModal({
   const slowLoadingTimeoutRef = useRef(null);
   const loadTimeoutRef = useRef(null);
   const { addComment, comments } = useImageComments(displayItem, {
-    commentType: "viewer3d",
+    commentType: "panorama",
     projectId,
   });
   const annotationComments = useMemo(

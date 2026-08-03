@@ -99,6 +99,27 @@ class PanoramaModelViewerElement extends HTMLElement {
     this.renderer.setSize(width, height, false);
   }
 
+  positionAndNormalFromPoint(clientX, clientY) {
+    const bounds = this.getBoundingClientRect();
+    const pointer = new THREE.Vector2(
+      (clientX / bounds.width) * 2 - 1,
+      -(clientY / bounds.height) * 2 + 1,
+    );
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(pointer, this.camera);
+    const direction = raycaster.ray.direction.clone().normalize();
+    const position = direction.clone().multiplyScalar(500);
+    return { position, normal: direction.clone().multiplyScalar(-1) };
+  }
+
+  updateHotspot() {}
+
+  getCameraOrbit() {
+    return { theta: THREE.MathUtils.degToRad(this.yaw), phi: THREE.MathUtils.degToRad(90 - this.pitch), radius: 1 };
+  }
+
+  getCameraTarget() { return { x: 0, y: 0, z: 0 }; }
+
   animate = () => {
     const yaw = THREE.MathUtils.degToRad(this.yaw);
     const pitch = THREE.MathUtils.degToRad(this.pitch);
