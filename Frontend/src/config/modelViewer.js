@@ -34,6 +34,7 @@ class PanoramaModelViewerElement extends HTMLElement {
 
   disconnectedCallback() {
     cancelAnimationFrame(this.frame);
+    this.loadController?.abort();
     this.resizeObserver?.disconnect();
     this.texture?.dispose();
     this.geometry?.dispose();
@@ -47,36 +48,113 @@ class PanoramaModelViewerElement extends HTMLElement {
 
   installControls() {
     const canvas = this.renderer.domElement;
+    const pointers = new Map();
     let dragging = false;
     let startX = 0;
     let startY = 0;
     let startYaw = 0;
     let startPitch = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let lastTime = 0;
+    let pinchDistance = 0;
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     canvas.addEventListener("pointerdown", (event) => {
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       dragging = true;
       startX = event.clientX; startY = event.clientY;
       startYaw = this.yaw; startPitch = this.pitch;
+      lastX = event.clientX; lastY = event.clientY; lastTime = performance.now();
+      this.velocityYaw = 0; this.velocityPitch = 0;
+      if (pointers.size === 2) {
+        const [left, right] = [...pointers.values()];
+        pinchDistance = Math.hypot(right.x - left.x, right.y - left.y);
+      }
       canvas.setPointerCapture(event.pointerId);
     });
     canvas.addEventListener("pointermove", (event) => {
+      if (!pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pointers.size === 2) {
+        const [left, right] = [...pointers.values()];
+        const nextDistance = Math.hypot(right.x - left.x, right.y - left.y);
+        if (pinchDistance) {
+          this.camera.fov = THREE.MathUtils.clamp(this.camera.fov - (nextDistance - pinchDistance) * 0.08, 25, 90);
+          this.camera.updateProjectionMatrix();
+        }
+        pinchDistance = nextDistance;
+        return;
+      }
       if (!dragging) return;
       this.yaw = startYaw - (event.clientX - startX) * 0.15;
       this.pitch = THREE.MathUtils.clamp(startPitch + (event.clientY - startY) * 0.15, -85, 85);
+      const now = performance.now();
+      const elapsed = Math.max(now - lastTime, 1);
+      this.velocityYaw = -(event.clientX - lastX) * 0.15 * (16 / elapsed);
+      this.velocityPitch = (event.clientY - lastY) * 0.15 * (16 / elapsed);
+      lastX = event.clientX; lastY = event.clientY; lastTime = now;
     });
-    canvas.addEventListener("pointerup", () => { dragging = false; });
+    const release = (event) => {
+      pointers.delete(event.pointerId);
+      pinchDistance = 0;
+      if (pointers.size === 0) dragging = false;
+      if (reducedMotion) { this.velocityYaw = 0; this.velocityPitch = 0; }
+    };
+    canvas.addEventListener("pointerup", release);
+    canvas.addEventListener("pointercancel", release);
     canvas.addEventListener("wheel", (event) => {
       event.preventDefault();
       this.camera.fov = THREE.MathUtils.clamp(this.camera.fov + event.deltaY * 0.03, 25, 90);
       this.camera.updateProjectionMatrix();
     }, { passive: false });
+    canvas.addEventListener("dblclick", () => {
+      this.camera.fov = this.camera.fov > 45 ? 35 : 70;
+      this.camera.updateProjectionMatrix();
+    });
   }
 
-  loadTexture() {
+  async loadTexture() {
     const src = this.getAttribute("src");
     if (!src) return;
+    this.loadController?.abort();
+    const controller = new AbortController();
+    this.loadController = controller;
     this.loaded = false;
     this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: 0.08 } }));
-    new THREE.TextureLoader().load(src, (texture) => {
+    try {
+      const response = await fetch(src, {
+        credentials: "include",
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`Panorama request failed: ${response.status}`);
+      const total = Number(response.headers.get("content-length")) || 0;
+      const reader = response.body?.getReader();
+      const chunks = [];
+      let received = 0;
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.byteLength;
+          const ratio = total > 0
+            ? Math.min(received / total, 0.98)
+            : Math.min(0.08 + chunks.length * 0.02, 0.9);
+          this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: ratio } }));
+        }
+      } else {
+        chunks.push(new Uint8Array(await response.arrayBuffer()));
+      }
+      if (controller.signal.aborted) return;
+      const blobUrl = URL.createObjectURL(new Blob(chunks, {
+        type: response.headers.get("content-type") || "image/jpeg",
+      }));
+      const texture = await new THREE.TextureLoader().loadAsync(blobUrl);
+      URL.revokeObjectURL(blobUrl);
+      if (controller.signal.aborted) {
+        texture.dispose();
+        return;
+      }
       this.texture?.dispose();
       this.texture = texture;
       texture.colorSpace = THREE.SRGBColorSpace;
@@ -85,9 +163,9 @@ class PanoramaModelViewerElement extends HTMLElement {
       this.loaded = true;
       this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: 1 } }));
       this.dispatchEvent(new Event("load"));
-    }, (event) => {
-      if (event.total) this.dispatchEvent(new CustomEvent("progress", { detail: { totalProgress: event.loaded / event.total } }));
-    }, () => this.dispatchEvent(new Event("error")));
+    } catch (error) {
+      if (error?.name !== "AbortError") this.dispatchEvent(new Event("error"));
+    }
   }
 
   resize() {
@@ -121,6 +199,12 @@ class PanoramaModelViewerElement extends HTMLElement {
   getCameraTarget() { return { x: 0, y: 0, z: 0 }; }
 
   animate = () => {
+    if (Math.abs(this.velocityYaw || 0) > 0.01 || Math.abs(this.velocityPitch || 0) > 0.01) {
+      this.yaw += this.velocityYaw || 0;
+      this.pitch = THREE.MathUtils.clamp(this.pitch + (this.velocityPitch || 0), -85, 85);
+      this.velocityYaw *= 0.92;
+      this.velocityPitch *= 0.92;
+    }
     const yaw = THREE.MathUtils.degToRad(this.yaw);
     const pitch = THREE.MathUtils.degToRad(this.pitch);
     this.camera.lookAt(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
