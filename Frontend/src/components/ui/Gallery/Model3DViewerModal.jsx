@@ -29,6 +29,61 @@ import ArchitecturalSettingsPanel from "./ArchitecturalSettingsPanel.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
 import VRModelViewer from "./VRModelViewer.jsx";
+export const MODEL_3D_NAVIGATION_MODES = {
+  drag: {
+    id: "drag",
+    label: "Arrastre",
+    cameraOrbit: "0deg 82deg 70%",
+    fieldOfView: "44deg",
+    interactionPrompt: "auto",
+  },
+  gyroscope: {
+    id: "gyroscope",
+    label: "Giroscopio",
+    cameraOrbit: "0deg 82deg 70%",
+    fieldOfView: "44deg",
+    interactionPrompt: "none",
+  },
+  autorotate: {
+    id: "autorotate",
+    label: "Autorrotación",
+    cameraOrbit: "0deg 82deg 70%",
+    fieldOfView: "40deg",
+    interactionPrompt: "none",
+  },
+};
+export const MODEL_3D_TEXTURE_PRESETS = {
+  auto: {
+    id: "auto",
+    label: "Automática",
+    environmentImage: "neutral",
+    shadowIntensity: "1",
+    shadowSoftness: "0.6",
+    exposure: "1",
+    filter: "none",
+    toneMapping: "neutral",
+  },
+  hd: {
+    id: "hd",
+    label: "HD",
+    environmentImage: "neutral",
+    shadowIntensity: "1",
+    shadowSoftness: "0.4",
+    exposure: "1",
+    filter: "none",
+    toneMapping: "neutral",
+  },
+  saver: {
+    id: "saver",
+    label: "Ahorro de datos",
+    environmentImage: "neutral",
+    shadowIntensity: "1",
+    shadowSoftness: "1",
+    exposure: "1",
+    filter: "none",
+    toneMapping: "neutral",
+  },
+};
 
 const VIEWER_3D_OBSERVATION_LABEL = getObservationTypeLabel("panorama");
 
@@ -355,7 +410,7 @@ function Model3DSettingsMenu({
         className={menuItemClassName}
         onClick={() => setMenuView("textures")}
       >
-        <span className={mutedClassName}>Texturas</span>
+        <span className={mutedClassName}>Calidad</span>
         <span className="flex items-center gap-[6px]">
           <span>{MODEL_3D_TEXTURE_PRESETS[texturePreset]?.label}</span>
           <ChevronRightIcon />
@@ -367,14 +422,14 @@ function Model3DSettingsMenu({
 
 export function Model3DViewerControls({
   className,
-  navigationMode = "orbit",
+  navigationMode = "drag",
   onNavigationModeChange,
   onView,
   onExpand,
   onTexturePresetChange,
   persistSelection = true,
   selectedIndex = null,
-  texturePreset = "hd",
+  texturePreset = "auto",
 }) {
   const settingsMenuRef = useRef(null);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
