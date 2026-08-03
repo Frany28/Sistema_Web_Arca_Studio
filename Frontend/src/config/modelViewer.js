@@ -3,13 +3,15 @@ import * as THREE from "three";
 // Compatibility element: it preserves the approved <model-viewer> UI contract
 // while rendering an equirectangular panorama instead of a GLB.
 class PanoramaModelViewerElement extends HTMLElement {
-  static get observedAttributes() { return ["src"]; }
+  static get observedAttributes() { return ["src", "navigation-mode", "quality-preset"]; }
 
   constructor() {
     super();
     this.loaded = false;
     this.yaw = 0;
     this.pitch = 0;
+    this.isDragging = false;
+    this.orientation = null;
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `<style>:host{display:block;position:relative;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none}.slots{position:absolute;inset:0;pointer-events:none}</style><div class="stage"></div><div class="slots"></div>`;
   }
@@ -19,7 +21,7 @@ class PanoramaModelViewerElement extends HTMLElement {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(55, 1, 0.1, 1100);
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    this.applyQuality();
     this.shadowRoot.querySelector(".stage").append(this.renderer.domElement);
     this.geometry = new THREE.SphereGeometry(500, 64, 40);
     this.geometry.scale(-1, 1, 1);
@@ -28,6 +30,7 @@ class PanoramaModelViewerElement extends HTMLElement {
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(this);
     this.installControls();
+    this.installOrientation();
     this.animate();
     if (this.getAttribute("src")) this.loadTexture();
   }
@@ -36,6 +39,7 @@ class PanoramaModelViewerElement extends HTMLElement {
     cancelAnimationFrame(this.frame);
     this.loadController?.abort();
     this.resizeObserver?.disconnect();
+    window.removeEventListener("deviceorientation", this.handleOrientation);
     this.texture?.dispose();
     this.geometry?.dispose();
     this.material?.dispose();
@@ -44,6 +48,55 @@ class PanoramaModelViewerElement extends HTMLElement {
 
   attributeChangedCallback(name, previous, next) {
     if (name === "src" && previous !== next && this.renderer) this.loadTexture();
+    if (name === "quality-preset" && previous !== next && this.renderer) this.applyQuality();
+    if (name === "navigation-mode" && previous !== next && this.renderer) this.applyNavigationMode();
+  }
+
+  get navigationMode() { return this.getAttribute("navigation-mode") || "drag"; }
+
+  get qualityPreset() { return this.getAttribute("quality-preset") || "auto"; }
+
+  applyQuality() {
+    if (!this.renderer) return;
+    const ratio = devicePixelRatio || 1;
+    const limit = this.qualityPreset === "hd" ? 2 : this.qualityPreset === "saver" ? 1 : 1.5;
+    this.renderer.setPixelRatio(Math.min(ratio, limit));
+    if (this.texture) {
+      const maximum = this.renderer.capabilities.getMaxAnisotropy();
+      this.texture.anisotropy = this.qualityPreset === "hd"
+        ? maximum
+        : this.qualityPreset === "saver" ? 1 : Math.min(maximum, 4);
+      this.texture.needsUpdate = true;
+    }
+    this.resize();
+  }
+
+  applyNavigationMode() {
+    this.velocityYaw = 0;
+    this.velocityPitch = 0;
+    if (this.navigationMode === "gyroscope") this.requestOrientationAccess();
+  }
+
+  installOrientation() {
+    this.handleOrientation = (event) => {
+      if (this.navigationMode !== "gyroscope" || event.alpha == null) return;
+      this.orientation = {
+        yaw: event.alpha,
+        pitch: THREE.MathUtils.clamp((event.beta ?? 90) - 90, -85, 85),
+      };
+    };
+    window.addEventListener("deviceorientation", this.handleOrientation, { passive: true });
+    this.applyNavigationMode();
+  }
+
+  async requestOrientationAccess() {
+    try {
+      if (typeof window.DeviceOrientationEvent?.requestPermission === "function") {
+        await window.DeviceOrientationEvent.requestPermission();
+      }
+    } catch {
+      // iOS requires the permission request to originate in a user gesture.
+    }
   }
 
   installControls() {
@@ -60,8 +113,13 @@ class PanoramaModelViewerElement extends HTMLElement {
     let pinchDistance = 0;
     const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     canvas.addEventListener("pointerdown", (event) => {
+      if (this.navigationMode === "gyroscope") {
+        this.requestOrientationAccess();
+        return;
+      }
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       dragging = true;
+      this.isDragging = true;
       startX = event.clientX; startY = event.clientY;
       startYaw = this.yaw; startPitch = this.pitch;
       lastX = event.clientX; lastY = event.clientY; lastTime = performance.now();
@@ -98,6 +156,7 @@ class PanoramaModelViewerElement extends HTMLElement {
       pointers.delete(event.pointerId);
       pinchDistance = 0;
       if (pointers.size === 0) dragging = false;
+      this.isDragging = pointers.size > 0;
       if (reducedMotion) { this.velocityYaw = 0; this.velocityPitch = 0; }
     };
     canvas.addEventListener("pointerup", release);
@@ -158,6 +217,7 @@ class PanoramaModelViewerElement extends HTMLElement {
       this.texture?.dispose();
       this.texture = texture;
       texture.colorSpace = THREE.SRGBColorSpace;
+      this.applyQuality();
       this.material.map = texture;
       this.material.needsUpdate = true;
       this.loaded = true;
@@ -199,6 +259,12 @@ class PanoramaModelViewerElement extends HTMLElement {
   getCameraTarget() { return { x: 0, y: 0, z: 0 }; }
 
   animate = () => {
+    if (this.navigationMode === "gyroscope" && this.orientation) {
+      this.yaw = this.orientation.yaw;
+      this.pitch = this.orientation.pitch;
+    } else if (this.navigationMode === "autorotate" && !this.isDragging) {
+      this.yaw += matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 0.035;
+    }
     if (Math.abs(this.velocityYaw || 0) > 0.01 || Math.abs(this.velocityPitch || 0) > 0.01) {
       this.yaw += this.velocityYaw || 0;
       this.pitch = THREE.MathUtils.clamp(this.pitch + (this.velocityPitch || 0), -85, 85);

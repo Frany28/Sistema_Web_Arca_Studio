@@ -682,54 +682,6 @@ export const MODEL_3D_CAMERA_CONTROLS = {
   panSensitivity: "0.72",
   zoomSensitivity: "0.16",
 };
-export const MODEL_3D_NAVIGATION_MODES = {
-  orbit: {
-    id: "orbit",
-    label: "Órbita",
-    cameraOrbit: "135deg 68deg 120%",
-    fieldOfView: "32deg",
-    interactionPrompt: "auto",
-  },
-  firstPerson: {
-    id: "firstPerson",
-    label: "Primera persona",
-    cameraOrbit: "0deg 82deg 70%",
-    fieldOfView: "44deg",
-    interactionPrompt: "none",
-  },
-};
-export const MODEL_3D_TEXTURE_PRESETS = {
-  standard: {
-    id: "standard",
-    label: "Estándar",
-    environmentImage: "neutral",
-    shadowIntensity: "1.25",
-    shadowSoftness: "0.62",
-    exposure: "1.02",
-    filter: "saturate(1.16) contrast(1.12)",
-    toneMapping: "commerce",
-  },
-  hd: {
-    id: "hd",
-    label: "HD",
-    environmentImage: "neutral",
-    shadowIntensity: "1.65",
-    shadowSoftness: "0.42",
-    exposure: "1.08",
-    filter: "saturate(1.24) contrast(1.2) brightness(0.98)",
-    toneMapping: "commerce",
-  },
-  matte: {
-    id: "matte",
-    label: "Mate",
-    environmentImage: "neutral",
-    shadowIntensity: "0.55",
-    shadowSoftness: "1",
-    exposure: "0.84",
-    filter: "saturate(0.92) contrast(1.04)",
-    toneMapping: "neutral",
-  },
-};
 function getCommentTime(comment) {
   const time = new Date(comment.createdAt || 0).getTime();
 
@@ -1864,8 +1816,8 @@ export default function Model3DViewerModal({
   const [modelLoadState, setModelLoadState] = useState("loading");
   const [modelProgress, setModelProgress] = useState(8);
   const [modelReloadKey, setModelReloadKey] = useState(0);
-  const [navigationMode, setNavigationMode] = useState("orbit");
-  const [texturePreset, setTexturePreset] = useState("hd");
+  const [navigationMode, setNavigationMode] = useState("drag");
+  const [texturePreset, setTexturePreset] = useState("auto");
   const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
   const [architecturalMaterials, setArchitecturalMaterials] = useState([]);
   const closeTimeoutRef = useRef(null);
@@ -1973,9 +1925,9 @@ export default function Model3DViewerModal({
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(displayItem?.image);
   const activeNavigationMode =
-    MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
+    MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.drag;
   const activeTexturePreset =
-    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.hd;
+    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.auto;
 
   useSketchfabLikeModelWheel(
     modelViewerRef,
@@ -2401,6 +2353,8 @@ export default function Model3DViewerModal({
                 key={`${modelSrc}-${modelReloadKey}`}
                 ref={modelViewerRef}
                 src={modelSrc}
+                navigation-mode={navigationMode}
+                quality-preset={texturePreset}
                 poster={displayItem.image || undefined}
                 alt={displayItem.title}
                 with-credentials

@@ -197,18 +197,18 @@ function RenderStage({
   const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(activeRender.image);
-  const [navigationMode, setNavigationMode] = useState("orbit");
-  const [texturePreset, setTexturePreset] = useState("hd");
+  const [navigationMode, setNavigationMode] = useState("drag");
+  const [texturePreset, setTexturePreset] = useState("auto");
   const [architecturalMaterials, setArchitecturalMaterials] = useState([]);
   const activeNavigationMode =
-    MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
+    MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.drag;
   const activeTexturePreset =
-    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.hd;
+    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.auto;
   const renderSettings = renderSettingsState.settings;
 
   useEffect(() => {
-    setNavigationMode("orbit");
-    setTexturePreset("hd");
+    setNavigationMode("drag");
+    setTexturePreset("auto");
   }, [modelSrc]);
 
   useSketchfabLikeModelWheel(modelViewerRef, hasInteractiveModel && !isLoading);
@@ -277,6 +277,8 @@ function RenderStage({
               key={`${modelSrc}-${modelReloadKey}`}
               ref={modelViewerRef}
               src={modelSrc}
+              navigation-mode={navigationMode}
+              quality-preset={texturePreset}
               poster={activeRender.image || undefined}
               alt={activeRender.title}
               with-credentials
