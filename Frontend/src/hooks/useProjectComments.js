@@ -40,11 +40,11 @@ function toDrawerComment(comment, user, projectNamesById = {}) {
     commentType,
     id: comment.id,
     image: comment.image,
-    imageComment: ["image", "viewer3d", "video"].includes(commentType),
+    imageComment: ["image", "panorama", "video"].includes(commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.content,
     pointNumber:
-      commentType === "viewer3d"
+      commentType === "panorama"
         ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
           null
         : null,

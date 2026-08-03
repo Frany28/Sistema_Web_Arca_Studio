@@ -17,7 +17,7 @@ import {
 } from "../services/documentCommentService.js";
 
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
-const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "viewer3d", "document"]);
+const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "panorama", "document"]);
 
 function parseProjectId(req) {
   const projectId = Number(req.params.projectId);

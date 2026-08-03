@@ -26,7 +26,7 @@ function toProjectComment(row) {
       ? Number(row.parent_comment_id)
       : null,
     pointNumber:
-      commentType === "viewer3d"
+      commentType === "panorama"
         ? Number(targetMetadata?.pointNumber ?? targetMetadata?.point_number) ||
           null
         : null,
@@ -289,7 +289,7 @@ export async function createProjectCommentRecord({
           end,
           case
             when $${parentIdParam}::bigint is null and $${typeParam}::comment_type = 'general'::comment_type then null
-            when $${parentIdParam}::bigint is null and $${typeParam}::comment_type = 'viewer3d'::comment_type then jsonb_set(
+            when $${parentIdParam}::bigint is null and $${typeParam}::comment_type = 'panorama'::comment_type then jsonb_set(
               coalesce($${targetMetadataParam}::jsonb, '{}'::jsonb),
               '{pointNumber}',
               to_jsonb(tpn.point_number),

@@ -70,6 +70,7 @@ function toPublicProjectFile(file) {
     description: file.description || null,
     extension: file.file_extension || null,
     fileType: file.file_type,
+    fileCategory: file.file_category,
     id: Number(file.id),
     size: file.file_size === null ? null : Number(file.file_size),
     title: file.title,
@@ -145,7 +146,7 @@ function hasDirectProjectAccess(project, user) {
 
 function isPublicShowcaseFile(file) {
   const type = String(file.file_type || "").toLowerCase();
-  return type.startsWith("image/") || type.startsWith("video/") || type.startsWith("model/");
+  return type.startsWith("image/") || type.startsWith("video/");
 }
 
 export async function findAssignedArchitectProfilePhotoForUser(projectId, user) {
@@ -374,6 +375,7 @@ async function findProjectDetailByConditionForUser({
             file.title,
             file.description,
             file.file_type,
+            file.file_category,
             file.current_version,
             version.id as current_version_id,
             version.file_extension,
@@ -409,6 +411,7 @@ async function findProjectDetailByConditionForUser({
             file.title,
             file.description,
             file.file_type,
+            file.file_category,
             file.current_version,
             version.id as current_version_id,
             version.file_extension,
@@ -433,7 +436,6 @@ async function findProjectDetailByConditionForUser({
             and file.status <> 'deleted'
             and file.file_type not like 'image/%'
             and file.file_type not like 'video/%'
-            and file.file_type not like 'model/%'
           order by file.created_at desc, file.id desc
           limit 3
         `,

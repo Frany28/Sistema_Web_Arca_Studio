@@ -47,7 +47,7 @@ test("observation types use the standardized professional vocabulary", () => {
   assert.equal(getObservationTypeLabel("general"), "Observación general");
   assert.equal(getObservationTypeLabel("image"), "Observación sobre imagen");
   assert.equal(getObservationTypeLabel("video"), "Observación sobre video");
-  assert.equal(getObservationTypeLabel("viewer3d"), "Observación en modelo 3D");
+  assert.equal(getObservationTypeLabel("panorama"), "Observación en panorámica 360");
 });
 
 test("display decoration includes current author, role, avatar and project", () => {

@@ -136,15 +136,8 @@ function isVideoFile(file) {
   return fileType.startsWith("video/") || ["mp4", "webm", "mov"].includes(extension);
 }
 
-function isModelFile(file) {
-  const fileType = String(file?.fileType || "").toLowerCase();
-  const extension = String(file?.extension || "").toLowerCase();
-
-  return (
-    fileType === "model/gltf-binary" ||
-    fileType === "model/gltf+json" ||
-    ["glb", "gltf"].includes(extension)
-  );
+function isPanoramaFile(file) {
+  return file?.fileCategory === "panorama";
 }
 
 function formatFileDate(value) {
@@ -181,10 +174,10 @@ function toMediaFileItem(file, { project }) {
     fileType: file.fileType,
     fileUrl: contentUrl,
     fileId: file.id,
-    id: `project-file-${file.id}`,
+    id: file.id,
     image: isImageFile(file) ? contentUrl : null,
     label: title,
-    modelUrl: isModelFile(file) ? contentUrl : null,
+    fileCategory: file.fileCategory,
     size: formatFileSize(file.size),
     title,
     uploadedAt,
@@ -195,15 +188,15 @@ function toMediaFileItem(file, { project }) {
 function toProjectPresentation(project) {
   const progressValue = Number(project?.progress) || 0;
   const projectFiles = project?.files || [];
-  const imageFiles = projectFiles.filter(isImageFile);
+  const imageFiles = projectFiles.filter((file) => isImageFile(file) && !isPanoramaFile(file));
   const renderGallery = imageFiles
     .filter((file) => file.available)
     .map((file) => toMediaFileItem(file, { project }));
   const videoGallery = projectFiles
     .filter((file) => isVideoFile(file) && file.available)
     .map((file) => toMediaFileItem(file, { project }));
-  const modelGallery = projectFiles
-    .filter((file) => isModelFile(file) && file.available)
+  const panoramaGallery = projectFiles
+    .filter((file) => isPanoramaFile(file) && file.available)
     .map((file) => toMediaFileItem(file, { project }));
   const toDocumentItem = (file) => {
       const contentUrl =
@@ -228,7 +221,7 @@ function toProjectPresentation(project) {
       };
     };
   const documents = projectFiles
-    .filter((file) => !isImageFile(file) && !isVideoFile(file) && !isModelFile(file))
+    .filter((file) => !isImageFile(file) && !isVideoFile(file))
     .map(toDocumentItem);
   const recentDocuments = (project?.recentDocuments || []).map(toDocumentItem);
 
@@ -240,7 +233,7 @@ function toProjectPresentation(project) {
     title: project?.name || "Proyecto",
     documents,
     recentDocuments,
-    modelGallery,
+    panoramaGallery,
     renderGallery,
     videoGallery,
   };
@@ -283,11 +276,11 @@ function toDrawerComment(comment, user) {
     commentType,
     id: comment.id,
     image: comment.image,
-    imageComment: ["image", "viewer3d", "video"].includes(commentType),
+    imageComment: ["image", "panorama", "video"].includes(commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.content,
     pointNumber:
-      commentType === "viewer3d"
+      commentType === "panorama"
         ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
           null
         : null,
@@ -674,7 +667,7 @@ export default function ProjectDetailsPage({
       <ProjectRendersPanel
         focusedCommentId={searchParams.get("commentId")}
         focusedImageId={searchParams.get("imageId")}
-        modelGallery={presentedProject.modelGallery}
+        panoramaGallery={presentedProject.panoramaGallery}
         onClearFocusedComment={clearFocusedRenderComment}
         projectId={resolvedProjectId}
         renderGallery={presentedProject.renderGallery}

@@ -15,10 +15,6 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             {
-              name: "model-viewer",
-              test: /[\\/]node_modules[\\/]@google[\\/]model-viewer[\\/]/,
-            },
-            {
               name: "react-vendor",
               test: /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/,
             },

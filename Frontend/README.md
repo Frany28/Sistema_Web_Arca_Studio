@@ -10,7 +10,7 @@ SPA construida con React, Vite y Tailwind CSS para la experiencia web de cliente
 - Tailwind CSS 4 con `@tailwindcss/vite`.
 - React Router DOM 7.
 - Iconsax React.
-- Three.js y `@google/model-viewer` para visualizacion 3D.
+- Three.js para la visualización de panorámicas equirectangulares 360.
 - ESLint 9.
 
 ## Scripts

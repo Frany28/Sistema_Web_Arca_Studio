@@ -39,7 +39,7 @@ export const OBSERVATION_TYPE_LABELS = Object.freeze({
   general: "Observación general",
   image: "Observación sobre imagen",
   video: "Observación sobre video",
-  viewer3d: "Observación en modelo 3D",
+  panorama: "Observación en panorámica 360",
   document: "Observación sobre documento",
 });
 

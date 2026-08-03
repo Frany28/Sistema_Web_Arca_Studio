@@ -106,6 +106,30 @@ test("video observations validate their temporal selection", () => {
   );
 });
 
+test("panorama observations require bounded angular coordinates", () => {
+  const valid = commentSchema.safeParse({
+    params: { projectId: 1 },
+    body: {
+      commentType: "panorama",
+      content: "Revisar este punto",
+      targetId: "42",
+      selection: { kind: "panorama-point", yaw: 179.5, pitch: -45 },
+    },
+  });
+  assert.equal(valid.success, true);
+
+  const invalid = commentSchema.safeParse({
+    params: { projectId: 1 },
+    body: {
+      commentType: "panorama",
+      content: "Fuera de rango",
+      targetId: "42",
+      selection: { kind: "panorama-point", yaw: 181, pitch: -91 },
+    },
+  });
+  assert.equal(invalid.success, false);
+});
+
 test("central errors preserve fields and hide unknown messages", () => {
   const validation = normalizeError(new ValidationError(undefined, { email: "Inválido" }));
   assert.deepEqual(validation.fields, { email: "Inválido" });

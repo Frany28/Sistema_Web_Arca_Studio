@@ -201,7 +201,7 @@ function CommentCard({
     name && typeof name === "object"
       ? (name.name ?? name.email ?? String(name))
       : name;
-  const isViewer3dComment = commentType === "viewer3d";
+  const isViewer3dComment = commentType === "panorama";
   const displayPointNumber = isViewer3dComment
     ? Number(pointNumber) || null
     : null;
@@ -323,7 +323,7 @@ function ImageCommentPreview({
 }) {
   const videoTiming = getVideoObservationTiming(selection);
   const pixels = selection.imagePixels ?? selection.displayPixels;
-  const isViewer3dComment = commentType === "viewer3d";
+  const isViewer3dComment = commentType === "panorama";
 
   if (videoTiming) {
     return (

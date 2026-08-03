@@ -15,35 +15,6 @@ export const paginationSchema = z.object({
 
 export const projectIdSchema = z.object({ params: z.object({ projectId: positiveId }) });
 
-const materialOverrideSchema = z.object({
-  category: z.enum(["glass", "metal", "emissive", "vegetation", "opaque"]).optional(),
-  excluded: z.boolean().optional(),
-  roughness: z.number().min(0).max(1).optional(),
-  metalness: z.number().min(0).max(1).optional(),
-  emissiveIntensity: z.number().min(0).max(8).optional(),
-  opacity: z.number().min(0.1).max(1).optional(),
-}).strict();
-
-export const modelRenderSettingsParamsSchema = z.object({
-  params: z.object({ projectId: positiveId, fileId: positiveId }),
-});
-
-export const updateModelRenderSettingsSchema = z.object({
-  params: z.object({ projectId: positiveId, fileId: positiveId }),
-  body: z.object({
-    profile: z.enum(["exterior", "interior", "night"]),
-    exposure: z.number().min(0.5).max(2),
-    shadowIntensity: z.number().min(0).max(3),
-    environment: z.enum(["studio", "day", "interior", "night"]),
-    materialOverrides: z.record(
-      z.string().trim().min(1).max(160),
-      materialOverrideSchema,
-    ).refine((value) => Object.keys(value).length <= 300, {
-      message: "Hay demasiados ajustes de materiales.",
-    }),
-  }).strict(),
-});
-
 const projectIdentifier = z.string().trim().refine((value) => {
   const numericValue = Number(value);
   return (
@@ -70,7 +41,7 @@ export const projectCommentAuthorPhotoSchema = z.object({
 export const commentSchema = z.object({
   params: z.object({ projectId: positiveId }),
   body: z.object({
-    commentType: z.enum(["general", "image", "video", "viewer3d", "document"]).default("general"),
+    commentType: z.enum(["general", "image", "video", "panorama", "document"]).default("general"),
     content: z.string().trim().min(1, "Escribe una observación.").max(2000),
     parentCommentId: positiveId.nullish(),
     targetId: z.union([z.string(), z.number()]).nullish(),
@@ -103,6 +74,23 @@ export const commentSchema = z.object({
       context.addIssue({
         code: "custom",
         message: "El punto del documento no es válido.",
+        path: ["body", "selection"],
+      });
+    }
+    return;
+  }
+
+  if (value.body.commentType === "panorama" && !value.body.parentCommentId) {
+    const yaw = Number(selection?.yaw);
+    const pitch = Number(selection?.pitch);
+    const validPoint =
+      selection?.kind === "panorama-point" &&
+      Number.isFinite(yaw) && yaw >= -180 && yaw <= 180 &&
+      Number.isFinite(pitch) && pitch >= -90 && pitch <= 90;
+    if (!validPoint) {
+      context.addIssue({
+        code: "custom",
+        message: "El punto de la panorámica no es válido.",
         path: ["body", "selection"],
       });
     }

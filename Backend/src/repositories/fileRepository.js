@@ -26,6 +26,7 @@ function getFileType(contentType, originalName) {
 
 function toFileUpload(row) {
   return {
+    fileCategory: row.file_category,
     fileSize: Number(row.file_size),
     fileType: row.file_type,
     id: Number(row.id),
@@ -127,17 +128,19 @@ export async function uploadProjectRequestFile({
           uploaded_by,
           title,
           file_type,
+          file_category,
           current_version,
           status
         )
-        values ($1, $2, $3, $4, $5, $6::file_status)
-        returning id, project_id, project_request_id, uploaded_by, file_type, current_version
+        values ($1, $2, $3, $4, $5, $6, $7::file_status)
+        returning id, project_id, project_request_id, uploaded_by, file_type, file_category, current_version
       `,
       [
         projectRequestId,
         user.id,
         safeOriginalName,
         fileType,
+        fileType.startsWith("image/") ? "image" : fileType.startsWith("video/") ? "video" : "document",
         versionNumber,
         DEFAULT_FILE_STATUS,
       ],
@@ -430,13 +433,22 @@ export async function uploadProjectFile({
           uploaded_by,
           title,
           file_type,
+          file_category,
           current_version,
           status
         )
-        values ($1, $2, $3, $4, $5, $6::file_status)
-        returning id, project_id, project_request_id, uploaded_by, file_type, current_version
+        values ($1, $2, $3, $4, $5, $6, $7::file_status)
+        returning id, project_id, project_request_id, uploaded_by, file_type, file_category, current_version
       `,
-      [projectId, user.id, safeOriginalName, fileType, versionNumber, DEFAULT_FILE_STATUS],
+      [
+        projectId,
+        user.id,
+        safeOriginalName,
+        fileType,
+        fileType.startsWith("image/") ? "image" : fileType.startsWith("video/") ? "video" : "document",
+        versionNumber,
+        DEFAULT_FILE_STATUS,
+      ],
     );
     const file = fileResult.rows[0];
     const storageKey = buildStorageObjectKey({
@@ -651,8 +663,7 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
     accessCondition = `(project.assigned_architect_id = $3 or (
       project.is_public = true and (
         file.file_type like 'image/%' or
-        file.file_type like 'video/%' or
-        file.file_type like 'model/%'
+        file.file_type like 'video/%'
       )
     ))`;
   } else if (roleCode === "client" && user.clientId) {
@@ -660,8 +671,7 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
     accessCondition = `(project.client_id = $3 or (
       project.is_public = true and (
         file.file_type like 'image/%' or
-        file.file_type like 'video/%' or
-        file.file_type like 'model/%'
+        file.file_type like 'video/%'
       )
     ))`;
   }

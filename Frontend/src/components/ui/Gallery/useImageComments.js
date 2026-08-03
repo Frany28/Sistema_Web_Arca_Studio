@@ -6,7 +6,7 @@ import { decorateCommentForDisplay } from "../../../utils/commentDisplay.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 
 const LEGACY_STORAGE_KEY = "arca.image-comments.v1";
-const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "viewer3d"]);
+const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "panorama"]);
 
 function getImageKey(item) {
   return String(item?.id ?? item?.image ?? item?.title ?? "image");
@@ -85,7 +85,7 @@ function decorateComment(comment, user, projectNamesById = {}) {
       : null;
   const videoTiming = getVideoObservationTiming(selection);
   const pointNumber =
-    comment.commentType === "viewer3d"
+    comment.commentType === "panorama"
       ? Number(comment.pointNumber ?? comment.targetMetadata?.pointNumber) ||
         null
       : null;
@@ -125,7 +125,7 @@ function withFallbackPointNumbers(comments) {
 
   comments.forEach((comment) => {
     if (
-      comment.commentType !== "viewer3d" ||
+      comment.commentType !== "panorama" ||
       comment.parentCommentId ||
       !comment.selection
     ) {
@@ -143,7 +143,7 @@ function withFallbackPointNumbers(comments) {
   });
 
   return comments.map((comment) => {
-    if (comment.commentType !== "viewer3d" || comment.pointNumber) {
+    if (comment.commentType !== "panorama" || comment.pointNumber) {
       return comment;
     }
 

@@ -29,15 +29,6 @@ const DOCUMENT_TYPE_BY_EXTENSION = new Map([
 ]);
 const AVATAR_EXTENSIONS = new Set(["jpeg", "jpg", "png", "webp"]);
 const AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MODEL_EXTENSIONS = new Set(["glb", "glbf"]);
-const MODEL_TYPES = new Set([
-  "application/octet-stream",
-  "model/gltf-binary",
-]);
-const MODEL_TYPE_BY_EXTENSION = new Map([
-  ["glb", "model/gltf-binary"],
-  ["glbf", "model/gltf-binary"],
-]);
 
 export const uploadPolicies = {
   document: {
@@ -48,15 +39,6 @@ export const uploadPolicies = {
     types: DOCUMENT_TYPES,
   },
   avatar: { extensions: AVATAR_EXTENSIONS, types: AVATAR_TYPES, maxBytes: Number(process.env.PROFILE_PHOTO_MAX_BYTES || 50 * 1024 * 1024), maxNameLength: 150 },
-  model: {
-    extensions: MODEL_EXTENSIONS,
-    maxBytes: Number(
-      process.env.MODEL_UPLOAD_MAX_BYTES || 250 * 1024 * 1024,
-    ),
-    maxNameLength: 150,
-    typeByExtension: MODEL_TYPE_BY_EXTENSION,
-    types: MODEL_TYPES,
-  },
 };
 
 function originalName(req, fallback) {
@@ -78,11 +60,7 @@ export function prepareUpload(req, policy, { fallbackName = "archivo" } = {}) {
     !policy.extensions.has(fileExtension) ||
     !policy.types.has(contentType) ||
     (policy.typeByExtension &&
-      policy.typeByExtension.get(fileExtension) !== contentType &&
-      !(
-        policy === uploadPolicies.model &&
-        contentType === "application/octet-stream"
-      ))
+      policy.typeByExtension.get(fileExtension) !== contentType)
   ) {
     throw new AppError({ code: "UNSUPPORTED_FILE_TYPE", message: "El tipo de archivo no está permitido.", status: 415 });
   }
@@ -90,21 +68,8 @@ export function prepareUpload(req, policy, { fallbackName = "archivo" } = {}) {
   return { body, contentType, originalName: name, size };
 }
 
-export function isModelFileName(fileName) {
-  return MODEL_EXTENSIONS.has(extension(String(fileName || "")));
-}
-
 export function prepareProjectUpload(req) {
-  const name = originalName(req, "archivo").trim();
-  const policy = isModelFileName(name)
-    ? uploadPolicies.model
-    : uploadPolicies.document;
-  const upload = prepareUpload(req, policy);
-
-  return {
-    ...upload,
-    kind: policy === uploadPolicies.model ? "model" : "document",
-  };
+  return prepareUpload(req, uploadPolicies.document);
 }
 
 export async function runProjectUpload({ operation, req }) {
