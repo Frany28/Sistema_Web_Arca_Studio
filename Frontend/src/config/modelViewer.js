@@ -144,12 +144,21 @@ class PanoramaModelViewerElement extends HTMLElement {
         return;
       }
       if (!dragging) return;
-      this.yaw = startYaw - (event.clientX - startX) * 0.15;
-      this.pitch = THREE.MathUtils.clamp(startPitch + (event.clientY - startY) * 0.15, -85, 85);
+      const sensitivity = 0.08 * THREE.MathUtils.clamp(this.camera.fov / 55, 0.45, 1.25);
+      this.yaw = startYaw - (event.clientX - startX) * sensitivity;
+      this.pitch = THREE.MathUtils.clamp(startPitch + (event.clientY - startY) * sensitivity, -85, 85);
       const now = performance.now();
       const elapsed = Math.max(now - lastTime, 1);
-      this.velocityYaw = -(event.clientX - lastX) * 0.15 * (16 / elapsed);
-      this.velocityPitch = (event.clientY - lastY) * 0.15 * (16 / elapsed);
+      this.velocityYaw = THREE.MathUtils.clamp(
+        -(event.clientX - lastX) * sensitivity * (16 / elapsed),
+        -0.65,
+        0.65,
+      );
+      this.velocityPitch = THREE.MathUtils.clamp(
+        (event.clientY - lastY) * sensitivity * (16 / elapsed),
+        -0.65,
+        0.65,
+      );
       lastX = event.clientX; lastY = event.clientY; lastTime = now;
     });
     const release = (event) => {
@@ -273,8 +282,8 @@ class PanoramaModelViewerElement extends HTMLElement {
     if (Math.abs(this.velocityYaw || 0) > 0.01 || Math.abs(this.velocityPitch || 0) > 0.01) {
       this.yaw += this.velocityYaw || 0;
       this.pitch = THREE.MathUtils.clamp(this.pitch + (this.velocityPitch || 0), -85, 85);
-      this.velocityYaw *= 0.92;
-      this.velocityPitch *= 0.92;
+      this.velocityYaw *= 0.86;
+      this.velocityPitch *= 0.86;
     }
     const yaw = THREE.MathUtils.degToRad(this.yaw);
     const pitch = THREE.MathUtils.degToRad(this.pitch);
