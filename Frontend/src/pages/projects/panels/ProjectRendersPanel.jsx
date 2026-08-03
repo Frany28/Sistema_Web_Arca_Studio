@@ -1,3 +1,4 @@
+
 import {
   useCallback,
   useEffect,
@@ -6,21 +7,45 @@ import {
   useState,
 } from "react";
 import clsx from "clsx";
+import "../../../config/modelViewer.js";
 import Button from "../../../components/ui/Button/Button.jsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import GalleryImagesModal from "../../../components/ui/Gallery/GalleryImagesModal.jsx";
 import SharedGalleryImageCard from "../../../components/ui/Gallery/GalleryImageCard.jsx";
 import GalleryVideosModal from "../../../components/ui/Gallery/GalleryVideosModal.jsx";
 import ImageViewerModal from "../../../components/ui/Gallery/ImageViewerModal.jsx";
-import Panorama360Modal from "../../../components/ui/Gallery/Panorama360Modal.jsx";
-import Panorama360Viewer from "../../../components/ui/Gallery/Panorama360Viewer.jsx";
+import Model3DViewerModal, {
+  MODEL_3D_CAMERA_CONTROLS,
+  MODEL_3D_NAVIGATION_MODES,
+  MODEL_3D_TEXTURE_PRESETS,
+  Model3DViewerControls,
+  useSketchfabLikeModelWheel,
+} from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
+import Model3DThumbnail from "../../../components/ui/Gallery/Model3DThumbnail.jsx";
 import VideoViewerModal from "../../../components/ui/Gallery/VideoViewerModal.jsx";
 import VideoThumbnail from "../../../components/ui/Gallery/VideoThumbnail.jsx";
+import VRModelViewer from "../../../components/ui/Gallery/VRModelViewer.jsx";
+import { useImageComments } from "../../../components/ui/Gallery/useImageComments.js";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
+import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
+import {
+  classifyArchitecturalMaterial,
+  enhanceModelViewerMaterials,
+  getStableMaterialKey,
+  getArchitecturalEnvironmentImage,
+} from "../../../utils/architecturalRendering.js";
+import ArchitecturalModelEffects from "../../../components/ui/Gallery/ArchitecturalModelEffects.jsx";
+import ArchitecturalSettingsPanel from "../../../components/ui/Gallery/ArchitecturalSettingsPanel.jsx";
+
+const MODEL_SLOW_LOADING_MS = 15000;
+const MODEL_LOAD_TIMEOUT_MS = 45000;
+const MODEL_VIEWER_BACKGROUND =
+  "radial-gradient(circle at 50% 38%, #3b3b3b 0%, #232323 48%, #101010 100%)";
+const MODEL_VIEWER_BACKGROUND_COLOR = "#171717";
 function MediaEmptyState({
   title,
   description,
@@ -62,8 +87,8 @@ function EmptyRenderOverview() {
       <div className="flex w-full items-start gap-[12px] max-[1024px]:flex-col">
         <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
           <MediaEmptyState
-            title="No se encontraron panorámicas 360"
-            description="Aún no se han subido panorámicas 360."
+            title="No se encontraron modelos 3D"
+            description="Aún no se han subido modelos 3D."
             className="h-[398px]"
             panel
             circlePositionClassName="[&>div.pointer-events-none.absolute.z-0]:left-[444px] [&>div.pointer-events-none.absolute.z-0]:top-[-58px] [&>div.pointer-events-none.absolute.z-0]:translate-x-0 [&>div.pointer-events-none.absolute.z-0]:translate-y-0"
@@ -77,7 +102,7 @@ function EmptyRenderOverview() {
         <aside className="flex h-[438px] w-[200px] shrink-0 flex-col justify-center overflow-visible max-[1024px]:h-auto max-[1024px]:w-full">
           <MediaEmptyState
             title="Aún no hay requerimientos"
-            description="Aún no se han subido panorámicas 360."
+            description="Aún no se han subido modelos 3D."
             className="h-full min-h-[206px] w-full"
             small
           />
@@ -154,34 +179,212 @@ function RenderLoadingState({ image, onRetry, progress, state = "loading" }) {
   );
 }
 
-function RenderStage({ activeRender, onOpenPanorama, projectId }) {
+function RenderStage({
+  activeRender,
+  isLoading,
+  loadState,
+  modelReloadKey,
+  onModelRetry,
+  progress,
+  onModelError,
+  onModelLoad,
+  onModelProgress,
+  onOpenModel,
+  onOpenVR,
+  renderSettingsState,
+}) {
+  const modelViewerRef = useRef(null);
+  const modelSrc = activeRender.modelUrl || activeRender.fileUrl || null;
+  const hasInteractiveModel = Boolean(modelSrc);
+  const hasPreviewImage = Boolean(activeRender.image);
+  const [navigationMode, setNavigationMode] = useState("orbit");
+  const [texturePreset, setTexturePreset] = useState("hd");
+  const [architecturalMaterials, setArchitecturalMaterials] = useState([]);
+  const activeNavigationMode =
+    MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.orbit;
+  const activeTexturePreset =
+    MODEL_3D_TEXTURE_PRESETS[texturePreset] ?? MODEL_3D_TEXTURE_PRESETS.hd;
+  const renderSettings = renderSettingsState.settings;
+
+  useEffect(() => {
+    setNavigationMode("orbit");
+    setTexturePreset("hd");
+  }, [modelSrc]);
+
+  useSketchfabLikeModelWheel(modelViewerRef, hasInteractiveModel && !isLoading);
+
+  useEffect(() => {
+    const modelViewer = modelViewerRef.current;
+
+    if (!modelViewer || !hasInteractiveModel) {
+      return undefined;
+    }
+
+    function handleLoad() {
+      enhanceModelViewerMaterials(modelViewer, renderSettings);
+      setArchitecturalMaterials(
+        (modelViewer.model?.materials || []).map((material, index) => ({
+          category: classifyArchitecturalMaterial(material.name),
+          key: getStableMaterialKey(material, index),
+          name: material.name || `Material ${index + 1}`,
+        })),
+      );
+      onModelLoad?.();
+    }
+
+    function handleError() {
+      onModelError?.();
+    }
+
+    function handleProgress(event) {
+      const totalProgress = Number(event.detail?.totalProgress);
+
+      if (Number.isFinite(totalProgress)) {
+        onModelProgress?.(Math.round(totalProgress * 100));
+      }
+    }
+
+    if (modelViewer.loaded) {
+      handleLoad();
+      return undefined;
+    }
+
+    modelViewer.addEventListener("load", handleLoad);
+    modelViewer.addEventListener("error", handleError);
+    modelViewer.addEventListener("progress", handleProgress);
+
+    return () => {
+      modelViewer.removeEventListener("load", handleLoad);
+      modelViewer.removeEventListener("error", handleError);
+      modelViewer.removeEventListener("progress", handleProgress);
+    };
+  }, [
+    hasInteractiveModel,
+    modelReloadKey,
+    modelSrc,
+    onModelError,
+    onModelLoad,
+    onModelProgress,
+    renderSettings,
+  ]);
+
   return (
     <div className="flex w-[888px] max-w-full shrink-0 flex-col gap-[8px] max-[1280px]:min-w-0 max-[1280px]:flex-1 max-[1024px]:w-full max-[1024px]:flex-none">
       <div className="group relative h-[480px] w-full overflow-hidden rounded-[var(--radius-3)] bg-[#171717] text-left max-[1024px]:h-[398px] max-[640px]:h-[280px]">
-        <Panorama360Viewer embedded item={activeRender} projectId={projectId} />
+        {hasInteractiveModel ? (
+          <>
+            <model-viewer
+              key={`${modelSrc}-${modelReloadKey}`}
+              ref={modelViewerRef}
+              src={modelSrc}
+              poster={activeRender.image || undefined}
+              alt={activeRender.title}
+              with-credentials
+              camera-controls
+              auto-rotate-delay="0"
+              camera-orbit={activeNavigationMode.cameraOrbit}
+              min-camera-orbit="auto 4deg 1.5%"
+              max-camera-orbit="auto 88deg 520%"
+              field-of-view={activeNavigationMode.fieldOfView}
+              min-field-of-view="8deg"
+              max-field-of-view="70deg"
+              environment-image={getArchitecturalEnvironmentImage()}
+              shadow-intensity={renderSettings.shadowIntensity}
+              shadow-softness={activeTexturePreset.shadowSoftness}
+              exposure={renderSettings.exposure}
+              tone-mapping={activeTexturePreset.toneMapping}
+              interpolation-decay={MODEL_3D_CAMERA_CONTROLS.interpolationDecay}
+              orbit-sensitivity={MODEL_3D_CAMERA_CONTROLS.orbitSensitivity}
+              pan-sensitivity={MODEL_3D_CAMERA_CONTROLS.panSensitivity}
+              zoom-sensitivity={MODEL_3D_CAMERA_CONTROLS.zoomSensitivity}
+              interaction-prompt={activeNavigationMode.interactionPrompt}
+              loading="eager"
+              reveal="auto"
+              touch-action="none"
+              style={{
+                background: MODEL_VIEWER_BACKGROUND,
+                backgroundColor: MODEL_VIEWER_BACKGROUND_COLOR,
+                display: "block",
+                filter: activeTexturePreset.filter,
+                height: "100%",
+                "--poster-color": "transparent",
+                width: "100%",
+              }}
+            >
+              <ArchitecturalModelEffects settings={renderSettings} />
+            </model-viewer>
+            <ArchitecturalSettingsPanel
+              error={renderSettingsState.error}
+              isSaving={renderSettingsState.isSaving}
+              settings={renderSettings}
+              materials={architecturalMaterials}
+              onChange={(patch) =>
+                renderSettingsState.setSettings((current) => ({
+                  ...current,
+                  ...patch,
+                }))
+              }
+              onSave={() => renderSettingsState.save(renderSettings)}
+            />
+            {isLoading ? (
+              <RenderLoadingState
+                image={activeRender.image}
+                onRetry={onModelRetry}
+                progress={progress}
+                state={loadState}
+              />
+            ) : null}
+          </>
+        ) : hasPreviewImage ? (
+          <button
+            type="button"
+            className="h-full w-full cursor-pointer text-left transition-opacity duration-150 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
+            onClick={onOpenModel}
+            aria-label={`Abrir modelo 3D ${activeRender.title}`}
+          >
+            <img
+              src={activeRender.image}
+              alt={activeRender.title}
+              className="h-full w-full object-cover"
+            />
+          </button>
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-[8px] bg-[var(--color-neutral-200)] px-[24px] text-center">
+            <span className="text-heading-4 text-[var(--color-text-300)]">
+              Modelo 3D
+            </span>
+            <span className="max-w-[360px] text-body-3 text-[var(--color-text-100)]">
+              {getFileDisplayName(activeRender.title)}
+            </span>
+          </div>
+        )}
+
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(180deg,rgba(0,0,0,0.22)_0%,rgba(0,0,0,0)_100%)]" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[156px] bg-[linear-gradient(0deg,rgba(0,0,0,0.28)_0%,rgba(0,0,0,0)_100%)]" />
         <div className="pointer-events-none absolute left-[12px] top-[12px] z-10">
           <MainLogo size="32px" appearance="dark" alt="ARCA Studio" />
         </div>
-        <Button
-          className="absolute bottom-[12px] right-[12px] z-20 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
-          fitContent
-          size="S"
-          theme="Info"
-          type="Outline"
-          onClick={onOpenPanorama}
-        >
-          Ampliar 360
-        </Button>
+
+        {hasInteractiveModel || hasPreviewImage ? (
+          <Model3DViewerControls
+            onExpand={onOpenModel}
+            navigationMode={navigationMode}
+            onNavigationModeChange={hasInteractiveModel ? setNavigationMode : null}
+            onTexturePresetChange={hasInteractiveModel ? setTexturePreset : null}
+            onView={hasInteractiveModel ? onOpenVR : null}
+            persistSelection={false}
+            texturePreset={texturePreset}
+            className="absolute bottom-[12px] right-[12px] z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[16px]"
+          />
+        ) : null}
       </div>
+
       <h2 className="text-heading-4 text-[var(--color-text-300)]">
         {getFileDisplayName(activeRender.title)}
       </h2>
     </div>
   );
 }
-
 
 function RenderThumbnail({ item, selected, onSelect }) {
   return (
@@ -196,8 +399,8 @@ function RenderThumbnail({ item, selected, onSelect }) {
       )}
       aria-pressed={selected}
     >
-      <img
-        src={item.image || item.fileUrl}
+      <Model3DThumbnail
+        item={item}
         alt={item.title}
         className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
       />
@@ -529,19 +732,26 @@ function VideoGallerySection({ items, onOpenGallery, onOpenVideo }) {
 export default function ProjectRendersPanel({
   focusedCommentId,
   focusedImageId,
-  panoramaGallery,
+  modelGallery,
   onClearFocusedComment,
   projectId,
   renderGallery = PROJECT_RENDER_GALLERY,
   videoGallery = PROJECT_VIDEO_GALLERY,
 }) {
-  const resolvedModelGallery = panoramaGallery ?? [];
+  const resolvedModelGallery = modelGallery ?? renderGallery;
   const [activeRenderId, setActiveRenderId] = useState(
     resolvedModelGallery[0]?.id,
   );
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadState, setLoadState] = useState("loading");
+  const [modelReloadKey, setModelReloadKey] = useState(0);
+  const [progress, setProgress] = useState(43);
+  const slowLoadingTimeoutRef = useRef(null);
+  const loadTimeoutRef = useRef(null);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
   const [isVideoGalleryModalOpen, setIsVideoGalleryModalOpen] = useState(false);
-  const [selectedPanorama, setSelectedPanorama] = useState(null);
+  const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
+  const [selectedModel3D, setSelectedModel3D] = useState(null);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(null);
   const [selectedGalleryVideo, setSelectedGalleryVideo] = useState(null);
   const selectedActiveRenderId = resolvedModelGallery.some(
@@ -556,7 +766,112 @@ export default function ProjectRendersPanel({
       resolvedModelGallery[0],
     [resolvedModelGallery, selectedActiveRenderId],
   );
+  const activeModelSrc = activeRender?.modelUrl || activeRender?.fileUrl || null;
+  const renderSettingsState = useModelRenderSettings({
+    fileId: Number(activeRender?.id) || null,
+    projectId: Number(projectId) || null,
+  });
+  const activeRenderIdForLoading = activeRender?.id || null;
+  const {
+    addComment: addVRObservation,
+    comments: vrObservations,
+  } = useImageComments(activeRender, {
+    commentType: "viewer3d",
+    projectId,
+  });
 
+  const clearModelLoadingTimers = useCallback(() => {
+    window.clearTimeout(slowLoadingTimeoutRef.current);
+    window.clearTimeout(loadTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    clearModelLoadingTimers();
+
+    if (!activeRender || !activeModelSrc) {
+      const frameId = window.requestAnimationFrame(() => {
+        setIsLoading(false);
+        setLoadState("loaded");
+        setProgress(100);
+      });
+
+      return () => {
+        window.cancelAnimationFrame(frameId);
+      };
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setIsLoading(true);
+      setLoadState("loading");
+      setProgress(8);
+    });
+
+    slowLoadingTimeoutRef.current = window.setTimeout(() => {
+      setLoadState((current) =>
+        current === "loading" ? "slow" : current,
+      );
+    }, MODEL_SLOW_LOADING_MS);
+
+    loadTimeoutRef.current = window.setTimeout(() => {
+      setIsLoading(true);
+      setLoadState((current) =>
+        current === "loading" || current === "slow" ? "error" : current,
+      );
+    }, MODEL_LOAD_TIMEOUT_MS);
+
+    const intervalId = window.setInterval(() => {
+      setProgress((current) => {
+        if (current >= 92) {
+          return current;
+        }
+
+        return Math.min(current + 8, 92);
+      });
+    }, 360);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      clearModelLoadingTimers();
+      window.clearInterval(intervalId);
+    };
+  }, [
+    activeModelSrc,
+    activeRenderIdForLoading,
+    clearModelLoadingTimers,
+    modelReloadKey,
+  ]);
+
+  const handleModelLoad = useCallback(() => {
+    clearModelLoadingTimers();
+    setProgress(100);
+    setLoadState("loaded");
+    setIsLoading(false);
+  }, [clearModelLoadingTimers]);
+
+  const handleModelError = useCallback(() => {
+    clearModelLoadingTimers();
+    setProgress(100);
+    setLoadState("error");
+    setIsLoading(true);
+  }, [clearModelLoadingTimers]);
+
+  const handleModelProgress = useCallback((nextProgress) => {
+    if (nextProgress > 0) {
+      setLoadState((current) => (current === "error" ? current : "loading"));
+    }
+
+    setProgress((current) =>
+      Math.max(current, Math.min(Math.max(nextProgress, 8), 98)),
+    );
+  }, []);
+
+  const handleModelRetry = useCallback(() => {
+    clearModelLoadingTimers();
+    setIsLoading(true);
+    setLoadState("loading");
+    setProgress(8);
+    setModelReloadKey((current) => current + 1);
+  }, [clearModelLoadingTimers]);
 
   const handleCloseFocusedMedia = useCallback((closeMedia) => {
     closeMedia();
@@ -564,7 +879,7 @@ export default function ProjectRendersPanel({
   }, [onClearFocusedComment]);
 
   useEffect(() => {
-    if (!focusedImageId) {
+    if (!focusedImageId || !renderGallery.length) {
       return;
     }
 
@@ -619,7 +934,7 @@ export default function ProjectRendersPanel({
       }
 
       const frameId = window.requestAnimationFrame(() => {
-        setSelectedPanorama(focusedModel);
+        setSelectedModel3D(focusedModel);
       });
 
       return () => {
@@ -665,13 +980,13 @@ export default function ProjectRendersPanel({
           onClose={() => setIsVideoGalleryModalOpen(false)}
           onWatchVideo={setSelectedGalleryVideo}
         />
-        <Panorama360Modal
+        <Model3DViewerModal
           focusedCommentId={focusedCommentId}
-          visible={Boolean(selectedPanorama)}
-          item={selectedPanorama}
+          visible={Boolean(selectedModel3D)}
+          item={selectedModel3D}
           projectId={projectId}
           onClose={() =>
-            handleCloseFocusedMedia(() => setSelectedPanorama(null))
+            handleCloseFocusedMedia(() => setSelectedModel3D(null))
           }
         />
         <VideoViewerModal
@@ -702,8 +1017,17 @@ export default function ProjectRendersPanel({
         <div className="flex w-full items-start gap-[12px] max-[1024px]:flex-col">
           <RenderStage
             activeRender={activeRender}
-            onOpenPanorama={() => setSelectedPanorama(activeRender)}
-            projectId={projectId}
+            isLoading={isLoading}
+            loadState={loadState}
+            modelReloadKey={modelReloadKey}
+            onModelRetry={handleModelRetry}
+            progress={progress}
+            onModelError={handleModelError}
+            onModelLoad={handleModelLoad}
+            onModelProgress={handleModelProgress}
+            onOpenModel={() => setSelectedModel3D(activeRender)}
+            onOpenVR={() => setIsVRViewerOpen(true)}
+            renderSettingsState={renderSettingsState}
           />
           <RenderThumbnailRail
             items={resolvedModelGallery}
@@ -736,15 +1060,28 @@ export default function ProjectRendersPanel({
         onClose={() => setIsVideoGalleryModalOpen(false)}
         onWatchVideo={setSelectedGalleryVideo}
       />
-      <Panorama360Modal
+      <Model3DViewerModal
         focusedCommentId={focusedCommentId}
-        visible={Boolean(selectedPanorama)}
-        item={selectedPanorama}
+        visible={Boolean(selectedModel3D)}
+        item={selectedModel3D}
         projectId={projectId}
         onClose={() =>
-          handleCloseFocusedMedia(() => setSelectedPanorama(null))
+          handleCloseFocusedMedia(() => setSelectedModel3D(null))
         }
       />
+      {isVRViewerOpen ? (
+        <VRModelViewer
+          annotations={vrObservations}
+          item={activeRender}
+          modelSrc={activeModelSrc}
+          onSubmitObservation={addVRObservation}
+          poster={activeRender.image || undefined}
+          title={activeRender.title}
+          renderSettings={renderSettingsState.settings}
+          visible={isVRViewerOpen}
+          onClose={() => setIsVRViewerOpen(false)}
+        />
+      ) : null}
       <VideoViewerModal
         visible={Boolean(selectedGalleryVideo)}
         item={selectedGalleryVideo}
