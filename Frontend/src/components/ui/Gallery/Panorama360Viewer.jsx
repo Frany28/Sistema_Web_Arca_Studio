@@ -29,7 +29,7 @@ function pointToDirection({ yaw, pitch }) {
   );
 }
 
-export default function Panorama360Viewer({ item, projectId, focusedCommentId = null }) {
+export default function Panorama360Viewer({ embedded = false, item, projectId, focusedCommentId = null }) {
   const containerRef = useRef(null);
   const stageRef = useRef(null);
   const sceneRef = useRef(null);
@@ -152,15 +152,21 @@ export default function Panorama360Viewer({ item, projectId, focusedCommentId = 
     return { left: `${(position.x * 0.5 + 0.5) * 100}%`, top: `${(-position.y * 0.5 + 0.5) * 100}%` };
   }, [viewVersion]);
 
-  return (
-    <div className="flex min-h-[520px] w-full gap-[12px] max-[920px]:flex-col">
-      <section ref={stageRef} tabIndex={0} aria-label="Visor panorámico 360" className="relative min-h-[520px] min-w-0 flex-1 overflow-hidden rounded-[var(--radius-3)] bg-black focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)]">
+  const stage = (
+      <section ref={stageRef} tabIndex={0} aria-label="Visor panorámico 360" className={`relative min-w-0 flex-1 overflow-hidden rounded-[var(--radius-3)] bg-black focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] ${embedded ? "h-full min-h-0" : "min-h-[520px]"}`}>
         <div ref={containerRef} className="absolute inset-0 cursor-grab active:cursor-grabbing" />
         {loadState !== "loaded" ? <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)]">{loadState === "error" ? "No se pudo cargar la panorámica." : "Cargando panorámica 360…"}</div> : null}
         {roots.map((comment) => <button key={comment.id} type="button" style={pointPosition(comment.selection)} className="absolute z-10 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-primary-300)] text-heading-8 text-white shadow-[var(--shadow-e2)]" aria-label={`Observación ${comment.pointNumber}`}>{comment.pointNumber}</button>)}
         {pendingSelection ? <span style={pointPosition(pendingSelection)} className="pointer-events-none absolute z-10 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[var(--color-primary-300)] text-white">+</span> : null}
-        <div className="absolute right-3 top-3 z-30"><Button size="S" type="Outline" theme="Info" fitContent onClick={() => stageRef.current?.requestFullscreen?.()}>Pantalla completa</Button></div>
+        {!embedded ? <div className="absolute right-3 top-3 z-30"><Button size="S" type="Outline" theme="Info" fitContent onClick={() => stageRef.current?.requestFullscreen?.()}>Pantalla completa</Button></div> : null}
       </section>
+  );
+
+  if (embedded) return stage;
+
+  return (
+    <div className="flex min-h-[520px] w-full gap-[12px] max-[920px]:flex-col">
+      {stage}
       <aside className="w-[296px] shrink-0 max-[920px]:h-[360px] max-[920px]:w-full">
         <GeneralCommentsDrawer comments={comments} focusedSelectionCommentId={focusedCommentId} mediaItem={item} mediaType="panorama" pendingSelection={pendingSelection} requireSelectionForRoot onClearSelection={() => setPendingSelection(null)} onSubmitComment={async (payload) => { await addComment(payload); if (!payload.parentCommentId) setPendingSelection(null); }} />
       </aside>
