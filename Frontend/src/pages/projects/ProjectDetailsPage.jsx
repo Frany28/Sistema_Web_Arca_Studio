@@ -667,7 +667,7 @@ export default function ProjectDetailsPage({
       <ProjectRendersPanel
         focusedCommentId={searchParams.get("commentId")}
         focusedImageId={searchParams.get("imageId")}
-        panoramaGallery={presentedProject.panoramaGallery}
+        modelGallery={presentedProject.panoramaGallery}
         onClearFocusedComment={clearFocusedRenderComment}
         projectId={resolvedProjectId}
         renderGallery={presentedProject.renderGallery}

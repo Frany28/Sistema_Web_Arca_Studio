@@ -776,7 +776,7 @@ export default function ProjectRendersPanel({
     addComment: addVRObservation,
     comments: vrObservations,
   } = useImageComments(activeRender, {
-    commentType: "viewer3d",
+    commentType: "panorama",
     projectId,
   });
 
