@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -12,6 +13,7 @@ import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import AvatarLabel from "../../ui/AvatarLabel/AvatarLabel.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
+import Label from "../../ui/Label/Label.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
@@ -923,7 +925,7 @@ function SelectionPreview({
   }
 
   const videoTiming = getVideoObservationTiming(selection);
-  const Container = onSelect ? "button" : "div";
+  const Container = onSelect && !onClear ? "button" : "div";
 
   if (videoTiming) {
     return (
@@ -951,24 +953,17 @@ function SelectionPreview({
           </p>
         </div>
         {onClear ? (
-          <span
-            role="button"
-            tabIndex={0}
-            className="shrink-0 cursor-pointer rounded-[6px] px-[6px] py-[4px] text-[10px] leading-[12px] text-[var(--color-text-200)] hover:bg-[var(--color-neutral-200)]"
+          <button
+            type="button"
+            aria-label="Quitar referencia"
+            className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
             onClick={(event) => {
               event.stopPropagation();
               onClear();
             }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                event.stopPropagation();
-                onClear();
-              }
-            }}
           >
-            Quitar
-          </span>
+            <CloseIcon className="size-3" />
+          </button>
         ) : null}
       </Container>
     );
@@ -998,7 +993,9 @@ function SelectionPreview({
   const referenceNumber = Number(pointNumber) || null;
   const referenceTitle =
     observationTitle ||
-    (mediaType === "image"
+    (mediaType === "panorama"
+      ? "Observación en panorámica 360"
+      : mediaType === "image"
       ? "Observación sobre imagen"
       : mediaType === "video"
         ? "Observación sobre video"
@@ -1006,7 +1003,9 @@ function SelectionPreview({
           ? "Observación sobre documento"
           : "Observación en modelo 3D");
   const referenceSubtitle =
-    mediaType === "image"
+    mediaType === "panorama"
+      ? "Punto señalado en la panorámica"
+      : mediaType === "image"
       ? "Área señalada en la imagen"
       : isDocumentPoint
         ? `Punto señalado en la página ${selection.pageNumber}`
@@ -1065,10 +1064,14 @@ function SelectionPreview({
       {onClear ? (
         <button
           type="button"
-          className="shrink-0 cursor-pointer rounded-[6px] px-[6px] py-[4px] text-[10px] leading-[12px] text-[var(--color-text-200)] hover:bg-[var(--color-neutral-200)]"
-          onClick={onClear}
+          aria-label="Quitar referencia"
+          className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+          onClick={(event) => {
+            event.stopPropagation();
+            onClear();
+          }}
         >
-          Quitar
+          <CloseIcon className="size-3" />
         </button>
       ) : null}
     </Container>
@@ -1111,6 +1114,7 @@ function MessageInput({
   requireSelection = false,
 }) {
   const fieldRef = useRef(null);
+  const fieldId = useId();
   const [textAreaValue, setTextAreaValue] = useState("");
   const trimmedValue = textAreaValue.trim();
 
@@ -1139,6 +1143,17 @@ function MessageInput({
 
   return multiline ? (
     <div ref={fieldRef} className="flex flex-col gap-[8px]">
+      <Label
+        htmlFor={fieldId}
+        label={
+          pendingSelection
+            ? getObservationTypeLabel(
+                mediaType === "render" ? "image" : mediaType,
+              )
+            : "Observación general"
+        }
+        information={false}
+      />
       {pendingSelection ? (
         <SelectionPreview
           image={pendingSelection.image}
@@ -1149,14 +1164,9 @@ function MessageInput({
         />
       ) : null}
       <TextArea
+        id={fieldId}
         disabled={disabled || (requireSelection && !pendingSelection)}
-        label={
-          pendingSelection
-            ? getObservationTypeLabel(
-                mediaType === "render" ? "image" : mediaType,
-              )
-            : "Observación general"
-        }
+        showLabel={false}
         placeholder={
           disabled
             ? placeholder
@@ -2540,7 +2550,7 @@ export default function Model3DViewerModal({
             comments={comments}
             focusedSelectionCommentId={focusedSelectionCommentId}
             mediaItem={displayItem}
-            mediaType="render"
+            mediaType="panorama"
             pendingSelection={pendingSelection}
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={handleSelectionPreviewClick}
