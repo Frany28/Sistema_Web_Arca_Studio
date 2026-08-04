@@ -358,7 +358,7 @@ export default function VRModelViewer({
       geometry.dispose(); material.map?.dispose(); material.dispose(); renderer.dispose();
       rendererRef.current = null;
     };
-  }, [initialSession, mode, modelSrc, visible]);
+  }, [annotations, initialSession, mode, modelSrc, visible]);
 
   const requestMotion = useCallback(async () => {
     const permission = typeof window.DeviceOrientationEvent !== "undefined" && typeof window.DeviceOrientationEvent.requestPermission === "function"

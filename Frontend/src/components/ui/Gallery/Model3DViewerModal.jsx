@@ -1471,8 +1471,10 @@ function Model3DAnnotationMarker({
   ...props
 }) {
   const markerRef = useRef(null);
+  const tooltipCloseTimerRef = useRef(null);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState(null);
+  useEffect(() => () => window.clearTimeout(tooltipCloseTimerRef.current), []);
   const pointNumber = Number(item.pointNumber) || "";
   const tooltipText = pointNumber
     ? `${VIEWER_3D_OBSERVATION_LABEL} ${pointNumber}`
@@ -1481,6 +1483,7 @@ function Model3DAnnotationMarker({
     tooltipOpen && !item.pending && tooltipPosition && typeof document !== "undefined";
 
   const openTooltip = () => {
+    window.clearTimeout(tooltipCloseTimerRef.current);
     const rect = markerRef.current?.getBoundingClientRect();
 
     if (!rect) {
@@ -1492,6 +1495,10 @@ function Model3DAnnotationMarker({
       top: rect.top + rect.height / 2,
     });
     setTooltipOpen(true);
+  };
+  const scheduleTooltipClose = () => {
+    window.clearTimeout(tooltipCloseTimerRef.current);
+    tooltipCloseTimerRef.current = window.setTimeout(() => setTooltipOpen(false), 120);
   };
 
   return (
@@ -1511,9 +1518,9 @@ function Model3DAnnotationMarker({
         style={style}
         aria-label={tooltipText}
         onFocus={openTooltip}
-        onBlur={() => window.setTimeout(() => setTooltipOpen(false), 120)}
+        onBlur={scheduleTooltipClose}
         onMouseEnter={openTooltip}
-        onMouseLeave={() => window.setTimeout(() => setTooltipOpen(false), 120)}
+        onMouseLeave={scheduleTooltipClose}
         onPointerDown={(event) => {
           event.stopPropagation();
         }}
@@ -1540,7 +1547,7 @@ function Model3DAnnotationMarker({
           message={item.message || item.content}
           open={tooltipOpen}
           position={tooltipPosition}
-          onOpenChange={setTooltipOpen}
+          onOpenChange={(nextOpen) => nextOpen ? openTooltip() : scheduleTooltipClose()}
           onReply={onReply ? () => onReply(item.id) : undefined}
         />
       ) : null}
@@ -1732,14 +1739,15 @@ export function GeneralCommentsDrawer({
 
   useEffect(() => {
     if (!replyRequest?.commentId) return;
-    setVisibleReplyAction(null);
-    setActiveReplyComposer(replyRequest.commentId);
-    window.requestAnimationFrame(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setVisibleReplyAction(null);
+      setActiveReplyComposer(replyRequest.commentId);
       commentRefs.current.get(String(replyRequest.commentId))?.scrollIntoView?.({
         block: "nearest",
         behavior: "smooth",
       });
     });
+    return () => window.cancelAnimationFrame(frameId);
   }, [replyRequest]);
 
   useEffect(() => {
