@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { getPanoramaDirection } from "../utils/panoramaCoordinates.js";
 
 // Compatibility element: it preserves the approved <model-viewer> UI contract
 // while rendering an equirectangular panorama instead of a GLB.
@@ -262,6 +263,34 @@ class PanoramaModelViewerElement extends HTMLElement {
     const direction = raycaster.ray.direction.clone().normalize();
     const position = direction.clone().multiplyScalar(500);
     return { position, normal: direction.clone().multiplyScalar(-1) };
+  }
+
+  projectPanoramaPoint(yawDegrees, pitchDegrees) {
+    const yaw = THREE.MathUtils.degToRad(Number(yawDegrees));
+    const pitch = THREE.MathUtils.degToRad(Number(pitchDegrees));
+    if (!Number.isFinite(yaw) || !Number.isFinite(pitch) || !this.camera) return null;
+    const coordinates = getPanoramaDirection(yawDegrees, pitchDegrees);
+    if (!coordinates) return null;
+    const direction = new THREE.Vector3(coordinates.x, coordinates.y, coordinates.z);
+    const cameraDirection = new THREE.Vector3();
+    this.camera.getWorldDirection(cameraDirection);
+    const visible = direction.dot(cameraDirection) > 0.02;
+    const projected = direction.clone().multiplyScalar(10).project(this.camera);
+    return {
+      visible: visible && Math.abs(projected.x) <= 1.08 && Math.abs(projected.y) <= 1.08,
+      x: (projected.x + 1) / 2,
+      y: (1 - projected.y) / 2,
+    };
+  }
+
+  lookAtPanoramaPoint(yawDegrees, pitchDegrees) {
+    const yaw = Number(yawDegrees);
+    const pitch = Number(pitchDegrees);
+    if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) return;
+    this.yaw = yaw;
+    this.pitch = THREE.MathUtils.clamp(pitch, -85, 85);
+    this.velocityYaw = 0;
+    this.velocityPitch = 0;
   }
 
   updateHotspot() {}

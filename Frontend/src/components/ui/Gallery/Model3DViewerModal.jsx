@@ -17,6 +17,7 @@ import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
+import { getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
 import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
 import useVrViewerLaunch from "../../../hooks/useVrViewerLaunch.js";
 import {
@@ -973,7 +974,7 @@ function SelectionPreview({
     );
   }
 
-  const isViewerPoint = selection.kind === "viewer3d-point";
+  const isViewerPoint = ["panorama-point", "viewer3d-point"].includes(selection.kind);
   const isDocumentPoint = selection.kind === "document-point";
   const pixels = selection.imagePixels ?? selection.displayPixels;
   const naturalSize = selection.naturalSize ?? {
@@ -1234,8 +1235,12 @@ function ReplyComposer({ onSubmit, placeholder = "Escribe tu mensaje..." }) {
   );
 }
 
+function isPanoramaPointSelection(selection) {
+  return ["panorama-point", "viewer3d-point"].includes(selection?.kind);
+}
+
 function getViewerPointPosition(selection) {
-  if (selection?.kind === "viewer3d-point" && selection.viewerPoint) {
+  if (isPanoramaPointSelection(selection) && selection.viewerPoint) {
     const x = Number(selection.viewerPoint.normalizedX);
     const y = Number(selection.viewerPoint.normalizedY);
 
@@ -1582,36 +1587,66 @@ function Model3DHotspots({
 function Model3DCommentMarkers({
   annotations = [],
   focusedAnnotationId = null,
+  modelViewerRef,
   onAnnotationSelect,
   pendingSelection = null,
 }) {
-  const markerItems = [
-    ...annotations.map((comment) => ({
-      id: comment.id,
-      active: String(comment.id) === String(focusedAnnotationId),
-      pointNumber: comment.pointNumber,
-      selection: comment.selection,
-    })),
-    pendingSelection
-      ? {
-          id: "pending",
-          active: true,
-          pending: true,
-          selection: pendingSelection,
-        }
-      : null,
-  ].filter(Boolean);
+  const markerItems = useMemo(
+    () => [
+      ...annotations.map((comment) => ({
+        id: comment.id,
+        active: String(comment.id) === String(focusedAnnotationId),
+        pointNumber: comment.pointNumber,
+        selection: comment.selection,
+      })),
+      pendingSelection
+        ? {
+            id: "pending",
+            active: true,
+            pending: true,
+            selection: pendingSelection,
+          }
+        : null,
+    ].filter(Boolean),
+    [annotations, focusedAnnotationId, pendingSelection],
+  );
+  const [projectedPoints, setProjectedPoints] = useState({});
+
+  useEffect(() => {
+    let frameId;
+    let previousSignature = "";
+    const update = () => {
+      const viewer = modelViewerRef?.current;
+      const next = {};
+      markerItems.forEach((item) => {
+        const orientation = getPanoramaOrientation(item.selection);
+        const projected = orientation
+          ? viewer?.projectPanoramaPoint?.(orientation.yaw, orientation.pitch)
+          : null;
+        const fallback = getViewerPointPosition(item.selection);
+        next[item.id] = projected || (fallback
+          ? { visible: true, x: fallback.x, y: fallback.y }
+          : { visible: false, x: 0, y: 0 });
+      });
+      const signature = Object.entries(next)
+        .map(([id, point]) => `${id}:${point.visible ? 1 : 0}:${point.x.toFixed(4)}:${point.y.toFixed(4)}`)
+        .join("|");
+      if (signature !== previousSignature) {
+        previousSignature = signature;
+        setProjectedPoints(next);
+      }
+      frameId = window.requestAnimationFrame(update);
+    };
+    frameId = window.requestAnimationFrame(update);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [markerItems, modelViewerRef]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[12]">
       {markerItems.map((item) => {
-        if (getViewerModelPoint(item.selection)) {
-          return null;
-        }
+        const point = projectedPoints[item.id];
 
-        const point = getViewerPointPosition(item.selection);
-
-        if (!point) {
+        if (!point?.visible) {
           return null;
         }
 
@@ -2081,7 +2116,7 @@ export default function Model3DViewerModal({
         String(currentComment.id) === String(focusedAnnotationId),
     );
 
-    if (comment?.selection?.kind === "viewer3d-point") {
+    if (isPanoramaPointSelection(comment?.selection)) {
       restoreViewerCamera(comment.selection);
     }
   }, [comments, focusedAnnotationId, isModelLoading, modelLoadState, visible]);
@@ -2124,6 +2159,15 @@ export default function Model3DViewerModal({
   function restoreViewerCamera(selection) {
     const modelViewer = modelViewerRef.current;
     const viewerPoint = selection?.viewerPoint;
+
+    const panoramaOrientation = getPanoramaOrientation(selection);
+    if (modelViewer && panoramaOrientation) {
+      modelViewer.lookAtPanoramaPoint?.(
+        panoramaOrientation.yaw,
+        panoramaOrientation.pitch,
+      );
+      return;
+    }
 
     if (!modelViewer || !viewerPoint) {
       return;
@@ -2226,10 +2270,13 @@ export default function Model3DViewerModal({
     const markerSize = 18;
     const camera = getViewerCameraSnapshot();
     const previewImage = displayItem.image || displayItem.poster || null;
+    const orientation = getPanoramaOrientation({
+      viewerPoint: { modelPosition: hit.position },
+    });
 
     setFocusedSelectionCommentId(null);
     setPendingSelection({
-      kind: "viewer3d-point",
+      kind: "panorama-point",
       displayPixels: {
         height: markerSize,
         width: markerSize,
@@ -2242,6 +2289,8 @@ export default function Model3DViewerModal({
         title: displayItem.title,
       },
       imageSrc: previewImage,
+      yaw: orientation?.yaw,
+      pitch: orientation?.pitch,
       naturalSize: {
         height: Math.round(rect.height),
         width: Math.round(rect.width),
@@ -2276,7 +2325,7 @@ export default function Model3DViewerModal({
       (currentComment) => String(currentComment.id) === String(nextCommentId),
     );
 
-    if (comment?.selection?.kind === "viewer3d-point") {
+    if (isPanoramaPointSelection(comment?.selection)) {
       restoreViewerCamera(comment.selection);
     }
 
@@ -2288,7 +2337,7 @@ export default function Model3DViewerModal({
       (currentComment) => String(currentComment.id) === String(commentId),
     );
 
-    if (comment?.selection?.kind === "viewer3d-point") {
+    if (isPanoramaPointSelection(comment?.selection)) {
       restoreViewerCamera(comment.selection);
     }
 
@@ -2416,6 +2465,7 @@ export default function Model3DViewerModal({
               <Model3DCommentMarkers
                 annotations={annotationComments}
                 focusedAnnotationId={focusedAnnotationId}
+                modelViewerRef={modelViewerRef}
                 onAnnotationSelect={handleAnnotationMarkerClick}
                 pendingSelection={pendingSelection}
               />

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { StereoEffect } from "three/addons/effects/StereoEffect.js";
 import { getSnapTurnState, getXRHandedAxes } from "../../../utils/vrLocomotion.js";
+import { getPanoramaDirection, getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
 
 import Button from "../Button/Button.jsx";
 import { ButtonGroup } from "../ButtonGroupItem/ButtonGroupItem.jsx";
@@ -21,13 +22,6 @@ function CardboardIcon() {
 
 function ImmersiveIcon() {
   return <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M8 20H4v-4m12 4h4v-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-}
-
-function getAnnotationOrientation(annotation) {
-  const selection = annotation?.selection || annotation?.targetMetadata?.selection || annotation?.targetMetadata;
-  const yaw = Number(selection?.yaw);
-  const pitch = Number(selection?.pitch);
-  return Number.isFinite(yaw) && Number.isFinite(pitch) ? { yaw, pitch } : null;
 }
 
 function createMarkerTexture(number) {
@@ -172,17 +166,12 @@ export default function VRModelViewer({
     const markerSprites = [];
     const markerTextures = [];
     annotations.forEach((annotation, index) => {
-      const orientation = getAnnotationOrientation(annotation);
+      const orientation = getPanoramaOrientation(annotation);
       if (!orientation) return;
       const texture = createMarkerTexture(annotation.pointNumber || annotation.selection?.pointNumber || index + 1);
       const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
-      const yaw = THREE.MathUtils.degToRad(orientation.yaw);
-      const pitch = THREE.MathUtils.degToRad(orientation.pitch);
-      sprite.position.set(
-        Math.sin(yaw) * Math.cos(pitch) * 480,
-        Math.sin(pitch) * 480,
-        -Math.cos(yaw) * Math.cos(pitch) * 480,
-      );
+      const direction = getPanoramaDirection(orientation.yaw, orientation.pitch, 480);
+      sprite.position.set(direction.x, direction.y, direction.z);
       sprite.scale.set(18, 18, 1);
       sprite.userData.annotation = annotation;
       world.add(sprite);
