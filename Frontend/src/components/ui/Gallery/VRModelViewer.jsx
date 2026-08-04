@@ -44,20 +44,27 @@ function createObservationPanel(annotation) {
   context.strokeStyle = "rgba(255,255,255,0.22)";
   context.lineWidth = 4;
   context.stroke();
-  const number = annotation?.pointNumber || annotation?.selection?.pointNumber || "";
-  const author = annotation?.author?.name || annotation?.authorName || "Observación";
+  const author = annotation?.name || annotation?.author?.name || annotation?.authorName || "Usuario";
   const content = String(annotation?.content || annotation?.message || "Sin contenido").slice(0, 150);
-  context.fillStyle = "#ff4431";
-  context.font = "700 54px Inter, sans-serif";
-  context.fillText(number ? `Punto ${number}` : "Observación", 58, 92);
+  const initials = author.trim().split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "U";
+  context.fillStyle = "#2a2929";
+  context.beginPath();
+  context.arc(88, 92, 42, 0, Math.PI * 2);
+  context.fill();
   context.fillStyle = "#ffffff";
-  context.font = "600 40px Inter, sans-serif";
-  context.fillText(author.slice(0, 38), 58, 158);
+  context.font = "600 28px Inter, sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(initials, 88, 94);
+  context.textAlign = "left";
+  context.textBaseline = "alphabetic";
+  context.font = "400 40px Inter, sans-serif";
+  context.fillText(author.slice(0, 38), 150, 106);
   context.fillStyle = "rgba(255,255,255,0.82)";
   context.font = "32px Inter, sans-serif";
   const words = content.split(/\s+/);
   let line = "";
-  let y = 224;
+  let y = 190;
   for (const word of words) {
     const next = `${line} ${word}`.trim();
     if (context.measureText(next).width > 900) {
@@ -70,6 +77,30 @@ function createObservationPanel(annotation) {
   if (y <= 350) context.fillText(line, 58, y);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  const avatarSrc = annotation?.avatarSrc;
+  if (avatarSrc) {
+    fetch(avatarSrc, { credentials: "include" })
+      .then((response) => {
+        if (!response.ok) throw new Error("AVATAR_UNAVAILABLE");
+        return response.blob();
+      })
+      .then((blob) => createImageBitmap(blob))
+      .then((bitmap) => {
+        if (texture.userData.cancelled) {
+          bitmap.close?.();
+          return;
+        }
+        context.save();
+        context.beginPath();
+        context.arc(88, 92, 42, 0, Math.PI * 2);
+        context.clip();
+        context.drawImage(bitmap, 46, 50, 84, 84);
+        context.restore();
+        bitmap.close?.();
+        texture.needsUpdate = true;
+      })
+      .catch(() => {});
+  }
   return texture;
 }
 
@@ -195,8 +226,11 @@ export default function VRModelViewer({
 
     const raycaster = new THREE.Raycaster();
     const controllerCleanups = [];
+    const xrControllers = [];
+    let hoveredAnnotationId = null;
     for (let index = 0; index < 2; index += 1) {
       const xrController = renderer.xr.getController(index);
+      xrControllers.push(xrController);
       const rayGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(0, 0, -500),
@@ -204,20 +238,7 @@ export default function VRModelViewer({
       const rayMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72 });
       xrController.add(new THREE.Line(rayGeometry, rayMaterial));
       scene.add(xrController);
-      const selectObservation = () => {
-        const rotation = new THREE.Matrix4().extractRotation(xrController.matrixWorld);
-        raycaster.ray.origin.setFromMatrixPosition(xrController.matrixWorld);
-        raycaster.ray.direction.set(0, 0, -1).applyMatrix4(rotation).normalize();
-        const hit = raycaster.intersectObjects(markerSprites, false)[0];
-        if (!hit?.object?.userData?.annotation) return;
-        panelMaterial.map?.dispose();
-        panelMaterial.map = createObservationPanel(hit.object.userData.annotation);
-        panelMaterial.visible = true;
-        panelMaterial.needsUpdate = true;
-      };
-      xrController.addEventListener("selectstart", selectObservation);
       controllerCleanups.push(() => {
-        xrController.removeEventListener("selectstart", selectObservation);
         rayGeometry.dispose();
         rayMaterial.dispose();
       });
@@ -259,6 +280,29 @@ export default function VRModelViewer({
 
     const render = () => {
       if (renderer.xr.isPresenting) {
+        let hoveredAnnotation = null;
+        for (const xrController of xrControllers) {
+          const rotation = new THREE.Matrix4().extractRotation(xrController.matrixWorld);
+          raycaster.ray.origin.setFromMatrixPosition(xrController.matrixWorld);
+          raycaster.ray.direction.set(0, 0, -1).applyMatrix4(rotation).normalize();
+          const hit = raycaster.intersectObjects(markerSprites, false)[0];
+          if (hit?.object?.userData?.annotation) {
+            hoveredAnnotation = hit.object.userData.annotation;
+            break;
+          }
+        }
+        const nextHoveredId = hoveredAnnotation ? String(hoveredAnnotation.id) : null;
+        if (nextHoveredId !== hoveredAnnotationId) {
+          hoveredAnnotationId = nextHoveredId;
+          if (panelMaterial.map) {
+            panelMaterial.map.userData.cancelled = true;
+            panelMaterial.map.dispose();
+            panelMaterial.map = null;
+          }
+          panelMaterial.visible = Boolean(hoveredAnnotation);
+          if (hoveredAnnotation) panelMaterial.map = createObservationPanel(hoveredAnnotation);
+          panelMaterial.needsUpdate = true;
+        }
         const axes = getXRHandedAxes(renderer.xr.getSession()?.inputSources, "right");
         const snap = getSnapTurnState(axes.x, snapTurnLatched);
         snapTurnLatched = snap.latched;
@@ -308,6 +352,7 @@ export default function VRModelViewer({
       window.removeEventListener("deviceorientation", onOrientation);
       controllerCleanups.forEach((cleanup) => cleanup());
       markerTextures.forEach((texture) => texture.dispose());
+      if (panelMaterial.map) panelMaterial.map.userData.cancelled = true;
       panelMaterial.map?.dispose();
       panelMaterial.dispose();
       geometry.dispose(); material.map?.dispose(); material.dispose(); renderer.dispose();

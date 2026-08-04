@@ -33,6 +33,7 @@ import ArchitecturalSettingsPanel from "./ArchitecturalSettingsPanel.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
 import VRModelViewer from "./VRModelViewer.jsx";
+import ObservationTooltip from "../ObservationTooltip/ObservationTooltip.jsx";
 export const MODEL_3D_NAVIGATION_MODES = {
   drag: {
     id: "drag",
@@ -1465,6 +1466,7 @@ function Model3DAnnotationMarker({
   className,
   item,
   onSelect,
+  onReply,
   style,
   ...props
 }) {
@@ -1509,9 +1511,9 @@ function Model3DAnnotationMarker({
         style={style}
         aria-label={tooltipText}
         onFocus={openTooltip}
-        onBlur={() => setTooltipOpen(false)}
+        onBlur={() => window.setTimeout(() => setTooltipOpen(false), 120)}
         onMouseEnter={openTooltip}
-        onMouseLeave={() => setTooltipOpen(false)}
+        onMouseLeave={() => window.setTimeout(() => setTooltipOpen(false), 120)}
         onPointerDown={(event) => {
           event.stopPropagation();
         }}
@@ -1531,21 +1533,17 @@ function Model3DAnnotationMarker({
         </span>
       </button>
 
-      {canShowTooltip
-        ? createPortal(
-            <Tooltip
-              text={tooltipText}
-              showTip={false}
-              className="fixed z-[80] -translate-y-1/2 !border-black/70 !bg-black/90 !px-[10px] !py-[8px] !shadow-[0_12px_24px_rgba(0,0,0,0.32)] [&_p]:!text-[var(--color-neutral-100-uniform)]"
-              style={{
-                left: `${tooltipPosition.left}px`,
-                top: `${tooltipPosition.top}px`,
-              }}
-              aria-label={tooltipText}
-            />,
-            document.body,
-          )
-        : null}
+      {canShowTooltip ? (
+        <ObservationTooltip
+          authorName={item.name || item.author?.name}
+          avatarSrc={item.avatarSrc}
+          message={item.message || item.content}
+          open={tooltipOpen}
+          position={tooltipPosition}
+          onOpenChange={setTooltipOpen}
+          onReply={onReply ? () => onReply(item.id) : undefined}
+        />
+      ) : null}
     </>
   );
 }
@@ -1553,6 +1551,7 @@ function Model3DAnnotationMarker({
 function Model3DHotspots({
   annotations = [],
   focusedAnnotationId = null,
+  onAnnotationReply,
   onAnnotationSelect,
   pendingSelection = null,
 }) {
@@ -1562,6 +1561,11 @@ function Model3DHotspots({
       active: String(comment.id) === String(focusedAnnotationId),
       pointNumber: comment.pointNumber,
       selection: comment.selection,
+      name: comment.name,
+      avatarSrc: comment.avatarSrc,
+      message: comment.message,
+      author: comment.author,
+      content: comment.content,
     })),
     pendingSelection
       ? {
@@ -1595,6 +1599,7 @@ function Model3DHotspots({
             }}
             active={item.active}
             onSelect={onAnnotationSelect}
+            onReply={onAnnotationReply}
           />
         );
       })}
@@ -1606,6 +1611,7 @@ function Model3DCommentMarkers({
   annotations = [],
   focusedAnnotationId = null,
   modelViewerRef,
+  onAnnotationReply,
   onAnnotationSelect,
   pendingSelection = null,
 }) {
@@ -1616,6 +1622,11 @@ function Model3DCommentMarkers({
         active: String(comment.id) === String(focusedAnnotationId),
         pointNumber: comment.pointNumber,
         selection: comment.selection,
+        name: comment.name,
+        avatarSrc: comment.avatarSrc,
+        message: comment.message,
+        author: comment.author,
+        content: comment.content,
       })),
       pendingSelection
         ? {
@@ -1679,6 +1690,7 @@ function Model3DCommentMarkers({
             }}
             active={item.active}
             onSelect={onAnnotationSelect}
+            onReply={onAnnotationReply}
           />
         );
       })}
@@ -1710,12 +1722,25 @@ export function GeneralCommentsDrawer({
   onSelectionPreviewClick,
   onSubmitComment,
   pendingSelection,
+  replyRequest = null,
   requireSelectionForRoot = false,
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
   const commentRefs = useRef(new Map());
   const orderedComments = orderCommentsByThread(comments);
+
+  useEffect(() => {
+    if (!replyRequest?.commentId) return;
+    setVisibleReplyAction(null);
+    setActiveReplyComposer(replyRequest.commentId);
+    window.requestAnimationFrame(() => {
+      commentRefs.current.get(String(replyRequest.commentId))?.scrollIntoView?.({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    });
+  }, [replyRequest]);
 
   useEffect(() => {
     if (!focusedSelectionCommentId) {
@@ -1897,6 +1922,7 @@ export default function Model3DViewerModal({
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
     useState(focusedCommentId);
+  const [replyRequest, setReplyRequest] = useState(null);
   const renderSettingsState = useModelRenderSettings({
     fileId: Number(displayItem?.id) || null,
     projectId: Number(projectId) || null,
@@ -2363,6 +2389,11 @@ export default function Model3DViewerModal({
     setFocusedSelectionCommentId(commentId);
   }
 
+  function handleAnnotationReply(commentId) {
+    handleAnnotationMarkerClick(commentId);
+    setReplyRequest({ commentId, requestId: Date.now() });
+  }
+
   async function handleSubmitComment({ message, parentCommentId, selection }) {
     const comment = await addComment({ message, parentCommentId, selection });
     if (comment && !parentCommentId) {
@@ -2455,6 +2486,7 @@ export default function Model3DViewerModal({
                 <Model3DHotspots
                   annotations={annotationComments}
                   focusedAnnotationId={focusedAnnotationId}
+                  onAnnotationReply={handleAnnotationReply}
                   onAnnotationSelect={handleAnnotationMarkerClick}
                   pendingSelection={pendingSelection}
                 />
@@ -2484,6 +2516,7 @@ export default function Model3DViewerModal({
                 annotations={annotationComments}
                 focusedAnnotationId={focusedAnnotationId}
                 modelViewerRef={modelViewerRef}
+                onAnnotationReply={handleAnnotationReply}
                 onAnnotationSelect={handleAnnotationMarkerClick}
                 pendingSelection={pendingSelection}
               />
@@ -2560,6 +2593,7 @@ export default function Model3DViewerModal({
             mediaItem={displayItem}
             mediaType="panorama"
             pendingSelection={pendingSelection}
+            replyRequest={replyRequest}
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={handleSelectionPreviewClick}
             onSubmitComment={handleSubmitComment}
