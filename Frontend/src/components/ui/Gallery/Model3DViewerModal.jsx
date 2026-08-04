@@ -18,6 +18,7 @@ import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
+import useVrViewerLaunch from "../../../hooks/useVrViewerLaunch.js";
 import {
   classifyArchitecturalMaterial,
   enhanceModelViewerMaterials,
@@ -425,6 +426,8 @@ export function Model3DViewerControls({
   navigationMode = "drag",
   onNavigationModeChange,
   onView,
+  isViewDisabled = false,
+  viewLabel = "Abrir modo VR",
   onExpand,
   onTexturePresetChange,
   persistSelection = true,
@@ -447,8 +450,8 @@ export function Model3DViewerControls({
         label: "VR",
         showText: false,
         icon: <ViewIcon />,
-        disabled: !onView,
-        "aria-label": "Abrir modo VR",
+        disabled: !onView || isViewDisabled,
+        "aria-label": viewLabel,
       },
       {
         label: "Expandir",
@@ -458,7 +461,7 @@ export function Model3DViewerControls({
         "aria-label": "Expandir modelo 3D",
       },
     ],
-    [canShowSettings, onExpand, onView],
+    [canShowSettings, isViewDisabled, onExpand, onView, viewLabel],
   );
 
   useEffect(() => {
@@ -1818,7 +1821,7 @@ export default function Model3DViewerModal({
   const [modelReloadKey, setModelReloadKey] = useState(0);
   const [navigationMode, setNavigationMode] = useState("drag");
   const [texturePreset, setTexturePreset] = useState("auto");
-  const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
+  const vrLaunch = useVrViewerLaunch();
   const [architecturalMaterials, setArchitecturalMaterials] = useState([]);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
@@ -1871,9 +1874,9 @@ export default function Model3DViewerModal({
         setDisplayItem(item);
         setIsActive(false);
         setModelReloadKey(0);
-        setNavigationMode("orbit");
-    setTexturePreset("hd");
-        setIsVRViewerOpen(false);
+        setNavigationMode("drag");
+        setTexturePreset("auto");
+        vrLaunch.close();
         setPendingSelection(null);
         setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
@@ -2046,8 +2049,7 @@ export default function Model3DViewerModal({
     if (!hasInteractiveModel) {
       return;
     }
-
-    setIsVRViewerOpen(true);
+    vrLaunch.open();
   }
 
   async function handleToggleFullscreen() {
@@ -2467,6 +2469,8 @@ export default function Model3DViewerModal({
               onNavigationModeChange={hasInteractiveModel ? setNavigationMode : null}
               onTexturePresetChange={hasInteractiveModel ? setTexturePreset : null}
               onView={hasInteractiveModel ? handleOpenVRViewer : null}
+              isViewDisabled={vrLaunch.isChecking}
+              viewLabel={vrLaunch.isChecking ? "Comprobando visor VR" : "Ver en VR"}
               selectedIndex={2}
               texturePreset={texturePreset}
               className="absolute bottom-[12px] right-[12px] z-20 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[16px]"
@@ -2495,7 +2499,7 @@ export default function Model3DViewerModal({
         </div>
       </section>
 
-      {isVRViewerOpen ? (
+      {vrLaunch.viewer.visible ? (
         <VRModelViewer
           annotations={annotationComments}
           item={displayItem}
@@ -2504,8 +2508,12 @@ export default function Model3DViewerModal({
           poster={displayItem.image || undefined}
           title={displayItem.title}
           renderSettings={renderSettings}
-          visible={isVRViewerOpen}
-          onClose={() => setIsVRViewerOpen(false)}
+          visible={vrLaunch.viewer.visible}
+          mode={vrLaunch.viewer.mode}
+          initialSession={vrLaunch.viewer.initialSession}
+          notice={vrLaunch.viewer.notice}
+          onImmersiveEnd={vrLaunch.handleImmersiveEnd}
+          onClose={vrLaunch.close}
         />
       ) : null}
     </div>,

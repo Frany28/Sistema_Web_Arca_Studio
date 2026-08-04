@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { StereoEffect } from "three/addons/effects/StereoEffect.js";
+import { getSnapTurnState, getXRHandedAxes } from "../../../utils/vrLocomotion.js";
 
 import Button from "../Button/Button.jsx";
 import { ButtonGroup } from "../ButtonGroupItem/ButtonGroupItem.jsx";
@@ -20,6 +21,75 @@ function CardboardIcon() {
 
 function ImmersiveIcon() {
   return <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M8 20H4v-4m12 4h4v-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+
+function getAnnotationOrientation(annotation) {
+  const selection = annotation?.selection || annotation?.targetMetadata?.selection || annotation?.targetMetadata;
+  const yaw = Number(selection?.yaw);
+  const pitch = Number(selection?.pitch);
+  return Number.isFinite(yaw) && Number.isFinite(pitch) ? { yaw, pitch } : null;
+}
+
+function createMarkerTexture(number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const context = canvas.getContext("2d");
+  context.fillStyle = "#ff4431";
+  context.beginPath();
+  context.arc(64, 64, 48, 0, Math.PI * 2);
+  context.fill();
+  context.lineWidth = 8;
+  context.strokeStyle = "#ffffff";
+  context.stroke();
+  context.fillStyle = "#ffffff";
+  context.font = "600 44px Inter, sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(String(number || "•"), 64, 66);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function createObservationPanel(annotation) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 420;
+  const context = canvas.getContext("2d");
+  context.fillStyle = "rgba(15, 15, 15, 0.94)";
+  context.roundRect(12, 12, 1000, 396, 32);
+  context.fill();
+  context.strokeStyle = "rgba(255,255,255,0.22)";
+  context.lineWidth = 4;
+  context.stroke();
+  const number = annotation?.pointNumber || annotation?.selection?.pointNumber || "";
+  const author = annotation?.author?.name || annotation?.authorName || "Observación";
+  const content = String(annotation?.content || annotation?.message || "Sin contenido").slice(0, 150);
+  context.fillStyle = "#ff4431";
+  context.font = "700 54px Inter, sans-serif";
+  context.fillText(number ? `Punto ${number}` : "Observación", 58, 92);
+  context.fillStyle = "#ffffff";
+  context.font = "600 40px Inter, sans-serif";
+  context.fillText(author.slice(0, 38), 58, 158);
+  context.fillStyle = "rgba(255,255,255,0.82)";
+  context.font = "32px Inter, sans-serif";
+  const words = content.split(/\s+/);
+  let line = "";
+  let y = 224;
+  for (const word of words) {
+    const next = `${line} ${word}`.trim();
+    if (context.measureText(next).width > 900) {
+      context.fillText(line, 58, y);
+      line = word;
+      y += 48;
+      if (y > 350) break;
+    } else line = next;
+  }
+  if (y <= 350) context.fillText(line, 58, y);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 async function loadAuthenticatedTexture(source, signal, onProgress) {
@@ -48,20 +118,33 @@ async function loadAuthenticatedTexture(source, signal, onProgress) {
   }
 }
 
-export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 360", visible = false, onClose }) {
+export default function VRModelViewer({
+  annotations = [],
+  initialSession = null,
+  mode = "fallback",
+  modelSrc,
+  notice = "",
+  title = "Panorámica 360",
+  visible = false,
+  onClose,
+  onImmersiveEnd,
+}) {
   const mountRef = useRef(null);
   const rendererRef = useRef(null);
   const cardboardRef = useRef(false);
   const motionEnabledRef = useRef(false);
+  const immersiveEndRef = useRef(onImmersiveEnd);
   const [status, setStatus] = useState("loading");
   const [progress, setProgress] = useState(8);
   const [xrAvailable, setXrAvailable] = useState(false);
   const [xrSession, setXrSession] = useState(null);
   const [cardboard, setCardboard] = useState(false);
   const [motionEnabled, setMotionEnabled] = useState(false);
+  const [sessionNotice, setSessionNotice] = useState("");
 
   useEffect(() => { cardboardRef.current = cardboard; }, [cardboard]);
   useEffect(() => { motionEnabledRef.current = motionEnabled; }, [motionEnabled]);
+  useEffect(() => { immersiveEndRef.current = onImmersiveEnd; }, [onImmersiveEnd]);
 
   useEffect(() => {
     if (!visible || !modelSrc || !mountRef.current) return undefined;
@@ -81,7 +164,37 @@ export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 3
     const geometry = new THREE.SphereGeometry(500, 64, 40);
     geometry.scale(-1, 1, 1);
     const material = new THREE.MeshBasicMaterial();
-    scene.add(new THREE.Mesh(geometry, material));
+    const world = new THREE.Group();
+    world.add(new THREE.Mesh(geometry, material));
+    scene.add(world);
+    scene.add(camera);
+
+    const markerSprites = [];
+    const markerTextures = [];
+    annotations.forEach((annotation, index) => {
+      const orientation = getAnnotationOrientation(annotation);
+      if (!orientation) return;
+      const texture = createMarkerTexture(annotation.pointNumber || annotation.selection?.pointNumber || index + 1);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
+      const yaw = THREE.MathUtils.degToRad(orientation.yaw);
+      const pitch = THREE.MathUtils.degToRad(orientation.pitch);
+      sprite.position.set(
+        Math.sin(yaw) * Math.cos(pitch) * 480,
+        Math.sin(pitch) * 480,
+        -Math.cos(yaw) * Math.cos(pitch) * 480,
+      );
+      sprite.scale.set(18, 18, 1);
+      sprite.userData.annotation = annotation;
+      world.add(sprite);
+      markerSprites.push(sprite);
+      markerTextures.push(texture);
+    });
+
+    const panelMaterial = new THREE.SpriteMaterial({ transparent: true, visible: false, depthTest: false });
+    const observationPanel = new THREE.Sprite(panelMaterial);
+    observationPanel.position.set(0, -0.2, -1.6);
+    observationPanel.scale.set(1.8, 0.74, 1);
+    camera.add(observationPanel);
 
     let yaw = 0;
     let pitch = 0;
@@ -91,6 +204,7 @@ export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 3
     let startYaw = 0;
     let startPitch = 0;
     let orientation = null;
+    let snapTurnLatched = false;
     const canvas = renderer.domElement;
     canvas.style.cursor = "grab";
     canvas.style.touchAction = "none";
@@ -101,6 +215,36 @@ export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 3
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
+
+    const raycaster = new THREE.Raycaster();
+    const controllerCleanups = [];
+    for (let index = 0; index < 2; index += 1) {
+      const xrController = renderer.xr.getController(index);
+      const rayGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -500),
+      ]);
+      const rayMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72 });
+      xrController.add(new THREE.Line(rayGeometry, rayMaterial));
+      scene.add(xrController);
+      const selectObservation = () => {
+        const rotation = new THREE.Matrix4().extractRotation(xrController.matrixWorld);
+        raycaster.ray.origin.setFromMatrixPosition(xrController.matrixWorld);
+        raycaster.ray.direction.set(0, 0, -1).applyMatrix4(rotation).normalize();
+        const hit = raycaster.intersectObjects(markerSprites, false)[0];
+        if (!hit?.object?.userData?.annotation) return;
+        panelMaterial.map?.dispose();
+        panelMaterial.map = createObservationPanel(hit.object.userData.annotation);
+        panelMaterial.visible = true;
+        panelMaterial.needsUpdate = true;
+      };
+      xrController.addEventListener("selectstart", selectObservation);
+      controllerCleanups.push(() => {
+        xrController.removeEventListener("selectstart", selectObservation);
+        rayGeometry.dispose();
+        rayMaterial.dispose();
+      });
+    }
     const onOrientation = (event) => { orientation = event; };
     window.addEventListener("deviceorientation", onOrientation);
     const resize = () => {
@@ -120,6 +264,10 @@ export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 3
 
     const render = () => {
       if (renderer.xr.isPresenting) {
+        const axes = getXRHandedAxes(renderer.xr.getSession()?.inputSources, "right");
+        const snap = getSnapTurnState(axes.x, snapTurnLatched);
+        snapTurnLatched = snap.latched;
+        if (snap.direction) world.rotation.y += THREE.MathUtils.degToRad(30 * snap.direction);
         renderer.render(scene, camera);
       } else {
         if (orientation && motionEnabledRef.current) {
@@ -138,16 +286,35 @@ export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 3
     };
     renderer.setAnimationLoop(render);
     navigator.xr?.isSessionSupported?.("immersive-vr").then(setXrAvailable).catch(() => setXrAvailable(false));
+    let sessionEndHandler;
+    if (mode === "immersive" && initialSession) {
+      sessionEndHandler = () => {
+        setXrSession(null);
+        immersiveEndRef.current?.();
+      };
+      initialSession.addEventListener("end", sessionEndHandler, { once: true });
+      renderer.xr.setSession(initialSession)
+        .then(() => setXrSession(initialSession))
+        .catch(() => {
+          initialSession.end?.().catch(() => {});
+          immersiveEndRef.current?.();
+        });
+    }
     return () => {
       controller.abort();
+      if (sessionEndHandler) initialSession?.removeEventListener("end", sessionEndHandler);
       renderer.xr.getSession()?.end?.().catch(() => {});
       renderer.setAnimationLoop(null);
       observer.disconnect();
       window.removeEventListener("deviceorientation", onOrientation);
+      controllerCleanups.forEach((cleanup) => cleanup());
+      markerTextures.forEach((texture) => texture.dispose());
+      panelMaterial.map?.dispose();
+      panelMaterial.dispose();
       geometry.dispose(); material.map?.dispose(); material.dispose(); renderer.dispose();
       rendererRef.current = null;
     };
-  }, [modelSrc, visible]);
+  }, [initialSession, mode, modelSrc, visible]);
 
   const requestMotion = useCallback(async () => {
     const permission = typeof window.DeviceOrientationEvent !== "undefined" && typeof window.DeviceOrientationEvent.requestPermission === "function"
@@ -159,18 +326,23 @@ export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 3
   const toggleXR = useCallback(async () => {
     const renderer = rendererRef.current;
     if (!renderer || !navigator.xr) return;
-    if (xrSession) { await xrSession.end(); return; }
-    const session = await navigator.xr.requestSession("immersive-vr", { optionalFeatures: ["local-floor", "bounded-floor"] });
-    session.addEventListener("end", () => setXrSession(null), { once: true });
-    await renderer.xr.setSession(session);
-    setXrSession(session);
+    try {
+      setSessionNotice("");
+      if (xrSession) { await xrSession.end(); return; }
+      const session = await navigator.xr.requestSession("immersive-vr", { optionalFeatures: ["local-floor", "bounded-floor"] });
+      session.addEventListener("end", () => setXrSession(null), { once: true });
+      await renderer.xr.setSession(session);
+      setXrSession(session);
+    } catch {
+      setSessionNotice("No se pudo iniciar el modo VR. Puedes continuar con el visor disponible.");
+    }
   }, [xrSession]);
 
   if (!visible || typeof document === "undefined") return null;
   const vrControlItems = [
     { label: "Giroscopio", showText: false, icon: <MotionIcon />, "aria-label": "Activar giroscopio", "aria-pressed": motionEnabled },
     { label: "Cardboard", showText: false, icon: <CardboardIcon />, "aria-label": "Activar vista Cardboard", "aria-pressed": cardboard },
-    { label: "WebXR", showText: false, icon: <ImmersiveIcon />, "aria-label": xrSession ? "Salir de WebXR" : "Entrar en WebXR", disabled: !xrAvailable, "aria-pressed": Boolean(xrSession) },
+    { label: "VR", showText: false, icon: <ImmersiveIcon />, "aria-label": xrSession ? "Salir de VR" : "Entrar en VR", disabled: !xrAvailable, "aria-pressed": Boolean(xrSession) },
   ];
   return createPortal(
     <div className="fixed inset-0 z-[100] bg-[#111] text-white">
@@ -197,7 +369,8 @@ export default function VRModelViewer({ modelSrc, poster, title = "Panorámica 3
             />
           </div>
           {status !== "loaded" ? <div className="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center bg-black/55 backdrop-blur-md"><div className="w-[320px] text-center"><p className="mb-2 text-sm">{status === "error" ? "No se pudo cargar la panorámica VR" : "Cargando panorámica VR"}</p>{status !== "error" ? <div className="h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-[#ff4431] transition-[width]" style={{ width: `${progress}%` }} /></div> : null}</div></div> : null}
-          {status === "loaded" && !xrAvailable ? <p className="pointer-events-none absolute bottom-4 left-4 z-10 rounded-lg bg-black/55 px-3 py-2 text-xs text-white/75">Usa Giroscopio o Cardboard en móvil. WebXR depende del navegador y del visor.</p> : null}
+          {notice || sessionNotice ? <p role="status" className="pointer-events-none absolute left-1/2 top-[12px] z-30 max-w-[min(520px,calc(100%-32px))] -translate-x-1/2 rounded-lg bg-black/75 px-4 py-3 text-center text-xs text-white">{notice || sessionNotice}</p> : null}
+          {status === "loaded" && !xrAvailable ? <p className="pointer-events-none absolute bottom-4 left-4 z-10 rounded-lg bg-black/55 px-3 py-2 text-xs text-white/75">Usa Giroscopio o Cardboard en móvil. El modo VR depende del navegador y del visor.</p> : null}
         </main>
       </div>
     </div>, document.body,

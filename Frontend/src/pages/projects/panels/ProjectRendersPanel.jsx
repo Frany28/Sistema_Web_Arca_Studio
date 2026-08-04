@@ -32,6 +32,7 @@ import { PROJECT_RENDER_GALLERY } from "../projectRenderGalleryData.js";
 import { PROJECT_VIDEO_GALLERY } from "../projectVideoGalleryData.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
+import useVrViewerLaunch from "../../../hooks/useVrViewerLaunch.js";
 import {
   classifyArchitecturalMaterial,
   enhanceModelViewerMaterials,
@@ -191,6 +192,7 @@ function RenderStage({
   onModelProgress,
   onOpenModel,
   onOpenVR,
+  isVrChecking,
   renderSettingsState,
 }) {
   const modelViewerRef = useRef(null);
@@ -374,6 +376,8 @@ function RenderStage({
             onNavigationModeChange={hasInteractiveModel ? setNavigationMode : null}
             onTexturePresetChange={hasInteractiveModel ? setTexturePreset : null}
             onView={hasInteractiveModel ? onOpenVR : null}
+            isViewDisabled={isVrChecking}
+            viewLabel={isVrChecking ? "Comprobando visor VR" : "Ver en VR"}
             persistSelection={false}
             texturePreset={texturePreset}
             className="pointer-events-auto absolute bottom-[12px] right-[12px] z-20 opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[16px]"
@@ -752,7 +756,7 @@ export default function ProjectRendersPanel({
   const loadTimeoutRef = useRef(null);
   const [isImageGalleryModalOpen, setIsImageGalleryModalOpen] = useState(false);
   const [isVideoGalleryModalOpen, setIsVideoGalleryModalOpen] = useState(false);
-  const [isVRViewerOpen, setIsVRViewerOpen] = useState(false);
+  const vrLaunch = useVrViewerLaunch();
   const [selectedModel3D, setSelectedModel3D] = useState(null);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(null);
   const [selectedGalleryVideo, setSelectedGalleryVideo] = useState(null);
@@ -1014,7 +1018,8 @@ export default function ProjectRendersPanel({
             onModelLoad={handleModelLoad}
             onModelProgress={handleModelProgress}
             onOpenModel={() => setSelectedModel3D(activeRender)}
-            onOpenVR={() => setIsVRViewerOpen(true)}
+            onOpenVR={vrLaunch.open}
+            isVrChecking={vrLaunch.isChecking}
             renderSettingsState={renderSettingsState}
           />
           <RenderThumbnailRail
@@ -1057,7 +1062,7 @@ export default function ProjectRendersPanel({
           handleCloseFocusedMedia(() => setSelectedModel3D(null))
         }
       />
-      {isVRViewerOpen ? (
+      {vrLaunch.viewer.visible ? (
         <VRModelViewer
           annotations={vrObservations}
           item={activeRender}
@@ -1066,8 +1071,12 @@ export default function ProjectRendersPanel({
           poster={activeRender.image || undefined}
           title={activeRender.title}
           renderSettings={renderSettingsState.settings}
-          visible={isVRViewerOpen}
-          onClose={() => setIsVRViewerOpen(false)}
+          visible={vrLaunch.viewer.visible}
+          mode={vrLaunch.viewer.mode}
+          initialSession={vrLaunch.viewer.initialSession}
+          notice={vrLaunch.viewer.notice}
+          onImmersiveEnd={vrLaunch.handleImmersiveEnd}
+          onClose={vrLaunch.close}
         />
       ) : null}
       <VideoViewerModal
