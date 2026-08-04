@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { StereoEffect } from "three/addons/effects/StereoEffect.js";
-import { getSnapTurnState, getXRHandedAxes } from "../../../utils/vrLocomotion.js";
+import {
+  getSnapTurnState,
+  getXRHandedAxes,
+  getXRRayPointHitDistance,
+} from "../../../utils/vrLocomotion.js";
 import { getPanoramaDirection, getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
 
 import Button from "../Button/Button.jsx";
@@ -199,7 +203,7 @@ export default function VRModelViewer({
       const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
       const direction = getPanoramaDirection(orientation.yaw, orientation.pitch, 480);
       sprite.position.set(direction.x, direction.y, direction.z);
-      sprite.scale.set(18, 18, 1);
+      sprite.scale.set(24, 24, 1);
       sprite.userData.annotation = annotation;
       world.add(sprite);
       markerSprites.push(sprite);
@@ -232,9 +236,12 @@ export default function VRModelViewer({
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
 
-    const raycaster = new THREE.Raycaster();
     const controllerCleanups = [];
     const xrControllers = [];
+    const controllerRotation = new THREE.Matrix4();
+    const controllerOrigin = new THREE.Vector3();
+    const controllerDirection = new THREE.Vector3();
+    const markerWorldPosition = new THREE.Vector3();
     let hoveredAnnotationSignature = null;
     for (let index = 0; index < 2; index += 1) {
       const xrController = renderer.xr.getController(index);
@@ -264,7 +271,7 @@ export default function VRModelViewer({
     const observer = new ResizeObserver(resize);
     observer.observe(mount);
     resize();
-    const textureReady = loadAuthenticatedTexture(
+    loadAuthenticatedTexture(
       modelSrc,
       controller.signal,
       (ratio) => ratio && setProgress(Math.max(8, Math.round(ratio * 98))),
@@ -282,24 +289,36 @@ export default function VRModelViewer({
         return true;
       })
       .catch((error) => {
-        if (error.name !== "AbortError") setStatus("error");
+        if (error.name !== "AbortError") {
+          setStatus("error");
+          setSessionNotice("No se pudo cargar la panorámica VR.");
+          if (mode === "immersive") initialSession?.end?.().catch(() => {});
+        }
         return false;
       });
 
     const render = () => {
       if (renderer.xr.isPresenting) {
+        scene.updateMatrixWorld(true);
         let hoveredAnnotation = null;
+        let closestHitDistance = Number.POSITIVE_INFINITY;
         for (const xrController of xrControllers) {
-          const rotation = new THREE.Matrix4().extractRotation(xrController.matrixWorld);
-          raycaster.ray.origin.setFromMatrixPosition(xrController.matrixWorld);
-          raycaster.ray.direction.set(0, 0, -1).applyMatrix4(rotation).normalize();
-          const hit = raycaster.intersectObjects(markerSprites, false)[0];
-          if (hit?.object?.userData?.annotation) {
-            const hitAnnotation = hit.object.userData.annotation;
+          controllerRotation.extractRotation(xrController.matrixWorld);
+          controllerOrigin.setFromMatrixPosition(xrController.matrixWorld);
+          controllerDirection.set(0, 0, -1).applyMatrix4(controllerRotation).normalize();
+          for (const marker of markerSprites) {
+            marker.getWorldPosition(markerWorldPosition);
+            const distanceAlongRay = getXRRayPointHitDistance({
+              direction: controllerDirection,
+              origin: controllerOrigin,
+              point: markerWorldPosition,
+            });
+            if (distanceAlongRay == null || distanceAlongRay >= closestHitDistance) continue;
+            closestHitDistance = distanceAlongRay;
+            const hitAnnotation = marker.userData.annotation;
             hoveredAnnotation = annotationsRef.current.find(
               (annotation) => String(annotation.id) === String(hitAnnotation.id),
             ) || hitAnnotation;
-            break;
           }
         }
         const nextHoveredSignature = hoveredAnnotation
@@ -345,11 +364,7 @@ export default function VRModelViewer({
         immersiveEndRef.current?.();
       };
       initialSession.addEventListener("end", sessionEndHandler, { once: true });
-      textureReady
-        .then((ready) => {
-          if (!ready || controller.signal.aborted) throw new Error("PANORAMA_NOT_READY");
-          return renderer.xr.setSession(initialSession);
-        })
+      renderer.xr.setSession(initialSession)
         .then(() => setXrSession(initialSession))
         .catch(() => {
           initialSession.end?.().catch(() => {});

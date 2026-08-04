@@ -6,6 +6,7 @@ import {
   getSnapTurnState,
   getXRHandedAxes,
   getXRMovementAxes,
+  getXRRayPointHitDistance,
 } from "../src/utils/vrLocomotion.js";
 
 test("VR locomotion ignores controller drift and rescales intentional input", () => {
@@ -58,4 +59,31 @@ test("VR snap turning fires once until the stick returns to center", () => {
 
   const released = getSnapTurnState(0.1, held.latched);
   assert.equal(released.latched, false);
+});
+
+test("VR controller lasers detect nearby markers and reject points outside the ray", () => {
+  assert.equal(
+    getXRRayPointHitDistance({
+      direction: { x: 0, y: 0, z: -1 },
+      origin: { x: 0, y: 0, z: 0 },
+      point: { x: 8, y: 0, z: -480 },
+    }),
+    480,
+  );
+  assert.equal(
+    getXRRayPointHitDistance({
+      direction: { x: 0, y: 0, z: -1 },
+      origin: { x: 0, y: 0, z: 0 },
+      point: { x: 30, y: 0, z: -480 },
+    }),
+    null,
+  );
+  assert.equal(
+    getXRRayPointHitDistance({
+      direction: { x: 0, y: 0, z: -1 },
+      origin: { x: 0, y: 0, z: 0 },
+      point: { x: 0, y: 0, z: 10 },
+    }),
+    null,
+  );
 });

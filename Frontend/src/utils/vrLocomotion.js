@@ -93,3 +93,28 @@ export function getSnapTurnState(
     latched: true,
   };
 }
+
+export function getXRRayPointHitDistance({
+  direction,
+  maxDistance = 500,
+  origin,
+  point,
+  radius = 18,
+}) {
+  if (!direction || !origin || !point) return null;
+  const dx = Number(point.x) - Number(origin.x);
+  const dy = Number(point.y) - Number(origin.y);
+  const dz = Number(point.z) - Number(origin.z);
+  const directionLength = Math.hypot(direction.x, direction.y, direction.z);
+  if (!Number.isFinite(directionLength) || directionLength === 0) return null;
+  const nx = direction.x / directionLength;
+  const ny = direction.y / directionLength;
+  const nz = direction.z / directionLength;
+  const distanceAlongRay = dx * nx + dy * ny + dz * nz;
+  if (distanceAlongRay <= 0 || distanceAlongRay > maxDistance) return null;
+  const perpendicularDistanceSq = Math.max(
+    0,
+    dx * dx + dy * dy + dz * dz - distanceAlongRay * distanceAlongRay,
+  );
+  return perpendicularDistanceSq <= radius * radius ? distanceAlongRay : null;
+}
