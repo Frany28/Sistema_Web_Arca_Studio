@@ -1491,8 +1491,9 @@ function Model3DAnnotationMarker({
     }
 
     setTooltipPosition({
-      left: rect.right + 8,
-      top: rect.top + rect.height / 2,
+      anchorBottom: rect.bottom,
+      anchorTop: rect.top,
+      anchorX: rect.left + rect.width / 2,
     });
     setTooltipOpen(true);
   };
@@ -1500,6 +1501,29 @@ function Model3DAnnotationMarker({
     window.clearTimeout(tooltipCloseTimerRef.current);
     tooltipCloseTimerRef.current = window.setTimeout(() => setTooltipOpen(false), 120);
   };
+
+  useEffect(() => {
+    if (!tooltipOpen) return undefined;
+    let frameId;
+    let previous = "";
+    const followMarker = () => {
+      const rect = markerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const signature = `${rect.left.toFixed(1)}:${rect.top.toFixed(1)}:${rect.bottom.toFixed(1)}:${rect.width.toFixed(1)}`;
+        if (signature !== previous) {
+          previous = signature;
+          setTooltipPosition({
+            anchorBottom: rect.bottom,
+            anchorTop: rect.top,
+            anchorX: rect.left + rect.width / 2,
+          });
+        }
+      }
+      frameId = window.requestAnimationFrame(followMarker);
+    };
+    frameId = window.requestAnimationFrame(followMarker);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [tooltipOpen]);
 
   return (
     <>
