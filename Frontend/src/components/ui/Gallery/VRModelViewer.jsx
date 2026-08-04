@@ -38,55 +38,80 @@ function createMarkerTexture(number) {
 }
 
 function createObservationPanel(annotation) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 420;
-  const context = canvas.getContext("2d");
-  context.fillStyle = "rgba(15, 15, 15, 0.94)";
-  context.roundRect(12, 12, 1000, 396, 32);
-  context.fill();
-  context.strokeStyle = "rgba(255,255,255,0.22)";
-  context.lineWidth = 4;
-  context.stroke();
+  const scale = 4;
+  const width = 210;
+  const padding = 12;
+  const avatarSize = 24;
   const author = annotation?.name || annotation?.author?.name || annotation?.authorName || "Usuario";
-  const content = String(annotation?.content || annotation?.message || "Sin contenido").slice(0, 150);
+  const content = String(annotation?.content || annotation?.message || "Sin contenido");
+  const replyCount = Math.max(0, Number(annotation?.replyCount) || 0);
+  const measureCanvas = document.createElement("canvas");
+  const measureContext = measureCanvas.getContext("2d");
+  measureContext.font = "500 14px Inter, sans-serif";
+  const maxTextWidth = width - padding * 2;
+  const words = content.split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const next = `${line} ${word}`.trim();
+    if (line && measureContext.measureText(next).width > maxTextWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  }
+  if (line) lines.push(line);
+  const visibleLines = (lines.length ? lines : ["Sin contenido"]).slice(0, 4);
+  const messageHeight = visibleLines.length * 17;
+  const replyRowHeight = replyCount > 0 ? 25 : 0;
+  const height = padding + avatarSize + 8 + messageHeight + (replyRowHeight ? 8 + replyRowHeight : 0) + padding;
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  const context = canvas.getContext("2d");
+  context.scale(scale, scale);
+  context.fillStyle = "#0b0b0c";
+  context.beginPath();
+  context.roundRect(0.5, 0.5, width - 1, height - 1, [12, 12, 12, 0]);
+  context.fill();
+  context.strokeStyle = "#606060";
+  context.lineWidth = 1;
+  context.stroke();
   const initials = author.trim().split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "U";
   context.fillStyle = "#2a2929";
   context.beginPath();
-  context.arc(88, 92, 42, 0, Math.PI * 2);
+  context.arc(padding + avatarSize / 2, padding + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
   context.fill();
   context.fillStyle = "#ffffff";
-  context.font = "600 28px Inter, sans-serif";
+  context.font = "600 10px Inter, sans-serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(initials, 88, 94);
+  context.fillText(initials, padding + avatarSize / 2, padding + avatarSize / 2 + 0.5);
   context.textAlign = "left";
   context.textBaseline = "alphabetic";
-  context.font = "400 40px Inter, sans-serif";
-  context.fillText(author.slice(0, 38), 150, 106);
-  context.fillStyle = "rgba(255,255,255,0.82)";
-  context.font = "32px Inter, sans-serif";
-  const words = content.split(/\s+/);
-  let line = "";
-  let y = 190;
-  for (const word of words) {
-    const next = `${line} ${word}`.trim();
-    if (context.measureText(next).width > 900) {
-      context.fillText(line, 58, y);
-      line = word;
-      y += 48;
-      if (y > 350) break;
-    } else line = next;
-  }
-  if (y <= 350) context.fillText(line, 58, y);
-  const replyCount = Math.max(0, Number(annotation?.replyCount) || 0);
+  context.fillStyle = "#a0a0a0";
+  context.font = "400 12px Inter, sans-serif";
+  context.fillText(author.slice(0, 30), padding + avatarSize + 8, padding + 16);
+  context.fillStyle = "#a0a0a0";
+  context.font = "500 14px Inter, sans-serif";
+  let textY = padding + avatarSize + 8 + 14;
+  visibleLines.forEach((messageLine) => {
+    context.fillText(messageLine, padding, textY);
+    textY += 17;
+  });
   if (replyCount > 0) {
-    context.fillStyle = "rgba(255,255,255,0.82)";
-    context.font = "600 28px Inter, sans-serif";
-    context.fillText(`${replyCount} ${replyCount === 1 ? "respuesta" : "respuestas"}`, 58, 382);
+    context.fillStyle = "#a0a0a0";
+    context.font = "500 14px Inter, sans-serif";
+    context.fillText(
+      `${replyCount} ${replyCount === 1 ? "respuesta" : "respuestas"}`,
+      padding,
+      textY + 8,
+    );
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.userData.aspectRatio = width / height;
   const avatarSrc = annotation?.avatarSrc;
   if (avatarSrc) {
     fetch(avatarSrc, { credentials: "include" })
@@ -102,9 +127,9 @@ function createObservationPanel(annotation) {
         }
         context.save();
         context.beginPath();
-        context.arc(88, 92, 42, 0, Math.PI * 2);
+        context.arc(padding + avatarSize / 2, padding + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
         context.clip();
-        context.drawImage(bitmap, 46, 50, 84, 84);
+        context.drawImage(bitmap, padding, padding, avatarSize, avatarSize);
         context.restore();
         bitmap.close?.();
         texture.needsUpdate = true;
@@ -212,9 +237,9 @@ export default function VRModelViewer({
 
     const panelMaterial = new THREE.SpriteMaterial({ transparent: true, visible: false, depthTest: false });
     const observationPanel = new THREE.Sprite(panelMaterial);
-    observationPanel.position.set(0, -0.2, -1.6);
-    observationPanel.scale.set(1.8, 0.74, 1);
-    camera.add(observationPanel);
+    observationPanel.center.set(0, 0);
+    observationPanel.renderOrder = 1000;
+    world.add(observationPanel);
 
     let yaw = 0;
     let pitch = 0;
@@ -301,6 +326,7 @@ export default function VRModelViewer({
       if (renderer.xr.isPresenting) {
         scene.updateMatrixWorld(true);
         let hoveredAnnotation = null;
+        let hoveredMarker = null;
         let closestHitDistance = Number.POSITIVE_INFINITY;
         for (const xrController of xrControllers) {
           controllerRotation.extractRotation(xrController.matrixWorld);
@@ -315,6 +341,7 @@ export default function VRModelViewer({
             });
             if (distanceAlongRay == null || distanceAlongRay >= closestHitDistance) continue;
             closestHitDistance = distanceAlongRay;
+            hoveredMarker = marker;
             const hitAnnotation = marker.userData.annotation;
             hoveredAnnotation = annotationsRef.current.find(
               (annotation) => String(annotation.id) === String(hitAnnotation.id),
@@ -332,7 +359,16 @@ export default function VRModelViewer({
             panelMaterial.map = null;
           }
           panelMaterial.visible = Boolean(hoveredAnnotation);
-          if (hoveredAnnotation) panelMaterial.map = createObservationPanel(hoveredAnnotation);
+          if (hoveredAnnotation && hoveredMarker) {
+            panelMaterial.map = createObservationPanel(hoveredAnnotation);
+            observationPanel.position.copy(hoveredMarker.position).multiplyScalar(0.96);
+            const panelWidth = 118;
+            observationPanel.scale.set(
+              panelWidth,
+              panelWidth / panelMaterial.map.userData.aspectRatio,
+              1,
+            );
+          }
           panelMaterial.needsUpdate = true;
         }
         const axes = getXRHandedAxes(renderer.xr.getSession()?.inputSources, "right");
