@@ -20,26 +20,27 @@ export function getAdaptiveObservationTooltipPlacement({
   viewportWidth,
 }) {
   const margin = 12;
-  const gap = 12;
   const width = Math.max(1, tooltipWidth || 210);
   const height = Math.max(1, tooltipHeight || 128);
   const availableAbove = anchorTop - margin;
   const availableBelow = viewportHeight - anchorBottom - margin;
-  const placement = availableAbove >= height + gap || availableAbove >= availableBelow
+  const placement = availableAbove >= height || availableAbove >= availableBelow
     ? "top"
     : "bottom";
-  const left = Math.min(
-    Math.max(anchorX - width / 2, margin),
-    Math.max(margin, viewportWidth - width - margin),
-  );
+  const opensRight = anchorX + width <= viewportWidth - margin;
+  const left = opensRight
+    ? Math.max(margin, anchorX)
+    : Math.max(margin, anchorX - width);
   const top = placement === "top"
-    ? Math.max(margin, anchorTop - height - gap)
-    : Math.min(viewportHeight - height - margin, anchorBottom + gap);
+    ? Math.max(margin, anchorTop - height)
+    : Math.min(viewportHeight - height - margin, anchorBottom);
 
   return {
+    corner: placement === "top"
+      ? opensRight ? "bottom-left" : "bottom-right"
+      : opensRight ? "top-left" : "top-right",
     left,
     placement,
-    tailLeft: Math.min(Math.max(anchorX - left, 18), width - 18),
     top,
   };
 }

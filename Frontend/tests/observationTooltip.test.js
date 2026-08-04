@@ -20,8 +20,8 @@ test("observation tooltip stays centered, bounded and flips near the viewport ed
     viewportHeight: 800, viewportWidth: 1000,
   });
   assert.equal(centered.placement, "top");
-  assert.equal(centered.left, 395);
-  assert.equal(centered.tailLeft, 105);
+  assert.equal(centered.left, 500);
+  assert.equal(centered.corner, "bottom-left");
 
   const edge = getAdaptiveObservationTooltipPlacement({
     anchorBottom: 52, anchorTop: 12, anchorX: 18,
@@ -29,8 +29,8 @@ test("observation tooltip stays centered, bounded and flips near the viewport ed
     viewportHeight: 800, viewportWidth: 1000,
   });
   assert.equal(edge.placement, "bottom");
-  assert.equal(edge.left, 12);
-  assert.ok(edge.tailLeft >= 18);
+  assert.equal(edge.left, 18);
+  assert.equal(edge.corner, "top-left");
 });
 
 test("observation tooltip formats live reply totals", () => {

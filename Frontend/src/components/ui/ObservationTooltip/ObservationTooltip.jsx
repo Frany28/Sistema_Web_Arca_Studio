@@ -22,7 +22,6 @@ export default function ObservationTooltip({
 }) {
   const closeTimerRef = useRef(null);
   const cardRef = useRef(null);
-  const tailRef = useRef(null);
   const isBrowser = typeof document !== "undefined";
 
   useEffect(() => () => window.clearTimeout(closeTimerRef.current), []);
@@ -49,8 +48,7 @@ export default function ObservationTooltip({
     if (!open || !position || !cardRef.current || !isBrowser) return undefined;
     const updatePlacement = () => {
       const card = cardRef.current;
-      const tail = tailRef.current;
-      if (!card || !tail) return;
+      if (!card) return;
       const placement = getAdaptiveObservationTooltipPlacement({
         ...position,
         tooltipHeight: card.offsetHeight,
@@ -61,13 +59,11 @@ export default function ObservationTooltip({
       card.style.left = `${placement.left}px`;
       card.style.top = `${placement.top}px`;
       card.dataset.placement = placement.placement;
-      tail.style.left = `${placement.tailLeft}px`;
-      tail.className = clsx(
-        "pointer-events-none absolute size-[12px] -translate-x-1/2 rotate-45 bg-[var(--color-neutral-bg)]",
-        placement.placement === "top"
-          ? "bottom-[-7px] border-b border-r border-[var(--color-neutral-400)]"
-          : "top-[-7px] border-l border-t border-[var(--color-neutral-400)]",
-      );
+      card.style.borderTopLeftRadius = "var(--radius-3)";
+      card.style.borderTopRightRadius = "var(--radius-3)";
+      card.style.borderBottomLeftRadius = "var(--radius-3)";
+      card.style.borderBottomRightRadius = "var(--radius-3)";
+      card.style.setProperty(`border-${placement.corner}-radius`, "0px");
     };
     updatePlacement();
     window.addEventListener("resize", updatePlacement);
@@ -82,13 +78,14 @@ export default function ObservationTooltip({
       role="tooltip"
       aria-label={`Observación de ${safeAuthorName}`}
       className={clsx(
-        "flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-br-[var(--radius-3)] rounded-tl-[var(--radius-3)] rounded-tr-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left",
+        "flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left",
         position && "fixed z-[1000]",
         className,
       )}
       style={estimatedPlacement ? {
         left: `${estimatedPlacement.left}px`,
         top: `${estimatedPlacement.top}px`,
+        [`border${estimatedPlacement.corner.split("-").map((part) => `${part[0].toUpperCase()}${part.slice(1)}`).join("")}Radius`]: "0px",
       } : undefined}
       onMouseEnter={keepOpen}
       onMouseLeave={scheduleClose}
@@ -103,19 +100,6 @@ export default function ObservationTooltip({
           src={avatarSrc} alt={safeAuthorName} decorative={false} />
         <p className="min-w-0 truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">{safeAuthorName}</p>
       </div>
-      {position ? (
-        <span
-          ref={tailRef}
-          aria-hidden="true"
-          className={clsx(
-            "pointer-events-none absolute size-[12px] -translate-x-1/2 rotate-45 bg-[var(--color-neutral-bg)]",
-            estimatedPlacement?.placement === "top"
-              ? "bottom-[-7px] border-b border-r border-[var(--color-neutral-400)]"
-              : "top-[-7px] border-l border-t border-[var(--color-neutral-400)]",
-          )}
-          style={{ left: `${estimatedPlacement?.tailLeft || 105}px` }}
-        />
-      ) : null}
       <p className="w-full break-words text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">{safeMessage}</p>
       <div className="flex items-center gap-[8px]">
         {replyCount > 0 ? (
