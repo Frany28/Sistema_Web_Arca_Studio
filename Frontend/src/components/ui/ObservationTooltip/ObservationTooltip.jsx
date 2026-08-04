@@ -3,7 +3,10 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 
 import Avatar from "../Avatar/Avatar.jsx";
-import { getObservationAuthorInitials } from "./observationTooltip.js";
+import {
+  formatObservationReplyCount,
+  getObservationAuthorInitials,
+} from "./observationTooltip.js";
 
 export default function ObservationTooltip({
   authorName,
@@ -14,6 +17,7 @@ export default function ObservationTooltip({
   onReply,
   open = true,
   position,
+  replyCount = 0,
 }) {
   const closeTimerRef = useRef(null);
 
@@ -35,7 +39,7 @@ export default function ObservationTooltip({
       role="tooltip"
       aria-label={`Observación de ${safeAuthorName}`}
       className={clsx(
-        "flex w-[256px] max-w-[min(256px,calc(100vw-24px))] flex-col gap-[8px] rounded-[var(--radius-3)] border border-[var(--color-neutral-300)] bg-[var(--color-neutral-100)] p-[10px] text-left shadow-[var(--shadow-e2)]",
+        "flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-br-[var(--radius-3)] rounded-tl-[var(--radius-3)] rounded-tr-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left",
         position && "fixed z-[1000]",
         className,
       )}
@@ -56,12 +60,19 @@ export default function ObservationTooltip({
           src={avatarSrc} alt={safeAuthorName} decorative={false} />
         <p className="min-w-0 truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">{safeAuthorName}</p>
       </div>
-      <p className="line-clamp-4 break-words text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)]">{safeMessage}</p>
-      {onReply ? (
-        <button type="button" className="w-fit cursor-pointer text-[12px] leading-[14px] text-[var(--color-text-200)] transition-colors hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]" onClick={onReply}>
-          Responder
-        </button>
-      ) : null}
+      <p className="w-full break-words text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">{safeMessage}</p>
+      <div className="flex items-center gap-[8px]">
+        {replyCount > 0 ? (
+          <p className="whitespace-nowrap text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
+            {formatObservationReplyCount(replyCount)}
+          </p>
+        ) : null}
+        {onReply ? (
+          <button type="button" className="cursor-pointer rounded-[var(--radius-2)] p-[8px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]" onClick={onReply}>
+            Responder
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 

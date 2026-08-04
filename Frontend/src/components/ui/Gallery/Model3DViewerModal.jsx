@@ -1246,10 +1246,10 @@ function MessageInput({
   );
 }
 
-function ReplyComposer({ onSubmit, placeholder = "Escribe tu mensaje..." }) {
+function ReplyComposer({ focusSignal, onSubmit, placeholder = "Escribe tu mensaje..." }) {
   return (
     <div data-reply-interaction="true">
-      <MessageInput placeholder={placeholder} onSubmit={onSubmit} />
+      <MessageInput focusSignal={focusSignal} placeholder={placeholder} onSubmit={onSubmit} />
     </div>
   );
 }
@@ -1545,6 +1545,7 @@ function Model3DAnnotationMarker({
           authorName={item.name || item.author?.name}
           avatarSrc={item.avatarSrc}
           message={item.message || item.content}
+          replyCount={item.replyCount}
           open={tooltipOpen}
           position={tooltipPosition}
           onOpenChange={(nextOpen) => nextOpen ? openTooltip() : scheduleTooltipClose()}
@@ -1573,6 +1574,7 @@ function Model3DHotspots({
       message: comment.message,
       author: comment.author,
       content: comment.content,
+      replyCount: comment.replyCount,
     })),
     pendingSelection
       ? {
@@ -1634,6 +1636,7 @@ function Model3DCommentMarkers({
         message: comment.message,
         author: comment.author,
         content: comment.content,
+        replyCount: comment.replyCount,
       })),
       pendingSelection
         ? {
@@ -1878,6 +1881,7 @@ export function GeneralCommentsDrawer({
 
               {activeReplyComposer === comment.id ? (
                 <ReplyComposer
+                  focusSignal={replyRequest?.requestId || comment.id}
                   onSubmit={(message) =>
                     handleCommentSubmit(message, comment)
                   }
@@ -1920,13 +1924,20 @@ export default function Model3DViewerModal({
     commentType: "panorama",
     projectId,
   });
-  const annotationComments = useMemo(
-    () =>
-      comments.filter(
-        (comment) => comment.selection && !comment.parentCommentId,
-      ),
-    [comments],
-  );
+  const annotationComments = useMemo(() => {
+    const repliesByRootId = new Map();
+    comments.forEach((comment) => {
+      if (!comment.parentCommentId) return;
+      const rootId = String(comment.parentCommentId);
+      repliesByRootId.set(rootId, (repliesByRootId.get(rootId) || 0) + 1);
+    });
+    return comments
+      .filter((comment) => comment.selection && !comment.parentCommentId)
+      .map((comment) => ({
+        ...comment,
+        replyCount: repliesByRootId.get(String(comment.id)) || 0,
+      }));
+  }, [comments]);
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedSelectionCommentId, setFocusedSelectionCommentId] =
     useState(focusedCommentId);

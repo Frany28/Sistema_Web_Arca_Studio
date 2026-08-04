@@ -75,6 +75,12 @@ function createObservationPanel(annotation) {
     } else line = next;
   }
   if (y <= 350) context.fillText(line, 58, y);
+  const replyCount = Math.max(0, Number(annotation?.replyCount) || 0);
+  if (replyCount > 0) {
+    context.fillStyle = "rgba(255,255,255,0.82)";
+    context.font = "600 28px Inter, sans-serif";
+    context.fillText(`${replyCount} ${replyCount === 1 ? "respuesta" : "respuestas"}`, 58, 382);
+  }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   const avatarSrc = annotation?.avatarSrc;
@@ -144,6 +150,7 @@ export default function VRModelViewer({
 }) {
   const mountRef = useRef(null);
   const rendererRef = useRef(null);
+  const annotationsRef = useRef(annotations);
   const cardboardRef = useRef(false);
   const motionEnabledRef = useRef(false);
   const immersiveEndRef = useRef(onImmersiveEnd);
@@ -158,6 +165,7 @@ export default function VRModelViewer({
   useEffect(() => { cardboardRef.current = cardboard; }, [cardboard]);
   useEffect(() => { motionEnabledRef.current = motionEnabled; }, [motionEnabled]);
   useEffect(() => { immersiveEndRef.current = onImmersiveEnd; }, [onImmersiveEnd]);
+  useEffect(() => { annotationsRef.current = annotations; }, [annotations]);
 
   useEffect(() => {
     if (!visible || !modelSrc || !mountRef.current) return undefined;
@@ -227,7 +235,7 @@ export default function VRModelViewer({
     const raycaster = new THREE.Raycaster();
     const controllerCleanups = [];
     const xrControllers = [];
-    let hoveredAnnotationId = null;
+    let hoveredAnnotationSignature = null;
     for (let index = 0; index < 2; index += 1) {
       const xrController = renderer.xr.getController(index);
       xrControllers.push(xrController);
@@ -287,13 +295,18 @@ export default function VRModelViewer({
           raycaster.ray.direction.set(0, 0, -1).applyMatrix4(rotation).normalize();
           const hit = raycaster.intersectObjects(markerSprites, false)[0];
           if (hit?.object?.userData?.annotation) {
-            hoveredAnnotation = hit.object.userData.annotation;
+            const hitAnnotation = hit.object.userData.annotation;
+            hoveredAnnotation = annotationsRef.current.find(
+              (annotation) => String(annotation.id) === String(hitAnnotation.id),
+            ) || hitAnnotation;
             break;
           }
         }
-        const nextHoveredId = hoveredAnnotation ? String(hoveredAnnotation.id) : null;
-        if (nextHoveredId !== hoveredAnnotationId) {
-          hoveredAnnotationId = nextHoveredId;
+        const nextHoveredSignature = hoveredAnnotation
+          ? `${hoveredAnnotation.id}:${hoveredAnnotation.replyCount || 0}:${hoveredAnnotation.message || hoveredAnnotation.content || ""}`
+          : null;
+        if (nextHoveredSignature !== hoveredAnnotationSignature) {
+          hoveredAnnotationSignature = nextHoveredSignature;
           if (panelMaterial.map) {
             panelMaterial.map.userData.cancelled = true;
             panelMaterial.map.dispose();
