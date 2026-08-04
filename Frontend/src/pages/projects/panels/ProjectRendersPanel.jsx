@@ -376,7 +376,7 @@ function RenderStage({
             onView={hasInteractiveModel ? onOpenVR : null}
             persistSelection={false}
             texturePreset={texturePreset}
-            className="absolute bottom-[12px] right-[12px] z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[16px]"
+            className="pointer-events-auto absolute bottom-[12px] right-[12px] z-20 opacity-100 [&_button]:h-[40px] [&_button]:min-w-[52px] [&_button]:px-[16px]"
           />
         ) : null}
       </div>
