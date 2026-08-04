@@ -104,6 +104,7 @@ export default function VRModelViewer({
   initialSession = null,
   mode = "fallback",
   modelSrc,
+  poster,
   notice = "",
   title = "Panorámica 360",
   visible = false,
