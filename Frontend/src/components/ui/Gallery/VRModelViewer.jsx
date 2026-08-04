@@ -234,9 +234,27 @@ export default function VRModelViewer({
     const observer = new ResizeObserver(resize);
     observer.observe(mount);
     resize();
-    loadAuthenticatedTexture(modelSrc, controller.signal, (ratio) => ratio && setProgress(Math.max(8, Math.round(ratio * 98))))
-      .then((texture) => { if (!controller.signal.aborted) { material.map = texture; material.needsUpdate = true; setProgress(100); setStatus("loaded"); } })
-      .catch((error) => { if (error.name !== "AbortError") setStatus("error"); });
+    const textureReady = loadAuthenticatedTexture(
+      modelSrc,
+      controller.signal,
+      (ratio) => ratio && setProgress(Math.max(8, Math.round(ratio * 98))),
+    )
+      .then((texture) => {
+        if (controller.signal.aborted) {
+          texture.dispose();
+          return false;
+        }
+        material.map = texture;
+        material.needsUpdate = true;
+        renderer.render(scene, camera);
+        setProgress(100);
+        setStatus("loaded");
+        return true;
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") setStatus("error");
+        return false;
+      });
 
     const render = () => {
       if (renderer.xr.isPresenting) {
@@ -269,7 +287,11 @@ export default function VRModelViewer({
         immersiveEndRef.current?.();
       };
       initialSession.addEventListener("end", sessionEndHandler, { once: true });
-      renderer.xr.setSession(initialSession)
+      textureReady
+        .then((ready) => {
+          if (!ready || controller.signal.aborted) throw new Error("PANORAMA_NOT_READY");
+          return renderer.xr.setSession(initialSession);
+        })
         .then(() => setXrSession(initialSession))
         .catch(() => {
           initialSession.end?.().catch(() => {});

@@ -979,15 +979,28 @@ function SelectionPreview({
   const imageSrc = image?.src ?? selection.imageSrc;
   const safeWidth = Math.max(pixels?.width || 1, 1);
   const safeHeight = Math.max(pixels?.height || 1, 1);
+  const panoramaOrientation = isViewerPoint
+    ? getPanoramaOrientation(selection)
+    : null;
+  const panoramaU = panoramaOrientation
+    ? ((((panoramaOrientation.yaw + 180) % 360) + 360) % 360) / 360
+    : null;
+  const panoramaV = panoramaOrientation
+    ? Math.min(Math.max((90 - panoramaOrientation.pitch) / 180, 0), 1)
+    : null;
   const bgSize = imageSrc
-    ? `${(naturalSize.width / safeWidth) * 100}% ${(naturalSize.height / safeHeight) * 100}%`
+    ? isViewerPoint && panoramaOrientation
+      ? "400% 200%"
+      : `${(naturalSize.width / safeWidth) * 100}% ${(naturalSize.height / safeHeight) * 100}%`
     : undefined;
   const bgPosition = imageSrc
-    ? `${naturalSize.width === safeWidth ? 0 : (pixels.x / (naturalSize.width - safeWidth)) * 100}% ${
-        naturalSize.height === safeHeight
-          ? 0
-          : (pixels.y / (naturalSize.height - safeHeight)) * 100
-      }%`
+    ? isViewerPoint && panoramaOrientation
+      ? `${Math.min(Math.max(((panoramaU * 4 - 0.5) / 3) * 100, 0), 100)}% ${Math.min(Math.max((panoramaV * 2 - 0.5) * 100, 0), 100)}%`
+      : `${naturalSize.width === safeWidth ? 0 : (pixels.x / (naturalSize.width - safeWidth)) * 100}% ${
+          naturalSize.height === safeHeight
+            ? 0
+            : (pixels.y / (naturalSize.height - safeHeight)) * 100
+        }%`
     : undefined;
 
   const referenceNumber = Number(pointNumber) || null;
@@ -1145,14 +1158,9 @@ function MessageInput({
     <div ref={fieldRef} className="flex flex-col gap-[8px]">
       <Label
         htmlFor={fieldId}
-        label={
-          pendingSelection
-            ? getObservationTypeLabel(
-                mediaType === "render" ? "image" : mediaType,
-              )
-            : "Observación general"
-        }
+        label="Observación general"
         information={false}
+        required={false}
       />
       {pendingSelection ? (
         <SelectionPreview
