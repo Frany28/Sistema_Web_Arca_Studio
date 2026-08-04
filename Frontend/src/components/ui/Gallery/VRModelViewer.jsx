@@ -358,7 +358,11 @@ export default function VRModelViewer({
       geometry.dispose(); material.map?.dispose(); material.dispose(); renderer.dispose();
       rendererRef.current = null;
     };
-  }, [annotations, initialSession, mode, modelSrc, visible]);
+  // Annotation refreshes must not recreate the WebGL renderer or abort an active
+  // immersive session. The annotations present when the viewer opens are enough
+  // to build its marker sprites; a later refresh will be reflected next launch.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSession, mode, modelSrc, visible]);
 
   const requestMotion = useCallback(async () => {
     const permission = typeof window.DeviceOrientationEvent !== "undefined" && typeof window.DeviceOrientationEvent.requestPermission === "function"
