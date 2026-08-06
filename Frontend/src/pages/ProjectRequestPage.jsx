@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import Button from "../components/ui/Button/Button.jsx";
+import Checkbox from "../components/ui/Checkbox/Checkbox.jsx";
 import DropdownMenu from "../components/ui/DropdownMenu/DropdownMenu.jsx";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
@@ -25,9 +26,10 @@ const INITIAL_FORM = {
   investmentRange: "$10,000 - $50,000 USD",
   capitalAvailability: "Disponible ahora",
   startTime: "De inmediato",
-  decisionMaker: "Yo solo(a)",
+  decisionMaker: "Yo solo/a",
   quality: "Funcional y económico",
-  experience: "",
+  experience: "Sí, buena experiencia",
+  hasBlueprints: "Indeterminate",
   referenceLink: "",
 };
 
@@ -46,12 +48,12 @@ function TextField({ icon: Icon, label, multiline = false, optional, ...props })
   return (
     <div className="flex w-full flex-col gap-[8px]">
       <FieldLabel optional={optional}>{label}</FieldLabel>
-      <div className="relative">
+      <div className="relative flex w-full">
         {Icon ? <Icon className="absolute left-[12px] top-[8px] size-[20px] text-[var(--color-text-100)]" aria-hidden="true" /> : null}
         {multiline ? (
-          <textarea className={`${controlClass} min-h-[130px] resize-y py-[12px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
+          <textarea className={`${controlClass} block min-h-[130px] resize-y py-[12px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
         ) : (
-          <input className={`${controlClass} h-[36px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
+          <input className={`${controlClass} block h-[36px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
         )}
       </div>
     </div>
@@ -101,13 +103,28 @@ function ChoiceGroup({ label, value, options, onChange, info = false, optional =
             type="button"
             aria-pressed={value === option}
             onClick={() => onChange(option)}
-            className={`${orientation === "vertical" && value === option ? "h-[33px] py-[7px]" : "h-[36px] py-[8px]"} rounded-[8px] border px-[12px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option ? "border-[var(--color-primary-300)] bg-[var(--color-primary-300)] text-white" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
+            className={`${orientation === "vertical" && value === option ? "h-[33px] py-[7px]" : "h-[36px] py-[8px]"} rounded-[8px] border px-[12px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option ? "border-transparent bg-[var(--color-neutral-200)] text-[var(--color-text-300)]" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
           >
             {option}
           </button>
         ))}
       </div>
     </fieldset>
+  );
+}
+
+function CheckboxField({ label, value, onChange }) {
+  return (
+    <div className="flex h-[41px] w-full items-center justify-between gap-[16px]">
+      <FieldLabel optional>{label}</FieldLabel>
+      <Checkbox
+        checked={value}
+        size="S"
+        interactive
+        aria-label={label}
+        onCheckedChange={onChange}
+      />
+    </div>
   );
 }
 
@@ -228,9 +245,9 @@ export default function ProjectRequestPage() {
                 <TextField label="Ubicación del proyecto" icon={Location} placeholder='Ej. “Maracaibo, Estado Zulia”' value={form.location} onChange={update("location")} />
                 <TextField label="Descripción del proyecto" multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
                 <SelectField label="Tamaño aproximado del proyecto" value={form.projectSize} onChange={update("projectSize")} options={["Pequeño (menos de 80 m²)", "Mediano (80-200 m²)", "Grande (más de 200 m²)"]} />
-                <SelectField label="¿Cómo deseas desarrollar el proyecto?" value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "Proyecto completo", "Por definir"]} />
-                <ChoiceGroup label="¿Tiene terreno o inmueble disponible?" value={form.landStatus} onChange={update("landStatus")} options={["Sí, disponible", "En proceso de adquirirlo", "No todavía"]} />
-                <ChoiceGroup label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={update("hasBlueprints")} options={["Sí", "No"]} />
+                <SelectField label="¿Cómo desea desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "Proyecto completo", "Por definir"]} />
+                <ChoiceGroup label="¿Tiene terreno o inmueble disponible?" optional value={form.landStatus} onChange={update("landStatus")} options={["Sí, disponible", "En proceso de adquirirlo", "No todavía"]} />
+                <CheckboxField label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={(value) => setForm((current) => ({ ...current, hasBlueprints: value }))} />
               </FormSection>
 
               <FormDivider />
@@ -244,7 +261,7 @@ export default function ProjectRequestPage() {
 
               <FormSection title="Compatibilidad" description="Estas preguntas nos ayudan a conocer tus expectativas, tiempos y experiencia previa para ofrecerte un proceso de trabajo más personalizado y eficiente.">
                 <ChoiceGroup label="¿Cuándo espera iniciar el proyecto?" optional orientation="vertical" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
-                <SelectField label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo(a)", "Mi pareja o familia", "Un equipo o socios"]} />
+                <SelectField label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo/a", "Mi pareja o familia", "Un equipo o socios"]} />
                 <SelectField label="Expectativa de estilo / nivel de calidad" optional info value={form.quality} onChange={update("quality")} options={["Funcional y económico", "Equilibrio entre diseño y presupuesto", "Alta gama / personalizado"]} />
                 <ChoiceGroup label="¿Ha trabajado con un arquitecto o diseñador antes?" optional value={form.experience} onChange={update("experience")} options={["Sí, buena experiencia", "Sí, mala experiencia", "No, primera vez"]} />
               </FormSection>
