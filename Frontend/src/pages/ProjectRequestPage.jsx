@@ -21,7 +21,6 @@ const INITIAL_FORM = {
   location: "",
   description: "",
   projectSize: "Mediano (80-200 m²)",
-  developmentMode: "Por fases",
   landStatus: "Sí, disponible",
   investmentRange: "$10,000 - $50,000 USD",
   capitalAvailability: "Disponible ahora",
@@ -204,8 +203,8 @@ export default function ProjectRequestPage() {
     setSubmitMessage("");
   };
   const handleFrontendSubmit = () => {
-    if (!form.projectName.trim() || !form.location.trim() || !form.description.trim()) {
-      setSubmitMessage("Completa el nombre, la ubicación y la descripción del proyecto.");
+    if (!form.projectName.trim() || !form.location.trim()) {
+      setSubmitMessage("Completa el nombre y la ubicación del proyecto.");
       return;
     }
 
@@ -256,8 +255,8 @@ export default function ProjectRequestPage() {
                 <SelectField label="Tipo de proyecto" value={form.projectType} onChange={update("projectType")} options={["Residencial", "Comercial", "Corporativo", "Stands y exhibiciones"]} />
                 <TextField label="Ubicación del proyecto" icon={Location} placeholder='Ej. “Maracaibo, Estado Zulia”' value={form.location} onChange={update("location")} />
                 <TextField label="Descripción del proyecto" optional multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
-                <SelectField label="Tamaño aproximado del proyecto" optional value={form.projectSize} onChange={update("projectSize")} options={["Pequeño (menos de 80 m²)", "Mediano (80-200 m²)", "Grande (más de 200 m²)"]} />
-                <SelectField label="¿Cómo desea desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "Proyecto completo", "Por definir"]} />
+                <SelectField label="Tamaño aproximado del proyecto" optional value={form.projectSize} onChange={update("projectSize")} options={["Pequeño (menos de 80 m²)", "Mediano (80-200 m²)", "Grande (200-500 m²)", "Muy grande (más de 500 m²)", "No lo sé aún"]} />
+                <SelectField label="¿Cómo prefiere desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "En su totalidad", "Por definir"]} />
                 <ChoiceGroup label="¿Tiene terreno o inmueble disponible?" optional value={form.landStatus} onChange={update("landStatus")} options={["Sí, disponible", "En proceso de adquirirlo", "No todavía"]} />
                 <CheckboxField label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={(value) => setForm((current) => ({ ...current, hasBlueprints: value }))} />
               </FormSection>
@@ -265,24 +264,24 @@ export default function ProjectRequestPage() {
               <FormDivider />
 
               <FormSection fieldsVariant="responsive-grid" title="Viabilidad financiera" description="Conocer tu presupuesto y la disponibilidad de capital nos permite proponerte soluciones acordes.">
-                <SelectField label="Rango de inversión estimado" value={form.investmentRange} onChange={update("investmentRange")} options={["Menos de $10,000 USD", "$10,000 - $50,000 USD", "$50,000 - $100,000 USD", "Más de $100,000 USD"]} />
-                <SelectField label="Disponibilidad del capital" optional value={form.capitalAvailability} onChange={update("capitalAvailability")} options={["Disponible ahora", "Parcialmente disponible", "En proceso de financiamiento"]} />
+                <SelectField label="Rango de inversión estimado" value={form.investmentRange} onChange={update("investmentRange")} options={["No lo tengo definido aún", "Menos de $10,000 USD", "$10,000 - $50,000 USD", "$50,000 - $150,000 USD", "Más de $150,000 USD"]} />
+                <SelectField label="Disponibilidad de capital" value={form.capitalAvailability} onChange={update("capitalAvailability")} options={["Disponible ahora", "En los próximos 3 meses", "Busca financiamiento", "Indefinido"]} />
               </FormSection>
 
               <FormDivider />
 
               <FormSection title="Compatibilidad" description="Estas preguntas nos ayudan a conocer tus expectativas, tiempos y experiencia previa para ofrecerte un proceso de trabajo más personalizado y eficiente.">
-                <ChoiceGroup label="¿Cuándo espera iniciar el proyecto?" optional orientation="vertical" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
-                <SelectField label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo/a", "Mi pareja o familia", "Un equipo o socios"]} />
-                <SelectField label="Expectativa de estilo / nivel de calidad" optional info value={form.quality} onChange={update("quality")} options={["Funcional y económico", "Equilibrio entre diseño y presupuesto", "Alta gama / personalizado"]} />
-                <ChoiceGroup label="¿Ha trabajado con un arquitecto o diseñador antes?" optional value={form.experience} onChange={update("experience")} options={["Sí, buena experiencia", "Sí, mala experiencia", "No, primera vez"]} />
+                <ChoiceGroup label="¿Cuándo espera iniciar el proyecto?" orientation="vertical" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
+                <SelectField label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo/a", "Con mi pareja/socio", "Familia extendida", "Empresa/junta"]} />
+                <SelectField label="Expectativa de estilo / nivel de calidad" optional info value={form.quality} onChange={update("quality")} options={["Funcional y económico", "Calidad estándar", "Premium", "Exclusivo/lujo"]} />
+                <ChoiceGroup label="¿Ha trabajado con un arquitecto o diseñador antes?" optional value={form.experience} onChange={update("experience")} options={["Sí, buena experiencia", "Sí, mala experiencia", "No, es la primera vez"]} />
               </FormSection>
 
               <FormDivider />
 
               <FormSection title="Referencias" description="Comparte imágenes, enlaces o cualquier material de referencia que represente tu visión del proyecto. Esto nos ayudará a comprender mejor el estilo, la atmósfera y los acabados que deseas lograr.">
                 <div className="flex flex-col gap-[8px]">
-                  <FieldLabel optional>Subir imágenes / archivos (opcional)</FieldLabel>
+                  <FieldLabel optional>Subir imágenes o archivos (opcional)</FieldLabel>
                   <button type="button" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); setFiles(Array.from(event.dataTransfer.files || [])); }} className="flex min-h-[177px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] min-[480px]:h-[177px]">
                     <span className="flex size-[40px] items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)] text-[var(--color-text-100)] shadow-[var(--shadow-e1)]"><CloudPlus size="20" color="currentColor" /></span>
                     <span className="flex w-full flex-col items-center gap-[8px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
@@ -297,7 +296,7 @@ export default function ProjectRequestPage() {
                   <input ref={fileInputRef} type="file" multiple accept=".jpeg,.jpg,.png,.pdf,.mp4" className="sr-only" onChange={(event) => setFiles(Array.from(event.target.files || []))} />
                   {files.length ? <p className="text-[14px] text-[var(--color-text-200)]">{files.length} archivo(s) seleccionado(s)</p> : null}
                 </div>
-                <TextField label="Link de referencia (Pinterest, web, etc.)" optional icon={Link21} placeholder='Ej. “https://es.pinterest.com/pin”' value={form.referenceLink} onChange={update("referenceLink")} />
+                <TextField label="Links de referencia (Pinterest, web, etc.) (opcional)" optional icon={Link21} placeholder='Ej. “https://es.pinterest.com/pin”' value={form.referenceLink} onChange={update("referenceLink")} />
               </FormSection>
 
               <FormDivider />
