@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
+import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
@@ -99,6 +100,7 @@ function EmptyProjectsExample() {
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
   const todayLabel = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
     day: "numeric",
@@ -183,6 +185,8 @@ function EmptyProjectsExample() {
             <NavigationBar
               variant="utility"
               utilityText={formattedTodayLabel}
+              utilityActionActive={isNotificationsDrawerOpen}
+              onUtilityActionClick={() => setIsNotificationsDrawerOpen((current) => !current)}
               className="w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
             />
           </div>
@@ -209,6 +213,15 @@ function EmptyProjectsExample() {
           <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[24px]">
             <EmptyProjectsCarouselSection />
           </div>
+
+          <NotificationsDrawer
+            open={isNotificationsDrawerOpen}
+            onClose={() => setIsNotificationsDrawerOpen(false)}
+            comments={[]}
+            commentsLoading={false}
+            recentActivity={[]}
+            recentActivityLoading={false}
+          />
         </div>
       </div>
     </main>

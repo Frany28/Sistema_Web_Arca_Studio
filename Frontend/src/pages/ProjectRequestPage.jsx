@@ -1,15 +1,23 @@
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { CloudPlus, Edit2, InfoCircle, Link21, Location } from "iconsax-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext.jsx";
+import { useRecentProjects } from "../auth/RecentProjectsContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
+import Alert from "../components/ui/Alert/Alert.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import Checkbox from "../components/ui/Checkbox/Checkbox.jsx";
 import DropdownMenu from "../components/ui/DropdownMenu/DropdownMenu.jsx";
+import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
+import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import SideOverlayDrawer from "../components/ui/SideOverlayDrawer.jsx";
+import { useRecentProjectComments } from "../hooks/useProjectComments.js";
+import { getProjectNamesById } from "../utils/commentDisplay.js";
+import { getProjectRequestRequiredFieldErrors } from "../utils/projectRequestValidation.js";
+import { getProjectPath } from "../utils/projectRoutes.js";
 import {
   createUserSideNavigationItems,
   getDashboardPath,
@@ -21,13 +29,14 @@ const INITIAL_FORM = {
   location: "",
   description: "",
   projectSize: "Mediano (80-200 m²)",
-  landStatus: "Sí, disponible",
+  developmentMode: "Por fases",
+  landStatus: "",
   investmentRange: "$10,000 - $50,000 USD",
   capitalAvailability: "Disponible ahora",
-  startTime: "De inmediato",
+  startTime: "",
   decisionMaker: "Yo solo/a",
   quality: "Funcional y económico",
-  experience: "Sí, buena experiencia",
+  experience: "",
   hasBlueprints: "Indeterminate",
   referenceLink: "",
 };
@@ -46,8 +55,8 @@ function FieldLabel({ asSpan = false, children, optional = false, info = false, 
     : <label {...props} className={className}>{content}</label>;
 }
 
-function TextField({ icon: Icon, label, multiline = false, optional, ...props }) {
-  const controlClass = "w-full rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[12px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none transition focus:border-[var(--color-primary-300)] focus:ring-2 focus:ring-[var(--color-primary-10)] placeholder:text-[var(--color-text-100)]";
+function TextField({ icon: Icon, inputRef, invalid = false, label, multiline = false, optional = false, ...props }) {
+  const controlClass = `w-full rounded-[8px] border bg-[var(--color-neutral-100)] px-[12px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none transition focus:ring-2 placeholder:text-[var(--color-text-100)] ${invalid ? "border-[var(--color-danger-100)] focus:border-[var(--color-danger-100)] focus:ring-[var(--color-danger-10)]" : "border-[var(--color-neutral-200)] focus:border-[var(--color-primary-300)] focus:ring-[var(--color-primary-10)]"}`;
 
   return (
     <div className="flex w-full flex-col gap-[8px]">
@@ -55,16 +64,16 @@ function TextField({ icon: Icon, label, multiline = false, optional, ...props })
       <div className="relative flex w-full">
         {Icon ? <Icon className="absolute left-[12px] top-[8px] size-[20px] text-[var(--color-text-100)]" aria-hidden="true" /> : null}
         {multiline ? (
-          <textarea className={`${controlClass} block min-h-[130px] resize-y py-[12px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
+          <textarea ref={inputRef} className={`${controlClass} block min-h-[130px] resize-y py-[12px] ${Icon ? "pl-[40px]" : ""}`} required={!optional} aria-invalid={invalid || undefined} aria-errormessage={invalid ? "project-request-required-alert" : undefined} {...props} />
         ) : (
-          <input className={`${controlClass} block h-[36px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
+          <input ref={inputRef} className={`${controlClass} block h-[36px] ${Icon ? "pl-[40px]" : ""}`} required={!optional} aria-invalid={invalid || undefined} aria-errormessage={invalid ? "project-request-required-alert" : undefined} {...props} />
         )}
       </div>
     </div>
   );
 }
 
-function SelectField({ label, value, onChange, options, optional = false, info = false }) {
+function SelectField({ invalid = false, label, value, onChange, options, optional = false, info = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const items = options.map((option) => ({
     id: option,
@@ -90,18 +99,22 @@ function SelectField({ label, value, onChange, options, optional = false, info =
         }}
         interactive
         triggerHeightClassName="h-[37px]"
+        triggerWrapperClassName={invalid ? "!border-[var(--color-danger-100)]" : undefined}
         className="w-full max-w-none"
         aria-label={label}
+        aria-invalid={invalid || undefined}
+        aria-errormessage={invalid ? "project-request-required-alert" : undefined}
+        aria-required={!optional}
       />
     </div>
   );
 }
 
-function ChoiceGroup({ label, value, options, onChange, info = false, optional = false, orientation = "horizontal" }) {
+function ChoiceGroup({ invalid = false, label, value, options, onChange, info = false, optional = false, orientation = "horizontal" }) {
   const labelId = useId();
 
   return (
-    <div role="group" aria-labelledby={labelId} className="flex w-full flex-col gap-[8px]">
+    <div role="group" aria-labelledby={labelId} aria-invalid={invalid || undefined} aria-errormessage={invalid ? "project-request-required-alert" : undefined} aria-required={!optional} className="flex w-full flex-col gap-[8px]">
       <FieldLabel asSpan id={labelId} info={info} optional={optional}>{label}</FieldLabel>
       <div className={orientation === "vertical" ? "flex flex-col items-start gap-[8px]" : "flex flex-wrap gap-[8px]"}>
         {options.map((option) => (
@@ -110,7 +123,7 @@ function ChoiceGroup({ label, value, options, onChange, info = false, optional =
             type="button"
             aria-pressed={value === option}
             onClick={() => onChange(option)}
-            className={`${orientation === "vertical" && value === option ? "h-[33px] py-[7px]" : "h-[36px] py-[8px]"} rounded-[8px] border px-[12px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option ? "border-transparent bg-[var(--color-neutral-200)] text-[var(--color-text-300)]" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
+            className={`${orientation === "vertical" && value === option ? "h-[33px] py-[7px]" : "h-[36px] py-[8px]"} rounded-[8px] border px-[12px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option ? "border-transparent bg-[var(--color-neutral-200)] text-[var(--color-text-300)]" : invalid ? "border-[var(--color-danger-100)] bg-transparent text-[var(--color-text-100)]" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
           >
             {option}
           </button>
@@ -175,16 +188,75 @@ export default function ProjectRequestPage() {
   }));
   const [files, setFiles] = useState([]);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [showRequiredAlert, setShowRequiredAlert] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+  const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const formRef = useRef(null);
+  const requiredFieldErrors = useMemo(
+    () => getProjectRequestRequiredFieldErrors(form),
+    [form],
+  );
+  const hasRequiredFieldErrors = Object.keys(requiredFieldErrors).length > 0;
   const navigationItems = useMemo(
     () => createUserSideNavigationItems([], currentUser.roleCode),
     [currentUser.roleCode],
   );
+  const { projects: recentProjects } = useRecentProjects();
+  const notificationProjectIds = useMemo(
+    () => recentProjects.map((project) => project.id),
+    [recentProjects],
+  );
+  const projectNamesById = useMemo(
+    () => getProjectNamesById(recentProjects),
+    [recentProjects],
+  );
+  const imageCommentNotifications = useImageCommentNotifications({
+    projectIds: notificationProjectIds,
+    projectNamesById,
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
+  });
+  const {
+    drawerComments: recentProjectComments,
+    error: recentProjectCommentsError,
+    loading: recentProjectCommentsLoading,
+    refresh: refreshRecentComments,
+  } = useRecentProjectComments({
+    enabled: notificationProjectIds.length > 0,
+    projectIds: notificationProjectIds,
+    projectNamesById,
+    refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
+    user,
+  });
+  const notificationComments = useMemo(() => {
+    const commentsById = new Map();
+
+    [...recentProjectComments, ...imageCommentNotifications].forEach((comment) => {
+      if (comment?.id !== undefined && comment?.id !== null) {
+        commentsById.set(String(comment.id), comment);
+      }
+    });
+
+    return Array.from(commentsById.values());
+  }, [imageCommentNotifications, recentProjectComments]);
+
+  useEffect(() => {
+    if (isNotificationsDrawerOpen) {
+      refreshRecentComments?.();
+    }
+  }, [isNotificationsDrawerOpen, refreshRecentComments]);
+
   const update = (field) => (eventOrValue) => {
     const value = eventOrValue?.target ? eventOrValue.target.value : eventOrValue;
-    setForm((current) => ({ ...current, [field]: value }));
+    const nextForm = { ...form, [field]: value };
+
+    setForm(nextForm);
+
+    if (hasAttemptedSubmit && Object.keys(getProjectRequestRequiredFieldErrors(nextForm)).length === 0) {
+      setShowRequiredAlert(false);
+    }
   };
   const handleNavigation = (item) => {
     if (item?.to) {
@@ -197,17 +269,57 @@ export default function ProjectRequestPage() {
     if (item.id === "more-projects") navigate("/proyectos");
     if (item.id === "settings") navigate("/configuraciones");
   };
+  const openImageComment = (comment) => {
+    const targetProjectId = comment?.projectId;
+
+    if (!targetProjectId) {
+      return;
+    }
+
+    const params = new URLSearchParams({ tab: "renders" });
+
+    if (comment.imageId) params.set("imageId", comment.imageId);
+    if (comment.id) params.set("commentId", comment.id);
+
+    const targetProject = recentProjects.find(
+      (project) => String(project.id) === String(targetProjectId),
+    );
+
+    setIsNotificationsDrawerOpen(false);
+    navigate(
+      targetProject
+        ? getProjectPath(targetProject, params.toString())
+        : `/proyectos/${targetProjectId}?${params.toString()}`,
+    );
+  };
   const resetForm = () => {
     setForm(INITIAL_FORM);
     setFiles([]);
     setSubmitMessage("");
+    setHasAttemptedSubmit(false);
+    setShowRequiredAlert(false);
   };
   const handleFrontendSubmit = () => {
-    if (!form.projectName.trim() || !form.location.trim()) {
-      setSubmitMessage("Completa el nombre y la ubicación del proyecto.");
+    setHasAttemptedSubmit(true);
+    setSubmitMessage("");
+
+    if (hasRequiredFieldErrors) {
+      setShowRequiredAlert(true);
+
+      window.requestAnimationFrame(() => {
+        const invalidField = formRef.current?.querySelector('[aria-invalid="true"]');
+        const focusTarget = invalidField?.matches("input, textarea, button")
+          ? invalidField
+          : invalidField?.querySelector("input, textarea, button");
+
+        invalidField?.scrollIntoView({ behavior: "smooth", block: "center" });
+        focusTarget?.focus({ preventScroll: true });
+      });
+
       return;
     }
 
+    setShowRequiredAlert(false);
     setSubmitMessage("Formulario completado correctamente.");
   };
   const sidebar = (
@@ -235,6 +347,8 @@ export default function ProjectRequestPage() {
             showUtilityMenu
             utilityText={new Intl.DateTimeFormat("es-VE", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}
             onMenuClick={() => setIsMobileNavigationOpen(true)}
+            utilityActionActive={isNotificationsDrawerOpen}
+            onUtilityActionClick={() => setIsNotificationsDrawerOpen((current) => !current)}
             className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
           />
 
@@ -249,14 +363,14 @@ export default function ProjectRequestPage() {
 
             <FormDivider />
 
-            <form className="flex w-full flex-col items-center gap-[48px]" onSubmit={(event) => event.preventDefault()}>
+            <form ref={formRef} noValidate className="flex w-full flex-col items-center gap-[48px]" onSubmit={(event) => { event.preventDefault(); handleFrontendSubmit(); }}>
               <FormSection title="Detalles del proyecto" description="Cuéntanos qué deseas desarrollar. Esta información nos ayudará a comprender el alcance, los objetivos y las características generales de tu proyecto antes de la primera reunión.">
-                <TextField label="Nombre del proyecto" icon={Edit2} placeholder='Ej. “Apto. Noventa y Uno”' value={form.projectName} onChange={update("projectName")} />
-                <SelectField label="Tipo de proyecto" value={form.projectType} onChange={update("projectType")} options={["Residencial", "Comercial", "Corporativo", "Stands y exhibiciones"]} />
-                <TextField label="Ubicación del proyecto" icon={Location} placeholder='Ej. “Maracaibo, Estado Zulia”' value={form.location} onChange={update("location")} />
+                <TextField invalid={hasAttemptedSubmit && requiredFieldErrors.projectName} label="Nombre del proyecto" icon={Edit2} placeholder='Ej. “Apto. Noventa y Uno”' value={form.projectName} onChange={update("projectName")} />
+                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.projectType} label="Tipo de proyecto" value={form.projectType} onChange={update("projectType")} options={["Residencial", "Comercial", "Corporativo", "Stands y exhibiciones"]} />
+                <TextField invalid={hasAttemptedSubmit && requiredFieldErrors.location} label="Ubicación del proyecto" icon={Location} placeholder='Ej. “Maracaibo, Estado Zulia”' value={form.location} onChange={update("location")} />
                 <TextField label="Descripción del proyecto" optional multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
                 <SelectField label="Tamaño aproximado del proyecto" optional value={form.projectSize} onChange={update("projectSize")} options={["Pequeño (menos de 80 m²)", "Mediano (80-200 m²)", "Grande (200-500 m²)", "Muy grande (más de 500 m²)", "No lo sé aún"]} />
-                <SelectField label="¿Cómo prefiere desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "En su totalidad", "Por definir"]} />
+                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.developmentMode} label="¿Cómo prefiere desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "En su totalidad", "Por definir"]} />
                 <ChoiceGroup label="¿Tiene terreno o inmueble disponible?" optional value={form.landStatus} onChange={update("landStatus")} options={["Sí, disponible", "En proceso de adquirirlo", "No todavía"]} />
                 <CheckboxField label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={(value) => setForm((current) => ({ ...current, hasBlueprints: value }))} />
               </FormSection>
@@ -264,14 +378,14 @@ export default function ProjectRequestPage() {
               <FormDivider />
 
               <FormSection fieldsVariant="responsive-grid" title="Viabilidad financiera" description="Conocer tu presupuesto y la disponibilidad de capital nos permite proponerte soluciones acordes.">
-                <SelectField label="Rango de inversión estimado" value={form.investmentRange} onChange={update("investmentRange")} options={["No lo tengo definido aún", "Menos de $10,000 USD", "$10,000 - $50,000 USD", "$50,000 - $150,000 USD", "Más de $150,000 USD"]} />
-                <SelectField label="Disponibilidad de capital" value={form.capitalAvailability} onChange={update("capitalAvailability")} options={["Disponible ahora", "En los próximos 3 meses", "Busca financiamiento", "Indefinido"]} />
+                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.investmentRange} label="Rango de inversión estimado" value={form.investmentRange} onChange={update("investmentRange")} options={["No lo tengo definido aún", "Menos de $10,000 USD", "$10,000 - $50,000 USD", "$50,000 - $150,000 USD", "Más de $150,000 USD"]} />
+                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.capitalAvailability} label="Disponibilidad de capital" value={form.capitalAvailability} onChange={update("capitalAvailability")} options={["Disponible ahora", "En los próximos 3 meses", "Busca financiamiento", "Indefinido"]} />
               </FormSection>
 
               <FormDivider />
 
               <FormSection title="Compatibilidad" description="Estas preguntas nos ayudan a conocer tus expectativas, tiempos y experiencia previa para ofrecerte un proceso de trabajo más personalizado y eficiente.">
-                <ChoiceGroup label="¿Cuándo espera iniciar el proyecto?" orientation="vertical" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
+                <ChoiceGroup invalid={hasAttemptedSubmit && requiredFieldErrors.startTime} label="¿Cuándo espera iniciar el proyecto?" orientation="vertical" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
                 <SelectField label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo/a", "Con mi pareja/socio", "Familia extendida", "Empresa/junta"]} />
                 <SelectField label="Expectativa de estilo / nivel de calidad" optional info value={form.quality} onChange={update("quality")} options={["Funcional y económico", "Calidad estándar", "Premium", "Exclusivo/lujo"]} />
                 <ChoiceGroup label="¿Ha trabajado con un arquitecto o diseñador antes?" optional value={form.experience} onChange={update("experience")} options={["Sí, buena experiencia", "Sí, mala experiencia", "No, es la primera vez"]} />
@@ -307,16 +421,43 @@ export default function ProjectRequestPage() {
               </div>
               <footer className="flex w-full max-w-[850px] flex-col-reverse gap-[8px] min-[480px]:flex-row min-[480px]:justify-end">
                 <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={resetForm}>Limpiar formulario</Button>
-                <Button theme="Primary" type="Solid" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={handleFrontendSubmit}>Enviar</Button>
+                <Button theme="Primary" type="Solid" htmlType="submit" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto">Enviar</Button>
               </footer>
             </form>
           </div>
+
+          <NotificationsDrawer
+            open={isNotificationsDrawerOpen}
+            onClose={() => setIsNotificationsDrawerOpen(false)}
+            comments={notificationComments}
+            commentsError={recentProjectCommentsError}
+            commentsLoading={recentProjectCommentsLoading}
+            recentActivity={[]}
+            recentActivityLoading={false}
+            onCommentSelect={openImageComment}
+          />
         </div>
       </div>
 
       <SideOverlayDrawer open={isMobileNavigationOpen} onClose={() => setIsMobileNavigationOpen(false)} side="left" widthClassName="w-[min(312px,calc(100vw-32px))]" className="z-[80] min-[768px]:hidden" panelClassName="rounded-none">
         <SideNavigation {...sidebar.props} expanded onItemSelect={(item) => { setIsMobileNavigationOpen(false); handleNavigation(item); }} />
       </SideOverlayDrawer>
+
+      <div className="pointer-events-none fixed bottom-0 right-0 z-[90] flex w-full max-w-[722.615px] p-[16px] min-[480px]:p-[24px]">
+        <Alert
+          id="project-request-required-alert"
+          visible={showRequiredAlert}
+          theme="Danger"
+          layout="Box"
+          title="Por favor, proporcione la información necesaria."
+          description="Le recordamos que es fundamental completar todos los campos obligatorios."
+          showActions={false}
+          showCloseButton
+          onDismiss={() => setShowRequiredAlert(false)}
+          aria-label="Campos obligatorios incompletos"
+          className="pointer-events-auto"
+        />
+      </div>
     </main>
   );
 }
