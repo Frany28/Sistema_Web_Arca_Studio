@@ -85,6 +85,7 @@ function SelectField({ label, value, onChange, options, optional = false, info =
           setIsOpen(false);
         }}
         interactive
+        triggerHeightClassName="h-[37px]"
         className="w-full max-w-none"
         aria-label={label}
       />
@@ -94,9 +95,9 @@ function SelectField({ label, value, onChange, options, optional = false, info =
 
 function ChoiceGroup({ label, value, options, onChange, info = false, optional = false, orientation = "horizontal" }) {
   return (
-    <fieldset className="flex w-full flex-col gap-[8px]">
+    <fieldset className="flex w-full flex-col">
       <legend><FieldLabel info={info} optional={optional}>{label}</FieldLabel></legend>
-      <div className={orientation === "vertical" ? "flex flex-col items-start gap-[8px]" : "flex flex-wrap gap-[8px]"}>
+      <div className={orientation === "vertical" ? "mt-[8px] flex flex-col items-start gap-[8px]" : "mt-[8px] flex flex-wrap gap-[8px]"}>
         {options.map((option) => (
           <button
             key={option}
@@ -129,7 +130,11 @@ function CheckboxField({ label, value, onChange }) {
 }
 
 function FormDivider() {
-  return <div aria-hidden="true" className="h-px w-full bg-[var(--color-neutral-200)]" />;
+  return (
+    <div aria-hidden="true" className="relative h-0 w-full">
+      <span className="absolute inset-x-0 top-0 h-px bg-[var(--color-neutral-200)]" />
+    </div>
+  );
 }
 
 function FormSection({ title, description, children, fieldsVariant = "stacked" }) {
@@ -230,7 +235,7 @@ export default function ProjectRequestPage() {
           <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
             <header className="flex w-full max-w-[850px] flex-wrap items-end justify-between gap-x-[24px] gap-y-[16px]">
               <div className="min-w-0">
-                <h1 className="text-[32px] font-bold leading-[38px] tracking-[-1px] text-[var(--color-text-300)] min-[768px]:text-[48px] min-[768px]:leading-[58px]">Solicitud de proyecto</h1>
+                <h1 className="text-[32px] font-bold leading-[38px] tracking-[-1px] text-[var(--color-text-50)] min-[768px]:text-[48px] min-[768px]:leading-[58px]">Solicitud de proyecto</h1>
                 <p className="mt-[4px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] min-[768px]:text-[18px] min-[768px]:leading-[21px]">Cada proyecto merece ser el correcto.</p>
               </div>
               <p className="hidden shrink-0 text-right text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)] min-[480px]:block">Tiempo estimado<br />3–5 minutos</p>
@@ -243,8 +248,8 @@ export default function ProjectRequestPage() {
                 <TextField label="Nombre del proyecto" icon={Edit2} placeholder='Ej. “Apto. Noventa y Uno”' value={form.projectName} onChange={update("projectName")} />
                 <SelectField label="Tipo de proyecto" value={form.projectType} onChange={update("projectType")} options={["Residencial", "Comercial", "Corporativo", "Stands y exhibiciones"]} />
                 <TextField label="Ubicación del proyecto" icon={Location} placeholder='Ej. “Maracaibo, Estado Zulia”' value={form.location} onChange={update("location")} />
-                <TextField label="Descripción del proyecto" multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
-                <SelectField label="Tamaño aproximado del proyecto" value={form.projectSize} onChange={update("projectSize")} options={["Pequeño (menos de 80 m²)", "Mediano (80-200 m²)", "Grande (más de 200 m²)"]} />
+                <TextField label="Descripción del proyecto" optional multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
+                <SelectField label="Tamaño aproximado del proyecto" optional value={form.projectSize} onChange={update("projectSize")} options={["Pequeño (menos de 80 m²)", "Mediano (80-200 m²)", "Grande (más de 200 m²)"]} />
                 <SelectField label="¿Cómo desea desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "Proyecto completo", "Por definir"]} />
                 <ChoiceGroup label="¿Tiene terreno o inmueble disponible?" optional value={form.landStatus} onChange={update("landStatus")} options={["Sí, disponible", "En proceso de adquirirlo", "No todavía"]} />
                 <CheckboxField label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={(value) => setForm((current) => ({ ...current, hasBlueprints: value }))} />
@@ -272,7 +277,7 @@ export default function ProjectRequestPage() {
                 <div className="flex flex-col gap-[8px]">
                   <FieldLabel optional>Subir imágenes / archivos (opcional)</FieldLabel>
                   <button type="button" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); setFiles(Array.from(event.dataTransfer.files || [])); }} className="flex min-h-[177px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] min-[480px]:h-[177px]">
-                    <span className="flex size-[40px] items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)]"><CloudPlus size="20" color="currentColor" /></span>
+                    <span className="flex size-[40px] items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)] text-[var(--color-text-100)] shadow-[var(--shadow-e1)]"><CloudPlus size="20" color="currentColor" /></span>
                     <span className="flex w-full flex-col items-center gap-[8px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
                       <span className="flex min-h-[36px] flex-wrap items-center justify-center gap-[8px]">
                         <span className="text-[var(--color-text-300)] underline">Elige un archivo</span>
@@ -295,8 +300,8 @@ export default function ProjectRequestPage() {
                 {submitMessage ? <p role="status" className="mt-[16px] text-[14px] text-[var(--color-text-200)]">{submitMessage}</p> : null}
               </div>
               <footer className="flex w-full max-w-[850px] flex-col-reverse gap-[8px] min-[480px]:flex-row min-[480px]:justify-end">
-                <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="w-full min-[480px]:w-auto" onClick={resetForm}>Limpiar formulario</Button>
-                <Button theme="Primary" type="Solid" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="w-full min-[480px]:w-auto" onClick={handleFrontendSubmit}>Enviar</Button>
+                <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={resetForm}>Limpiar formulario</Button>
+                <Button theme="Primary" type="Solid" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={handleFrontendSubmit}>Enviar</Button>
               </footer>
             </form>
           </div>
