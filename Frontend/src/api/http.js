@@ -216,10 +216,11 @@ export const authApi = {
 };
 
 export const projectsApi = {
-  list({ cursor, limit } = {}) {
+  list({ cursor, limit, scope } = {}) {
     const params = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     if (limit) params.set("limit", String(limit));
+    if (scope) params.set("scope", scope);
     const query = params.toString();
     return apiRequest(`/projects${query ? `?${query}` : ""}`);
   },

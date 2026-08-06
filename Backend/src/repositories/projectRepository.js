@@ -170,8 +170,13 @@ export async function findAssignedArchitectProfilePhotoForUser(projectId, user) 
   return result.rows[0]?.profile_photo_url || null;
 }
 
-export async function listProjectsForUser(user, { cursor = null, limit = 25 } = {}) {
-  const { condition: accessCondition, params } = getProjectAccess(user);
+export async function listProjectsForUser(
+  user,
+  { cursor = null, directOnly = false, limit = 25 } = {},
+) {
+  const { condition: accessCondition, params } = directOnly
+    ? getDirectProjectAccess(user)
+    : getProjectAccess(user);
   const cursorDateParam = params.length + 1;
   const cursorIdParam = params.length + 2;
   const limitParam = params.length + 3;

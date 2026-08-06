@@ -1,8 +1,8 @@
+import { updateProjectVisibility } from "../repositories/projectRepository.js";
 import {
-  listProjectsForUser,
-  updateProjectVisibility,
-} from "../repositories/projectRepository.js";
-import { getProjectDetail as getProjectDetailService } from "../services/projectService.js";
+  getProjectDetail as getProjectDetailService,
+  listProjects,
+} from "../services/projectService.js";
 import { getAssignedArchitectProfilePhoto } from "../services/profilePhotoService.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
@@ -12,7 +12,12 @@ export async function getMyProjects(req, res, next) {
     const limit = parsePageLimit(query?.limit);
     const cursor = decodeCursor(query?.cursor);
     if (query?.cursor && !cursor) return res.status(400).json({ code: "INVALID_CURSOR", message: "Cursor inválido." });
-    const page = await listProjectsForUser(req.user, { cursor, limit });
+    const page = await listProjects({
+      cursor,
+      limit,
+      scope: query?.scope,
+      user: req.user,
+    });
 
     res.status(200).json({
       projects: page.items,

@@ -259,7 +259,7 @@ Base: `/api/projects`
 
 | Metodo | Endpoint                            | Proteccion                | Descripcion                       |
 | ------ | ----------------------------------- | ------------------------- | --------------------------------- |
-| GET    | `/`                                 | Auth + `projects.read`    | Lista proyectos accesibles        |
+| GET    | `/?scope=accessible|owned`          | Auth + `projects.read`    | Lista proyectos accesibles o vinculados directamente al usuario |
 | GET    | `/:projectId`                       | Auth + `projects.read`    | Detalle de proyecto               |
 | GET    | `/:projectId/comments`              | Auth                      | Lista comentarios                 |
 | GET    | `/:projectId/events`                | Auth                      | Stream SSE de comentarios         |

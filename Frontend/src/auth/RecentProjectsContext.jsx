@@ -10,11 +10,13 @@ import {
 import { api } from "../api/http.js";
 import {
   RECENT_PROJECTS_LIMIT,
+  getRecentProjectsScope,
   toRecentProjectCacheEntries,
 } from "../utils/recentProjects.js";
 import { useAuth } from "./AuthContext.jsx";
 
-const RECENT_PROJECTS_CACHE_PREFIX = "arca_recent_projects_v1";
+const RECENT_PROJECTS_CACHE_PREFIX = "arca_recent_projects_v2";
+const LEGACY_RECENT_PROJECTS_CACHE_PREFIX = "arca_recent_projects_v1";
 const pendingRequests = new Map();
 const RecentProjectsContext = createContext({
   loading: false,
@@ -66,20 +68,22 @@ function writeCachedProjects(cacheKey, projects) {
   }
 }
 
-function requestRecentProjects(cacheKey) {
-  if (!pendingRequests.has(cacheKey)) {
-    const request = api.projects
-      .list({ limit: RECENT_PROJECTS_LIMIT })
-      .then((data) => toRecentProjectCacheEntries(data.projects))
-      .finally(() => pendingRequests.delete(cacheKey));
+function requestRecentProjects(cacheKey, scope) {
+  const requestKey = `${cacheKey}:${scope}`;
 
-    pendingRequests.set(cacheKey, request);
+  if (!pendingRequests.has(requestKey)) {
+    const request = api.projects
+      .list({ limit: RECENT_PROJECTS_LIMIT, scope })
+      .then((data) => toRecentProjectCacheEntries(data.projects))
+      .finally(() => pendingRequests.delete(requestKey));
+
+    pendingRequests.set(requestKey, request);
   }
 
-  return pendingRequests.get(cacheKey);
+  return pendingRequests.get(requestKey);
 }
 
-function RecentProjectsSession({ cacheKey, children }) {
+function RecentProjectsSession({ cacheKey, children, scope }) {
   const [cachedValue] = useState(() => readCachedProjects(cacheKey));
   const [projects, setProjects] = useState(cachedValue?.projects || []);
   const [loading, setLoading] = useState(!cachedValue);
@@ -91,7 +95,7 @@ function RecentProjectsSession({ cacheKey, children }) {
       writeCachedProjects(cacheKey, cachedValue.projects);
     }
 
-    requestRecentProjects(cacheKey)
+    requestRecentProjects(cacheKey, scope)
       .then((nextProjects) => {
         if (!isMounted) {
           return;
@@ -112,7 +116,7 @@ function RecentProjectsSession({ cacheKey, children }) {
     return () => {
       isMounted = false;
     };
-  }, [cacheKey, cachedValue]);
+  }, [cacheKey, cachedValue, scope]);
 
   const value = useMemo(
     () => ({ loading, projects }),
@@ -128,7 +132,26 @@ function RecentProjectsSession({ cacheKey, children }) {
 
 export function RecentProjectsProvider({ children }) {
   const { user } = useAuth();
-  const cacheKey = getUserCacheKey(user);
+  const userId = user?.id;
+  const roleCode =
+    typeof user?.role === "string" ? user.role : user?.role?.code;
+  const scope = getRecentProjectsScope(roleCode);
+  const userCacheKey = getUserCacheKey(user);
+  const cacheKey = userCacheKey ? `${userCacheKey}:${scope}` : null;
+
+  useEffect(() => {
+    if (userId === undefined || userId === null) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.removeItem(
+        `${LEGACY_RECENT_PROJECTS_CACHE_PREFIX}:${userId}`,
+      );
+    } catch {
+      // Ignore storage errors in restricted browsers.
+    }
+  }, [userId]);
 
   if (!cacheKey) {
     return (
@@ -139,7 +162,7 @@ export function RecentProjectsProvider({ children }) {
   }
 
   return (
-    <RecentProjectsSession key={cacheKey} cacheKey={cacheKey}>
+    <RecentProjectsSession key={cacheKey} cacheKey={cacheKey} scope={scope}>
       {children}
     </RecentProjectsSession>
   );

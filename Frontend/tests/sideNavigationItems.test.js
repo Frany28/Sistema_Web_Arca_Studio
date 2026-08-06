@@ -6,7 +6,10 @@ import {
   getDashboardPath,
   mergeRecentProjectNavigationItems,
 } from "../src/utils/sideNavigationItems.js";
-import { toRecentProjectCacheEntries } from "../src/utils/recentProjects.js";
+import {
+  getRecentProjectsScope,
+  toRecentProjectCacheEntries,
+} from "../src/utils/recentProjects.js";
 
 test("client navigation keeps requests in every environment", () => {
   const ids = createUserSideNavigationItems([], "client").map(({ id }) => id);
@@ -89,6 +92,12 @@ test("recent project cache excludes unrelated and sensitive project fields", () 
   ]);
   assert.equal(JSON.stringify(cachedProject).includes("cliente@example.com"), false);
   assert.equal(JSON.stringify(cachedProject).includes("InformaciÃ³n interna"), false);
+});
+
+test("client recent projects exclude public projects owned by other users", () => {
+  assert.equal(getRecentProjectsScope("client"), "owned");
+  assert.equal(getRecentProjectsScope("architect"), "accessible");
+  assert.equal(getRecentProjectsScope("admin"), "accessible");
 });
 
 test("dashboard destinations follow the authenticated role", () => {

@@ -5,6 +5,7 @@ import {
   loginSchema,
   commentSchema,
   paginationSchema,
+  projectListSchema,
   projectCommentAuthorPhotoSchema,
   projectDetailSchema,
 } from "../src/validation/schemas.js";
@@ -17,6 +18,17 @@ test("login schema normalizes email and rejects short passwords", () => {
 
 test("pagination schema rejects invalid cursors and limits", () => {
   assert.equal(paginationSchema.safeParse({ query: { cursor: "broken", limit: 101 } }).success, false);
+});
+
+test("project list schema only accepts supported access scopes", () => {
+  assert.equal(
+    projectListSchema.safeParse({ query: { limit: "3", scope: "owned" } }).success,
+    true,
+  );
+  assert.equal(
+    projectListSchema.safeParse({ query: { scope: "private" } }).success,
+    false,
+  );
 });
 
 test("project detail schema accepts ids and slugs and validates file pagination", () => {

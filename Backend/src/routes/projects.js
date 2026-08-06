@@ -25,6 +25,7 @@ import {
   commentSchema,
   documentCommentsSchema,
   paginationSchema,
+  projectListSchema,
   projectDetailSchema,
   projectCommentAuthorPhotoSchema,
   projectIdSchema,
@@ -32,7 +33,7 @@ import {
 
 const router = Router();
 
-router.get("/", requireAuth, requirePermissions("projects.read"), validate(paginationSchema), getMyProjects);
+router.get("/", requireAuth, requirePermissions("projects.read"), validate(projectListSchema), getMyProjects);
 router.get(
   "/:projectId/assigned-architect/profile-photo",
   requireAuth,

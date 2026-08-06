@@ -13,6 +13,14 @@ export const paginationSchema = z.object({
   query: z.object({ cursor, limit: z.coerce.number().int().min(1).max(100).optional() }).passthrough(),
 });
 
+export const projectListSchema = z.object({
+  query: z.object({
+    cursor,
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    scope: z.enum(["accessible", "owned"]).optional(),
+  }).passthrough(),
+});
+
 export const projectIdSchema = z.object({ params: z.object({ projectId: positiveId }) });
 
 const projectIdentifier = z.string().trim().refine((value) => {

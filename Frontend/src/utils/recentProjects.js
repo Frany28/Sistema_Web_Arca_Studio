@@ -1,5 +1,9 @@
 export const RECENT_PROJECTS_LIMIT = 3;
 
+export function getRecentProjectsScope(roleCode) {
+  return roleCode === "client" ? "owned" : "accessible";
+}
+
 function getProjectTimestamp(project) {
   const timestamp = new Date(
     project?.updatedAt || project?.createdAt || 0,

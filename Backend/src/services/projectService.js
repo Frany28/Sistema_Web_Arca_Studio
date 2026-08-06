@@ -1,7 +1,16 @@
 import {
   findProjectDetailByPublicSlugForUser,
   findProjectDetailForUser,
+  listProjectsForUser,
 } from "../repositories/projectRepository.js";
+
+export function listProjects({ cursor = null, limit, scope, user }) {
+  return listProjectsForUser(user, {
+    cursor,
+    directOnly: scope === "owned",
+    limit,
+  });
+}
 
 export function getProjectDetail({
   fileCursor = null,
