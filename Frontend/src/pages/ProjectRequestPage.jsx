@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { CloudPlus, Edit2, InfoCircle, Link21, Location } from "iconsax-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -33,13 +33,18 @@ const INITIAL_FORM = {
   referenceLink: "",
 };
 
-function FieldLabel({ children, optional = false, info = false }) {
-  return (
-    <label className="flex items-center gap-[2px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
+function FieldLabel({ asSpan = false, children, optional = false, info = false, ...props }) {
+  const content = (
+    <>
       {children}{optional ? null : <span aria-hidden="true">*</span>}
       {info ? <InfoCircle size="18" color="currentColor" aria-hidden="true" /> : null}
-    </label>
+    </>
   );
+  const className = "flex items-center gap-[2px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]";
+
+  return asSpan
+    ? <span {...props} className={className}>{content}</span>
+    : <label {...props} className={className}>{content}</label>;
 }
 
 function TextField({ icon: Icon, label, multiline = false, optional, ...props }) {
@@ -94,10 +99,12 @@ function SelectField({ label, value, onChange, options, optional = false, info =
 }
 
 function ChoiceGroup({ label, value, options, onChange, info = false, optional = false, orientation = "horizontal" }) {
+  const labelId = useId();
+
   return (
-    <fieldset className="flex w-full flex-col">
-      <legend><FieldLabel info={info} optional={optional}>{label}</FieldLabel></legend>
-      <div className={orientation === "vertical" ? "mt-[8px] flex flex-col items-start gap-[8px]" : "mt-[8px] flex flex-wrap gap-[8px]"}>
+    <div role="group" aria-labelledby={labelId} className="flex w-full flex-col gap-[8px]">
+      <FieldLabel asSpan id={labelId} info={info} optional={optional}>{label}</FieldLabel>
+      <div className={orientation === "vertical" ? "flex flex-col items-start gap-[8px]" : "flex flex-wrap gap-[8px]"}>
         {options.map((option) => (
           <button
             key={option}
@@ -110,7 +117,7 @@ function ChoiceGroup({ label, value, options, onChange, info = false, optional =
           </button>
         ))}
       </div>
-    </fieldset>
+    </div>
   );
 }
 
