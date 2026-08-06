@@ -53,6 +53,9 @@ input[type="reset"]:disabled,
    Root Tokens
    ========================================================================== */
 :root {
+  /* Capas flotantes */
+  --z-tooltip: 2147483000;
+
   /*Tamaño de la bandera*/
   --app-size-flag: 24px;
   --size-flag: var(--app-size-flag);

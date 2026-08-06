@@ -36,8 +36,17 @@ function ArchitectProjectRow({
             {project.isPublic ? "Publico" : "Privado"}
           </span>
           {project.assigneeAvatars?.length ? (
-            <Tooltip text={project.assigneeAvatars[0].name} tipPosition="Top center">
-              <AvatarGroup size="S" items={project.assigneeAvatars} tabIndex={0} />
+            <Tooltip
+              text={project.assigneeAvatars[0].name}
+              tipPosition="Top center"
+              portal
+            >
+              <AvatarGroup
+                size="S"
+                items={project.assigneeAvatars}
+                tabIndex={0}
+                aria-label={`Encargado: ${project.assigneeAvatars[0].name}`}
+              />
             </Tooltip>
           ) : null}
         </div>

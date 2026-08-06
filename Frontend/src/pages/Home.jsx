@@ -81,8 +81,17 @@ function ProjectRow({ project }) {
             {project.name}
           </h2>
           {project.assigneeAvatars.length ? (
-            <Tooltip text={project.assigneeAvatars[0].name} tipPosition="Top center">
-              <AvatarGroup size="S" items={project.assigneeAvatars} tabIndex={0} />
+            <Tooltip
+              text={project.assigneeAvatars[0].name}
+              tipPosition="Top center"
+              portal
+            >
+              <AvatarGroup
+                size="S"
+                items={project.assigneeAvatars}
+                tabIndex={0}
+                aria-label={`Encargado: ${project.assigneeAvatars[0].name}`}
+              />
             </Tooltip>
           ) : null}
         </div>
@@ -662,11 +671,7 @@ function Home({ view = "dashboard" }) {
               <div
                 ref={requestsContainerRef}
                 onScroll={handleRequestScroll}
-                className={`min-w-0 flex-1 pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
-                  isRequestsView
-                    ? "overflow-y-visible"
-                    : "lg:max-h-[232px] lg:overflow-y-auto"
-                }`}
+                className="min-w-0 flex-1 overflow-y-visible pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] lg:max-h-[232px] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden"
               >
                 {projectRequestsLoading ? (
                     <Loader
@@ -736,7 +741,7 @@ function Home({ view = "dashboard" }) {
                     />
                 )}
               </div>
-              {!isRequestsView && !projectRequestsLoading && projectRequests.length ? (
+              {!projectRequestsLoading && projectRequests.length ? (
                 <ScrollBar
                   height={232}
                   length={requestScrollLength}

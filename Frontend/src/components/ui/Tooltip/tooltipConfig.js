@@ -18,6 +18,7 @@ export const TOOLTIP_DEFAULT_PROPS = {
   tipPosition: "Right",
   open: undefined,
   defaultOpen: false,
+  portal: true,
   "aria-label": "Tooltip",
 };
 

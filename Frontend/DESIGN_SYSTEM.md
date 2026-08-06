@@ -180,6 +180,8 @@ No reemplazar la pantalla completa por un texto improvisado. Reutilizar los comp
 
 La colección de Solicitudes es un caso visual especial: cuando esté vacía debe usar `EmptyState` en tamaño `M`, con icono destacado, el título “Tu espacio de proyectos está listo”, la descripción “Aquí podrás visualizar y dar seguimiento a tus proyectos.” y la acción “Nueva oportunidad”.
 
+- Los `Tooltip` interactivos se montan mediante portal por defecto, usan la capa flotante global y se ajustan a los bordes del viewport para no quedar recortados por contenedores, scroll, drawers o modales.
+
 ## Responsive
 
 El enfoque es mobile-first. Los breakpoints de referencia existentes son:

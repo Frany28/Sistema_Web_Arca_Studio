@@ -79,7 +79,7 @@ export default function ObservationTooltip({
       aria-label={`Observación de ${safeAuthorName}`}
       className={clsx(
         "flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left",
-        position && "fixed z-[1000]",
+        position && "fixed z-[var(--z-tooltip)]",
         className,
       )}
       style={estimatedPlacement ? {

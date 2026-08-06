@@ -2,6 +2,7 @@ import { useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { TOOLTIP_DEFAULT_PROPS, TOOLTIP_POSITIONS } from "./tooltipConfig.js";
+import { getTooltipViewportOffset } from "./tooltipPosition.js";
 
 const TOOLTIP_NODE_IDS = {
   base: "2061:19961",
@@ -141,7 +142,7 @@ function TooltipBubble({
       id={tooltipId}
       role="tooltip"
       className={clsx(
-        "relative flex w-fit max-w-none flex-col items-start gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[8px] shadow-[var(--shadow-e2)] transition-colors duration-200",
+        "relative flex w-max max-w-[calc(100vw-16px)] flex-col items-start gap-[2px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[8px] shadow-[var(--shadow-e2)] transition-colors duration-200",
         className,
       )}
       data-node-id={getResolvedNodeId({
@@ -155,7 +156,7 @@ function TooltipBubble({
         content
       ) : (
         <>
-          <p className="w-full whitespace-nowrap text-heading-8 text-[var(--color-text-200)]">
+          <p className="w-full max-w-full break-words text-heading-8 text-[var(--color-text-200)]">
             {text}
           </p>
 
@@ -194,13 +195,14 @@ function Tooltip({
   defaultOpen = TOOLTIP_DEFAULT_PROPS.defaultOpen,
   children,
   onOpenChange,
-  portal = false,
+  portal = TOOLTIP_DEFAULT_PROPS.portal,
   "aria-label": ariaLabel = TOOLTIP_DEFAULT_PROPS["aria-label"],
   ...props
 }) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen);
   const [portalPosition, setPortalPosition] = useState(null);
   const anchorRef = useRef(null);
+  const portalRef = useRef(null);
   const tooltipId = useId();
   const isOpenControlled = typeof open === "boolean";
   const resolvedOpen = isOpenControlled ? open : internalOpen;
@@ -226,6 +228,30 @@ function Tooltip({
       window.removeEventListener("scroll", updatePosition, true);
     };
   }, [portal, resolvedOpen, resolvedPosition]);
+
+  useLayoutEffect(() => {
+    if (!portal || !resolvedOpen || !portalPosition || !portalRef.current) {
+      return;
+    }
+
+    const rect = portalRef.current.getBoundingClientRect();
+    const { offsetX, offsetY } = getTooltipViewportOffset({
+      bottom: rect.bottom,
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    });
+
+    if (Math.abs(offsetX) > 0.5 || Math.abs(offsetY) > 0.5) {
+      setPortalPosition((current) => ({
+        ...current,
+        left: current.left + offsetX,
+        top: current.top + offsetY,
+      }));
+    }
+  }, [portal, portalPosition, resolvedOpen]);
 
   const setTooltipOpen = (nextOpen) => {
     if (!isOpenControlled) {
@@ -273,7 +299,8 @@ function Tooltip({
 
       {resolvedOpen && portal && portalPosition && typeof document !== "undefined" ? createPortal(
         <span
-          className="pointer-events-none fixed z-[1000]"
+          ref={portalRef}
+          className="pointer-events-none fixed z-[var(--z-tooltip)]"
           style={portalPosition}
         >
           <TooltipBubble
