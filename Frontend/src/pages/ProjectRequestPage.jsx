@@ -12,6 +12,7 @@ import DropdownMenu from "../components/ui/DropdownMenu/DropdownMenu.jsx";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
 import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
+import ProjectRequestCancelModal from "../components/ui/ProjectRequestFlow/ProjectRequestCancelModal.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import SideOverlayDrawer from "../components/ui/SideOverlayDrawer.jsx";
 import { useRecentProjectComments } from "../hooks/useProjectComments.js";
@@ -25,17 +26,17 @@ import {
 
 const INITIAL_FORM = {
   projectName: "",
-  projectType: "Residencial",
+  projectType: "",
   location: "",
   description: "",
-  projectSize: "Mediano (80-200 m²)",
-  developmentMode: "Por fases",
+  projectSize: "",
+  developmentMode: "",
   landStatus: "",
-  investmentRange: "$10,000 - $50,000 USD",
-  capitalAvailability: "Disponible ahora",
+  investmentRange: "",
+  capitalAvailability: "",
   startTime: "",
-  decisionMaker: "Yo solo/a",
-  quality: "Funcional y económico",
+  decisionMaker: "",
+  quality: "",
   experience: "",
   hasBlueprints: "Indeterminate",
   referenceLink: "",
@@ -73,7 +74,7 @@ function TextField({ icon: Icon, inputRef, invalid = false, label, multiline = f
   );
 }
 
-function SelectField({ invalid = false, label, value, onChange, options, optional = false, info = false }) {
+function SelectField({ invalid = false, label, value, onChange, options, optional = false, info = false, placeholder = "Selecciona una opción" }) {
   const [isOpen, setIsOpen] = useState(false);
   const items = options.map((option) => ({
     id: option,
@@ -87,7 +88,7 @@ function SelectField({ invalid = false, label, value, onChange, options, optiona
       <FieldLabel optional={optional} info={info}>{label}</FieldLabel>
       <DropdownMenu
         type="Text"
-        label={value}
+        label={value || placeholder}
         supportingText=""
         items={items}
         selectedItemId={value}
@@ -193,6 +194,7 @@ export default function ProjectRequestPage() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
+  const [pendingRequestAction, setPendingRequestAction] = useState(null);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
   const requiredFieldErrors = useMemo(
@@ -258,7 +260,7 @@ export default function ProjectRequestPage() {
       setShowRequiredAlert(false);
     }
   };
-  const handleNavigation = (item) => {
+  const performSideNavigation = (item) => {
     if (item?.to) {
       navigate(item.to);
       return;
@@ -268,6 +270,44 @@ export default function ProjectRequestPage() {
     if (item.id === "requests") navigate("/solicitudes");
     if (item.id === "more-projects") navigate("/proyectos");
     if (item.id === "settings") navigate("/configuraciones");
+  };
+  const handleNavigation = (item) => {
+    if (!item) {
+      return;
+    }
+
+    setShowRequiredAlert(false);
+    setIsNotificationsDrawerOpen(false);
+    setIsMobileNavigationOpen(false);
+    setPendingRequestAction({ type: "navigate", item });
+  };
+  const requestLogout = () => {
+    setShowRequiredAlert(false);
+    setIsNotificationsDrawerOpen(false);
+    setIsMobileNavigationOpen(false);
+    setPendingRequestAction({ type: "logout" });
+  };
+  const cancelRequestAction = () => {
+    setPendingRequestAction(null);
+  };
+  const confirmRequestAction = () => {
+    const action = pendingRequestAction;
+    setPendingRequestAction(null);
+
+    if (action?.type === "clear") {
+      resetForm();
+      return;
+    }
+
+    if (action?.type === "logout") {
+      logout();
+      navigate("/");
+      return;
+    }
+
+    if (action?.type === "navigate") {
+      performSideNavigation(action.item);
+    }
   };
   const openImageComment = (comment) => {
     const targetProjectId = comment?.projectId;
@@ -295,9 +335,16 @@ export default function ProjectRequestPage() {
   const resetForm = () => {
     setForm(INITIAL_FORM);
     setFiles([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setSubmitMessage("");
     setHasAttemptedSubmit(false);
     setShowRequiredAlert(false);
+  };
+  const requestFormReset = () => {
+    setShowRequiredAlert(false);
+    setPendingRequestAction({ type: "clear" });
   };
   const handleFrontendSubmit = () => {
     setHasAttemptedSubmit(true);
@@ -333,7 +380,7 @@ export default function ProjectRequestPage() {
       onExpandedChange={setIsSidebarExpanded}
       onItemSelect={handleNavigation}
       onNewOpportunityClick={() => navigate("/solicitudes/nueva")}
-      onLogoutClick={() => { logout(); navigate("/"); }}
+      onLogoutClick={requestLogout}
     />
   );
 
@@ -420,7 +467,7 @@ export default function ProjectRequestPage() {
                 {submitMessage ? <p role="status" className="mt-[16px] text-[14px] text-[var(--color-text-200)]">{submitMessage}</p> : null}
               </div>
               <footer className="flex w-full max-w-[850px] flex-col-reverse gap-[8px] min-[480px]:flex-row min-[480px]:justify-end">
-                <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={resetForm}>Limpiar formulario</Button>
+                <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={requestFormReset}>Limpiar formulario</Button>
                 <Button theme="Primary" type="Solid" htmlType="submit" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto">Enviar</Button>
               </footer>
             </form>
@@ -442,6 +489,16 @@ export default function ProjectRequestPage() {
       <SideOverlayDrawer open={isMobileNavigationOpen} onClose={() => setIsMobileNavigationOpen(false)} side="left" widthClassName="w-[min(312px,calc(100vw-32px))]" className="z-[80] min-[768px]:hidden" panelClassName="rounded-none">
         <SideNavigation {...sidebar.props} expanded onItemSelect={(item) => { setIsMobileNavigationOpen(false); handleNavigation(item); }} />
       </SideOverlayDrawer>
+
+      <ProjectRequestCancelModal
+        open={Boolean(pendingRequestAction)}
+        onCancel={cancelRequestAction}
+        onConfirm={confirmRequestAction}
+        title={pendingRequestAction?.type === "clear" ? "¿Deseas limpiar el formulario?" : undefined}
+        description={pendingRequestAction?.type === "clear" ? "Esta acción eliminará toda la información ingresada en el formulario." : undefined}
+        primaryActionLabel={pendingRequestAction?.type === "clear" ? "Limpiar" : undefined}
+        ariaLabel={pendingRequestAction?.type === "clear" ? "Confirmar limpieza del formulario" : undefined}
+      />
 
       <div className="pointer-events-none fixed bottom-0 right-0 z-[90] flex w-full max-w-[722.615px] p-[16px] min-[480px]:p-[24px]">
         <Alert

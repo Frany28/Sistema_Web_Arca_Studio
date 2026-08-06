@@ -56,7 +56,10 @@ function Modal({
   description = MODAL_DEFAULT_PROPS.description,
   primaryActionLabel = MODAL_DEFAULT_PROPS.primaryActionLabel,
   secondaryActionLabel = MODAL_DEFAULT_PROPS.secondaryActionLabel,
+  primaryActionTheme = "Primary",
+  secondaryActionTheme = "Primary",
   checkboxLabel = MODAL_DEFAULT_PROPS.checkboxLabel,
+  icon = null,
   showCloseButton = MODAL_DEFAULT_PROPS.showCloseButton,
   onClose,
   onPrimaryAction,
@@ -228,7 +231,7 @@ function Modal({
                     dialogAlignmentClassName,
                   )}
                 >
-                  <IconContainer size="M" type="Outline" />
+                  <IconContainer size="M" type="Outline" icon={icon} />
 
                   <div className="flex w-full flex-col gap-[4px] tracking-[-0.5px]">
                     <p className="text-heading-6 text-[var(--color-text-300)]">
@@ -251,7 +254,7 @@ function Modal({
                   ) : null}
 
                   <Button
-                    theme="Primary"
+                    theme={secondaryActionTheme}
                     type="Outline"
                     size="S"
                     showLeftIcon={false}
@@ -263,7 +266,7 @@ function Modal({
                   </Button>
 
                   <Button
-                    theme="Primary"
+                    theme={primaryActionTheme}
                     type="Solid"
                     size="S"
                     showLeftIcon={false}
