@@ -33,9 +33,9 @@ const INITIAL_FORM = {
 
 function FieldLabel({ children, optional = false, info = false }) {
   return (
-    <label className="flex items-center gap-[4px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
+    <label className="flex items-center gap-[2px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
       {children}{optional ? null : <span aria-hidden="true">*</span>}
-      {info ? <InfoCircle size="14" color="currentColor" aria-hidden="true" /> : null}
+      {info ? <InfoCircle size="18" color="currentColor" aria-hidden="true" /> : null}
     </label>
   );
 }
@@ -47,18 +47,18 @@ function TextField({ icon: Icon, label, multiline = false, optional, ...props })
     <div className="flex w-full flex-col gap-[8px]">
       <FieldLabel optional={optional}>{label}</FieldLabel>
       <div className="relative">
-        {Icon ? <Icon className="absolute left-[12px] top-[10px] size-[20px] text-[var(--color-text-100)]" aria-hidden="true" /> : null}
+        {Icon ? <Icon className="absolute left-[12px] top-[8px] size-[20px] text-[var(--color-text-100)]" aria-hidden="true" /> : null}
         {multiline ? (
-          <textarea className={`${controlClass} min-h-[112px] resize-y py-[12px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
+          <textarea className={`${controlClass} min-h-[130px] resize-y py-[12px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
         ) : (
-          <input className={`${controlClass} h-[41px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
+          <input className={`${controlClass} h-[36px] ${Icon ? "pl-[40px]" : ""}`} {...props} />
         )}
       </div>
     </div>
   );
 }
 
-function SelectField({ label, value, onChange, options }) {
+function SelectField({ label, value, onChange, options, optional = false, info = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const items = options.map((option) => ({
     id: option,
@@ -69,7 +69,7 @@ function SelectField({ label, value, onChange, options }) {
 
   return (
     <div className="flex w-full flex-col gap-[8px]">
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel optional={optional} info={info}>{label}</FieldLabel>
       <DropdownMenu
         type="Text"
         label={value}
@@ -90,18 +90,18 @@ function SelectField({ label, value, onChange, options }) {
   );
 }
 
-function ChoiceGroup({ label, value, options, onChange, info = false }) {
+function ChoiceGroup({ label, value, options, onChange, info = false, optional = false, orientation = "horizontal" }) {
   return (
     <fieldset className="flex w-full flex-col gap-[8px]">
-      <legend><FieldLabel info={info}>{label}</FieldLabel></legend>
-      <div className="flex flex-wrap gap-[8px]">
+      <legend><FieldLabel info={info} optional={optional}>{label}</FieldLabel></legend>
+      <div className={orientation === "vertical" ? "flex flex-col items-start gap-[8px]" : "flex flex-wrap gap-[8px]"}>
         {options.map((option) => (
           <button
             key={option}
             type="button"
             aria-pressed={value === option}
             onClick={() => onChange(option)}
-            className={`rounded-[8px] border px-[12px] py-[8px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option ? "border-[var(--color-primary-300)] bg-[var(--color-primary-300)] text-white" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
+            className={`${orientation === "vertical" && value === option ? "h-[33px] py-[7px]" : "h-[36px] py-[8px]"} rounded-[8px] border px-[12px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option ? "border-[var(--color-primary-300)] bg-[var(--color-primary-300)] text-white" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
           >
             {option}
           </button>
@@ -111,14 +111,22 @@ function ChoiceGroup({ label, value, options, onChange, info = false }) {
   );
 }
 
-function FormSection({ title, description, children }) {
+function FormDivider() {
+  return <div aria-hidden="true" className="h-px w-full bg-[var(--color-neutral-200)]" />;
+}
+
+function FormSection({ title, description, children, fieldsVariant = "stacked" }) {
+  const fieldsClassName = fieldsVariant === "responsive-grid"
+    ? "flex min-w-[214.5px] flex-1 flex-wrap items-start gap-[16px] [&>*]:min-w-[214.5px] [&>*]:basis-[214.5px] [&>*]:grow"
+    : "flex w-full min-w-0 max-w-[445px] flex-col gap-[16px] min-[480px]:w-[445px]";
+
   return (
-    <section className="grid w-full gap-[24px] border-t border-[var(--color-neutral-200)] py-[32px] min-[1024px]:grid-cols-[minmax(180px,350px)_minmax(280px,445px)] min-[1024px]:gap-[24px] min-[1280px]:gap-[48px]">
-      <div className="flex flex-col gap-[16px] text-[var(--color-text-200)]">
+    <section className="flex w-full max-w-[850px] flex-wrap content-start items-start gap-[48px]">
+      <div className="flex w-full min-w-0 flex-col gap-[16px] text-[var(--color-text-200)] min-[480px]:min-w-[300px] min-[480px]:w-[350px]">
         <h2 className="text-[16px] font-bold leading-[19px] tracking-[-0.5px]">{title}</h2>
         <p className="text-[14px] leading-[17px] tracking-[-0.5px]">{description}</p>
       </div>
-      <div className="flex min-w-0 flex-col gap-[16px]">{children}</div>
+      <div className={fieldsClassName}>{children}</div>
     </section>
   );
 }
@@ -199,19 +207,21 @@ export default function ProjectRequestPage() {
             showUtilityMenu
             utilityText={new Intl.DateTimeFormat("es-VE", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}
             onMenuClick={() => setIsMobileNavigationOpen(true)}
-            className="mx-auto w-full max-w-[1128px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
+            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
           />
 
-          <div className="mx-auto w-full max-w-[1128px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
-            <header className="flex items-start justify-between gap-[24px] border-b border-[var(--color-neutral-200)] pb-[24px] pt-[8px]">
+          <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
+            <header className="flex w-full max-w-[850px] flex-wrap items-end justify-between gap-x-[24px] gap-y-[16px]">
               <div className="min-w-0">
                 <h1 className="text-[32px] font-bold leading-[38px] tracking-[-1px] text-[var(--color-text-300)] min-[768px]:text-[48px] min-[768px]:leading-[58px]">Solicitud de proyecto</h1>
-                <p className="mt-[4px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)]">Cada proyecto merece ser el correcto.</p>
+                <p className="mt-[4px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-200)] min-[768px]:text-[18px] min-[768px]:leading-[21px]">Cada proyecto merece ser el correcto.</p>
               </div>
-              <p className="hidden shrink-0 text-right text-[12px] leading-[15px] text-[var(--color-text-100)] min-[480px]:block">Tiempo estimado<br />3–5 minutos</p>
+              <p className="hidden shrink-0 text-right text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)] min-[480px]:block">Tiempo estimado<br />3–5 minutos</p>
             </header>
 
-            <form onSubmit={(event) => event.preventDefault()}>
+            <FormDivider />
+
+            <form className="flex w-full flex-col items-center gap-[48px]" onSubmit={(event) => event.preventDefault()}>
               <FormSection title="Detalles del proyecto" description="Cuéntanos qué deseas desarrollar. Esta información nos ayudará a comprender el alcance, los objetivos y las características generales de tu proyecto antes de la primera reunión.">
                 <TextField label="Nombre del proyecto" icon={Edit2} placeholder='Ej. “Apto. Noventa y Uno”' value={form.projectName} onChange={update("projectName")} />
                 <SelectField label="Tipo de proyecto" value={form.projectType} onChange={update("projectType")} options={["Residencial", "Comercial", "Corporativo", "Stands y exhibiciones"]} />
@@ -223,25 +233,37 @@ export default function ProjectRequestPage() {
                 <ChoiceGroup label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={update("hasBlueprints")} options={["Sí", "No"]} />
               </FormSection>
 
-              <FormSection title="Viabilidad financiera" description="Conocer tu presupuesto y la disponibilidad de capital nos permite proponerte soluciones acordes.">
+              <FormDivider />
+
+              <FormSection fieldsVariant="responsive-grid" title="Viabilidad financiera" description="Conocer tu presupuesto y la disponibilidad de capital nos permite proponerte soluciones acordes.">
                 <SelectField label="Rango de inversión estimado" value={form.investmentRange} onChange={update("investmentRange")} options={["Menos de $10,000 USD", "$10,000 - $50,000 USD", "$50,000 - $100,000 USD", "Más de $100,000 USD"]} />
-                <SelectField label="Disponibilidad del capital" value={form.capitalAvailability} onChange={update("capitalAvailability")} options={["Disponible ahora", "Parcialmente disponible", "En proceso de financiamiento"]} />
+                <SelectField label="Disponibilidad del capital" optional value={form.capitalAvailability} onChange={update("capitalAvailability")} options={["Disponible ahora", "Parcialmente disponible", "En proceso de financiamiento"]} />
               </FormSection>
 
+              <FormDivider />
+
               <FormSection title="Compatibilidad" description="Estas preguntas nos ayudan a conocer tus expectativas, tiempos y experiencia previa para ofrecerte un proceso de trabajo más personalizado y eficiente.">
-                <ChoiceGroup label="¿Cuándo esperas iniciar el proyecto?" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
-                <SelectField label="¿Quién toma la decisión final del proyecto?" value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo(a)", "Mi pareja o familia", "Un equipo o socios"]} />
-                <SelectField label="Expectativa de estilo / nivel de calidad" value={form.quality} onChange={update("quality")} options={["Funcional y económico", "Equilibrio entre diseño y presupuesto", "Alta gama / personalizado"]} />
-                <ChoiceGroup label="¿Ha trabajado con un arquitecto o diseñador antes?" value={form.experience} onChange={update("experience")} options={["Sí, buena experiencia", "Sí, mala experiencia", "No, primera vez"]} />
+                <ChoiceGroup label="¿Cuándo espera iniciar el proyecto?" optional orientation="vertical" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
+                <SelectField label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo(a)", "Mi pareja o familia", "Un equipo o socios"]} />
+                <SelectField label="Expectativa de estilo / nivel de calidad" optional info value={form.quality} onChange={update("quality")} options={["Funcional y económico", "Equilibrio entre diseño y presupuesto", "Alta gama / personalizado"]} />
+                <ChoiceGroup label="¿Ha trabajado con un arquitecto o diseñador antes?" optional value={form.experience} onChange={update("experience")} options={["Sí, buena experiencia", "Sí, mala experiencia", "No, primera vez"]} />
               </FormSection>
+
+              <FormDivider />
 
               <FormSection title="Referencias" description="Comparte imágenes, enlaces o cualquier material de referencia que represente tu visión del proyecto. Esto nos ayudará a comprender mejor el estilo, la atmósfera y los acabados que deseas lograr.">
                 <div className="flex flex-col gap-[8px]">
                   <FieldLabel optional>Subir imágenes / archivos (opcional)</FieldLabel>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); setFiles(Array.from(event.dataTransfer.files || [])); }} className="flex min-h-[160px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); setFiles(Array.from(event.dataTransfer.files || [])); }} className="flex min-h-[177px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] min-[480px]:h-[177px]">
                     <span className="flex size-[40px] items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)]"><CloudPlus size="20" color="currentColor" /></span>
-                    <span className="text-[14px] text-[var(--color-text-100)]"><span className="text-[var(--color-text-300)] underline">Elige un archivo</span> &nbsp;O&nbsp; Arrastra y suelta</span>
-                    <span className="text-[14px] text-[var(--color-text-100)]">Formatos JPEG, PNG, PDF y MP4, hasta 50 MB.</span>
+                    <span className="flex w-full flex-col items-center gap-[8px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
+                      <span className="flex min-h-[36px] flex-wrap items-center justify-center gap-[8px]">
+                        <span className="text-[var(--color-text-300)] underline">Elige un archivo</span>
+                        <span>O</span>
+                        <span>Arrastra y suelta</span>
+                      </span>
+                      <span>Formatos JPEG, PNG, PDF y MP4, hasta 50 MB.</span>
+                    </span>
                   </button>
                   <input ref={fileInputRef} type="file" multiple accept=".jpeg,.jpg,.png,.pdf,.mp4" className="sr-only" onChange={(event) => setFiles(Array.from(event.target.files || []))} />
                   {files.length ? <p className="text-[14px] text-[var(--color-text-200)]">{files.length} archivo(s) seleccionado(s)</p> : null}
@@ -249,9 +271,13 @@ export default function ProjectRequestPage() {
                 <TextField label="Link de referencia (Pinterest, web, etc.)" optional icon={Link21} placeholder='Ej. “https://es.pinterest.com/pin”' value={form.referenceLink} onChange={update("referenceLink")} />
               </FormSection>
 
-              <p className="border-t border-[var(--color-neutral-200)] pt-[32px] text-[16px] leading-[19px] tracking-[-0.5px] text-[var(--color-text-100)]">Al enviar este formulario, nuestro equipo revisará la información y se pondrá en contacto contigo en un plazo aproximado de 24–48 horas.</p>
-              {submitMessage ? <p role="status" className="mt-[16px] text-[14px] text-[var(--color-text-200)]">{submitMessage}</p> : null}
-              <footer className="flex flex-col-reverse gap-[8px] py-[32px] min-[480px]:flex-row min-[480px]:justify-end">
+              <FormDivider />
+
+              <div className="w-full max-w-[850px]">
+                <p className="text-[16px] leading-[19px] tracking-[-0.5px] text-[var(--color-text-100)]">Al enviar este formulario, nuestro equipo revisará la información y se pondrá en contacto contigo en un plazo aproximado de 24–48 horas.</p>
+                {submitMessage ? <p role="status" className="mt-[16px] text-[14px] text-[var(--color-text-200)]">{submitMessage}</p> : null}
+              </div>
+              <footer className="flex w-full max-w-[850px] flex-col-reverse gap-[8px] min-[480px]:flex-row min-[480px]:justify-end">
                 <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="w-full min-[480px]:w-auto" onClick={resetForm}>Limpiar formulario</Button>
                 <Button theme="Primary" type="Solid" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="w-full min-[480px]:w-auto" onClick={handleFrontendSubmit}>Enviar</Button>
               </footer>
