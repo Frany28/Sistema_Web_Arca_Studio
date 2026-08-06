@@ -201,6 +201,11 @@ function ArchitectDashboard({ empty = false }) {
   }, []);
 
   const handleSideNavigationSelect = (item) => {
+    if (item?.to) {
+      navigate(item.to);
+      return;
+    }
+
     if (item?.id === "dashboard") {
       navigate("/dashboard-arquitecto");
       return;

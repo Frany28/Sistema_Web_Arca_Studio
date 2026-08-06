@@ -529,6 +529,11 @@ export default function ProjectDetailsPage({
   }, [isNotificationsDrawerOpen, resolvedProjectId]);
 
   const handleSideNavigationSelect = (item) => {
+    if (item?.to) {
+      navigate(item.to);
+      return;
+    }
+
     if (item?.id === "dashboard") {
       navigate(getDashboardPath(currentUser.roleCode));
       return;

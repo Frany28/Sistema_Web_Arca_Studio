@@ -251,6 +251,11 @@ export default function SettingsPage() {
   }, [currentUser.name]);
 
   const handleSideNavigationSelect = (item) => {
+    if (item?.to) {
+      navigate(item.to);
+      return;
+    }
+
     if (item?.id === "dashboard") {
       navigate(getDashboardPath(currentUser.roleCode));
       return;

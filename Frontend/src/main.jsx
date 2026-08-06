@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./index.css";
 import { AuthProvider } from "./auth/AuthContext.jsx";
+import { RecentProjectsProvider } from "./auth/RecentProjectsContext.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import PublicOnlyRoute from "./auth/PublicOnlyRoute.jsx";
 import ThemeSync from "./components/ui/ThemeSync.jsx";
@@ -56,10 +57,11 @@ function RouteFallback() {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <ThemeSync />
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
+      <RecentProjectsProvider>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <ThemeSync />
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
             <Route element={<PublicOnlyRoute />}>
               <Route path="/" element={<Login />} />
               <Route path="/crear-cuenta" element={<CreateAccount />} />
@@ -122,9 +124,10 @@ createRoot(document.getElementById("root")).render(
                 element={<EmptyProjectWarrantiesExample />}
               />
             </Route>
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </RecentProjectsProvider>
     </AuthProvider>
   </StrictMode>,
 );

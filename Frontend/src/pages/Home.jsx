@@ -469,6 +469,11 @@ function Home({ view = "dashboard" }) {
   }, []);
 
   const handleSideNavigationSelect = (item) => {
+    if (item?.to) {
+      navigate(item.to);
+      return;
+    }
+
     if (item?.id === "dashboard") {
       navigate("/dashboard-clientes");
       return;

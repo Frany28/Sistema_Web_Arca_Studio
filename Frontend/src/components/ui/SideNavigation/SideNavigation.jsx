@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import clsx from "clsx";
 import { ElementPlus } from "iconsax-react";
-import { api } from "../../../api/http.js";
 import { useAuth } from "../../../auth/AuthContext.jsx";
+import { useRecentProjects } from "../../../auth/RecentProjectsContext.jsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
+import {
+  createUserSideNavigationItems,
+  mergeRecentProjectNavigationItems,
+} from "../../../utils/sideNavigationItems.js";
 import AvatarLabel from "../AvatarLabel/AvatarLabel.jsx";
 import Button from "../Button/Button.jsx";
 import Input from "../Input/Input.jsx";
@@ -331,20 +335,6 @@ function clearPointerFocus(event) {
   event.currentTarget.blur();
 }
 
-function createProjectItems(projects) {
-  return [
-    SIDE_NAVIGATION_DEFAULT_ITEMS[0],
-    ...projects.slice(0, 2).map((project) => ({
-      id: `project-${project.id}`,
-      label: project.name,
-      icon: "project",
-      trailingIcon: project.isPublic ? "window" : undefined,
-      wrapperHeight: "56px",
-    })),
-    ...SIDE_NAVIGATION_DEFAULT_ITEMS.slice(1),
-  ];
-}
-
 function SideNavigation({
   className,
   items,
@@ -368,19 +358,23 @@ function SideNavigation({
   ...props
 }) {
   const { user } = useAuth();
+  const { projects: recentProjects } = useRecentProjects();
   const [searchValue, setSearchValue] = useState("");
   const [internalActiveItemId, setInternalActiveItemId] =
     useState(defaultActiveItemId);
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
-  const [loadedItems, setLoadedItems] = useState(
-    SIDE_NAVIGATION_DEFAULT_ITEMS,
-  );
-  const usesSharedProjectItems = items === undefined;
-  const normalizedItems = usesSharedProjectItems
-    ? loadedItems
-    : Array.isArray(items)
-      ? items
-      : SIDE_NAVIGATION_DEFAULT_ITEMS;
+  const normalizedItems = useMemo(() => {
+    const roleCode =
+      typeof user?.role === "string" ? user.role : user?.role?.code;
+    const baseItems =
+      items === undefined
+        ? createUserSideNavigationItems([], roleCode)
+        : Array.isArray(items)
+          ? items
+          : SIDE_NAVIGATION_DEFAULT_ITEMS;
+
+    return mergeRecentProjectNavigationItems(baseItems, recentProjects);
+  }, [items, recentProjects, user?.role]);
   const isActiveControlled =
     typeof activeItemId === "string" && activeItemId.length > 0;
   const isExpandedControlled = typeof expanded === "boolean";
@@ -404,42 +398,6 @@ function SideNavigation({
         .includes(normalizedQuery),
     );
   }, [normalizedItems, searchValue]);
-
-  useEffect(() => {
-    if (!usesSharedProjectItems || !user) {
-      return undefined;
-    }
-
-    let isMounted = true;
-
-    api.projects
-      .list()
-      .then((data) => {
-        if (!isMounted) {
-          return;
-        }
-
-        const projects = Array.isArray(data.projects) ? data.projects : [];
-        const visibleProjects =
-          user.role === "client" && user.clientId
-            ? projects.filter(
-                (project) =>
-                  Number(project.client?.id) === Number(user.clientId),
-              )
-            : projects;
-
-        setLoadedItems(createProjectItems(visibleProjects));
-      })
-      .catch(() => {
-        if (isMounted) {
-          setLoadedItems(SIDE_NAVIGATION_DEFAULT_ITEMS);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user, usesSharedProjectItems]);
 
   const handleSearchChange = (event) => {
     setSearchValue(event.target.value);

@@ -258,6 +258,11 @@ export default function PublicProjectsGallery() {
     currentUser.roleCode === "architect" || currentUser.roleCode === "admin";
 
   const handleNavigation = (item) => {
+    if (item?.to) {
+      navigate(item.to);
+      return;
+    }
+
     if (item?.id === "dashboard") {
       navigate(getDashboardPath(currentUser.roleCode));
     } else if (item?.id === "requests") {

@@ -4,7 +4,9 @@ import test from "node:test";
 import {
   createUserSideNavigationItems,
   getDashboardPath,
+  mergeRecentProjectNavigationItems,
 } from "../src/utils/sideNavigationItems.js";
+import { toRecentProjectCacheEntries } from "../src/utils/recentProjects.js";
 
 test("client navigation keeps requests in every environment", () => {
   const ids = createUserSideNavigationItems([], "client").map(({ id }) => id);
@@ -26,6 +28,67 @@ test("project shortcuts preserve the shared navigation actions", () => {
   assert.equal(items[1].id, "project-10");
   assert.equal(items[1].trailingIcon, "window");
   assert.equal(items.at(-1).id, "settings");
+});
+
+test("navigation keeps exactly the three most recently updated projects", () => {
+  const items = createUserSideNavigationItems(
+    [
+      { id: 1, name: "Uno", updatedAt: "2026-08-01T00:00:00.000Z" },
+      { id: 2, name: "Dos", updatedAt: "2026-08-04T00:00:00.000Z" },
+      { id: 3, name: "Tres", updatedAt: "2026-08-03T00:00:00.000Z" },
+      { id: 4, name: "Cuatro", updatedAt: "2026-08-02T00:00:00.000Z" },
+    ],
+    "client",
+  );
+  const projectIds = items
+    .filter(({ id }) => id.startsWith("project-"))
+    .map(({ id }) => id);
+
+  assert.deepEqual(projectIds, ["project-2", "project-3", "project-4"]);
+});
+
+test("shared recent projects replace a page-specific partial project list", () => {
+  const pageItems = createUserSideNavigationItems(
+    [{ id: 1, name: "Proyecto abierto" }],
+    "client",
+  );
+  const items = mergeRecentProjectNavigationItems(pageItems, [
+    { id: 3, name: "Reciente 3", updatedAt: "2026-08-03" },
+    { id: 2, name: "Reciente 2", updatedAt: "2026-08-02" },
+    { id: 1, name: "Reciente 1", updatedAt: "2026-08-01" },
+  ]);
+
+  assert.deepEqual(
+    items.filter(({ id }) => id.startsWith("project-")).map(({ id }) => id),
+    ["project-3", "project-2", "project-1"],
+  );
+  assert.equal(items.filter(({ id }) => id === "requests").length, 1);
+  assert.equal(items.filter(({ id }) => id === "settings").length, 1);
+});
+
+test("recent project cache excludes unrelated and sensitive project fields", () => {
+  const [cachedProject] = toRecentProjectCacheEntries([
+    {
+      id: 7,
+      name: "Proyecto seguro",
+      publicSlug: "proyecto-seguro",
+      isPublic: true,
+      updatedAt: "2026-08-05T00:00:00.000Z",
+      budget: 50000,
+      client: { email: "cliente@example.com" },
+      description: "InformaciÃ³n interna",
+    },
+  ]);
+
+  assert.deepEqual(Object.keys(cachedProject).sort(), [
+    "id",
+    "isPublic",
+    "name",
+    "publicSlug",
+    "updatedAt",
+  ]);
+  assert.equal(JSON.stringify(cachedProject).includes("cliente@example.com"), false);
+  assert.equal(JSON.stringify(cachedProject).includes("InformaciÃ³n interna"), false);
 });
 
 test("dashboard destinations follow the authenticated role", () => {

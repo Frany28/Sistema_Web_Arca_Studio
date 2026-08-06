@@ -151,6 +151,11 @@ export default function ProjectRequestPage() {
     setForm((current) => ({ ...current, [field]: value }));
   };
   const handleNavigation = (item) => {
+    if (item?.to) {
+      navigate(item.to);
+      return;
+    }
+
     if (item.id === "dashboard") navigate(getDashboardPath(currentUser.roleCode));
     if (item.id === "requests") navigate("/solicitudes");
     if (item.id === "more-projects") navigate("/proyectos");
