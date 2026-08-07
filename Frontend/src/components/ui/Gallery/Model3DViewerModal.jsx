@@ -23,6 +23,7 @@ import {
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 import { getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
+import { canShowPanoramaAnnotations } from "../../../utils/panoramaViewerState.js";
 import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
 import useVrViewerLaunch from "../../../hooks/useVrViewerLaunch.js";
 import {
@@ -2012,6 +2013,12 @@ export default function Model3DViewerModal({
   const modelSrc = displayItem?.modelUrl || displayItem?.fileUrl || null;
   const hasInteractiveModel = Boolean(modelSrc);
   const hasPreviewImage = Boolean(displayItem?.image);
+  const showPanoramaAnnotations = canShowPanoramaAnnotations({
+    isLoading: isModelLoading,
+    loadState: modelLoadState,
+    viewerLoaded: modelViewerRef.current?.loaded === true,
+    visible,
+  });
   const activeNavigationMode =
     MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.drag;
   const activeTexturePreset =
@@ -2490,13 +2497,15 @@ export default function Model3DViewerModal({
                 }}
               >
                 <ArchitecturalModelEffects settings={renderSettings} />
-                <Model3DHotspots
-                  annotations={annotationComments}
-                  focusedAnnotationId={focusedAnnotationId}
-                  onAnnotationReply={handleAnnotationReply}
-                  onAnnotationSelect={handleAnnotationMarkerClick}
-                  pendingSelection={pendingSelection}
-                />
+                {showPanoramaAnnotations ? (
+                  <Model3DHotspots
+                    annotations={annotationComments}
+                    focusedAnnotationId={focusedAnnotationId}
+                    onAnnotationReply={handleAnnotationReply}
+                    onAnnotationSelect={handleAnnotationMarkerClick}
+                    pendingSelection={pendingSelection}
+                  />
+                ) : null}
               </model-viewer>
               <ArchitecturalSettingsPanel
                 error={renderSettingsState.error}
@@ -2519,14 +2528,16 @@ export default function Model3DViewerModal({
                   state={modelLoadState}
                 />
               ) : null}
-              <Model3DCommentMarkers
-                annotations={annotationComments}
-                focusedAnnotationId={focusedAnnotationId}
-                modelViewerRef={modelViewerRef}
-                onAnnotationReply={handleAnnotationReply}
-                onAnnotationSelect={handleAnnotationMarkerClick}
-                pendingSelection={pendingSelection}
-              />
+              {showPanoramaAnnotations ? (
+                <Model3DCommentMarkers
+                  annotations={annotationComments}
+                  focusedAnnotationId={focusedAnnotationId}
+                  modelViewerRef={modelViewerRef}
+                  onAnnotationReply={handleAnnotationReply}
+                  onAnnotationSelect={handleAnnotationMarkerClick}
+                  pendingSelection={pendingSelection}
+                />
+              ) : null}
               {!isModelLoading ? <Model3DUsageHint /> : null}
             </>
           ) : hasPreviewImage ? (
