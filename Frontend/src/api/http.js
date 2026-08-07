@@ -339,8 +339,13 @@ export const projectsApi = {
     );
   },
 
-  getFileContentUrl({ fileId, projectId }) {
-    return getApiUrl(`/projects/${projectId}/files/${fileId}/content`);
+  getFileContentUrl({ fileId, projectId, versionId }) {
+    const params = new URLSearchParams();
+    if (versionId) params.set("versionId", String(versionId));
+    const query = params.toString();
+    return getApiUrl(
+      `/projects/${projectId}/files/${fileId}/content${query ? `?${query}` : ""}`,
+    );
   },
 
   updatePublication({ projectId, isPublic }) {

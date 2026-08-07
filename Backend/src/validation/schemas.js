@@ -139,6 +139,11 @@ export const documentCommentsSchema = z.object({
   }),
 });
 
+export const projectFileContentSchema = z.object({
+  params: z.object({ projectId: positiveId, fileId: positiveId }),
+  query: z.object({ versionId: positiveId.optional() }).passthrough(),
+});
+
 export const environmentCommentSchema = z.object({
   body: z.object({
     content: z.string().trim().min(1, "Escribe una observación.").max(2000),

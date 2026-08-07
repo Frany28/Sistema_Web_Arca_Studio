@@ -96,7 +96,11 @@ function decorateComment(comment, user, projectNamesById = {}) {
   const fileId = getCommentFileId(comment);
   const protectedImageSrc =
     fileId && comment.projectId
-      ? api.projects.getFileContentUrl({ fileId, projectId: comment.projectId })
+      ? api.projects.getFileContentUrl({
+          fileId,
+          projectId: comment.projectId,
+          versionId: comment.fileVersionId,
+        })
       : null;
   const videoTiming = getVideoObservationTiming(selection);
   const pointNumber =

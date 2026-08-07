@@ -10,6 +10,7 @@ import {
   projectListSchema,
   projectCommentAuthorPhotoSchema,
   projectDetailSchema,
+  projectFileContentSchema,
 } from "../src/validation/schemas.js";
 
 test("login schema normalizes email and rejects short passwords", () => {
@@ -59,6 +60,23 @@ test("project detail schema accepts ids and slugs and validates file pagination"
     projectDetailSchema.safeParse({
       params: { projectId: "12" },
       query: { filesLimit: 101 },
+    }).success,
+    false,
+  );
+});
+
+test("project file content cache keys accept only positive version ids", () => {
+  const valid = projectFileContentSchema.parse({
+    params: { fileId: "34", projectId: "12" },
+    query: { versionId: "56" },
+  });
+
+  assert.deepEqual(valid.params, { fileId: 34, projectId: 12 });
+  assert.equal(valid.query.versionId, 56);
+  assert.equal(
+    projectFileContentSchema.safeParse({
+      params: { fileId: "34", projectId: "12" },
+      query: { versionId: "0" },
     }).success,
     false,
   );

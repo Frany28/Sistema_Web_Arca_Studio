@@ -8,6 +8,7 @@ import {
   uploadProjectFile,
   uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
+import { getProjectFileCacheHeaders } from "../utils/projectFileCache.js";
 import { runUpload, uploadPolicies } from "../services/fileUploadService.js";
 import { getAllowedOrigins } from "../config/cors.js";
 
@@ -215,6 +216,12 @@ export async function streamProjectFile(req, res, next) {
       return;
     }
 
+    const cacheHeaders = getProjectFileCacheHeaders({
+      currentVersionId: file.currentVersionId,
+      fileId: file.id,
+      requestedVersionId: req.validatedQuery?.versionId,
+    });
+
     const range = req.headers.range;
     const object = await getProjectFileObject({
       fileName: file.fileName,
@@ -240,7 +247,11 @@ export async function streamProjectFile(req, res, next) {
     }
 
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "private, max-age=300");
+    res.setHeader("Cache-Control", cacheHeaders.cacheControl);
+    res.vary("Cookie");
+    if (cacheHeaders.etag) {
+      res.setHeader("ETag", cacheHeaders.etag);
+    }
     res.setHeader(
       "Content-Disposition",
       `inline; filename="${encodeURIComponent(file.originalName)}"`,

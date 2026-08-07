@@ -27,6 +27,7 @@ import {
   paginationSchema,
   projectListSchema,
   projectDetailSchema,
+  projectFileContentSchema,
   projectCommentAuthorPhotoSchema,
   projectIdSchema,
 } from "../validation/schemas.js";
@@ -79,6 +80,7 @@ router.get(
   "/:projectId/files/:fileId/content",
   requireAuth,
   requirePermissions("projects.read"),
+  validate(projectFileContentSchema),
   streamProjectFile,
 );
 router.patch(

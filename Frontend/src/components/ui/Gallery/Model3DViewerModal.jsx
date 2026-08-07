@@ -753,6 +753,7 @@ function CommentCard({
   observationTypeLabel,
   pointNumber,
   selection,
+  selectionDisabled = false,
   timestamp,
   type = "comment",
   selectionActive = false,
@@ -838,6 +839,7 @@ function CommentCard({
               observationTitle={observationTypeLabel}
               pointNumber={pointNumber}
               selection={selection}
+              disabled={selectionDisabled}
               compact
               onSelect={onSelectionClick}
             />
@@ -876,6 +878,7 @@ function CommentCard({
 function SelectionPreview({
   active = false,
   compact = false,
+  disabled = false,
   image,
   mediaType = "render",
   observationTitle,
@@ -895,13 +898,15 @@ function SelectionPreview({
     return (
       <Container
         type={onSelect ? "button" : undefined}
+        disabled={onSelect ? disabled : undefined}
         className={clsx(
           "flex w-full items-center gap-[8px] rounded-[var(--radius-2)] border bg-[var(--color-neutral-100)] p-[6px] text-left transition-colors",
           active
             ? "border-[var(--color-accent-300)]"
             : "border-[var(--color-neutral-200)]",
-          onSelect &&
+          onSelect && !disabled &&
             "cursor-pointer hover:border-[var(--color-neutral-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]",
+          onSelect && disabled && "cursor-not-allowed opacity-60",
         )}
         onClick={onSelect}
       >
@@ -991,13 +996,15 @@ function SelectionPreview({
   return (
     <Container
       type={onSelect ? "button" : undefined}
+      disabled={onSelect ? disabled : undefined}
       className={clsx(
         "flex w-full items-center gap-[8px] rounded-[var(--radius-2)] border bg-[var(--color-neutral-100)] p-[6px] text-left transition-colors",
         active
           ? "border-[var(--color-accent-300)]"
           : "border-[var(--color-neutral-200)]",
-        onSelect &&
+        onSelect && !disabled &&
           "cursor-pointer hover:border-[var(--color-neutral-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]",
+        onSelect && disabled && "cursor-not-allowed opacity-60",
       )}
       onClick={onSelect}
     >
@@ -1722,6 +1729,7 @@ export function GeneralCommentsDrawer({
   pendingSelection,
   replyRequest = null,
   requireSelectionForRoot = false,
+  selectionDisabled = false,
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
@@ -1857,6 +1865,7 @@ export function GeneralCommentsDrawer({
                 selectionActive={
                   String(focusedSelectionCommentId) === String(comment.id)
                 }
+                selectionDisabled={selectionDisabled}
                 showReplyAction={visibleReplyAction === comment.id}
                 onMoreClick={() => handleMoreClick(comment.id)}
                 onReplyClick={() => handleReplyClick(comment.id)}
@@ -1995,12 +2004,6 @@ export default function Model3DViewerModal({
     };
   }, [visible, item]);
 
-  useEffect(() => {
-    if (visible) {
-      setFocusedSelectionCommentId(focusedCommentId);
-    }
-  }, [focusedCommentId, visible]);
-
   useEffect(
     () => () => {
       window.clearTimeout(closeTimeoutRef.current);
@@ -2019,6 +2022,15 @@ export default function Model3DViewerModal({
     viewerLoaded: modelViewerRef.current?.loaded === true,
     visible,
   });
+
+  useEffect(() => {
+    if (!showPanoramaAnnotations) {
+      setFocusedSelectionCommentId(null);
+      return;
+    }
+
+    setFocusedSelectionCommentId(focusedCommentId);
+  }, [focusedCommentId, showPanoramaAnnotations]);
   const activeNavigationMode =
     MODEL_3D_NAVIGATION_MODES[navigationMode] ?? MODEL_3D_NAVIGATION_MODES.drag;
   const activeTexturePreset =
@@ -2164,7 +2176,7 @@ export default function Model3DViewerModal({
   }
 
   useEffect(() => {
-    if (!visible || !focusedAnnotationId) {
+    if (!showPanoramaAnnotations || !focusedAnnotationId) {
       return;
     }
 
@@ -2176,7 +2188,7 @@ export default function Model3DViewerModal({
     if (isPanoramaPointSelection(comment?.selection)) {
       restoreViewerCamera(comment.selection);
     }
-  }, [comments, focusedAnnotationId, isModelLoading, modelLoadState, visible]);
+  }, [comments, focusedAnnotationId, showPanoramaAnnotations]);
 
   if (!shouldRender || !displayItem || typeof document === "undefined") {
     return null;
@@ -2375,6 +2387,10 @@ export default function Model3DViewerModal({
   }
 
   function handleSelectionPreviewClick(commentId) {
+    if (!showPanoramaAnnotations) {
+      return;
+    }
+
     const nextCommentId =
       String(focusedSelectionCommentId) === String(commentId)
         ? null
@@ -2391,6 +2407,10 @@ export default function Model3DViewerModal({
   }
 
   function handleAnnotationMarkerClick(commentId) {
+    if (!showPanoramaAnnotations) {
+      return false;
+    }
+
     const comment = comments.find(
       (currentComment) => String(currentComment.id) === String(commentId),
     );
@@ -2401,10 +2421,14 @@ export default function Model3DViewerModal({
 
     setPendingSelection(null);
     setFocusedSelectionCommentId(commentId);
+    return true;
   }
 
   function handleAnnotationReply(commentId) {
-    handleAnnotationMarkerClick(commentId);
+    if (!handleAnnotationMarkerClick(commentId)) {
+      return;
+    }
+
     setReplyRequest({ commentId, requestId: Date.now() });
   }
 
@@ -2612,6 +2636,7 @@ export default function Model3DViewerModal({
             mediaType="panorama"
             pendingSelection={pendingSelection}
             replyRequest={replyRequest}
+            selectionDisabled={!showPanoramaAnnotations}
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={handleSelectionPreviewClick}
             onSubmitComment={handleSubmitComment}

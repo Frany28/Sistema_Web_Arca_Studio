@@ -5,8 +5,12 @@ import { getProjectImageSource } from "../src/utils/projectImage.js";
 
 test("project covers are reconstructed from protected identifiers", () => {
   assert.match(
-    getProjectImageSource({ id: 12, imageFileId: 34 }),
-    /\/api\/projects\/12\/files\/34\/content$/,
+    getProjectImageSource({
+      id: 12,
+      imageFileId: 34,
+      imageFileVersionId: 56,
+    }),
+    /\/api\/projects\/12\/files\/34\/content\?versionId=56$/,
   );
 });
 

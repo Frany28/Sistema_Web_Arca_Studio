@@ -160,6 +160,7 @@ function toMediaFileItem(file, { project }) {
       ? api.projects.getFileContentUrl({
           fileId: file.id,
           projectId: project.id,
+          versionId: file.currentVersionId,
         })
       : null;
 
@@ -174,6 +175,7 @@ function toMediaFileItem(file, { project }) {
     fileType: file.fileType,
     fileUrl: contentUrl,
     fileId: file.id,
+    currentVersionId: file.currentVersionId,
     id: file.id,
     image: isImageFile(file) ? contentUrl : null,
     label: title,
@@ -204,6 +206,7 @@ function toProjectPresentation(project) {
           ? api.projects.getFileContentUrl({
               fileId: file.id,
               projectId: project.id,
+              versionId: file.currentVersionId,
             })
           : null;
 

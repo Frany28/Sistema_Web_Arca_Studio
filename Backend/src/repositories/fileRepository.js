@@ -682,6 +682,7 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
         file.id,
         file.title,
         file.file_type,
+        version.id as version_id,
         version.file_name,
         version.original_name,
         version.file_size
@@ -714,6 +715,7 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
     fileSize: file.file_size === null ? null : Number(file.file_size),
     fileType: file.file_type,
     id: Number(file.id),
+    currentVersionId: Number(file.version_id),
     originalName: file.original_name || file.title || "archivo",
     title: file.title,
   };

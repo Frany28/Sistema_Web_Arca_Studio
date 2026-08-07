@@ -33,6 +33,9 @@ function toProject(row) {
     hasPlans: Boolean(row.has_plans),
     id: Number(row.id),
     imageFileId: row.image_file_id ? Number(row.image_file_id) : null,
+    imageFileVersionId: row.image_file_version_id
+      ? Number(row.image_file_version_id)
+      : null,
     hasImage: Boolean(row.image_file_id),
     isPublic: Boolean(row.is_public),
     location: row.location,
@@ -216,12 +219,13 @@ export async function listProjectsForUser(
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
-        image_version.file_id as image_file_id
+        image_version.file_id as image_file_id,
+        image_version.version_id as image_file_version_id
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
       left join lateral (
-        select file.id as file_id
+        select file.id as file_id, version.id as version_id
         from public.files file
         inner join public.file_versions version
           on version.file_id = file.id
@@ -293,12 +297,13 @@ async function findProjectDetailByConditionForUser({
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
-        image_version.file_id as image_file_id
+        image_version.file_id as image_file_id,
+        image_version.version_id as image_file_version_id
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
       left join lateral (
-        select file.id as file_id
+        select file.id as file_id, version.id as version_id
         from public.files file
         inner join public.file_versions version
           on version.file_id = file.id
@@ -555,12 +560,13 @@ export async function updateProjectVisibility(projectId, isPublic, user) {
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
-        image_version.file_id as image_file_id
+        image_version.file_id as image_file_id,
+        image_version.version_id as image_file_version_id
       from updated_project p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
       left join lateral (
-        select file.id as file_id
+        select file.id as file_id, version.id as version_id
         from public.files file
         inner join public.file_versions version
           on version.file_id = file.id

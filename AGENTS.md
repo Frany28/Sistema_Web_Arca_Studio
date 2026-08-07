@@ -52,6 +52,16 @@ Antes de implementar lógica nueva, revisar:
 
 Si una regla se utiliza en dos sitios, extraerla a un módulo compartido en lugar de copiarla.
 
+## Caché obligatorio
+
+- Toda lectura repetible o recurso reutilizable debe evaluar y aplicar caché cuando sea técnicamente seguro, con el objetivo de reducir latencia, consultas a PostgreSQL, solicitudes al backend y descargas duplicadas.
+- Panorámicas, imágenes, videos y demás archivos inmutables deben usar URLs versionadas y caché privado de larga duración. Una nueva versión debe producir una clave distinta e invalidar de forma natural el contenido anterior.
+- Las peticiones concurrentes equivalentes deben deduplicarse y compartir la misma promesa o carga en curso. Los resultados reutilizables dentro de la sesión deben conservarse en un módulo compartido, no en implementaciones duplicadas por componente.
+- Todo caché debe definir explícitamente su clave, alcance, duración, límite de memoria o almacenamiento e invalidación. No se permite un caché sin estrategia para cambios, eliminaciones o nuevas versiones.
+- Los recursos protegidos deben aislarse por usuario o sesión y usar `Cache-Control: private`. Nunca se debe compartir contenido autenticado entre usuarios, roles o proyectos sin comprobar sus permisos.
+- No almacenar en caché respuestas de autenticación, datos sensibles no versionados, mutaciones, errores ni respuestas incompletas. Ante duda de seguridad o consistencia, priorizar la fuente de verdad y documentar por qué no se usa caché.
+- Cada implementación de caché debe cubrir con pruebas el acierto, el fallo, la deduplicación cuando corresponda y la invalidación por versión, usuario o cambio de contexto.
+
 ## Reglas de API y datos
 
 - Regla estricta de seguridad: ninguna respuesta JSON, evento SSE, log o metadato público puede exponer URLs de almacenamiento, URLs firmadas, claves de objeto ni rutas protegidas de archivos o avatares.
