@@ -389,7 +389,7 @@ export default function ProjectRequestPage() {
   );
 
   return (
-    <main className="content-reveal min-h-screen bg-[var(--color-neutral-bg)]">
+    <main className="min-h-screen bg-[var(--color-neutral-bg)]">
       <div className="flex min-h-screen items-stretch">
         <div className="hidden shrink-0 min-[768px]:block min-[768px]:[&>aside]:!w-[234px] min-[1024px]:[&>aside]:!w-[312px]">{sidebar}</div>
         <div className="min-w-0 flex-1">
@@ -403,7 +403,7 @@ export default function ProjectRequestPage() {
             className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
           />
 
-          <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
+          <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
             <header className="flex w-full max-w-[850px] flex-wrap items-end justify-between gap-x-[24px] gap-y-[16px]">
               <div className="min-w-0">
                 <h1 className="text-[32px] font-bold leading-[38px] tracking-[-1px] text-[var(--color-text-50)] min-[768px]:text-[48px] min-[768px]:leading-[58px]">Solicitud de proyecto</h1>
