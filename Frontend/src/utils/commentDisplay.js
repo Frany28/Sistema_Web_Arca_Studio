@@ -4,15 +4,17 @@ export function buildCommentAuthorAvatarUrl(comment) {
   const authorUserId = Number(comment?.author?.id);
   const projectId = Number(comment?.projectId);
 
-  if (
-    !comment?.author?.hasProfilePhoto ||
-    !Number.isInteger(authorUserId) ||
-    authorUserId <= 0 ||
-    !Number.isInteger(projectId) ||
-    projectId <= 0
-  ) {
+  if (!comment?.author?.hasProfilePhoto || !Number.isInteger(authorUserId) || authorUserId <= 0) {
     return "";
   }
+
+  if (comment?.scope === "environment") {
+    return getApiUrl(
+      `/environment-comments/authors/${authorUserId}/profile-photo`,
+    );
+  }
+
+  if (!Number.isInteger(projectId) || projectId <= 0) return "";
 
   return getApiUrl(
     `/projects/${projectId}/comment-authors/${authorUserId}/profile-photo`,

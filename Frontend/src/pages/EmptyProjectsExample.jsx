@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
-import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;

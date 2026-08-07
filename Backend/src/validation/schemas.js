@@ -137,6 +137,17 @@ export const documentCommentsSchema = z.object({
   }),
 });
 
+export const environmentCommentSchema = z.object({
+  body: z.object({
+    content: z.string().trim().min(1, "Escribe una observación.").max(2000),
+    parentCommentId: positiveId.nullish(),
+  }),
+});
+
+export const environmentCommentAuthorPhotoSchema = z.object({
+  params: z.object({ userId: positiveId }),
+});
+
 export const fileRouteSchema = z.object({
   params: z.object({ projectId: positiveId.optional(), projectRequestId: positiveId.optional(), supportRequestId: positiveId.optional() }).passthrough(),
 });

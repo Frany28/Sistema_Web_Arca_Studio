@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
-import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
 import ProjectDetailTabMenu from "./projects/components/ProjectDetailTabMenu.jsx";

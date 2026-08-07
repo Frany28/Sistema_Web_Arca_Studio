@@ -11,7 +11,7 @@ import AuthToast, { AuthToastLockIcon } from "../components/ui/AuthToast/AuthToa
 import Button from "../components/ui/Button/Button.jsx";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import Loader from "../components/ui/Loader/Loader.jsx";
-import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import ProjectProgress from "../components/ui/ProjectProgress/ProjectProgress.jsx";
 import ProjectImage from "../components/ui/ProjectImage/ProjectImage.jsx";
 import ProjectsShowcaseCarousel from "../components/ui/ProjectsShowcaseCarousel.jsx";

@@ -4,6 +4,8 @@ import { normalizeError, ValidationError } from "../src/errors/appError.js";
 import {
   loginSchema,
   commentSchema,
+  environmentCommentAuthorPhotoSchema,
+  environmentCommentSchema,
   paginationSchema,
   projectListSchema,
   projectCommentAuthorPhotoSchema,
@@ -113,6 +115,41 @@ test("video observations validate their temporal selection", () => {
         ...base.body,
         selection: { kind: "video-time", timeSeconds: "12", durationSeconds: 40 },
       },
+    }).success,
+    false,
+  );
+});
+
+test("environment observations require content but never a project id", () => {
+  const valid = environmentCommentSchema.parse({
+    body: { content: "Nota general del entorno" },
+  });
+
+  assert.deepEqual(valid.body, {
+    content: "Nota general del entorno",
+  });
+  assert.equal(
+    environmentCommentSchema.safeParse({ body: { content: "   " } }).success,
+    false,
+  );
+  assert.equal(
+    environmentCommentSchema.safeParse({
+      body: { content: "Respuesta", parentCommentId: 0 },
+    }).success,
+    false,
+  );
+});
+
+test("environment observation author photos require a positive user id", () => {
+  assert.equal(
+    environmentCommentAuthorPhotoSchema.safeParse({
+      params: { userId: "12" },
+    }).success,
+    true,
+  );
+  assert.equal(
+    environmentCommentAuthorPhotoSchema.safeParse({
+      params: { userId: "0" },
     }).success,
     false,
   );

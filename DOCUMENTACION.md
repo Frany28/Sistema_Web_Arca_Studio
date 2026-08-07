@@ -268,6 +268,16 @@ Base: `/api/projects`
 | GET    | `/:projectId/files/:fileId/content` | Auth + `projects.read`    | Stream/descarga de archivo        |
 | PATCH  | `/:projectId/publication`           | Auth + `projects.publish` | Actualiza publicacion/visibilidad |
 
+### Observaciones generales del entorno
+
+Base: `/api/environment-comments`. No requieren un proyecto vinculado. Un usuario ve las conversaciones cuyo autor raíz comparte al menos un proyecto con él; el administrador ve todas.
+
+| Metodo | Endpoint | Proteccion | Descripcion |
+| ------ | -------- | ---------- | ----------- |
+| GET    | `/`      | Auth       | Lista las observaciones generales del entorno del usuario |
+| POST   | `/`      | Auth + limite de frecuencia | Crea una observacion general o una respuesta |
+| GET    | `/authors/:userId/profile-photo` | Auth | Obtiene el avatar solo cuando el autor es visible por proyectos compartidos |
+
 ### Solicitudes de proyecto
 
 Base: `/api/project-requests`

@@ -13,7 +13,7 @@ import {
   getCommentableProjectsForUser,
   getProjectNamesById,
 } from "../../utils/commentDisplay.js";
-import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import SettingsVerticalTabMenu from "../../components/ui/SettingsVerticalTabMenu.jsx";
 import TabPanel from "../../components/ui/TabPanel.jsx";

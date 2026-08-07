@@ -98,6 +98,29 @@ test("other authors use the authenticated project avatar endpoint", () => {
   );
 });
 
+test("shared environment observations use their authenticated avatar endpoint", () => {
+  const decorated = decorateCommentForDisplay(
+    {
+      author: {
+        id: 30,
+        name: "María Gómez",
+        hasProfilePhoto: true,
+        roleCode: "client",
+      },
+      commentType: "general",
+      projectId: null,
+      scope: "environment",
+    },
+    { id: 20, role: "architect" },
+  );
+
+  assert.equal(
+    decorated.avatarSrc,
+    "/api/environment-comments/authors/30/profile-photo",
+  );
+  assert.equal(decorated.projectName, "");
+});
+
 test("author avatar endpoint requires a stored photo and valid identifiers", () => {
   assert.equal(
     buildCommentAuthorAvatarUrl({

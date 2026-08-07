@@ -7,7 +7,7 @@ import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
-import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import {

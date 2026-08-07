@@ -7,7 +7,7 @@ import { getUserDisplay } from "../../auth/userDisplay.js";
 import { decorateCommentForDisplay } from "../../utils/commentDisplay.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
-import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
 import TabPanel from "../../components/ui/TabPanel.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";

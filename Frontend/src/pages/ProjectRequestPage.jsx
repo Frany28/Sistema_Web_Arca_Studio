@@ -11,7 +11,7 @@ import Checkbox from "../components/ui/Checkbox/Checkbox.jsx";
 import DropdownMenu from "../components/ui/DropdownMenu/DropdownMenu.jsx";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
-import NotificationsDrawer from "../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import ProjectRequestCancelModal from "../components/ui/ProjectRequestFlow/ProjectRequestCancelModal.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import SideOverlayDrawer from "../components/ui/SideOverlayDrawer.jsx";
@@ -195,6 +195,7 @@ export default function ProjectRequestPage() {
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
   const [pendingRequestAction, setPendingRequestAction] = useState(null);
+  const [isRequestActionModalOpen, setIsRequestActionModalOpen] = useState(false);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
   const requiredFieldErrors = useMemo(
@@ -280,19 +281,21 @@ export default function ProjectRequestPage() {
     setIsNotificationsDrawerOpen(false);
     setIsMobileNavigationOpen(false);
     setPendingRequestAction({ type: "navigate", item });
+    setIsRequestActionModalOpen(true);
   };
   const requestLogout = () => {
     setShowRequiredAlert(false);
     setIsNotificationsDrawerOpen(false);
     setIsMobileNavigationOpen(false);
     setPendingRequestAction({ type: "logout" });
+    setIsRequestActionModalOpen(true);
   };
   const cancelRequestAction = () => {
-    setPendingRequestAction(null);
+    setIsRequestActionModalOpen(false);
   };
   const confirmRequestAction = () => {
     const action = pendingRequestAction;
-    setPendingRequestAction(null);
+    setIsRequestActionModalOpen(false);
 
     if (action?.type === "clear") {
       resetForm();
@@ -345,6 +348,7 @@ export default function ProjectRequestPage() {
   const requestFormReset = () => {
     setShowRequiredAlert(false);
     setPendingRequestAction({ type: "clear" });
+    setIsRequestActionModalOpen(true);
   };
   const handleFrontendSubmit = () => {
     setHasAttemptedSubmit(true);
@@ -491,7 +495,7 @@ export default function ProjectRequestPage() {
       </SideOverlayDrawer>
 
       <ProjectRequestCancelModal
-        open={Boolean(pendingRequestAction)}
+        open={isRequestActionModalOpen}
         onCancel={cancelRequestAction}
         onConfirm={confirmRequestAction}
         title={pendingRequestAction?.type === "clear" ? "¿Deseas limpiar el formulario?" : undefined}

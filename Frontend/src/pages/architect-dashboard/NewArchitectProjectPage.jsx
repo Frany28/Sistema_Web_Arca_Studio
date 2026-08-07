@@ -5,7 +5,7 @@ import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
-import NotificationsDrawer from "../../components/ui/NotificationsDrawer.jsx";
+import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import {
   ARCHITECT_DRAWER_RECENT_ACTIVITY,

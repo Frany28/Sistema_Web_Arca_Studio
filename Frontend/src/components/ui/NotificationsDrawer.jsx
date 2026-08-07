@@ -583,11 +583,14 @@ function NotificationsDrawer({
   onActivitySelect,
   onCommentSelect,
   onSubmitComment,
+  onSubmitEnvironmentComment,
   ...props
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
   const canSubmitComments = typeof onSubmitComment === "function";
+  const canSubmitEnvironmentComments =
+    typeof onSubmitEnvironmentComment === "function";
   const orderedComments = orderCommentsByThread(comments, {
     limitRootThreads: 3,
   });
@@ -663,16 +666,21 @@ function NotificationsDrawer({
         : {};
 
     try {
-      await onSubmitComment?.({
+      const submitComment = parentComment
+        ? parentComment.scope === "environment"
+          ? onSubmitEnvironmentComment
+          : onSubmitComment
+        : onSubmitEnvironmentComment || onSubmitComment;
+
+      await submitComment?.({
         ...parentCommentPayload,
         message,
         parentCommentId,
         projectId,
       });
-    } catch (err) {
+    } catch {
       // Error will be reflected via props `commentsError` from the caller;
       // prevent unhandled rejection from breaking the UI.
-      console.warn("Comment submit failed:", err);
     } finally {
       if (parentCommentId) {
         setActiveReplyComposer(null);
@@ -700,7 +708,9 @@ function NotificationsDrawer({
             <div className="content-reveal flex flex-col gap-[16px]">
               <MessageInput
                 multiline
-                disabled={!canSubmitComments}
+                disabled={
+                  !canSubmitEnvironmentComments && !canSubmitComments
+                }
                 placeholder="Escribe algo..."
                 onSubmit={(message) => handleCommentSubmit(message)}
               />
@@ -728,7 +738,11 @@ function NotificationsDrawer({
 
                     {activeReplyComposer === item.id ? (
                       <ReplyComposer
-                        disabled={!canSubmitComments}
+                        disabled={
+                          item.scope === "environment"
+                            ? !canSubmitEnvironmentComments
+                            : !canSubmitComments
+                        }
                         onSubmit={(message) =>
                           handleCommentSubmit(message, item)
                         }
