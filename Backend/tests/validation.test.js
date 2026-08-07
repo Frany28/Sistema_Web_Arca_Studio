@@ -177,6 +177,17 @@ test("panorama observations require bounded angular coordinates", () => {
     },
   });
   assert.equal(invalid.success, false);
+
+  const nullOrientation = commentSchema.safeParse({
+    params: { projectId: 1 },
+    body: {
+      commentType: "panorama",
+      content: "Sin coordenadas",
+      targetId: "42",
+      selection: { kind: "panorama-point", yaw: null, pitch: null },
+    },
+  });
+  assert.equal(nullOrientation.success, false);
 });
 
 test("central errors preserve fields and hide unknown messages", () => {

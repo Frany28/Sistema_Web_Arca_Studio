@@ -22,10 +22,7 @@ import {
 } from "../../../utils/commentDisplay.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
-import {
-  getPanoramaCameraOrientation,
-  getPanoramaOrientation,
-} from "../../../utils/panoramaCoordinates.js";
+import { getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
 import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
 import useVrViewerLaunch from "../../../hooks/useVrViewerLaunch.js";
 import {
@@ -2213,9 +2210,7 @@ export default function Model3DViewerModal({
     const modelViewer = modelViewerRef.current;
     const viewerPoint = selection?.viewerPoint;
 
-    const panoramaOrientation =
-      getPanoramaCameraOrientation(selection) ||
-      getPanoramaOrientation(selection);
+    const panoramaOrientation = getPanoramaOrientation(selection);
     if (modelViewer && panoramaOrientation) {
       modelViewer.lookAtPanoramaPoint?.(
         panoramaOrientation.yaw,

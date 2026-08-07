@@ -1,34 +1,33 @@
 export function getPanoramaOrientation(value) {
   const selection = value?.selection || value?.targetMetadata?.selection || value?.targetMetadata || value;
-  const yaw = Number(selection?.yaw);
-  const pitch = Number(selection?.pitch);
+  const yaw = selection?.yaw;
+  const pitch = selection?.pitch;
   if (Number.isFinite(yaw) && Number.isFinite(pitch)) return { yaw, pitch };
 
   const position = selection?.viewerPoint?.modelPosition;
-  const x = Number(position?.x);
-  const y = Number(position?.y);
-  const z = Number(position?.z);
+  const x = position?.x;
+  const y = position?.y;
+  const z = position?.z;
   const length = Math.hypot(x, y, z);
-  if (!Number.isFinite(length) || length === 0) return null;
+  if (
+    ![x, y, z].every(Number.isFinite) ||
+    !Number.isFinite(length) ||
+    length === 0
+  ) {
+    return null;
+  }
   return {
     yaw: Math.atan2(x, -z) * 180 / Math.PI,
     pitch: Math.asin(Math.min(Math.max(y / length, -1), 1)) * 180 / Math.PI,
   };
 }
 
-export function getPanoramaCameraOrientation(value) {
-  const selection =
-    value?.selection || value?.targetMetadata?.selection || value?.targetMetadata || value;
-  const cameraOrbit = selection?.viewerPoint?.cameraOrbit;
-  const theta = Number(cameraOrbit?.theta);
-  const phi = Number(cameraOrbit?.phi);
+export function getPanoramaFieldOfViewDegrees(value) {
+  if (value == null || !Number.isFinite(Number(value))) return null;
 
-  if (!Number.isFinite(theta) || !Number.isFinite(phi)) return null;
+  const degrees = Number(value) * 180 / Math.PI;
 
-  return {
-    yaw: theta * 180 / Math.PI,
-    pitch: 90 - phi * 180 / Math.PI,
-  };
+  return Math.min(Math.max(degrees, 15), 90);
 }
 
 export function getPanoramaDirection(yawDegrees, pitchDegrees, radius = 1) {

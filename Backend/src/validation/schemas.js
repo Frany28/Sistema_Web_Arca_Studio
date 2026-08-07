@@ -93,7 +93,9 @@ export const commentSchema = z.object({
     const pitch = Number(selection?.pitch);
     const validPoint =
       ["panorama-point", "viewer3d-point"].includes(selection?.kind) &&
+      typeof selection?.yaw === "number" &&
       Number.isFinite(yaw) && yaw >= -180 && yaw <= 180 &&
+      typeof selection?.pitch === "number" &&
       Number.isFinite(pitch) && pitch >= -90 && pitch <= 90;
     if (!validPoint) {
       context.addIssue({

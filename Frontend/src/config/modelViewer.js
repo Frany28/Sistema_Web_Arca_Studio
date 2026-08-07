@@ -1,5 +1,8 @@
 import * as THREE from "three";
-import { getPanoramaDirection } from "../utils/panoramaCoordinates.js";
+import {
+  getPanoramaDirection,
+  getPanoramaFieldOfViewDegrees,
+} from "../utils/panoramaCoordinates.js";
 
 // Compatibility element: it preserves the approved <model-viewer> UI contract
 // while rendering an equirectangular panorama instead of a GLB.
@@ -289,9 +292,9 @@ class PanoramaModelViewerElement extends HTMLElement {
     if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) return;
     this.yaw = yaw;
     this.pitch = THREE.MathUtils.clamp(pitch, -85, 85);
-    const fieldOfView = THREE.MathUtils.radToDeg(Number(fieldOfViewRadians));
-    if (Number.isFinite(fieldOfView) && this.camera) {
-      this.camera.fov = THREE.MathUtils.clamp(fieldOfView, 15, 90);
+    const fieldOfView = getPanoramaFieldOfViewDegrees(fieldOfViewRadians);
+    if (fieldOfView !== null && this.camera) {
+      this.camera.fov = fieldOfView;
       this.camera.updateProjectionMatrix();
     }
     this.velocityYaw = 0;
