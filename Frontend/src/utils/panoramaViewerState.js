@@ -11,3 +11,14 @@ export function canShowPanoramaAnnotations({
       viewerLoaded,
   );
 }
+
+export function canObservePanoramaViewer({
+  hasInteractiveModel,
+  shouldRender,
+  viewerAvailable,
+  visible,
+}) {
+  return Boolean(
+    visible && shouldRender && hasInteractiveModel && viewerAvailable,
+  );
+}

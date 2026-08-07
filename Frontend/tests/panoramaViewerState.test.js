@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { canShowPanoramaAnnotations } from "../src/utils/panoramaViewerState.js";
+import {
+  canObservePanoramaViewer,
+  canShowPanoramaAnnotations,
+} from "../src/utils/panoramaViewerState.js";
 
 test("panorama annotations stay hidden until the viewer is fully loaded", () => {
   assert.equal(
@@ -51,5 +54,26 @@ test("panorama annotations appear only after a successful visible load", () => {
       visible: false,
     }),
     false,
+  );
+});
+
+test("a reopened panorama attaches its load lifecycle to the new viewer", () => {
+  assert.equal(
+    canObservePanoramaViewer({
+      hasInteractiveModel: true,
+      shouldRender: false,
+      viewerAvailable: false,
+      visible: false,
+    }),
+    false,
+  );
+  assert.equal(
+    canObservePanoramaViewer({
+      hasInteractiveModel: true,
+      shouldRender: true,
+      viewerAvailable: true,
+      visible: true,
+    }),
+    true,
   );
 });

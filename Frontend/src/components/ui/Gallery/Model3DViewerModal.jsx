@@ -23,7 +23,10 @@ import {
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 import { getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
-import { canShowPanoramaAnnotations } from "../../../utils/panoramaViewerState.js";
+import {
+  canObservePanoramaViewer,
+  canShowPanoramaAnnotations,
+} from "../../../utils/panoramaViewerState.js";
 import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
 import useVrViewerLaunch from "../../../hooks/useVrViewerLaunch.js";
 import {
@@ -2042,7 +2045,7 @@ export default function Model3DViewerModal({
   );
 
   useEffect(() => {
-    if (!visible || !hasInteractiveModel) {
+    if (!visible || !shouldRender || !hasInteractiveModel) {
       setIsModelLoading(false);
       clearModelLoadingTimers();
       return undefined;
@@ -2074,13 +2077,21 @@ export default function Model3DViewerModal({
     hasInteractiveModel,
     modelReloadKey,
     modelSrc,
+    shouldRender,
     visible,
   ]);
 
   useEffect(() => {
     const modelViewer = modelViewerRef.current;
 
-    if (!modelViewer || !hasInteractiveModel) {
+    if (
+      !canObservePanoramaViewer({
+        hasInteractiveModel,
+        shouldRender,
+        viewerAvailable: Boolean(modelViewer),
+        visible,
+      })
+    ) {
       return undefined;
     }
 
@@ -2139,6 +2150,8 @@ export default function Model3DViewerModal({
     modelReloadKey,
     modelSrc,
     renderSettings,
+    shouldRender,
+    visible,
   ]);
 
   function handleModelRetry() {
