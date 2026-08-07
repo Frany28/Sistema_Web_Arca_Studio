@@ -8,12 +8,11 @@ export function getEnvironmentComments({ cursor, limit, user }) {
   return listEnvironmentComments(user, { cursor, limit });
 }
 
-export async function addEnvironmentComment({
-  content,
-  parentCommentId,
-  user,
-}) {
-  const comment = await createEnvironmentComment({
+export async function addEnvironmentComment(
+  { content, parentCommentId, user },
+  { createComment = createEnvironmentComment } = {},
+) {
+  const comment = await createComment({
     content,
     parentCommentId,
     user,
