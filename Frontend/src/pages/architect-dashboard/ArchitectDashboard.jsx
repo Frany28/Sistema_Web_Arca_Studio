@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
-import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../../components/EnvironmentNavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
 import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
@@ -63,13 +63,6 @@ function ArchitectDashboard({ empty = false }) {
   const canManagePublication =
     user?.permissionCodes?.includes("projects.publish");
 
-  const todayLabel = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-  const formattedTodayLabel =
-    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
   const projectRows = useMemo(
     () => projects.map((project) => toProjectRow(project, user)),
     [projects, user],
@@ -311,13 +304,10 @@ function ArchitectDashboard({ empty = false }) {
 
         <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
           <NavigationBar
-            variant="utility"
-            utilityText={formattedTodayLabel}
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] px-[48px] py-[16px]">

@@ -9,7 +9,7 @@ import AvatarGroup from "../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import EmptyState from "../components/ui/EmptyState.jsx";
 import Loader from "../components/ui/Loader/Loader.jsx";
-import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import ProjectImage from "../components/ui/ProjectImage/ProjectImage.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
@@ -247,13 +247,6 @@ export default function PublicProjectsGallery() {
     () => createUserSideNavigationItems(projects, currentUser.roleCode),
     [currentUser.roleCode, projects],
   );
-  const todayLabel = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-  const formattedTodayLabel =
-    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
   const isArchitect =
     currentUser.roleCode === "architect" || currentUser.roleCode === "admin";
 
@@ -312,15 +305,11 @@ export default function PublicProjectsGallery() {
 
         <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto">
           <NavigationBar
-            variant="utility"
-            showUtilityMenu
-            utilityText={formattedTodayLabel}
             onMenuClick={() => setIsMobileNavigationOpen(true)}
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[48px]"
           />
 
           <section className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col px-[16px] pb-[48px] pt-0 min-[768px]:px-[48px]">

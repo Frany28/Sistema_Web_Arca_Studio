@@ -1,4 +1,4 @@
-import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -257,13 +257,6 @@ function Home({ view = "dashboard" }) {
     }
     return null;
   });
-  const todayLabel = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-  const formattedTodayLabel =
-    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
   const projectRows = useMemo(
     () => projects.map((project) => toProjectRow(project)),
     [projects],
@@ -582,15 +575,11 @@ function Home({ view = "dashboard" }) {
 
         <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
           <NavigationBar
-            variant="utility"
-            showUtilityMenu
-            utilityText={formattedTodayLabel}
             onMenuClick={() => setIsMobileNavigationOpen(true)}
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-[12px] px-[16px] py-[16px] min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between sm:px-[24px] lg:px-[48px]">

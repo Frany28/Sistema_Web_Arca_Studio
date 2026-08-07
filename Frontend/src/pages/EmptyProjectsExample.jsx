@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import EmptyState from "../components/ui/EmptyState.jsx";
-import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 
@@ -101,14 +101,6 @@ function EmptyProjectsExample() {
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
-  const todayLabel = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-  const formattedTodayLabel =
-    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
-
   useEffect(() => {
     const mediaQuery = window.matchMedia(
       `(max-width: ${TABLET_BREAKPOINT_PX - 1}px)`,
@@ -183,11 +175,8 @@ function EmptyProjectsExample() {
         >
           <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between self-stretch border-b border-[var(--color-neutral-200)]">
             <NavigationBar
-              variant="utility"
-              utilityText={formattedTodayLabel}
               utilityActionActive={isNotificationsDrawerOpen}
               onUtilityActionClick={() => setIsNotificationsDrawerOpen((current) => !current)}
-              className="w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
             />
           </div>
 

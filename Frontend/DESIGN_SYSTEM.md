@@ -219,6 +219,13 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 
 ## Datos, paginación y tiempo real
 
+### Navegación superior persistente
+
+- Todas las pantallas del entorno autenticado deben renderizar `EnvironmentNavigationBar`; las páginas no pueden importar directamente `ui/NavigationBar/NavigationBar.jsx` ni recrear el navbar con JSX o estilos locales.
+- `EnvironmentNavigationBar` es la única fuente de verdad para la variante, fecha, ancho máximo, espaciado responsive, botón de notificaciones y visibilidad del menú móvil. Una página solo puede proporcionar los callbacks funcionales y el estado activo de sus acciones; no puede sobrescribir `variant`, `utilityText`, `showUtilityMenu` ni `className`.
+- La campana debe abrir el panel compartido `EnvironmentNotificationsDrawer` y permanecer funcional en cualquier pantalla donde aparezca el navbar. No se permiten implementaciones particulares del panel por página.
+- Cualquier cambio visual o funcional del navbar que deba afectar al entorno se implementa una sola vez en `EnvironmentNavigationBar` y debe conservar el mismo resultado para cliente, arquitecto y administrador.
+
 ### Navegación lateral persistente
 
 - Los destinos disponibles en `SideNavigation` se definen de forma centralizada por rol y deben conservarse en todas las pantallas del entorno autenticado del usuario.

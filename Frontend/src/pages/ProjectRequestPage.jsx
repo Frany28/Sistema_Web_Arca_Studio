@@ -10,7 +10,7 @@ import Button from "../components/ui/Button/Button.jsx";
 import Checkbox from "../components/ui/Checkbox/Checkbox.jsx";
 import DropdownMenu from "../components/ui/DropdownMenu/DropdownMenu.jsx";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
-import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import ProjectRequestCancelModal from "../components/ui/ProjectRequestFlow/ProjectRequestCancelModal.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
@@ -394,13 +394,9 @@ export default function ProjectRequestPage() {
         <div className="hidden shrink-0 min-[768px]:block min-[768px]:[&>aside]:!w-[234px] min-[1024px]:[&>aside]:!w-[312px]">{sidebar}</div>
         <div className="min-w-0 flex-1">
           <NavigationBar
-            variant="utility"
-            showUtilityMenu
-            utilityText={new Intl.DateTimeFormat("es-VE", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}
             onMenuClick={() => setIsMobileNavigationOpen(true)}
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() => setIsNotificationsDrawerOpen((current) => !current)}
-            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[48px]"
           />
 
           <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
-import NavigationBar from "../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
@@ -28,14 +28,6 @@ export default function EmptyProjectRendersExample() {
   const imageCommentNotifications = useImageCommentNotifications({
     projectIds: ["quinta-bella-vista"],
   });
-
-  const todayLabel = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-  const formattedTodayLabel =
-    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -137,13 +129,10 @@ export default function EmptyProjectRendersExample() {
 
         <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
           <NavigationBar
-            variant="utility"
-            utilityText={formattedTodayLabel}
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[48px] px-[48px] pb-[24px] pt-0">

@@ -7,7 +7,7 @@ import { getUserDisplay } from "../../auth/userDisplay.js";
 import AuthToast, {
   AuthToastLockIcon,
 } from "../../components/ui/AuthToast/AuthToast.jsx";
-import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../../components/EnvironmentNavigationBar.jsx";
 import { useRecentProjectComments } from "../../hooks/useProjectComments.js";
 import {
   getCommentableProjectsForUser,
@@ -220,14 +220,6 @@ export default function SettingsPage() {
   useEffect(() => {
     if (isNotificationsDrawerOpen) refreshObservations?.();
   }, [isNotificationsDrawerOpen, refreshObservations]);
-
-  const todayLabel = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-  const formattedTodayLabel =
-    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -610,13 +602,10 @@ export default function SettingsPage() {
           />
 
           <NavigationBar
-            variant="utility"
-            utilityText={formattedTodayLabel}
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[var(--spacing-spacing-gap-8,48px)] py-[var(--spacing-spacing-gap-4,12px)]"
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col items-start px-[48px] pt-[48px]">

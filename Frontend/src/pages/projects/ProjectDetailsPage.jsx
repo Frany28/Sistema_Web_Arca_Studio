@@ -5,7 +5,7 @@ import { api } from "../../api/http.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import { decorateCommentForDisplay } from "../../utils/commentDisplay.js";
-import NavigationBar from "../../components/ui/NavigationBar/NavigationBar.jsx";
+import NavigationBar from "../../components/EnvironmentNavigationBar.jsx";
 import { useImageCommentNotifications } from "../../components/ui/Gallery/useImageComments.js";
 import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
@@ -345,14 +345,6 @@ export default function ProjectDetailsPage({
     ...projectComments.map((comment) => toDrawerComment(comment, user)),
     ...imageCommentNotifications,
   ]);
-
-  const todayLabel = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-  const formattedTodayLabel =
-    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -750,15 +742,11 @@ export default function ProjectDetailsPage({
 
         <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
           <NavigationBar
-            variant="utility"
-            utilityText={formattedTodayLabel}
             utilityActionActive={isNotificationsDrawerOpen}
-            showUtilityMenu
             onMenuClick={() => setIsSidebarExpanded(true)}
             onUtilityActionClick={() =>
               setIsNotificationsDrawerOpen((current) => !current)
             }
-            className="mx-auto w-full max-w-[1200px] px-[16px] py-[12px] min-[768px]:px-[24px] min-[1024px]:px-[32px] min-[1280px]:px-[48px]"
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-[24px] px-[8px] pb-[24px] pt-0 min-[480px]:px-[16px] min-[768px]:gap-[32px] min-[768px]:px-[24px] min-[1024px]:px-[32px] min-[1280px]:gap-[48px] min-[1280px]:px-[48px]">

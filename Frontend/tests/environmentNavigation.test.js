@@ -1,0 +1,51 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const AUTHENTICATED_PAGE_FILES = [
+  "src/pages/Home.jsx",
+  "src/pages/ProjectRequestPage.jsx",
+  "src/pages/PublicProjectsGallery.jsx",
+  "src/pages/EmptyProjectsExample.jsx",
+  "src/pages/EmptyProjectRendersExample.jsx",
+  "src/pages/architect-dashboard/ArchitectDashboard.jsx",
+  "src/pages/architect-dashboard/NewArchitectProjectPage.jsx",
+  "src/pages/projects/ProjectDetailsPage.jsx",
+  "src/pages/settings/SettingsPage.jsx",
+];
+
+test("authenticated pages use the shared environment navbar without local overrides", async () => {
+  for (const filePath of AUTHENTICATED_PAGE_FILES) {
+    const source = await readFile(new URL(`../${filePath}`, import.meta.url), "utf8");
+    const navbarUsage = source.match(/<NavigationBar[\s\S]*?\/>/)?.[0] ?? "";
+
+    assert.match(source, /components\/EnvironmentNavigationBar\.jsx/, filePath);
+    assert.doesNotMatch(source, /ui\/NavigationBar\/NavigationBar\.jsx/, filePath);
+    assert.ok(navbarUsage, `${filePath} debe renderizar el navbar compartido`);
+
+    for (const forbiddenProp of [
+      "variant=",
+      "utilityText=",
+      "showUtilityMenu=",
+      "className=",
+    ]) {
+      assert.equal(
+        navbarUsage.includes(forbiddenProp),
+        false,
+        `${filePath} no debe sobrescribir ${forbiddenProp}`,
+      );
+    }
+  }
+});
+
+test("the environment navbar owns its shared visual configuration", async () => {
+  const source = await readFile(
+    new URL("../src/components/EnvironmentNavigationBar.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /variant="utility"/);
+  assert.match(source, /utilityText=\{formatEnvironmentDate\(\)\}/);
+  assert.match(source, /showUtilityMenu=\{Boolean\(props\.onMenuClick\)\}/);
+  assert.match(source, /className=\{ENVIRONMENT_NAVBAR_CLASS_NAME\}/);
+});
