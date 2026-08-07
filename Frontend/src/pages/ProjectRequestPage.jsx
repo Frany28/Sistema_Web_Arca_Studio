@@ -385,7 +385,7 @@ export default function ProjectRequestPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[var(--color-neutral-bg)]">
+    <main className="content-reveal min-h-screen bg-[var(--color-neutral-bg)]">
       <div className="flex min-h-screen items-stretch">
         <div className="hidden shrink-0 min-[768px]:block min-[768px]:[&>aside]:!w-[234px] min-[1024px]:[&>aside]:!w-[312px]">{sidebar}</div>
         <div className="min-w-0 flex-1">
