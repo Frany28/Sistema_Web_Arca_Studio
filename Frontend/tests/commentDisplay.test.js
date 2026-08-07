@@ -151,7 +151,7 @@ test("author avatar endpoint relies on the HttpOnly session cookie", () => {
   );
 });
 
-test("general comments show only the three conversations with latest activity", () => {
+test("general comments show the three newest root comments first", () => {
   const comments = [
     { id: "first", createdAt: "2026-07-10T10:00:00Z" },
     { id: "second", createdAt: "2026-07-11T10:00:00Z" },
@@ -165,7 +165,7 @@ test("general comments show only the three conversations with latest activity", 
   );
 });
 
-test("a recent reply promotes its complete conversation and keeps replies together", () => {
+test("a recent reply stays with its root without changing root comment order", () => {
   const comments = [
     { id: "old-root", createdAt: "2026-07-01T10:00:00Z" },
     {
@@ -180,6 +180,28 @@ test("a recent reply promotes its complete conversation and keeps replies togeth
 
   assert.deepEqual(
     orderCommentsByThread(comments, { limitRootThreads: 3 }).map(({ id }) => id),
-    ["old-root", "old-reply", "root-2", "root-3"],
+    ["root-2", "root-3", "root-4"],
+  );
+});
+
+test("replies remain below their root from oldest to newest", () => {
+  const comments = [
+    { id: "new-root", createdAt: "2026-07-15T10:00:00Z" },
+    {
+      id: "newer-reply",
+      parentCommentId: "new-root",
+      createdAt: "2026-07-15T12:00:00Z",
+    },
+    {
+      id: "older-reply",
+      parentCommentId: "new-root",
+      createdAt: "2026-07-15T11:00:00Z",
+    },
+    { id: "old-root", createdAt: "2026-07-14T10:00:00Z" },
+  ];
+
+  assert.deepEqual(
+    orderCommentsByThread(comments).map(({ id }) => id),
+    ["new-root", "older-reply", "newer-reply", "old-root"],
   );
 });

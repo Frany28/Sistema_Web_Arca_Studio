@@ -283,12 +283,17 @@ class PanoramaModelViewerElement extends HTMLElement {
     };
   }
 
-  lookAtPanoramaPoint(yawDegrees, pitchDegrees) {
+  lookAtPanoramaPoint(yawDegrees, pitchDegrees, fieldOfViewRadians) {
     const yaw = Number(yawDegrees);
     const pitch = Number(pitchDegrees);
     if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) return;
     this.yaw = yaw;
     this.pitch = THREE.MathUtils.clamp(pitch, -85, 85);
+    const fieldOfView = THREE.MathUtils.radToDeg(Number(fieldOfViewRadians));
+    if (Number.isFinite(fieldOfView) && this.camera) {
+      this.camera.fov = THREE.MathUtils.clamp(fieldOfView, 15, 90);
+      this.camera.updateProjectionMatrix();
+    }
     this.velocityYaw = 0;
     this.velocityPitch = 0;
   }
@@ -297,6 +302,10 @@ class PanoramaModelViewerElement extends HTMLElement {
 
   getCameraOrbit() {
     return { theta: THREE.MathUtils.degToRad(this.yaw), phi: THREE.MathUtils.degToRad(90 - this.pitch), radius: 1 };
+  }
+
+  getFieldOfView() {
+    return THREE.MathUtils.degToRad(this.camera?.fov ?? 55);
   }
 
   getCameraTarget() { return { x: 0, y: 0, z: 0 }; }

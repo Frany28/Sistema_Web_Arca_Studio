@@ -16,10 +16,16 @@ import { ButtonGroup } from "../../ui/ButtonGroupItem/ButtonGroupItem.jsx";
 import Label from "../../ui/Label/Label.jsx";
 import TextArea from "../../ui/TextArea/TextArea.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
-import { getObservationTypeLabel } from "../../../utils/commentDisplay.js";
+import {
+  getObservationTypeLabel,
+  orderCommentsByThread,
+} from "../../../utils/commentDisplay.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
-import { getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
+import {
+  getPanoramaCameraOrientation,
+  getPanoramaOrientation,
+} from "../../../utils/panoramaCoordinates.js";
 import useModelRenderSettings from "../../../hooks/useModelRenderSettings.js";
 import useVrViewerLaunch from "../../../hooks/useVrViewerLaunch.js";
 import {
@@ -689,47 +695,6 @@ export const MODEL_3D_CAMERA_CONTROLS = {
   panSensitivity: "0.72",
   zoomSensitivity: "0.16",
 };
-function getCommentTime(comment) {
-  const time = new Date(comment.createdAt || 0).getTime();
-
-  return Number.isNaN(time) ? 0 : time;
-}
-
-function orderCommentsByThread(comments) {
-  const repliesByParent = new Map();
-  const rootComments = [];
-  const rootIds = new Set();
-
-  comments.forEach((comment) => {
-    if (comment.parentCommentId) {
-      const key = String(comment.parentCommentId);
-      repliesByParent.set(key, [...(repliesByParent.get(key) ?? []), comment]);
-      return;
-    }
-
-    rootIds.add(String(comment.id));
-    rootComments.push(comment);
-  });
-
-  const orderedThreads = rootComments.flatMap((comment) => [
-    comment,
-    ...(repliesByParent.get(String(comment.id)) ?? []).sort(
-      (left, right) => getCommentTime(left) - getCommentTime(right),
-    ),
-  ]);
-  const orphanReplies = comments.filter(
-    (comment) =>
-      comment.parentCommentId && !rootIds.has(String(comment.parentCommentId)),
-  );
-
-  return [
-    ...orderedThreads,
-    ...orphanReplies.sort(
-      (left, right) => getCommentTime(left) - getCommentTime(right),
-    ),
-  ];
-}
-
 function ReplyArrowIcon({ className }) {
   return (
     <svg
@@ -1717,9 +1682,10 @@ function Model3DCommentMarkers({
           <Model3DAnnotationMarker
             key={item.id}
             item={item}
-            className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform"
+            className="-translate-x-1/2 -translate-y-1/2 transition-transform"
             style={{
               left: `${Math.min(Math.max(point.x, 0), 1) * 100}%`,
+              position: "absolute",
               top: `${Math.min(Math.max(point.y, 0), 1) * 100}%`,
             }}
             active={item.active}
@@ -2247,11 +2213,14 @@ export default function Model3DViewerModal({
     const modelViewer = modelViewerRef.current;
     const viewerPoint = selection?.viewerPoint;
 
-    const panoramaOrientation = getPanoramaOrientation(selection);
+    const panoramaOrientation =
+      getPanoramaCameraOrientation(selection) ||
+      getPanoramaOrientation(selection);
     if (modelViewer && panoramaOrientation) {
       modelViewer.lookAtPanoramaPoint?.(
         panoramaOrientation.yaw,
         panoramaOrientation.pitch,
+        viewerPoint?.fieldOfView,
       );
       return;
     }

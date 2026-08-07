@@ -16,6 +16,21 @@ export function getPanoramaOrientation(value) {
   };
 }
 
+export function getPanoramaCameraOrientation(value) {
+  const selection =
+    value?.selection || value?.targetMetadata?.selection || value?.targetMetadata || value;
+  const cameraOrbit = selection?.viewerPoint?.cameraOrbit;
+  const theta = Number(cameraOrbit?.theta);
+  const phi = Number(cameraOrbit?.phi);
+
+  if (!Number.isFinite(theta) || !Number.isFinite(phi)) return null;
+
+  return {
+    yaw: theta * 180 / Math.PI,
+    pitch: 90 - phi * 180 / Math.PI,
+  };
+}
+
 export function getPanoramaDirection(yawDegrees, pitchDegrees, radius = 1) {
   const yaw = Number(yawDegrees) * Math.PI / 180;
   const pitch = Number(pitchDegrees) * Math.PI / 180;

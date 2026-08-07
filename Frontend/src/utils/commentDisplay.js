@@ -90,20 +90,9 @@ export function orderCommentsByThread(comments, { limitRootThreads } = {}) {
     rootComments.push(comment);
   });
 
-  const sortedRootComments = [...rootComments].sort((left, right) => {
-    const leftReplies = repliesByParent.get(String(left.id)) ?? [];
-    const rightReplies = repliesByParent.get(String(right.id)) ?? [];
-    const leftTime = Math.max(
-      getCommentTime(left),
-      ...leftReplies.map(getCommentTime),
-    );
-    const rightTime = Math.max(
-      getCommentTime(right),
-      ...rightReplies.map(getCommentTime),
-    );
-
-    return rightTime - leftTime;
-  });
+  const sortedRootComments = [...rootComments].sort(
+    (left, right) => getCommentTime(right) - getCommentTime(left),
+  );
   const visibleRootComments =
     Number.isInteger(limitRootThreads) && limitRootThreads > 0
       ? sortedRootComments.slice(0, limitRootThreads)
