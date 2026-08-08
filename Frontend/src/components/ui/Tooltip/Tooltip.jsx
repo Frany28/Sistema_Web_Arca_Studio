@@ -33,8 +33,8 @@ const TOOLTIP_NODE_IDS = {
 };
 
 const TOOLTIP_TAIL_CLASSNAMES = {
-  Right: "right-[-10px] bottom-[6px]",
-  Left: "left-[-10px] bottom-[6px]",
+  Right: "left-[-10px] top-1/2 -translate-y-1/2",
+  Left: "right-[-10px] top-1/2 -translate-y-1/2",
   "Top center": "left-1/2 bottom-[-8.512px] -translate-x-1/2",
   "Top right": "right-[6px] bottom-[-8.512px]",
   "Top left": "left-[6px] bottom-[-8.512px]",
@@ -55,8 +55,8 @@ const TOOLTIP_BUBBLE_CLASSNAMES = {
 };
 
 const TOOLTIP_TAIL_TRANSFORMS = {
-  Right: "rotate-90",
-  Left: "-scale-y-100 rotate-90",
+  Right: "-rotate-90",
+  Left: "rotate-90",
   "Top center": "-scale-y-100",
   "Top right": "-scale-y-100",
   "Top left": "-scale-y-100",
