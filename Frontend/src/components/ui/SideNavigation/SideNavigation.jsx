@@ -465,6 +465,7 @@ function SideNavigation({
             showRightIcon={false}
             iconLeft={<SidebarRightIcon className="size-5" />}
             className="shrink-0"
+            tooltipPosition="Right"
             aria-label={
               isExpanded
                 ? "Contraer navegación lateral"
@@ -511,6 +512,7 @@ function SideNavigation({
                 showLeftIcon
                 showRightIcon={false}
                 iconLeft={<SearchIcon className="size-5" />}
+                tooltipPosition="Right"
                 aria-label="Buscar navegación"
                 onMouseUp={clearPointerFocus}
                 onTouchEnd={clearPointerFocus}
@@ -541,6 +543,7 @@ function SideNavigation({
                 showLeftIcon
                 showRightIcon={false}
                 iconLeft={<AddIcon className="size-5" />}
+                tooltipPosition="Right"
                 aria-label={newOpportunityLabel}
                 onClick={onNewOpportunityClick}
                 onMouseUp={clearPointerFocus}
@@ -647,6 +650,7 @@ function SideNavigation({
             showLeftIcon
             showRightIcon={false}
             iconLeft={<LogoutIcon className="size-5" />}
+            tooltipPosition="Right"
             aria-label="Cerrar sesión"
             onClick={onLogoutClick}
             onMouseUp={clearPointerFocus}
