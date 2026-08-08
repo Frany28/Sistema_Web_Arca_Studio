@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { CloudPlus, Edit2, InfoCircle, Link21, Location } from "iconsax-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import clsx from "clsx";
 
 import { useAuth } from "../auth/AuthContext.jsx";
 import { useRecentProjects } from "../auth/RecentProjectsContext.jsx";
@@ -391,7 +392,15 @@ export default function ProjectRequestPage() {
   return (
     <main className="min-h-screen bg-[var(--color-neutral-bg)]">
       <div className="flex min-h-screen items-stretch">
-        <div className="hidden shrink-0 min-[768px]:block min-[768px]:[&>aside]:!w-[234px] min-[1024px]:[&>aside]:!w-[312px]">{sidebar}</div>
+        <div
+          className={clsx(
+            "hidden shrink-0 min-[768px]:block",
+            isSidebarExpanded &&
+              "min-[768px]:[&>aside]:!w-[234px] min-[1024px]:[&>aside]:!w-[312px]",
+          )}
+        >
+          {sidebar}
+        </div>
         <div className="min-w-0 flex-1">
           <NavigationBar
             onMenuClick={() => setIsMobileNavigationOpen(true)}
