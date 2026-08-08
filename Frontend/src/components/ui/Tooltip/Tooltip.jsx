@@ -10,7 +10,10 @@ import {
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { TOOLTIP_DEFAULT_PROPS, TOOLTIP_POSITIONS } from "./tooltipConfig.js";
-import { getTooltipViewportOffset } from "./tooltipPosition.js";
+import {
+  getAdaptiveTooltipPosition,
+  getTooltipViewportOffset,
+} from "./tooltipPosition.js";
 
 const TOOLTIP_NODE_IDS = {
   base: "2061:19961",
@@ -210,6 +213,9 @@ function Tooltip({
 }) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen);
   const [portalPosition, setPortalPosition] = useState(null);
+  const [portalTipPosition, setPortalTipPosition] = useState(
+    getResolvedPosition(tipPosition),
+  );
   const anchorRef = useRef(null);
   const portalRef = useRef(null);
   const tooltipId = useId();
@@ -229,7 +235,9 @@ function Tooltip({
 
     const updatePosition = () => {
       if (anchorRef.current) {
-        setPortalPosition(getPortalPosition(anchorRef.current, resolvedPosition));
+        setPortalPosition(
+          getPortalPosition(anchorRef.current, portalTipPosition),
+        );
       }
     };
 
@@ -241,14 +249,39 @@ function Tooltip({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [portal, resolvedOpen, resolvedPosition]);
+  }, [portal, portalTipPosition, resolvedOpen]);
 
   useLayoutEffect(() => {
-    if (!portal || !resolvedOpen || !portalPosition || !portalRef.current) {
+    if (
+      !portal ||
+      !resolvedOpen ||
+      !portalPosition ||
+      !portalRef.current ||
+      !anchorRef.current
+    ) {
       return;
     }
 
     const rect = portalRef.current.getBoundingClientRect();
+    const anchorRect = anchorRef.current.getBoundingClientRect();
+    const adaptivePosition = getAdaptiveTooltipPosition({
+      anchorBottom: anchorRect.bottom,
+      anchorLeft: anchorRect.left,
+      anchorRight: anchorRect.right,
+      anchorTop: anchorRect.top,
+      preferredPosition: resolvedPosition,
+      tooltipHeight: rect.height,
+      tooltipWidth: rect.width,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    });
+
+    if (adaptivePosition !== portalTipPosition) {
+      setPortalTipPosition(adaptivePosition);
+      setPortalPosition(getPortalPosition(anchorRef.current, adaptivePosition));
+      return;
+    }
+
     const { offsetX, offsetY } = getTooltipViewportOffset({
       bottom: rect.bottom,
       left: rect.left,
@@ -258,16 +291,26 @@ function Tooltip({
       viewportWidth: window.innerWidth,
     });
 
-    if (Math.abs(offsetX) > 0.5 || Math.abs(offsetY) > 0.5) {
+    const isVerticalPlacement =
+      portalTipPosition.startsWith("Top") ||
+      portalTipPosition.startsWith("Bottom");
+    const safeOffsetX = isVerticalPlacement ? offsetX : 0;
+    const safeOffsetY = isVerticalPlacement ? 0 : offsetY;
+
+    if (Math.abs(safeOffsetX) > 0.5 || Math.abs(safeOffsetY) > 0.5) {
       setPortalPosition((current) => ({
         ...current,
-        left: current.left + offsetX,
-        top: current.top + offsetY,
+        left: current.left + safeOffsetX,
+        top: current.top + safeOffsetY,
       }));
     }
-  }, [portal, portalPosition, resolvedOpen]);
+  }, [portal, portalPosition, portalTipPosition, resolvedOpen, resolvedPosition]);
 
   const setTooltipOpen = (nextOpen) => {
+    if (nextOpen) {
+      setPortalTipPosition(resolvedPosition);
+    }
+
     if (!isOpenControlled) {
       setInternalOpen(nextOpen);
     }
@@ -290,7 +333,7 @@ function Tooltip({
               subtext={subtext}
               showSubtext={showSubtext}
               showTip={showTip}
-              tipPosition={resolvedPosition}
+              tipPosition={portalTipPosition}
               tooltipId={tooltipId}
               aria-label={ariaLabel}
               {...props}
