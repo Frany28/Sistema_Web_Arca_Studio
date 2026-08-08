@@ -264,12 +264,12 @@ function CommentCard({
               asChild
               portal
               showTip
-              text={`Mostrar acciones de ${displayName}`}
+              text="Más opciones"
               tipPosition="Bottom right"
             >
               <button
                 type="button"
-                aria-label={`Mostrar acciones de ${displayName}`}
+                aria-label="Más opciones"
                 aria-expanded={showReplyAction}
                 aria-controls={`reply-action-${id}`}
                 className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-200)] transition-colors duration-200 hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
