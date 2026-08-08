@@ -260,20 +260,28 @@ function CommentCard({
               </p>
             </div>
 
-            <button
-              type="button"
-              aria-label={`Mostrar acciones de ${displayName}`}
-              aria-expanded={showReplyAction}
-              aria-controls={`reply-action-${id}`}
-              className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-200)] transition-colors duration-200 hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
-              data-reply-interaction="true"
-              onClick={(event) => {
-                event.stopPropagation();
-                onMoreClick?.();
-              }}
+            <Tooltip
+              asChild
+              portal
+              showTip
+              text={`Mostrar acciones de ${displayName}`}
+              tipPosition="Bottom right"
             >
-              <MoreIcon />
-            </button>
+              <button
+                type="button"
+                aria-label={`Mostrar acciones de ${displayName}`}
+                aria-expanded={showReplyAction}
+                aria-controls={`reply-action-${id}`}
+                className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[8px] p-[8px] text-[var(--color-text-200)] transition-colors duration-200 hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
+                data-reply-interaction="true"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onMoreClick?.();
+                }}
+              >
+                <MoreIcon />
+              </button>
+            </Tooltip>
           </div>
 
           <p className="text-[14px] font-normal leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
@@ -293,6 +301,7 @@ function CommentCard({
 
         {showReplyAction ? (
           <Tooltip
+            asChild
             text="Presiona para responder"
             tipPosition="Top center"
             showTip
@@ -455,15 +464,17 @@ function MessageInput({
         }}
       />
       <div className="flex justify-end">
-        <button
-          type="button"
-          aria-label="Enviar observación"
-          disabled={!trimmedValue || disabled}
-          className="flex size-8 cursor-pointer items-center justify-center rounded-[8px] text-[var(--color-neutral-300)] transition-colors duration-200 hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={handleSubmit}
-        >
-          <SendIcon />
-        </button>
+        <Tooltip asChild portal showTip text="Enviar observación" tipPosition="Top right">
+          <button
+            type="button"
+            aria-label="Enviar observación"
+            disabled={!trimmedValue || disabled}
+            className="flex size-8 cursor-pointer items-center justify-center rounded-[8px] text-[var(--color-neutral-300)] transition-colors duration-200 hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={handleSubmit}
+          >
+            <SendIcon />
+          </button>
+        </Tooltip>
       </div>
     </div>
   ) : (
@@ -486,15 +497,17 @@ function MessageInput({
               }
             }}
           />
-          <button
-            type="button"
-            aria-label="Enviar mensaje"
-            disabled={!trimmedValue || disabled}
-            className="flex cursor-pointer shrink-0 items-center justify-center text-[var(--color-neutral-300)] transition-colors duration-200 hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
-            onClick={handleSubmit}
-          >
-            <SendIcon />
-          </button>
+          <Tooltip asChild portal showTip text="Enviar mensaje" tipPosition="Top right">
+            <button
+              type="button"
+              aria-label="Enviar mensaje"
+              disabled={!trimmedValue || disabled}
+              className="flex cursor-pointer shrink-0 items-center justify-center text-[var(--color-neutral-300)] transition-colors duration-200 hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={handleSubmit}
+            >
+              <SendIcon />
+            </button>
+          </Tooltip>
         </div>
       </div>
     </div>

@@ -318,21 +318,31 @@ function PlaybackBar({
           const isActive =
             marker.pending || String(marker.id) === String(focusedCommentId);
 
+          const markerLabel = `${marker.pending ? "Referencia pendiente" : "Ir a la observación"} en ${formatVideoObservationTime(markerTime)}`;
+
           return (
-            <button
+            <Tooltip
               key={marker.id}
-              type="button"
-              aria-label={`${marker.pending ? "Referencia pendiente" : "Ir a la observación"} en ${formatVideoObservationTime(markerTime)}`}
-              className={clsx(
-                "absolute top-1/2 z-20 h-[16px] w-[4px] -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full bg-[var(--color-accent-300)] transition-[height,box-shadow,width] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
-                isActive
-                  ? "h-[20px] w-[6px] shadow-[0_0_0_3px_rgba(255,68,49,0.28)]"
-                  : "hover:h-[20px]",
-                marker.pending && "opacity-65",
-              )}
-              style={{ left: `${markerLeft}%` }}
-              onClick={() => onMarkerClick?.(marker)}
-            />
+              asChild
+              portal
+              showTip
+              text={markerLabel}
+              tipPosition="Top center"
+            >
+              <button
+                type="button"
+                aria-label={markerLabel}
+                className={clsx(
+                  "absolute top-1/2 z-20 h-[16px] w-[4px] -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full bg-[var(--color-accent-300)] transition-[height,box-shadow,width] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                  isActive
+                    ? "h-[20px] w-[6px] shadow-[0_0_0_3px_rgba(255,68,49,0.28)]"
+                    : "hover:h-[20px]",
+                  marker.pending && "opacity-65",
+                )}
+                style={{ left: `${markerLeft}%` }}
+                onClick={() => onMarkerClick?.(marker)}
+              />
+            </Tooltip>
           );
         })}
         <input
@@ -349,37 +359,49 @@ function PlaybackBar({
       </div>
 
       <div className="absolute bottom-[12px] left-[24px] flex items-center gap-[8px]">
-        <button
-          type="button"
-          aria-label={isMuted ? "Activar sonido" : "Silenciar video"}
-          className="flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-          onClick={onToggleMute}
+        <Tooltip
+          asChild
+          portal
+          showTip
+          text={isMuted ? "Activar sonido" : "Silenciar video"}
+          tipPosition="Top center"
         >
-          {isMuted ? (
-            <VolumeMutedIcon className="size-5" />
-          ) : (
-            <VolumeIcon className="size-5" />
-          )}
-        </button>
+          <button
+            type="button"
+            aria-label={isMuted ? "Activar sonido" : "Silenciar video"}
+            className="flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={onToggleMute}
+          >
+            {isMuted ? (
+              <VolumeMutedIcon className="size-5" />
+            ) : (
+              <VolumeIcon className="size-5" />
+            )}
+          </button>
+        </Tooltip>
 
-        <button
-          type="button"
-          aria-label="Comentar video"
-          className="flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-          onClick={onCommentClick}
-        >
-          <CommentIcon className="size-5" />
-        </button>
+        <Tooltip asChild portal showTip text="Comentar video" tipPosition="Top center">
+          <button
+            type="button"
+            aria-label="Comentar video"
+            className="flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={onCommentClick}
+          >
+            <CommentIcon className="size-5" />
+          </button>
+        </Tooltip>
       </div>
 
-      <button
-        type="button"
-        aria-label="Pantalla completa"
-        className="absolute bottom-[12px] right-[24px] flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-        onClick={onFullscreen}
-      >
-        <SettingsIcon className="size-5" />
-      </button>
+      <Tooltip asChild portal showTip text="Pantalla completa" tipPosition="Top right">
+        <button
+          type="button"
+          aria-label="Pantalla completa"
+          className="absolute bottom-[12px] right-[24px] flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+          onClick={onFullscreen}
+        >
+          <SettingsIcon className="size-5" />
+        </button>
+      </Tooltip>
     </div>
   );
 }
@@ -673,26 +695,34 @@ export default function VideoViewerModal({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[120px] bg-[linear-gradient(0deg,rgba(0,0,0,0.30)_0%,rgba(0,0,0,0)_100%)]" />
 
           {displayItem.video ? (
-            <button
-              type="button"
-              aria-label={isPlaying ? "Pausar video" : "Reproducir video"}
-              className={clsx(
-                "group/play absolute inset-0 z-10 flex cursor-pointer items-center justify-center text-[var(--color-neutral-100-uniform)] transition-opacity duration-200 focus-visible:outline-none",
-                isPlaying
-                  ? "opacity-0 hover:opacity-100 focus-visible:opacity-100 group-hover/video:opacity-100"
-                  : "opacity-100",
-              )}
-              onClick={handleTogglePlay}
+            <Tooltip
+              asChild
+              portal
+              showTip
+              text={isPlaying ? "Pausar video" : "Reproducir video"}
+              tipPosition="Top center"
             >
-              <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.24)_0%,rgba(0,0,0,0.14)_28%,rgba(0,0,0,0.04)_56%,rgba(0,0,0,0)_100%)]" />
-              <span className="relative flex size-[64px] items-center justify-center rounded-full text-[var(--color-neutral-100-uniform)] drop-shadow-[0_8px_24px_rgba(0,0,0,0.34)] group-focus-visible/play:ring-2 group-focus-visible/play:ring-[var(--color-neutral-100-uniform)]">
-                {isPlaying ? (
-                  <PauseIcon className="size-[56px]" />
-                ) : (
-                  <PlayIcon className="size-[56px]" />
+              <button
+                type="button"
+                aria-label={isPlaying ? "Pausar video" : "Reproducir video"}
+                className={clsx(
+                  "group/play absolute inset-0 z-10 flex cursor-pointer items-center justify-center text-[var(--color-neutral-100-uniform)] transition-opacity duration-200 focus-visible:outline-none",
+                  isPlaying
+                    ? "opacity-0 hover:opacity-100 focus-visible:opacity-100 group-hover/video:opacity-100"
+                    : "opacity-100",
                 )}
-              </span>
-            </button>
+                onClick={handleTogglePlay}
+              >
+                <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.24)_0%,rgba(0,0,0,0.14)_28%,rgba(0,0,0,0.04)_56%,rgba(0,0,0,0)_100%)]" />
+                <span className="relative flex size-[64px] items-center justify-center rounded-full text-[var(--color-neutral-100-uniform)] drop-shadow-[0_8px_24px_rgba(0,0,0,0.34)] group-focus-visible/play:ring-2 group-focus-visible/play:ring-[var(--color-neutral-100-uniform)]">
+                  {isPlaying ? (
+                    <PauseIcon className="size-[56px]" />
+                  ) : (
+                    <PlayIcon className="size-[56px]" />
+                  )}
+                </span>
+              </button>
+            </Tooltip>
           ) : null}
 
           <div className="absolute left-[12px] top-[12px] z-30">

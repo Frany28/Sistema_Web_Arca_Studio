@@ -4,6 +4,7 @@ import Flag from "../../Flag.jsx";
 import Tag from "../Tag/Tag.jsx";
 import Label from "../Label/Label.jsx";
 import HintText from "../HintText/HintText.jsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
   INPUT_INTERACTIVE_STYLES,
   INPUT_SIZE_STYLES,
@@ -339,6 +340,7 @@ function Input({
   required = true,
   leftIcon = null,
   rightIcon = null,
+  rightIconAriaLabel,
   paymentIcon = false,
   paymentBrand = "VISA",
   countryCode = "US",
@@ -467,6 +469,13 @@ function Input({
   const leadingIcon = leftIcon ?? getDefaultLeftIcon(resolvedType);
   const trailingIcon =
     rightIcon ?? getDefaultRightIcon(resolvedType, passwordVisible);
+  const trailingIconLabel =
+    rightIconAriaLabel ||
+    (resolvedType === "Password"
+      ? passwordVisible
+        ? "Ocultar contraseña"
+        : "Mostrar contraseña"
+      : `Información sobre ${label}`);
   const passwordRequirementItems =
     resolvedType === "Password" && showPasswordStrength
       ? (passwordRequirements ?? PASSWORD_REQUIREMENT_RULES).map(
@@ -732,7 +741,14 @@ function Input({
                 }}
                 aria-label="Código de país"
               />
-              <button
+              <Tooltip
+                asChild
+                portal
+                showTip
+                text="Seleccionar código de país"
+                tipPosition="Top center"
+              >
+                <button
                 type="button"
                 className={clsx(
                   "inline-flex size-5 items-center justify-center",
@@ -745,11 +761,12 @@ function Input({
                   }
                 }}
                 disabled={disabled}
-                aria-label="Mostrar sugerencias de país"
+                aria-label="Seleccionar código de país"
                 aria-expanded={isPhoneMenuOpen}
               >
                 <ChevronDownIcon className="size-5" />
               </button>
+              </Tooltip>
             </div>
 
             {isPhoneMenuOpen ? (
@@ -830,7 +847,14 @@ function Input({
               {...props}
             />
             {showRightIcon && trailingIcon ? (
-              <button
+              <Tooltip
+                asChild
+                portal
+                showTip
+                text={trailingIconLabel}
+                tipPosition="Top center"
+              >
+                <button
                 type="button"
                 className={clsx(
                   "inline-flex size-5 shrink-0 items-center justify-center",
@@ -842,10 +866,11 @@ function Input({
                 }}
                 onClick={handleRightIconClick}
                 disabled={disabled}
-                aria-label="Acción del campo"
+                aria-label={trailingIconLabel}
               >
                 {trailingIcon}
-              </button>
+                </button>
+              </Tooltip>
             ) : null}
           </div>
         </div>
@@ -938,7 +963,14 @@ function Input({
           ) : null}
 
           {showRightIcon && trailingIcon ? (
-            <button
+            <Tooltip
+              asChild
+              portal
+              showTip
+              text={trailingIconLabel}
+              tipPosition="Top center"
+            >
+              <button
               type="button"
               className={clsx(
                 "inline-flex size-5 shrink-0 items-center justify-center",
@@ -950,10 +982,11 @@ function Input({
               }}
               onClick={handleRightIconClick}
               disabled={disabled}
-              aria-label="Acción del campo"
+              aria-label={trailingIconLabel}
             >
               {trailingIcon}
-            </button>
+              </button>
+            </Tooltip>
           ) : null}
         </div>
       )}

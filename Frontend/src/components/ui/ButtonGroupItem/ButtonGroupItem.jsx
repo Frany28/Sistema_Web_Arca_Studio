@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import clsx from "clsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
   BUTTON_GROUP_INTERACTIVE_STYLES,
   BUTTON_GROUP_ITEM_INTERACTIVE_STYLES,
@@ -72,7 +73,7 @@ function ButtonGroupItem({
     onClick?.(event);
   }
 
-  return (
+  const button = (
     <button
       type="button"
       className={clsx(
@@ -108,6 +109,14 @@ function ButtonGroupItem({
         </span>
       ) : null}
     </button>
+  );
+
+  return !showText && label ? (
+    <Tooltip asChild portal showTip text={label} tipPosition="Top center">
+      {button}
+    </Tooltip>
+  ) : (
+    button
   );
 }
 

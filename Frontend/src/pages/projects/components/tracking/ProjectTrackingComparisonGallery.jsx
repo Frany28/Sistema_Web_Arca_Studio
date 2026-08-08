@@ -98,8 +98,10 @@ export default function ProjectTrackingComparisonGallery({ items = [] }) {
             Comparativa de resultados
           </span>
           <Tooltip
+            asChild
             text="Compara las distintas etapas del proyecto."
             showTip
+            portal
             tipPosition="Top center"
           >
             <button

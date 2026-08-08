@@ -12,6 +12,7 @@ import AvatarLabel from "../AvatarLabel/AvatarLabel.jsx";
 import Button from "../Button/Button.jsx";
 import Input from "../Input/Input.jsx";
 import TabItem from "../TabItem/TabItem.jsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
   SIDE_NAVIGATION_DEFAULT_ITEMS,
   SIDE_NAVIGATION_DEFAULT_PROPS,
@@ -579,22 +580,30 @@ function SideNavigation({
                   />
                 </div>
               ) : (
-                <button
+                <Tooltip
                   key={item.id}
-                  type="button"
-                  className={clsx(
-                    "inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--radius-2)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
-                    item.id === resolvedActiveItemId
-                      ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
-                      : "bg-transparent text-[var(--color-text-100)] hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
-                  )}
-                  aria-label={item.label}
-                  onClick={() => handleItemSelect(item)}
-                  onMouseUp={clearPointerFocus}
-                  onTouchEnd={clearPointerFocus}
+                  asChild
+                  portal
+                  showTip
+                  text={item.label}
+                  tipPosition="Right"
                 >
-                  {getItemIcon(item.icon)}
-                </button>
+                  <button
+                    type="button"
+                    className={clsx(
+                      "inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--radius-2)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+                      item.id === resolvedActiveItemId
+                        ? "bg-[var(--color-neutral-200)] text-[var(--color-text-300)]"
+                        : "bg-transparent text-[var(--color-text-100)] hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]",
+                    )}
+                    aria-label={item.label}
+                    onClick={() => handleItemSelect(item)}
+                    onMouseUp={clearPointerFocus}
+                    onTouchEnd={clearPointerFocus}
+                  >
+                    {getItemIcon(item.icon)}
+                  </button>
+                </Tooltip>
               ),
             )}
 

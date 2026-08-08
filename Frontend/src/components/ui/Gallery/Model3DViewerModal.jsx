@@ -817,17 +817,25 @@ function CommentCard({
               </span>
             </div>
 
-            <button
-              type="button"
-              aria-label={`Mostrar acciones de ${displayAuthor}`}
-              aria-expanded={showReplyAction}
-              aria-controls={`image-reply-action-${id}`}
-              className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[var(--radius-2)] p-[8px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
-              data-reply-interaction="true"
-              onClick={onMoreClick}
+            <Tooltip
+              asChild
+              portal
+              showTip
+              text={`Mostrar acciones de ${safeDisplayAuthor}`}
+              tipPosition="Bottom right"
             >
-              <MoreIcon className="size-5" />
-            </button>
+              <button
+                type="button"
+                aria-label={`Mostrar acciones de ${displayAuthor}`}
+                aria-expanded={showReplyAction}
+                aria-controls={`image-reply-action-${id}`}
+                className="absolute right-[-1px] top-[-1px] flex cursor-pointer shrink-0 items-center justify-center rounded-[var(--radius-2)] p-[8px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)]"
+                data-reply-interaction="true"
+                onClick={onMoreClick}
+              >
+                <MoreIcon className="size-5" />
+              </button>
+            </Tooltip>
           </div>
 
           <p className="text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
@@ -857,6 +865,7 @@ function CommentCard({
 
         {showReplyAction ? (
           <Tooltip
+            asChild
             text="Presiona para responder"
             tipPosition="Top center"
             showTip
@@ -925,17 +934,19 @@ function SelectionPreview({
           </p>
         </div>
         {onClear ? (
-          <button
-            type="button"
-            aria-label="Quitar referencia"
-            className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-            onClick={(event) => {
-              event.stopPropagation();
-              onClear();
-            }}
-          >
-            <CloseIcon className="size-3" />
-          </button>
+          <Tooltip asChild portal showTip text="Quitar referencia" tipPosition="Top right">
+            <button
+              type="button"
+              aria-label="Quitar referencia"
+              className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+              onClick={(event) => {
+                event.stopPropagation();
+                onClear();
+              }}
+            >
+              <CloseIcon className="size-3" />
+            </button>
+          </Tooltip>
         ) : null}
       </Container>
     );
@@ -1049,17 +1060,19 @@ function SelectionPreview({
         </p>
       </div>
       {onClear ? (
-        <button
-          type="button"
-          aria-label="Quitar referencia"
-          className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-          onClick={(event) => {
-            event.stopPropagation();
-            onClear();
-          }}
-        >
-          <CloseIcon className="size-3" />
-        </button>
+        <Tooltip asChild portal showTip text="Quitar referencia" tipPosition="Top right">
+          <button
+            type="button"
+            aria-label="Quitar referencia"
+            className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClear();
+            }}
+          >
+            <CloseIcon className="size-3" />
+          </button>
+        </Tooltip>
       ) : null}
     </Container>
   );
@@ -1171,19 +1184,21 @@ function MessageInput({
         }}
       />
       <div className="flex justify-end">
-        <button
-          type="button"
-          aria-label="Enviar observación"
-          disabled={
-            disabled ||
-            !trimmedValue ||
-            (requireSelection && !pendingSelection)
-          }
-          className="flex size-8 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-neutral-300)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={handleSubmit}
-        >
-          <SendIcon className="size-5" />
-        </button>
+        <Tooltip asChild portal showTip text="Enviar observación" tipPosition="Top right">
+          <button
+            type="button"
+            aria-label="Enviar observación"
+            disabled={
+              disabled ||
+              !trimmedValue ||
+              (requireSelection && !pendingSelection)
+            }
+            className="flex size-8 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-neutral-300)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={handleSubmit}
+          >
+            <SendIcon className="size-5" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   ) : (
@@ -1205,15 +1220,17 @@ function MessageInput({
           }}
         />
 
-        <button
-          type="button"
-          aria-label="Enviar mensaje"
-          disabled={!trimmedValue}
-          className="flex size-5 cursor-pointer shrink-0 items-center justify-center text-[var(--color-neutral-300)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
-          onClick={handleSubmit}
-        >
-          <SendIcon className="size-5" />
-        </button>
+        <Tooltip asChild portal showTip text="Enviar mensaje" tipPosition="Top right">
+          <button
+            type="button"
+            aria-label="Enviar mensaje"
+            disabled={!trimmedValue}
+            className="flex size-5 cursor-pointer shrink-0 items-center justify-center text-[var(--color-neutral-300)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={handleSubmit}
+          >
+            <SendIcon className="size-5" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

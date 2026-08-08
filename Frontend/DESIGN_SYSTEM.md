@@ -117,7 +117,7 @@ Usar `Button` y sus propiedades existentes:
 - `fitContent` cuando la etiqueta no deba ocupar el ancho predeterminado.
 - `htmlType="submit"` dentro de formularios.
 
-No simular un botón con un `div`. Las acciones solo con icono necesitan nombre accesible mediante `aria-label`.
+No simular un botón con un `div`. Las acciones solo con icono necesitan nombre accesible mediante `aria-label` y un `Tooltip` descriptivo visible tanto por hover como por foco. El tooltip debe usar portal, la capa flotante global y ajuste al viewport para sobreponerse sin quedar recortado; su incorporación no puede alterar la posición ni las dimensiones del botón.
 
 Todo botón o control con `role="button"` que esté habilitado debe mostrar obligatoriamente `cursor: pointer`. Esta conducta se define de forma global y no debe eliminarse ni sobrescribirse con `cursor: default` o `cursor: auto`. Los controles deshabilitados deben usar `cursor: not-allowed` y declarar el estado mediante `disabled` o `aria-disabled="true"`.
 

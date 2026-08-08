@@ -6,6 +6,7 @@ import Badge from "../../../components/ui/Badge/Badge.jsx";
 import DropdownMenu from "../../../components/ui/DropdownMenu/DropdownMenu.jsx";
 import EmptyState from "../../../components/ui/EmptyState.jsx";
 import Input from "../../../components/ui/Input/Input.jsx";
+import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import {
   PROJECT_WARRANTIES,
   PROJECT_WARRANTY_FILTER_ITEMS,
@@ -106,16 +107,24 @@ function WarrantyRow({ warranty, expanded, onToggle }) {
           className="justify-self-end"
         />
 
-        <button
-          type="button"
-          className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]"
-          aria-label={expanded ? "Contraer garantía" : "Expandir garantía"}
-          aria-expanded={expanded}
-          aria-controls={detailsId}
-          onClick={onToggle}
+        <Tooltip
+          asChild
+          portal
+          showTip
+          text={expanded ? "Contraer garantía" : "Expandir garantía"}
+          tipPosition="Top right"
         >
-          <WarrantyChevronIcon expanded={expanded} />
-        </button>
+          <button
+            type="button"
+            className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]"
+            aria-label={expanded ? "Contraer garantía" : "Expandir garantía"}
+            aria-expanded={expanded}
+            aria-controls={detailsId}
+            onClick={onToggle}
+          >
+            <WarrantyChevronIcon expanded={expanded} />
+          </button>
+        </Tooltip>
       </div>
 
       {expanded ? (

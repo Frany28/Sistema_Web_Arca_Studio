@@ -1,4 +1,12 @@
-import { useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { TOOLTIP_DEFAULT_PROPS, TOOLTIP_POSITIONS } from "./tooltipConfig.js";
@@ -184,6 +192,7 @@ function TooltipBubble({
 }
 
 function Tooltip({
+  asChild = false,
   className,
   content,
   text = TOOLTIP_DEFAULT_PROPS.text,
@@ -207,6 +216,11 @@ function Tooltip({
   const isOpenControlled = typeof open === "boolean";
   const resolvedOpen = isOpenControlled ? open : internalOpen;
   const resolvedPosition = getResolvedPosition(tipPosition);
+  const childRef = asChild && isValidElement(children)
+    ? children.props.ref
+    : null;
+
+  useImperativeHandle(childRef, () => anchorRef.current);
 
   useLayoutEffect(() => {
     if (!portal || !resolvedOpen || !anchorRef.current) {
@@ -261,6 +275,54 @@ function Tooltip({
     onOpenChange?.(nextOpen);
   };
 
+  const portalTooltip =
+    resolvedOpen && portal && portalPosition && typeof document !== "undefined"
+      ? createPortal(
+          <span
+            ref={portalRef}
+            className="pointer-events-none fixed z-[var(--z-tooltip)]"
+            style={portalPosition}
+          >
+            <TooltipBubble
+              className={className}
+              content={content}
+              text={text}
+              subtext={subtext}
+              showSubtext={showSubtext}
+              showTip={showTip}
+              tipPosition={resolvedPosition}
+              tooltipId={tooltipId}
+              aria-label={ariaLabel}
+              {...props}
+            />
+          </span>,
+          document.body,
+        )
+      : null;
+
+  const inlineTooltip =
+    resolvedOpen && !portal ? (
+      <span
+        className={clsx(
+          "pointer-events-none absolute z-20",
+          TOOLTIP_BUBBLE_CLASSNAMES[resolvedPosition],
+        )}
+      >
+        <TooltipBubble
+          className={className}
+          content={content}
+          text={text}
+          subtext={subtext}
+          showSubtext={showSubtext}
+          showTip={showTip}
+          tipPosition={resolvedPosition}
+          tooltipId={tooltipId}
+          aria-label={ariaLabel}
+          {...props}
+        />
+      </span>
+    ) : null;
+
   if (!children) {
     return (
       <TooltipBubble
@@ -275,6 +337,46 @@ function Tooltip({
         aria-label={ariaLabel}
         {...props}
       />
+    );
+  }
+
+  if (asChild && isValidElement(children)) {
+    const childDescription = children.props["aria-describedby"];
+    const mergeHandler = (childHandler, tooltipHandler) => (event) => {
+      childHandler?.(event);
+      tooltipHandler(event);
+    };
+    // cloneElement only installs a callback ref; it does not read ref.current while rendering.
+    // eslint-disable-next-line react-hooks/refs
+    const mergedChild = cloneElement(children, {
+      ref: (node) => {
+        anchorRef.current = node;
+      },
+      "aria-describedby": [
+        childDescription,
+        resolvedOpen ? tooltipId : null,
+      ]
+        .filter(Boolean)
+        .join(" ") || undefined,
+      onBlur: mergeHandler(children.props.onBlur, (event) => {
+        if (event.currentTarget.contains(event.relatedTarget)) return;
+        setTooltipOpen(false);
+      }),
+      onFocus: mergeHandler(children.props.onFocus, () => setTooltipOpen(true)),
+      onMouseEnter: mergeHandler(children.props.onMouseEnter, () =>
+        setTooltipOpen(true),
+      ),
+      onMouseLeave: mergeHandler(children.props.onMouseLeave, () =>
+        setTooltipOpen(false),
+      ),
+    });
+
+    return (
+      <>
+        {mergedChild}
+        {portalTooltip}
+        {inlineTooltip}
+      </>
     );
   }
 
@@ -297,47 +399,8 @@ function Tooltip({
         {children}
       </span>
 
-      {resolvedOpen && portal && portalPosition && typeof document !== "undefined" ? createPortal(
-        <span
-          ref={portalRef}
-          className="pointer-events-none fixed z-[var(--z-tooltip)]"
-          style={portalPosition}
-        >
-          <TooltipBubble
-            className={className}
-            content={content}
-            text={text}
-            subtext={subtext}
-            showSubtext={showSubtext}
-            showTip={showTip}
-            tipPosition={resolvedPosition}
-            tooltipId={tooltipId}
-            aria-label={ariaLabel}
-            {...props}
-          />
-        </span>,
-        document.body,
-      ) : resolvedOpen && !portal ? (
-        <span
-          className={clsx(
-            "pointer-events-none absolute z-20",
-            TOOLTIP_BUBBLE_CLASSNAMES[resolvedPosition],
-          )}
-        >
-          <TooltipBubble
-            className={className}
-            content={content}
-            text={text}
-            subtext={subtext}
-            showSubtext={showSubtext}
-            showTip={showTip}
-            tipPosition={resolvedPosition}
-            tooltipId={tooltipId}
-            aria-label={ariaLabel}
-            {...props}
-          />
-        </span>
-      ) : null}
+      {portalTooltip}
+      {inlineTooltip}
     </span>
   );
 }

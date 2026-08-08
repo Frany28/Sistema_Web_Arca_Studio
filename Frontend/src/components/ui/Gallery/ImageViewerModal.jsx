@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
+import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
@@ -93,41 +94,53 @@ function ImageCarouselControl({ items, activeIndex, onSelect, onPrevious, onNext
 
   return (
     <div className="absolute bottom-[16px] left-1/2 flex -translate-x-1/2 items-center gap-[12px]">
-      <button
-        type="button"
-        className="flex size-8 items-center justify-center rounded-full text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-[rgba(42,41,41,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)]"
-        onClick={onPrevious}
-        aria-label="Imagen anterior"
-      >
-        <ArrowLeftIcon className="size-5" />
-      </button>
+      <Tooltip asChild portal showTip text="Imagen anterior" tipPosition="Top center">
+        <button
+          type="button"
+          className="flex size-8 items-center justify-center rounded-full text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-[rgba(42,41,41,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)]"
+          onClick={onPrevious}
+          aria-label="Imagen anterior"
+        >
+          <ArrowLeftIcon className="size-5" />
+        </button>
+      </Tooltip>
 
       <div className="flex max-w-[340px] items-center gap-[6px] rounded-full bg-[rgba(42,41,41,0.82)] px-[10px] py-[7px]">
         {items.map((item, index) => (
-          <button
+          <Tooltip
             key={item.id ?? item.image}
-            type="button"
-            className={clsx(
-              "h-[8px] rounded-full transition-[width,background-color] duration-200",
-              index === activeIndex
-                ? "w-[28px] bg-[var(--color-neutral-100-uniform)]"
-                : "w-[8px] bg-[var(--color-text-100)] hover:bg-[var(--color-neutral-300)]",
-            )}
-            onClick={() => onSelect(index)}
-            aria-label={`Ver imagen ${index + 1}`}
-            aria-current={index === activeIndex ? "true" : undefined}
-          />
+            asChild
+            portal
+            showTip
+            text={`Ver imagen ${index + 1}`}
+            tipPosition="Top center"
+          >
+            <button
+              type="button"
+              className={clsx(
+                "h-[8px] rounded-full transition-[width,background-color] duration-200",
+                index === activeIndex
+                  ? "w-[28px] bg-[var(--color-neutral-100-uniform)]"
+                  : "w-[8px] bg-[var(--color-text-100)] hover:bg-[var(--color-neutral-300)]",
+              )}
+              onClick={() => onSelect(index)}
+              aria-label={`Ver imagen ${index + 1}`}
+              aria-current={index === activeIndex ? "true" : undefined}
+            />
+          </Tooltip>
         ))}
       </div>
 
-      <button
-        type="button"
-        className="flex size-8 items-center justify-center rounded-full text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-[rgba(42,41,41,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)]"
-        onClick={onNext}
-        aria-label="Imagen siguiente"
-      >
-        <ArrowRightIcon className="size-5" />
-      </button>
+      <Tooltip asChild portal showTip text="Imagen siguiente" tipPosition="Top center">
+        <button
+          type="button"
+          className="flex size-8 items-center justify-center rounded-full text-[var(--color-neutral-100-uniform)] transition-colors hover:bg-[rgba(42,41,41,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)]"
+          onClick={onNext}
+          aria-label="Imagen siguiente"
+        >
+          <ArrowRightIcon className="size-5" />
+        </button>
+      </Tooltip>
     </div>
   );
 }

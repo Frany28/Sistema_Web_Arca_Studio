@@ -7,6 +7,7 @@ import EmptyState from "../components/ui/EmptyState.jsx";
 import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
+import Tooltip from "../components/ui/Tooltip/Tooltip.jsx";
 
 const EXPANDED_SIDEBAR_WIDTH = 312;
 const COLLAPSED_SIDEBAR_WIDTH = 76;
@@ -61,23 +62,27 @@ function EmptyProjectsCarouselSection() {
         </h2>
 
         <div className="flex items-center gap-[6px]">
-          <button
-            type="button"
-            aria-label="Proyecto anterior"
-            disabled
-            className=" cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
-          >
-            <ChevronLeftIcon className="size-4" />
-          </button>
+          <Tooltip asChild portal showTip text="Proyecto anterior" tipPosition="Top center">
+            <button
+              type="button"
+              aria-label="Proyecto anterior"
+              disabled
+              className=" cursor-not-allowed flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
+            >
+              <ChevronLeftIcon className="size-4" />
+            </button>
+          </Tooltip>
 
-          <button
-            type="button"
-            aria-label="Proyecto siguiente"
-            disabled
-            className=" cursor-pointer flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
-          >
-            <ChevronRightIcon className="size-4" />
-          </button>
+          <Tooltip asChild portal showTip text="Proyecto siguiente" tipPosition="Top center">
+            <button
+              type="button"
+              aria-label="Proyecto siguiente"
+              disabled
+              className=" cursor-not-allowed flex h-[28px] w-[28px] items-center justify-center rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] text-[var(--color-text-200)] opacity-40"
+            >
+              <ChevronRightIcon className="size-4" />
+            </button>
+          </Tooltip>
         </div>
       </div>
 

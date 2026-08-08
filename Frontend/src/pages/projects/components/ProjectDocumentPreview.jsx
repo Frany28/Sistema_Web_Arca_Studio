@@ -25,10 +25,17 @@ const DOCUMENT_POINT_COMMENTS_ENABLED =
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const ViewerButton = forwardRef(function ViewerButton(
-  { children, className, disabled, label, onClick },
+  {
+    children,
+    className,
+    disabled,
+    label,
+    onClick,
+    tooltipPosition = "Top center",
+  },
   ref,
 ) {
-  return (
+  const button = (
     <button
       ref={ref}
       type="button"
@@ -42,6 +49,18 @@ const ViewerButton = forwardRef(function ViewerButton(
     >
       {children}
     </button>
+  );
+
+  return (
+    <Tooltip
+      asChild
+      portal
+      showTip
+      text={label}
+      tipPosition={tooltipPosition}
+    >
+      {button}
+    </Tooltip>
   );
 });
 
@@ -103,25 +122,31 @@ function PdfToolbar({
         <span className="mx-[4px] text-[var(--color-neutral-300)]">|</span>
 
         {fullscreen ? (
-          <Tooltip text="Contraer visor" tipPosition="Bottom center" showTip portal>
-            <ViewerButton label="Contraer visor" onClick={onClose}>
-              <ExpandIcon contracted />
-            </ViewerButton>
-          </Tooltip>
+          <ViewerButton
+            label="Contraer visor"
+            onClick={onClose}
+            tooltipPosition="Bottom center"
+          >
+            <ExpandIcon contracted />
+          </ViewerButton>
         ) : (
-          <Tooltip text="Ver en pantalla completa" tipPosition="Top center" showTip portal>
-            <ViewerButton ref={expandButtonRef} label="Ver en pantalla completa" onClick={onExpand}>
-              <ExpandIcon />
-            </ViewerButton>
-          </Tooltip>
+          <ViewerButton
+            ref={expandButtonRef}
+            label="Ver en pantalla completa"
+            onClick={onExpand}
+          >
+            <ExpandIcon />
+          </ViewerButton>
         )}
 
         {fullscreen ? (
-          <Tooltip text="Cerrar" tipPosition="Bottom center" showTip portal>
-            <ViewerButton label="Cerrar visor" onClick={onClose}>
-              <CloseIcon />
-            </ViewerButton>
-          </Tooltip>
+          <ViewerButton
+            label="Cerrar visor"
+            onClick={onClose}
+            tooltipPosition="Bottom center"
+          >
+            <CloseIcon />
+          </ViewerButton>
         ) : null}
       </div>
     </div>
@@ -407,6 +432,7 @@ function DocumentFullscreenModal({ children, documentName, onClose, triggerRef, 
           <ViewerButton
             label="Cerrar visor"
             onClick={onClose}
+            tooltipPosition="Bottom right"
             className="absolute right-[8px] top-[8px] z-20 bg-[var(--color-primary-300)] shadow-[var(--shadow-e1)]"
           >
             <CloseIcon />
@@ -622,15 +648,13 @@ function OfficeInlineDocumentPreview({
     <div className="flex h-[554px] min-h-[554px] max-h-[554px] min-w-0 flex-col overflow-hidden rounded-b-[var(--radius-3)]">
       <div className="flex h-[34px] shrink-0 items-center justify-between bg-[#333] px-[12px] text-[var(--color-neutral-100-uniform)]">
         <span className="min-w-0 truncate text-[11px]">{title}</span>
-        <Tooltip text="Ver en pantalla completa" tipPosition="Top center" showTip portal>
-          <ViewerButton
-            ref={expandButtonRef}
-            label="Ver en pantalla completa"
-            onClick={onExpand}
-          >
-            <ExpandIcon />
-          </ViewerButton>
-        </Tooltip>
+        <ViewerButton
+          ref={expandButtonRef}
+          label="Ver en pantalla completa"
+          onClick={onExpand}
+        >
+          <ExpandIcon />
+        </ViewerButton>
       </div>
       <div className="min-h-0 flex-1">
         {kind === "docx" ? (

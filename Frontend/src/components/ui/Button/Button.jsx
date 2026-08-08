@@ -1,4 +1,6 @@
 import clsx from "clsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
+import { resolveIconButtonTooltip } from "./buttonTooltip.js";
 import {
   BUTTON_INTERACTIVE_STYLES,
   BUTTON_SIZE_STYLES,
@@ -21,6 +23,9 @@ function Button({
   htmlType = "button",
   disabled = false,
   style,
+  tooltip,
+  tooltipPosition = "Top center",
+  "aria-label": ariaLabel,
   ...props
 }) {
   const resolvedTheme = BUTTON_VISUALS[theme] ? theme : "Primary";
@@ -62,7 +67,7 @@ function Button({
     className,
   );
 
-  return (
+  const button = (
     <button
       type={htmlType}
       className={buttonClassName}
@@ -71,6 +76,7 @@ function Button({
         ...style,
         ...focusStyle,
       }}
+      aria-label={ariaLabel}
       {...props}
     >
       {showLeftIcon && iconLeft ? (
@@ -101,6 +107,26 @@ function Button({
         </span>
       ) : null}
     </button>
+  );
+
+  const tooltipText = resolveIconButtonTooltip({
+    ariaLabel,
+    showText,
+    tooltip,
+  });
+
+  return tooltipText ? (
+    <Tooltip
+      asChild
+      portal
+      showTip
+      text={tooltipText}
+      tipPosition={tooltipPosition}
+    >
+      {button}
+    </Tooltip>
+  ) : (
+    button
   );
 }
 

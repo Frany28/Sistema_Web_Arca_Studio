@@ -5,7 +5,6 @@ import * as IconsaxIcons from "iconsax-react";
 import Button from "../Button/Button.jsx";
 import FileAttachmentIcons from "../FileAttachmentIcons.jsx";
 import ScrollBar from "../ScrollBar.jsx";
-import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
   FILE_UPLOAD_SECTION_DEFAULT_FILES,
   FILE_UPLOAD_SECTION_DEFAULT_PROPS,
@@ -164,20 +163,18 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
       </div>
 
       {isCompleted ? (
-        <Tooltip text="Añadir" tipPosition="Top center" showTip>
-          <Button
-            theme="Primary"
-            type="Ghost"
-            size="S"
-            showText={false}
-            showLeftIcon
-            showRightIcon={false}
-            iconLeft={<MoreIcon />}
-            className="shrink-0"
-            aria-label="Añadir archivo"
-            onClick={onAddFile}
-          />
-        </Tooltip>
+        <Button
+          theme="Primary"
+          type="Ghost"
+          size="S"
+          showText={false}
+          showLeftIcon
+          showRightIcon={false}
+          iconLeft={<MoreIcon />}
+          className="shrink-0"
+          aria-label="Añadir archivo"
+          onClick={onAddFile}
+        />
       ) : !isFailed && file.onRemove ? (
         <Button
           theme="Primary"

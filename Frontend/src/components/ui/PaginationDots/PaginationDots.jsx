@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
   PAGINATION_DOTS_ATOM_STYLES,
   PAGINATION_DOTS_DEFAULT_PROPS,
@@ -75,17 +76,27 @@ function PaginationDots({
           );
         }
 
+        const label = `Ir al elemento ${index + 1}`;
+
         return (
-          <button
+          <Tooltip
             key={`pagination-dot-${index}`}
-            type="button"
-            className="inline-flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
-            aria-label={`Ir al elemento ${index + 1}`}
-            aria-pressed={isActive}
-            onClick={() => onChange?.(index)}
+            asChild
+            portal
+            showTip
+            text={label}
+            tipPosition="Top center"
           >
-            {atom}
-          </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]"
+              aria-label={label}
+              aria-pressed={isActive}
+              onClick={() => onChange?.(index)}
+            >
+              {atom}
+            </button>
+          </Tooltip>
         );
       })}
     </div>

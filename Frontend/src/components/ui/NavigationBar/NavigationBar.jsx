@@ -1,6 +1,7 @@
 import { useState } from "react";
 import clsx from "clsx";
 import Button from "../Button/Button.jsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 import HorizontalTabMenu from "../HorizontalTabMenu/HorizontalTabMenu.jsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 
@@ -182,14 +183,16 @@ function NavigationBar({
         </div>
 
         {isMobile ? (
-          <button
-            type="button"
-            aria-label={mobileMenuLabel}
-            onClick={onMenuClick}
-            className="flex items-center justify-center gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-300)] bg-transparent p-[8px] text-[var(--color-primary-200)] transition-colors duration-200 hover:border-[var(--color-neutral-600)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-10)] dark:text-[var(--color-text-200)]"
-          >
-            <MenuIcon />
-          </button>
+          <Tooltip asChild portal showTip text={mobileMenuLabel} tipPosition="Bottom left">
+            <button
+              type="button"
+              aria-label={mobileMenuLabel}
+              onClick={onMenuClick}
+              className="flex items-center justify-center gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-300)] bg-transparent p-[8px] text-[var(--color-primary-200)] transition-colors duration-200 hover:border-[var(--color-neutral-600)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-10)] dark:text-[var(--color-text-200)]"
+            >
+              <MenuIcon />
+            </button>
+          </Tooltip>
         ) : (
           <>
             <div className="flex min-w-0 flex-1 justify-center">
