@@ -36,7 +36,14 @@ function ProjectRequestCancelModal({
     previouslyFocusedRef.current = document.activeElement;
     const frameId = window.requestAnimationFrame(() => {
       const modal = document.querySelector("[data-project-request-cancel-modal]");
-      modal?.querySelector(FOCUSABLE_SELECTOR)?.focus();
+      const focusableElements = Array.from(
+        modal?.querySelectorAll(FOCUSABLE_SELECTOR) ?? [],
+      );
+      const initialFocusTarget = focusableElements.find(
+        (element) => element.getAttribute("aria-label") !== "Cerrar modal",
+      );
+
+      initialFocusTarget?.focus();
     });
 
     const handleKeyDown = (event) => {

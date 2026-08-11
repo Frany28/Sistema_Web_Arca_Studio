@@ -1,6 +1,7 @@
 import {
   cloneElement,
   isValidElement,
+  useEffect,
   useId,
   useImperativeHandle,
   useLayoutEffect,
@@ -14,6 +15,11 @@ import {
   getAdaptiveTooltipPosition,
   getTooltipViewportOffset,
 } from "./tooltipPosition.js";
+
+const TOUCH_LONG_PRESS_MS = 550;
+const TOUCH_TOOLTIP_DISMISS_MS = 1200;
+const TOUCH_MOUSE_SUPPRESSION_MS = 1000;
+const TOUCH_MOVE_TOLERANCE_PX = 10;
 
 const TOOLTIP_NODE_IDS = {
   base: "2061:19961",
@@ -100,6 +106,14 @@ function getResolvedPosition(tipPosition) {
   return TOOLTIP_POSITIONS.includes(tipPosition)
     ? tipPosition
     : TOOLTIP_DEFAULT_PROPS.tipPosition;
+}
+
+function supportsHoverTooltip() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return true;
+  }
+
+  return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 }
 
 function getResolvedNodeId({ tipPosition, showSubtext, showTip }) {
@@ -218,6 +232,13 @@ function Tooltip({
   );
   const anchorRef = useRef(null);
   const portalRef = useRef(null);
+  const longPressTimerRef = useRef(null);
+  const dismissTimerRef = useRef(null);
+  const touchSuppressionTimerRef = useRef(null);
+  const touchStartPointRef = useRef(null);
+  const suppressMouseRef = useRef(false);
+  const suppressNextClickRef = useRef(false);
+  const longPressOpenedRef = useRef(false);
   const tooltipId = useId();
   const isOpenControlled = typeof open === "boolean";
   const resolvedOpen = isOpenControlled ? open : internalOpen;
@@ -227,6 +248,15 @@ function Tooltip({
     : null;
 
   useImperativeHandle(childRef, () => anchorRef.current);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(longPressTimerRef.current);
+      window.clearTimeout(dismissTimerRef.current);
+      window.clearTimeout(touchSuppressionTimerRef.current);
+    },
+    [],
+  );
 
   useLayoutEffect(() => {
     if (!portal || !resolvedOpen || !anchorRef.current) {
@@ -318,6 +348,149 @@ function Tooltip({
     onOpenChange?.(nextOpen);
   };
 
+  const clearLongPressTimer = () => {
+    window.clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = null;
+  };
+
+  const suppressTouchGeneratedEvents = () => {
+    suppressMouseRef.current = true;
+    window.clearTimeout(touchSuppressionTimerRef.current);
+    touchSuppressionTimerRef.current = window.setTimeout(() => {
+      suppressMouseRef.current = false;
+    }, TOUCH_MOUSE_SUPPRESSION_MS);
+  };
+
+  const handleTouchPointerDown = (event) => {
+    if (event.pointerType !== "touch") {
+      return;
+    }
+
+    clearLongPressTimer();
+    window.clearTimeout(dismissTimerRef.current);
+    suppressTouchGeneratedEvents();
+    suppressNextClickRef.current = false;
+    longPressOpenedRef.current = false;
+    touchStartPointRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressOpenedRef.current = true;
+      suppressNextClickRef.current = true;
+      setTooltipOpen(true);
+    }, TOUCH_LONG_PRESS_MS);
+  };
+
+  const handleTouchPointerMove = (event) => {
+    if (event.pointerType !== "touch" || !touchStartPointRef.current) {
+      return;
+    }
+
+    const horizontalDistance = Math.abs(
+      event.clientX - touchStartPointRef.current.x,
+    );
+    const verticalDistance = Math.abs(
+      event.clientY - touchStartPointRef.current.y,
+    );
+
+    if (
+      horizontalDistance > TOUCH_MOVE_TOLERANCE_PX ||
+      verticalDistance > TOUCH_MOVE_TOLERANCE_PX
+    ) {
+      clearLongPressTimer();
+      touchStartPointRef.current = null;
+    }
+  };
+
+  const handleTouchPointerEnd = (event) => {
+    if (event.pointerType !== "touch") {
+      return;
+    }
+
+    clearLongPressTimer();
+    touchStartPointRef.current = null;
+    suppressTouchGeneratedEvents();
+
+    if (!longPressOpenedRef.current) {
+      setTooltipOpen(false);
+      return;
+    }
+
+    window.clearTimeout(dismissTimerRef.current);
+    dismissTimerRef.current = window.setTimeout(() => {
+      setTooltipOpen(false);
+      longPressOpenedRef.current = false;
+    }, TOUCH_TOOLTIP_DISMISS_MS);
+  };
+
+  const handleMouseEnter = (event) => {
+    const originatedFromTouch =
+      event.nativeEvent?.sourceCapabilities?.firesTouchEvents;
+
+    if (
+      originatedFromTouch ||
+      suppressMouseRef.current ||
+      !supportsHoverTooltip()
+    ) {
+      return;
+    }
+
+    setTooltipOpen(true);
+  };
+
+  const handleFocus = (event) => {
+    if (suppressMouseRef.current || !supportsHoverTooltip()) {
+      return;
+    }
+
+    const focusTarget = event.target?.matches ? event.target : event.currentTarget;
+
+    if (focusTarget.matches(":focus-visible")) {
+      setTooltipOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (suppressMouseRef.current) {
+      return;
+    }
+
+    setTooltipOpen(false);
+  };
+
+  const handleBlur = (event) => {
+    if (
+      suppressMouseRef.current ||
+      event.currentTarget.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+
+    setTooltipOpen(false);
+  };
+
+  const handleLongPressClick = (event, childClickHandler) => {
+    if (suppressNextClickRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressNextClickRef.current = false;
+      return;
+    }
+
+    childClickHandler?.(event);
+  };
+
+  const handleTouchContextMenu = (event, childContextMenuHandler) => {
+    if (suppressMouseRef.current) {
+      event.preventDefault();
+      return;
+    }
+
+    childContextMenuHandler?.(event);
+  };
+
   const portalTooltip =
     resolvedOpen && portal && portalPosition && typeof document !== "undefined"
       ? createPortal(
@@ -389,8 +562,8 @@ function Tooltip({
       childHandler?.(event);
       tooltipHandler(event);
     };
-    // cloneElement only installs a callback ref; it does not read ref.current while rendering.
-    // eslint-disable-next-line react-hooks/refs
+    // cloneElement installs handlers that access refs only after user events.
+    /* eslint-disable react-hooks/refs */
     const mergedChild = cloneElement(children, {
       ref: (node) => {
         anchorRef.current = node;
@@ -401,18 +574,31 @@ function Tooltip({
       ]
         .filter(Boolean)
         .join(" ") || undefined,
-      onBlur: mergeHandler(children.props.onBlur, (event) => {
-        if (event.currentTarget.contains(event.relatedTarget)) return;
-        setTooltipOpen(false);
-      }),
-      onFocus: mergeHandler(children.props.onFocus, () => setTooltipOpen(true)),
-      onMouseEnter: mergeHandler(children.props.onMouseEnter, () =>
-        setTooltipOpen(true),
+      onBlur: mergeHandler(children.props.onBlur, handleBlur),
+      onClick: (event) => handleLongPressClick(event, children.props.onClick),
+      onContextMenu: (event) =>
+        handleTouchContextMenu(event, children.props.onContextMenu),
+      onFocus: mergeHandler(children.props.onFocus, handleFocus),
+      onMouseEnter: mergeHandler(children.props.onMouseEnter, handleMouseEnter),
+      onMouseLeave: mergeHandler(children.props.onMouseLeave, handleMouseLeave),
+      onPointerCancel: mergeHandler(
+        children.props.onPointerCancel,
+        handleTouchPointerEnd,
       ),
-      onMouseLeave: mergeHandler(children.props.onMouseLeave, () =>
-        setTooltipOpen(false),
+      onPointerDown: mergeHandler(
+        children.props.onPointerDown,
+        handleTouchPointerDown,
+      ),
+      onPointerMove: mergeHandler(
+        children.props.onPointerMove,
+        handleTouchPointerMove,
+      ),
+      onPointerUp: mergeHandler(
+        children.props.onPointerUp,
+        handleTouchPointerEnd,
       ),
     });
+    /* eslint-enable react-hooks/refs */
 
     return (
       <>
@@ -427,16 +613,16 @@ function Tooltip({
     <span
       ref={anchorRef}
       className="relative inline-flex"
-      onMouseEnter={() => setTooltipOpen(true)}
-      onMouseLeave={() => setTooltipOpen(false)}
-      onFocusCapture={() => setTooltipOpen(true)}
-      onBlurCapture={(event) => {
-        if (event.currentTarget.contains(event.relatedTarget)) {
-          return;
-        }
-
-        setTooltipOpen(false);
-      }}
+      onClickCapture={(event) => handleLongPressClick(event)}
+      onContextMenu={(event) => handleTouchContextMenu(event)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocusCapture={handleFocus}
+      onBlurCapture={handleBlur}
+      onPointerCancel={handleTouchPointerEnd}
+      onPointerDown={handleTouchPointerDown}
+      onPointerMove={handleTouchPointerMove}
+      onPointerUp={handleTouchPointerEnd}
     >
       <span aria-describedby={resolvedOpen ? tooltipId : undefined}>
         {children}
