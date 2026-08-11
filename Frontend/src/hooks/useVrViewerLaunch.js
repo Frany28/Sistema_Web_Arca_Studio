@@ -7,7 +7,26 @@ const CLOSED_VIEWER = {
   visible: false,
 };
 
-export async function getVrSupportStatus(xr) {
+const MOBILE_DEVICE_PATTERN = /Android|iPhone|iPad|iPod|Mobile/i;
+const HEADSET_BROWSER_PATTERN = /OculusBrowser|Meta Quest|Quest|Pico|Vive Focus|Firefox Reality/i;
+
+export function isHandheldMobileNavigator(navigatorLike) {
+  if (!navigatorLike) return false;
+
+  const userAgent = navigatorLike.userAgent || "";
+  if (HEADSET_BROWSER_PATTERN.test(userAgent)) return false;
+
+  if (navigatorLike.userAgentData?.mobile === true) return true;
+  if (MOBILE_DEVICE_PATTERN.test(userAgent)) return true;
+
+  // iPadOS can identify itself as macOS when desktop sites are enabled.
+  return navigatorLike.platform === "MacIntel" && navigatorLike.maxTouchPoints > 1;
+}
+
+export async function getVrSupportStatus(xr, navigatorLike) {
+  // Some Android browsers expose immersive-vr as a Cardboard-style session.
+  // Opening it on a phone forces the duplicated, split-screen presentation.
+  if (isHandheldMobileNavigator(navigatorLike)) return "unsupported";
   if (!xr?.isSessionSupported) return "unsupported";
   try {
     return await xr.isSessionSupported("immersive-vr") ? "supported" : "unsupported";
@@ -30,7 +49,7 @@ export default function useVrViewerLaunch() {
 
   useEffect(() => {
     let cancelled = false;
-    getVrSupportStatus(navigator.xr).then((status) => {
+    getVrSupportStatus(navigator.xr, navigator).then((status) => {
       if (!cancelled) setSupportStatus(status);
     });
     return () => { cancelled = true; };
