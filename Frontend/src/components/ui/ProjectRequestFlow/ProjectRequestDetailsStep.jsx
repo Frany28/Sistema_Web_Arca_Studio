@@ -180,6 +180,8 @@ function ProjectRequestDetailsStep({
   const [contentHeight, setContentHeight] = useState(modalBodyMaxHeight);
   const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [locationSuggestionsError, setLocationSuggestionsError] = useState("");
+  const [isLocationSearching, setIsLocationSearching] = useState(false);
   const contentRef = useRef(null);
   const projectName = values.projectName.trim();
   const description = values.description.trim();
@@ -277,6 +279,9 @@ function ProjectRequestDetailsStep({
       setHasAttemptedSubmit(false);
       setScrollPosition(0);
       setScrollLength(1);
+      setLocationSuggestions([]);
+      setLocationSuggestionsError("");
+      setIsLocationSearching(false);
     });
 
     return () => {
@@ -290,19 +295,28 @@ function ProjectRequestDetailsStep({
       values.projectLocation.trim().length < 2 ||
       values.projectLocationLatitude
     ) {
-      setLocationSuggestions([]);
       return undefined;
     }
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
+      setIsLocationSearching(true);
       searchAddressSuggestions(values.projectLocation, {
         signal: controller.signal,
       })
-        .then(setLocationSuggestions)
+        .then((suggestions) => {
+          setLocationSuggestions(suggestions);
+          setLocationSuggestionsError("");
+        })
         .catch((error) => {
           if (error.name !== "AbortError") {
             setLocationSuggestions([]);
+            setLocationSuggestionsError(error.message);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsLocationSearching(false);
           }
         });
     }, 120);
@@ -386,6 +400,8 @@ function ProjectRequestDetailsStep({
   const handleLocationSuggestionSelect = (suggestion) => {
     setHasAttemptedSubmit(false);
     setLocationSuggestions([]);
+    setLocationSuggestionsError("");
+    setIsLocationSearching(false);
     setIsLocationInputFocused(false);
     onProjectLocationChange?.(suggestion.formattedAddress);
     onProjectLocationSelect?.(suggestion);
@@ -503,6 +519,9 @@ function ProjectRequestDetailsStep({
                 onChange={(event) => {
                   setHasAttemptedSubmit(false);
                   setIsLocationInputFocused(true);
+                  setLocationSuggestions([]);
+                  setLocationSuggestionsError("");
+                  setIsLocationSearching(false);
                   onProjectLocationChange?.(event.target.value);
                   onProjectLocationSelect?.({
                     formattedAddress: "",
@@ -520,6 +539,22 @@ function ProjectRequestDetailsStep({
                 />
               ) : null}
             </div>
+            {isLocationSearching && !showProjectLocationError ? (
+              <HintText
+                state="Default"
+                hintText="Buscando direcciones..."
+                className="w-full"
+                role="status"
+              />
+            ) : null}
+            {locationSuggestionsError && !showProjectLocationError ? (
+              <HintText
+                state="Error"
+                hintText={locationSuggestionsError}
+                className="w-full"
+                role="alert"
+              />
+            ) : null}
             {values.projectLocationLatitude ? (
               <HintText
                 state="Success"
