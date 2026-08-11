@@ -14,12 +14,14 @@ import { useImageCommentNotifications } from "../components/ui/Gallery/useImageC
 import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import ProjectRequestCancelModal from "../components/ui/ProjectRequestFlow/ProjectRequestCancelModal.jsx";
+import ProjectRequestValidationStep from "../components/ui/ProjectRequestFlow/ProjectRequestValidationStep.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import SideOverlayDrawer from "../components/ui/SideOverlayDrawer.jsx";
 import { useRecentProjectComments } from "../hooks/useProjectComments.js";
 import { getProjectNamesById } from "../utils/commentDisplay.js";
 import { getProjectRequestRequiredFieldErrors } from "../utils/projectRequestValidation.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
+import ProjectRequestReceivedView from "./project-request/components/ProjectRequestReceivedView.jsx";
 import {
   createUserSideNavigationItems,
   getDashboardPath,
@@ -189,7 +191,6 @@ export default function ProjectRequestPage() {
     referenceLink: initialRequest?.referenceLink || "",
   }));
   const [files, setFiles] = useState([]);
-  const [submitMessage, setSubmitMessage] = useState("");
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [showRequiredAlert, setShowRequiredAlert] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -197,6 +198,9 @@ export default function ProjectRequestPage() {
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] = useState(false);
   const [pendingRequestAction, setPendingRequestAction] = useState(null);
   const [isRequestActionModalOpen, setIsRequestActionModalOpen] = useState(false);
+  const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
+  const [validationCode, setValidationCode] = useState("");
+  const [isRequestReceived, setIsRequestReceived] = useState(false);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
   const requiredFieldErrors = useMemo(
@@ -342,9 +346,11 @@ export default function ProjectRequestPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    setSubmitMessage("");
     setHasAttemptedSubmit(false);
     setShowRequiredAlert(false);
+    setIsValidationModalOpen(false);
+    setValidationCode("");
+    setIsRequestReceived(false);
   };
   const requestFormReset = () => {
     setShowRequiredAlert(false);
@@ -353,7 +359,6 @@ export default function ProjectRequestPage() {
   };
   const handleFrontendSubmit = () => {
     setHasAttemptedSubmit(true);
-    setSubmitMessage("");
 
     if (hasRequiredFieldErrors) {
       setShowRequiredAlert(true);
@@ -372,7 +377,18 @@ export default function ProjectRequestPage() {
     }
 
     setShowRequiredAlert(false);
-    setSubmitMessage("Formulario completado correctamente.");
+    setValidationCode("");
+    setIsValidationModalOpen(true);
+  };
+  const handleValidationSubmit = (code) => {
+    if (!/^\d+$/.test(String(code ?? "").trim())) {
+      return;
+    }
+
+    setIsValidationModalOpen(false);
+    setIsRequestReceived(true);
+    setIsSidebarExpanded(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const sidebar = (
     <SideNavigation
@@ -408,7 +424,16 @@ export default function ProjectRequestPage() {
             onUtilityActionClick={() => setIsNotificationsDrawerOpen((current) => !current)}
           />
 
-          <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
+          {isRequestReceived ? (
+            <ProjectRequestReceivedView
+              onViewRequest={() => {
+                setIsRequestReceived(false);
+                setIsSidebarExpanded(true);
+              }}
+              onBackToDashboard={() => navigate(getDashboardPath(currentUser.roleCode))}
+            />
+          ) : (
+            <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
             <header className="flex w-full max-w-[850px] flex-wrap items-end justify-between gap-x-[24px] gap-y-[16px]">
               <div className="min-w-0">
                 <h1 className="text-[32px] font-bold leading-[38px] tracking-[-1px] text-[var(--color-text-50)] min-[768px]:text-[48px] min-[768px]:leading-[58px]">Solicitud de proyecto</h1>
@@ -473,14 +498,14 @@ export default function ProjectRequestPage() {
 
               <div className="w-full max-w-[850px]">
                 <p className="text-[16px] leading-[19px] tracking-[-0.5px] text-[var(--color-text-100)]">Al enviar este formulario, nuestro equipo revisará la información y se pondrá en contacto contigo en un plazo aproximado de 24–48 horas.</p>
-                {submitMessage ? <p role="status" className="mt-[16px] text-[14px] text-[var(--color-text-200)]">{submitMessage}</p> : null}
               </div>
               <footer className="flex w-full max-w-[850px] flex-col-reverse gap-[8px] min-[480px]:flex-row min-[480px]:justify-end">
                 <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={requestFormReset}>Limpiar formulario</Button>
                 <Button theme="Primary" type="Solid" htmlType="submit" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto">Enviar</Button>
               </footer>
             </form>
-          </div>
+            </div>
+          )}
 
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}
@@ -507,6 +532,15 @@ export default function ProjectRequestPage() {
         description={pendingRequestAction?.type === "clear" ? "Esta acción eliminará toda la información ingresada en el formulario." : undefined}
         primaryActionLabel={pendingRequestAction?.type === "clear" ? "Limpiar" : undefined}
         ariaLabel={pendingRequestAction?.type === "clear" ? "Confirmar limpieza del formulario" : undefined}
+      />
+
+      <ProjectRequestValidationStep
+        open={isValidationModalOpen}
+        code={validationCode}
+        onCodeChange={setValidationCode}
+        onClose={() => setIsValidationModalOpen(false)}
+        onPrevious={() => setIsValidationModalOpen(false)}
+        onNext={handleValidationSubmit}
       />
 
       <div className="pointer-events-none fixed bottom-0 right-0 z-[90] flex w-full max-w-[722.615px] p-[16px] min-[480px]:p-[24px]">

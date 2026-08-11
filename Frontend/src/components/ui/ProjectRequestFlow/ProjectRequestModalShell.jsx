@@ -36,6 +36,7 @@ function ProjectRequestModalShell({
   onClose,
   onPrevious,
   onNext,
+  previousLabel = "Anterior",
   nextLabel = "Siguiente",
   nextDisabled = false,
   children,
@@ -117,7 +118,7 @@ function ProjectRequestModalShell({
               className="min-w-0 flex-1"
               onClick={onPrevious}
             >
-              Anterior
+              {previousLabel}
             </Button>
             <Button
               theme="Primary"

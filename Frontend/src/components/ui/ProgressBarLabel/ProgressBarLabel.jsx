@@ -33,6 +33,7 @@ function ProgressBarLabel({
   position = PROGRESS_BAR_LABEL_DEFAULT_PROPS.position,
   showTitle = PROGRESS_BAR_LABEL_DEFAULT_PROPS.showTitle,
   showSublabel = PROGRESS_BAR_LABEL_DEFAULT_PROPS.showSublabel,
+  animated = false,
   valueLabel,
   trackClassName,
   fillClassName,
@@ -80,9 +81,12 @@ function ProgressBarLabel({
           <div
             className={clsx(
               "h-full rounded-full bg-[var(--color-text-300)]",
+              animated && "progress-fill-reveal",
               fillClassName,
             )}
-            style={{ width: `${percentage}%` }}
+            style={animated
+              ? { width: "100%", "--progress-scale": percentage / 100 }
+              : { width: `${percentage}%` }}
           />
         </div>
       ) : (
@@ -101,9 +105,12 @@ function ProgressBarLabel({
             <div
               className={clsx(
                 "h-full rounded-full bg-[var(--color-text-300)]",
+                animated && "progress-fill-reveal",
                 fillClassName,
               )}
-              style={{ width: `${percentage}%` }}
+              style={animated
+                ? { width: "100%", "--progress-scale": percentage / 100 }
+                : { width: `${percentage}%` }}
             />
           </div>
           <span className="shrink-0 text-heading-8 tracking-[-0.5px] text-[var(--color-text-100)] dark:text-[var(--color-text-200)]">

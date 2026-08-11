@@ -32,6 +32,8 @@ function ProjectRequestValidationStep({
   submitError = "",
   onCodeChange,
 }) {
+  const hasNumericCode = /^\d+$/.test(String(code ?? "").trim());
+
   return (
     <ProjectRequestModalShell
       open={open}
@@ -39,7 +41,8 @@ function ProjectRequestValidationStep({
       onClose={onClose}
       onPrevious={onPrevious}
       onNext={() => onNext?.(code)}
-      nextDisabled={isSubmitting}
+      previousLabel="Cerrar"
+      nextDisabled={isSubmitting || !hasNumericCode}
       nextLabel={isSubmitting ? "Enviando" : "Enviar"}
     >
       <div className="flex w-full flex-col gap-[8px]">
@@ -57,7 +60,10 @@ function ProjectRequestValidationStep({
           showLeftIcon
           showRightIcon={false}
           value={code}
-          onChange={(event) => onCodeChange?.(event.target.value)}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="one-time-code"
+          onChange={(event) => onCodeChange?.(event.target.value.replace(/\D/g, ""))}
           className="w-full max-w-none"
         />
         {submitError ? (
