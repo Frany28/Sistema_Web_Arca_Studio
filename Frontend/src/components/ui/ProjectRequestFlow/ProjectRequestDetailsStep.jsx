@@ -182,6 +182,7 @@ function ProjectRequestDetailsStep({
   const {
     clear: clearLocationSuggestions,
     error: locationSuggestionsError,
+    hasSearched: hasSearchedLocation,
     isSearching: isLocationSearching,
     suggestions: locationSuggestions,
   } = useAddressSuggestions({
@@ -487,7 +488,6 @@ function ProjectRequestDetailsStep({
                 onChange={(event) => {
                   setHasAttemptedSubmit(false);
                   setIsLocationInputFocused(true);
-                  clearLocationSuggestions();
                   onProjectLocationChange?.(event.target.value);
                   onProjectLocationSelect?.({
                     formattedAddress: "",
@@ -519,6 +519,14 @@ function ProjectRequestDetailsStep({
                 hintText={locationSuggestionsError}
                 className="w-full"
                 role="alert"
+              />
+            ) : null}
+            {hasSearchedLocation && locationSuggestions.length === 0 && !showProjectLocationError ? (
+              <HintText
+                state="Default"
+                hintText="No encontramos coincidencias. Puedes escribir una dirección más específica o continuar con la dirección manual."
+                className="w-full"
+                role="status"
               />
             ) : null}
             {values.projectLocationLatitude ? (

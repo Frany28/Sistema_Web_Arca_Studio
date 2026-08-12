@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { searchAddressSuggestions } from "../utils/geoapify.js";
+
+const EMPTY_RESULT = {
+  error: "",
+  query: "",
+  status: "idle",
+  suggestions: [],
+};
 
 export default function useAddressSuggestions({
   debounceMs = 180,
@@ -8,40 +15,47 @@ export default function useAddressSuggestions({
   query,
   selected = false,
 } = {}) {
-  const [suggestions, setSuggestions] = useState([]);
-  const [error, setError] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const normalizedQuery = String(query || "").trim();
+  const canSearch = enabled && !selected && normalizedQuery.length >= 2;
+  const [result, setResult] = useState(EMPTY_RESULT);
 
   const clear = useCallback(() => {
-    setSuggestions([]);
-    setError("");
-    setIsSearching(false);
+    setResult(EMPTY_RESULT);
   }, []);
 
   useEffect(() => {
-    const normalizedQuery = String(query || "").trim();
-    if (!enabled || selected || normalizedQuery.length < 2) {
+    if (!canSearch) {
       return undefined;
     }
 
+    const requestQuery = normalizedQuery;
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
-      setIsSearching(true);
-      searchAddressSuggestions(normalizedQuery, { signal: controller.signal })
+      setResult({
+        error: "",
+        query: requestQuery,
+        status: "searching",
+        suggestions: [],
+      });
+
+      searchAddressSuggestions(requestQuery, { signal: controller.signal })
         .then((nextSuggestions) => {
-          setSuggestions(nextSuggestions);
-          setError("");
+          if (controller.signal.aborted) return;
+          setResult({
+            error: "",
+            query: requestQuery,
+            status: "complete",
+            suggestions: nextSuggestions,
+          });
         })
         .catch((requestError) => {
-          if (requestError.name !== "AbortError") {
-            setSuggestions([]);
-            setError(requestError.message);
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsSearching(false);
-          }
+          if (requestError.name === "AbortError" || controller.signal.aborted) return;
+          setResult({
+            error: requestError.message,
+            query: requestQuery,
+            status: "error",
+            suggestions: [],
+          });
         });
     }, debounceMs);
 
@@ -49,7 +63,16 @@ export default function useAddressSuggestions({
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [debounceMs, enabled, query, selected]);
+  }, [canSearch, debounceMs, normalizedQuery]);
 
-  return { clear, error, isSearching, suggestions };
+  return useMemo(() => {
+    const belongsToCurrentQuery = canSearch && result.query === normalizedQuery;
+    return {
+      clear,
+      error: belongsToCurrentQuery ? result.error : "",
+      hasSearched: belongsToCurrentQuery && result.status === "complete",
+      isSearching: belongsToCurrentQuery && result.status === "searching",
+      suggestions: belongsToCurrentQuery ? result.suggestions : [],
+    };
+  }, [canSearch, clear, normalizedQuery, result]);
 }

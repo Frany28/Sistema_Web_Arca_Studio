@@ -1,6 +1,7 @@
 const GEOAPIFY_AUTOCOMPLETE_URL =
   "https://api.geoapify.com/v1/geocode/autocomplete";
 const GEOAPIFY_REVERSE_URL = "https://api.geoapify.com/v1/geocode/reverse";
+const GEOAPIFY_DEFAULT_COUNTRY_BIAS = "ve";
 
 function getGeoapifyApiKey() {
   return process.env.GEOAPIFY_API_KEY || process.env.VITE_GEOAPIFY_API_KEY;
@@ -75,6 +76,7 @@ async function searchByCoordinates({ apiKey, latitude, longitude }) {
 
 export async function getAddressSuggestions(req, res, next) {
   try {
+    res.setHeader("Cache-Control", "private, no-store");
     const apiKey = getGeoapifyApiKey();
     const text = String(req.query?.q || "").trim();
 
@@ -109,6 +111,7 @@ export async function getAddressSuggestions(req, res, next) {
 
     const params = new URLSearchParams({
       apiKey,
+      bias: `countrycode:${GEOAPIFY_DEFAULT_COUNTRY_BIAS}`,
       format: "geojson",
       lang: "es",
       limit: "5",
@@ -118,17 +121,34 @@ export async function getAddressSuggestions(req, res, next) {
     const response = await fetch(`${GEOAPIFY_AUTOCOMPLETE_URL}?${params}`);
 
     if (!response.ok) {
+      const isConfigurationError = response.status === 401 || response.status === 403;
+      const isRateLimited = response.status === 429;
       res.status(502).json({
-        code: "GEOAPIFY_REQUEST_FAILED",
-        message: "No se pudieron obtener sugerencias de ubicación.",
+        code: isConfigurationError
+          ? "GEOAPIFY_CONFIGURATION_INVALID"
+          : isRateLimited
+            ? "GEOAPIFY_LIMIT_REACHED"
+            : "GEOAPIFY_REQUEST_FAILED",
+        message: isConfigurationError
+          ? "El buscador de ubicaciones no está configurado correctamente."
+          : isRateLimited
+            ? "El buscador de ubicaciones alcanzó temporalmente su límite."
+            : "No se pudieron obtener sugerencias de ubicación.",
       });
       return;
     }
 
     const data = await response.json();
+    const seenSuggestions = new Set();
     const suggestions = (data.features || [])
       .map(toAddressSuggestion)
-      .filter(Boolean);
+      .filter((suggestion) => {
+        if (!suggestion) return false;
+        const key = suggestion.placeId || suggestion.formattedAddress.toLowerCase();
+        if (seenSuggestions.has(key)) return false;
+        seenSuggestions.add(key);
+        return true;
+      });
 
     res.status(200).json({
       suggestions,

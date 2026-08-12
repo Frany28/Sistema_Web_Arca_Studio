@@ -57,6 +57,18 @@ test("every defined investment range contributes the same 15 base points", () =>
   assert.deepEqual(scores, [100, 100, 100, 100]);
 });
 
+test("every defined project size contributes the same 15 base points", () => {
+  const scores = [
+    "small_lt_80",
+    "medium_80_200",
+    "large_200_500",
+    "very_large_gt_500",
+  ].map((projectSize) =>
+    evaluateProjectCompatibility({ ...COMPLETE_PROJECT, projectSize }).score,
+  );
+  assert.deepEqual(scores, [100, 100, 100, 100]);
+});
+
 test("experience, blueprints and decision maker never change the score", () => {
   const baseline = evaluateProjectCompatibility(COMPLETE_PROJECT).score;
   for (const values of [

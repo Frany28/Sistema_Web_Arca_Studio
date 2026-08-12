@@ -261,6 +261,7 @@ export default function ProjectRequestPage() {
   const {
     clear: clearLocationSuggestions,
     error: locationSuggestionsError,
+    hasSearched: hasSearchedLocation,
     isSearching: isLocationSearching,
     suggestions: locationSuggestions,
   } = useAddressSuggestions({
@@ -343,7 +344,6 @@ export default function ProjectRequestPage() {
       locationProviderPlaceId: null,
     };
 
-    clearLocationSuggestions();
     setIsLocationInputFocused(true);
     setForm(nextForm);
 
@@ -649,7 +649,7 @@ export default function ProjectRequestPage() {
                   aria-expanded={
                     isLocationInputFocused && locationSuggestions.length > 0
                   }
-                  containerClassName="relative z-10"
+                  containerClassName="relative z-20"
                   supportingContent={
                     isLocationSearching ? (
                       <HintText
@@ -664,6 +664,13 @@ export default function ProjectRequestPage() {
                         hintText={locationSuggestionsError}
                         className="w-full"
                         role="alert"
+                      />
+                    ) : hasSearchedLocation && locationSuggestions.length === 0 ? (
+                      <HintText
+                        state="Default"
+                        hintText="No encontramos coincidencias. Puedes escribir una dirección más específica o continuar con la dirección manual."
+                        className="w-full"
+                        role="status"
                       />
                     ) : null
                   }
