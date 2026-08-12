@@ -72,9 +72,10 @@ function AnimatedRequestStep({ animationDelay, state, subtext, title }) {
 
 const LEVEL_LABELS = {
   excellent: "Excelente compatibilidad",
-  high: "Alta compatibilidad",
+  high: "Buena compatibilidad",
   medium: "Compatibilidad media",
-  low: "Compatibilidad por revisar",
+  low: "Baja compatibilidad",
+  poorly_defined: "Solicitud poco definida",
 };
 
 function ProjectRequestReceivedView({ compatibility, onBackToDashboard, onViewRequest }) {

@@ -653,6 +653,7 @@ enum project_compatibility_level {
   high
   medium
   low
+  poorly_defined
 }
 
 enum project_status {

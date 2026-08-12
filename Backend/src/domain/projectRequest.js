@@ -33,7 +33,7 @@ export const PROJECT_REQUEST_VALUES = {
   startTime: ["immediate", "1_3_months", "3_6_months", "over_6_months"],
 };
 
-export const COMPATIBILITY_SCORING_VERSION = "1.0";
+export const COMPATIBILITY_SCORING_VERSION = "2.1";
 
 export const COMPATIBILITY_OBSERVATIONS = {
   budgetUndefinedImmediate:
@@ -44,6 +44,16 @@ export const COMPATIBILITY_OBSERVATIONS = {
     "La disponibilidad de capital necesita aclararse para un inicio inmediato.",
   capitalUndefinedSoon:
     "La disponibilidad de capital necesita aclararse para iniciar en los próximos meses.",
+  capitalWithin3MonthsImmediate:
+    "La disponibilidad de capital en tres meses debe coordinarse con el inicio inmediato.",
+  companyCapitalUndefined:
+    "La decisión mediante empresa o junta requiere aclarar la disponibilidad de capital.",
+  companyImmediate:
+    "Un inicio inmediato debe coordinarse con el proceso de decisión de la empresa o junta.",
+  descriptionWeak:
+    "Una descripción más completa ayudará a evaluar mejor el alcance del proyecto.",
+  extendedFamilyImmediate:
+    "Un inicio inmediato debe coordinarse con todas las personas que participan en la decisión.",
   financingImmediate:
     "El financiamiento debe estar encaminado antes de plantear un inicio inmediato.",
   financingSoon:
@@ -54,56 +64,101 @@ export const COMPATIBILITY_OBSERVATIONS = {
     "Se necesita definir el inmueble antes de iniciar de inmediato.",
   landUnavailableSoon:
     "Se necesita avanzar en la definición del inmueble antes del inicio previsto.",
+  largeBudget10k50k:
+    "El alcance y el rango de inversión del proyecto grande necesitan alinearse.",
+  largeBudgetUnder10k:
+    "El rango de inversión requiere revisión para el tamaño grande indicado.",
+  largeBudgetUndefined:
+    "Conviene definir la inversión para evaluar el alcance del proyecto grande.",
+  luxuryBudget10k50k:
+    "El nivel exclusivo o de lujo requiere revisar su coherencia con el rango de inversión.",
   luxuryBudgetUnder10k:
     "El nivel exclusivo o de lujo requiere revisar su coherencia con el rango de inversión.",
+  luxuryBudgetUndefined:
+    "Conviene definir la inversión para evaluar una expectativa exclusiva o de lujo.",
   mediumBudgetUnder10k:
     "El rango de inversión requiere revisión para el tamaño mediano indicado.",
   modeUndefinedImmediate:
     "Conviene definir la modalidad de desarrollo antes de iniciar de inmediato.",
   premiumBudgetUnder10k:
     "El nivel premium requiere revisar su coherencia con el rango de inversión.",
-  largeBudgetUnder10k:
-    "El rango de inversión requiere revisión para el tamaño grande indicado.",
-  largeBudget10k50k:
-    "El alcance y el rango de inversión del proyecto grande necesitan alinearse.",
-  veryLargeBudgetUnder10k:
-    "El rango de inversión requiere revisión para el tamaño muy grande indicado.",
+  premiumBudgetUndefined:
+    "Conviene definir la inversión para evaluar una expectativa de calidad premium.",
+  referencesMissingDescriptionWeak:
+    "Agregar referencias o ampliar la descripción facilitará la evaluación del proyecto.",
+  sizeUnknownBudgetUndefined:
+    "Definir el tamaño o la inversión permitirá estimar mejor el alcance del proyecto.",
   veryLargeBudget10k50k:
     "El alcance y el rango de inversión del proyecto muy grande necesitan alinearse.",
-  capitalWithin3MonthsImmediate:
-    "La disponibilidad de capital en tres meses debe coordinarse con el inicio inmediato.",
+  veryLargeBudgetUnder10k:
+    "El rango de inversión requiere revisión para el tamaño muy grande indicado.",
+  veryLargeBudgetUndefined:
+    "Conviene definir la inversión para evaluar el alcance del proyecto muy grande.",
 };
 
 const BASE_SCORE = {
   capitalAvailability: {
-    available_now: 35,
-    within_3_months: 28,
-    seeking_financing: 15,
-    undefined: 5,
+    available_now: 25,
+    within_3_months: 20,
+    seeking_financing: 10,
+    undefined: 0,
   },
-  developmentMode: { phased: 20, full: 20, undecided: 5 },
+  developmentMode: { phased: 15, full: 15, undecided: 0 },
   investmentRange: {
-    undefined: 5,
-    under_10k: 25,
-    "10k_50k": 25,
-    "50k_150k": 25,
-    over_150k: 25,
+    undefined: 0,
+    under_10k: 15,
+    "10k_50k": 15,
+    "50k_150k": 15,
+    over_150k: 15,
+  },
+  landStatus: { available: 10, acquiring: 5, unavailable: 0 },
+  projectSize: {
+    small_lt_80: 15,
+    medium_80_200: 15,
+    large_200_500: 15,
+    very_large_gt_500: 15,
+    unknown: 0,
   },
 };
 
-function compatibilityLevel(score) {
+export function compatibilityLevel(score) {
   if (score >= 80) return "excellent";
   if (score >= 60) return "high";
   if (score >= 40) return "medium";
-  return "low";
+  if (score >= 20) return "low";
+  return "poorly_defined";
+}
+
+function descriptionScore(description) {
+  const length = String(description || "").trim().length;
+  if (length >= 30) return 10;
+  if (length >= 10) return 4;
+  return 0;
+}
+
+function isValidReferenceLink(value) {
+  const link = String(value || "").trim();
+  if (!link || link.length > 500) return false;
+  try {
+    const url = new URL(link);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 export function evaluateProjectCompatibility(payload) {
+  const hasReferenceLink = isValidReferenceLink(payload.referenceLink);
+  const hasFiles = payload.hasFiles === true;
   let score =
-    BASE_SCORE.investmentRange[payload.investmentRange] +
-    BASE_SCORE.capitalAvailability[payload.capitalAvailability] +
-    BASE_SCORE.developmentMode[payload.developmentMode] +
-    20;
+    descriptionScore(payload.description) +
+    (BASE_SCORE.projectSize[payload.projectSize] || 0) +
+    (BASE_SCORE.developmentMode[payload.developmentMode] || 0) +
+    (BASE_SCORE.landStatus[payload.landStatus] || 0) +
+    (BASE_SCORE.investmentRange[payload.investmentRange] || 0) +
+    (BASE_SCORE.capitalAvailability[payload.capitalAvailability] || 0) +
+    (hasFiles ? 6 : 0) +
+    (hasReferenceLink ? 4 : 0);
   const deductions = [];
 
   const deduct = (code, points) => {
@@ -111,39 +166,43 @@ export function evaluateProjectCompatibility(payload) {
     score -= points;
   };
 
-  if (payload.startTime === "immediate") {
-    if (payload.capitalAvailability === "within_3_months") {
-      deduct("capitalWithin3MonthsImmediate", 10);
-    } else if (payload.capitalAvailability === "seeking_financing") {
-      deduct("financingImmediate", 18);
-    } else if (payload.capitalAvailability === "undefined") {
-      deduct("capitalUndefinedImmediate", 22);
-    }
-
-    if (payload.landStatus === "acquiring") deduct("landAcquiringImmediate", 6);
-    if (payload.landStatus === "unavailable") deduct("landUnavailableImmediate", 12);
-    if (payload.investmentRange === "undefined") deduct("budgetUndefinedImmediate", 10);
-    if (payload.developmentMode === "undecided") deduct("modeUndefinedImmediate", 6);
-  }
-
-  if (payload.startTime === "1_3_months") {
-    if (payload.capitalAvailability === "seeking_financing") deduct("financingSoon", 8);
-    if (payload.capitalAvailability === "undefined") deduct("capitalUndefinedSoon", 12);
-    if (payload.landStatus === "unavailable") deduct("landUnavailableSoon", 6);
-    if (payload.investmentRange === "undefined") deduct("budgetUndefinedSoon", 5);
-  }
-
   if (payload.investmentRange === "under_10k") {
     if (payload.projectSize === "medium_80_200") deduct("mediumBudgetUnder10k", 10);
-    if (payload.projectSize === "large_200_500") deduct("largeBudgetUnder10k", 20);
-    if (payload.projectSize === "very_large_gt_500") deduct("veryLargeBudgetUnder10k", 25);
-    if (payload.quality === "premium") deduct("premiumBudgetUnder10k", 8);
-    if (payload.quality === "luxury") deduct("luxuryBudgetUnder10k", 15);
+    if (payload.projectSize === "large_200_500") deduct("largeBudgetUnder10k", 25);
+    if (payload.projectSize === "very_large_gt_500") deduct("veryLargeBudgetUnder10k", 35);
+    if (payload.quality === "premium") deduct("premiumBudgetUnder10k", 20);
+    if (payload.quality === "luxury") deduct("luxuryBudgetUnder10k", 30);
   }
 
   if (payload.investmentRange === "10k_50k") {
-    if (payload.projectSize === "large_200_500") deduct("largeBudget10k50k", 8);
-    if (payload.projectSize === "very_large_gt_500") deduct("veryLargeBudget10k50k", 15);
+    if (payload.projectSize === "very_large_gt_500") deduct("veryLargeBudget10k50k", 25);
+    if (payload.quality === "luxury") deduct("luxuryBudget10k50k", 20);
+  }
+
+  if (payload.investmentRange === "undefined") {
+    if (payload.projectSize === "large_200_500") deduct("largeBudgetUndefined", 15);
+    if (payload.projectSize === "very_large_gt_500") deduct("veryLargeBudgetUndefined", 20);
+    if (payload.quality === "premium") deduct("premiumBudgetUndefined", 15);
+    if (payload.quality === "luxury") deduct("luxuryBudgetUndefined", 20);
+  }
+
+  if (payload.startTime === "immediate") {
+    if (payload.landStatus === "unavailable") deduct("landUnavailableImmediate", 20);
+    if (payload.landStatus === "acquiring") deduct("landAcquiringImmediate", 10);
+    if (payload.capitalAvailability === "undefined") deduct("capitalUndefinedImmediate", 20);
+    if (payload.capitalAvailability === "seeking_financing") deduct("financingImmediate", 15);
+    if (payload.capitalAvailability === "within_3_months") {
+      deduct("capitalWithin3MonthsImmediate", 10);
+    }
+    if (payload.investmentRange === "undefined") deduct("budgetUndefinedImmediate", 10);
+    if (payload.developmentMode === "undecided") deduct("modeUndefinedImmediate", 10);
+  }
+
+  if (payload.startTime === "1_3_months") {
+    if (payload.landStatus === "unavailable") deduct("landUnavailableSoon", 10);
+    if (payload.capitalAvailability === "undefined") deduct("capitalUndefinedSoon", 10);
+    if (payload.capitalAvailability === "seeking_financing") deduct("financingSoon", 8);
+    if (payload.investmentRange === "undefined") deduct("budgetUndefinedSoon", 5);
   }
 
   const normalizedScore = Math.max(0, Math.min(100, score));

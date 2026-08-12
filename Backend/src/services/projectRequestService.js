@@ -8,6 +8,7 @@ import {
   submitProjectRequestForUser,
   updateProjectRequestDraft,
 } from "../repositories/projectRequestRepository.js";
+import { getProjectRequestFileUsage } from "../repositories/fileRepository.js";
 
 function requireClient(user) {
   if (!user?.clientId) {
@@ -118,7 +119,11 @@ export async function submitProjectRequest({ projectRequestId, user }) {
   }
 
   await assertAvailableName(user, current, projectRequestId);
-  const evaluation = evaluateProjectCompatibility(current);
+  const fileUsage = await getProjectRequestFileUsage(projectRequestId);
+  const evaluation = evaluateProjectCompatibility({
+    ...current,
+    hasFiles: fileUsage.count > 0,
+  });
   let submitted;
   try {
     submitted = await submitProjectRequestForUser(projectRequestId, user, evaluation);
