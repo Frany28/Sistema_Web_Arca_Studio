@@ -9,7 +9,7 @@ import ScrollBar from "../ScrollBar/ScrollBar.jsx";
 import TextArea from "../TextArea/TextArea.jsx";
 import ProjectLocationSuggestions from "./ProjectLocationSuggestions.jsx";
 import ProjectRequestModalShell from "./ProjectRequestModalShell.jsx";
-import { searchAddressSuggestions } from "../../../utils/geoapify.js";
+import useAddressSuggestions from "../../../hooks/useAddressSuggestions.js";
 
 const PROJECT_TYPE_OPTIONS = [
   { id: "residencial", label: "Residencial", type: "Checkbox", checked: "Yes" },
@@ -179,9 +179,19 @@ function ProjectRequestDetailsStep({
   const [scrollLength, setScrollLength] = useState(1);
   const [contentHeight, setContentHeight] = useState(modalBodyMaxHeight);
   const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
-  const [locationSuggestions, setLocationSuggestions] = useState([]);
-  const [locationSuggestionsError, setLocationSuggestionsError] = useState("");
-  const [isLocationSearching, setIsLocationSearching] = useState(false);
+  const {
+    clear: clearLocationSuggestions,
+    error: locationSuggestionsError,
+    isSearching: isLocationSearching,
+    suggestions: locationSuggestions,
+  } = useAddressSuggestions({
+    debounceMs: 120,
+    enabled: open,
+    query: values.projectLocation,
+    selected:
+      values.projectLocationLatitude !== null &&
+      values.projectLocationLatitude !== undefined,
+  });
   const contentRef = useRef(null);
   const projectName = values.projectName.trim();
   const description = values.description.trim();
@@ -279,53 +289,13 @@ function ProjectRequestDetailsStep({
       setHasAttemptedSubmit(false);
       setScrollPosition(0);
       setScrollLength(1);
-      setLocationSuggestions([]);
-      setLocationSuggestionsError("");
-      setIsLocationSearching(false);
+      clearLocationSuggestions();
     });
 
     return () => {
       cancelled = true;
     };
-  }, [open]);
-
-  useEffect(() => {
-    if (
-      !open ||
-      values.projectLocation.trim().length < 2 ||
-      values.projectLocationLatitude
-    ) {
-      return undefined;
-    }
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      setIsLocationSearching(true);
-      searchAddressSuggestions(values.projectLocation, {
-        signal: controller.signal,
-      })
-        .then((suggestions) => {
-          setLocationSuggestions(suggestions);
-          setLocationSuggestionsError("");
-        })
-        .catch((error) => {
-          if (error.name !== "AbortError") {
-            setLocationSuggestions([]);
-            setLocationSuggestionsError(error.message);
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsLocationSearching(false);
-          }
-        });
-    }, 120);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeoutId);
-    };
-  }, [open, values.projectLocation, values.projectLocationLatitude]);
+  }, [clearLocationSuggestions, open]);
 
   useEffect(() => {
     const container = contentRef.current;
@@ -399,9 +369,7 @@ function ProjectRequestDetailsStep({
 
   const handleLocationSuggestionSelect = (suggestion) => {
     setHasAttemptedSubmit(false);
-    setLocationSuggestions([]);
-    setLocationSuggestionsError("");
-    setIsLocationSearching(false);
+    clearLocationSuggestions();
     setIsLocationInputFocused(false);
     onProjectLocationChange?.(suggestion.formattedAddress);
     onProjectLocationSelect?.(suggestion);
@@ -519,9 +487,7 @@ function ProjectRequestDetailsStep({
                 onChange={(event) => {
                   setHasAttemptedSubmit(false);
                   setIsLocationInputFocused(true);
-                  setLocationSuggestions([]);
-                  setLocationSuggestionsError("");
-                  setIsLocationSearching(false);
+                  clearLocationSuggestions();
                   onProjectLocationChange?.(event.target.value);
                   onProjectLocationSelect?.({
                     formattedAddress: "",

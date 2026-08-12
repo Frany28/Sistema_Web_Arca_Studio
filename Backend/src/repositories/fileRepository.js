@@ -41,7 +41,7 @@ export async function findProjectRequestForFileUpload(projectRequestId, user) {
       from public.project_requests
       where id = $1
         and deleted_at is null
-        and status in ('pending_verification', 'pending_review')
+        and status = 'draft'
       limit 1
     `,
     [projectRequestId],
@@ -59,6 +59,25 @@ export async function findProjectRequestForFileUpload(projectRequestId, user) {
   const isAdmin = user.role?.code === "admin";
 
   return isOwner || isAdmin ? projectRequest : null;
+}
+
+export async function getProjectRequestFileUsage(projectRequestId) {
+  const result = await query(
+    `
+      select count(*)::integer as file_count, coalesce(sum(fv.file_size), 0)::bigint as total_bytes
+      from public.files f
+      inner join public.file_versions fv
+        on fv.file_id = f.id and fv.is_current = true
+      where f.project_request_id = $1
+        and f.deleted_at is null
+        and f.status <> 'deleted'
+    `,
+    [projectRequestId],
+  );
+  return {
+    count: Number(result.rows[0]?.file_count || 0),
+    totalBytes: Number(result.rows[0]?.total_bytes || 0),
+  };
 }
 
 export async function findExistingProjectRequestFile({
@@ -257,7 +276,7 @@ export async function deleteProjectRequestFile({
           and f.deleted_at is null
           and f.status <> 'deleted'
           and pr.deleted_at is null
-          and pr.status in ('pending_verification', 'pending_review')
+          and pr.status = 'draft'
         limit 1
       `,
       [fileId, projectRequestId],

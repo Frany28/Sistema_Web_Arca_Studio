@@ -4,22 +4,31 @@ import { useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 
 import { useAuth } from "../auth/AuthContext.jsx";
+import { api } from "../api/http.js";
 import { useRecentProjects } from "../auth/RecentProjectsContext.jsx";
 import { getUserDisplay } from "../auth/userDisplay.js";
 import Alert from "../components/ui/Alert/Alert.jsx";
 import Button from "../components/ui/Button/Button.jsx";
 import Checkbox from "../components/ui/Checkbox/Checkbox.jsx";
 import DropdownMenu from "../components/ui/DropdownMenu/DropdownMenu.jsx";
+import HintText from "../components/ui/HintText/HintText.jsx";
 import { useImageCommentNotifications } from "../components/ui/Gallery/useImageComments.js";
 import NavigationBar from "../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../components/EnvironmentNotificationsDrawer.jsx";
 import ProjectRequestCancelModal from "../components/ui/ProjectRequestFlow/ProjectRequestCancelModal.jsx";
+import ProjectLocationSuggestions from "../components/ui/ProjectRequestFlow/ProjectLocationSuggestions.jsx";
 import ProjectRequestValidationStep from "../components/ui/ProjectRequestFlow/ProjectRequestValidationStep.jsx";
 import SideNavigation from "../components/ui/SideNavigation/SideNavigation.jsx";
 import SideOverlayDrawer from "../components/ui/SideOverlayDrawer.jsx";
+import useAddressSuggestions from "../hooks/useAddressSuggestions.js";
 import { useRecentProjectComments } from "../hooks/useProjectComments.js";
 import { getProjectNamesById } from "../utils/commentDisplay.js";
-import { getProjectRequestRequiredFieldErrors } from "../utils/projectRequestValidation.js";
+import {
+  buildProjectRequestPayload,
+  getProjectRequestFieldErrors,
+  getProjectRequestFileErrors,
+} from "../utils/projectRequestValidation.js";
+import { PROJECT_REQUEST_OPTIONS } from "../utils/projectRequestOptions.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
 import ProjectRequestReceivedView from "./project-request/components/ProjectRequestReceivedView.jsx";
 import {
@@ -31,6 +40,10 @@ const INITIAL_FORM = {
   projectName: "",
   projectType: "",
   location: "",
+  locationFormattedAddress: "",
+  locationLatitude: null,
+  locationLongitude: null,
+  locationProviderPlaceId: null,
   description: "",
   projectSize: "",
   developmentMode: "",
@@ -59,11 +72,11 @@ function FieldLabel({ asSpan = false, children, optional = false, info = false, 
     : <label {...props} className={className}>{content}</label>;
 }
 
-function TextField({ icon: Icon, inputRef, invalid = false, label, multiline = false, optional = false, ...props }) {
+function TextField({ children, containerClassName, error = "", icon: Icon, inputRef, invalid = false, label, multiline = false, optional = false, supportingContent, ...props }) {
   const controlClass = `w-full rounded-[8px] border bg-[var(--color-neutral-100)] px-[12px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)] outline-none transition focus:ring-2 placeholder:text-[var(--color-text-100)] ${invalid ? "border-[var(--color-danger-100)] focus:border-[var(--color-danger-100)] focus:ring-[var(--color-danger-10)]" : "border-[var(--color-neutral-200)] focus:border-[var(--color-primary-300)] focus:ring-[var(--color-primary-10)]"}`;
 
   return (
-    <div className="flex w-full flex-col gap-[8px]">
+    <div className={clsx("flex w-full flex-col gap-[8px]", containerClassName)}>
       <FieldLabel optional={optional}>{label}</FieldLabel>
       <div className="relative flex w-full">
         {Icon ? <Icon className="absolute left-[12px] top-[8px] size-[20px] text-[var(--color-text-100)]" aria-hidden="true" /> : null}
@@ -72,16 +85,19 @@ function TextField({ icon: Icon, inputRef, invalid = false, label, multiline = f
         ) : (
           <input ref={inputRef} className={`${controlClass} block h-[36px] ${Icon ? "pl-[40px]" : ""}`} required={!optional} aria-invalid={invalid || undefined} aria-errormessage={invalid ? "project-request-required-alert" : undefined} {...props} />
         )}
+        {children}
       </div>
+      {error ? <HintText state="Error" hintText={error} className="w-full" role="alert" /> : null}
+      {supportingContent}
     </div>
   );
 }
 
-function SelectField({ invalid = false, label, value, onChange, options, optional = false, info = false, placeholder = "Selecciona una opción" }) {
+function SelectField({ error = "", invalid = false, label, value, onChange, options, optional = false, info = false, placeholder = "Selecciona una opción" }) {
   const [isOpen, setIsOpen] = useState(false);
   const items = options.map((option) => ({
-    id: option,
-    label: option,
+    id: option.value,
+    label: option.label,
     supportingText: "",
     type: "Text",
   }));
@@ -91,7 +107,7 @@ function SelectField({ invalid = false, label, value, onChange, options, optiona
       <FieldLabel optional={optional} info={info}>{label}</FieldLabel>
       <DropdownMenu
         type="Text"
-        label={value || placeholder}
+        label={options.find((option) => option.value === value)?.label || placeholder}
         supportingText=""
         items={items}
         selectedItemId={value}
@@ -110,11 +126,12 @@ function SelectField({ invalid = false, label, value, onChange, options, optiona
         aria-errormessage={invalid ? "project-request-required-alert" : undefined}
         aria-required={!optional}
       />
+      {error ? <HintText state="Error" hintText={error} className="w-full" role="alert" /> : null}
     </div>
   );
 }
 
-function ChoiceGroup({ invalid = false, label, value, options, onChange, info = false, optional = false, orientation = "horizontal" }) {
+function ChoiceGroup({ error = "", invalid = false, label, value, options, onChange, info = false, optional = false, orientation = "horizontal" }) {
   const labelId = useId();
 
   return (
@@ -123,16 +140,17 @@ function ChoiceGroup({ invalid = false, label, value, options, onChange, info = 
       <div className={orientation === "vertical" ? "flex flex-col items-start gap-[8px]" : "flex flex-wrap gap-[8px]"}>
         {options.map((option) => (
           <button
-            key={option}
+            key={option.value}
             type="button"
-            aria-pressed={value === option}
-            onClick={() => onChange(option)}
-            className={`${orientation === "vertical" && value === option ? "h-[33px] py-[7px]" : "h-[36px] py-[8px]"} rounded-[8px] border px-[12px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option ? "border-transparent bg-[var(--color-neutral-200)] text-[var(--color-text-300)]" : invalid ? "border-[var(--color-danger-100)] bg-transparent text-[var(--color-text-100)]" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
+            aria-pressed={value === option.value}
+            onClick={() => onChange(option.value)}
+            className={`${orientation === "vertical" && value === option.value ? "h-[33px] py-[7px]" : "h-[36px] py-[8px]"} rounded-[8px] border px-[12px] text-[14px] font-medium leading-[17px] tracking-[-0.5px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] ${value === option.value ? "border-transparent bg-[var(--color-neutral-200)] text-[var(--color-text-300)]" : invalid ? "border-[var(--color-danger-100)] bg-transparent text-[var(--color-text-100)]" : "border-[var(--color-neutral-200)] bg-transparent text-[var(--color-text-100)] hover:border-[var(--color-neutral-300)] hover:text-[var(--color-text-300)]"}`}
           >
-            {option}
+            {option.label}
           </button>
         ))}
       </div>
+      {error ? <HintText state="Error" hintText={error} className="w-full" role="alert" /> : null}
     </div>
   );
 }
@@ -176,6 +194,16 @@ function FormSection({ title, description, children, fieldsVariant = "stacked" }
   );
 }
 
+function toFileItems(fileList) {
+  return Array.from(fileList || []).map((file, index) => ({
+    error: "",
+    file,
+    id: `${file.name}-${file.size}-${file.lastModified}-${index}`,
+    progress: 0,
+    status: "pending",
+  }));
+}
+
 export default function ProjectRequestPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -187,10 +215,31 @@ export default function ProjectRequestPage() {
     projectName: initialRequest?.projectName || "",
     projectType: initialRequest?.projectType || INITIAL_FORM.projectType,
     location: initialRequest?.location || "",
+    locationFormattedAddress: initialRequest?.formattedAddress || "",
+    locationLatitude: initialRequest?.locationCoordinates?.latitude ?? null,
+    locationLongitude: initialRequest?.locationCoordinates?.longitude ?? null,
+    locationProviderPlaceId: initialRequest?.providerPlaceId || null,
     description: initialRequest?.description || "",
+    projectSize: initialRequest?.projectSize || "",
+    developmentMode: initialRequest?.developmentMode || "",
+    landStatus: initialRequest?.landStatus || "",
+    investmentRange: initialRequest?.investmentRange || "",
+    capitalAvailability: initialRequest?.capitalAvailability || "",
+    startTime: initialRequest?.startTime || "",
+    decisionMaker: initialRequest?.decisionMaker || "",
+    quality: initialRequest?.quality || "",
+    experience: initialRequest?.experience || "",
+    hasBlueprints:
+      initialRequest?.hasPlans === true
+        ? "Yes"
+        : initialRequest?.hasPlans === false
+          ? "No"
+          : "Indeterminate",
     referenceLink: initialRequest?.referenceLink || "",
   }));
   const [files, setFiles] = useState([]);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [fileErrors, setFileErrors] = useState([]);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [showRequiredAlert, setShowRequiredAlert] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -201,13 +250,28 @@ export default function ProjectRequestPage() {
   const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
   const [validationCode, setValidationCode] = useState("");
   const [isRequestReceived, setIsRequestReceived] = useState(false);
+  const [receivedRequest, setReceivedRequest] = useState(null);
+  const [draftId, setDraftId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
-  const requiredFieldErrors = useMemo(
-    () => getProjectRequestRequiredFieldErrors(form),
+  const submissionIdRef = useRef(null);
+  const {
+    clear: clearLocationSuggestions,
+    error: locationSuggestionsError,
+    isSearching: isLocationSearching,
+    suggestions: locationSuggestions,
+  } = useAddressSuggestions({
+    query: form.location,
+    selected:
+      form.locationLatitude !== null && form.locationLatitude !== undefined,
+  });
+  const currentFieldErrors = useMemo(
+    () => getProjectRequestFieldErrors(form),
     [form],
   );
-  const hasRequiredFieldErrors = Object.keys(requiredFieldErrors).length > 0;
   const navigationItems = useMemo(
     () => createUserSideNavigationItems([], currentUser.roleCode),
     [currentUser.roleCode],
@@ -262,9 +326,53 @@ export default function ProjectRequestPage() {
 
     setForm(nextForm);
 
-    if (hasAttemptedSubmit && Object.keys(getProjectRequestRequiredFieldErrors(nextForm)).length === 0) {
+    if (hasAttemptedSubmit) {
+      const nextErrors = getProjectRequestFieldErrors(nextForm);
+      setFieldErrors(nextErrors);
+      if (Object.keys(nextErrors).length === 0 && fileErrors.length === 0) setShowRequiredAlert(false);
+    }
+  };
+  const updateLocation = (event) => {
+    const value = event.target.value;
+    const nextForm = {
+      ...form,
+      location: value,
+      locationFormattedAddress: "",
+      locationLatitude: null,
+      locationLongitude: null,
+      locationProviderPlaceId: null,
+    };
+
+    clearLocationSuggestions();
+    setIsLocationInputFocused(true);
+    setForm(nextForm);
+
+    if (
+      hasAttemptedSubmit &&
+      Object.keys(getProjectRequestFieldErrors(nextForm)).length === 0 &&
+      fileErrors.length === 0
+    ) {
       setShowRequiredAlert(false);
     }
+    if (hasAttemptedSubmit) setFieldErrors(getProjectRequestFieldErrors(nextForm));
+  };
+  const selectLocationSuggestion = (suggestion) => {
+    const nextForm = {
+      ...form,
+      location: suggestion.formattedAddress,
+      locationFormattedAddress: suggestion.formattedAddress,
+      locationLatitude: suggestion.latitude,
+      locationLongitude: suggestion.longitude,
+      locationProviderPlaceId: suggestion.placeId,
+    };
+    setForm(nextForm);
+    if (hasAttemptedSubmit) {
+      const nextErrors = getProjectRequestFieldErrors(nextForm);
+      setFieldErrors(nextErrors);
+      if (Object.keys(nextErrors).length === 0 && fileErrors.length === 0) setShowRequiredAlert(false);
+    }
+    clearLocationSuggestions();
+    setIsLocationInputFocused(false);
   };
   const performSideNavigation = (item) => {
     if (item?.to) {
@@ -342,7 +450,11 @@ export default function ProjectRequestPage() {
   };
   const resetForm = () => {
     setForm(INITIAL_FORM);
+    clearLocationSuggestions();
+    setIsLocationInputFocused(false);
     setFiles([]);
+    setFieldErrors({});
+    setFileErrors([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -351,16 +463,40 @@ export default function ProjectRequestPage() {
     setIsValidationModalOpen(false);
     setValidationCode("");
     setIsRequestReceived(false);
+    setReceivedRequest(null);
+    setDraftId(null);
+    setSubmitError("");
+    submissionIdRef.current = null;
   };
   const requestFormReset = () => {
     setShowRequiredAlert(false);
     setPendingRequestAction({ type: "clear" });
     setIsRequestActionModalOpen(true);
   };
+  const handleFilesChange = (fileList) => {
+    if (draftId) {
+      setFileErrors(["Ya existe un borrador en proceso. Reintenta el envío antes de cambiar los archivos."]);
+      return;
+    }
+    const nextFiles = toFileItems(fileList);
+    const nextErrors = getProjectRequestFileErrors(nextFiles);
+    setFiles(nextFiles);
+    setFileErrors(nextErrors);
+    if (hasAttemptedSubmit && nextErrors.length === 0 && Object.keys(currentFieldErrors).length === 0) {
+      setShowRequiredAlert(false);
+    }
+  };
+  const updateFileItem = (id, values) => {
+    setFiles((current) => current.map((item) => (item.id === id ? { ...item, ...values } : item)));
+  };
   const handleFrontendSubmit = () => {
     setHasAttemptedSubmit(true);
+    const nextFieldErrors = getProjectRequestFieldErrors(form);
+    const nextFileErrors = getProjectRequestFileErrors(files);
+    setFieldErrors(nextFieldErrors);
+    setFileErrors(nextFileErrors);
 
-    if (hasRequiredFieldErrors) {
+    if (Object.keys(nextFieldErrors).length > 0 || nextFileErrors.length > 0) {
       setShowRequiredAlert(true);
 
       window.requestAnimationFrame(() => {
@@ -377,18 +513,64 @@ export default function ProjectRequestPage() {
     }
 
     setShowRequiredAlert(false);
+    setSubmitError("");
     setValidationCode("");
     setIsValidationModalOpen(true);
   };
-  const handleValidationSubmit = (code) => {
-    if (!/^\d+$/.test(String(code ?? "").trim())) {
+  const handleValidationSubmit = async (code) => {
+    if (isSubmitting || !/^\d{6}$/.test(String(code ?? "").trim())) {
       return;
     }
+    setValidationCode("");
+    setIsSubmitting(true);
+    setSubmitError("");
 
-    setIsValidationModalOpen(false);
-    setIsRequestReceived(true);
-    setIsSidebarExpanded(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    try {
+      if (!submissionIdRef.current) submissionIdRef.current = window.crypto.randomUUID();
+      const payload = buildProjectRequestPayload(form, submissionIdRef.current);
+      let nextDraftId = draftId;
+      if (nextDraftId) {
+        await api.projectRequests.update({
+          payload: buildProjectRequestPayload(form),
+          projectRequestId: nextDraftId,
+        });
+      } else {
+        const created = await api.projectRequests.create(payload);
+        nextDraftId = created?.projectRequest?.id;
+        if (!nextDraftId) throw new Error("No se pudo identificar el borrador de la solicitud.");
+        setDraftId(nextDraftId);
+      }
+
+      for (const item of files) {
+        if (item.status === "uploaded") continue;
+        updateFileItem(item.id, { error: "", progress: 0, status: "uploading" });
+        try {
+          await api.projectRequests.uploadFile({
+            file: item.file,
+            onUploadProgress: ({ progress }) => updateFileItem(item.id, { progress }),
+            projectRequestId: nextDraftId,
+          });
+          updateFileItem(item.id, { progress: 100, status: "uploaded" });
+        } catch (error) {
+          updateFileItem(item.id, {
+            error: error.message || "No se pudo subir el archivo.",
+            status: "error",
+          });
+          throw error;
+        }
+      }
+
+      const submitted = await api.projectRequests.submit(nextDraftId);
+      setReceivedRequest(submitted?.projectRequest || null);
+      setIsValidationModalOpen(false);
+      setIsRequestReceived(true);
+      setIsSidebarExpanded(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setSubmitError(error.message || "No se pudo enviar la solicitud. Puedes reintentarlo.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   const sidebar = (
     <SideNavigation
@@ -426,6 +608,8 @@ export default function ProjectRequestPage() {
 
           {isRequestReceived ? (
             <ProjectRequestReceivedView
+              compatibility={receivedRequest?.compatibility}
+              projectRequest={receivedRequest}
               onViewRequest={() => {
                 setIsRequestReceived(false);
                 setIsSidebarExpanded(true);
@@ -446,30 +630,72 @@ export default function ProjectRequestPage() {
 
             <form ref={formRef} noValidate className="flex w-full flex-col items-center gap-[48px]" onSubmit={(event) => { event.preventDefault(); handleFrontendSubmit(); }}>
               <FormSection title="Detalles del proyecto" description="Cuéntanos qué deseas desarrollar. Esta información nos ayudará a comprender el alcance, los objetivos y las características generales de tu proyecto antes de la primera reunión.">
-                <TextField invalid={hasAttemptedSubmit && requiredFieldErrors.projectName} label="Nombre del proyecto" icon={Edit2} placeholder='Ej. “Apto. Noventa y Uno”' value={form.projectName} onChange={update("projectName")} />
-                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.projectType} label="Tipo de proyecto" value={form.projectType} onChange={update("projectType")} options={["Residencial", "Comercial", "Corporativo", "Stands y exhibiciones"]} />
-                <TextField invalid={hasAttemptedSubmit && requiredFieldErrors.location} label="Ubicación del proyecto" icon={Location} placeholder='Ej. “Maracaibo, Estado Zulia”' value={form.location} onChange={update("location")} />
-                <TextField label="Descripción del proyecto" optional multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
-                <SelectField label="Tamaño aproximado del proyecto" optional value={form.projectSize} onChange={update("projectSize")} options={["Pequeño (menos de 80 m²)", "Mediano (80-200 m²)", "Grande (200-500 m²)", "Muy grande (más de 500 m²)", "No lo sé aún"]} />
-                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.developmentMode} label="¿Cómo prefiere desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={["Por fases", "En su totalidad", "Por definir"]} />
-                <ChoiceGroup label="¿Tiene terreno o inmueble disponible?" optional value={form.landStatus} onChange={update("landStatus")} options={["Sí, disponible", "En proceso de adquirirlo", "No todavía"]} />
+                <TextField error={hasAttemptedSubmit ? fieldErrors.projectName : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.projectName)} label="Nombre del proyecto" icon={Edit2} placeholder='Ej. “Apto. Noventa y Uno”' value={form.projectName} onChange={update("projectName")} />
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.projectType : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.projectType)} label="Tipo de proyecto" value={form.projectType} onChange={update("projectType")} options={PROJECT_REQUEST_OPTIONS.projectType} />
+                <TextField
+                  error={hasAttemptedSubmit ? fieldErrors.location : ""}
+                  invalid={hasAttemptedSubmit && Boolean(fieldErrors.location)}
+                  label="Ubicación del proyecto"
+                  icon={Location}
+                  placeholder='Ej. “Maracaibo, Estado Zulia”'
+                  value={form.location}
+                  onFocus={() => setIsLocationInputFocused(true)}
+                  onBlur={() => {
+                    window.setTimeout(() => setIsLocationInputFocused(false), 120);
+                  }}
+                  onChange={updateLocation}
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={
+                    isLocationInputFocused && locationSuggestions.length > 0
+                  }
+                  containerClassName="relative z-10"
+                  supportingContent={
+                    isLocationSearching ? (
+                      <HintText
+                        state="Default"
+                        hintText="Buscando direcciones..."
+                        className="w-full"
+                        role="status"
+                      />
+                    ) : locationSuggestionsError ? (
+                      <HintText
+                        state="Error"
+                        hintText={locationSuggestionsError}
+                        className="w-full"
+                        role="alert"
+                      />
+                    ) : null
+                  }
+                >
+                  {isLocationInputFocused && locationSuggestions.length ? (
+                    <ProjectLocationSuggestions
+                      suggestions={locationSuggestions}
+                      onSelect={selectLocationSuggestion}
+                    />
+                  ) : null}
+                </TextField>
+                <TextField error={hasAttemptedSubmit ? fieldErrors.description : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.description)} label="Descripción del proyecto" optional multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.projectSize : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.projectSize)} label="Tamaño aproximado del proyecto" optional value={form.projectSize} onChange={update("projectSize")} options={PROJECT_REQUEST_OPTIONS.projectSize} />
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.developmentMode : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.developmentMode)} label="¿Cómo prefiere desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={PROJECT_REQUEST_OPTIONS.developmentMode} />
+                <ChoiceGroup error={hasAttemptedSubmit ? fieldErrors.landStatus : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.landStatus)} label="¿Tiene terreno o inmueble disponible?" optional value={form.landStatus} onChange={update("landStatus")} options={PROJECT_REQUEST_OPTIONS.landStatus} />
                 <CheckboxField label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={(value) => setForm((current) => ({ ...current, hasBlueprints: value }))} />
               </FormSection>
 
               <FormDivider />
 
               <FormSection fieldsVariant="responsive-grid" title="Viabilidad financiera" description="Conocer tu presupuesto y la disponibilidad de capital nos permite proponerte soluciones acordes.">
-                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.investmentRange} label="Rango de inversión estimado" value={form.investmentRange} onChange={update("investmentRange")} options={["No lo tengo definido aún", "Menos de $10,000 USD", "$10,000 - $50,000 USD", "$50,000 - $150,000 USD", "Más de $150,000 USD"]} />
-                <SelectField invalid={hasAttemptedSubmit && requiredFieldErrors.capitalAvailability} label="Disponibilidad de capital" value={form.capitalAvailability} onChange={update("capitalAvailability")} options={["Disponible ahora", "En los próximos 3 meses", "Busca financiamiento", "Indefinido"]} />
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.investmentRange : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.investmentRange)} label="Rango de inversión estimado" value={form.investmentRange} onChange={update("investmentRange")} options={PROJECT_REQUEST_OPTIONS.investmentRange} />
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.capitalAvailability : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.capitalAvailability)} label="Disponibilidad de capital" value={form.capitalAvailability} onChange={update("capitalAvailability")} options={PROJECT_REQUEST_OPTIONS.capitalAvailability} />
               </FormSection>
 
               <FormDivider />
 
               <FormSection title="Compatibilidad" description="Estas preguntas nos ayudan a conocer tus expectativas, tiempos y experiencia previa para ofrecerte un proceso de trabajo más personalizado y eficiente.">
-                <ChoiceGroup invalid={hasAttemptedSubmit && requiredFieldErrors.startTime} label="¿Cuándo espera iniciar el proyecto?" orientation="vertical" value={form.startTime} onChange={update("startTime")} options={["De inmediato", "1-3 meses", "3-6 meses", "Más de 6 meses"]} />
-                <SelectField label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={["Yo solo/a", "Con mi pareja/socio", "Familia extendida", "Empresa/junta"]} />
-                <SelectField label="Expectativa de estilo / nivel de calidad" optional info value={form.quality} onChange={update("quality")} options={["Funcional y económico", "Calidad estándar", "Premium", "Exclusivo/lujo"]} />
-                <ChoiceGroup label="¿Ha trabajado con un arquitecto o diseñador antes?" optional value={form.experience} onChange={update("experience")} options={["Sí, buena experiencia", "Sí, mala experiencia", "No, es la primera vez"]} />
+                <ChoiceGroup error={hasAttemptedSubmit ? fieldErrors.startTime : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.startTime)} label="¿Cuándo espera iniciar el proyecto?" orientation="vertical" value={form.startTime} onChange={update("startTime")} options={PROJECT_REQUEST_OPTIONS.startTime} />
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.decisionMaker : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.decisionMaker)} label="¿Quién toma la decisión final del proyecto?" optional value={form.decisionMaker} onChange={update("decisionMaker")} options={PROJECT_REQUEST_OPTIONS.decisionMaker} />
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.quality : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.quality)} label="Expectativa de estilo / nivel de calidad" optional info value={form.quality} onChange={update("quality")} options={PROJECT_REQUEST_OPTIONS.quality} />
+                <ChoiceGroup error={hasAttemptedSubmit ? fieldErrors.experience : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.experience)} label="¿Ha trabajado con un arquitecto o diseñador antes?" optional value={form.experience} onChange={update("experience")} options={PROJECT_REQUEST_OPTIONS.experience} />
               </FormSection>
 
               <FormDivider />
@@ -477,7 +703,7 @@ export default function ProjectRequestPage() {
               <FormSection title="Referencias" description="Comparte imágenes, enlaces o cualquier material de referencia que represente tu visión del proyecto. Esto nos ayudará a comprender mejor el estilo, la atmósfera y los acabados que deseas lograr.">
                 <div className="flex flex-col gap-[8px]">
                   <FieldLabel optional>Subir imágenes o archivos (opcional)</FieldLabel>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); setFiles(Array.from(event.dataTransfer.files || [])); }} className="flex min-h-[177px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] min-[480px]:h-[177px]">
+                  <button type="button" disabled={isSubmitting || Boolean(draftId)} onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFilesChange(event.dataTransfer.files); }} className="flex min-h-[177px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] disabled:cursor-not-allowed disabled:opacity-60 min-[480px]:h-[177px]">
                     <span className="flex size-[40px] items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)] text-[var(--color-text-100)] shadow-[var(--shadow-e1)]"><CloudPlus size="20" color="currentColor" /></span>
                     <span className="flex w-full flex-col items-center gap-[8px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
                       <span className="flex min-h-[36px] flex-wrap items-center justify-center gap-[8px]">
@@ -488,10 +714,15 @@ export default function ProjectRequestPage() {
                       <span>Formatos JPEG, PNG, PDF y MP4, hasta 50 MB.</span>
                     </span>
                   </button>
-                  <input ref={fileInputRef} type="file" multiple accept=".jpeg,.jpg,.png,.pdf,.mp4" className="sr-only" onChange={(event) => setFiles(Array.from(event.target.files || []))} />
-                  {files.length ? <p className="text-[14px] text-[var(--color-text-200)]">{files.length} archivo(s) seleccionado(s)</p> : null}
+                  <input ref={fileInputRef} type="file" multiple accept=".jpeg,.jpg,.png,.pdf,.mp4" className="sr-only" onChange={(event) => handleFilesChange(event.target.files)} />
+                  {files.length ? (
+                    <ul className="flex flex-col gap-[4px] text-[14px] text-[var(--color-text-200)]" aria-live="polite">
+                      {files.map((item) => <li key={item.id}>{item.file.name} · {item.status === "uploading" ? `${item.progress}%` : item.status === "uploaded" ? "Cargado" : item.status === "error" ? item.error : "Listo para cargar"}</li>)}
+                    </ul>
+                  ) : null}
+                  {fileErrors.map((error) => <HintText key={error} state="Error" hintText={error} className="w-full" role="alert" />)}
                 </div>
-                <TextField label="Links de referencia (Pinterest, web, etc.) (opcional)" optional icon={Link21} placeholder='Ej. “https://es.pinterest.com/pin”' value={form.referenceLink} onChange={update("referenceLink")} />
+                <TextField error={hasAttemptedSubmit ? fieldErrors.referenceLink : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.referenceLink)} label="Links de referencia (Pinterest, web, etc.) (opcional)" optional icon={Link21} placeholder='Ej. “https://es.pinterest.com/pin”' value={form.referenceLink} onChange={update("referenceLink")} />
               </FormSection>
 
               <FormDivider />
@@ -501,7 +732,7 @@ export default function ProjectRequestPage() {
               </div>
               <footer className="flex w-full max-w-[850px] flex-col-reverse gap-[8px] min-[480px]:flex-row min-[480px]:justify-end">
                 <Button theme="Primary" type="Outline" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto" onClick={requestFormReset}>Limpiar formulario</Button>
-                <Button theme="Primary" type="Solid" htmlType="submit" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto">Enviar</Button>
+                <Button disabled={isSubmitting} theme="Primary" type="Solid" htmlType="submit" size="M" fitContent={false} showLeftIcon={false} showRightIcon={false} className="h-[41px] w-full min-[480px]:w-auto">{isSubmitting ? "Enviando" : "Enviar"}</Button>
               </footer>
             </form>
             </div>
@@ -538,8 +769,10 @@ export default function ProjectRequestPage() {
         open={isValidationModalOpen}
         code={validationCode}
         onCodeChange={setValidationCode}
-        onClose={() => setIsValidationModalOpen(false)}
-        onPrevious={() => setIsValidationModalOpen(false)}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+        onClose={() => { if (!isSubmitting) setIsValidationModalOpen(false); }}
+        onPrevious={() => { if (!isSubmitting) setIsValidationModalOpen(false); }}
         onNext={handleValidationSubmit}
       />
 
@@ -550,7 +783,7 @@ export default function ProjectRequestPage() {
           theme="Danger"
           layout="Box"
           title="Por favor, proporcione la información necesaria."
-          description="Le recordamos que es fundamental completar todos los campos obligatorios."
+          description="Revisa los campos señalados y los archivos seleccionados antes de continuar."
           showActions={false}
           showCloseButton
           onDismiss={() => setShowRequiredAlert(false)}

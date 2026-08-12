@@ -1,45 +1,64 @@
-import crypto from "node:crypto";
-
 import { query } from "../config/db.js";
 import { pageResult } from "../utils/pagination.js";
 
-const PROJECT_TYPE_MAP = {
-  comercial: "commercial",
-  corporativo: "corporate",
-  residencial: "residential",
-  stands: "stands_exhibitions",
-};
+const SELECT_FIELDS = `
+  id,
+  client_id,
+  requested_by,
+  project_name,
+  project_type,
+  location,
+  description,
+  has_plans,
+  project_size,
+  development_mode,
+  land_status,
+  investment_range,
+  capital_availability,
+  expected_start_time,
+  decision_maker,
+  quality_expectation,
+  prior_design_experience,
+  reference_link,
+  status,
+  created_at,
+  updated_at,
+  location_latitude,
+  location_longitude,
+  provider_place_id,
+  formatted_address,
+  submission_id,
+  compatibility_score,
+  compatibility_level,
+  compatibility_reason_codes,
+  compatibility_scoring_version
+`;
 
-function toNullableString(value) {
-  const normalized = String(value || "").trim();
-  return normalized || null;
-}
-
-function toNullableNumber(value) {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-}
-
-function hashVerificationCode(code) {
-  return crypto
-    .createHash("sha256")
-    .update(String(code || crypto.randomUUID()))
-    .digest("hex");
-}
-
-function toProjectRequest(row) {
+function toProjectRequestRecord(row) {
   return {
+    capitalAvailability: row.capital_availability,
     clientId: Number(row.client_id),
+    compatibility:
+      row.compatibility_score === null || row.compatibility_score === undefined
+        ? null
+        : {
+            level: row.compatibility_level,
+            reasonCodes: Array.isArray(row.compatibility_reason_codes)
+              ? row.compatibility_reason_codes
+              : [],
+            score: Number(row.compatibility_score),
+            version: row.compatibility_scoring_version,
+          },
     createdAt: row.created_at,
+    decisionMaker: row.decision_maker,
     description: row.description,
+    developmentMode: row.development_mode,
+    experience: row.prior_design_experience,
     formattedAddress: row.formatted_address,
-    providerPlaceId: row.provider_place_id,
-    hasPlans: Boolean(row.has_plans),
+    hasPlans: row.has_plans,
     id: Number(row.id),
+    investmentRange: row.investment_range,
+    landStatus: row.land_status,
     location: row.location,
     locationCoordinates:
       row.location_latitude !== null &&
@@ -52,15 +71,17 @@ function toProjectRequest(row) {
           }
         : null,
     projectName: row.project_name,
+    projectSize: row.project_size,
     projectType: row.project_type,
+    providerPlaceId: row.provider_place_id,
+    quality: row.quality_expectation,
     referenceLink: row.reference_link,
     requestedBy: Number(row.requested_by),
+    startTime: row.expected_start_time,
     status: row.status,
+    submissionId: row.submission_id,
+    updatedAt: row.updated_at,
   };
-}
-
-export function normalizeProjectType(value) {
-  return PROJECT_TYPE_MAP[value] || null;
 }
 
 export async function listProjectRequestsForUser(user, { cursor, limit }) {
@@ -69,31 +90,13 @@ export async function listProjectRequestsForUser(user, { cursor, limit }) {
 
   if (cursor) {
     params.push(cursor[0], cursor[1]);
-    cursorCondition = `
-      and (created_at, id) < ($3::timestamptz, $4::bigint)
-    `;
+    cursorCondition = "and (created_at, id) < ($3::timestamptz, $4::bigint)";
   }
 
   params.push(limit + 1);
-  const limitParameter = `$${params.length}`;
   const result = await query(
     `
-      select
-        id,
-        client_id,
-        requested_by,
-        project_name,
-        project_type,
-        location,
-        description,
-        has_plans,
-        reference_link,
-        status,
-        created_at,
-        location_latitude,
-        location_longitude,
-        provider_place_id,
-        formatted_address
+      select ${SELECT_FIELDS}
       from public.project_requests
       where client_id = $1
         and requested_by = $2
@@ -101,7 +104,7 @@ export async function listProjectRequestsForUser(user, { cursor, limit }) {
         and status in ('pending_verification', 'pending_review')
         ${cursorCondition}
       order by created_at desc, id desc
-      limit ${limitParameter}
+      limit $${params.length}
     `,
     params,
   );
@@ -109,7 +112,7 @@ export async function listProjectRequestsForUser(user, { cursor, limit }) {
   return pageResult(
     result.rows,
     limit,
-    toProjectRequest,
+    toProjectRequestRecord,
     (row) => [row.created_at, Number(row.id)],
   );
 }
@@ -117,20 +120,13 @@ export async function listProjectRequestsForUser(user, { cursor, limit }) {
 export async function findExistingProjectNameForClient(
   clientId,
   projectName,
-  options = {},
+  { excludeProjectRequestId = null } = {},
 ) {
-  const normalizedProjectName = String(projectName || "").trim();
-  const excludeProjectRequestId = options.excludeProjectRequestId || null;
-
   const result = await query(
     `
       select source, id, name, status
       from (
-        select
-          'project' as source,
-          p.id,
-          p.name,
-          p.status::text as status
+        select 'project' as source, p.id, p.name, p.status::text as status
         from public.projects p
         where p.client_id = $1
           and p.deleted_at is null
@@ -139,11 +135,7 @@ export async function findExistingProjectNameForClient(
 
         union all
 
-        select
-          'project_request' as source,
-          pr.id,
-          pr.project_name as name,
-          pr.status::text as status
+        select 'project_request', pr.id, pr.project_name, pr.status::text
         from public.project_requests pr
         where pr.client_id = $1
           and pr.deleted_at is null
@@ -153,184 +145,168 @@ export async function findExistingProjectNameForClient(
       ) existing_names
       limit 1
     `,
-    [clientId, normalizedProjectName, excludeProjectRequestId],
+    [clientId, String(projectName).trim(), excludeProjectRequestId],
   );
 
   return result.rows[0] || null;
 }
 
-export async function findProjectRequestEditableByUser(projectRequestId, user) {
+export async function findProjectRequestBySubmissionId(submissionId, user) {
   const result = await query(
     `
-      select id, client_id, requested_by, status
+      select ${SELECT_FIELDS}
+      from public.project_requests
+      where client_id = $1
+        and requested_by = $2
+        and submission_id = $3::uuid
+        and deleted_at is null
+      limit 1
+    `,
+    [user.clientId, user.id, submissionId],
+  );
+  return result.rows[0] ? toProjectRequestRecord(result.rows[0]) : null;
+}
+
+export async function findProjectRequestOwnedByUser(projectRequestId, user) {
+  const result = await query(
+    `
+      select ${SELECT_FIELDS}
       from public.project_requests
       where id = $1
         and client_id = $2
         and requested_by = $3
         and deleted_at is null
-        and status in ('pending_verification', 'pending_review')
       limit 1
     `,
     [projectRequestId, user.clientId, user.id],
   );
-
-  return result.rows[0] || null;
+  return result.rows[0] ? toProjectRequestRecord(result.rows[0]) : null;
 }
 
-export async function createProjectRequestForUser(user, payload) {
-  const projectType = normalizeProjectType(payload.selectedProjectTypeId);
-  const requestStatus =
-    payload.prepare === true ? "pending_verification" : "pending_review";
-
+export async function createProjectRequestDraft(user, payload) {
   const result = await query(
     `
       insert into public.project_requests (
-        client_id,
-        requested_by,
-        project_name,
-        project_type,
-        location,
-        description,
-        has_plans,
-        reference_link,
-        status,
-        verification_code_hash,
-        verification_expires_at,
-        location_latitude,
-        location_longitude,
-        provider_place_id,
-        formatted_address
+        client_id, requested_by, project_name, project_type, location,
+        description, has_plans, project_size, development_mode, land_status,
+        investment_range, capital_availability, expected_start_time,
+        decision_maker, quality_expectation, prior_design_experience,
+        reference_link, status, location_latitude, location_longitude,
+        provider_place_id, formatted_address, submission_id
       )
       values (
-        $1,
-        $2,
-        $3,
-        $4::project_type,
-        $5,
-        $6,
-        $7,
-        $8,
-        $9::project_request_status,
-        $10,
-        now() + interval '15 minutes',
-        $11,
-        $12,
-        $13,
-        $14
+        $1, $2, $3, $4::project_type, $5,
+        $6, $7, $8::project_request_size, $9::project_development_mode,
+        $10::project_land_status, $11::project_investment_range,
+        $12::project_capital_availability, $13::project_start_time,
+        $14::project_decision_maker, $15::project_quality_expectation,
+        $16::project_design_experience, $17, 'draft', $18, $19, $20, $21, $22::uuid
       )
-      returning
-        id,
-        client_id,
-        requested_by,
-        project_name,
-        project_type,
-        location,
-        description,
-        has_plans,
-        reference_link,
-        status,
-        created_at,
-        location_latitude,
-        location_longitude,
-        provider_place_id,
-        formatted_address
+      on conflict (client_id, requested_by, submission_id)
+        where submission_id is not null and deleted_at is null
+      do nothing
+      returning ${SELECT_FIELDS}
     `,
-    [
-      user.clientId,
-      user.id,
-      String(payload.projectName || "").trim(),
-      projectType,
-      String(payload.projectLocation || "").trim(),
-      toNullableString(payload.description),
-      payload.hasBlueprints === "Yes",
-      toNullableString(payload.referenceLink),
-      requestStatus,
-      hashVerificationCode(payload.code),
-      toNullableNumber(payload.projectLocationLatitude),
-      toNullableNumber(payload.projectLocationLongitude),
-      toNullableString(payload.projectLocationProviderPlaceId),
-      toNullableString(payload.projectLocationFormattedAddress),
-    ],
+    projectRequestParams(user, payload),
   );
 
-  return toProjectRequest(result.rows[0]);
+  if (result.rows[0]) return toProjectRequestRecord(result.rows[0]);
+  return findProjectRequestBySubmissionId(payload.submissionId, user);
 }
 
-export async function updateProjectRequestForUser(projectRequestId, user, payload) {
-  const projectType = normalizeProjectType(payload.selectedProjectTypeId);
-  const shouldSubmitRequest = payload.prepare !== true;
-  const shouldUpdateVerificationCode = Boolean(
-    String(payload.code || "").trim(),
-  );
-
+export async function updateProjectRequestDraft(projectRequestId, user, payload) {
+  const params = projectRequestParams(user, payload);
   const result = await query(
     `
       update public.project_requests
       set
-        project_name = $4,
-        project_type = $5::project_type,
-        location = $6,
-        description = $7,
-        has_plans = $8,
-        reference_link = $9,
-        location_latitude = $10,
-        location_longitude = $11,
-        provider_place_id = $12,
-        formatted_address = $13,
-        status = case
-          when $16::boolean then 'pending_review'::project_request_status
-          else status
-        end,
-        verification_code_hash = case
-          when $14::boolean then $15
-          else verification_code_hash
-        end,
-        verification_expires_at = case
-          when $14::boolean then now() + interval '15 minutes'
-          else verification_expires_at
-        end,
+        project_name = $3,
+        project_type = $4::project_type,
+        location = $5,
+        description = $6,
+        has_plans = $7,
+        project_size = $8::project_request_size,
+        development_mode = $9::project_development_mode,
+        land_status = $10::project_land_status,
+        investment_range = $11::project_investment_range,
+        capital_availability = $12::project_capital_availability,
+        expected_start_time = $13::project_start_time,
+        decision_maker = $14::project_decision_maker,
+        quality_expectation = $15::project_quality_expectation,
+        prior_design_experience = $16::project_design_experience,
+        reference_link = $17,
+        location_latitude = $18,
+        location_longitude = $19,
+        provider_place_id = $20,
+        formatted_address = $21,
+        updated_at = now()
+      where id = $22
+        and client_id = $1
+        and requested_by = $2
+        and deleted_at is null
+        and status = 'draft'
+      returning ${SELECT_FIELDS}
+    `,
+    [...params.slice(0, 21), projectRequestId],
+  );
+  return result.rows[0] ? toProjectRequestRecord(result.rows[0]) : null;
+}
+
+export async function submitProjectRequestForUser(projectRequestId, user, evaluation) {
+  const result = await query(
+    `
+      update public.project_requests
+      set
+        status = 'pending_review',
+        compatibility_score = $4,
+        compatibility_level = $5::project_compatibility_level,
+        compatibility_reason_codes = $6::jsonb,
+        compatibility_scoring_version = $7,
         updated_at = now()
       where id = $1
         and client_id = $2
         and requested_by = $3
         and deleted_at is null
-        and status in ('pending_verification', 'pending_review')
-      returning
-        id,
-        client_id,
-        requested_by,
-        project_name,
-        project_type,
-        location,
-        description,
-        has_plans,
-        reference_link,
-        status,
-        created_at,
-        location_latitude,
-        location_longitude,
-        provider_place_id,
-        formatted_address
+        and status = 'draft'
+      returning ${SELECT_FIELDS}
     `,
     [
       projectRequestId,
       user.clientId,
       user.id,
-      String(payload.projectName || "").trim(),
-      projectType,
-      String(payload.projectLocation || "").trim(),
-      toNullableString(payload.description),
-      payload.hasBlueprints === "Yes",
-      toNullableString(payload.referenceLink),
-      toNullableNumber(payload.projectLocationLatitude),
-      toNullableNumber(payload.projectLocationLongitude),
-      toNullableString(payload.projectLocationProviderPlaceId),
-      toNullableString(payload.projectLocationFormattedAddress),
-      shouldUpdateVerificationCode,
-      hashVerificationCode(payload.code),
-      shouldSubmitRequest,
+      evaluation.score,
+      evaluation.level,
+      JSON.stringify(evaluation.reasonCodes),
+      evaluation.version,
     ],
   );
+  if (result.rows[0]) return toProjectRequestRecord(result.rows[0]);
+  return findProjectRequestOwnedByUser(projectRequestId, user);
+}
 
-  return result.rows[0] ? toProjectRequest(result.rows[0]) : null;
+function projectRequestParams(user, payload) {
+  return [
+    user.clientId,
+    user.id,
+    payload.projectName,
+    payload.projectType,
+    payload.projectLocation,
+    payload.description,
+    payload.hasBlueprints,
+    payload.projectSize,
+    payload.developmentMode,
+    payload.landStatus,
+    payload.investmentRange,
+    payload.capitalAvailability,
+    payload.startTime,
+    payload.decisionMaker,
+    payload.quality,
+    payload.experience,
+    payload.referenceLink,
+    payload.projectLocationLatitude,
+    payload.projectLocationLongitude,
+    payload.projectLocationProviderPlaceId,
+    payload.projectLocationFormattedAddress,
+    payload.submissionId,
+  ];
 }

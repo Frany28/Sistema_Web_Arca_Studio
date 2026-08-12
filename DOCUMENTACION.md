@@ -284,12 +284,15 @@ Base: `/api/project-requests`
 
 | Metodo | Endpoint                           | Proteccion        | Descripcion         |
 | ------ | ---------------------------------- | ----------------- | ------------------- |
-| POST   | `/`                                | Auth              | Crea solicitud      |
-| PATCH  | `/:projectRequestId`               | Auth              | Actualiza solicitud |
+| POST   | `/`                                | Auth + límite de frecuencia | Crea o recupera un borrador idempotente |
+| PATCH  | `/:projectRequestId`               | Auth + límite de frecuencia | Actualiza un borrador propio |
 | POST   | `/:projectRequestId/files`         | Auth + raw upload | Sube adjunto        |
 | DELETE | `/:projectRequestId/files/:fileId` | Auth              | Elimina adjunto     |
+| POST   | `/:projectRequestId/submit`         | Auth + límite de frecuencia | Calcula compatibilidad y envía el borrador a revisión |
 
-La subida usa `express.raw` con limite `FILE_UPLOAD_LIMIT` o `50mb` por defecto. El controlador tambien valida `FILE_UPLOAD_MAX_BYTES`, por defecto 50 MB.
+La creación exige un `submissionId` UUID y valores normalizados del cuestionario. El cliente no puede establecer estado, puntuación, identidad del cliente ni códigos de verificación. La respuesta final incluye únicamente el puntaje, nivel y observaciones públicas calculadas por el servidor.
+
+Los adjuntos se transmiten por streaming y aceptan JPEG, PNG, PDF y MP4. Se valida nombre, extensión, MIME, firma binaria, máximo de 50 MB por archivo, 10 archivos y 200 MB por solicitud.
 
 ### Geoapify
 

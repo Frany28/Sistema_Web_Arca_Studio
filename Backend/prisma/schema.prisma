@@ -269,7 +269,16 @@ model project_requests {
   project_type                               project_type
   location                                   String                 @db.VarChar(255)
   description                                String?
-  has_plans                                  Boolean                @default(false)
+  has_plans                                  Boolean?
+  project_size                               project_request_size?
+  development_mode                           project_development_mode?
+  land_status                                project_land_status?
+  investment_range                           project_investment_range?
+  capital_availability                       project_capital_availability?
+  expected_start_time                        project_start_time?
+  decision_maker                             project_decision_maker?
+  quality_expectation                        project_quality_expectation?
+  prior_design_experience                    project_design_experience?
   general_area                               Decimal?               @db.Decimal(10, 2)
   construction_area                          Decimal?               @db.Decimal(10, 2)
   zoning                                     String?
@@ -278,8 +287,8 @@ model project_requests {
   equipment_used                             String?
   reference_link                             String?                @db.VarChar(500)
   status                                     project_request_status @default(pending_verification)
-  verification_code_hash                     String                 @db.VarChar(255)
-  verification_expires_at                    DateTime               @db.Timestamptz(6)
+  verification_code_hash                     String?                @db.VarChar(255)
+  verification_expires_at                    DateTime?              @db.Timestamptz(6)
   verified_at                                DateTime?              @db.Timestamptz(6)
   reviewed_by                                BigInt?
   reviewed_at                                DateTime?              @db.Timestamptz(6)
@@ -292,6 +301,11 @@ model project_requests {
   location_longitude                         Decimal?               @db.Decimal(10, 7)
   provider_place_id                          String?                @db.VarChar
   formatted_address                          String?                @db.VarChar
+  submission_id                              String?                @db.Uuid
+  compatibility_score                        Int?
+  compatibility_level                        project_compatibility_level?
+  compatibility_reason_codes                 Json?
+  compatibility_scoring_version              String?                @db.VarChar(20)
   files                                      files[]
   clients                                    clients                @relation(fields: [client_id], references: [id], map: "fk_project_requests_client")
   projects                                   projects?              @relation(fields: [converted_project_id], references: [id], map: "fk_project_requests_converted_project")
@@ -564,11 +578,81 @@ enum file_status {
 }
 
 enum project_request_status {
+  draft
   pending_verification
   pending_review
   approved
   rejected
   converted
+}
+
+enum project_request_size {
+  small_lt_80
+  medium_80_200
+  large_200_500
+  very_large_gt_500
+  unknown
+}
+
+enum project_development_mode {
+  phased
+  full
+  undecided
+}
+
+enum project_land_status {
+  available
+  acquiring
+  unavailable
+}
+
+enum project_investment_range {
+  undefined
+  under_10k
+  range_10k_50k   @map("10k_50k")
+  range_50k_150k  @map("50k_150k")
+  over_150k
+}
+
+enum project_capital_availability {
+  available_now
+  within_3_months
+  seeking_financing
+  undefined
+}
+
+enum project_start_time {
+  immediate
+  within_1_3_months @map("1_3_months")
+  within_3_6_months @map("3_6_months")
+  over_6_months
+}
+
+enum project_decision_maker {
+  self
+  partner
+  extended_family
+  company_board
+}
+
+enum project_quality_expectation {
+  functional_economic
+  standard
+  premium
+  luxury
+}
+
+enum project_design_experience {
+  positive
+  negative
+  first_time
+}
+
+enum project_compatibility_level {
+  excellent
+  high
+  medium
+  low
 }
 
 enum project_status {

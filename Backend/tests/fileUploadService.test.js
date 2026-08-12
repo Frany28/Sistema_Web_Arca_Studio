@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { prepareUpload, runUpload, uploadPolicies } from "../src/services/fileUploadService.js";
+import { Readable } from "node:stream";
+import { prepareProjectRequestUpload, prepareUpload, runUpload, uploadPolicies } from "../src/services/fileUploadService.js";
 
 function request(overrides = {}) {
   return { destroyed: false, headers: { "content-length": "100", "content-type": "application/pdf", "x-file-name": "documento.pdf" }, ...overrides };
@@ -82,4 +83,33 @@ test("document uploads reject legacy Office and mismatched extensions", () => {
 test("operation errors remain the primary upload error", async () => {
   const failure = new Error("database failed");
   await assert.rejects(() => runUpload({ req: request(), policy: uploadPolicies.document, operation: async () => { throw failure; } }), failure);
+});
+
+function streamingRequest(content, contentType, fileName) {
+  const req = Readable.from([content]);
+  req.headers = {
+    "content-length": String(content.length),
+    "content-type": contentType,
+    "x-file-name": fileName,
+  };
+  return req;
+}
+
+test("project request uploads verify the real file signature", async () => {
+  const validPng = Buffer.from("89504e470d0a1a0a00000000", "hex");
+  const upload = prepareProjectRequestUpload(
+    streamingRequest(validPng, "image/png", "referencia.png"),
+  );
+  const chunks = [];
+  for await (const chunk of upload.body) chunks.push(chunk);
+  assert.deepEqual(Buffer.concat(chunks), validPng);
+
+  const invalid = prepareProjectRequestUpload(
+    streamingRequest(Buffer.from("not a png"), "image/png", "falso.png"),
+  );
+  await assert.rejects(async () => {
+    for await (const _chunk of invalid.body) {
+      // Consume the stream so signature failures surface.
+    }
+  }, { code: "INVALID_FILE_SIGNATURE" });
 });

@@ -1,3 +1,5 @@
+import { optionValues } from "./projectRequestOptions.js";
+
 export const PROJECT_REQUEST_REQUIRED_FIELDS = [
   "projectName",
   "projectType",
@@ -8,12 +10,135 @@ export const PROJECT_REQUEST_REQUIRED_FIELDS = [
   "startTime",
 ];
 
-export function getProjectRequestRequiredFieldErrors(values = {}) {
-  return PROJECT_REQUEST_REQUIRED_FIELDS.reduce((errors, field) => {
-    if (!String(values[field] ?? "").trim()) {
-      errors[field] = true;
-    }
+export const PROJECT_REQUEST_FILE_LIMITS = {
+  maxCount: 10,
+  maxFileBytes: 50 * 1024 * 1024,
+  maxNameLength: 150,
+  maxTotalBytes: 200 * 1024 * 1024,
+};
 
-    return errors;
-  }, {});
+const FILE_MIME_BY_EXTENSION = new Map([
+  ["jpeg", "image/jpeg"],
+  ["jpg", "image/jpeg"],
+  ["mp4", "video/mp4"],
+  ["pdf", "application/pdf"],
+  ["png", "image/png"],
+]);
+
+function isHttpUrl(value) {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+function isValidLocation(value) {
+  const normalized = String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (normalized.length < 5 || !/[a-z]/.test(normalized)) return false;
+  if (/^(.)\1{5,}$/.test(normalized.replace(/\s/g, ""))) return false;
+  return (normalized.match(/[a-z0-9]+/g) || []).some((word) => word.length >= 5);
+}
+
+export function getProjectRequestFieldErrors(values = {}) {
+  const errors = {};
+  const projectName = String(values.projectName || "").trim();
+  const location = String(values.location || "").trim();
+  const description = String(values.description || "").trim();
+  const referenceLink = String(values.referenceLink || "").trim();
+
+  if (projectName.length < 3) errors.projectName = "Ingresa al menos 3 caracteres.";
+  else if (projectName.length > 150) errors.projectName = "Máximo 150 caracteres.";
+
+  if (!optionValues("projectType").has(values.projectType)) errors.projectType = "Selecciona un tipo de proyecto.";
+  if (!isValidLocation(location)) errors.location = "Ingresa una ubicación válida de al menos 5 caracteres.";
+  else if (location.length > 255) errors.location = "Máximo 255 caracteres.";
+
+  if (description && description.length < 10) errors.description = "Usa al menos 10 caracteres o deja el campo vacío.";
+  else if (description.length > 5000) errors.description = "Máximo 5000 caracteres.";
+
+  for (const field of ["developmentMode", "investmentRange", "capitalAvailability", "startTime"]) {
+    if (!optionValues(field).has(values[field])) errors[field] = "Selecciona una opción válida.";
+  }
+  for (const field of ["projectSize", "landStatus", "decisionMaker", "quality", "experience"]) {
+    if (values[field] && !optionValues(field).has(values[field])) errors[field] = "Selecciona una opción válida.";
+  }
+
+  if (referenceLink && (referenceLink.length > 500 || !isHttpUrl(referenceLink))) {
+    errors.referenceLink = referenceLink.length > 500
+      ? "Máximo 500 caracteres."
+      : "Ingresa un enlace que comience con http:// o https://.";
+  }
+
+  const hasLatitude = values.locationLatitude !== null && values.locationLatitude !== undefined;
+  const hasLongitude = values.locationLongitude !== null && values.locationLongitude !== undefined;
+  if (hasLatitude !== hasLongitude) errors.location = "La ubicación seleccionada tiene coordenadas incompletas.";
+  if (hasLatitude && (Number(values.locationLatitude) < -90 || Number(values.locationLatitude) > 90)) errors.location = "La latitud no es válida.";
+  if (hasLongitude && (Number(values.locationLongitude) < -180 || Number(values.locationLongitude) > 180)) errors.location = "La longitud no es válida.";
+
+  return errors;
+}
+
+export function getProjectRequestRequiredFieldErrors(values = {}) {
+  const errors = getProjectRequestFieldErrors(values);
+  return Object.fromEntries(
+    PROJECT_REQUEST_REQUIRED_FIELDS.filter((field) => errors[field]).map((field) => [field, errors[field]]),
+  );
+}
+
+export function getProjectRequestFileErrors(files = []) {
+  const errors = [];
+  if (files.length > PROJECT_REQUEST_FILE_LIMITS.maxCount) errors.push("Puedes adjuntar un máximo de 10 archivos.");
+  const names = new Set();
+  let totalBytes = 0;
+  for (const item of files) {
+    const file = item?.file || item;
+    const name = String(file?.name || "").trim();
+    const extension = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
+    const expectedMime = FILE_MIME_BY_EXTENSION.get(extension);
+    totalBytes += Number(file?.size || 0);
+    if (!name || name.length > PROJECT_REQUEST_FILE_LIMITS.maxNameLength) errors.push(`${name || "Un archivo"}: nombre inválido.`);
+    else if (names.has(name.toLowerCase())) errors.push(`${name}: está repetido.`);
+    names.add(name.toLowerCase());
+    if (!expectedMime || expectedMime !== String(file?.type || "").toLowerCase()) errors.push(`${name || "Un archivo"}: formato no permitido.`);
+    if (!Number.isFinite(file?.size) || file.size <= 0) errors.push(`${name || "Un archivo"}: está vacío.`);
+    else if (file.size > PROJECT_REQUEST_FILE_LIMITS.maxFileBytes) errors.push(`${name}: supera 50 MB.`);
+  }
+  if (totalBytes > PROJECT_REQUEST_FILE_LIMITS.maxTotalBytes) errors.push("Los archivos no pueden superar 200 MB en total.");
+  return [...new Set(errors)];
+}
+
+function nullableText(value) {
+  const normalized = String(value || "").trim();
+  return normalized || null;
+}
+
+export function buildProjectRequestPayload(form, submissionId) {
+  return {
+    capitalAvailability: form.capitalAvailability,
+    decisionMaker: form.decisionMaker || null,
+    description: nullableText(form.description),
+    developmentMode: form.developmentMode,
+    experience: form.experience || null,
+    hasBlueprints:
+      form.hasBlueprints === "Yes" ? true : form.hasBlueprints === "No" ? false : null,
+    investmentRange: form.investmentRange,
+    landStatus: form.landStatus || null,
+    projectLocation: String(form.location || "").trim(),
+    projectLocationFormattedAddress: nullableText(form.locationFormattedAddress),
+    projectLocationLatitude: form.locationLatitude ?? null,
+    projectLocationLongitude: form.locationLongitude ?? null,
+    projectLocationProviderPlaceId: nullableText(form.locationProviderPlaceId),
+    projectName: String(form.projectName || "").trim(),
+    projectSize: form.projectSize || null,
+    projectType: form.projectType,
+    quality: form.quality || null,
+    referenceLink: nullableText(form.referenceLink),
+    startTime: form.startTime,
+    ...(submissionId ? { submissionId } : {}),
+  };
 }

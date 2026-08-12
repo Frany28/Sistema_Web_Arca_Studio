@@ -70,7 +70,21 @@ function AnimatedRequestStep({ animationDelay, state, subtext, title }) {
   );
 }
 
-function ProjectRequestReceivedView({ onBackToDashboard, onViewRequest }) {
+const LEVEL_LABELS = {
+  excellent: "Excelente compatibilidad",
+  high: "Alta compatibilidad",
+  medium: "Compatibilidad media",
+  low: "Compatibilidad por revisar",
+};
+
+function ProjectRequestReceivedView({ compatibility, onBackToDashboard, onViewRequest }) {
+  const score = Number.isFinite(Number(compatibility?.score))
+    ? Math.max(0, Math.min(100, Number(compatibility.score)))
+    : 0;
+  const levelLabel = LEVEL_LABELS[compatibility?.level] || "Evaluación disponible";
+  const observations = Array.isArray(compatibility?.observations)
+    ? compatibility.observations.slice(0, 3)
+    : [];
   return (
     <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
       <header className="flex w-full max-w-[850px] flex-col gap-[4px]">
@@ -91,15 +105,20 @@ function ProjectRequestReceivedView({ onBackToDashboard, onViewRequest }) {
 
         <ProgressBarLabel
           animated
-          title="Excelente compatibilidad"
-          value={80}
+          title={levelLabel}
+          value={score}
           position="side"
-          valueLabel="80%"
-          sublabel="La información proporcionada indica una alta compatibilidad con los servicios de ARCAstudio. Nuestro equipo realizará una revisión detallada para preparar los siguientes pasos del proceso."
+          valueLabel={`${score}%`}
+          sublabel="Este resultado mide la preparación y coherencia inicial de la solicitud. Nuestro equipo realizará la revisión definitiva."
           fillClassName="bg-[var(--color-success-200)]"
           className="w-full max-w-[445px]"
-          aria-label="Compatibilidad con nuestros servicios: 80%"
+          aria-label={`Compatibilidad con nuestros servicios: ${score}%`}
         />
+        {observations.length ? (
+          <ul className="min-[768px]:col-start-2 flex list-disc flex-col gap-[8px] pl-[20px] text-body-3 text-[var(--color-text-200)]">
+            {observations.map((observation) => <li key={observation}>{observation}</li>)}
+          </ul>
+        ) : null}
       </section>
 
       <SectionDivider />

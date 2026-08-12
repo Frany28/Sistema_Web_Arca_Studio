@@ -1,43 +1,30 @@
 import {
   deleteProjectFile,
-  deleteProjectRequestFile,
   findProjectForFileUpload,
-  findProjectRequestForFileUpload,
   findProjectFileForDownload,
   getProjectFileObject,
   uploadProjectFile,
-  uploadProjectRequestFile,
 } from "../repositories/fileRepository.js";
 import { getProjectFileCacheHeaders } from "../utils/projectFileCache.js";
-import { runUpload, uploadPolicies } from "../services/fileUploadService.js";
+import {
+  prepareProjectRequestUpload,
+  runUpload,
+  uploadPolicies,
+} from "../services/fileUploadService.js";
 import { getAllowedOrigins } from "../config/cors.js";
+import {
+  deleteProjectRequestAttachment as deleteProjectRequestAttachmentService,
+  uploadProjectRequestAttachment as uploadProjectRequestAttachmentService,
+} from "../services/projectRequestFileService.js";
 
 export async function uploadProjectRequestAttachment(req, res, next) {
   try {
-    const projectRequestId = Number(req.params.projectRequestId);
-
-    if (!Number.isInteger(projectRequestId) || projectRequestId <= 0) {
-      res.status(400).json({
-        code: "INVALID_PROJECT_REQUEST_ID",
-        message: "La solicitud de proyecto no es valida.",
-      });
-      return;
-    }
-
-    const projectRequest = await findProjectRequestForFileUpload(
-      projectRequestId,
-      req.user,
-    );
-
-    if (!projectRequest) {
-      res.status(404).json({
-        code: "PROJECT_REQUEST_NOT_FOUND",
-        message: "No se encontro la solicitud de proyecto.",
-      });
-      return;
-    }
-
-    const file = await runUpload({ req, policy: uploadPolicies.document, operation: (upload) => uploadProjectRequestFile({ ...upload, projectRequestId, user: req.user }) });
+    const upload = prepareProjectRequestUpload(req);
+    const file = await uploadProjectRequestAttachmentService({
+      projectRequestId: req.params.projectRequestId,
+      upload,
+      user: req.user,
+    });
 
     res.status(201).json({ file });
   } catch (error) {
@@ -63,38 +50,11 @@ export async function uploadProjectRequestAttachment(req, res, next) {
 
 export async function deleteProjectRequestAttachment(req, res, next) {
   try {
-    const projectRequestId = Number(req.params.projectRequestId);
-    const fileId = Number(req.params.fileId);
-
-    if (!Number.isInteger(projectRequestId) || projectRequestId <= 0) {
-      res.status(400).json({
-        code: "INVALID_PROJECT_REQUEST_ID",
-        message: "La solicitud de proyecto no es valida.",
-      });
-      return;
-    }
-
-    if (!Number.isInteger(fileId) || fileId <= 0) {
-      res.status(400).json({
-        code: "INVALID_FILE_ID",
-        message: "El archivo no es valido.",
-      });
-      return;
-    }
-
-    const deletedFile = await deleteProjectRequestFile({
-      fileId,
-      projectRequestId,
+    const deletedFile = await deleteProjectRequestAttachmentService({
+      fileId: req.params.fileId,
+      projectRequestId: req.params.projectRequestId,
       user: req.user,
     });
-
-    if (!deletedFile) {
-      res.status(404).json({
-        code: "FILE_NOT_FOUND",
-        message: "No se encontro el archivo en esta solicitud.",
-      });
-      return;
-    }
 
     res.status(200).json(deletedFile);
   } catch (error) {

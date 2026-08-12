@@ -32,7 +32,7 @@ function ProjectRequestValidationStep({
   submitError = "",
   onCodeChange,
 }) {
-  const hasNumericCode = /^\d+$/.test(String(code ?? "").trim());
+  const hasNumericCode = /^\d{6}$/.test(String(code ?? "").trim());
 
   return (
     <ProjectRequestModalShell
@@ -54,7 +54,7 @@ function ProjectRequestValidationStep({
           size="S"
           type="Default input"
           placeholder="Ingresa el código"
-          hintText="Enviamos un código a tu correo"
+          hintText="Usa un código temporal de 6 dígitos para continuar."
           leftIcon={<SecurityIcon className="size-5" />}
           rightIcon={null}
           showLeftIcon
@@ -62,8 +62,9 @@ function ProjectRequestValidationStep({
           value={code}
           inputMode="numeric"
           pattern="[0-9]*"
+          maxLength={6}
           autoComplete="one-time-code"
-          onChange={(event) => onCodeChange?.(event.target.value.replace(/\D/g, ""))}
+          onChange={(event) => onCodeChange?.(event.target.value.replace(/\D/g, "").slice(0, 6))}
           className="w-full max-w-none"
         />
         {submitError ? (

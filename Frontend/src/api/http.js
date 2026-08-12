@@ -495,6 +495,13 @@ export const projectRequestsApi = {
     });
   },
 
+  submit(projectRequestId) {
+    return apiRequest(`/project-requests/${projectRequestId}/submit`, {
+      body: JSON.stringify({}),
+      method: "POST",
+    });
+  },
+
   deleteFile({ fileId, projectRequestId }) {
     return apiRequest(`/project-requests/${projectRequestId}/files/${fileId}`, {
       method: "DELETE",

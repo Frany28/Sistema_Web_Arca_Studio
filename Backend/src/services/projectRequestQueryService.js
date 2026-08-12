@@ -1,5 +1,6 @@
 import { AppError } from "../errors/appError.js";
 import { listProjectRequestsForUser } from "../repositories/projectRequestRepository.js";
+import { toPublicProjectRequest } from "./projectRequestService.js";
 
 export async function listUserProjectRequests({ cursor, limit, user }) {
   if (!user?.clientId) {
@@ -10,5 +11,6 @@ export async function listUserProjectRequests({ cursor, limit, user }) {
     });
   }
 
-  return listProjectRequestsForUser(user, { cursor, limit });
+  const page = await listProjectRequestsForUser(user, { cursor, limit });
+  return { ...page, items: page.items.map(toPublicProjectRequest) };
 }
