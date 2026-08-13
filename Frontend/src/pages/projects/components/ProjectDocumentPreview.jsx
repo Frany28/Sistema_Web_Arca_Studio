@@ -7,6 +7,7 @@ import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import * as XLSX from "xlsx";
 
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
+import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import ObservationTooltip from "../../../components/ui/ObservationTooltip/ObservationTooltip.jsx";
@@ -27,6 +28,8 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState(null);
   const isPending = comment.id === "pending";
+  const authorName = comment.authorName || comment.name || comment.author?.name || "Usuario";
+  const avatarSrc = comment.avatarSrc || "";
   const replyCount = Number(comment.replyCount || comment.replies?.length || 0);
   const openTooltip = () => {
     if (isPending || !markerRef.current) return;
@@ -40,10 +43,10 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         ref={markerRef}
         type="button"
         data-document-marker
-        aria-label={isPending ? "Punto pendiente" : `Observación ${comment.pointNumber}`}
+        aria-label={isPending ? "Ubicación de observación pendiente" : `Observación de ${authorName}`}
         className={clsx(
-          "absolute z-[3] flex size-[24px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold text-[var(--color-neutral-100-uniform)] shadow-[0_2px_8px_rgba(0,0,0,0.28)] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2",
-          focused && "scale-125",
+          "absolute z-[3] flex size-[40px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-10)] p-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2",
+          focused && "ring-2 ring-[var(--color-accent-300)] ring-offset-2",
         )}
         style={style}
         onMouseEnter={openTooltip}
@@ -52,11 +55,19 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         onBlur={() => setTooltipOpen(false)}
         onClick={(event) => { event.stopPropagation(); if (!isPending) onSelect?.(comment.id); }}
       >
-        {comment.pointNumber}
+        <Avatar
+          size="S"
+          theme="Brand 1"
+          content={avatarSrc ? "Image" : "Icon"}
+          name={authorName}
+          src={avatarSrc}
+          alt={authorName}
+          decorative={false}
+        />
       </button>
       <ObservationTooltip
-        authorName={comment.authorName || comment.name || comment.author?.name}
-        avatarSrc={comment.avatarSrc}
+        authorName={authorName}
+        avatarSrc={avatarSrc}
         message={comment.message || comment.content}
         replyCount={replyCount}
         open={tooltipOpen}
