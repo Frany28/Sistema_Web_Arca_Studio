@@ -1011,17 +1011,12 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
   const page = viewState.source === source ? viewState.page : 1;
   const zoom = viewState.source === source ? viewState.zoom : 100;
   const documentName = getFileDisplayName(document?.name);
-  const { addComment, comments } = useDocumentComments({
+  const { comments } = useDocumentComments({
     enabled: Boolean(projectId && document?.id && document?.currentVersionId),
     fileId: document?.id,
     fileVersionId: document?.currentVersionId,
     projectId,
   });
-  const handleSubmitComment = async ({ message, parentCommentId, selection }) => {
-    const comment = await addComment({ message, parentCommentId, selection });
-    if (comment && !parentCommentId) setPendingSelection(null);
-  };
-
   useEffect(() => {
     queueMicrotask(() => {
       setPendingSelection(null);
@@ -1102,17 +1097,11 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
   if (documentKind === "docx" || documentKind === "xlsx") {
     return (
       <>
-        <div className="flex h-[554px] gap-[12px] max-[767px]:h-auto max-[767px]:flex-col">
+        <div className="h-[554px]">
           <div className="min-w-0 flex-1 max-[767px]:h-[52dvh]">
             <OfficeInlineDocumentPreview annotations={comments} document={document} expandButtonRef={expandButtonRef}
               focusedId={focusedCommentId} kind={documentKind} onExpand={() => setIsFullscreenOpen(true)}
               onPointCreate={setPendingSelection} onPointSelect={setFocusedCommentId} pendingSelection={pendingSelection} />
-          </div>
-          <div className="h-[554px] w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
-            <GeneralCommentsDrawer comments={comments} focusedSelectionCommentId={focusedCommentId} mediaItem={document}
-              composerFocusSignal={pendingSelection ? JSON.stringify(pendingSelection) : ""}
-              mediaType="document" pendingSelection={pendingSelection} requireSelectionForRoot
-              onClearSelection={() => setPendingSelection(null)} onSelectionPreviewClick={setFocusedCommentId} onSubmitComment={handleSubmitComment} />
           </div>
         </div>
         <ProjectDocumentViewerModal
@@ -1171,7 +1160,7 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
 
   return (
     <>
-      <div className="flex h-[554px] gap-[12px] max-[767px]:h-auto max-[767px]:flex-col">
+      <div className="h-[554px]">
       <PdfViewerSurface
         annotations={comments}
         className="h-[554px] min-h-[554px] max-h-[554px] rounded-b-[var(--radius-3)]"
@@ -1189,20 +1178,6 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
         updateZoom={updateZoom}
         zoom={zoom}
       />
-        <div className="h-[554px] w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
-          <GeneralCommentsDrawer
-            composerFocusSignal={pendingSelection ? JSON.stringify(pendingSelection) : ""}
-            comments={comments}
-            focusedSelectionCommentId={focusedCommentId}
-            mediaItem={document}
-            mediaType="document"
-            pendingSelection={pendingSelection}
-            requireSelectionForRoot
-            onClearSelection={() => setPendingSelection(null)}
-            onSelectionPreviewClick={setFocusedCommentId}
-            onSubmitComment={handleSubmitComment}
-          />
-        </div>
       </div>
 
       <ProjectDocumentViewerModal
