@@ -1,15 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import clsx from "clsx";
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import IconContainer from "../../../components/ui/IconContainer.jsx";
-import Loader from "../../../components/ui/Loader/Loader.jsx";
-import ScrollBar from "../../../components/ui/ScrollBar.jsx";
 import ProjectDocumentCard from "../components/ProjectDocumentCard.jsx";
-import ProjectDocumentListCard from "../components/ProjectDocumentListCard.jsx";
 import ProjectDocumentPreview from "../components/ProjectDocumentPreview.jsx";
-import ProjectDocumentsToolbar from "../components/ProjectDocumentsToolbar.jsx";
 import { PROJECT_DETAIL_DATA } from "../projectDetailsData.js";
-import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 
 const EMPTY_DOCUMENT_PREVIEW = {
   id: "empty-document-preview",
@@ -129,107 +124,17 @@ export default function ProjectDocumentsPanel({
   projectId,
 }) {
   const hasDocuments = documents.length > 0;
-  const listViewportRef = useRef(null);
-  const [selectedDocumentId, setSelectedDocumentId] = useState(
-    () =>
-      documents.find(
-        (document) => String(document.id) === String(focusedDocumentId),
-      )?.id ?? documents[0]?.id,
-  );
-  const [query, setQuery] = useState("");
-  const [sortDirection, setSortDirection] = useState("desc");
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [scrollState, setScrollState] = useState({
-    length: 1,
-    position: 0,
-    height: 480,
-  });
-
-  const visibleDocuments = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("es");
-    return [...documents]
-      .filter((document) =>
-        getFileDisplayName(document.name)
-          .toLocaleLowerCase("es")
-          .includes(normalizedQuery),
-      )
-      .sort((left, right) => {
-        const leftTime = new Date(left.createdAt || 0).getTime();
-        const rightTime = new Date(right.createdAt || 0).getTime();
-        return sortDirection === "desc" ? rightTime - leftTime : leftTime - rightTime;
-      });
-  }, [documents, query, sortDirection]);
-  const hasVisibleDocuments = visibleDocuments.length > 0;
-
   const selectedDocument = useMemo(() => {
-    if (!hasVisibleDocuments) return null;
+    if (!hasDocuments) return null;
 
-    return (
-      visibleDocuments.find((document) => document.id === selectedDocumentId) ??
-      visibleDocuments[0]
-    );
-  }, [hasVisibleDocuments, selectedDocumentId, visibleDocuments]);
-
-  const syncScrollState = useCallback(() => {
-    const element = listViewportRef.current;
-
-    if (!element) return;
-
-    const maxScrollTop = Math.max(
-      element.scrollHeight - element.clientHeight,
-      0,
-    );
-    const nextLength =
-      element.scrollHeight > 0
-        ? Math.min(element.clientHeight / element.scrollHeight, 1)
-        : 1;
-    const nextPosition =
-      maxScrollTop > 0 ? element.scrollTop / maxScrollTop : 0;
-
-    setScrollState({
-      length: nextLength,
-      position: nextPosition,
-      height: element.clientHeight,
-    });
-  }, []);
-
-  const handleScrollBarPositionChange = useCallback((nextPosition) => {
-    const element = listViewportRef.current;
-
-    if (!element) return;
-
-    const maxScrollTop = Math.max(
-      element.scrollHeight - element.clientHeight,
-      0,
-    );
-
-    element.scrollTop = maxScrollTop * nextPosition;
-  }, []);
-
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(syncScrollState);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [visibleDocuments, syncScrollState]);
-
-  useEffect(() => {
-    if (!listViewportRef.current || typeof ResizeObserver === "undefined") {
-      return undefined;
-    }
-
-    const observer = new ResizeObserver(syncScrollState);
-    observer.observe(listViewportRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [syncScrollState]);
+    return documents.find(
+      (document) => String(document.id) === String(focusedDocumentId),
+    ) ?? documents[0];
+  }, [documents, focusedDocumentId, hasDocuments]);
 
   return (
     <section className="flex w-full flex-col gap-[16px]">
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_335px] gap-[20px] max-[1024px]:grid-cols-1">
+      <div className="w-full">
         <div
           className={clsx(
             "flex min-w-0 flex-col overflow-hidden rounded-[var(--radius-3)] shadow-[var(--shadow-e1)]",
@@ -240,10 +145,9 @@ export default function ProjectDocumentsPanel({
         >
           <ProjectDocumentCard document={selectedDocument || EMPTY_DOCUMENT_PREVIEW} />
 
-          {hasVisibleDocuments ? (
+          {selectedDocument ? (
             <ProjectDocumentPreview
               document={selectedDocument}
-              onLoadingChange={setIsPreviewLoading}
               projectId={projectId}
             />
           ) : (
@@ -262,75 +166,6 @@ export default function ProjectDocumentsPanel({
           )}
         </div>
 
-        <aside className="flex min-h-0 flex-col">
-          <ProjectDocumentsToolbar
-            disabled={isPreviewLoading || !hasDocuments}
-            query={query}
-            sortDirection={sortDirection}
-            onQueryChange={setQuery}
-            onToggleSort={() =>
-              setSortDirection((current) => current === "desc" ? "asc" : "desc")
-            }
-          />
-
-          {isPreviewLoading ? (
-            <Loader
-              preset="documentList"
-              label="Cargando lista de documentos"
-              className="pt-[12px]"
-            />
-          ) : (
-            <>
-              {hasVisibleDocuments ? (
-          <div className="flex flex-col gap-[12px] py-[12px]">
-            <p className="text-heading-8 text-[var(--color-text-200)]">
-              Selecciona un documento para ver la previsualización
-            </p>
-
-            <div className="flex max-h-[480px] min-h-0 items-start">
-              <div
-                ref={listViewportRef}
-                className="flex max-h-[480px] min-w-0 flex-1 flex-col gap-[12px] overflow-y-auto pr-[8px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                onScroll={syncScrollState}
-              >
-                {visibleDocuments.map((document) => (
-                  <ProjectDocumentListCard
-                    key={document.id}
-                    document={document}
-                    selected={document.id === selectedDocument?.id}
-                    onClick={() => setSelectedDocumentId(document.id)}
-                  />
-                ))}
-              </div>
-
-              <div className="flex shrink-0">
-                <ScrollBar
-                  length={scrollState.length}
-                  position={scrollState.position}
-                  height={scrollState.height}
-                  interactive
-                  onPositionChange={handleScrollBarPositionChange}
-                />
-              </div>
-            </div>
-          </div>
-              ) : (
-            <div className="flex min-h-[443px] items-center justify-center px-[16px]">
-              <EmptyState
-                title={hasDocuments ? "No se encontraron documentos" : "Sin documentos"}
-                description={hasDocuments ? "Prueba con otro término de búsqueda." : "Aquí encontrarás todos los documentos importantes sobre este proyecto."}
-                size="S"
-                showFeaturedIcon
-                showActions
-                showSecondaryAction={false}
-                primaryActionLabel="Actualizar"
-                className="h-auto min-h-[254px]"
-              />
-            </div>
-              )}
-            </>
-          )}
-        </aside>
       </div>
 
       <div className="flex w-full items-center gap-[24px] max-[760px]:flex-col max-[760px]:items-start">
