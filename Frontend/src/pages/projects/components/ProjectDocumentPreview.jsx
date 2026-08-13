@@ -477,17 +477,6 @@ function DocumentFullscreenModal({ children, documentName, onClose, triggerRef, 
           className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[var(--radius-3)] shadow-[var(--shadow-e2)]"
           onClick={(event) => event.stopPropagation()}
         >
-          <ViewerButton
-            label="Cerrar visor"
-            onClick={onClose}
-            tooltipPosition="Bottom right"
-            className="absolute right-[8px] top-[8px] z-20 bg-[var(--color-primary-300)] shadow-[var(--shadow-e1)]"
-          >
-            <CloseIcon />
-          </ViewerButton>
-          <span className="pointer-events-none absolute left-[16px] top-[9px] z-[1] max-w-[28vw] truncate text-[11px] text-[var(--color-neutral-100-uniform)] max-[640px]:sr-only">
-            {documentName}
-          </span>
           {children}
         </div>
       </section>
@@ -970,7 +959,12 @@ export function ProjectDocumentViewerModal({
     >
       <div className="flex size-full min-h-0 min-w-0 gap-[12px] max-[767px]:flex-col">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-100)] max-[767px]:min-h-[52dvh]">
-          <ProjectDocumentCard document={document} />
+          <ProjectDocumentCard
+            closeIcon={<CloseIcon />}
+            document={document}
+            onClose={onClose}
+            variant="modal"
+          />
           <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
             {viewer}
           </div>

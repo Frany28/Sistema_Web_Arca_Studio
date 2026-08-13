@@ -1,18 +1,27 @@
 import clsx from "clsx";
 import AvatarLabel from "../../../components/ui/AvatarLabel/AvatarLabel.jsx";
+import Button from "../../../components/ui/Button/Button.jsx";
 import FileAttachmentIcons from "../../../components/ui/FileAttachmentIcons/FileAttachmentIcons.jsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 
-export default function ProjectDocumentCard({ document }) {
+export default function ProjectDocumentCard({ closeIcon = null, document, onClose, variant = "default" }) {
   if (!document) {
     return null;
   }
 
   const isEmptyState = document.emptyState === true;
+  const isModal = variant === "modal";
 
   return (
-    <article className="flex w-full items-center gap-[24px] bg-[var(--color-neutral-100)] p-[16px] max-[720px]:flex-wrap max-[520px]:gap-[16px]">
-      <div className="flex min-w-0 flex-1 items-center gap-[12px]">
+    <article
+      className={clsx(
+        "relative flex w-full items-center bg-[var(--color-neutral-100)] p-[16px]",
+        isModal
+          ? "min-h-[72px] gap-[48px] pr-[56px] max-[720px]:gap-[24px] max-[520px]:flex-wrap max-[520px]:gap-[12px]"
+          : "gap-[24px] max-[720px]:flex-wrap max-[520px]:gap-[16px]",
+      )}
+    >
+      <div className={clsx("flex min-w-0 items-center gap-[12px]", !isModal && "flex-1")}>
         <FileAttachmentIcons
           type={document.fileType}
           className={clsx(
@@ -56,6 +65,23 @@ export default function ProjectDocumentCard({ document }) {
         />
       ) : null}
 
+      {isModal && onClose ? (
+        <div className="absolute right-0 top-0 p-[8px]">
+          <Button
+            aria-label="Cerrar visor"
+            className="text-[var(--color-text-300)]"
+            fitContent
+            iconLeft={closeIcon}
+            showText={false}
+            size="S"
+            theme="Primary"
+            tooltip="Cerrar"
+            tooltipPosition="Bottom right"
+            type="Ghost"
+            onClick={onClose}
+          />
+        </div>
+      ) : null}
     </article>
   );
 }
