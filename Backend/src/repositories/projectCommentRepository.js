@@ -39,6 +39,8 @@ function toProjectComment(row) {
 
 function toDocumentComment(row) {
   const comment = toProjectComment(row);
+  const anchorContext = row.anchor_context_json || null;
+  const anchorKind = anchorContext?.kind || "document-point";
   return {
     ...comment,
     fileId: Number(row.file_id),
@@ -47,13 +49,14 @@ function toDocumentComment(row) {
     pointNumber:
       Number(row.target_metadata?.pointNumber ?? row.target_metadata?.point_number) || null,
     selection:
-      row.page_number === null
+      row.pos_x === null || row.pos_y === null
         ? null
         : {
-            kind: "document-point",
+            ...anchorContext,
+            kind: anchorKind,
             normalizedX: Number(row.pos_x),
             normalizedY: Number(row.pos_y),
-            pageNumber: Number(row.page_number),
+            ...(row.page_number === null ? {} : { pageNumber: Number(row.page_number) }),
           },
   };
 }
@@ -344,7 +347,7 @@ export async function listDocumentComments({
   const offset = access.params.length;
   const result = await query(
     `
-      select pc.*, ca.page_number, ca.pos_x, ca.pos_y,
+      select pc.*, ca.page_number, ca.pos_x, ca.pos_y, ca.anchor_context_json,
         u.first_name, u.last_name,
         (u.profile_photo_url is not null) as has_profile_photo,
         r.code as role_code
@@ -469,15 +472,20 @@ export async function createDocumentCommentRecord({
     );
     const row = inserted.rows[0];
     if (!root) {
+      const anchorContext = selection.kind === "document-point"
+        ? { kind: selection.kind, pageCount: selection.pageCount }
+        : selection.kind === "document-section-point"
+          ? { kind: selection.kind, sectionIndex: selection.sectionIndex, sectionCount: selection.sectionCount }
+          : { kind: selection.kind, sheetName: selection.sheetName, cell: selection.cell };
       await client.query(
         `insert into public.comment_anchors
-          (comment_id, anchor_type, pos_x, pos_y, page_number)
-         values ($1, 'document'::anchor_type, $2, $3, $4)`,
-        [row.id, selection.normalizedX, selection.normalizedY, selection.pageNumber],
+          (comment_id, anchor_type, pos_x, pos_y, page_number, anchor_context_json)
+         values ($1, 'document'::anchor_type, $2, $3, $4, $5::jsonb)`,
+        [row.id, selection.normalizedX, selection.normalizedY, selection.pageNumber || null, JSON.stringify(anchorContext)],
       );
     }
     const hydrated = await client.query(
-      `select pc.*, ca.page_number, ca.pos_x, ca.pos_y,
+       `select pc.*, ca.page_number, ca.pos_x, ca.pos_y, ca.anchor_context_json,
         u.first_name, u.last_name, (u.profile_photo_url is not null) as has_profile_photo,
         r.code as role_code
        from public.project_comments pc

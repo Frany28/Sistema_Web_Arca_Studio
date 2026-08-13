@@ -9,6 +9,7 @@ import * as XLSX from "xlsx";
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
+import ObservationTooltip from "../../../components/ui/ObservationTooltip/ObservationTooltip.jsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { GeneralCommentsDrawer } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import { useDocumentComments } from "../../../hooks/useDocumentComments.js";
@@ -19,10 +20,53 @@ const MAX_ZOOM = 200;
 const ZOOM_STEP = 25;
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
-const DOCUMENT_POINT_COMMENTS_ENABLED =
-  String(import.meta.env.VITE_DOCUMENT_POINT_COMMENTS_ENABLED || "false").toLowerCase() === "true";
-
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+function DocumentMarker({ comment, focused, onSelect, style }) {
+  const markerRef = useRef(null);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState(null);
+  const isPending = comment.id === "pending";
+  const replyCount = Number(comment.replyCount || comment.replies?.length || 0);
+  const openTooltip = () => {
+    if (isPending || !markerRef.current) return;
+    setTooltipPosition(markerRef.current.getBoundingClientRect());
+    setTooltipOpen(true);
+  };
+
+  return (
+    <>
+      <button
+        ref={markerRef}
+        type="button"
+        data-document-marker
+        aria-label={isPending ? "Punto pendiente" : `Observación ${comment.pointNumber}`}
+        className={clsx(
+          "absolute z-[3] flex size-[24px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold text-[var(--color-neutral-100-uniform)] shadow-[0_2px_8px_rgba(0,0,0,0.28)] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2",
+          focused && "scale-125",
+        )}
+        style={style}
+        onMouseEnter={openTooltip}
+        onMouseLeave={() => setTooltipOpen(false)}
+        onFocus={openTooltip}
+        onBlur={() => setTooltipOpen(false)}
+        onClick={(event) => { event.stopPropagation(); if (!isPending) onSelect?.(comment.id); }}
+      >
+        {comment.pointNumber}
+      </button>
+      <ObservationTooltip
+        authorName={comment.authorName || comment.name || comment.author?.name}
+        avatarSrc={comment.avatarSrc}
+        message={comment.message || comment.content}
+        replyCount={replyCount}
+        open={tooltipOpen}
+        onOpenChange={setTooltipOpen}
+        onReply={() => { setTooltipOpen(false); onSelect?.(comment.id); }}
+        position={tooltipOpen ? tooltipPosition : null}
+      />
+    </>
+  );
+}
 
 const ViewerButton = forwardRef(function ViewerButton(
   {
@@ -222,20 +266,13 @@ function PdfPageCanvas({ annotations, documentProxy, focusedId, onPointCreate, o
         className="block max-w-none bg-white shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
       />
       {[...annotations, ...(pendingSelection?.pageNumber === page ? [{ id: "pending", pointNumber: "", selection: pendingSelection }] : [])].map((comment) => (
-        <button
+        <DocumentMarker
           key={comment.id}
-          type="button"
-          data-document-marker
-          aria-label={comment.id === "pending" ? "Punto pendiente" : `Observación ${comment.pointNumber}`}
-          className={clsx(
-            "absolute z-[3] flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-[var(--color-accent-300)] text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.28)]",
-            String(comment.id) === String(focusedId) && "scale-125",
-          )}
+          comment={comment}
+          focused={String(comment.id) === String(focusedId)}
+          onSelect={onPointSelect}
           style={{ left: `${comment.selection.normalizedX * 100}%`, top: `${comment.selection.normalizedY * 100}%` }}
-          onClick={(event) => { event.stopPropagation(); onPointSelect?.(comment.id); }}
-        >
-          {comment.pointNumber}
-        </button>
+        />
       ))}
     </div>
   );
@@ -460,9 +497,10 @@ function getDocumentKind(document) {
   return "unsupported";
 }
 
-function DocxViewerSurface({ data, title }) {
+function DocxViewerSurface({ annotations = [], data, focusedId, onPointCreate, onPointSelect, pendingSelection, title }) {
   const containerRef = useRef(null);
   const [error, setError] = useState("");
+  const [sectionBoxes, setSectionBoxes] = useState([]);
 
   useEffect(() => {
     if (!data || !containerRef.current) return undefined;
@@ -480,6 +518,16 @@ function DocxViewerSurface({ data, title }) {
       inWrapper: true,
       renderFooters: true,
       renderHeaders: true,
+    }).then(() => {
+      if (cancelled) return;
+      const sections = [...containerRef.current.querySelectorAll(".arca-docx")];
+      setSectionBoxes(sections.map((section, sectionIndex) => ({
+        height: section.offsetHeight,
+        left: section.offsetLeft,
+        sectionIndex,
+        top: section.offsetTop,
+        width: section.offsetWidth,
+      })));
     }).catch(() => {
       if (!cancelled) setError("No se pudo interpretar el documento Word.");
     });
@@ -488,6 +536,13 @@ function DocxViewerSurface({ data, title }) {
       cancelled = true;
     };
   }, [data]);
+
+  useEffect(() => {
+    const comment = annotations.find((item) => String(item.id) === String(focusedId));
+    if (comment?.selection?.kind !== "document-section-point") return;
+    containerRef.current?.querySelectorAll(".arca-docx")?.[comment.selection.sectionIndex]
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [annotations, focusedId]);
 
   if (error) {
     return (
@@ -505,16 +560,45 @@ function DocxViewerSurface({ data, title }) {
 
   return (
     <div
-      ref={containerRef}
       role="document"
       aria-label={`Vista de ${title}`}
-      className="size-full overflow-auto bg-[var(--color-neutral-200)] p-[16px] text-[var(--color-text-300)] max-[520px]:p-[8px] [&_.docx-wrapper]:!bg-transparent [&_.docx-wrapper]:!p-0 [&_.docx]:!mb-[16px] [&_.docx]:!max-w-full [&_.docx]:shadow-[var(--shadow-e1)]"
-    />
+      className="size-full overflow-auto bg-[var(--color-neutral-200)] p-[16px] text-[var(--color-text-300)] max-[520px]:p-[8px]"
+    >
+      <div
+        className="relative min-h-full [&_.docx-wrapper]:!bg-transparent [&_.docx-wrapper]:!p-0 [&_.docx]:!mb-[16px] [&_.docx]:!max-w-full [&_.docx]:shadow-[var(--shadow-e1)]"
+        onClick={(event) => {
+          if (!onPointCreate || event.target.closest("[data-document-marker]")) return;
+          const section = event.target.closest(".arca-docx");
+          if (!section) return;
+          const sections = [...containerRef.current.querySelectorAll(".arca-docx")];
+          const sectionIndex = sections.indexOf(section);
+          const rect = section.getBoundingClientRect();
+          onPointCreate({
+            kind: "document-section-point",
+            normalizedX: (event.clientX - rect.left) / rect.width,
+            normalizedY: (event.clientY - rect.top) / rect.height,
+            sectionIndex,
+            sectionCount: sections.length,
+          });
+        }}
+      >
+        <div ref={containerRef} />
+        {[...annotations.filter((comment) => comment.selection?.kind === "document-section-point"),
+          ...(pendingSelection?.kind === "document-section-point" ? [{ id: "pending", pointNumber: "", selection: pendingSelection }] : [])].map((comment) => {
+          const box = sectionBoxes[comment.selection.sectionIndex];
+          if (!box) return null;
+          return <DocumentMarker key={comment.id} comment={comment} focused={String(comment.id) === String(focusedId)} onSelect={onPointSelect}
+            style={{ left: box.left + comment.selection.normalizedX * box.width, top: box.top + comment.selection.normalizedY * box.height }} />;
+        })}
+      </div>
+    </div>
   );
 }
 
-function XlsxViewerSurface({ data, title }) {
+function XlsxViewerSurface({ annotations = [], data, focusedId, onPointCreate, onPointSelect, pendingSelection, title }) {
   const [activeSheetIndex, setActiveSheetIndex] = useState(0);
+  const tableRef = useRef(null);
+  const [cellBoxes, setCellBoxes] = useState({});
   const workbook = useMemo(() => {
     try {
       return data ? XLSX.read(data, { type: "array" }) : null;
@@ -523,25 +607,45 @@ function XlsxViewerSurface({ data, title }) {
     }
   }, [data]);
 
+  const safeSheetIndex = Math.min(activeSheetIndex, Math.max((workbook?.SheetNames?.length || 1) - 1, 0));
+  const activeSheetName = workbook?.SheetNames?.[safeSheetIndex] || "";
+  const tableHtml = activeSheetName
+    ? XLSX.utils.sheet_to_html(workbook.Sheets[activeSheetName], { id: "project-document-workbook" })
+    : "";
+
+  useEffect(() => {
+    const root = tableRef.current;
+    if (!root) return;
+    const boxes = {};
+    [...root.querySelectorAll("tr")].forEach((row, rowIndex) => {
+      [...row.querySelectorAll("td")].forEach((cell, columnIndex) => {
+        const address = XLSX.utils.encode_cell({ c: columnIndex, r: rowIndex });
+        cell.dataset.cell = address;
+        boxes[address] = { height: cell.offsetHeight, left: cell.offsetLeft, top: cell.offsetTop, width: cell.offsetWidth };
+      });
+    });
+    const frameId = window.requestAnimationFrame(() => setCellBoxes(boxes));
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeSheetName, tableHtml]);
+
+  useEffect(() => {
+    const comment = annotations.find((item) => String(item.id) === String(focusedId));
+    const sheetName = comment?.selection?.sheetName;
+    if (!sheetName || !workbook?.SheetNames) return;
+    const nextIndex = workbook.SheetNames.indexOf(sheetName);
+    if (nextIndex >= 0 && nextIndex !== activeSheetIndex) {
+      queueMicrotask(() => setActiveSheetIndex(nextIndex));
+    }
+  }, [activeSheetIndex, annotations, focusedId, workbook]);
+
   if (!workbook?.SheetNames?.length) {
     return (
       <div className="flex size-full items-center justify-center bg-[var(--color-primary-300)] p-[24px]">
-        <EmptyState
-          title="No se pudo abrir el libro"
-          description="El archivo Excel está dañado o no contiene hojas visibles."
-          size="S"
-          showFeaturedIcon
-          showActions={false}
-        />
+        <EmptyState title="No se pudo abrir el libro" description="El archivo Excel está dañado o no contiene hojas visibles."
+          size="S" showFeaturedIcon showActions={false} />
       </div>
     );
   }
-
-  const safeSheetIndex = Math.min(activeSheetIndex, workbook.SheetNames.length - 1);
-  const activeSheetName = workbook.SheetNames[safeSheetIndex];
-  const tableHtml = XLSX.utils.sheet_to_html(workbook.Sheets[activeSheetName], {
-    id: "project-document-workbook",
-  });
 
   return (
     <div className="flex size-full min-w-0 flex-col overflow-hidden bg-[var(--color-neutral-100)]">
@@ -569,20 +673,42 @@ function XlsxViewerSurface({ data, title }) {
         ))}
       </div>
       <div
+        ref={tableRef}
         role="region"
         aria-label={`Hoja ${activeSheetName}`}
-        className="min-h-0 flex-1 overflow-auto p-[12px] [&_table]:border-collapse [&_td]:max-w-[360px] [&_td]:break-words [&_td]:border [&_td]:border-[var(--color-neutral-200)] [&_td]:p-[8px] [&_td]:align-top [&_th]:border [&_th]:border-[var(--color-neutral-200)] [&_th]:bg-[var(--color-neutral-10)] [&_th]:p-[8px]"
-        dangerouslySetInnerHTML={{ __html: tableHtml }}
-      />
+        className="relative min-h-0 flex-1 overflow-auto p-[12px] [&_table]:relative [&_table]:border-collapse [&_td]:max-w-[360px] [&_td]:break-words [&_td]:border [&_td]:border-[var(--color-neutral-200)] [&_td]:p-[8px] [&_td]:align-top [&_th]:border [&_th]:border-[var(--color-neutral-200)] [&_th]:bg-[var(--color-neutral-10)] [&_th]:p-[8px]"
+        onClick={(event) => {
+          if (!onPointCreate || event.target.closest("[data-document-marker]")) return;
+          const cell = event.target.closest("td[data-cell]");
+          if (!cell) return;
+          const rect = cell.getBoundingClientRect();
+          onPointCreate({ kind: "document-cell-point", sheetName: activeSheetName, cell: cell.dataset.cell,
+            normalizedX: (event.clientX - rect.left) / rect.width, normalizedY: (event.clientY - rect.top) / rect.height });
+        }}
+      >
+        <div dangerouslySetInnerHTML={{ __html: tableHtml }} />
+        {[...annotations.filter((comment) => comment.selection?.kind === "document-cell-point" && comment.selection.sheetName === activeSheetName),
+          ...(pendingSelection?.kind === "document-cell-point" && pendingSelection.sheetName === activeSheetName ? [{ id: "pending", pointNumber: "", selection: pendingSelection }] : [])].map((comment) => {
+          const box = cellBoxes[comment.selection.cell];
+          if (!box) return null;
+          return <DocumentMarker key={comment.id} comment={comment} focused={String(comment.id) === String(focusedId)} onSelect={onPointSelect}
+            style={{ left: 12 + box.left + comment.selection.normalizedX * box.width, top: 12 + box.top + comment.selection.normalizedY * box.height }} />;
+        })}
+      </div>
     </div>
   );
 }
 
 function OfficeInlineDocumentPreview({
+  annotations,
   document,
   expandButtonRef,
+  focusedId,
   kind,
   onExpand,
+  onPointCreate,
+  onPointSelect,
+  pendingSelection,
 }) {
   const source = document?.fileUrl || "";
   const title = getFileDisplayName(document?.name);
@@ -658,9 +784,9 @@ function OfficeInlineDocumentPreview({
       </div>
       <div className="min-h-0 flex-1">
         {kind === "docx" ? (
-          <DocxViewerSurface data={state.data} title={title} />
+          <DocxViewerSurface annotations={annotations} data={state.data} focusedId={focusedId} onPointCreate={onPointCreate} onPointSelect={onPointSelect} pendingSelection={pendingSelection} title={title} />
         ) : (
-          <XlsxViewerSurface data={state.data} title={title} />
+          <XlsxViewerSurface annotations={annotations} data={state.data} focusedId={focusedId} onPointCreate={onPointCreate} onPointSelect={onPointSelect} pendingSelection={pendingSelection} title={title} />
         )}
       </div>
     </div>
@@ -690,7 +816,7 @@ export function ProjectDocumentViewerModal({
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedCommentId, setFocusedCommentId] = useState(null);
   const { addComment, comments } = useDocumentComments({
-    enabled: open && kind === "pdf",
+    enabled: open && kind !== "unsupported",
     fileId: document?.id,
     fileVersionId: document?.currentVersionId,
     projectId,
@@ -819,9 +945,9 @@ export function ProjectDocumentViewerModal({
       />
     );
   } else if (kind === "docx") {
-    viewer = <DocxViewerSurface data={loadState.data} title={documentName} />;
+    viewer = <DocxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={setFocusedCommentId} pendingSelection={pendingSelection} title={documentName} />;
   } else if (kind === "xlsx") {
-    viewer = <XlsxViewerSurface data={loadState.data} title={documentName} />;
+    viewer = <XlsxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={setFocusedCommentId} pendingSelection={pendingSelection} title={documentName} />;
   }
 
   return (
@@ -840,21 +966,16 @@ export function ProjectDocumentViewerModal({
         </div>
         <div className="w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
           <GeneralCommentsDrawer
-            comments={kind === "pdf" ? comments : []}
-            composerDisabled={kind !== "pdf"}
-            composerDisabledMessage={
-              kind !== "pdf"
-                ? "Las observaciones para documentos Word y Excel aún no están disponibles."
-                : ""
-            }
+            composerFocusSignal={pendingSelection ? JSON.stringify(pendingSelection) : ""}
+            comments={comments}
             focusedSelectionCommentId={focusedCommentId}
             mediaItem={document}
             mediaType="document"
             pendingSelection={pendingSelection}
-            requireSelectionForRoot={kind === "pdf"}
+            requireSelectionForRoot
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={setFocusedCommentId}
-            onSubmitComment={kind === "pdf" ? handleSubmitComment : undefined}
+            onSubmitComment={handleSubmitComment}
           />
         </div>
       </div>
@@ -891,7 +1012,7 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
   const zoom = viewState.source === source ? viewState.zoom : 100;
   const documentName = getFileDisplayName(document?.name);
   const { addComment, comments } = useDocumentComments({
-    enabled: DOCUMENT_POINT_COMMENTS_ENABLED,
+    enabled: Boolean(projectId && document?.id && document?.currentVersionId),
     fileId: document?.id,
     fileVersionId: document?.currentVersionId,
     projectId,
@@ -900,6 +1021,13 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
     const comment = await addComment({ message, parentCommentId, selection });
     if (comment && !parentCommentId) setPendingSelection(null);
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setPendingSelection(null);
+      setFocusedCommentId(null);
+    });
+  }, [document?.id, document?.currentVersionId]);
 
   useEffect(() => {
     onLoadingChange?.(status === "loading");
@@ -974,12 +1102,19 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
   if (documentKind === "docx" || documentKind === "xlsx") {
     return (
       <>
-        <OfficeInlineDocumentPreview
-          document={document}
-          expandButtonRef={expandButtonRef}
-          kind={documentKind}
-          onExpand={() => setIsFullscreenOpen(true)}
-        />
+        <div className="flex h-[554px] gap-[12px] max-[767px]:h-auto max-[767px]:flex-col">
+          <div className="min-w-0 flex-1 max-[767px]:h-[52dvh]">
+            <OfficeInlineDocumentPreview annotations={comments} document={document} expandButtonRef={expandButtonRef}
+              focusedId={focusedCommentId} kind={documentKind} onExpand={() => setIsFullscreenOpen(true)}
+              onPointCreate={setPendingSelection} onPointSelect={setFocusedCommentId} pendingSelection={pendingSelection} />
+          </div>
+          <div className="h-[554px] w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
+            <GeneralCommentsDrawer comments={comments} focusedSelectionCommentId={focusedCommentId} mediaItem={document}
+              composerFocusSignal={pendingSelection ? JSON.stringify(pendingSelection) : ""}
+              mediaType="document" pendingSelection={pendingSelection} requireSelectionForRoot
+              onClearSelection={() => setPendingSelection(null)} onSelectionPreviewClick={setFocusedCommentId} onSubmitComment={handleSubmitComment} />
+          </div>
+        </div>
         <ProjectDocumentViewerModal
           document={document}
           onClose={closeFullscreen}
@@ -1036,7 +1171,7 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
 
   return (
     <>
-      <div className={clsx(DOCUMENT_POINT_COMMENTS_ENABLED && "flex h-[554px] gap-[12px]")}>
+      <div className="flex h-[554px] gap-[12px] max-[767px]:h-auto max-[767px]:flex-col">
       <PdfViewerSurface
         annotations={comments}
         className="h-[554px] min-h-[554px] max-h-[554px] rounded-b-[var(--radius-3)]"
@@ -1044,7 +1179,7 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
         expandButtonRef={expandButtonRef}
         focusedId={focusedCommentId}
         onExpand={() => setIsFullscreenOpen(true)}
-        onPointCreate={DOCUMENT_POINT_COMMENTS_ENABLED ? setPendingSelection : undefined}
+        onPointCreate={setPendingSelection}
         onPointSelect={setFocusedCommentId}
         page={page}
         pageCount={pageCount}
@@ -1054,20 +1189,20 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
         updateZoom={updateZoom}
         zoom={zoom}
       />
-      {DOCUMENT_POINT_COMMENTS_ENABLED ? (
-        <div className="h-[554px] w-[296px] shrink-0">
+        <div className="h-[554px] w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
           <GeneralCommentsDrawer
+            composerFocusSignal={pendingSelection ? JSON.stringify(pendingSelection) : ""}
             comments={comments}
             focusedSelectionCommentId={focusedCommentId}
             mediaItem={document}
             mediaType="document"
             pendingSelection={pendingSelection}
+            requireSelectionForRoot
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={setFocusedCommentId}
             onSubmitComment={handleSubmitComment}
           />
         </div>
-      ) : null}
       </div>
 
       <ProjectDocumentViewerModal

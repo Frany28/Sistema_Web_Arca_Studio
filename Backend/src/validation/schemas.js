@@ -62,20 +62,29 @@ export const commentSchema = z.object({
   const selection = value.body.selection;
 
   if (value.body.commentType === "document") {
-    const validPoint =
+    const hasNormalizedCoordinates =
       value.body.fileId &&
       value.body.fileVersionId &&
       !value.body.parentCommentId &&
-      selection?.kind === "document-point" &&
-      Number.isInteger(selection.pageNumber) &&
-      selection.pageNumber > 0 &&
-      Number.isInteger(selection.pageCount) &&
-      selection.pageCount > 0 &&
-      selection.pageNumber <= selection.pageCount &&
       typeof selection.normalizedX === "number" &&
       selection.normalizedX >= 0 && selection.normalizedX <= 1 &&
       typeof selection.normalizedY === "number" &&
       selection.normalizedY >= 0 && selection.normalizedY <= 1;
+    const validPdfPoint =
+      selection?.kind === "document-point" &&
+      Number.isInteger(selection.pageNumber) && selection.pageNumber > 0 &&
+      Number.isInteger(selection.pageCount) && selection.pageCount > 0 &&
+      selection.pageNumber <= selection.pageCount;
+    const validWordPoint =
+      selection?.kind === "document-section-point" &&
+      Number.isInteger(selection.sectionIndex) && selection.sectionIndex >= 0 &&
+      Number.isInteger(selection.sectionCount) && selection.sectionCount > 0 &&
+      selection.sectionIndex < selection.sectionCount;
+    const validExcelPoint =
+      selection?.kind === "document-cell-point" &&
+      typeof selection.sheetName === "string" && selection.sheetName.trim().length > 0 && selection.sheetName.length <= 31 &&
+      typeof selection.cell === "string" && /^[A-Z]{1,3}[1-9]\d{0,6}$/.test(selection.cell);
+    const validPoint = hasNormalizedCoordinates && (validPdfPoint || validWordPoint || validExcelPoint);
     const validReply =
       value.body.fileId && value.body.fileVersionId && value.body.parentCommentId && !selection;
     if (!validPoint && !validReply) {

@@ -235,4 +235,25 @@ test("document observations require a normalized point within an existing page",
   assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: { ...point, pageNumber: 5 } } }).success, false);
   assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: { ...point, normalizedX: 1.1 } } }).success, false);
   assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, parentCommentId: 30, selection: null } }).success, true);
+
+  const wordPoint = {
+    kind: "document-section-point",
+    sectionIndex: 1,
+    sectionCount: 3,
+    normalizedX: 0.4,
+    normalizedY: 0.6,
+  };
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: wordPoint } }).success, true);
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: { ...wordPoint, sectionIndex: 3 } } }).success, false);
+
+  const excelPoint = {
+    kind: "document-cell-point",
+    sheetName: "Presupuesto",
+    cell: "C12",
+    normalizedX: 0.5,
+    normalizedY: 0.5,
+  };
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: excelPoint } }).success, true);
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, selection: { ...excelPoint, cell: "12C" } } }).success, false);
+  assert.equal(commentSchema.safeParse({ ...base, body: { ...base.body, parentCommentId: 30, selection: excelPoint } }).success, false);
 });
