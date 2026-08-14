@@ -39,7 +39,7 @@ test("observation tooltip formats live reply totals", () => {
   assert.equal(formatObservationReplyCount(3), "3 respuestas");
 });
 
-test("document tooltip replaces its marker from the same anchor position", () => {
+test("document tooltip expands upward from its marker position", () => {
   const placement = getAdaptiveObservationTooltipPlacement({
     anchorBottom: 140, anchorLeft: 100, anchorRight: 140,
     anchorTop: 100, anchorX: 120, replaceAnchor: true,
@@ -48,6 +48,7 @@ test("document tooltip replaces its marker from the same anchor position", () =>
   });
 
   assert.equal(placement.left, 100);
-  assert.equal(placement.top, 100);
-  assert.equal(placement.corner, "top-left");
+  assert.equal(placement.top, 12);
+  assert.equal(placement.corner, "bottom-left");
+  assert.equal(placement.placement, "anchor-top");
 });

@@ -30,17 +30,17 @@ export function getAdaptiveObservationTooltipPlacement({
     const safeAnchorLeft = Number.isFinite(anchorLeft) ? anchorLeft : anchorX;
     const safeAnchorRight = Number.isFinite(anchorRight) ? anchorRight : anchorX;
     const opensRight = safeAnchorLeft + width <= viewportWidth - margin;
-    const opensDown = anchorTop + height <= viewportHeight - margin;
+    const opensUp = anchorBottom - height >= margin;
 
     return {
-      corner: `${opensDown ? "top" : "bottom"}-${opensRight ? "left" : "right"}`,
+      corner: `${opensUp ? "bottom" : "top"}-${opensRight ? "left" : "right"}`,
       left: opensRight
         ? Math.max(margin, safeAnchorLeft)
         : Math.max(margin, safeAnchorRight - width),
-      placement: opensDown ? "anchor-bottom" : "anchor-top",
-      top: opensDown
-        ? Math.max(margin, anchorTop)
-        : Math.max(margin, anchorBottom - height),
+      placement: opensUp ? "anchor-top" : "anchor-bottom",
+      top: opensUp
+        ? Math.max(margin, anchorBottom - height)
+        : Math.min(viewportHeight - height - margin, anchorTop),
     };
   }
 
