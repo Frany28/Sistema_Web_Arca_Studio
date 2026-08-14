@@ -12,8 +12,11 @@ export function formatObservationReplyCount(replyCount) {
 
 export function getAdaptiveObservationTooltipPlacement({
   anchorBottom,
+  anchorLeft,
+  anchorRight,
   anchorTop,
   anchorX,
+  replaceAnchor = false,
   tooltipHeight,
   tooltipWidth,
   viewportHeight,
@@ -22,6 +25,25 @@ export function getAdaptiveObservationTooltipPlacement({
   const margin = 12;
   const width = Math.max(1, tooltipWidth || 210);
   const height = Math.max(1, tooltipHeight || 128);
+
+  if (replaceAnchor) {
+    const safeAnchorLeft = Number.isFinite(anchorLeft) ? anchorLeft : anchorX;
+    const safeAnchorRight = Number.isFinite(anchorRight) ? anchorRight : anchorX;
+    const opensRight = safeAnchorLeft + width <= viewportWidth - margin;
+    const opensDown = anchorTop + height <= viewportHeight - margin;
+
+    return {
+      corner: `${opensDown ? "top" : "bottom"}-${opensRight ? "left" : "right"}`,
+      left: opensRight
+        ? Math.max(margin, safeAnchorLeft)
+        : Math.max(margin, safeAnchorRight - width),
+      placement: opensDown ? "anchor-bottom" : "anchor-top",
+      top: opensDown
+        ? Math.max(margin, anchorTop)
+        : Math.max(margin, anchorBottom - height),
+    };
+  }
+
   const availableAbove = anchorTop - margin;
   const availableBelow = viewportHeight - anchorBottom - margin;
   const placement = availableAbove >= height || availableAbove >= availableBelow

@@ -40,9 +40,12 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
     window.clearTimeout(tooltipCloseTimerRef.current);
     const rect = markerRef.current.getBoundingClientRect();
     setTooltipPosition({
+      anchorLeft: rect.left,
+      anchorRight: rect.right,
       anchorBottom: rect.bottom,
       anchorTop: rect.top,
       anchorX: rect.left + rect.width / 2,
+      replaceAnchor: true,
     });
     setTooltipOpen(true);
   };
@@ -61,9 +64,12 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
       const rect = markerRef.current?.getBoundingClientRect();
       if (rect) {
         setTooltipPosition({
+          anchorLeft: rect.left,
+          anchorRight: rect.right,
           anchorBottom: rect.bottom,
           anchorTop: rect.top,
           anchorX: rect.left + rect.width / 2,
+          replaceAnchor: true,
         });
       }
       frameId = window.requestAnimationFrame(followMarker);
@@ -80,8 +86,9 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         data-document-marker
         aria-label={isPending ? "Ubicación de observación pendiente" : `Observación de ${authorName}`}
         className={clsx(
-          "absolute z-[3] flex size-[40px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[8px] transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
+          "absolute z-[3] flex size-[40px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[8px] transition-[border-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)] motion-reduce:transition-none",
           isPending ? "pointer-events-none animate-pulse" : "cursor-pointer",
+          tooltipOpen && !isPending ? "opacity-0" : "opacity-100",
           focused && "border-[var(--color-accent-300)] ring-2 ring-[var(--color-accent-300)] ring-offset-2 ring-offset-[var(--color-neutral-bg)]",
         )}
         style={style}

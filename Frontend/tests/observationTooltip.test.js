@@ -38,3 +38,16 @@ test("observation tooltip formats live reply totals", () => {
   assert.equal(formatObservationReplyCount(1), "1 respuesta");
   assert.equal(formatObservationReplyCount(3), "3 respuestas");
 });
+
+test("document tooltip replaces its marker from the same anchor position", () => {
+  const placement = getAdaptiveObservationTooltipPlacement({
+    anchorBottom: 140, anchorLeft: 100, anchorRight: 140,
+    anchorTop: 100, anchorX: 120, replaceAnchor: true,
+    tooltipHeight: 128, tooltipWidth: 210,
+    viewportHeight: 600, viewportWidth: 800,
+  });
+
+  assert.equal(placement.left, 100);
+  assert.equal(placement.top, 100);
+  assert.equal(placement.corner, "top-left");
+});
