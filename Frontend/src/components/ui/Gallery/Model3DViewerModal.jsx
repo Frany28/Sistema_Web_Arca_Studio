@@ -890,7 +890,7 @@ function CommentCard({
   );
 }
 
-function SelectionPreview({
+export function SelectionPreview({
   active = false,
   compact = false,
   disabled = false,

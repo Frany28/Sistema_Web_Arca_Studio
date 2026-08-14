@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 import { orderCommentsByThread } from "../../utils/commentDisplay.js";
-import { getVideoObservationTiming } from "../../utils/videoObservation.js";
+import { SelectionPreview } from "./Gallery/Model3DViewerModal.jsx";
 
 import Avatar from "./Avatar/Avatar.jsx";
 import Badge from "./Badge/Badge.jsx";
@@ -290,10 +290,11 @@ function CommentCard({
           </p>
 
           {imageComment && selection && !isReply ? (
-            <ImageCommentPreview
-              commentType={commentType}
+            <SelectionPreview
+              compact
               fileType={fileType}
               image={image}
+              mediaType={commentType}
               observationTypeLabel={observationTypeLabel}
               pointNumber={displayPointNumber}
               selection={selection}
@@ -320,98 +321,6 @@ function CommentCard({
             </button>
           </Tooltip>
         ) : null}
-      </div>
-    </div>
-  );
-}
-
-function ImageCommentPreview({
-  commentType,
-  fileType,
-  image,
-  observationTypeLabel,
-  pointNumber,
-  selection,
-}) {
-  const videoTiming = getVideoObservationTiming(selection);
-  const pixels = selection.imagePixels ?? selection.displayPixels;
-  const isViewer3dComment = commentType === "panorama";
-
-  if (commentType === "document") {
-    const reference = selection?.kind === "document-point"
-      ? `Página ${selection.pageNumber}`
-      : selection?.kind === "document-section-point"
-        ? `Sección ${Number(selection.sectionIndex) + 1}`
-        : selection?.kind === "document-cell-point"
-          ? `Celda ${selection.cell}`
-          : "Ubicación guardada";
-
-    return (
-      <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
-        <div className="flex size-[44px] shrink-0 items-center justify-center">
-          <FileAttachmentIcons type={fileType} className="scale-[0.8]" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-            {observationTypeLabel || "Observación sobre documento"}
-          </p>
-          <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-            {reference}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (videoTiming) {
-    return (
-      <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
-        <div className="flex size-[44px] shrink-0 items-center justify-center rounded-[6px] bg-[var(--color-neutral-200)] text-[12px] font-semibold text-[var(--color-text-300)]">
-          {videoTiming.videoTimeLabel}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-            {observationTypeLabel || "Observación sobre video"}
-          </p>
-          <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-            Momento {videoTiming.videoTimeLabel}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!pixels) {
-    return null;
-  }
-
-  return (
-    <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
-      <div className="relative size-[44px] shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-neutral-200)]">
-        {image?.src ? (
-          <img
-            src={image.src}
-            alt=""
-            className="h-full w-full object-cover"
-            aria-hidden="true"
-          />
-        ) : null}
-        {isViewer3dComment && Number(pointNumber) ? (
-          <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
-            {Number(pointNumber)}
-          </span>
-        ) : null}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
-          {observationTypeLabel ||
-            (isViewer3dComment
-              ? "Observación en modelo 3D"
-              : "Observación sobre imagen")}
-        </p>
-        <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
-          x:{pixels.x}px y:{pixels.y}px w:{pixels.width}px h:{pixels.height}px
-        </p>
       </div>
     </div>
   );
