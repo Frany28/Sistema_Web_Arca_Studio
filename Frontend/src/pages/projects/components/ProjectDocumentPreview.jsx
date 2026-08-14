@@ -994,6 +994,12 @@ export function ProjectDocumentViewerModal({
     if (comment && !parentCommentId) setPendingSelection(null);
   };
 
+  const handleSelectionChange = (selection) => {
+    setFocusedCommentId(null);
+    setReplyRequest(null);
+    setPendingSelection(selection);
+  };
+
   const handlePointSelect = (commentId, options = {}) => {
     const restoreCommentLocation = () => {
       const comment = comments.find(
@@ -1052,7 +1058,7 @@ export function ProjectDocumentViewerModal({
         focusedId={focusedCommentId}
         fullscreen
         onClose={onClose}
-        onPointCreate={setPendingSelection}
+        onPointCreate={handleSelectionChange}
         onPointSelect={handlePointSelect}
         page={page}
         pageCount={loadState.pageCount}
@@ -1064,9 +1070,9 @@ export function ProjectDocumentViewerModal({
       />
     );
   } else if (kind === "docx") {
-    viewer = <DocxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
+    viewer = <DocxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={handleSelectionChange} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
   } else if (kind === "xlsx") {
-    viewer = <XlsxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
+    viewer = <XlsxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={handleSelectionChange} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
   }
 
   return (
