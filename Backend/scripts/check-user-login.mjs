@@ -3,10 +3,14 @@ import "dotenv/config";
 import bcrypt from "bcrypt";
 import { pool, query } from "../src/config/db.js";
 
-const [email, password] = process.argv.slice(2);
+const [emailArgument, passwordArgument] = process.argv.slice(2);
+const email = emailArgument || process.env.TEST_USER_EMAIL;
+const password = passwordArgument || process.env.TEST_USER_PASSWORD;
 
 if (!email || !password) {
-  console.error("Usage: node scripts/check-user-login.mjs <email> <password>");
+  console.error(
+    "Provide login values as arguments or TEST_USER_EMAIL and TEST_USER_PASSWORD.",
+  );
   process.exitCode = 1;
 } else {
   try {

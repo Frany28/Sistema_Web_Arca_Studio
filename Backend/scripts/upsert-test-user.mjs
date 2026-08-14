@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import bcrypt from "bcrypt";
+import { createHash } from "node:crypto";
 
 import { pool, query } from "../src/config/db.js";
 
@@ -8,7 +9,7 @@ const email = String(process.env.TEST_USER_EMAIL || "").trim().toLowerCase();
 const password = String(process.env.TEST_USER_PASSWORD || "");
 const firstName = String(process.env.TEST_USER_FIRST_NAME || "Developer").trim();
 const lastName = String(process.env.TEST_USER_LAST_NAME || "Test").trim();
-const phone = String(process.env.TEST_USER_PHONE || "+584120000000").trim();
+const requestedPhone = String(process.env.TEST_USER_PHONE || "+584120000000").trim();
 const roleCode = String(process.env.TEST_USER_ROLE || "admin").trim();
 
 if (!email || !password) {
@@ -45,6 +46,42 @@ const existingResult = await query(
     limit 1
   `,
   [email],
+);
+
+async function resolveAvailablePhone(preferredPhone, existingUserId) {
+  const isAvailable = async (candidate) => {
+    const result = await query(
+      `
+        select 1
+        from public.users
+        where phone = $1
+          and deleted_at is null
+          and ($2::bigint is null or id <> $2)
+        limit 1
+      `,
+      [candidate, existingUserId || null],
+    );
+    return !result.rows[0];
+  };
+
+  if (await isAvailable(preferredPhone)) return preferredPhone;
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const digits = createHash("sha256")
+      .update(`${email}:${attempt}`)
+      .digest("hex")
+      .slice(0, 8);
+    const suffix = String(Number.parseInt(digits, 16) % 10_000_000).padStart(7, "0");
+    const candidate = `+58999${suffix}`;
+    if (await isAvailable(candidate)) return candidate;
+  }
+
+  throw new Error("Unable to allocate a unique development phone");
+}
+
+const phone = await resolveAvailablePhone(
+  requestedPhone,
+  existingResult.rows[0]?.id || null,
 );
 
 const commonParams = [

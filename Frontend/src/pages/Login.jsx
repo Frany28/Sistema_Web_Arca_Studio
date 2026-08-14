@@ -15,15 +15,19 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 }
 
-const TEMP_CLIENT_EMAIL = "cliente@arcastudio.com";
-const TEMP_CLIENT_PASSWORD = "ClienteArca2026*";
+const DEV_LOGIN_EMAIL = import.meta.env.DEV
+  ? String(import.meta.env.VITE_DEV_ADMIN_EMAIL || "")
+  : "";
+const DEV_LOGIN_PASSWORD = import.meta.env.DEV
+  ? String(import.meta.env.VITE_DEV_ADMIN_PASSWORD || "")
+  : "";
 
 function Login() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState(TEMP_CLIENT_EMAIL);
-  const [password, setPassword] = useState(TEMP_CLIENT_PASSWORD);
+  const [email, setEmail] = useState(DEV_LOGIN_EMAIL);
+  const [password, setPassword] = useState(DEV_LOGIN_PASSWORD);
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginToast, setLoginToast] = useState(null);
