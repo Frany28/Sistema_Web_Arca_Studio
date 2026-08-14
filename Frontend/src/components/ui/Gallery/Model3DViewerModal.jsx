@@ -1001,6 +1001,13 @@ function SelectionPreview({
       : selection.kind === "document-cell-point"
         ? "Celda"
         : "Referencia";
+  const documentReferenceAbbreviation = isDocumentPoint
+    ? "P"
+    : selection.kind === "document-section-point"
+      ? "S"
+      : selection.kind === "document-cell-point"
+        ? "C"
+        : "R";
   const referenceTitle =
     observationTitle ||
     (mediaType === "panorama"
@@ -1045,8 +1052,10 @@ function SelectionPreview({
             !imageSrc &&
             "relative bg-[radial-gradient(circle_at_50%_50%,rgba(255,68,49,0.42)_0%,rgba(255,68,49,0.18)_24%,rgba(42,41,41,0.95)_25%,rgba(42,41,41,0.95)_100%)]",
           mediaType === "document" &&
-            "flex flex-col items-center justify-center border border-[var(--color-neutral-300)] bg-[var(--color-neutral-bg)]",
-          compact ? "size-[44px]" : "size-[56px]",
+            "flex items-center justify-center rounded-full border-0 bg-[var(--color-neutral-200)]",
+          mediaType === "document"
+            ? compact ? "size-[36px]" : "size-[40px]"
+            : compact ? "size-[44px]" : "size-[56px]",
         )}
         style={
           imageSrc
@@ -1064,14 +1073,9 @@ function SelectionPreview({
           <span className="absolute left-1/2 top-1/2 size-[10px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent-300)] shadow-[0_0_0_4px_rgba(255,68,49,0.22)]" />
         ) : null}
         {mediaType === "document" ? (
-          <>
-            <span className="text-[9px] font-medium uppercase leading-[11px] tracking-[-0.25px] text-[var(--color-text-100)]">
-              {documentReferenceCaption}
-            </span>
-            <span className="max-w-full truncate px-[3px] text-[14px] font-semibold leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
-              {documentReferenceLabel}
-            </span>
-          </>
+          <span className="max-w-full truncate px-[5px] text-[12px] font-semibold leading-[14px] tracking-[-0.4px] text-[var(--color-text-300)]">
+            {documentReferenceAbbreviation}. {documentReferenceLabel}
+          </span>
         ) : referenceNumber ? (
           <span className="absolute left-1/2 top-1/2 flex size-[24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[var(--color-neutral-100-uniform)] bg-[var(--color-accent-300)] text-[11px] font-semibold leading-none text-[var(--color-neutral-100-uniform)] shadow-[0_0_0_4px_rgba(255,68,49,0.22),0_2px_8px_rgba(0,0,0,0.28)]">
             {referenceNumber}

@@ -115,7 +115,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         replyCount={replyCount}
         open={tooltipOpen}
         onOpenChange={(nextOpen) => nextOpen ? openTooltip() : scheduleTooltipClose()}
-        onReply={onSelect ? () => { setTooltipOpen(false); onSelect(comment.id); } : undefined}
+        onReply={onSelect ? () => { setTooltipOpen(false); onSelect(comment.id, { reply: true }); } : undefined}
         position={tooltipOpen ? tooltipPosition : null}
       />
     </>
@@ -858,6 +858,7 @@ export function ProjectDocumentViewerModal({
   const [zoom, setZoom] = useState(100);
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedCommentId, setFocusedCommentId] = useState(null);
+  const [replyRequest, setReplyRequest] = useState(null);
   const { addComment, comments, error: commentsError, isSubmitting } = useDocumentComments({
     enabled: open && kind !== "unsupported",
     fileId: document?.id,
@@ -886,6 +887,7 @@ export function ProjectDocumentViewerModal({
       setZoom(100);
       setPendingSelection(null);
       setFocusedCommentId(null);
+      setReplyRequest(null);
     });
 
     fetch(source, { signal: controller.signal })
@@ -940,6 +942,13 @@ export function ProjectDocumentViewerModal({
     if (comment && !parentCommentId) setPendingSelection(null);
   };
 
+  const handlePointSelect = (commentId, options = {}) => {
+    setFocusedCommentId(commentId);
+    if (options.reply) {
+      setReplyRequest({ commentId, requestId: Date.now() });
+    }
+  };
+
   let viewer = null;
   if (kind === "unsupported") {
     viewer = (
@@ -977,7 +986,7 @@ export function ProjectDocumentViewerModal({
         fullscreen
         onClose={onClose}
         onPointCreate={setPendingSelection}
-        onPointSelect={setFocusedCommentId}
+        onPointSelect={handlePointSelect}
         page={page}
         pageCount={loadState.pageCount}
         pendingSelection={pendingSelection}
@@ -988,9 +997,9 @@ export function ProjectDocumentViewerModal({
       />
     );
   } else if (kind === "docx") {
-    viewer = <DocxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={setFocusedCommentId} pendingSelection={pendingSelection} title={documentName} />;
+    viewer = <DocxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
   } else if (kind === "xlsx") {
-    viewer = <XlsxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={setFocusedCommentId} pendingSelection={pendingSelection} title={documentName} />;
+    viewer = <XlsxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={setPendingSelection} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
   }
 
   return (
@@ -1023,6 +1032,7 @@ export function ProjectDocumentViewerModal({
             mediaItem={document}
             mediaType="document"
             pendingSelection={pendingSelection}
+            replyRequest={replyRequest}
             requireSelectionForRoot
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={setFocusedCommentId}
