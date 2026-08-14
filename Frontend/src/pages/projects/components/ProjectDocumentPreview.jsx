@@ -98,7 +98,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         data-document-marker
         aria-label={isPending ? "Ubicación de observación pendiente" : `Observación de ${authorName}`}
         className={clsx(
-          "absolute z-[3] flex h-[40px] min-w-[40px] -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] transition-[border-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)] motion-reduce:transition-none",
+          "absolute z-[3] flex h-[40px] min-w-[40px] -translate-y-full items-center justify-center border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] transition-[border-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)] motion-reduce:transition-none",
           hasMultipleParticipants
             ? "w-auto rounded-[var(--radius-full)] px-[8px]"
             : "w-[40px] rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] p-[8px]",
