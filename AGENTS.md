@@ -38,6 +38,17 @@ Consultar `Sistema_Web_Arca_Studio/Backend/ARCHITECTURE.md` antes de crear módu
 
 ## Reutilización obligatoria
 
+Antes de editar código, seguir obligatoriamente este orden:
+
+1. Leer el `AGENTS.md` aplicable y los documentos de arquitectura o diseño requeridos para el área afectada.
+2. Buscar implementaciones equivalentes en el repositorio antes de proponer o escribir lógica nueva.
+3. Identificar los componentes, hooks, helpers, servicios y patrones de estado compartidos que ya resuelven el flujo.
+4. Extender y reutilizar esas piezas; no crear una implementación local paralela para resolver solamente el síntoma inmediato.
+5. Revisar todos los consumidores del flujo compartido para mantener el mismo comportamiento entre páginas y visores.
+6. Ejecutar las pruebas y compilaciones aplicables y comprobar también la consistencia arquitectónica, no solo el resultado visual o funcional.
+
+Este orden es una condición previa a la implementación. No se permite posponer la revisión de reutilización hasta después de editar ni justificar duplicaciones por rapidez. Si una solución contradice estas reglas, no debe implementarse aunque corrija el síntoma inmediato.
+
 Antes de implementar lógica nueva, revisar:
 
 - `src/middlewares/validate.js` y `src/validation/` para entradas externas.
