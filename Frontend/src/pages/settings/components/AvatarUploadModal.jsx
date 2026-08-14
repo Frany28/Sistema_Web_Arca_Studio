@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Modal from "../../../components/ui/Modal/Modal.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import FileUploadSection from "../../../components/ui/FileUploadSection/FileUploadSection.jsx";
 
@@ -10,6 +11,72 @@ const AVATAR_UPLOAD_INITIAL_STATE = {
   progress: 0,
   status: "idle",
 };
+const AVATAR_PREVIEW_SIZE = 112;
+const AVATAR_OUTPUT_SIZE = 512;
+
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) =>
+        blob
+          ? resolve(blob)
+          : reject(new Error("No se pudo preparar el avatar.")),
+      "image/jpeg",
+      0.9,
+    );
+  });
+}
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("No se pudo leer la imagen."));
+    };
+    image.src = url;
+  });
+}
+
+async function createCroppedAvatar(file, offset) {
+  const image = await loadImage(file);
+  const scale = Math.max(
+    AVATAR_PREVIEW_SIZE / image.naturalWidth,
+    AVATAR_PREVIEW_SIZE / image.naturalHeight,
+  );
+  const sourceSize = AVATAR_PREVIEW_SIZE / scale;
+  const centeredX = (image.naturalWidth - sourceSize) / 2;
+  const centeredY = (image.naturalHeight - sourceSize) / 2;
+  const sourceX = centeredX - offset.x / scale;
+  const sourceY = centeredY - offset.y / scale;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  canvas.width = AVATAR_OUTPUT_SIZE;
+  canvas.height = AVATAR_OUTPUT_SIZE;
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, AVATAR_OUTPUT_SIZE, AVATAR_OUTPUT_SIZE);
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceSize,
+    sourceSize,
+    0,
+    0,
+    AVATAR_OUTPUT_SIZE,
+    AVATAR_OUTPUT_SIZE,
+  );
+  const blob = await canvasToBlob(canvas);
+  return new File([blob], `${file.name.replace(/\.[^/.]+$/, "") || "avatar"}.jpg`, {
+    lastModified: Date.now(),
+    type: "image/jpeg",
+  });
+}
 
 function CloseIcon({ className }) {
   return (
@@ -44,13 +111,26 @@ function AvatarUploadModal({
   onUpload,
 }) {
   const uploadAbortControllerRef = useRef(null);
+  const dragStateRef = useRef(null);
   const [uploadState, setUploadState] = useState(AVATAR_UPLOAD_INITIAL_STATE);
+  const [previewDimensions, setPreviewDimensions] = useState(null);
+  const [previewOffset, setPreviewOffset] = useState({ x: 0, y: 0 });
+  const previewUrl = useMemo(
+    () => (uploadState.file ? URL.createObjectURL(uploadState.file) : ""),
+    [uploadState.file],
+  );
   const isUploadBusy = isSubmitting || uploadState.status === "uploading";
+
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
 
   const resetUploadState = useCallback(() => {
     uploadAbortControllerRef.current?.abort();
     uploadAbortControllerRef.current = null;
     setUploadState(AVATAR_UPLOAD_INITIAL_STATE);
+    setPreviewDimensions(null);
+    setPreviewOffset({ x: 0, y: 0 });
   }, []);
 
   const handleClose = useCallback(() => {
@@ -135,6 +215,7 @@ function AvatarUploadModal({
             status: "completed",
           };
         });
+        return result;
       } catch (error) {
         if (error.code === "UPLOAD_ABORTED") {
           return;
@@ -182,15 +263,16 @@ function AvatarUploadModal({
         id: `${selectedFile.name}-${selectedFile.lastModified}`,
         name: selectedFile.name,
         onRemove:
-          uploadState.status === "uploading" ? resetUploadState : undefined,
-        onRetryUpload: isFailed ? () => uploadFile(selectedFile) : undefined,
+          uploadState.status === "pending" || isFailed
+            ? resetUploadState
+            : undefined,
         progress: uploadState.progress,
         status: uploadState.status,
         totalSizeLabel: `${sizeInKb}KB`,
         type: type === "JPEG" ? "JPG" : type,
       },
     ];
-  }, [resetUploadState, uploadFile, uploadState]);
+  }, [resetUploadState, uploadState]);
 
   const handleFileSelection = (fileList) => {
     if (isUploadBusy) {
@@ -203,15 +285,74 @@ function AvatarUploadModal({
       return;
     }
 
-    uploadFile(nextFile);
+    setPreviewDimensions(null);
+    setPreviewOffset({ x: 0, y: 0 });
+    setUploadState({
+      errorMessage: "",
+      file: nextFile,
+      progress: 0,
+      status: "pending",
+    });
   };
 
-  const handleConfirm = () => {
-    if (uploadState.status !== "completed" || isUploadBusy) {
+  const clampOffset = useCallback((offset) => {
+    if (!previewDimensions) return { x: 0, y: 0 };
+    const scale = Math.max(
+      AVATAR_PREVIEW_SIZE / previewDimensions.width,
+      AVATAR_PREVIEW_SIZE / previewDimensions.height,
+    );
+    const maxX = Math.max((previewDimensions.width * scale - AVATAR_PREVIEW_SIZE) / 2, 0);
+    const maxY = Math.max((previewDimensions.height * scale - AVATAR_PREVIEW_SIZE) / 2, 0);
+    return {
+      x: Math.max(-maxX, Math.min(maxX, offset.x)),
+      y: Math.max(-maxY, Math.min(maxY, offset.y)),
+    };
+  }, [previewDimensions]);
+
+  const handlePreviewPointerDown = (event) => {
+    if (!uploadState.file || isUploadBusy) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      offset: previewOffset,
+    };
+  };
+
+  const handlePreviewPointerMove = (event) => {
+    const drag = dragStateRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    setPreviewOffset(clampOffset({
+      x: drag.offset.x + event.clientX - drag.startX,
+      y: drag.offset.y + event.clientY - drag.startY,
+    }));
+  };
+
+  const handlePreviewPointerUp = (event) => {
+    if (dragStateRef.current?.pointerId === event.pointerId) {
+      dragStateRef.current = null;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!uploadState.file || isUploadBusy) {
       return;
     }
 
-    onConfirm?.(uploadState.result);
+    try {
+      const croppedFile = await createCroppedAvatar(uploadState.file, previewOffset);
+      setPreviewOffset({ x: 0, y: 0 });
+      const result = await uploadFile(croppedFile);
+      if (result) onConfirm?.(result);
+    } catch (error) {
+      setUploadState((current) => ({
+        ...current,
+        errorMessage: error.message || "No se pudo preparar el avatar.",
+        status: "failed",
+      }));
+    }
   };
 
   return (
@@ -248,6 +389,52 @@ function AvatarUploadModal({
                 Avatar
               </h2>
 
+              <div className="flex w-full flex-col items-center gap-[8px] pb-[20px]">
+                <div
+                  className="relative size-[112px] touch-none overflow-hidden rounded-full bg-[var(--color-neutral-200)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]"
+                  role={uploadState.file ? "application" : "img"}
+                  aria-label={uploadState.file ? "Vista previa del avatar. Arrastra la imagen para ajustar el encuadre." : "Vista previa del avatar"}
+                  tabIndex={uploadState.file ? 0 : undefined}
+                  onPointerDown={handlePreviewPointerDown}
+                  onPointerMove={handlePreviewPointerMove}
+                  onPointerUp={handlePreviewPointerUp}
+                  onPointerCancel={handlePreviewPointerUp}
+                >
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Vista previa del avatar seleccionado"
+                      draggable="false"
+                      className="absolute left-1/2 top-1/2 max-w-none select-none"
+                      style={previewDimensions ? {
+                        width: `${previewDimensions.width * Math.max(AVATAR_PREVIEW_SIZE / previewDimensions.width, AVATAR_PREVIEW_SIZE / previewDimensions.height)}px`,
+                        height: `${previewDimensions.height * Math.max(AVATAR_PREVIEW_SIZE / previewDimensions.width, AVATAR_PREVIEW_SIZE / previewDimensions.height)}px`,
+                        transform: `translate3d(calc(-50% + ${previewOffset.x}px), calc(-50% + ${previewOffset.y}px), 0)`,
+                      } : { width: "100%", height: "100%", objectFit: "cover", transform: "translate3d(-50%, -50%, 0)" }}
+                      onLoad={(event) => setPreviewDimensions({
+                        width: event.currentTarget.naturalWidth,
+                        height: event.currentTarget.naturalHeight,
+                      })}
+                    />
+                  ) : (
+                    <div className="flex size-full items-center justify-center" aria-hidden="true">
+                      <Avatar
+                        size="L"
+                        theme="Brand 1"
+                        content="Icon"
+                        decorative
+                        className="scale-[2]"
+                      />
+                    </div>
+                  )}
+                </div>
+                {previewUrl ? (
+                  <p className="text-center text-[12px] leading-[15px] text-[var(--color-text-100)]">
+                    Arrastra la imagen para ajustar el encuadre
+                  </p>
+                ) : null}
+              </div>
+
               <div className="w-full">
                 <FileUploadSection
                   className="w-full"
@@ -261,11 +448,6 @@ function AvatarUploadModal({
                   viewportHeight={null}
                   fileInputAccept=".jpg,.jpeg,.png,.webp"
                   onFilesSelected={handleFileSelection}
-                  onRetryUpload={() => {
-                    if (uploadState.file) {
-                      uploadFile(uploadState.file);
-                    }
-                  }}
                 />
               </div>
             </div>
@@ -290,7 +472,7 @@ function AvatarUploadModal({
               showLeftIcon={false}
               showRightIcon={false}
               className="min-w-0 flex-1"
-              disabled={uploadState.status !== "completed" || isUploadBusy}
+              disabled={!uploadState.file || isUploadBusy}
               onClick={handleConfirm}
             >
               Confirmar
