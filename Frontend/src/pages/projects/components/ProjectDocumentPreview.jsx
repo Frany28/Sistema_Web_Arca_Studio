@@ -815,7 +815,7 @@ export function ProjectDocumentViewerModal({
   const [zoom, setZoom] = useState(100);
   const [pendingSelection, setPendingSelection] = useState(null);
   const [focusedCommentId, setFocusedCommentId] = useState(null);
-  const { addComment, comments } = useDocumentComments({
+  const { addComment, comments, error: commentsError, isSubmitting } = useDocumentComments({
     enabled: open && kind !== "unsupported",
     fileId: document?.id,
     fileVersionId: document?.currentVersionId,
@@ -971,8 +971,11 @@ export function ProjectDocumentViewerModal({
         </div>
         <div className="w-[296px] shrink-0 max-[767px]:h-[36dvh] max-[767px]:w-full">
           <GeneralCommentsDrawer
+            composerDisabled={isSubmitting}
+            composerDisabledMessage={isSubmitting ? "Guardando observación..." : ""}
             composerFocusSignal={pendingSelection ? JSON.stringify(pendingSelection) : ""}
             comments={comments}
+            commentsError={commentsError}
             focusedSelectionCommentId={focusedCommentId}
             mediaItem={document}
             mediaType="document"

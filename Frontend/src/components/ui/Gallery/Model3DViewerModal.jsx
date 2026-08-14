@@ -1116,6 +1116,7 @@ function MessageInput({
   const fieldRef = useRef(null);
   const fieldId = useId();
   const [textAreaValue, setTextAreaValue] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const trimmedValue = textAreaValue.trim();
 
   useEffect(() => {
@@ -1132,13 +1133,20 @@ function MessageInput({
     });
   }, [focusSignal]);
 
-  function handleSubmit() {
-    if (disabled || !trimmedValue || (requireSelection && !pendingSelection)) {
+  async function handleSubmit() {
+    if (disabled || isSubmitting || !trimmedValue || (requireSelection && !pendingSelection)) {
       return;
     }
 
-    onSubmit?.(trimmedValue);
-    setTextAreaValue("");
+    setIsSubmitting(true);
+    try {
+      await onSubmit?.(trimmedValue);
+      setTextAreaValue("");
+    } catch {
+      // The caller renders the request error; keep the draft available to retry.
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return multiline ? (
@@ -1160,7 +1168,7 @@ function MessageInput({
       ) : null}
       <TextArea
         id={fieldId}
-        disabled={disabled || (requireSelection && !pendingSelection)}
+        disabled={disabled || isSubmitting || (requireSelection && !pendingSelection)}
         showLabel={false}
         placeholder={
           disabled
@@ -1190,6 +1198,7 @@ function MessageInput({
             aria-label="Enviar observación"
             disabled={
               disabled ||
+              isSubmitting ||
               !trimmedValue ||
               (requireSelection && !pendingSelection)
             }
@@ -1738,6 +1747,7 @@ function getRootCommentId(comments, commentId) {
 export function GeneralCommentsDrawer({
   composerDisabled = false,
   composerDisabledMessage = "",
+  commentsError = "",
   composerFocusSignal,
   comments = [],
   focusedSelectionCommentId = null,
@@ -1826,19 +1836,14 @@ export function GeneralCommentsDrawer({
         ? parentComment.parentCommentId || parentComment.id
         : parentComment;
 
-    try {
-      await onSubmitComment?.({
-        message,
-        parentCommentId,
-        selection: parentCommentId ? null : pendingSelection,
-      });
+    await onSubmitComment?.({
+      message,
+      parentCommentId,
+      selection: parentCommentId ? null : pendingSelection,
+    });
 
-      if (parentCommentId) {
-        setActiveReplyComposer(null);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn("Comment submit failed:", error);
+    if (parentCommentId) {
+      setActiveReplyComposer(null);
     }
   }
 
@@ -1859,6 +1864,11 @@ export function GeneralCommentsDrawer({
         {composerDisabled && composerDisabledMessage ? (
           <p className="text-[12px] leading-[16px] text-[var(--color-text-100)]">
             {composerDisabledMessage}
+          </p>
+        ) : null}
+        {commentsError ? (
+          <p role="alert" className="text-[12px] leading-[16px] text-[var(--color-danger-300)]">
+            {commentsError}
           </p>
         ) : null}
 

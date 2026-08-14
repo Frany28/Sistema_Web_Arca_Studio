@@ -98,6 +98,27 @@ test("other authors use the authenticated project avatar endpoint", () => {
   );
 });
 
+test("current authors fall back to the authenticated comment avatar endpoint", () => {
+  const decorated = decorateCommentForDisplay(
+    {
+      author: {
+        id: 20,
+        name: "Ana Pérez",
+        hasProfilePhoto: true,
+        roleCode: "architect",
+      },
+      commentType: "document",
+      projectId: 1,
+    },
+    { id: 20, role: "architect", hasProfilePhoto: true },
+  );
+
+  assert.equal(
+    decorated.avatarSrc,
+    "/api/projects/1/comment-authors/20/profile-photo",
+  );
+});
+
 test("shared environment observations use their authenticated avatar endpoint", () => {
   const decorated = decorateCommentForDisplay(
     {

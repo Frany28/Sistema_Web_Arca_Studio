@@ -7,6 +7,41 @@ const CACHE_TTL_MS = 30_000;
 const CACHE_MAX_ENTRIES = 50;
 const commentCache = new Map();
 
+function isPositiveId(value) {
+  const numericValue = Number(value);
+  return Number.isInteger(numericValue) && numericValue > 0;
+}
+
+function isValidDocumentSelection(selection) {
+  if (!selection || typeof selection !== "object") return false;
+  const hasCoordinates =
+    Number.isFinite(selection.normalizedX) &&
+    selection.normalizedX >= 0 &&
+    selection.normalizedX <= 1 &&
+    Number.isFinite(selection.normalizedY) &&
+    selection.normalizedY >= 0 &&
+    selection.normalizedY <= 1;
+
+  if (!hasCoordinates) return false;
+  if (selection.kind === "document-point") {
+    return isPositiveId(selection.pageNumber) &&
+      isPositiveId(selection.pageCount) &&
+      Number(selection.pageNumber) <= Number(selection.pageCount);
+  }
+  if (selection.kind === "document-section-point") {
+    return Number.isInteger(selection.sectionIndex) &&
+      selection.sectionIndex >= 0 &&
+      isPositiveId(selection.sectionCount) &&
+      selection.sectionIndex < Number(selection.sectionCount);
+  }
+  if (selection.kind === "document-cell-point") {
+    return typeof selection.sheetName === "string" &&
+      selection.sheetName.trim().length > 0 &&
+      /^[A-Z]{1,3}[1-9]\d{0,6}$/.test(selection.cell || "");
+  }
+  return false;
+}
+
 function upsert(comments, comment) {
   return comments.some((item) => String(item.id) === String(comment.id))
     ? comments.map((item) => String(item.id) === String(comment.id) ? comment : item)
@@ -50,6 +85,7 @@ export function useDocumentComments({ enabled, fileId, fileVersionId, projectId 
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const submitPromiseRef = useRef(null);
   const cacheKey = getCacheKey({ fileId, fileVersionId, projectId, userId: user?.id || "anonymous" });
 
@@ -84,6 +120,22 @@ export function useDocumentComments({ enabled, fileId, fileVersionId, projectId 
 
   const addComment = useCallback(async ({ message, parentCommentId = null, selection = null }) => {
     if (submitPromiseRef.current) return submitPromiseRef.current;
+
+    const validationError = !isPositiveId(projectId) || !isPositiveId(fileId) || !isPositiveId(fileVersionId)
+      ? "No se pudo identificar el documento o su versión."
+      : parentCommentId
+        ? null
+        : isValidDocumentSelection(selection)
+          ? null
+          : "Selecciona un punto válido en el documento.";
+
+    if (validationError) {
+      setError(validationError);
+      throw new Error(validationError);
+    }
+
+    setError("");
+    setIsSubmitting(true);
     const request = api.projects.createComment({
       commentType: "document",
       content: message,
@@ -93,22 +145,29 @@ export function useDocumentComments({ enabled, fileId, fileVersionId, projectId 
       projectId,
       selection,
     }).then((data) => {
-      if (data.comment) {
-        setRows((current) => upsert(current, data.comment));
-        const cached = commentCache.get(cacheKey);
-        commentCache.set(cacheKey, {
-          comments: upsert(cached?.comments || [], data.comment),
-          createdAt: Date.now(),
-          promise: null,
-        });
+      if (!data?.comment?.id) {
+        throw new Error("El servidor no devolvió la observación guardada.");
       }
-      return data.comment || null;
+
+      setRows((current) => upsert(current, data.comment));
+      const cached = commentCache.get(cacheKey);
+      commentCache.set(cacheKey, {
+        comments: upsert(cached?.comments || [], data.comment),
+        createdAt: Date.now(),
+        promise: null,
+      });
+      trimCache();
+      return data.comment;
+    }).catch((requestError) => {
+      setError(requestError.message || "No se pudo guardar la observación.");
+      throw requestError;
     }).finally(() => {
       submitPromiseRef.current = null;
+      setIsSubmitting(false);
     });
     submitPromiseRef.current = request;
     return request;
   }, [cacheKey, fileId, fileVersionId, projectId]);
 
-  return { addComment, comments, error, isLoading };
+  return { addComment, comments, error, isLoading, isSubmitting };
 }

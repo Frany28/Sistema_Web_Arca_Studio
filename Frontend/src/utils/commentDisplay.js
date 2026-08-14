@@ -31,7 +31,7 @@ export function isCommentFromCurrentUser(comment, user) {
 
 export function getCommentAuthorAvatarSrc(comment, user) {
   if (isCommentFromCurrentUser(comment, user)) {
-    return user?.profilePhotoUrl || "";
+    return user?.profilePhotoUrl || buildCommentAuthorAvatarUrl(comment) || "";
   }
 
   return buildCommentAuthorAvatarUrl(comment) || comment?.avatarSrc || "";
