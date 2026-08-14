@@ -21,6 +21,7 @@ import {
   orderCommentsByThread,
 } from "../../../utils/commentDisplay.js";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
+import { getToggledCommentId } from "../../../utils/commentSelection.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 import { getPanoramaOrientation } from "../../../utils/panoramaCoordinates.js";
 import {
@@ -2463,10 +2464,10 @@ export default function Model3DViewerModal({
       return;
     }
 
-    const nextCommentId =
-      String(focusedSelectionCommentId) === String(commentId)
-        ? null
-        : commentId;
+    const nextCommentId = getToggledCommentId(
+      focusedSelectionCommentId,
+      commentId,
+    );
     const comment = comments.find(
       (currentComment) => String(currentComment.id) === String(nextCommentId),
     );

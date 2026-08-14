@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
+import { getToggledCommentId } from "../../../utils/commentSelection.js";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../../ui/Button/Button.jsx";
 import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
@@ -443,7 +444,7 @@ export default function ImageViewerModal({
             onClearSelection={() => setPendingSelection(null)}
             onSelectionPreviewClick={(commentId) =>
               setFocusedSelectionCommentId((currentId) =>
-                String(currentId) === String(commentId) ? null : commentId,
+                getToggledCommentId(currentId, commentId),
               )
             }
             onSubmitComment={handleSubmitComment}

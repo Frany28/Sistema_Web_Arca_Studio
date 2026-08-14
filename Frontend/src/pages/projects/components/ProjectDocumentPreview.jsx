@@ -13,6 +13,7 @@ import Loader from "../../../components/ui/Loader/Loader.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import ObservationTooltip from "../../../components/ui/ObservationTooltip/ObservationTooltip.jsx";
 import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
+import { getToggledCommentId } from "../../../utils/commentSelection.js";
 import { GeneralCommentsDrawer } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import { useDocumentComments } from "../../../hooks/useDocumentComments.js";
 import ProjectDocumentCard from "./ProjectDocumentCard.jsx";
@@ -969,10 +970,15 @@ export function ProjectDocumentViewerModal({
   };
 
   const handlePointSelect = (commentId, options = {}) => {
-    setFocusedCommentId(commentId);
     if (options.reply) {
+      setFocusedCommentId(commentId);
       setReplyRequest({ commentId, requestId: Date.now() });
+      return;
     }
+
+    setFocusedCommentId((currentId) =>
+      getToggledCommentId(currentId, commentId),
+    );
   };
 
   let viewer = null;
@@ -1061,7 +1067,7 @@ export function ProjectDocumentViewerModal({
             replyRequest={replyRequest}
             requireSelectionForRoot
             onClearSelection={() => setPendingSelection(null)}
-            onSelectionPreviewClick={setFocusedCommentId}
+            onSelectionPreviewClick={handlePointSelect}
             onSubmitComment={handleSubmitComment}
           />
         </div>

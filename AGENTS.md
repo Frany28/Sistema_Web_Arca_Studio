@@ -49,6 +49,7 @@ Antes de implementar lógica nueva, revisar:
 - `src/middlewares/auth.js` para autenticación y permisos.
 - `src/config/db.js` para PostgreSQL.
 - `src/services/projectEvents.js` para eventos en tiempo real.
+- Antes de implementar una interacción equivalente en otro módulo, revisar el flujo ya existente y reutilizar sus componentes, helpers, hooks y reglas de estado. En particular, comentarios y observaciones de documentos, imágenes, videos, panorámicas y modelos deben compartir la misma lógica de selección, foco, segundo clic para desmarcar, respuestas y sincronización con el drawer; solo debe permanecer separada la conducta específica de cada visor.
 
 Si una regla se utiliza en dos sitios, extraerla a un módulo compartido en lugar de copiarla.
 
