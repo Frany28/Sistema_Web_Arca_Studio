@@ -96,6 +96,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         ref={markerRef}
         type="button"
         data-document-marker
+        data-comment-id={isPending ? undefined : comment.id}
         aria-label={isPending ? "Ubicación de observación pendiente" : `Observación de ${authorName}`}
         className={clsx(
           "absolute z-[3] flex h-[40px] min-w-[40px] -translate-y-full items-center justify-center border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] transition-[border-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)] motion-reduce:transition-none",
@@ -366,6 +367,11 @@ const PdfPages = forwardRef(function PdfPages(
   const viewportRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
+    scrollToComment(commentId) {
+      viewportRef.current
+        ?.querySelector(`[data-document-marker][data-comment-id="${commentId}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+    },
     scrollToPage(nextPage) {
       viewportRef.current
         ?.querySelector(`[data-pdf-page="${nextPage}"]`)
@@ -427,6 +433,14 @@ function PdfViewerSurface({
     updatePage(normalizedPage);
     pagesRef.current?.scrollToPage(normalizedPage);
   };
+
+  useEffect(() => {
+    if (!focusedId) return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      pagesRef.current?.scrollToComment(focusedId);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [focusedId, zoom]);
 
   return (
     <div
@@ -610,9 +624,11 @@ function DocxViewerSurface({ annotations = [], data, focusedId, onPointCreate, o
   useEffect(() => {
     const comment = annotations.find((item) => String(item.id) === String(focusedId));
     if (comment?.selection?.kind !== "document-section-point") return;
-    containerRef.current?.querySelectorAll(".arca-docx")?.[comment.selection.sectionIndex]
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [annotations, focusedId]);
+    const marker = containerRef.current?.parentElement
+      ?.querySelector(`[data-document-marker][data-comment-id="${comment.id}"]`);
+    (marker || containerRef.current?.querySelectorAll(".arca-docx")?.[comment.selection.sectionIndex])
+      ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+  }, [annotations, focusedId, sectionBoxes]);
 
   if (error) {
     return (
@@ -707,6 +723,15 @@ function XlsxViewerSurface({ annotations = [], data, focusedId, onPointCreate, o
       queueMicrotask(() => setActiveSheetIndex(nextIndex));
     }
   }, [activeSheetIndex, annotations, focusedId, workbook]);
+
+  useEffect(() => {
+    const comment = annotations.find((item) => String(item.id) === String(focusedId));
+    if (comment?.selection?.kind !== "document-cell-point" || comment.selection.sheetName !== activeSheetName) return;
+    const marker = tableRef.current
+      ?.querySelector(`[data-document-marker][data-comment-id="${comment.id}"]`);
+    (marker || tableRef.current?.querySelector(`[data-cell="${comment.selection.cell}"]`))
+      ?.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+  }, [activeSheetName, annotations, cellBoxes, focusedId]);
 
   if (!workbook?.SheetNames?.length) {
     return (
@@ -970,15 +995,25 @@ export function ProjectDocumentViewerModal({
   };
 
   const handlePointSelect = (commentId, options = {}) => {
+    const restoreCommentLocation = () => {
+      const comment = comments.find(
+        (item) => String(item.id) === String(commentId),
+      );
+      if (comment?.selection?.kind === "document-point") {
+        setPage(comment.selection.pageNumber);
+      }
+    };
+
     if (options.reply) {
+      restoreCommentLocation();
       setFocusedCommentId(commentId);
       setReplyRequest({ commentId, requestId: Date.now() });
       return;
     }
 
-    setFocusedCommentId((currentId) =>
-      getToggledCommentId(currentId, commentId),
-    );
+    const nextCommentId = getToggledCommentId(focusedCommentId, commentId);
+    if (nextCommentId) restoreCommentLocation();
+    setFocusedCommentId(nextCommentId);
   };
 
   let viewer = null;
