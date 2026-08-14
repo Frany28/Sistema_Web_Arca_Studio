@@ -267,12 +267,13 @@ function AvatarUploadModal({
             ? resetUploadState
             : undefined,
         progress: uploadState.progress,
+        previewSrc: previewUrl,
         status: uploadState.status,
         totalSizeLabel: `${sizeInKb}KB`,
         type: type === "JPEG" ? "JPG" : type,
       },
     ];
-  }, [resetUploadState, uploadState]);
+  }, [previewUrl, resetUploadState, uploadState]);
 
   const handleFileSelection = (fileList) => {
     if (isUploadBusy) {
