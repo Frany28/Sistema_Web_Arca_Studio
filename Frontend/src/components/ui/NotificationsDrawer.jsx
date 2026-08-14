@@ -181,6 +181,7 @@ function SendIcon() {
 function CommentCard({
   avatarSrc,
   commentType,
+  fileType,
   id,
   image,
   imageComment = false,
@@ -291,6 +292,7 @@ function CommentCard({
           {imageComment && selection && !isReply ? (
             <ImageCommentPreview
               commentType={commentType}
+              fileType={fileType}
               image={image}
               observationTypeLabel={observationTypeLabel}
               pointNumber={displayPointNumber}
@@ -325,6 +327,7 @@ function CommentCard({
 
 function ImageCommentPreview({
   commentType,
+  fileType,
   image,
   observationTypeLabel,
   pointNumber,
@@ -333,6 +336,32 @@ function ImageCommentPreview({
   const videoTiming = getVideoObservationTiming(selection);
   const pixels = selection.imagePixels ?? selection.displayPixels;
   const isViewer3dComment = commentType === "panorama";
+
+  if (commentType === "document") {
+    const reference = selection?.kind === "document-point"
+      ? `Página ${selection.pageNumber}`
+      : selection?.kind === "document-section-point"
+        ? `Sección ${Number(selection.sectionIndex) + 1}`
+        : selection?.kind === "document-cell-point"
+          ? `Celda ${selection.cell}`
+          : "Ubicación guardada";
+
+    return (
+      <div className="mt-[6px] flex items-center gap-[8px] rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px]">
+        <div className="flex size-[44px] shrink-0 items-center justify-center">
+          <FileAttachmentIcons type={fileType} className="scale-[0.8]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-300)]">
+            {observationTypeLabel || "Observación sobre documento"}
+          </p>
+          <p className="truncate text-[10px] leading-[12px] tracking-[-0.5px] text-[var(--color-text-100)]">
+            {reference}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (videoTiming) {
     return (

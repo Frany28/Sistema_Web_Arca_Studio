@@ -271,15 +271,20 @@ function getRelativeTimeLabel(value) {
   return `Hace ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
 }
 
-function toDrawerComment(comment, user) {
+function toDrawerComment(comment, user, files = []) {
   const commentType = comment.commentType || "general";
+  const documentFile = commentType === "document"
+    ? files.find((file) => String(file.id) === String(comment.fileId))
+    : null;
 
   return {
     ...decorateCommentForDisplay(comment, user),
     commentType,
     id: comment.id,
     image: comment.image,
-    imageComment: ["image", "panorama", "video"].includes(commentType),
+    fileId: comment.fileId,
+    fileType: String(documentFile?.extension || "FILE").toUpperCase(),
+    imageComment: ["image", "panorama", "video", "document"].includes(commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.content,
     pointNumber:
@@ -345,7 +350,7 @@ export default function ProjectDetailsPage({
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
   const notificationComments = mergeNotificationComments([
-    ...projectComments.map((comment) => toDrawerComment(comment, user)),
+    ...projectComments.map((comment) => toDrawerComment(comment, user, project?.files)),
     ...imageCommentNotifications,
   ]);
 
@@ -572,9 +577,12 @@ export default function ProjectDetailsPage({
   };
 
   const openImageComment = (comment) => {
-    const params = new URLSearchParams({ tab: "renders" });
+    const isDocumentComment = comment?.commentType === "document";
+    const params = new URLSearchParams({ tab: isDocumentComment ? "documents" : "renders" });
 
-    if (comment?.imageId) {
+    if (isDocumentComment && comment?.fileId) {
+      params.set("fileId", comment.fileId);
+    } else if (comment?.imageId) {
       params.set("imageId", comment.imageId);
     }
 

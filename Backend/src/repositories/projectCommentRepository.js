@@ -154,9 +154,15 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
         pc.parent_comment_id,
         pc.comment_type,
         pc.content,
+        pc.file_id,
+        pc.file_version_id,
         pc.target_id,
         pc.target_metadata,
         pc.created_at,
+        ca.page_number,
+        ca.pos_x,
+        ca.pos_y,
+        ca.anchor_context_json,
         u.first_name,
         u.last_name,
         (u.profile_photo_url is not null) as has_profile_photo,
@@ -168,11 +174,12 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
         on u.id = pc.user_id
       inner join public.roles r
         on r.id = u.role_id
+      left join public.comment_anchors ca
+        on ca.comment_id = coalesce(pc.parent_comment_id, pc.id)
+       and ca.anchor_type = 'document'::anchor_type
       where pc.project_id = $${access.params.length + 1}
         and pc.deleted_at is null
         and pc.status = $${access.params.length + 2}::comment_status
-        and pc.file_id is null
-        and pc.file_version_id is null
         and p.deleted_at is null
         and (${access.sql})
         and ($${access.params.length + 3}::timestamptz is null or (pc.created_at, pc.id) > ($${access.params.length + 3}::timestamptz, $${access.params.length + 4}::bigint))
@@ -182,7 +189,12 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
     [...access.params, projectId, ACTIVE_COMMENT_STATUS, cursor?.[0] || null, cursor?.[1] || null, limit + 1],
   );
 
-  return pageResult(result.rows, limit, toProjectComment, (row) => [row.created_at, String(row.id)]);
+  return pageResult(
+    result.rows,
+    limit,
+    (row) => row.comment_type === "document" ? toDocumentComment(row) : toProjectComment(row),
+    (row) => [row.created_at, String(row.id)],
+  );
 }
 
 export async function createProjectCommentRecord({
