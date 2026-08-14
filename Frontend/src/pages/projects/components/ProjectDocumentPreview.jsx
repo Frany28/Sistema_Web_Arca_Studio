@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
+import AvatarGroup from "../../../components/ui/AvatarGroup/AvatarGroup.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import ObservationTooltip from "../../../components/ui/ObservationTooltip/ObservationTooltip.jsx";
@@ -32,6 +33,11 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
   const authorName = comment.authorName || comment.name || comment.author?.name || "Usuario";
   const avatarSrc = comment.avatarSrc || "";
   const replyCount = Number(comment.replyCount || comment.replies?.length || 0);
+  const participants = Array.isArray(comment.threadParticipants)
+    ? comment.threadParticipants
+    : [];
+  const visibleParticipants = participants.slice(0, 3);
+  const hasMultipleParticipants = participants.length > 1;
 
   useEffect(() => () => window.clearTimeout(tooltipCloseTimerRef.current), []);
 
@@ -86,7 +92,10 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         data-document-marker
         aria-label={isPending ? "Ubicación de observación pendiente" : `Observación de ${authorName}`}
         className={clsx(
-          "absolute z-[3] flex size-[40px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[8px] transition-[border-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)] motion-reduce:transition-none",
+          "absolute z-[3] flex h-[40px] min-w-[40px] -translate-x-1/2 -translate-y-1/2 items-center justify-center border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] transition-[border-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)] motion-reduce:transition-none",
+          hasMultipleParticipants
+            ? "w-auto rounded-[var(--radius-full)] px-[8px]"
+            : "w-[40px] rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] p-[8px]",
           isPending ? "pointer-events-none animate-pulse" : "cursor-pointer",
           tooltipOpen && !isPending ? "opacity-0" : "opacity-100",
           focused && "border-[var(--color-accent-300)] ring-2 ring-[var(--color-accent-300)] ring-offset-2 ring-offset-[var(--color-neutral-bg)]",
@@ -98,15 +107,26 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         onBlur={scheduleTooltipClose}
         onClick={(event) => { event.stopPropagation(); if (!isPending) onSelect?.(comment.id); }}
       >
-        <Avatar
-          size="S"
-          theme="Brand 1"
-          content={avatarSrc ? "Image" : "Icon"}
-          name={authorName}
-          src={avatarSrc}
-          alt={authorName}
-          decorative={isPending}
-        />
+        {hasMultipleParticipants ? (
+          <AvatarGroup
+            aria-label={`Participantes: ${participants.map((participant) => participant.name).join(", ")}`}
+            items={visibleParticipants}
+            moreCount={participants.length > visibleParticipants.length
+              ? participants.length - visibleParticipants.length
+              : null}
+            size="S"
+          />
+        ) : (
+          <Avatar
+            size="S"
+            theme="Brand 1"
+            content={avatarSrc ? "Image" : "Icon"}
+            name={authorName}
+            src={avatarSrc}
+            alt={authorName}
+            decorative={isPending}
+          />
+        )}
       </button>
       <ObservationTooltip
         authorName={authorName}

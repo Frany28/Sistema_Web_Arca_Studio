@@ -110,17 +110,40 @@ export function useDocumentComments({ enabled, fileId, fileVersionId, projectId 
 
   const comments = useMemo(() => {
     const replyCounts = new Map();
-    rows.forEach((comment) => {
+    const threadParticipants = new Map();
+    const decoratedRows = rows.map((comment) => decorateCommentForDisplay(comment, user));
+
+    decoratedRows.forEach((comment) => {
+      const rootId = String(comment.parentCommentId || comment.id);
+      const authorKey = comment.author?.id != null
+        ? `id:${comment.author.id}`
+        : `name:${comment.name}`;
+      const participants = threadParticipants.get(rootId) || new Map();
+      if (!participants.has(authorKey)) {
+        participants.set(authorKey, {
+          alt: comment.name,
+          content: comment.avatarSrc ? "Image" : "Text",
+          decorative: false,
+          name: comment.name,
+          src: comment.avatarSrc,
+          theme: "Neutral",
+        });
+      }
+      threadParticipants.set(rootId, participants);
+
       if (!comment.parentCommentId) return;
       const parentId = String(comment.parentCommentId);
       replyCounts.set(parentId, (replyCounts.get(parentId) || 0) + 1);
     });
 
-    return rows.map((comment) => ({
-      ...decorateCommentForDisplay(comment, user),
+    return decoratedRows.map((comment) => ({
+      ...comment,
       imageComment: true,
       message: comment.content,
       replyCount: replyCounts.get(String(comment.id)) || 0,
+      threadParticipants: Array.from(
+        threadParticipants.get(String(comment.parentCommentId || comment.id))?.values() || [],
+      ),
       timestamp: "",
     }));
   }, [rows, user]);
