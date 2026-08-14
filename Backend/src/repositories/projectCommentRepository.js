@@ -157,7 +157,7 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
         pc.content,
         pc.file_id,
         pc.file_version_id,
-        f.extension as file_extension,
+        fv.file_extension,
         pc.target_id,
         pc.target_metadata,
         pc.created_at,
@@ -182,6 +182,10 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
       left join public.files f
         on f.id = pc.file_id
        and f.project_id = pc.project_id
+      left join public.file_versions fv
+        on fv.id = pc.file_version_id
+       and fv.file_id = f.id
+       and fv.deleted_at is null
       where pc.project_id = $${access.params.length + 1}
         and pc.deleted_at is null
         and pc.status = $${access.params.length + 2}::comment_status
