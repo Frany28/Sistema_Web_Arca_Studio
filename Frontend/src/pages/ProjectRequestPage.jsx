@@ -30,6 +30,7 @@ import {
 } from "../utils/projectRequestValidation.js";
 import { PROJECT_REQUEST_OPTIONS } from "../utils/projectRequestOptions.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
+import { getCommentNavigationParams } from "../utils/commentSelection.js";
 import ProjectRequestReceivedView from "./project-request/components/ProjectRequestReceivedView.jsx";
 import {
   createUserSideNavigationItems,
@@ -432,10 +433,7 @@ export default function ProjectRequestPage() {
       return;
     }
 
-    const params = new URLSearchParams({ tab: "renders" });
-
-    if (comment.imageId) params.set("imageId", comment.imageId);
-    if (comment.id) params.set("commentId", comment.id);
+    const params = getCommentNavigationParams(comment);
 
     const targetProject = recentProjects.find(
       (project) => String(project.id) === String(targetProjectId),

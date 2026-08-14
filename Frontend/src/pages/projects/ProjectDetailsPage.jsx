@@ -23,6 +23,7 @@ import ProjectUploadFilesPanel from "./panels/ProjectUploadFilesPanel.jsx";
 import ProjectWarrantiesPanel from "./panels/ProjectWarrantiesPanel.jsx";
 import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
+import { getCommentNavigationParams } from "../../utils/commentSelection.js";
 import { getProjectTypeDisplay } from "../../utils/projectTypeDisplay.js";
 import {
   createUserSideNavigationItems,
@@ -372,9 +373,9 @@ export default function ProjectDetailsPage({
   }, []);
 
   useEffect(() => {
-    if (searchParams.get("tab") === "renders") {
-      setActiveProjectTabIndex(1);
-    }
+    const requestedTab = searchParams.get("tab");
+    if (requestedTab === "renders") setActiveProjectTabIndex(1);
+    if (requestedTab === "documents") setActiveProjectTabIndex(2);
   }, [searchParams]);
 
   useEffect(() => {
@@ -577,18 +578,7 @@ export default function ProjectDetailsPage({
   };
 
   const openImageComment = (comment) => {
-    const isDocumentComment = comment?.commentType === "document";
-    const params = new URLSearchParams({ tab: isDocumentComment ? "documents" : "renders" });
-
-    if (isDocumentComment && comment?.fileId) {
-      params.set("fileId", comment.fileId);
-    } else if (comment?.imageId) {
-      params.set("imageId", comment.imageId);
-    }
-
-    if (comment?.id) {
-      params.set("commentId", comment.id);
-    }
+    const params = getCommentNavigationParams(comment);
 
     setIsNotificationsDrawerOpen(false);
     navigate(
@@ -686,6 +676,7 @@ export default function ProjectDetailsPage({
     activeProjectPanel = (
       <ProjectDocumentsPanel
         documents={presentedProject.documents}
+        focusedCommentId={searchParams.get("commentId")}
         focusedDocumentId={searchParams.get("fileId")}
         lastSynchronizedAt={filesSynchronizedAt}
         projectId={resolvedProjectId}

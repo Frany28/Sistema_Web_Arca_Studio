@@ -26,6 +26,7 @@ import {
 } from "../hooks/useProjectComments.js";
 import { getProjectNamesById } from "../utils/commentDisplay.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
+import { getCommentNavigationParams } from "../utils/commentSelection.js";
 import { getProjectImageSource } from "../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
 import { groupProjectsByStatus } from "../utils/projectStatusGroups.js";
@@ -521,15 +522,7 @@ function Home({ view = "dashboard" }) {
   };
 
   const openImageComment = (comment) => {
-    const params = new URLSearchParams({ tab: "renders" });
-
-    if (comment?.imageId) {
-      params.set("imageId", comment.imageId);
-    }
-
-    if (comment?.id) {
-      params.set("commentId", comment.id);
-    }
+    const params = getCommentNavigationParams(comment);
 
     setIsNotificationsDrawerOpen(false);
     const targetProjectId = comment?.projectId || commentsProjectId;

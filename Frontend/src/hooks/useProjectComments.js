@@ -47,9 +47,12 @@ function toDrawerComment(comment, user, projectNamesById = {}) {
   return {
     ...decorateCommentForDisplay(comment, user, projectNamesById),
     commentType,
+    fileId: comment.fileId,
+    fileType: comment.fileType,
+    fileVersionId: comment.fileVersionId,
     id: commentId,
     image: comment.image,
-    imageComment: ["image", "panorama", "video"].includes(commentType),
+    imageComment: ["image", "panorama", "video", "document"].includes(commentType),
     imageId: comment.targetId || comment.imageId,
     message: comment.content,
     pointNumber:

@@ -18,6 +18,7 @@ import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.js
 import SettingsVerticalTabMenu from "../../components/ui/SettingsVerticalTabMenu.jsx";
 import TabPanel from "../../components/ui/TabPanel.jsx";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "../clientDrawerData.js";
+import { getCommentNavigationParams } from "../../utils/commentSelection.js";
 import PreferencesPanel from "./panels/PreferencesPanel.jsx";
 import ProfilePanel from "./panels/ProfilePanel.jsx";
 import SecurityPanel from "./panels/SecurityPanel.jsx";
@@ -296,15 +297,7 @@ export default function SettingsPage() {
       return;
     }
 
-    const params = new URLSearchParams({ tab: "renders" });
-
-    if (comment?.imageId) {
-      params.set("imageId", comment.imageId);
-    }
-
-    if (comment?.id) {
-      params.set("commentId", comment.id);
-    }
+    const params = getCommentNavigationParams(comment);
 
     setIsNotificationsDrawerOpen(false);
     navigate(`/proyectos/${encodeURIComponent(projectRouteId)}?${params.toString()}`);

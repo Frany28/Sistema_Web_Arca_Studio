@@ -44,6 +44,7 @@ function toDocumentComment(row) {
   return {
     ...comment,
     fileId: Number(row.file_id),
+    fileType: String(row.file_extension || "FILE").toUpperCase(),
     fileVersionId: Number(row.file_version_id),
     pageNumber: row.page_number === null ? null : Number(row.page_number),
     pointNumber:
@@ -156,6 +157,7 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
         pc.content,
         pc.file_id,
         pc.file_version_id,
+        f.extension as file_extension,
         pc.target_id,
         pc.target_metadata,
         pc.created_at,
@@ -177,6 +179,9 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
       left join public.comment_anchors ca
         on ca.comment_id = coalesce(pc.parent_comment_id, pc.id)
        and ca.anchor_type = 'document'::anchor_type
+      left join public.files f
+        on f.id = pc.file_id
+       and f.project_id = pc.project_id
       where pc.project_id = $${access.params.length + 1}
         and pc.deleted_at is null
         and pc.status = $${access.params.length + 2}::comment_status

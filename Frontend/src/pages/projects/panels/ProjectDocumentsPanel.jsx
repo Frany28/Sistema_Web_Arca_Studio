@@ -124,6 +124,7 @@ function getSynchronizationLabel(value) {
 
 export default function ProjectDocumentsPanel({
   documents = PROJECT_DETAIL_DATA.documents,
+  focusedCommentId = null,
   focusedDocumentId = null,
   lastSynchronizedAt = null,
   projectId,
@@ -149,6 +150,15 @@ export default function ProjectDocumentsPanel({
       });
   }, [documents, query, sortDirection]);
   const hasVisibleDocuments = visibleDocuments.length > 0;
+
+  useEffect(() => {
+    const focusedDocument = documents.find(
+      (document) => String(document.id) === String(focusedDocumentId),
+    );
+    if (focusedDocument) {
+      queueMicrotask(() => setSelectedDocumentId(focusedDocument.id));
+    }
+  }, [documents, focusedDocumentId]);
 
   const selectedDocument = useMemo(() => {
     if (!hasVisibleDocuments) return null;
@@ -200,6 +210,7 @@ export default function ProjectDocumentsPanel({
           {hasVisibleDocuments ? (
             <ProjectDocumentPreview
               document={selectedDocument}
+              focusedCommentId={focusedCommentId}
               onLoadingChange={setIsPreviewLoading}
               projectId={projectId}
             />

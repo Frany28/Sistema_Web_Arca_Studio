@@ -6,7 +6,7 @@ import { decorateCommentForDisplay } from "../../../utils/commentDisplay.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 
 const LEGACY_STORAGE_KEY = "arca.image-comments.v1";
-const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "panorama"]);
+const MULTIMEDIA_COMMENT_TYPES = new Set(["image", "video", "panorama", "document"]);
 
 function getImageKey(item) {
   return String(item?.id ?? item?.image ?? item?.title ?? "image");
@@ -42,7 +42,7 @@ function normalizePanoramaSelection(selection, commentType) {
 }
 
 function getCommentFileId(comment) {
-  const candidates = [comment?.targetId, comment?.image?.id, comment?.selection?.image?.id];
+  const candidates = [comment?.fileId, comment?.targetId, comment?.image?.id, comment?.selection?.image?.id];
   for (const candidate of candidates) {
     const match = String(candidate || "").match(/(?:project-file-)?(\d+)$/);
     if (match) return Number(match[1]);
@@ -127,6 +127,8 @@ function decorateComment(comment, user, projectNamesById = {}) {
     ...decorateCommentForDisplay(comment, user, projectNamesById),
     image,
     imageComment: MULTIMEDIA_COMMENT_TYPES.has(comment.commentType),
+    fileId: comment.fileId,
+    fileType: comment.fileType,
     imageId: comment.targetId || comment.imageId,
     message: comment.message ?? comment.content,
     pointNumber,
@@ -247,7 +249,7 @@ function useProjectCommentRows(projectIds, { refreshIntervalMs = 0 } = {}) {
     clearLegacyStoredComments();
 
     if (projectIds.length === 0) {
-      setComments([]);
+      queueMicrotask(() => setComments([]));
       return undefined;
     }
 

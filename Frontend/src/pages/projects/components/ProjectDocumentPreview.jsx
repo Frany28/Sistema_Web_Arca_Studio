@@ -890,6 +890,7 @@ function OfficeInlineDocumentPreview({
 
 export function ProjectDocumentViewerModal({
   document,
+  initialFocusedCommentId = null,
   onClose,
   open = false,
   projectId,
@@ -917,6 +918,20 @@ export function ProjectDocumentViewerModal({
     fileVersionId: document?.currentVersionId,
     projectId,
   });
+
+  useEffect(() => {
+    if (!open || !initialFocusedCommentId) return;
+    const comment = comments.find(
+      (item) => String(item.id) === String(initialFocusedCommentId),
+    );
+    if (!comment) return;
+    queueMicrotask(() => {
+      setFocusedCommentId(comment.id);
+      if (comment.selection?.kind === "document-point") {
+        setPage(comment.selection.pageNumber);
+      }
+    });
+  }, [comments, initialFocusedCommentId, open]);
 
   useEffect(() => {
     if (!open || !source || kind === "unsupported") return undefined;
@@ -1117,7 +1132,7 @@ export function ProjectDocumentViewerModal({
   );
 }
 
-export default function ProjectDocumentPreview({ document, onLoadingChange, projectId }) {
+export default function ProjectDocumentPreview({ document, focusedCommentId = null, onLoadingChange, projectId }) {
   const source = document?.fileUrl || "";
   const documentKind = getDocumentKind(document);
   const isPdf = documentKind === "pdf";
@@ -1131,6 +1146,10 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
   const [retryKey, setRetryKey] = useState(0);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const expandButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (focusedCommentId) queueMicrotask(() => setIsFullscreenOpen(true));
+  }, [focusedCommentId]);
   const status = loadState.source === source
     ? loadState.status
     : source && isPdf
@@ -1230,6 +1249,7 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
         </div>
         <ProjectDocumentViewerModal
           document={document}
+          initialFocusedCommentId={focusedCommentId}
           onClose={closeFullscreen}
           open={isFullscreenOpen}
           projectId={projectId}
@@ -1303,6 +1323,7 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
 
       <ProjectDocumentViewerModal
         document={document}
+        initialFocusedCommentId={focusedCommentId}
         onClose={closeFullscreen}
         open={isFullscreenOpen}
         projectId={projectId}
