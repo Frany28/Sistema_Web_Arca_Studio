@@ -108,15 +108,22 @@ export function useDocumentComments({ enabled, fileId, fileVersionId, projectId 
     return () => { mounted = false; };
   }, [cacheKey, enabled, fileId, fileVersionId, projectId]);
 
-  const comments = useMemo(
-    () => rows.map((comment) => ({
+  const comments = useMemo(() => {
+    const replyCounts = new Map();
+    rows.forEach((comment) => {
+      if (!comment.parentCommentId) return;
+      const parentId = String(comment.parentCommentId);
+      replyCounts.set(parentId, (replyCounts.get(parentId) || 0) + 1);
+    });
+
+    return rows.map((comment) => ({
       ...decorateCommentForDisplay(comment, user),
       imageComment: true,
       message: comment.content,
+      replyCount: replyCounts.get(String(comment.id)) || 0,
       timestamp: "",
-    })),
-    [rows, user],
-  );
+    }));
+  }, [rows, user]);
 
   const addComment = useCallback(async ({ message, parentCommentId = null, selection = null }) => {
     if (submitPromiseRef.current) return submitPromiseRef.current;

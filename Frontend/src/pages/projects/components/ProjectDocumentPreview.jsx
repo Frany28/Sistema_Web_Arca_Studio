@@ -25,17 +25,52 @@ GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 function DocumentMarker({ comment, focused, onSelect, style }) {
   const markerRef = useRef(null);
+  const tooltipCloseTimerRef = useRef(null);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState(null);
   const isPending = comment.id === "pending";
   const authorName = comment.authorName || comment.name || comment.author?.name || "Usuario";
   const avatarSrc = comment.avatarSrc || "";
   const replyCount = Number(comment.replyCount || comment.replies?.length || 0);
+
+  useEffect(() => () => window.clearTimeout(tooltipCloseTimerRef.current), []);
+
   const openTooltip = () => {
     if (isPending || !markerRef.current) return;
-    setTooltipPosition(markerRef.current.getBoundingClientRect());
+    window.clearTimeout(tooltipCloseTimerRef.current);
+    const rect = markerRef.current.getBoundingClientRect();
+    setTooltipPosition({
+      anchorBottom: rect.bottom,
+      anchorTop: rect.top,
+      anchorX: rect.left + rect.width / 2,
+    });
     setTooltipOpen(true);
   };
+  const scheduleTooltipClose = () => {
+    window.clearTimeout(tooltipCloseTimerRef.current);
+    tooltipCloseTimerRef.current = window.setTimeout(
+      () => setTooltipOpen(false),
+      120,
+    );
+  };
+
+  useEffect(() => {
+    if (!tooltipOpen) return undefined;
+    let frameId;
+    const followMarker = () => {
+      const rect = markerRef.current?.getBoundingClientRect();
+      if (rect) {
+        setTooltipPosition({
+          anchorBottom: rect.bottom,
+          anchorTop: rect.top,
+          anchorX: rect.left + rect.width / 2,
+        });
+      }
+      frameId = window.requestAnimationFrame(followMarker);
+    };
+    frameId = window.requestAnimationFrame(followMarker);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [tooltipOpen]);
 
   return (
     <>
@@ -45,14 +80,15 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         data-document-marker
         aria-label={isPending ? "Ubicación de observación pendiente" : `Observación de ${authorName}`}
         className={clsx(
-          "absolute z-[3] flex size-[40px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-10)] p-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2",
-          focused && "ring-2 ring-[var(--color-accent-300)] ring-offset-2",
+          "absolute z-[3] flex size-[40px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-br-[var(--radius-full)] rounded-tl-[var(--radius-full)] rounded-tr-[var(--radius-full)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[8px] transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-bg)]",
+          isPending ? "pointer-events-none animate-pulse" : "cursor-pointer",
+          focused && "border-[var(--color-accent-300)] ring-2 ring-[var(--color-accent-300)] ring-offset-2 ring-offset-[var(--color-neutral-bg)]",
         )}
         style={style}
         onMouseEnter={openTooltip}
-        onMouseLeave={() => setTooltipOpen(false)}
+        onMouseLeave={scheduleTooltipClose}
         onFocus={openTooltip}
-        onBlur={() => setTooltipOpen(false)}
+        onBlur={scheduleTooltipClose}
         onClick={(event) => { event.stopPropagation(); if (!isPending) onSelect?.(comment.id); }}
       >
         <Avatar
@@ -62,7 +98,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
           name={authorName}
           src={avatarSrc}
           alt={authorName}
-          decorative={false}
+          decorative={isPending}
         />
       </button>
       <ObservationTooltip
@@ -71,7 +107,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         message={comment.message || comment.content}
         replyCount={replyCount}
         open={tooltipOpen}
-        onOpenChange={setTooltipOpen}
+        onOpenChange={(nextOpen) => nextOpen ? openTooltip() : scheduleTooltipClose()}
         onReply={() => { setTooltipOpen(false); onSelect?.(comment.id); }}
         position={tooltipOpen ? tooltipPosition : null}
       />
