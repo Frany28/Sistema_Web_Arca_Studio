@@ -13,6 +13,7 @@ export default function ObservationTooltip({
   authorName,
   avatarSrc = "",
   className,
+  closing = false,
   message,
   onOpenChange,
   onReply,
@@ -79,7 +80,8 @@ export default function ObservationTooltip({
       role="tooltip"
       aria-label={`Observación de ${safeAuthorName}`}
       className={clsx(
-        "observation-tooltip-enter flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left shadow-[var(--shadow-e2)]",
+        "flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left shadow-[var(--shadow-e2)]",
+        closing ? "observation-tooltip-exit" : "observation-tooltip-enter",
         position && "fixed z-[var(--z-tooltip)]",
         className,
       )}

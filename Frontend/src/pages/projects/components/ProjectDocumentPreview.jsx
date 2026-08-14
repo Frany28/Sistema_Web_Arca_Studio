@@ -28,6 +28,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
   const markerRef = useRef(null);
   const tooltipCloseTimerRef = useRef(null);
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [tooltipClosing, setTooltipClosing] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState(null);
   const isPending = comment.id === "pending";
   const authorName = comment.authorName || comment.name || comment.author?.name || "Usuario";
@@ -44,6 +45,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
   const openTooltip = () => {
     if (isPending || !markerRef.current) return;
     window.clearTimeout(tooltipCloseTimerRef.current);
+    setTooltipClosing(false);
     const rect = markerRef.current.getBoundingClientRect();
     setTooltipPosition({
       anchorLeft: rect.left,
@@ -57,10 +59,13 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
   };
   const scheduleTooltipClose = () => {
     window.clearTimeout(tooltipCloseTimerRef.current);
-    tooltipCloseTimerRef.current = window.setTimeout(
-      () => setTooltipOpen(false),
-      120,
-    );
+    tooltipCloseTimerRef.current = window.setTimeout(() => {
+      setTooltipClosing(true);
+      tooltipCloseTimerRef.current = window.setTimeout(() => {
+        setTooltipOpen(false);
+        setTooltipClosing(false);
+      }, 180);
+    }, 120);
   };
 
   useEffect(() => {
@@ -132,6 +137,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         authorName={authorName}
         avatarSrc={avatarSrc}
         message={comment.message || comment.content}
+        closing={tooltipClosing}
         replyCount={replyCount}
         open={tooltipOpen}
         onOpenChange={(nextOpen) => nextOpen ? openTooltip() : scheduleTooltipClose()}
