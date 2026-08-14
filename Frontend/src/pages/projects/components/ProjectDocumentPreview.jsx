@@ -108,7 +108,7 @@ function DocumentMarker({ comment, focused, onSelect, style }) {
         replyCount={replyCount}
         open={tooltipOpen}
         onOpenChange={(nextOpen) => nextOpen ? openTooltip() : scheduleTooltipClose()}
-        onReply={() => { setTooltipOpen(false); onSelect?.(comment.id); }}
+        onReply={onSelect ? () => { setTooltipOpen(false); onSelect(comment.id); } : undefined}
         position={tooltipOpen ? tooltipPosition : null}
       />
     </>
@@ -1040,8 +1040,6 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
   const [viewState, setViewState] = useState({ page: 1, source, zoom: 100 });
   const [retryKey, setRetryKey] = useState(0);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  const [pendingSelection, setPendingSelection] = useState(null);
-  const [focusedCommentId, setFocusedCommentId] = useState(null);
   const expandButtonRef = useRef(null);
   const status = loadState.source === source
     ? loadState.status
@@ -1061,13 +1059,6 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
     fileVersionId: document?.currentVersionId,
     projectId,
   });
-  useEffect(() => {
-    queueMicrotask(() => {
-      setPendingSelection(null);
-      setFocusedCommentId(null);
-    });
-  }, [document?.id, document?.currentVersionId]);
-
   useEffect(() => {
     onLoadingChange?.(status === "loading");
 
@@ -1144,8 +1135,7 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
         <div className="h-[554px]">
           <div className="min-w-0 flex-1 max-[767px]:h-[52dvh]">
             <OfficeInlineDocumentPreview annotations={comments} document={document} expandButtonRef={expandButtonRef}
-              focusedId={focusedCommentId} kind={documentKind} onExpand={() => setIsFullscreenOpen(true)}
-              onPointCreate={setPendingSelection} onPointSelect={setFocusedCommentId} pendingSelection={pendingSelection} />
+              focusedId={null} kind={documentKind} onExpand={() => setIsFullscreenOpen(true)} />
           </div>
         </div>
         <ProjectDocumentViewerModal
@@ -1210,13 +1200,10 @@ export default function ProjectDocumentPreview({ document, onLoadingChange, proj
         className="h-[554px] min-h-[554px] max-h-[554px] rounded-b-[var(--radius-3)]"
         documentProxy={documentProxy}
         expandButtonRef={expandButtonRef}
-        focusedId={focusedCommentId}
+        focusedId={null}
         onExpand={() => setIsFullscreenOpen(true)}
-        onPointCreate={setPendingSelection}
-        onPointSelect={setFocusedCommentId}
         page={page}
         pageCount={pageCount}
-        pendingSelection={pendingSelection}
         title={`Vista previa de ${documentName}`}
         updatePage={updatePage}
         updateZoom={updateZoom}
