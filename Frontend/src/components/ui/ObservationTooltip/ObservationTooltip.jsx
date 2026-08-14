@@ -64,6 +64,7 @@ export default function ObservationTooltip({
       card.style.borderBottomLeftRadius = "var(--radius-3)";
       card.style.borderBottomRightRadius = "var(--radius-3)";
       card.style.setProperty(`border-${placement.corner}-radius`, "0px");
+      card.style.transformOrigin = placement.corner.replace("-", " ");
     };
     updatePlacement();
     window.addEventListener("resize", updatePlacement);
@@ -78,13 +79,14 @@ export default function ObservationTooltip({
       role="tooltip"
       aria-label={`Observación de ${safeAuthorName}`}
       className={clsx(
-        "flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left",
+        "observation-tooltip-enter flex w-[210px] max-w-[min(210px,calc(100vw-24px))] flex-col items-start justify-center gap-[8px] rounded-[var(--radius-3)] border border-[var(--color-neutral-400)] bg-[var(--color-neutral-bg)] p-[12px] text-left shadow-[var(--shadow-e2)]",
         position && "fixed z-[var(--z-tooltip)]",
         className,
       )}
       style={estimatedPlacement ? {
         left: `${estimatedPlacement.left}px`,
         top: `${estimatedPlacement.top}px`,
+        transformOrigin: estimatedPlacement.corner.replace("-", " "),
         [`border${estimatedPlacement.corner.split("-").map((part) => `${part[0].toUpperCase()}${part.slice(1)}`).join("")}Radius`]: "0px",
       } : undefined}
       onMouseEnter={keepOpen}
