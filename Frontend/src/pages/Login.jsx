@@ -15,19 +15,17 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 }
 
-const DEV_LOGIN_EMAIL = import.meta.env.DEV
-  ? String(import.meta.env.VITE_DEV_ADMIN_EMAIL || "")
-  : "";
-const DEV_LOGIN_PASSWORD = import.meta.env.DEV
-  ? String(import.meta.env.VITE_DEV_ADMIN_PASSWORD || "")
-  : "";
+// Credenciales públicas y desechables de la cuenta de staging/demo.
+// Deben retirarse antes de que ARCA Studio pase a producción.
+const DEMO_EMAIL = "cliente@arcastudio.com";
+const DEMO_PASSWORD = "ClienteArca2026*";
 
 function Login() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState(DEV_LOGIN_EMAIL);
-  const [password, setPassword] = useState(DEV_LOGIN_PASSWORD);
+  const [email, setEmail] = useState(DEMO_EMAIL);
+  const [password, setPassword] = useState(DEMO_PASSWORD);
   const [authError, setAuthError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginToast, setLoginToast] = useState(null);
