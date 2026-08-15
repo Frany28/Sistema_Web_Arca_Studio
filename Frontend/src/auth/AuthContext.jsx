@@ -16,7 +16,7 @@ import {
 
 const AuthContext = createContext(null);
 
-function buildProfilePhotoImageUrl(profilePhotoUrl) {
+function buildProfilePhotoImageUrl(profilePhotoUrl, version) {
   if (!profilePhotoUrl) {
     return "";
   }
@@ -29,7 +29,7 @@ function buildProfilePhotoImageUrl(profilePhotoUrl) {
   }
 
   const params = new URLSearchParams({
-    v: Date.now().toString(),
+    v: String(version || Date.now()),
   });
   return getApiUrl(`/auth/profile-photo/image?${params.toString()}`);
 }
@@ -42,7 +42,7 @@ function normalizeUser(user) {
   return {
     ...user,
     profilePhotoUrl: user.hasProfilePhoto
-      ? buildProfilePhotoImageUrl("stored")
+      ? buildProfilePhotoImageUrl("stored", user.updatedAt)
       : "",
     role: typeof user.role === "string" ? user.role : user.role?.code,
     roleDetails: typeof user.role === "object" ? user.role : null,

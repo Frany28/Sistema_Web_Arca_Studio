@@ -347,7 +347,7 @@ export async function getProfilePhotoImage(req, res, next) {
       "Content-Type",
       getProfilePhotoContentType(object.ContentType),
     );
-    res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+    res.setHeader("Cache-Control", "private, no-store");
     if (object.ContentLength !== undefined) res.setHeader("Content-Length", String(object.ContentLength));
     object.Body.on?.("error", next);
     object.Body.pipe(res);
