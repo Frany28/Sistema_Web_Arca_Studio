@@ -12,6 +12,13 @@ test("identifica errores transitorios de PostgreSQL", () => {
     isTransientDatabaseError({ message: "Connection terminated unexpectedly" }),
     true,
   );
+  assert.equal(
+    isTransientDatabaseError({
+      code: "XX000",
+      message: "(EMAXCONNSESSION) max clients reached in session mode",
+    }),
+    true,
+  );
 });
 
 test("no reintenta errores permanentes de consulta", () => {

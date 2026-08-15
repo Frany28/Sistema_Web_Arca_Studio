@@ -65,7 +65,21 @@ function getPoolMax() {
 
   // Serverless instances scale horizontally. Keeping a large pool per instance
   // can exhaust the database connection limit during traffic bursts.
-  return isServerlessRuntime() ? 3 : 10;
+  if (isServerlessRuntime()) {
+    return 1;
+  }
+
+  return isLocalDatabase(databaseUrl) ? 10 : 2;
+}
+
+function getIdleTimeoutMs() {
+  const configured = Number(process.env.DATABASE_IDLE_TIMEOUT_MS);
+
+  if (Number.isFinite(configured) && configured >= 0) {
+    return configured;
+  }
+
+  return isServerlessRuntime() ? 5000 : 30000;
 }
 
 const TRANSIENT_DATABASE_ERRORS = new Set([
@@ -90,7 +104,9 @@ export function isTransientDatabaseError(error) {
   return (
     message.includes("connection terminated") ||
     message.includes("connection timeout") ||
-    message.includes("cannot acquire a client")
+    message.includes("cannot acquire a client") ||
+    message.includes("emaxconnsession") ||
+    message.includes("max clients reached")
   );
 }
 
@@ -103,7 +119,7 @@ export const pool = new Pool({
   ssl: getSslConfig(),
   max: getPoolMax(),
   allowExitOnIdle: isServerlessRuntime(),
-  idleTimeoutMillis: Number(process.env.DATABASE_IDLE_TIMEOUT_MS || 30000),
+  idleTimeoutMillis: getIdleTimeoutMs(),
   connectionTimeoutMillis: Number(process.env.DATABASE_CONNECTION_TIMEOUT_MS || 5000),
   statement_timeout: Number(process.env.DATABASE_STATEMENT_TIMEOUT_MS || 10000),
   query_timeout: Number(process.env.DATABASE_QUERY_TIMEOUT_MS || 12000),
