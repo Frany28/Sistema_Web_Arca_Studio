@@ -258,7 +258,7 @@ export const dropdownMenuQuickToggleItems = [
     items: [
       {
         id: "dashboard",
-        label: "Panel",
+        label: "Dashboard",
         supportingText: "@dashboard",
         type: "Icon",
       },

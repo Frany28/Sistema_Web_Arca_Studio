@@ -1,0 +1,155 @@
+import {
+  Buildings2,
+  Folder2,
+  Information,
+  MessageNotif,
+  People,
+} from "iconsax-react";
+
+import Badge from "../../../components/ui/Badge/Badge.jsx";
+import Button from "../../../components/ui/Button/Button.jsx";
+import IconContainer from "../../../components/ui/IconContainer/IconContainer.jsx";
+import Loader from "../../../components/ui/Loader/Loader.jsx";
+
+const numberFormatter = new Intl.NumberFormat("es-VE");
+
+function formatStorage(bytes) {
+  const value = Number(bytes) || 0;
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let unitIndex = 0;
+  let amount = value;
+
+  while (amount >= 1024 && unitIndex < units.length - 1) {
+    amount /= 1024;
+    unitIndex += 1;
+  }
+
+  const digits = amount >= 10 || unitIndex === 0 ? 0 : 1;
+  return `${amount.toLocaleString("es-VE", { maximumFractionDigits: digits })} ${units[unitIndex]}`;
+}
+
+function formatRelativeTime(value) {
+  const timestamp = new Date(value).getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return "Sin eventos recientes";
+  }
+
+  const minutes = Math.max(Math.floor((Date.now() - timestamp) / 60000), 0);
+
+  if (minutes < 1) return "Hace menos de 1 min";
+  if (minutes < 60) return `Hace ${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Hace ${hours} h`;
+
+  const days = Math.floor(hours / 24);
+  return `Hace ${days} d`;
+}
+
+function MetricItem({ badge, badgeTheme = "Success", icon, iconType, label, supportingText, value }) {
+  return (
+    <article className="flex min-w-0 flex-col items-start gap-[8px]">
+      <h2 className="text-body-1 m-0 whitespace-nowrap text-[var(--color-text-300)]">
+        {label}
+      </h2>
+      <div className="flex items-center gap-[12px]">
+        <IconContainer size="L" type={iconType} icon={icon} />
+        <strong className="text-heading-3 text-[var(--color-text-50)]">
+          {numberFormatter.format(value || 0)}
+        </strong>
+      </div>
+      <div className="flex min-h-[21px] items-center gap-[8px]">
+        {badge ? (
+          <Badge label={badge} theme={badgeTheme} variation="Simple" size="M" />
+        ) : null}
+        <span className="text-body-1 whitespace-nowrap text-[var(--color-text-100)]">
+          {supportingText}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
+  if (loading) {
+    return (
+      <section className="mx-auto w-full max-w-[1200px] px-[16px] sm:px-[24px] lg:px-[48px]">
+        <Loader preset="adminMetrics" label="Cargando métricas administrativas" />
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mx-auto w-full max-w-[1200px] px-[16px] sm:px-[24px] lg:px-[48px]">
+        <div className="flex flex-wrap items-center justify-between gap-[16px] border-y border-[var(--color-neutral-200)] py-[24px]">
+          <p className="text-body-3 text-[var(--color-danger-100)]">{error}</p>
+          <Button
+            theme="Primary"
+            type="Outline"
+            size="S"
+            fitContent
+            showLeftIcon={false}
+            showRightIcon={false}
+            onClick={onRetry}
+          >
+            Reintentar
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className="mx-auto w-full max-w-[1200px] px-[16px] sm:px-[24px] lg:px-[48px]"
+      aria-label="Resumen de métricas administrativas"
+    >
+      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 lg:grid-cols-5">
+        <MetricItem
+          label="Usuarios activos"
+          value={metrics?.activeUsers?.total}
+          badge={`+${numberFormatter.format(metrics?.activeUsers?.thisMonth || 0)}`}
+          supportingText="este mes"
+          iconType="Success"
+          icon={<People size="24" variant="Linear" color="currentColor" />}
+        />
+        <MetricItem
+          label="Proyectos activos"
+          value={metrics?.activeProjects?.total}
+          badge={`+${numberFormatter.format(metrics?.activeProjects?.thisMonth || 0)}`}
+          supportingText="este mes"
+          iconType="Accent"
+          icon={<Buildings2 size="24" variant="Linear" color="currentColor" />}
+        />
+        <MetricItem
+          label="Archivos registrados"
+          value={metrics?.files?.total}
+          badge={formatStorage(metrics?.files?.totalBytes)}
+          badgeTheme="Info"
+          supportingText="usado"
+          iconType="Info"
+          icon={<Folder2 size="24" variant="Linear" color="currentColor" />}
+        />
+        <MetricItem
+          label="Solicitudes"
+          value={metrics?.requests?.total}
+          badge={`+${numberFormatter.format(metrics?.requests?.today || 0)}`}
+          supportingText="hoy"
+          iconType="Warning"
+          icon={<MessageNotif size="24" variant="Linear" color="currentColor" />}
+        />
+        <MetricItem
+          label="Eventos críticos"
+          value={metrics?.criticalEvents?.total}
+          supportingText={formatRelativeTime(metrics?.criticalEvents?.latestAt)}
+          iconType="Danger"
+          icon={<Information size="24" variant="Linear" color="currentColor" />}
+        />
+      </div>
+    </section>
+  );
+}
+
+export default AdminDashboardMetrics;

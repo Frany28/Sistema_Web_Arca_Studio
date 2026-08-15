@@ -22,6 +22,9 @@ import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js"
 import { groupProjectsByStatus } from "../../utils/projectStatusGroups.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
+import AdminDashboardHeader from "./components/AdminDashboardHeader.jsx";
+import AdminDashboardMetrics from "./components/AdminDashboardMetrics.jsx";
+import AdminDashboardOperations from "./components/AdminDashboardOperations.jsx";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
 const TABLET_BREAKPOINT_PX = 768;
@@ -61,6 +64,12 @@ function ArchitectDashboard({ empty = false }) {
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const [adminMetrics, setAdminMetrics] = useState(null);
+  const [adminMetricsError, setAdminMetricsError] = useState("");
+  const [adminMetricsLoading, setAdminMetricsLoading] = useState(
+    currentUser.roleCode === "admin",
+  );
+  const [adminMetricsRequestKey, setAdminMetricsRequestKey] = useState(0);
   const canManagePublication =
     user?.permissionCodes?.includes("projects.publish");
 
@@ -74,6 +83,26 @@ function ArchitectDashboard({ empty = false }) {
   );
   const projectGroups = useMemo(
     () => groupProjectsByStatus(projectRows),
+    [projectRows],
+  );
+  const upcomingDeliveries = useMemo(
+    () =>
+      [...projectRows]
+        .filter(
+          (project) =>
+            project.status !== "completed" && project.status !== "cancelled",
+        )
+        .sort((first, second) => {
+          const firstDate = first.endDate
+            ? new Date(first.endDate).getTime()
+            : Number.POSITIVE_INFINITY;
+          const secondDate = second.endDate
+            ? new Date(second.endDate).getTime()
+            : Number.POSITIVE_INFINITY;
+
+          return firstDate - secondDate;
+        })
+        .slice(0, 3),
     [projectRows],
   );
   const navigationItems = useMemo(
@@ -176,6 +205,45 @@ function ArchitectDashboard({ empty = false }) {
       isMounted = false;
     };
   }, [user]);
+
+  useEffect(() => {
+    if (currentUser.roleCode !== "admin") {
+      return undefined;
+    }
+
+    const abortController = new AbortController();
+    Promise.resolve()
+      .then(() => {
+        if (abortController.signal.aborted) {
+          return null;
+        }
+
+        setAdminMetricsLoading(true);
+        setAdminMetricsError("");
+        return api.admin.getDashboardMetrics({
+          signal: abortController.signal,
+        });
+      })
+      .then((data) => {
+        if (data) {
+          setAdminMetrics(data.metrics || null);
+        }
+      })
+      .catch((error) => {
+        if (error?.name !== "AbortError") {
+          setAdminMetricsError(
+            error?.message || "No se pudieron cargar las métricas.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) {
+          setAdminMetricsLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
+  }, [adminMetricsRequestKey, currentUser.roleCode]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -308,6 +376,27 @@ function ArchitectDashboard({ empty = false }) {
               Bienvenido, {currentUser.shortName}
             </p>
           </div>
+
+          {currentUser.roleCode === "admin" ? (
+            <>
+              <AdminDashboardHeader />
+              <AdminDashboardMetrics
+                error={adminMetricsError}
+                loading={adminMetricsLoading}
+                metrics={adminMetrics}
+                onRetry={() =>
+                  setAdminMetricsRequestKey((current) => current + 1)
+                }
+              />
+              <AdminDashboardOperations
+                deliveries={upcomingDeliveries}
+                deliveriesError={projectsError}
+                deliveriesLoading={projectsLoading}
+                onProjectSelect={(project) => navigate(getProjectPath(project))}
+                onViewProjects={() => navigate("/proyectos")}
+              />
+            </>
+          ) : null}
 
           {projectsLoading ? (
             <div className="mx-auto flex min-h-[360px] w-full max-w-[1200px] px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">

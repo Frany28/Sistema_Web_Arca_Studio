@@ -96,6 +96,82 @@ function ActivityItemSkeleton() {
   );
 }
 
+function AdminMetricsSkeleton() {
+  return (
+    <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 lg:grid-cols-5">
+      {Array.from({ length: 5 }, (_, index) => (
+        <div key={index} className="flex min-w-0 flex-col gap-[8px]">
+          <SkeletonBlock
+            className="h-[21px] w-[136px] max-w-full rounded-[var(--radius-1)]"
+            delay={index * 55}
+            tone="text"
+          />
+          <div className="flex items-center gap-[12px]">
+            <SkeletonBlock
+              className="size-[48px] shrink-0 rounded-[var(--radius-2)]"
+              delay={70 + index * 55}
+            />
+            <SkeletonBlock
+              className="h-[56px] w-[62px] rounded-[var(--radius-2)]"
+              delay={100 + index * 55}
+              tone="text"
+            />
+          </div>
+          <div className="flex items-center gap-[8px]">
+            <SkeletonBlock
+              className="h-[21px] w-[38px] rounded-[var(--radius-full)]"
+              delay={130 + index * 55}
+            />
+            <SkeletonBlock
+              className="h-[21px] w-[76px] rounded-[var(--radius-1)]"
+              delay={160 + index * 55}
+              tone="muted"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DeliveryListSkeleton() {
+  return (
+    <div className="flex w-full flex-col gap-[16px]">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="flex w-full items-start gap-[8px]">
+          <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
+            <div className="flex items-center justify-between gap-[16px]">
+              <SkeletonBlock
+                className="h-[17px] w-[min(180px,60%)] rounded-[var(--radius-1)]"
+                delay={index * 70}
+                tone="text"
+              />
+              <SkeletonBlock
+                className="h-[17px] w-[36px] rounded-[var(--radius-1)]"
+                delay={40 + index * 70}
+                tone="muted"
+              />
+            </div>
+            <SkeletonBlock
+              className="h-[8px] w-full rounded-[var(--radius-full)]"
+              delay={70 + index * 70}
+            />
+            <SkeletonBlock
+              className="h-[14px] w-[84px] rounded-[var(--radius-1)]"
+              delay={100 + index * 70}
+              tone="muted"
+            />
+          </div>
+          <SkeletonBlock
+            className="size-[36px] shrink-0 rounded-[var(--radius-2)]"
+            delay={120 + index * 70}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function VideoStageSkeleton() {
   return (
     <div className="relative size-full overflow-hidden rounded-[inherit]">
@@ -296,6 +372,10 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = <ProjectShowcaseSkeleton />;
   } else if (preset === "activityItem") {
     content = Array.from({ length: itemCount }, (_, index) => <ActivityItemSkeleton key={index} />);
+  } else if (preset === "adminMetrics") {
+    content = <AdminMetricsSkeleton />;
+  } else if (preset === "deliveryList") {
+    content = <DeliveryListSkeleton />;
   } else if (preset === "videoStage") {
     content = <VideoStageSkeleton />;
   } else if (preset === "documentPreview") {

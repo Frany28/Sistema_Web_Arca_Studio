@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { getDashboardMetrics } from "../controllers/adminDashboardController.js";
 import {
   getPermissions,
   getRolePermissionMatrix,
@@ -13,6 +14,7 @@ const router = Router();
 
 router.use(requireAuth, requireRoles("admin"));
 
+router.get("/dashboard-metrics", getDashboardMetrics);
 router.get("/roles", getRoles);
 router.get("/permissions", getPermissions);
 router.get("/roles-permissions", getRolePermissionMatrix);

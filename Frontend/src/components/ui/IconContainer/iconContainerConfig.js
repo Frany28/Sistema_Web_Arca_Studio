@@ -28,6 +28,16 @@ export const ICON_CONTAINER_TYPE_STYLES = {
   Fill:
     "border border-transparent bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)] shadow-[var(--shadow-e1)]",
   Ghost: "border border-transparent bg-transparent text-[var(--color-text-100)] shadow-none",
+  Success:
+    "border border-transparent bg-[var(--color-success-10)] text-[var(--color-success-200)] shadow-[var(--shadow-e1)]",
+  Accent:
+    "border border-transparent bg-[var(--color-accent-10)] text-[var(--color-accent-100)] shadow-[var(--shadow-e1)]",
+  Info:
+    "border border-transparent bg-[var(--color-info-10)] text-[var(--color-info-100)] shadow-[var(--shadow-e1)]",
+  Warning:
+    "border border-transparent bg-[var(--color-warning-10)] text-[var(--color-warning-200)] shadow-[var(--shadow-e1)]",
+  Danger:
+    "border border-transparent bg-[var(--color-danger-10)] text-[var(--color-danger-100)] shadow-[var(--shadow-e1)]",
 };
 
 export function createIconContainerProps(overrides = {}) {

@@ -215,6 +215,12 @@ export const authApi = {
   },
 };
 
+export const adminApi = {
+  getDashboardMetrics({ signal } = {}) {
+    return apiRequest("/admin/dashboard-metrics", { signal });
+  },
+};
+
 export const projectsApi = {
   list({ cursor, limit, scope } = {}) {
     const params = new URLSearchParams();
@@ -537,6 +543,7 @@ export const supportApi = {
 };
 
 export const api = {
+  admin: adminApi,
   auth: authApi,
   environmentComments: environmentCommentsApi,
   projectRequests: projectRequestsApi,

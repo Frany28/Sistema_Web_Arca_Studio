@@ -165,7 +165,7 @@ function getDefaultMenuItems(type) {
 
   if (type === "Icon") {
     return [
-      { id: "dashboard", label: "Panel", type: "Icon" },
+      { id: "dashboard", label: "Dashboard", type: "Icon" },
       { id: "analytics", label: "Analíticas", type: "Icon" },
       { id: "reports", label: "Reportes", type: "Icon" },
       { id: "settings", label: "Configuración", type: "Icon" },
