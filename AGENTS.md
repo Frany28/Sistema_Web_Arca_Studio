@@ -121,8 +121,8 @@ La posibilidad de recuperar estas credenciales mediante las herramientas del nav
 Por ejemplo:
 
 ```jsx
-const DEMO_EMAIL = "cliente@arcastudio.com";
-const DEMO_PASSWORD = "ClienteArca2026*";
+const DEMO_EMAIL = "admin2026@arcastudio.com";
+const DEMO_PASSWORD = "Admin2026*";
 
 const [email, setEmail] = useState(DEMO_EMAIL);
 const [password, setPassword] = useState(DEMO_PASSWORD);

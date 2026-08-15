@@ -17,8 +17,8 @@ function isValidEmail(value) {
 
 // Credenciales públicas y desechables de la cuenta de staging/demo.
 // Deben retirarse antes de que ARCA Studio pase a producción.
-const DEMO_EMAIL = "cliente@arcastudio.com";
-const DEMO_PASSWORD = "ClienteArca2026*";
+const DEMO_EMAIL = "admin2026@arcastudio.com";
+const DEMO_PASSWORD = "Admin2026*";
 
 function Login() {
   const location = useLocation();
