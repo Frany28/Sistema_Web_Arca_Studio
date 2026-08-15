@@ -172,6 +172,21 @@ function DeliveryListSkeleton() {
   );
 }
 
+function AdminProjectTableSkeleton() {
+  return (
+    <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)]">
+      <SkeletonBlock className="h-[48px] w-full rounded-none" />
+      {Array.from({ length: 5 }, (_, index) => (
+        <div key={index} className="grid h-[56px] grid-cols-[1.1fr_1fr_1.5fr_.8fr_.6fr_.6fr] items-center gap-[24px] border-b border-[var(--color-neutral-200)] px-[24px] last:border-b-0">
+          {Array.from({ length: 6 }, (_, cellIndex) => (
+            <SkeletonBlock key={cellIndex} className="h-[20px] w-full rounded-[var(--radius-1)]" delay={index * 45 + cellIndex * 20} tone={cellIndex < 3 ? "text" : "muted"} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function VideoStageSkeleton() {
   return (
     <div className="relative size-full overflow-hidden rounded-[inherit]">
@@ -376,6 +391,8 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = <AdminMetricsSkeleton />;
   } else if (preset === "deliveryList") {
     content = <DeliveryListSkeleton />;
+  } else if (preset === "adminProjectTable") {
+    content = <AdminProjectTableSkeleton />;
   } else if (preset === "videoStage") {
     content = <VideoStageSkeleton />;
   } else if (preset === "documentPreview") {

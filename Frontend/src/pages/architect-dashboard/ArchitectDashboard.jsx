@@ -25,6 +25,7 @@ import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import AdminDashboardHeader from "./components/AdminDashboardHeader.jsx";
 import AdminDashboardMetrics from "./components/AdminDashboardMetrics.jsx";
 import AdminDashboardOperations from "./components/AdminDashboardOperations.jsx";
+import AdminActiveProjects from "./components/AdminActiveProjects.jsx";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
 const TABLET_BREAKPOINT_PX = 768;
@@ -395,10 +396,16 @@ function ArchitectDashboard({ empty = false }) {
                 onProjectSelect={(project) => navigate(getProjectPath(project))}
                 onViewProjects={() => navigate("/proyectos")}
               />
+              <AdminActiveProjects
+                error={projectsError}
+                loading={projectsLoading}
+                projects={projectRows}
+                onOpenProject={(project) => navigate(getProjectPath(project))}
+              />
             </>
           ) : null}
 
-          {projectsLoading ? (
+          {currentUser.roleCode !== "admin" && projectsLoading ? (
             <div className="mx-auto flex min-h-[360px] w-full max-w-[1200px] px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
               <Loader
                 preset="projectRow"
@@ -406,13 +413,13 @@ function ArchitectDashboard({ empty = false }) {
                 label="Cargando proyectos"
               />
             </div>
-          ) : projectsError ? (
+          ) : currentUser.roleCode !== "admin" && projectsError ? (
             <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">
               <p className="text-body-3 text-[var(--color-danger-100)]">
                 {projectsError}
               </p>
             </div>
-          ) : empty || !projectRows.length ? (
+          ) : currentUser.roleCode !== "admin" && (empty || !projectRows.length) ? (
             <div className="mx-auto flex w-full max-w-[1200px] flex-1 items-center justify-center px-[48px] pb-[48px]">
               <EmptyState
                 title="Tu espacio de proyectos está listo"
@@ -426,7 +433,7 @@ function ArchitectDashboard({ empty = false }) {
                 className="max-w-[360px]"
               />
             </div>
-          ) : (
+          ) : currentUser.roleCode !== "admin" ? (
             <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col gap-[48px] px-[48px] pb-[48px]">
               {projectGroups.map((group) => (
                 <ArchitectProjectGroup
@@ -437,7 +444,7 @@ function ArchitectDashboard({ empty = false }) {
                 />
               ))}
             </div>
-          )}
+          ) : null}
 
           <NotificationsDrawer
             open={isNotificationsDrawerOpen}

@@ -31,7 +31,7 @@ export const ICON_CONTAINER_TYPE_STYLES = {
   Success:
     "border border-transparent bg-[var(--color-success-10)] text-[var(--color-success-200)] shadow-[var(--shadow-e1)]",
   Accent:
-    "border border-transparent bg-[var(--color-accent-10)] text-[var(--color-accent-100)] shadow-[var(--shadow-e1)]",
+    "border border-transparent bg-[var(--color-accent-10)] text-[var(--color-accent-300)] shadow-[var(--shadow-e1)]",
   Info:
     "border border-transparent bg-[var(--color-info-10)] text-[var(--color-info-100)] shadow-[var(--shadow-e1)]",
   Warning:
