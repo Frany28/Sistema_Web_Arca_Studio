@@ -122,8 +122,7 @@ Por ejemplo:
 
 ```jsx
 const DEMO_EMAIL = "cliente@arcastudio.com";
-const DEMO_PASSWORD = "ClienteArca2026*
-";
+const DEMO_PASSWORD = "ClienteArca2026*";
 
 const [email, setEmail] = useState(DEMO_EMAIL);
 const [password, setPassword] = useState(DEMO_PASSWORD);
