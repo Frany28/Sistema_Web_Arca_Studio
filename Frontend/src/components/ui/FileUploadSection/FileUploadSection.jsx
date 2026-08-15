@@ -87,6 +87,13 @@ function FileUploadProgress({ progress, showValue = true }) {
   );
 }
 
+function getFileAttachmentType(file) {
+  const fileName = String(file?.name || "");
+  const extension = fileName.includes(".") ? fileName.split(".").pop() : "";
+
+  return extension || file?.type;
+}
+
 function FileUploadCard({ file, onAddFile, onRetryUpload }) {
   const isCompleted = file.status === "completed";
   const isUploading = file.status === "uploading";
@@ -102,18 +109,7 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
           : "border-[var(--color-neutral-200)] dark:border-[var(--color-neutral-300)]",
       )}
     >
-      {file.previewSrc ? (
-        <div className="size-[40px] shrink-0 overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-200)]">
-          <img
-            src={file.previewSrc}
-            alt=""
-            className="size-full object-cover"
-            aria-hidden="true"
-          />
-        </div>
-      ) : (
-        <FileAttachmentIcons type={file.type} />
-      )}
+      <FileAttachmentIcons type={getFileAttachmentType(file)} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
         <div className="flex w-full flex-col items-start leading-none tracking-[-0.5px]">
