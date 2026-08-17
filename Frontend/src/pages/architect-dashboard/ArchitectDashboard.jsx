@@ -73,6 +73,7 @@ function ArchitectDashboard({ empty = false }) {
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsRequestKey, setProjectsRequestKey] = useState(0);
   const [adminMetrics, setAdminMetrics] = useState(null);
   const [adminMetricsError, setAdminMetricsError] = useState("");
   const [adminMetricsLoading, setAdminMetricsLoading] = useState(
@@ -223,7 +224,7 @@ function ArchitectDashboard({ empty = false }) {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [projectsRequestKey, user]);
 
   useEffect(() => {
     if (currentUser.roleCode !== "admin") {
@@ -555,6 +556,7 @@ function ArchitectDashboard({ empty = false }) {
                 projects={projectRows}
                 onOpenProject={(project) => navigate(getProjectPath(project))}
                 onProjectAssigneesChange={handleProjectAssigneesChange}
+                onRetry={() => setProjectsRequestKey((current) => current + 1)}
               />
             </>
           ) : null}

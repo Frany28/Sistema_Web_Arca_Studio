@@ -20,6 +20,7 @@ import Input from "../../../components/ui/Input/Input.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
 import Tag from "../../../components/ui/Tag/Tag.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
+import "./AdminActiveProjects.css";
 
 const STATUS_DETAILS = {
   completed: { label: "Finalizado", theme: "Success" },
@@ -75,6 +76,7 @@ function AdminActiveProjects({
   loading,
   onOpenProject,
   onProjectAssigneesChange,
+  onRetry,
   projects,
 }) {
   const [query, setQuery] = useState("");
@@ -158,14 +160,14 @@ function AdminActiveProjects({
 
   return (
     <section
-      className="mx-auto flex w-full max-w-[1200px] flex-col gap-[16px] px-[16px] pb-[48px] pt-[24px] sm:px-[24px] lg:px-[48px]"
+      className="admin-active-projects mx-auto flex w-full max-w-[1200px] flex-col gap-[16px] px-[16px] pb-[48px] pt-[24px] sm:px-[24px] lg:px-[48px]"
       aria-labelledby="admin-active-projects-title"
     >
       <h2 id="admin-active-projects-title" className="text-body-3 text-[var(--color-text-300)]">
         Proyectos activos
       </h2>
 
-      <div className="flex flex-col gap-[12px] min-[1100px]:flex-row min-[1100px]:items-center min-[1100px]:justify-between">
+      <div className="admin-active-projects__toolbar">
         <Input
           type="Default input"
           size="M"
@@ -176,18 +178,18 @@ function AdminActiveProjects({
           showLeftIcon
           showRightIcon={false}
           leftIcon={<SearchNormal1 size="20" color="currentColor" />}
-          className="w-full min-[1100px]:w-[320px]"
+          className="w-full"
           aria-label="Buscar proyectos activos"
           onChange={(event) => setQuery(event.target.value)}
         />
-        <div className="grid w-full grid-cols-1 gap-[12px] sm:grid-cols-2 min-[1100px]:flex min-[1100px]:w-[513px] min-[1100px]:flex-nowrap min-[1100px]:items-center">
+        <div className="admin-active-projects__filters w-full">
           <DropdownMenu
             type="Text"
             label="Filtrar por personal"
             items={personnelFilterItems}
             selectedItemId={personFilter}
             onItemSelect={(item) => setPersonFilter(item.id)}
-            className="w-full min-[1100px]:w-[180px]"
+            className="w-full"
             triggerWrapperClassName="h-[39px]"
             triggerHeightClassName="h-[37px]"
             triggerPaddingXClassName="px-[16px]"
@@ -199,7 +201,7 @@ function AdminActiveProjects({
             items={STATUS_FILTER_ITEMS}
             selectedItemId={statusFilter}
             onItemSelect={(item) => setStatusFilter(item.id)}
-            className="w-full min-[1100px]:w-[180px]"
+            className="w-full"
             triggerWrapperClassName="h-[39px]"
             triggerHeightClassName="h-[37px]"
             triggerPaddingXClassName="px-[16px]"
@@ -214,7 +216,7 @@ function AdminActiveProjects({
             iconLeft={<FilterRemove size="20" color="currentColor" />}
             showRightIcon={false}
             disabled={!hasFilters}
-            className="w-full sm:col-span-2 min-[1100px]:w-auto"
+            className="admin-active-projects__clear-filters w-full"
             onClick={clearFilters}
           >
             Quitar filtros
@@ -225,7 +227,17 @@ function AdminActiveProjects({
       {loading ? (
         <Loader preset="adminProjectTable" label="Cargando proyectos activos" />
       ) : error ? (
-        <EmptyState title="No se pudieron cargar los proyectos" description={error} size="S" showFeaturedIcon={false} showActions={false} />
+        <div className="w-full rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]">
+          <EmptyState
+            title="No se pudieron cargar los proyectos"
+            description={error}
+            size="S"
+            showFeaturedIcon={false}
+            showActions
+            primaryActionLabel="Reintentar"
+            onPrimaryAction={onRetry}
+          />
+        </div>
       ) : visibleProjects.length ? (
         <div className="w-full overflow-x-auto rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-e1)]">
           <table className="w-[1093px] min-w-[1093px] table-fixed border-collapse text-left">
