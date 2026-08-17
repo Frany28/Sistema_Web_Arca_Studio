@@ -219,6 +219,10 @@ export const adminApi = {
   getDashboardMetrics({ signal } = {}) {
     return apiRequest("/admin/dashboard-metrics", { signal });
   },
+
+  getDashboardOverview({ signal } = {}) {
+    return apiRequest("/admin/dashboard-overview", { signal });
+  },
 };
 
 export const projectsApi = {

@@ -25,6 +25,7 @@ import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import AdminDashboardHeader from "./components/AdminDashboardHeader.jsx";
 import AdminDashboardMetrics from "./components/AdminDashboardMetrics.jsx";
 import AdminDashboardOperations from "./components/AdminDashboardOperations.jsx";
+import AdminDashboardOverview from "./components/AdminDashboardOverview.jsx";
 import AdminActiveProjects from "./components/AdminActiveProjects.jsx";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
@@ -71,6 +72,12 @@ function ArchitectDashboard({ empty = false }) {
     currentUser.roleCode === "admin",
   );
   const [adminMetricsRequestKey, setAdminMetricsRequestKey] = useState(0);
+  const [adminOverview, setAdminOverview] = useState(null);
+  const [adminOverviewError, setAdminOverviewError] = useState("");
+  const [adminOverviewLoading, setAdminOverviewLoading] = useState(
+    currentUser.roleCode === "admin",
+  );
+  const [adminOverviewRequestKey, setAdminOverviewRequestKey] = useState(0);
   const canManagePublication =
     user?.permissionCodes?.includes("projects.publish");
 
@@ -247,6 +254,46 @@ function ArchitectDashboard({ empty = false }) {
   }, [adminMetricsRequestKey, currentUser.roleCode]);
 
   useEffect(() => {
+    if (currentUser.roleCode !== "admin") {
+      return undefined;
+    }
+
+    const abortController = new AbortController();
+
+    Promise.resolve()
+      .then(() => {
+        if (abortController.signal.aborted) {
+          return null;
+        }
+
+        setAdminOverviewLoading(true);
+        setAdminOverviewError("");
+        return api.admin.getDashboardOverview({
+          signal: abortController.signal,
+        });
+      })
+      .then((data) => {
+        if (data && !abortController.signal.aborted) {
+          setAdminOverview(data.overview || null);
+        }
+      })
+      .catch((error) => {
+        if (error?.name !== "AbortError") {
+          setAdminOverviewError(
+            error?.message || "No se pudo cargar la actividad administrativa.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) {
+          setAdminOverviewLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
+  }, [adminOverviewRequestKey, currentUser.roleCode]);
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia(
       `(max-width: ${TABLET_BREAKPOINT_PX - 1}px)`,
     );
@@ -395,6 +442,25 @@ function ArchitectDashboard({ empty = false }) {
                 deliveriesLoading={projectsLoading}
                 onProjectSelect={(project) => navigate(getProjectPath(project))}
                 onViewProjects={() => navigate("/proyectos")}
+              />
+              <AdminDashboardOverview
+                error={adminOverviewError}
+                loading={adminOverviewLoading}
+                newRequests={adminOverview?.newRequests}
+                recentActivity={adminOverview?.recentActivity}
+                onActivitySelect={(activity) => {
+                  const project = projectRows.find(
+                    (currentProject) =>
+                      currentProject.id === Number(activity.projectId),
+                  );
+
+                  if (project) {
+                    navigate(getProjectPath(project));
+                  }
+                }}
+                onRetry={() =>
+                  setAdminOverviewRequestKey((current) => current + 1)
+                }
               />
               <AdminActiveProjects
                 error={projectsError}

@@ -172,6 +172,59 @@ function DeliveryListSkeleton() {
   );
 }
 
+function AdminOverviewSkeleton() {
+  return (
+    <div className="grid w-full grid-cols-1 gap-[24px] lg:grid-cols-2">
+      {[3, 4].map((rowCount, columnIndex) => (
+        <div
+          key={rowCount}
+          className={clsx(
+            "flex min-w-0 flex-col gap-[16px] p-[16px]",
+            columnIndex === 0 &&
+              "rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)]",
+          )}
+        >
+          <SkeletonBlock
+            className="h-[17px] w-[120px] rounded-[var(--radius-1)]"
+            tone="text"
+          />
+          {Array.from({ length: rowCount }, (_, index) => (
+            <div
+              key={index}
+              className="flex h-9 items-center gap-[12px] border-b border-[var(--color-neutral-200)] last:border-b-0"
+            >
+              <SkeletonBlock
+                className="h-9 w-[73px] shrink-0 rounded-[var(--radius-full)]"
+                delay={index * 55}
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
+                <SkeletonBlock
+                  className="h-[13px] w-4/5 rounded-[var(--radius-1)]"
+                  delay={30 + index * 55}
+                  tone="text"
+                />
+                <SkeletonBlock
+                  className="h-[10px] w-3/5 rounded-[var(--radius-1)]"
+                  delay={50 + index * 55}
+                  tone="muted"
+                />
+              </div>
+              <SkeletonBlock
+                className="h-9 w-[132px] shrink-0 rounded-[var(--radius-2)]"
+                delay={70 + index * 55}
+              />
+              <SkeletonBlock
+                className="size-9 shrink-0 rounded-[var(--radius-2)]"
+                delay={90 + index * 55}
+              />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AdminProjectTableSkeleton() {
   return (
     <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)]">
@@ -391,6 +444,8 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = <AdminMetricsSkeleton />;
   } else if (preset === "deliveryList") {
     content = <DeliveryListSkeleton />;
+  } else if (preset === "adminOverview") {
+    content = <AdminOverviewSkeleton />;
   } else if (preset === "adminProjectTable") {
     content = <AdminProjectTableSkeleton />;
   } else if (preset === "videoStage") {

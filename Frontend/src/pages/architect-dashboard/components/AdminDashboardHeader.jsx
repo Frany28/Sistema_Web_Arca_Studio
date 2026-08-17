@@ -1,4 +1,4 @@
-import { Clock, Export } from "iconsax-react";
+import { Clock, ExportCurve } from "iconsax-react";
 
 import Button from "../../../components/ui/Button/Button.jsx";
 
@@ -29,7 +29,9 @@ function AdminDashboardHeader({ onExportReport, onViewHistory }) {
             fitContent
             showLeftIcon
             showRightIcon={false}
-            iconLeft={<Export size="20" variant="Linear" color="currentColor" />}
+            iconLeft={
+              <ExportCurve size="20" variant="Linear" color="currentColor" />
+            }
             onClick={onExportReport}
           >
             Exportar reporte

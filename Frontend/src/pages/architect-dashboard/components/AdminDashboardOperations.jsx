@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, Warning2 } from "iconsax-react";
+import { ArrowRight2, Eye, Warning2 } from "iconsax-react";
 
 import Button from "../../../components/ui/Button/Button.jsx";
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
@@ -96,7 +96,7 @@ function DeliveryRow({ project, onSelect }) {
         showText={false}
         showLeftIcon
         showRightIcon={false}
-        iconLeft={<ArrowRight size="20" variant="Linear" color="currentColor" />}
+        iconLeft={<ArrowRight2 size="20" variant="Linear" color="currentColor" />}
         aria-label={`Ver proyecto ${project.title || project.name || "Proyecto"}`}
         onClick={() => onSelect?.(project)}
       />

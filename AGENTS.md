@@ -398,3 +398,11 @@ Por tanto, mientras esta clasificación permanezca vigente:
 Estas credenciales se consideran deliberadamente públicas y no constituyen un secreto del sistema.
 
 Esta excepción existe para facilitar las pruebas y demostraciones de ARCA Studio y deberá eliminarse antes de considerar el sistema listo para producción.
+
+---
+
+# 17. Autoridad del desarrollador
+
+Cada regla indicada en este documento puede ser modificada, suspendida o revertida mediante una instrucción explícita del desarrollador responsable del proyecto.
+
+> **El desarrollador puede revertir cualquiera de estas reglas, sin excepciones.**
