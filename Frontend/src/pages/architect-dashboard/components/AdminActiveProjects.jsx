@@ -4,6 +4,7 @@ import { Edit2, Eye, FilterRemove, SearchNormal1 } from "iconsax-react";
 import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
 import Badge from "../../../components/ui/Badge/Badge.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
+import DropdownMenu from "../../../components/ui/DropdownMenu/DropdownMenu.jsx";
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Input from "../../../components/ui/Input/Input.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
@@ -18,6 +19,14 @@ const STATUS_DETAILS = {
   pending_approval: { label: "Solicitud", theme: "Neutral" },
   request: { label: "Solicitud", theme: "Neutral" },
 };
+
+const STATUS_FILTER_ITEMS = [
+  { id: "all", label: "Filtrar por status", type: "Text" },
+  { id: "in_process", label: "En progreso", type: "Text" },
+  { id: "in_review", label: "En revisión", type: "Text" },
+  { id: "pending_approval", label: "Solicitud", type: "Text" },
+  { id: "finished", label: "Finalizado", type: "Text" },
+];
 
 function getStatus(project) {
   return STATUS_DETAILS[project.status] || { label: "Solicitud", theme: "Neutral" };
@@ -52,6 +61,15 @@ function AdminActiveProjects({ error, loading, onOpenProject, projects }) {
     });
     return [...people.values()];
   }, [projects]);
+
+  const personnelFilterItems = useMemo(() => [
+    { id: "all", label: "Filtrar por personal", type: "Text" },
+    ...personnel.map((person) => ({
+      id: String(person.id || person.name),
+      label: person.name,
+      type: "Text",
+    })),
+  ], [personnel]);
 
   const visibleProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
@@ -93,20 +111,31 @@ function AdminActiveProjects({ error, loading, onOpenProject, projects }) {
           aria-label="Buscar proyectos activos"
           onChange={(event) => setQuery(event.target.value)}
         />
-        <div className="flex flex-wrap items-center gap-[8px]">
-          <label className="sr-only" htmlFor="admin-person-filter">Filtrar por personal</label>
-          <select id="admin-person-filter" value={personFilter} onChange={(event) => setPersonFilter(event.target.value)} className="text-body-4 h-[40px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[12px] text-[var(--color-text-200)]">
-            <option value="all">Filtrar por personal</option>
-            {personnel.map((person) => <option key={person.id || person.name} value={person.id || person.name}>{person.name}</option>)}
-          </select>
-          <label className="sr-only" htmlFor="admin-status-filter">Filtrar por estatus</label>
-          <select id="admin-status-filter" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="text-body-4 h-[40px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[12px] text-[var(--color-text-200)]">
-            <option value="all">Filtrar por estatus</option>
-            <option value="in_process">En progreso</option>
-            <option value="in_review">En revisión</option>
-            <option value="pending_approval">Solicitud</option>
-            <option value="finished">Finalizado</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-[12px]">
+          <DropdownMenu
+            type="Text"
+            label="Filtrar por personal"
+            items={personnelFilterItems}
+            selectedItemId={personFilter}
+            onItemSelect={(item) => setPersonFilter(item.id)}
+            className="w-[180px] max-w-full"
+            triggerWrapperClassName="h-[39px]"
+            triggerHeightClassName="h-[37px]"
+            triggerPaddingXClassName="px-[16px]"
+            aria-label="Filtrar proyectos por personal"
+          />
+          <DropdownMenu
+            type="Text"
+            label="Filtrar por status"
+            items={STATUS_FILTER_ITEMS}
+            selectedItemId={statusFilter}
+            onItemSelect={(item) => setStatusFilter(item.id)}
+            className="w-[180px] max-w-full"
+            triggerWrapperClassName="h-[39px]"
+            triggerHeightClassName="h-[37px]"
+            triggerPaddingXClassName="px-[16px]"
+            aria-label="Filtrar proyectos por status"
+          />
           <Button theme="Primary" type="Solid" size="S" fitContent showLeftIcon iconLeft={<FilterRemove size="20" color="currentColor" />} showRightIcon={false} disabled={!hasFilters} onClick={clearFilters}>Quitar filtros</Button>
         </div>
       </div>
