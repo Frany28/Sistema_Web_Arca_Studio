@@ -352,6 +352,7 @@ function Input({
   phoneOptions = PHONE_COUNTRY_OPTIONS,
   tags = INPUT_TAG_DEFAULT_ITEMS,
   tagOptions = INPUT_TAG_DEFAULT_ITEMS,
+  showTagOptionsOnFocus = false,
   showPasswordStrength = false,
   passwordRequirements,
   passwordHintTitle,
@@ -362,6 +363,7 @@ function Input({
   onFocus,
   onBlur,
   onTagsChange,
+  onTagOptionSelect,
   onClickRightIcon,
   inputRef,
   inputClassName,
@@ -448,10 +450,6 @@ function Input({
   const showTagsInsideField =
     resolvedType === "Tags" &&
     ["Filled", "Error"].includes(resolvedState) &&
-    showTags;
-  const showTagsBelowField =
-    resolvedType === "Tags" &&
-    resolvedState === "Focused" &&
     showTags;
   const resolvedPhoneOption = selectedPhoneOption ?? phoneOptions[0];
   const normalizedPhonePrefix = normalizeDialCode(phonePrefixValue);
@@ -578,6 +576,10 @@ function Input({
 
     return String(option.label ?? "").trim().toLowerCase().includes(query);
   });
+  const showTagsBelowField =
+    resolvedType === "Tags" &&
+    resolvedState === "Focused" &&
+    (showTags || (showTagOptionsOnFocus && filteredSelectableTags.length > 0));
 
   const handleTagSelection = () => {
     const nextTag =
@@ -1015,9 +1017,27 @@ function Input({
               closeIcon={tag.closeIcon ?? true}
               count={false}
               disabled={disabled}
+              onMouseDown={(event) => event.preventDefault()}
               onRemove={() => handleRemoveTag(tag.id)}
             />
           ))}
+          {showTagOptionsOnFocus
+            ? filteredSelectableTags.map((tag, index) => (
+                <Tag
+                  key={tag.id ?? `${tag.label}-option-${index}`}
+                  size={sizing.tagSize}
+                  label={tag.label}
+                  avatar={tag.avatar ?? true}
+                  avatarText={tag.avatarText ?? "A"}
+                  closeIcon={tag.closeIcon ?? true}
+                  count={false}
+                  disabled={disabled}
+                  interactive
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onTagOptionSelect?.(tag)}
+                />
+              ))
+            : null}
         </div>
       ) : null}
     </div>
