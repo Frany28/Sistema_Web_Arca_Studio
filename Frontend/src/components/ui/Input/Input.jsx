@@ -231,6 +231,10 @@ function getDefaultLeftIcon(type) {
     return <LockIcon className="size-5" />;
   }
 
+  if (type === "Tags") {
+    return <UserIcon className="size-5" />;
+  }
+
   return <SmsIcon className="size-5" />;
 }
 
@@ -357,7 +361,9 @@ function Input({
   onChange,
   onFocus,
   onBlur,
+  onTagsChange,
   onClickRightIcon,
+  inputRef,
   inputClassName,
   style,
   ...props
@@ -370,11 +376,6 @@ function Input({
   const [selectedTags, setSelectedTags] = useState(() =>
     Array.isArray(tags)
       ? tags.map((tag, index) => normalizeTagItem(tag, `tag-selected-${index}`))
-      : [],
-  );
-  const [availableTags, setAvailableTags] = useState(() =>
-    Array.isArray(tagOptions)
-      ? tagOptions.map((tag, index) => normalizeTagItem(tag, `tag-option-${index}`))
       : [],
   );
   const [isPhoneMenuOpen, setIsPhoneMenuOpen] = useState(false);
@@ -405,9 +406,18 @@ function Input({
   const isControlled = value !== undefined;
   const fieldValue = isControlled ? value : internalValue;
 
-  const normalizedTagOptions = Array.isArray(availableTags) ? availableTags : [];
-  const visibleTags = resolvedType === "Tags" ? selectedTags : tags;
+  const tagsAreControlled = typeof onTagsChange === "function";
+  const visibleTags =
+    resolvedType === "Tags" && tagsAreControlled ? tags : selectedTags;
   const normalizedVisibleTags = Array.isArray(visibleTags) ? visibleTags : [];
+  const selectedTagIds = new Set(
+    normalizedVisibleTags.map((tag) => String(tag.id)),
+  );
+  const normalizedTagOptions = Array.isArray(tagOptions)
+    ? tagOptions
+        .map((tag, index) => normalizeTagItem(tag, `tag-option-${index}`))
+        .filter((tag) => !selectedTagIds.has(String(tag.id)))
+    : [];
   const hasSelectedTags =
     resolvedType === "Tags" && normalizedVisibleTags.length > 0;
   const resolvedState =
@@ -432,12 +442,12 @@ function Input({
   const showTags = resolvedType === "Tags" && normalizedVisibleTags.length > 0;
   const showTagsInsideField =
     resolvedType === "Tags" &&
-    ["Filled", "Disabled"].includes(resolvedState) &&
+    ["Filled", "Disabled", "Error"].includes(resolvedState) &&
     showTags;
   const showTagsBelowField =
     resolvedType === "Tags" &&
     resolvedState === "Focused" &&
-    normalizedTagOptions.length > 0;
+    showTags;
   const resolvedPhoneOption = selectedPhoneOption ?? phoneOptions[0];
   const normalizedPhonePrefix = normalizeDialCode(phonePrefixValue);
   const filteredPhoneOptions =
@@ -554,39 +564,6 @@ function Input({
     };
   }, [isPhoneMenuOpen]);
 
-  useEffect(() => {
-    if (resolvedType !== "Tags") {
-      return;
-    }
-
-    const normalizedSelected = Array.isArray(tags)
-      ? tags.map((tag, index) =>
-          normalizeTagItem(tag, `tag-selected-${index}-${tag.label}`),
-        )
-      : [];
-    setSelectedTags(normalizedSelected);
-  }, [resolvedType, tags]);
-
-  useEffect(() => {
-    if (resolvedType !== "Tags") {
-      return;
-    }
-
-    const normalizedSelectedIds = new Set(
-      (Array.isArray(tags) ? tags : []).map((tag, index) =>
-        normalizeTagItem(tag, `tag-selected-${index}-${tag.label}`).id,
-      ),
-    );
-    const normalizedAvailable = Array.isArray(tagOptions)
-      ? tagOptions
-          .map((tag, index) =>
-            normalizeTagItem(tag, `tag-option-${index}-${tag.label}`),
-          )
-          .filter((tag) => !normalizedSelectedIds.has(tag.id))
-      : [];
-    setAvailableTags(normalizedAvailable);
-  }, [resolvedType, tagOptions]);
-
   const filteredSelectableTags = normalizedTagOptions.filter((option) => {
     const query = String(currentValue).trim().toLowerCase();
 
@@ -613,37 +590,22 @@ function Input({
       return;
     }
 
-    setSelectedTags((current) => {
-      const exists = current.some((tag) => {
-        const currentId = tag.id ?? "";
-        const nextId = nextTag.id ?? "";
+    const exists = normalizedVisibleTags.some((tag) => {
+      const currentId = tag.id ?? "";
+      const nextId = nextTag.id ?? "";
 
-        return currentId === nextId || tag.label === nextTag.label;
-      });
-
-      return exists ? current : [...current, nextTag];
+      return currentId === nextId || tag.label === nextTag.label;
     });
-    setAvailableTags((current) =>
-      current.filter((tag) => {
-        const currentId = tag.id ?? "";
-        const nextId = nextTag.id ?? "";
 
-        return currentId !== nextId && tag.label !== nextTag.label;
-      }),
-    );
-
-    if (!isControlled) {
-      setInternalValue("");
-    }
-  };
-
-  const handleToggleTag = (tagItem) => {
-    if (disabled) {
+    if (exists) {
       return;
     }
 
-    setSelectedTags((current) => [...current, { ...tagItem, closeIcon: true }]);
-    setAvailableTags((current) => current.filter((tag) => tag.id !== tagItem.id));
+    const nextTags = [...normalizedVisibleTags, nextTag];
+    if (!tagsAreControlled) {
+      setSelectedTags(nextTags);
+    }
+    onTagsChange?.(nextTags);
 
     if (!isControlled) {
       setInternalValue("");
@@ -655,17 +617,11 @@ function Input({
       return;
     }
 
-    const removedTag = normalizedVisibleTags.find((tag) => tag.id === tagId);
-
-    setSelectedTags((current) => current.filter((tag) => tag.id !== tagId));
-
-    if (removedTag) {
-      setAvailableTags((current) => {
-        const exists = current.some((tag) => tag.id === removedTag.id);
-
-        return exists ? current : [...current, { ...removedTag, closeIcon: true }];
-      });
+    const nextTags = normalizedVisibleTags.filter((tag) => tag.id !== tagId);
+    if (!tagsAreControlled) {
+      setSelectedTags(nextTags);
     }
+    onTagsChange?.(nextTags);
   };
 
   const content = (
@@ -823,6 +779,7 @@ function Input({
           </div>
           <div className={clsx("flex min-w-0 flex-1 items-center gap-[8px]", sizing.field)}>
             <input
+              ref={inputRef}
               id={inputId}
               type={inputType}
               disabled={disabled}
@@ -893,31 +850,34 @@ function Input({
             </span>
           ) : null}
 
-          {showTagsInsideField ? (
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-[4px]">
-              {normalizedVisibleTags.map((tag, index) => (
-                <Tag
-                  key={tag.id ?? `${tag.label}-${index}`}
-                  size={sizing.tagSize}
-                  label={tag.label}
-                  avatar={tag.avatar ?? true}
-                  avatarText={tag.avatarText ?? "A"}
-                  closeIcon={tag.closeIcon ?? true}
-                  count={false}
-                  className="max-w-full"
-                  onRemove={() => handleRemoveTag(tag.id)}
-                />
-              ))}
-            </div>
-          ) : (
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-[4px]">
+            {showTagsInsideField
+              ? normalizedVisibleTags.map((tag, index) => (
+                  <Tag
+                    key={tag.id ?? `${tag.label}-${index}`}
+                    size={sizing.tagSize}
+                    label={tag.label}
+                    avatar={tag.avatar ?? true}
+                    avatarText={tag.avatarText ?? "A"}
+                    closeIcon={tag.closeIcon ?? true}
+                    count={false}
+                    className="max-w-full"
+                    disabled={disabled}
+                    onRemove={() => handleRemoveTag(tag.id)}
+                  />
+                ))
+              : null}
+
             <input
+              ref={inputRef}
               id={inputId}
               type={inputType}
               disabled={disabled}
               value={fieldValue}
-              placeholder={resolvedPlaceholder}
+              placeholder={showTagsInsideField ? "" : resolvedPlaceholder}
               className={clsx(
                 "text-body-3 min-w-0 flex-1 border-0 bg-transparent tracking-[-0.5px] outline-none",
+                showTagsInsideField && "min-w-[48px]",
                 disabled ? "cursor-not-allowed" : "cursor-text",
                 isFilled ? stateStyles.inputText : stateStyles.placeholder,
                 stateStyles.placeholder,
@@ -956,7 +916,7 @@ function Input({
               onChange={handleChange}
               {...props}
             />
-          )}
+          </div>
 
           {paymentIcon ? (
             <PaymentBadge className={sizing.paymentBadge} brand={paymentBrand} />
@@ -1034,7 +994,7 @@ function Input({
 
       {showTagsBelowField ? (
         <div className="flex w-full flex-wrap items-center gap-[4px]">
-          {filteredSelectableTags.map((tag, index) => (
+          {normalizedVisibleTags.map((tag, index) => (
             <Tag
               key={tag.id ?? `${tag.label}-${index}`}
               size={sizing.tagSize}
@@ -1043,9 +1003,8 @@ function Input({
               avatarText={tag.avatarText ?? "A"}
               closeIcon={tag.closeIcon ?? true}
               count={false}
-              interactive
-              onClick={() => handleToggleTag(tag)}
-              onRemove={() => handleToggleTag(tag)}
+              disabled={disabled}
+              onRemove={() => handleRemoveTag(tag.id)}
             />
           ))}
         </div>

@@ -1,9 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
-import { TickCircle, User } from "iconsax-react";
+import { TickCircle } from "iconsax-react";
 
-import Tag from "../Tag/Tag.jsx";
+import Input from "../Input/Input.jsx";
 
 function normalizeText(value) {
   return String(value || "")
@@ -31,7 +31,7 @@ function AssigneeMultiSelect({
   onChange,
   options = [],
   placeholder = "Asignar responsables...",
-  showTagAvatars = false,
+  showTagAvatars = true,
   value = [],
 }) {
   const inputId = useId();
@@ -63,6 +63,24 @@ function AssigneeMultiSelect({
   }, [options, query]);
   const isDisabled = disabled || loading || isSaving;
   const resolvedError = localError || error;
+  const peopleById = useMemo(
+    () =>
+      new Map(
+        [...options, ...value].map((person) => [String(person.id), person]),
+      ),
+    [options, value],
+  );
+  const selectedTags = useMemo(
+    () =>
+      value.map((person) => ({
+        id: String(person.id),
+        label: person.name,
+        avatar: showTagAvatars,
+        avatarText: getInitials(person.name) || "E",
+        closeIcon: true,
+      })),
+    [showTagAvatars, value],
+  );
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -149,6 +167,14 @@ function AssigneeMultiSelect({
     void commit(nextValue);
   };
 
+  const handleTagsChange = (nextTags) => {
+    const nextValue = nextTags
+      .map((tag) => peopleById.get(String(tag.id)))
+      .filter(Boolean);
+
+    void commit(nextValue);
+  };
+
   const handleKeyDown = (event) => {
     if (event.key === "Escape") {
       setIsOpen(false);
@@ -180,89 +206,66 @@ function AssigneeMultiSelect({
   };
 
   return (
-    <div ref={rootRef} className={clsx("relative min-w-0", className)}>
-      <div
-        className={clsx(
-          "flex h-9 w-full items-center gap-[8px] rounded-[var(--radius-2)] border bg-[var(--color-neutral-100)] px-[12px] py-[8px] shadow-none transition-[border-color,box-shadow]",
-          resolvedError
-            ? "border-[var(--color-danger-100)]"
-            : "border-[var(--color-neutral-200)] focus-within:border-[var(--color-primary-300)] focus-within:shadow-[0_0_0_1px_var(--color-primary-10)]",
-          isDisabled ? "cursor-not-allowed opacity-70" : "cursor-text",
-        )}
-        onClick={() => {
-          if (!isDisabled) {
-            setIsOpen(true);
-            inputRef.current?.focus();
-          }
-        }}
-      >
-        <User
-          size="20"
-          variant="Linear"
-          color="currentColor"
-          className="shrink-0 text-[var(--color-neutral-400)]"
-          aria-hidden="true"
-        />
-
-        <div className="flex min-w-0 flex-1 items-center gap-[4px] overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {value.map((person) => (
-            <Tag
-              key={person.id}
-              label={person.name}
-              size="S"
-              avatar={showTagAvatars}
-              avatarText={getInitials(person.name) || "E"}
-              checkbox={false}
-              closeIcon
-              count={false}
-              disabled={isDisabled}
-              onRemove={() =>
-                void commit(
-                  value.filter(
-                    (selected) => String(selected.id) !== String(person.id),
-                  ),
-                )
-              }
+    <div
+      ref={rootRef}
+      className={clsx("relative min-w-0", className)}
+      onClick={() => {
+        if (!isDisabled) {
+          setIsOpen(true);
+          inputRef.current?.focus();
+        }
+      }}
+    >
+      <Input
+        id={inputId}
+        inputRef={inputRef}
+        type="Tags"
+        size="S"
+        state={resolvedError ? "Error" : "Default"}
+        value={query}
+        tags={selectedTags}
+        tagOptions={[]}
+        showLabel={false}
+        showHint={Boolean(resolvedError)}
+        hintText={resolvedError}
+        showLabelInfo={false}
+        showLeftIcon
+        showRightIcon={isSaving}
+        rightIcon={
+          isSaving ? (
+            <span
+              className="size-4 animate-spin rounded-full border-2 border-[var(--color-neutral-300)] border-t-[var(--color-primary-300)]"
+              aria-hidden="true"
             />
-          ))}
-
-          <input
-            ref={inputRef}
-            id={inputId}
-            type="search"
-            role="combobox"
-            aria-label={ariaLabel}
-            aria-autocomplete="list"
-            aria-controls={listboxId}
-            aria-expanded={isOpen}
-            aria-invalid={Boolean(resolvedError)}
-            aria-activedescendant={
-              isOpen && visibleOptions[activeIndex]
-                ? `${listboxId}-${visibleOptions[activeIndex].id}`
-                : undefined
-            }
-            autoComplete="off"
-            disabled={isDisabled}
-            value={query}
-            placeholder={value.length ? "" : loading ? "Cargando empleados..." : placeholder}
-            className="text-body-3 min-w-[72px] flex-1 border-0 bg-transparent p-0 text-[var(--color-text-300)] outline-none placeholder:text-[var(--color-text-100)] [&::-webkit-search-cancel-button]:hidden"
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setIsOpen(true);
-              setActiveIndex(0);
-            }}
-            onFocus={() => !isDisabled && setIsOpen(true)}
-            onKeyDown={handleKeyDown}
-          />
-        </div>
-
-        {isSaving ? (
-          <span
-            className="size-4 shrink-0 animate-spin rounded-full border-2 border-[var(--color-neutral-300)] border-t-[var(--color-primary-300)]"
-            aria-label="Guardando responsables"
-          />
-        ) : null}
-      </div>
+          ) : null
+        }
+        rightIconAriaLabel="Guardando responsables"
+        required={false}
+        disabled={isDisabled}
+        placeholder={loading ? "Cargando empleados..." : placeholder}
+        className="max-w-none"
+        inputClassName="[&::-webkit-search-cancel-button]:hidden"
+        role="combobox"
+        aria-label={ariaLabel}
+        aria-autocomplete="list"
+        aria-controls={listboxId}
+        aria-expanded={isOpen}
+        aria-invalid={Boolean(resolvedError)}
+        aria-activedescendant={
+          isOpen && visibleOptions[activeIndex]
+            ? `${listboxId}-${visibleOptions[activeIndex].id}`
+            : undefined
+        }
+        autoComplete="off"
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setIsOpen(true);
+          setActiveIndex(0);
+        }}
+        onFocus={() => !isDisabled && setIsOpen(true)}
+        onKeyDown={handleKeyDown}
+        onTagsChange={handleTagsChange}
+      />
 
       {isOpen && !isDisabled && menuPosition
         ? createPortal(
@@ -327,11 +330,6 @@ function AssigneeMultiSelect({
       )
         : null}
 
-      {resolvedError ? (
-        <p className="text-body-4 mt-[4px] text-[var(--color-danger-100)]" role="alert">
-          {resolvedError}
-        </p>
-      ) : null}
     </div>
   );
 }
