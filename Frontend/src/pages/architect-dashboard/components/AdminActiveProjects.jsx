@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowSwapVertical,
   Edit2,
@@ -18,6 +18,7 @@ import DropdownMenu from "../../../components/ui/DropdownMenu/DropdownMenu.jsx";
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
 import Input from "../../../components/ui/Input/Input.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
+import ScrollBar from "../../../components/ui/ScrollBar/ScrollBar.jsx";
 import Tag from "../../../components/ui/Tag/Tag.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import "./AdminActiveProjects.css";
@@ -83,6 +84,12 @@ function AdminActiveProjects({
   const [statusFilter, setStatusFilter] = useState("all");
   const [personFilter, setPersonFilter] = useState("all");
   const [selectedProjectIds, setSelectedProjectIds] = useState(() => new Set());
+  const tableViewportRef = useRef(null);
+  const [tableScrollState, setTableScrollState] = useState({
+    length: 1,
+    position: 0,
+    width: 0,
+  });
 
   const personnel = useMemo(() => {
     const people = new Map();
@@ -129,6 +136,66 @@ function AdminActiveProjects({
       ? "Indeterminate"
       : "No";
   const hasFilters = Boolean(query || statusFilter !== "all" || personFilter !== "all");
+
+  const syncTableScrollState = useCallback(() => {
+    const viewport = tableViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const maxScroll = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
+    const nextState = {
+      length: viewport.scrollWidth
+        ? Math.min(viewport.clientWidth / viewport.scrollWidth, 1)
+        : 1,
+      position: maxScroll ? viewport.scrollLeft / maxScroll : 0,
+      width: viewport.clientWidth,
+    };
+
+    setTableScrollState((current) =>
+      Math.abs(current.length - nextState.length) < 0.001 &&
+      Math.abs(current.position - nextState.position) < 0.001 &&
+      current.width === nextState.width
+        ? current
+        : nextState,
+    );
+  }, []);
+
+  useEffect(() => {
+    const viewport = tableViewportRef.current;
+
+    if (!viewport) {
+      return undefined;
+    }
+
+    syncTableScrollState();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", syncTableScrollState);
+      return () => window.removeEventListener("resize", syncTableScrollState);
+    }
+
+    const resizeObserver = new ResizeObserver(syncTableScrollState);
+    resizeObserver.observe(viewport);
+
+    return () => resizeObserver.disconnect();
+  }, [error, loading, syncTableScrollState, visibleProjects.length]);
+
+  const handleTableScrollPositionChange = useCallback(
+    (position) => {
+      const viewport = tableViewportRef.current;
+
+      if (!viewport) {
+        return;
+      }
+
+      const maxScroll = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
+      viewport.scrollLeft = maxScroll * position;
+      syncTableScrollState();
+    },
+    [syncTableScrollState],
+  );
 
   const clearFilters = () => {
     setQuery("");
@@ -239,8 +306,13 @@ function AdminActiveProjects({
           />
         </div>
       ) : visibleProjects.length ? (
-        <div className="w-full overflow-x-auto rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] shadow-[var(--shadow-e1)]">
-          <table className="w-[1093px] min-w-[1093px] table-fixed border-collapse text-left">
+        <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+          <div
+            ref={tableViewportRef}
+            className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            onScroll={syncTableScrollState}
+          >
+            <table className="w-[1093px] min-w-[1093px] table-fixed border-collapse text-left">
             <colgroup>
               <col className="w-[48px]" />
               <col className="w-[155px]" />
@@ -273,7 +345,7 @@ function AdminActiveProjects({
                 const isSelected = selectedProjectIds.has(String(project.id));
 
                 return (
-                  <tr key={project.id} className="h-[68px] border-b border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] last:border-b-0">
+                  <tr key={project.id} className="h-[68px] bg-[var(--color-neutral-100)]">
                     <td className="p-[16px]">
                       <Checkbox size="S" checked={isSelected ? "Yes" : "No"} interactive aria-label={`Seleccionar ${projectName}`} onCheckedChange={() => toggleProject(project.id)} />
                     </td>
@@ -308,7 +380,20 @@ function AdminActiveProjects({
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </div>
+          {tableScrollState.length < 0.999 && tableScrollState.width > 0 ? (
+            <ScrollBar
+              orientation="horizontal"
+              width={tableScrollState.width}
+              length={tableScrollState.length}
+              position={tableScrollState.position}
+              interactive
+              onPositionChange={handleTableScrollPositionChange}
+              aria-label="Desplazar tabla de proyectos horizontalmente"
+              className="block max-w-full"
+            />
+          ) : null}
         </div>
       ) : (
         <EmptyState title={hasFilters ? "No hay coincidencias" : "No hay proyectos activos"} description={hasFilters ? "Ajusta o elimina los filtros para ver otros proyectos." : "Los proyectos aparecerán aquí cuando estén disponibles."} size="S" showFeaturedIcon={false} showActions={hasFilters} primaryActionLabel="Quitar filtros" onPrimaryAction={clearFilters} />

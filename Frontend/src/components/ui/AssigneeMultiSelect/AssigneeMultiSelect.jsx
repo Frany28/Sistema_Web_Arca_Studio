@@ -148,6 +148,7 @@ function AssigneeMultiSelect({
     try {
       await onChange(nextValue);
       setQuery("");
+      setIsOpen(false);
       requestAnimationFrame(() => inputRef.current?.focus());
     } catch (changeError) {
       setLocalError(
@@ -183,6 +184,10 @@ function AssigneeMultiSelect({
     }
 
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (!query.trim()) {
+        return;
+      }
+
       event.preventDefault();
       setIsOpen(true);
       setActiveIndex((current) => {
@@ -211,7 +216,6 @@ function AssigneeMultiSelect({
       className={clsx("relative min-w-0", className)}
       onClick={() => {
         if (!isDisabled) {
-          setIsOpen(true);
           inputRef.current?.focus();
         }
       }}
@@ -258,16 +262,16 @@ function AssigneeMultiSelect({
         }
         autoComplete="off"
         onChange={(event) => {
-          setQuery(event.target.value);
-          setIsOpen(true);
+          const nextQuery = event.target.value;
+          setQuery(nextQuery);
+          setIsOpen(Boolean(nextQuery.trim()));
           setActiveIndex(0);
         }}
-        onFocus={() => !isDisabled && setIsOpen(true)}
         onKeyDown={handleKeyDown}
         onTagsChange={handleTagsChange}
       />
 
-      {isOpen && !isDisabled && menuPosition
+      {isOpen && query.trim() && !isDisabled && menuPosition
         ? createPortal(
         <div
           ref={menuRef}

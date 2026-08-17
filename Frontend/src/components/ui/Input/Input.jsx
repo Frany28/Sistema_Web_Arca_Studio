@@ -371,6 +371,7 @@ function Input({
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [internalValue, setInternalValue] = useState(defaultValue ?? "");
   const [selectedTags, setSelectedTags] = useState(() =>
@@ -427,10 +428,14 @@ function Input({
           ? "Focused"
           : hasSelectedTags
             ? "Filled"
-            : "Default"
+            : isHovered
+              ? "Hover"
+              : "Default"
         : isFocused
           ? "Focused"
-          : baseState
+          : isHovered
+            ? "Hover"
+            : baseState
       : baseState;
   const stateStyles = INPUT_STATE_STYLES[resolvedState];
 
@@ -442,7 +447,7 @@ function Input({
   const showTags = resolvedType === "Tags" && normalizedVisibleTags.length > 0;
   const showTagsInsideField =
     resolvedType === "Tags" &&
-    ["Filled", "Disabled", "Error"].includes(resolvedState) &&
+    ["Filled", "Error"].includes(resolvedState) &&
     showTags;
   const showTagsBelowField =
     resolvedType === "Tags" &&
@@ -634,6 +639,12 @@ function Input({
         stateStyles.shell,
         baseState === "Default" && !disabled && INPUT_INTERACTIVE_STYLES,
       )}
+      onMouseEnter={() => {
+        if (!disabled && baseState === "Default") {
+          setIsHovered(true);
+        }
+      }}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {resolvedType === "Phone number" ? (
         <div

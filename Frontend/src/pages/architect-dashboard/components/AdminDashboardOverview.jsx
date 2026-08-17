@@ -94,7 +94,6 @@ function RequestRow({
         options={assignees}
         placeholder="Asignar responsables..."
         loading={assigneesLoading}
-        showTagAvatars={false}
         className="w-full max-w-[252px]"
         aria-label={`Responsables de ${request.projectName}`}
         onChange={(nextAssignees) => onAssigneesChange?.(request, nextAssignees)}
