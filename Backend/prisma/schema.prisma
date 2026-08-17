@@ -258,6 +258,36 @@ model project_progress_updates {
   users      users    @relation(fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_progress_updates_updated_by")
 }
 
+/// Multiple active employees assigned to a project.
+/// This model contains row level security and requires additional setup for migrations.
+model project_assignees {
+  project_id                    BigInt
+  user_id                       BigInt
+  assigned_by                   BigInt
+  created_at                    DateTime @default(now()) @db.Timestamptz(6)
+  projects                      projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_project_assignees_project")
+  users_project_assignee        users    @relation("project_assignees_user", fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "fk_project_assignees_user")
+  users_project_assigned_by     users    @relation("project_assignees_assigned_by", fields: [assigned_by], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "fk_project_assignees_assigned_by")
+
+  @@id([project_id, user_id])
+  @@index([user_id, project_id], map: "idx_project_assignees_user_id")
+}
+
+/// Multiple active employees assigned to a project request.
+/// This model contains row level security and requires additional setup for migrations.
+model project_request_assignees {
+  project_request_id                    BigInt
+  user_id                               BigInt
+  assigned_by                           BigInt
+  created_at                            DateTime         @default(now()) @db.Timestamptz(6)
+  project_requests                      project_requests @relation(fields: [project_request_id], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_project_request_assignees_request")
+  users_project_request_assignee        users            @relation("project_request_assignees_user", fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "fk_project_request_assignees_user")
+  users_project_request_assigned_by     users            @relation("project_request_assignees_assigned_by", fields: [assigned_by], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "fk_project_request_assignees_assigned_by")
+
+  @@id([project_request_id, user_id])
+  @@index([user_id, project_request_id], map: "idx_project_request_assignees_user_id")
+}
+
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -308,6 +338,7 @@ model project_requests {
   compatibility_reason_codes                 Json?
   compatibility_scoring_version              String?                @db.VarChar(20)
   files                                      files[]
+  project_request_assignees                  project_request_assignees[]
   clients                                    clients                @relation(fields: [client_id], references: [id], map: "fk_project_requests_client")
   projects                                   projects?              @relation(fields: [converted_project_id], references: [id], map: "fk_project_requests_converted_project")
   users_project_requests_requested_byTousers users                  @relation("project_requests_requested_byTousers", fields: [requested_by], references: [id], map: "fk_project_requests_requested_by")
@@ -433,6 +464,7 @@ model projects {
   project_comments                            project_comments[]
   project_milestones                          project_milestones[]
   project_progress_updates                    project_progress_updates[]
+  project_assignees                           project_assignees[]
   project_requests                            project_requests[]
   project_requirements                        project_requirements[]
   project_stages                              project_stages[]
@@ -506,6 +538,10 @@ model users {
   environment_comments                                  environment_comments[]
   project_comments                                      project_comments[]
   project_progress_updates                              project_progress_updates[]
+  project_assignees_project_assignee                    project_assignees[]         @relation("project_assignees_user")
+  project_assignees_project_assigned_by                 project_assignees[]         @relation("project_assignees_assigned_by")
+  project_request_assignees_project_assignee            project_request_assignees[] @relation("project_request_assignees_user")
+  project_request_assignees_project_assigned_by         project_request_assignees[] @relation("project_request_assignees_assigned_by")
   project_requests_project_requests_requested_byTousers project_requests[]         @relation("project_requests_requested_byTousers")
   project_requests_project_requests_reviewed_byTousers  project_requests[]         @relation("project_requests_reviewed_byTousers")
   project_status_history                                project_status_history[]

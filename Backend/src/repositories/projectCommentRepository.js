@@ -75,7 +75,11 @@ function getProjectAccessCondition(user, projectAlias = "p") {
   if (roleCode === "architect") {
     return {
       params: [user.id],
-      sql: `${projectAlias}.assigned_architect_id = $1`,
+      sql: `(${projectAlias}.assigned_architect_id = $1 or exists (
+        select 1 from public.project_assignees assignment
+        where assignment.project_id = ${projectAlias}.id
+          and assignment.user_id = $1
+      ))`,
     };
   }
 

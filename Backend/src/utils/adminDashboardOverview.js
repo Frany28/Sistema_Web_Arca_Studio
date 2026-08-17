@@ -16,6 +16,14 @@ export function mapAdminDashboardActivity(row = {}) {
 
 export function mapAdminDashboardRequest(row = {}) {
   return {
+    assignees: Array.isArray(row.assignees)
+      ? row.assignees.map((assignee) => ({
+          id: toNumber(assignee.id),
+          name: assignee.name || "Empleado",
+          roleCode: assignee.roleCode || null,
+          roleName: assignee.roleName || "Empleado",
+        }))
+      : [],
     createdAt: row.created_at || null,
     id: toNumber(row.id),
     projectName: row.project_name || "Solicitud de proyecto",

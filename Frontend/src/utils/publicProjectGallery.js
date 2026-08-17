@@ -16,7 +16,12 @@ export function isOwnProject(project, user) {
   }
 
   if (role === "architect") {
-    return Number(project?.assignedArchitect?.id) === Number(user?.id);
+    return (
+      Number(project?.assignedArchitect?.id) === Number(user?.id) ||
+      (project?.assignees || project?.assignedArchitects)?.some(
+        (assignee) => Number(assignee?.id) === Number(user?.id),
+      )
+    );
   }
 
   return false;
@@ -44,6 +49,9 @@ export function filterPublicProjects(projects, query) {
       project?.title,
       getProjectTypeDisplay(project?.projectType),
       project?.assignedArchitect?.name,
+      ...(project?.assignees || project?.assignedArchitects || []).map(
+        (assignee) => assignee?.name,
+      ),
       getProjectYear(project),
     ]
       .map(normalizeProjectSearch)

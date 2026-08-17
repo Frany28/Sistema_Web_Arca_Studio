@@ -106,7 +106,7 @@ function DeliveryRow({ project, onSelect }) {
 
 function AdminDashboardOperations({ deliveries, deliveriesError, deliveriesLoading, onProjectSelect, onViewProjects }) {
   return (
-    <section className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-[24px] px-[16px] py-[24px] sm:px-[24px] lg:grid-cols-2 lg:px-[48px]">
+    <section className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-[24px] px-[16px] pb-[24px] pt-[48px] sm:px-[24px] lg:grid-cols-2 lg:px-[48px]">
       <div className="flex min-w-[300px] flex-col gap-[16px] overflow-hidden rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[16px] max-sm:min-w-0">
         <Label label="Eventos críticos" required={false} information={false} />
         <div className="flex w-full flex-col">

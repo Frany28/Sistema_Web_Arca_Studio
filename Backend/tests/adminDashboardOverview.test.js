@@ -28,6 +28,42 @@ test("admin dashboard activity maps database rows to the public contract", () =>
   );
 });
 
+test("admin dashboard requests expose every assigned employee", () => {
+  assert.deepEqual(
+    mapAdminDashboardRequest({
+      id: "12",
+      assignees: [
+        {
+          id: "5",
+          name: "Armando Carroz",
+          roleCode: "architect",
+          roleName: "Arquitecto",
+        },
+        {
+          id: "8",
+          name: "Wilmer Salas",
+          roleCode: "architect",
+          roleName: "Arquitecto",
+        },
+      ],
+    }).assignees,
+    [
+      {
+        id: 5,
+        name: "Armando Carroz",
+        roleCode: "architect",
+        roleName: "Arquitecto",
+      },
+      {
+        id: 8,
+        name: "Wilmer Salas",
+        roleCode: "architect",
+        roleName: "Arquitecto",
+      },
+    ],
+  );
+});
+
 test("admin dashboard requests map database rows to the public contract", () => {
   assert.deepEqual(
     mapAdminDashboardRequest({
@@ -38,6 +74,7 @@ test("admin dashboard requests map database rows to the public contract", () => 
       status: "pending_review",
     }),
     {
+      assignees: [],
       createdAt: "2026-08-17T15:00:00.000Z",
       id: 12,
       projectName: "Apto. Noventa y Uno",

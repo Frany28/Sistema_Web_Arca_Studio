@@ -47,9 +47,9 @@ function formatRelativeTime(value) {
   return `Hace ${days} d`;
 }
 
-function MetricItem({ badge, badgeTheme = "Success", icon, iconType, label, supportingText, value }) {
+function MetricItem({ badge, badgeTheme = "Success", className = "", icon, iconType, label, supportingText, value }) {
   return (
-    <article className="flex min-w-0 flex-col items-start gap-[8px]">
+    <article className={`flex min-w-0 flex-col items-start gap-[8px] ${className}`}>
       <h2 className="text-body-1 m-0 whitespace-nowrap text-[var(--color-text-300)]">
         {label}
       </h2>
@@ -106,8 +106,9 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
       className="mx-auto w-full max-w-[1200px] px-[16px] sm:px-[24px] lg:px-[48px]"
       aria-label="Resumen de métricas administrativas"
     >
-      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 min-[900px]:grid-cols-3 min-[1400px]:grid-cols-[181px_191px_214px_141px_176px] min-[1400px]:gap-0">
         <MetricItem
+          className="min-[1400px]:w-[181px]"
           label="Usuarios activos"
           value={metrics?.activeUsers?.total}
           badge={`+${numberFormatter.format(metrics?.activeUsers?.thisMonth || 0)}`}
@@ -116,6 +117,7 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<People size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
+          className="min-[1400px]:w-[191px]"
           label="Proyectos activos"
           value={metrics?.activeProjects?.total}
           badge={`+${numberFormatter.format(metrics?.activeProjects?.thisMonth || 0)}`}
@@ -124,6 +126,7 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<Buildings2 size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
+          className="min-[1400px]:w-[214px]"
           label="Archivos registrados"
           value={metrics?.files?.total}
           badge={formatStorage(metrics?.files?.totalBytes)}
@@ -133,6 +136,7 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<Folder2 size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
+          className="min-[1400px]:w-[141px]"
           label="Solicitudes"
           value={metrics?.requests?.total}
           badge={`+${numberFormatter.format(metrics?.requests?.today || 0)}`}
@@ -141,6 +145,7 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<MessageNotif size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
+          className="min-[1400px]:w-[176px]"
           label="Eventos críticos"
           value={metrics?.criticalEvents?.total}
           supportingText={formatRelativeTime(metrics?.criticalEvents?.latestAt)}

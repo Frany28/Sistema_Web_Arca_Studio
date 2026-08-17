@@ -362,13 +362,23 @@ export async function deleteProjectRequestFile({
 export async function findProjectForFileUpload(projectId, user) {
   const result = await query(
     `
-      select id, client_id, assigned_architect_id, is_public, status
-      from public.projects
-      where id = $1
+      select
+        project.id,
+        project.client_id,
+        project.assigned_architect_id,
+        project.is_public,
+        project.status,
+        exists (
+          select 1 from public.project_assignees assignment
+          where assignment.project_id = project.id
+            and assignment.user_id = $2
+        ) as is_assignee
+      from public.projects project
+      where project.id = $1
         and deleted_at is null
       limit 1
     `,
-    [projectId],
+    [projectId, user.id],
   );
   const project = result.rows[0];
 
@@ -380,7 +390,8 @@ export async function findProjectForFileUpload(projectId, user) {
   const hasAccess =
     roleCode === "admin" ||
     (roleCode === "architect" &&
-      Number(project.assigned_architect_id) === Number(user.id)) ||
+      (Number(project.assigned_architect_id) === Number(user.id) ||
+        project.is_assignee === true)) ||
     (roleCode === "client" &&
       user.clientId &&
       Number(project.client_id) === Number(user.clientId));
@@ -573,7 +584,18 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
 
     const fileResult = await client.query(
       `
-        select f.id, f.uploaded_by, f.project_id, p.client_id, p.assigned_architect_id, p.is_public
+        select
+          f.id,
+          f.uploaded_by,
+          f.project_id,
+          p.client_id,
+          p.assigned_architect_id,
+          p.is_public,
+          exists (
+            select 1 from public.project_assignees assignment
+            where assignment.project_id = p.id
+              and assignment.user_id = $3
+          ) as is_assignee
         from public.files f
         inner join public.projects p
           on p.id = f.project_id
@@ -584,7 +606,7 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
           and p.deleted_at is null
         limit 1
       `,
-      [fileId, projectId],
+      [fileId, projectId, user.id],
     );
     const file = fileResult.rows[0];
 
@@ -598,6 +620,7 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
       roleCode === "admin" ||
       (roleCode === "architect" &&
         (Number(file.assigned_architect_id) === Number(user.id) ||
+          file.is_assignee === true ||
           file.is_public === true)) ||
       (roleCode === "client" &&
         user.clientId &&
@@ -679,7 +702,11 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
     accessCondition = "true";
   } else if (roleCode === "architect") {
     params.push(user.id);
-    accessCondition = `(project.assigned_architect_id = $3 or (
+    accessCondition = `(project.assigned_architect_id = $3 or exists (
+      select 1 from public.project_assignees assignment
+      where assignment.project_id = project.id
+        and assignment.user_id = $3
+    ) or (
       project.is_public = true and (
         file.file_type like 'image/%' or
         file.file_type like 'video/%'

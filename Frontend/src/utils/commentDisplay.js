@@ -130,7 +130,11 @@ export function getCommentableProjectsForUser(projects = [], user) {
   if (roleCode === "admin") return projects;
   if (roleCode === "architect") {
     return projects.filter(
-      (project) => String(project?.assignedArchitect?.id || "") === String(user?.id || ""),
+      (project) =>
+        String(project?.assignedArchitect?.id || "") === String(user?.id || "") ||
+        (project?.assignees || project?.assignedArchitects)?.some(
+          (assignee) => String(assignee?.id || "") === String(user?.id || ""),
+        ),
     );
   }
   if (roleCode === "client") {

@@ -5,6 +5,232 @@ import {
   mapAdminDashboardRequest,
 } from "../utils/adminDashboardOverview.js";
 
+function mapAssignee(row = {}) {
+  return {
+    id: Number(row.id),
+    name: row.name || "Empleado",
+    roleCode: row.role_code || row.roleCode || null,
+    roleName: row.role_name || row.roleName || "Empleado",
+  };
+}
+
+function mapAssignmentResult(row = {}) {
+  return {
+    allEligible: Boolean(row.all_eligible),
+    assignees: Array.isArray(row.assignees)
+      ? row.assignees.map(mapAssignee)
+      : [],
+    targetExists: Boolean(row.target_exists),
+  };
+}
+
+export async function listAdminAssignees() {
+  const result = await query(`
+    select
+      user_account.id,
+      concat_ws(' ', user_account.first_name, user_account.last_name) as name,
+      role.code as role_code,
+      role.name as role_name
+    from public.users user_account
+    inner join public.roles role on role.id = user_account.role_id
+    where user_account.status = 'active'
+      and user_account.deleted_at is null
+      and role.is_active = true
+      and role.code in ('admin', 'architect')
+    order by user_account.first_name, user_account.last_name, user_account.id
+  `);
+
+  return result.rows.map(mapAssignee);
+}
+
+export async function replaceProjectAssignees({
+  assigneeIds,
+  assignedBy,
+  projectId,
+}) {
+  const result = await query(
+    `
+      with target as (
+        select id
+        from public.projects
+        where id = $1
+          and deleted_at is null
+      ),
+      requested as (
+        select distinct unnest($2::bigint[]) as user_id
+      ),
+      eligible as (
+        select
+          user_account.id,
+          concat_ws(' ', user_account.first_name, user_account.last_name) as name,
+          role.code as role_code,
+          role.name as role_name
+        from requested
+        inner join public.users user_account on user_account.id = requested.user_id
+        inner join public.roles role on role.id = user_account.role_id
+        where user_account.status = 'active'
+          and user_account.deleted_at is null
+          and role.is_active = true
+          and role.code in ('admin', 'architect')
+      ),
+      validation as (
+        select
+          (select count(*) from requested) = (select count(*) from eligible)
+            as all_eligible
+      ),
+      upserted as (
+        insert into public.project_assignees (
+          project_id,
+          user_id,
+          assigned_by
+        )
+        select target.id, eligible.id, $3
+        from target
+        cross join eligible
+        where (select all_eligible from validation)
+        on conflict (project_id, user_id) do update
+          set assigned_by = excluded.assigned_by
+        returning user_id
+      ),
+      removed as (
+        delete from public.project_assignees assignment
+        using target
+        where assignment.project_id = target.id
+          and (select all_eligible from validation)
+          and not (assignment.user_id = any($2::bigint[]))
+        returning assignment.user_id
+      ),
+      updated as (
+        update public.projects project
+        set
+          assigned_architect_id = (
+            select eligible.id
+            from eligible
+            where eligible.role_code = 'architect'
+            order by eligible.id
+            limit 1
+          ),
+          updated_at = now()
+        from target
+        where project.id = target.id
+          and (select all_eligible from validation)
+        returning project.id
+      )
+      select
+        exists(select 1 from target) as target_exists,
+        (select all_eligible from validation) as all_eligible,
+        coalesce(
+          (
+            select json_agg(
+              json_build_object(
+                'id', eligible.id,
+                'name', eligible.name,
+                'roleCode', eligible.role_code,
+                'roleName', eligible.role_name
+              )
+              order by eligible.name, eligible.id
+            )
+            from eligible
+          ),
+          '[]'::json
+        ) as assignees
+    `,
+    [projectId, assigneeIds, assignedBy],
+  );
+
+  return mapAssignmentResult(result.rows[0]);
+}
+
+export async function replaceProjectRequestAssignees({
+  assigneeIds,
+  assignedBy,
+  projectRequestId,
+}) {
+  const result = await query(
+    `
+      with target as (
+        select id
+        from public.project_requests
+        where id = $1
+          and deleted_at is null
+      ),
+      requested as (
+        select distinct unnest($2::bigint[]) as user_id
+      ),
+      eligible as (
+        select
+          user_account.id,
+          concat_ws(' ', user_account.first_name, user_account.last_name) as name,
+          role.code as role_code,
+          role.name as role_name
+        from requested
+        inner join public.users user_account on user_account.id = requested.user_id
+        inner join public.roles role on role.id = user_account.role_id
+        where user_account.status = 'active'
+          and user_account.deleted_at is null
+          and role.is_active = true
+          and role.code in ('admin', 'architect')
+      ),
+      validation as (
+        select
+          (select count(*) from requested) = (select count(*) from eligible)
+            as all_eligible
+      ),
+      upserted as (
+        insert into public.project_request_assignees (
+          project_request_id,
+          user_id,
+          assigned_by
+        )
+        select target.id, eligible.id, $3
+        from target
+        cross join eligible
+        where (select all_eligible from validation)
+        on conflict (project_request_id, user_id) do update
+          set assigned_by = excluded.assigned_by
+        returning user_id
+      ),
+      removed as (
+        delete from public.project_request_assignees assignment
+        using target
+        where assignment.project_request_id = target.id
+          and (select all_eligible from validation)
+          and not (assignment.user_id = any($2::bigint[]))
+        returning assignment.user_id
+      ),
+      updated as (
+        update public.project_requests request
+        set updated_at = now()
+        from target
+        where request.id = target.id
+          and (select all_eligible from validation)
+        returning request.id
+      )
+      select
+        exists(select 1 from target) as target_exists,
+        (select all_eligible from validation) as all_eligible,
+        coalesce(
+          (
+            select json_agg(
+              json_build_object(
+                'id', eligible.id,
+                'name', eligible.name,
+                'roleCode', eligible.role_code,
+                'roleName', eligible.role_name
+              )
+              order by eligible.name, eligible.id
+            )
+            from eligible
+          ),
+          '[]'::json
+        ) as assignees
+    `,
+    [projectRequestId, assigneeIds, assignedBy],
+  );
+
+  return mapAssignmentResult(result.rows[0]);
+}
+
 export async function getAdminDashboardMetrics() {
   const result = await query(`
     select
@@ -91,11 +317,33 @@ export async function getAdminDashboardOverview() {
       limit 3
     `),
     query(`
-      select id, project_name, project_type, status, created_at
-      from public.project_requests
-      where status in ('pending_verification', 'pending_review')
-        and deleted_at is null
-      order by created_at desc, id desc
+      select
+        request.id,
+        request.project_name,
+        request.project_type,
+        request.status,
+        request.created_at,
+        coalesce(assignment.assignees, '[]'::json) as assignees
+      from public.project_requests request
+      left join lateral (
+        select json_agg(
+          json_build_object(
+            'id', employee.id,
+            'name', concat_ws(' ', employee.first_name, employee.last_name),
+            'roleCode', role.code,
+            'roleName', role.name
+          )
+          order by employee.first_name, employee.last_name, employee.id
+        ) as assignees
+        from public.project_request_assignees request_assignment
+        inner join public.users employee on employee.id = request_assignment.user_id
+        inner join public.roles role on role.id = employee.role_id
+        where request_assignment.project_request_id = request.id
+          and employee.deleted_at is null
+      ) assignment on true
+      where request.status in ('pending_verification', 'pending_review')
+        and request.deleted_at is null
+      order by request.created_at desc, request.id desc
       limit 4
     `),
   ]);

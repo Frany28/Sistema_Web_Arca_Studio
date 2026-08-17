@@ -223,6 +223,27 @@ export const adminApi = {
   getDashboardOverview({ signal } = {}) {
     return apiRequest("/admin/dashboard-overview", { signal });
   },
+
+  listAssignees({ signal } = {}) {
+    return apiRequest("/admin/assignees", { signal });
+  },
+
+  updateProjectAssignees({ assigneeIds, projectId }) {
+    return apiRequest(`/admin/projects/${encodeURIComponent(projectId)}/assignees`, {
+      body: JSON.stringify({ assigneeIds }),
+      method: "PUT",
+    });
+  },
+
+  updateProjectRequestAssignees({ assigneeIds, projectRequestId }) {
+    return apiRequest(
+      `/admin/project-requests/${encodeURIComponent(projectRequestId)}/assignees`,
+      {
+        body: JSON.stringify({ assigneeIds }),
+        method: "PUT",
+      },
+    );
+  },
 };
 
 export const projectsApi = {

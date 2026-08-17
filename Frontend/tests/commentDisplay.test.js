@@ -23,6 +23,7 @@ const projects = [
     name: "Proyecto público",
     client: { id: 11 },
     assignedArchitect: { id: 21 },
+    assignedArchitects: [{ id: 21 }, { id: 22 }],
     isPublic: true,
   },
 ];
@@ -35,6 +36,10 @@ test("commentable projects follow participant roles and ignore public visibility
   assert.deepEqual(
     getCommentableProjectsForUser(projects, { role: "architect", id: 20 }).map(({ id }) => id),
     [1],
+  );
+  assert.deepEqual(
+    getCommentableProjectsForUser(projects, { role: "architect", id: 22 }).map(({ id }) => id),
+    [2],
   );
   assert.deepEqual(
     getCommentableProjectsForUser(projects, { role: "admin" }).map(({ id }) => id),

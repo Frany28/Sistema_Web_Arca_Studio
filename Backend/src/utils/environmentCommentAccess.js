@@ -20,7 +20,11 @@ export function getEnvironmentCommentAccess(
     ? [selfUserId]
     : [selfUserId, Number(user.clientId)];
   const viewerMembership = isArchitect
-    ? `${projectAlias}.assigned_architect_id = $1`
+    ? `(${projectAlias}.assigned_architect_id = $1 or exists (
+        select 1 from public.project_assignees viewer_assignment
+        where viewer_assignment.project_id = ${projectAlias}.id
+          and viewer_assignment.user_id = $1
+      ))`
     : `${projectAlias}.client_id = $2`;
 
   return {
@@ -34,7 +38,14 @@ export function getEnvironmentCommentAccess(
           and ${projectAlias}.status <> 'cancelled'::project_status
           and (${viewerMembership})
           and (
-            (${roleAlias}.code = 'architect' and ${projectAlias}.assigned_architect_id = ${userAlias}.id)
+            (${roleAlias}.code = 'architect' and (
+              ${projectAlias}.assigned_architect_id = ${userAlias}.id
+              or exists (
+                select 1 from public.project_assignees peer_assignment
+                where peer_assignment.project_id = ${projectAlias}.id
+                  and peer_assignment.user_id = ${userAlias}.id
+              )
+            ))
             or (
               ${roleAlias}.code = 'client'
               and ${userAlias}.client_id is not null

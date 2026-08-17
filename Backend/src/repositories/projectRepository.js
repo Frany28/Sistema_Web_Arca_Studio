@@ -6,8 +6,18 @@ function toNumber(value) {
 }
 
 function toProject(row) {
+  const assignedArchitects = Array.isArray(row.assigned_employees)
+    ? row.assigned_employees.map((assignee) => ({
+        id: Number(assignee.id),
+        name: assignee.name || "Empleado",
+        roleCode: assignee.roleCode || null,
+        roleName: assignee.roleName || "Empleado",
+      }))
+    : [];
+
   return {
     areaUnit: row.area_unit,
+    assignees: assignedArchitects,
     assignedArchitect: row.assigned_architect_id
       ? {
           hasProfilePhoto: Boolean(row.architect_has_profile_photo),
@@ -17,6 +27,7 @@ function toProject(row) {
           }`.trim(),
         }
       : null,
+    assignedArchitects,
     budget: toNumber(row.budget),
     city: row.city || null,
     client: {
@@ -105,7 +116,11 @@ function getProjectAccess(user, projectAlias = "p") {
     condition = "true";
   } else if (roleCode === "architect") {
     params.push(user.id);
-    condition = `(${projectAlias}.assigned_architect_id = $${params.length} or ${projectAlias}.is_public = true)`;
+    condition = `(${projectAlias}.assigned_architect_id = $${params.length} or exists (
+      select 1 from public.project_assignees assignment
+      where assignment.project_id = ${projectAlias}.id
+        and assignment.user_id = $${params.length}
+    ) or ${projectAlias}.is_public = true)`;
   } else if (roleCode === "client" && user.clientId) {
     params.push(user.clientId);
     condition = `(${projectAlias}.client_id = $${params.length} or ${projectAlias}.is_public = true)`;
@@ -120,7 +135,11 @@ function getDirectProjectAccess(user, projectAlias = "p") {
   if (roleCode === "admin") return { condition: "true", params: [] };
   if (roleCode === "architect") {
     return {
-      condition: `${projectAlias}.assigned_architect_id = $1`,
+      condition: `(${projectAlias}.assigned_architect_id = $1 or exists (
+        select 1 from public.project_assignees assignment
+        where assignment.project_id = ${projectAlias}.id
+          and assignment.user_id = $1
+      ))`,
       params: [user.id],
     };
   }
@@ -138,7 +157,13 @@ function hasDirectProjectAccess(project, user) {
   const roleCode = user?.role?.code;
   if (roleCode === "admin") return true;
   if (roleCode === "architect") {
-    return Number(project.assigned_architect_id) === Number(user.id);
+    return (
+      Number(project.assigned_architect_id) === Number(user.id) ||
+      (Array.isArray(project.assigned_employees) &&
+        project.assigned_employees.some(
+          (assignee) => Number(assignee.id) === Number(user.id),
+        ))
+    );
   }
   return Boolean(
     roleCode === "client" &&
@@ -219,11 +244,28 @@ export async function listProjectsForUser(
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
+        coalesce(employee_assignment.assignees, '[]'::json) as assigned_employees,
         image_version.file_id as image_file_id,
         image_version.version_id as image_file_version_id
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
+      left join lateral (
+        select json_agg(
+          json_build_object(
+            'id', employee.id,
+            'name', concat_ws(' ', employee.first_name, employee.last_name),
+            'roleCode', role.code,
+            'roleName', role.name
+          )
+          order by employee.first_name, employee.last_name, employee.id
+        ) as assignees
+        from public.project_assignees assignment
+        inner join public.users employee on employee.id = assignment.user_id
+        inner join public.roles role on role.id = employee.role_id
+        where assignment.project_id = p.id
+          and employee.deleted_at is null
+      ) employee_assignment on true
       left join lateral (
         select file.id as file_id, version.id as version_id
         from public.files file
@@ -297,11 +339,28 @@ async function findProjectDetailByConditionForUser({
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
+        coalesce(employee_assignment.assignees, '[]'::json) as assigned_employees,
         image_version.file_id as image_file_id,
         image_version.version_id as image_file_version_id
       from public.projects p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
+      left join lateral (
+        select json_agg(
+          json_build_object(
+            'id', employee.id,
+            'name', concat_ws(' ', employee.first_name, employee.last_name),
+            'roleCode', role.code,
+            'roleName', role.name
+          )
+          order by employee.first_name, employee.last_name, employee.id
+        ) as assignees
+        from public.project_assignees assignment
+        inner join public.users employee on employee.id = assignment.user_id
+        inner join public.roles role on role.id = employee.role_id
+        where assignment.project_id = p.id
+          and employee.deleted_at is null
+      ) employee_assignment on true
       left join lateral (
         select file.id as file_id, version.id as version_id
         from public.files file
@@ -560,11 +619,28 @@ export async function updateProjectVisibility(projectId, isPublic, user) {
         architect.first_name as architect_first_name,
         architect.last_name as architect_last_name,
         (architect.profile_photo_url is not null) as architect_has_profile_photo,
+        coalesce(employee_assignment.assignees, '[]'::json) as assigned_employees,
         image_version.file_id as image_file_id,
         image_version.version_id as image_file_version_id
       from updated_project p
       inner join public.clients c on c.id = p.client_id
       left join public.users architect on architect.id = p.assigned_architect_id
+      left join lateral (
+        select json_agg(
+          json_build_object(
+            'id', employee.id,
+            'name', concat_ws(' ', employee.first_name, employee.last_name),
+            'roleCode', role.code,
+            'roleName', role.name
+          )
+          order by employee.first_name, employee.last_name, employee.id
+        ) as assignees
+        from public.project_assignees assignment
+        inner join public.users employee on employee.id = assignment.user_id
+        inner join public.roles role on role.id = employee.role_id
+        where assignment.project_id = p.id
+          and employee.deleted_at is null
+      ) employee_assignment on true
       left join lateral (
         select file.id as file_id, version.id as version_id
         from public.files file

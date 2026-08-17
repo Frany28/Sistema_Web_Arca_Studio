@@ -1,8 +1,8 @@
-import { ArrowRight2, Eye, User } from "iconsax-react";
+import { ArrowRight2, Eye } from "iconsax-react";
 
+import AssigneeMultiSelect from "../../../components/ui/AssigneeMultiSelect/AssigneeMultiSelect.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import EmptyState from "../../../components/ui/EmptyState/EmptyState.jsx";
-import Input from "../../../components/ui/Input/Input.jsx";
 import Label from "../../../components/ui/Label/Label.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
 import Tag from "../../../components/ui/Tag/Tag.jsx";
@@ -66,10 +66,16 @@ function ActivityRow({ activity, isLast, onSelect }) {
   );
 }
 
-function RequestRow({ isLast, request }) {
+function RequestRow({
+  assignees,
+  assigneesLoading,
+  isLast,
+  onAssigneesChange,
+  request,
+}) {
   return (
     <div
-      className={`flex min-h-9 w-full items-center gap-[12px] ${
+      className={`flex min-h-9 w-full flex-wrap items-center gap-[12px] ${
         isLast
           ? ""
           : "border-b border-[var(--color-neutral-200)] pb-[16px]"
@@ -83,19 +89,14 @@ function RequestRow({ isLast, request }) {
           {getProjectTypeDisplay(request.projectType)}
         </span>
       </span>
-      <Input
-        type="Default input"
-        size="S"
-        value=""
+      <AssigneeMultiSelect
+        value={request.assignees || []}
+        options={assignees}
         placeholder="Asignar responsables..."
-        showLabel={false}
-        showHint={false}
-        showLeftIcon
-        showRightIcon={false}
-        leftIcon={<User size="20" variant="Linear" color="currentColor" />}
+        loading={assigneesLoading}
         className="w-full max-w-[252px]"
         aria-label={`Responsables de ${request.projectName}`}
-        readOnly
+        onChange={(nextAssignees) => onAssigneesChange?.(request, nextAssignees)}
       />
       <Button
         theme="Primary"
@@ -113,10 +114,13 @@ function RequestRow({ isLast, request }) {
 }
 
 function AdminDashboardOverview({
+  assignees = [],
+  assigneesLoading = false,
   error,
   loading,
   newRequests = [],
   onActivitySelect,
+  onRequestAssigneesChange,
   onRetry,
   recentActivity = [],
 }) {
@@ -177,7 +181,7 @@ function AdminDashboardOverview({
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-[16px] overflow-hidden py-[16px]">
+      <div className="flex min-w-0 flex-col gap-[16px] py-[16px]">
         <Label label="Nuevas solicitudes" required={false} information={false} />
         {error ? (
           <EmptyState
@@ -194,6 +198,9 @@ function AdminDashboardOverview({
                 key={request.id}
                 request={request}
                 isLast={index === newRequests.length - 1}
+                assignees={assignees}
+                assigneesLoading={assigneesLoading}
+                onAssigneesChange={onRequestAssigneesChange}
               />
             ))}
           </div>

@@ -29,7 +29,7 @@ import AdminDashboardOverview from "./components/AdminDashboardOverview.jsx";
 import AdminActiveProjects from "./components/AdminActiveProjects.jsx";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 
-const TABLET_BREAKPOINT_PX = 768;
+const WEB_BREAKPOINT_PX = 1280;
 
 function mergeNotificationComments(comments) {
   const commentsById = new Map();
@@ -45,12 +45,17 @@ function mergeNotificationComments(comments) {
 
 function toProjectRow(project, user) {
   const assigneeAvatar = getProjectAssigneeAvatar(project);
+  const isAssignedEmployee = (project.assignees || project.assignedArchitects || []).some(
+    (assignee) => Number(assignee.id) === Number(user?.id),
+  );
 
   return {
     ...project,
     assigneeAvatars: assigneeAvatar ? [assigneeAvatar] : [],
     editable:
-      user?.role === "admin" || project.assignedArchitect?.id === user?.id,
+      user?.role === "admin" ||
+      project.assignedArchitect?.id === user?.id ||
+      isAssignedEmployee,
     image: getProjectImageSource(project),
     title: project.name,
   };
@@ -60,7 +65,9 @@ function ArchitectDashboard({ empty = false }) {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() =>
+    typeof window === "undefined" ? true : window.innerWidth >= WEB_BREAKPOINT_PX,
+  );
   const [isNotificationsDrawerOpen, setIsNotificationsDrawerOpen] =
     useState(false);
   const [projects, setProjects] = useState([]);
@@ -78,6 +85,10 @@ function ArchitectDashboard({ empty = false }) {
     currentUser.roleCode === "admin",
   );
   const [adminOverviewRequestKey, setAdminOverviewRequestKey] = useState(0);
+  const [adminAssignees, setAdminAssignees] = useState([]);
+  const [adminAssigneesLoading, setAdminAssigneesLoading] = useState(
+    currentUser.roleCode === "admin",
+  );
   const canManagePublication =
     user?.permissionCodes?.includes("projects.publish");
 
@@ -294,8 +305,39 @@ function ArchitectDashboard({ empty = false }) {
   }, [adminOverviewRequestKey, currentUser.roleCode]);
 
   useEffect(() => {
+    if (currentUser.roleCode !== "admin") {
+      return undefined;
+    }
+
+    const abortController = new AbortController();
+    Promise.resolve()
+      .then(() => {
+        if (abortController.signal.aborted) return null;
+        setAdminAssigneesLoading(true);
+        return api.admin.listAssignees({ signal: abortController.signal });
+      })
+      .then((data) => {
+        if (data && !abortController.signal.aborted) {
+          setAdminAssignees(data.assignees || []);
+        }
+      })
+      .catch((error) => {
+        if (error?.name !== "AbortError") {
+          setAdminAssignees([]);
+        }
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) {
+          setAdminAssigneesLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
+  }, [currentUser.roleCode]);
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia(
-      `(max-width: ${TABLET_BREAKPOINT_PX - 1}px)`,
+      `(max-width: ${WEB_BREAKPOINT_PX - 1}px)`,
     );
 
     function syncSidebarForViewport(event) {
@@ -388,9 +430,45 @@ function ArchitectDashboard({ empty = false }) {
     );
   };
 
+  const handleProjectAssigneesChange = async (project, assignees) => {
+    const data = await api.admin.updateProjectAssignees({
+      assigneeIds: assignees.map((assignee) => Number(assignee.id)),
+      projectId: project.id,
+    });
+
+    setProjects((currentProjects) =>
+      currentProjects.map((currentProject) =>
+        currentProject.id === project.id
+          ? {
+              ...currentProject,
+              assignees: data.assignees || [],
+              assignedArchitect: data.assignees?.[0] || null,
+              assignedArchitects: data.assignees || [],
+            }
+          : currentProject,
+      ),
+    );
+  };
+
+  const handleRequestAssigneesChange = async (request, assignees) => {
+    const data = await api.admin.updateProjectRequestAssignees({
+      assigneeIds: assignees.map((assignee) => Number(assignee.id)),
+      projectRequestId: request.id,
+    });
+
+    setAdminOverview((currentOverview) => ({
+      ...currentOverview,
+      newRequests: (currentOverview?.newRequests || []).map((currentRequest) =>
+        currentRequest.id === request.id
+          ? { ...currentRequest, assignees: data.assignees || [] }
+          : currentRequest,
+      ),
+    }));
+  };
+
   return (
-    <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
-      <div className="flex min-h-screen w-full items-stretch">
+    <main className="h-screen overflow-hidden bg-[var(--color-neutral-bg)] transition-colors duration-200">
+      <div className="flex h-full min-h-0 w-full items-stretch">
         <SideNavigation
           activeItemId="dashboard"
           expanded={isSidebarExpanded}
@@ -399,7 +477,11 @@ function ArchitectDashboard({ empty = false }) {
           userName={currentUser.name}
           userEmail={currentUser.email}
           userAvatarSrc={currentUser.profilePhotoUrl}
-          onExpandedChange={setIsSidebarExpanded}
+          onExpandedChange={(nextExpanded) => {
+            if (window.innerWidth >= WEB_BREAKPOINT_PX) {
+              setIsSidebarExpanded(nextExpanded);
+            }
+          }}
           onItemSelect={handleSideNavigationSelect}
           onNewOpportunityClick={() =>
             navigate("/dashboard-arquitecto/nuevo-proyecto")
@@ -408,10 +490,10 @@ function ArchitectDashboard({ empty = false }) {
             logout();
             navigate("/");
           }}
-          className="min-h-screen shrink-0 self-stretch"
+          className="h-screen shrink-0 self-stretch"
         />
 
-        <div className="relative flex min-h-screen min-w-0 flex-1 flex-col self-stretch overflow-y-auto transition-[width] duration-300 ease-out">
+        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col self-stretch overflow-y-auto overflow-x-hidden transition-[width] duration-300 ease-out">
           <NavigationBar
             utilityActionActive={isNotificationsDrawerOpen}
             onUtilityActionClick={() =>
@@ -419,7 +501,7 @@ function ArchitectDashboard({ empty = false }) {
             }
           />
 
-          <div className="mx-auto flex w-full max-w-[1200px] px-[48px] py-[16px]">
+          <div className="mx-auto flex w-full max-w-[1200px] px-[16px] pb-[16px] sm:px-[24px] lg:px-[48px]">
             <p className="text-heading-6 w-full text-[var(--color-text-300)]">
               Bienvenido, {currentUser.shortName}
             </p>
@@ -444,6 +526,8 @@ function ArchitectDashboard({ empty = false }) {
                 onViewProjects={() => navigate("/proyectos")}
               />
               <AdminDashboardOverview
+                assignees={adminAssignees}
+                assigneesLoading={adminAssigneesLoading}
                 error={adminOverviewError}
                 loading={adminOverviewLoading}
                 newRequests={adminOverview?.newRequests}
@@ -458,15 +542,19 @@ function ArchitectDashboard({ empty = false }) {
                     navigate(getProjectPath(project));
                   }
                 }}
+                onRequestAssigneesChange={handleRequestAssigneesChange}
                 onRetry={() =>
                   setAdminOverviewRequestKey((current) => current + 1)
                 }
               />
               <AdminActiveProjects
+                assignees={adminAssignees}
+                assigneesLoading={adminAssigneesLoading}
                 error={projectsError}
                 loading={projectsLoading}
                 projects={projectRows}
                 onOpenProject={(project) => navigate(getProjectPath(project))}
+                onProjectAssigneesChange={handleProjectAssigneesChange}
               />
             </>
           ) : null}
@@ -480,13 +568,13 @@ function ArchitectDashboard({ empty = false }) {
               />
             </div>
           ) : currentUser.roleCode !== "admin" && projectsError ? (
-            <div className="mx-auto flex w-full max-w-[1200px] px-[48px] pb-[48px]">
+            <div className="mx-auto flex w-full max-w-[1200px] px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
               <p className="text-body-3 text-[var(--color-danger-100)]">
                 {projectsError}
               </p>
             </div>
           ) : currentUser.roleCode !== "admin" && (empty || !projectRows.length) ? (
-            <div className="mx-auto flex w-full max-w-[1200px] flex-1 items-center justify-center px-[48px] pb-[48px]">
+            <div className="mx-auto flex w-full max-w-[1200px] flex-1 items-center justify-center px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
               <EmptyState
                 title="Tu espacio de proyectos está listo"
                 description="Aquí podrás visualizar y dar seguimiento a tus proyectos."
@@ -500,7 +588,7 @@ function ArchitectDashboard({ empty = false }) {
               />
             </div>
           ) : currentUser.roleCode !== "admin" ? (
-            <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col gap-[48px] px-[48px] pb-[48px]">
+            <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col gap-[48px] px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]">
               {projectGroups.map((group) => (
                 <ArchitectProjectGroup
                   key={group.id}

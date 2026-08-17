@@ -15,6 +15,10 @@ const projects = [
     isPublic: true,
     client: { id: 10 },
     assignedArchitect: { id: 20, name: "Ana Pérez" },
+    assignedArchitects: [
+      { id: 20, name: "Ana Pérez" },
+      { id: 22, name: "Wilmer Salas" },
+    ],
     projectType: "residential",
     updatedAt: "2026-05-02T00:00:00.000Z",
   },
@@ -44,6 +48,12 @@ test("public gallery excludes projects owned by clients and architects", () => {
     [1],
   );
   assert.deepEqual(
+    getPublicGalleryProjects(projects, { role: "architect", id: 22 }).map(
+      (project) => project.id,
+    ),
+    [2],
+  );
+  assert.deepEqual(
     getPublicGalleryProjects(projects, { role: "admin" }).map(
       (project) => project.id,
     ),
@@ -54,6 +64,7 @@ test("public gallery excludes projects owned by clients and architects", () => {
 test("public gallery search ignores accents and includes type, year and architect", () => {
   assert.equal(normalizeProjectSearch("  BAÑO  "), "bano");
   assert.deepEqual(filterPublicProjects(projects, "Perez").map((item) => item.id), [1]);
+  assert.deepEqual(filterPublicProjects(projects, "Wilmer").map((item) => item.id), [1]);
   assert.deepEqual(filterPublicProjects(projects, "corporativo").map((item) => item.id), [2]);
   assert.deepEqual(filterPublicProjects(projects, "2026").map((item) => item.id), [1]);
 });
