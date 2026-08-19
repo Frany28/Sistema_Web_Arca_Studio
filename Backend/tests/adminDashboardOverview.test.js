@@ -48,14 +48,16 @@ test("admin dashboard requests expose every assigned employee", () => {
       ],
     }).assignees,
     [
-      {
-        id: 5,
+        {
+          hasProfilePhoto: false,
+          id: 5,
         name: "Armando Carroz",
         roleCode: "architect",
         roleName: "Arquitecto",
       },
-      {
-        id: 8,
+        {
+          hasProfilePhoto: false,
+          id: 8,
         name: "Wilmer Salas",
         roleCode: "architect",
         roleName: "Arquitecto",

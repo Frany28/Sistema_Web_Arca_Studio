@@ -18,3 +18,7 @@ export const projectRequestAssigneesSchema = z.object({
   params: z.object({ projectRequestId: positiveId }),
   body: z.object({ assigneeIds }),
 });
+
+export const adminAssigneePhotoSchema = z.object({
+  params: z.object({ userId: positiveId }),
+});

@@ -18,6 +18,7 @@ export function mapAdminDashboardRequest(row = {}) {
   return {
     assignees: Array.isArray(row.assignees)
       ? row.assignees.map((assignee) => ({
+          hasProfilePhoto: Boolean(assignee.hasProfilePhoto),
           id: toNumber(assignee.id),
           name: assignee.name || "Empleado",
           roleCode: assignee.roleCode || null,

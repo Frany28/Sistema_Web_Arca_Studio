@@ -5,6 +5,26 @@ import {
   loadAdminDashboardOverview,
   loadAdminAssignees,
 } from "../services/adminDashboardService.js";
+import { getAdminAssigneeProfilePhoto } from "../services/profilePhotoService.js";
+
+export async function streamAdminAssigneeProfilePhoto(req, res, next) {
+  try {
+    const photo = await getAdminAssigneeProfilePhoto({
+      userId: req.params.userId,
+    });
+
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Content-Type", photo.contentType);
+    res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+    if (photo.contentLength !== undefined) {
+      res.setHeader("Content-Length", String(photo.contentLength));
+    }
+    photo.body.on?.("error", next);
+    photo.body.pipe(res.status(200));
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function getAdminAssignees(_req, res, next) {
   try {

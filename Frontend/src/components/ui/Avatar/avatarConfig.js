@@ -8,6 +8,10 @@ export const AVATAR_DEFAULT_PROPS = {
 };
 
 export const AVATAR_SIZE_STYLES = {
+  XS: {
+    container: "size-[16px]",
+    text: "text-[9px] leading-[10px]",
+  },
   S: {
     container: "size-[24px]",
     text: "text-body-4",

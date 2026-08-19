@@ -215,6 +215,21 @@ export const authApi = {
   },
 };
 
+function withAdminAssigneeAvatars(payload) {
+  const assignees = Array.isArray(payload?.assignees)
+    ? payload.assignees.map((assignee) => ({
+        ...assignee,
+        profilePhotoUrl: assignee.hasProfilePhoto
+          ? getApiUrl(
+              `/admin/assignees/${encodeURIComponent(assignee.id)}/profile-photo`,
+            )
+          : "",
+      }))
+    : [];
+
+  return { ...payload, assignees };
+}
+
 export const adminApi = {
   getDashboardMetrics({ signal } = {}) {
     return apiRequest("/admin/dashboard-metrics", { signal });
@@ -224,25 +239,28 @@ export const adminApi = {
     return apiRequest("/admin/dashboard-overview", { signal });
   },
 
-  listAssignees({ signal } = {}) {
-    return apiRequest("/admin/assignees", { signal });
+  async listAssignees({ signal } = {}) {
+    const payload = await apiRequest("/admin/assignees", { signal });
+    return withAdminAssigneeAvatars(payload);
   },
 
-  updateProjectAssignees({ assigneeIds, projectId }) {
-    return apiRequest(`/admin/projects/${encodeURIComponent(projectId)}/assignees`, {
+  async updateProjectAssignees({ assigneeIds, projectId }) {
+    const payload = await apiRequest(`/admin/projects/${encodeURIComponent(projectId)}/assignees`, {
       body: JSON.stringify({ assigneeIds }),
       method: "PUT",
     });
+    return withAdminAssigneeAvatars(payload);
   },
 
-  updateProjectRequestAssignees({ assigneeIds, projectRequestId }) {
-    return apiRequest(
+  async updateProjectRequestAssignees({ assigneeIds, projectRequestId }) {
+    const payload = await apiRequest(
       `/admin/project-requests/${encodeURIComponent(projectRequestId)}/assignees`,
       {
         body: JSON.stringify({ assigneeIds }),
         method: "PUT",
       },
     );
+    return withAdminAssigneeAvatars(payload);
   },
 };
 

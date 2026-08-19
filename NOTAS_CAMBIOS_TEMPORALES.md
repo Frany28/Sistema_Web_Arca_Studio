@@ -1,14 +1,5 @@
 # Cambios temporales para pruebas
 
-## Catalogo publico de Input Tags
-
-La ruta `/componentes/input-tags` expone temporalmente en localhost y en los
-despliegues de staging/demo una matriz visual y un ejemplo interactivo del
-componente `Input` con `type="Tags"`.
-
-Esta ruta no requiere autenticacion para facilitar la comparacion con Figma.
-Debe eliminarse del router antes de declarar un despliegue como produccion.
-
 ## Rutas publicas sin autenticacion
 
 Se desactivo temporalmente la proteccion de rutas para hacer pruebas sin login.

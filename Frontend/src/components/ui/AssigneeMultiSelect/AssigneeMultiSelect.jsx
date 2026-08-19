@@ -69,13 +69,19 @@ function AssigneeMultiSelect({
   const peopleById = useMemo(
     () =>
       new Map(
-        [...options, ...value].map((person) => [String(person.id), person]),
+        [...value, ...options].map((person) => [String(person.id), person]),
       ),
     [options, value],
   );
   const selectedTags = useMemo(
-    () => value.map((person) => toTag(person, showTagAvatars)),
-    [showTagAvatars, value],
+    () =>
+      value.map((person) =>
+        toTag(
+          { ...peopleById.get(String(person.id)), ...person },
+          showTagAvatars,
+        ),
+      ),
+    [peopleById, showTagAvatars, value],
   );
   const optionTags = useMemo(
     () => visibleOptions.map((person) => toTag(person, showTagAvatars)),

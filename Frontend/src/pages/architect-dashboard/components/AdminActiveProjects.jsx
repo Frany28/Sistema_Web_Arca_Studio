@@ -359,7 +359,7 @@ function AdminActiveProjects({
                       </div>
                     </td>
                     <td className="px-[24px] py-[16px]">
-                      <AssigneeMultiSelect value={assignees} options={employeeOptions} loading={assigneesLoading} showTagAvatars={false} className="w-[252px]" aria-label={`Responsables de ${projectName}`} onChange={(nextAssignees) => onProjectAssigneesChange?.(project, nextAssignees)} />
+                      <AssigneeMultiSelect value={assignees} options={employeeOptions} loading={assigneesLoading} className="w-[252px]" aria-label={`Responsables de ${projectName}`} onChange={(nextAssignees) => onProjectAssigneesChange?.(project, nextAssignees)} />
                     </td>
                     <td className="px-[24px] py-[16px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
                     <td className="px-[24px] py-[16px]"><Badge label={`${progress}%`} theme="Neutral" variation="Simple" size="S" /></td>

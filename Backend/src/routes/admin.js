@@ -6,6 +6,7 @@ import {
   getDashboardOverview,
   updateProjectAssignees,
   updateProjectRequestAssignees,
+  streamAdminAssigneeProfilePhoto,
 } from "../controllers/adminDashboardController.js";
 import {
   getPermissions,
@@ -17,6 +18,7 @@ import {
 import { requireAuth, requireRoles } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import {
+  adminAssigneePhotoSchema,
   projectAssigneesSchema,
   projectRequestAssigneesSchema,
 } from "../validation/adminDashboardSchemas.js";
@@ -28,6 +30,11 @@ router.use(requireAuth, requireRoles("admin"));
 router.get("/dashboard-metrics", getDashboardMetrics);
 router.get("/dashboard-overview", getDashboardOverview);
 router.get("/assignees", getAdminAssignees);
+router.get(
+  "/assignees/:userId/profile-photo",
+  validate(adminAssigneePhotoSchema),
+  streamAdminAssigneeProfilePhoto,
+);
 router.put(
   "/projects/:projectId/assignees",
   validate(projectAssigneesSchema),

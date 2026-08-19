@@ -7,6 +7,7 @@ import {
 
 function mapAssignee(row = {}) {
   return {
+    hasProfilePhoto: Boolean(row.has_profile_photo ?? row.hasProfilePhoto),
     id: Number(row.id),
     name: row.name || "Empleado",
     roleCode: row.role_code || row.roleCode || null,
@@ -29,6 +30,7 @@ export async function listAdminAssignees() {
     select
       user_account.id,
       concat_ws(' ', user_account.first_name, user_account.last_name) as name,
+      (user_account.profile_photo_url is not null and btrim(user_account.profile_photo_url) <> '') as has_profile_photo,
       role.code as role_code,
       role.name as role_name
     from public.users user_account
@@ -41,6 +43,25 @@ export async function listAdminAssignees() {
   `);
 
   return result.rows.map(mapAssignee);
+}
+
+export async function findAdminAssigneeProfilePhoto(userId) {
+  const result = await query(
+    `
+      select user_account.profile_photo_url
+      from public.users user_account
+      inner join public.roles role on role.id = user_account.role_id
+      where user_account.id = $1
+        and user_account.status = 'active'
+        and user_account.deleted_at is null
+        and role.is_active = true
+        and role.code in ('admin', 'architect')
+      limit 1
+    `,
+    [userId],
+  );
+
+  return result.rows[0]?.profile_photo_url || null;
 }
 
 export async function replaceProjectAssignees({
@@ -63,6 +84,7 @@ export async function replaceProjectAssignees({
         select
           user_account.id,
           concat_ws(' ', user_account.first_name, user_account.last_name) as name,
+          (user_account.profile_photo_url is not null and btrim(user_account.profile_photo_url) <> '') as has_profile_photo,
           role.code as role_code,
           role.name as role_name
         from requested
@@ -125,6 +147,7 @@ export async function replaceProjectAssignees({
               json_build_object(
                 'id', eligible.id,
                 'name', eligible.name,
+                'hasProfilePhoto', eligible.has_profile_photo,
                 'roleCode', eligible.role_code,
                 'roleName', eligible.role_name
               )
@@ -161,6 +184,7 @@ export async function replaceProjectRequestAssignees({
         select
           user_account.id,
           concat_ws(' ', user_account.first_name, user_account.last_name) as name,
+          (user_account.profile_photo_url is not null and btrim(user_account.profile_photo_url) <> '') as has_profile_photo,
           role.code as role_code,
           role.name as role_name
         from requested
@@ -215,6 +239,7 @@ export async function replaceProjectRequestAssignees({
               json_build_object(
                 'id', eligible.id,
                 'name', eligible.name,
+                'hasProfilePhoto', eligible.has_profile_photo,
                 'roleCode', eligible.role_code,
                 'roleName', eligible.role_name
               )
@@ -330,6 +355,7 @@ export async function getAdminDashboardOverview() {
           json_build_object(
             'id', employee.id,
             'name', concat_ws(' ', employee.first_name, employee.last_name),
+            'hasProfilePhoto', (employee.profile_photo_url is not null and btrim(employee.profile_photo_url) <> ''),
             'roleCode', role.code,
             'roleName', role.name
           )
