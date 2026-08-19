@@ -27,6 +27,7 @@ test("tag input exposes accessible state, keyboard behavior and Figma hint rules
   assert.match(inputSource, /normalizeTagSearchText/);
   assert.match(inputSource, /onMouseDown=\{\(event\) => event\.preventDefault\(\)\}/);
   assert.match(inputSource, /requestAnimationFrame\(\(\) => resolvedInputRef\.current\?\.focus\(\)\)/);
+  assert.match(inputSource, /tagFieldScrollRef\.current\?\.scrollTo\(\{ left: 0 \}\)/);
 });
 
 test("tag avatars support real images with fallback initials", async () => {

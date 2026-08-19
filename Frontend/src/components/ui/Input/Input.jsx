@@ -417,6 +417,7 @@ function Input({
     normalizeDialCode(countryPrefix || phoneOptions[0]?.dialCode),
   );
   const phoneMenuRef = useRef(null);
+  const tagFieldScrollRef = useRef(null);
 
   const resolvedSize = INPUT_SIZE_STYLES[size] ? size : "S";
   const resolvedType = INPUT_TYPES[type] ? type : "Default input";
@@ -430,6 +431,9 @@ function Input({
   const visibleTags =
     resolvedType === "Tags" && tagsAreControlled ? tags : selectedTags;
   const normalizedVisibleTags = Array.isArray(visibleTags) ? visibleTags : [];
+  const visibleTagIds = normalizedVisibleTags
+    .map((tag, index) => String(tag.id ?? `${tag.label}-${index}`))
+    .join("|");
   const selectedTagIds = new Set(
     normalizedVisibleTags.map((tag) => String(tag.id)),
   );
@@ -622,6 +626,18 @@ function Input({
     .join(" ") || undefined;
   const resolvedAriaInvalid =
     ariaInvalid ?? (resolvedState === "Error" ? true : undefined);
+
+  useEffect(() => {
+    if (resolvedType !== "Tags" || !tagFieldScrollRef.current) {
+      return undefined;
+    }
+
+    const frameId = requestAnimationFrame(() => {
+      tagFieldScrollRef.current?.scrollTo({ left: 0 });
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [resolvedType, visibleTagIds]);
 
   const handleTagSelection = () => {
     const nextTag =
@@ -959,6 +975,7 @@ function Input({
           ) : null}
 
           <div
+            ref={resolvedType === "Tags" ? tagFieldScrollRef : undefined}
             className={clsx(
               "flex min-w-0 flex-1 items-center gap-[4px]",
               resolvedType === "Tags"
