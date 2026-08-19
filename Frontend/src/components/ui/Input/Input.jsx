@@ -455,7 +455,8 @@ function Input({
   const showTags = resolvedType === "Tags" && normalizedVisibleTags.length > 0;
   const showTagsInsideField =
     resolvedType === "Tags" &&
-    ["Filled", "Error"].includes(resolvedState) &&
+    (["Filled", "Error"].includes(resolvedState) ||
+      (baseState === "Default" && isFocused)) &&
     showTags;
   const resolvedPhoneOption = selectedPhoneOption ?? phoneOptions[0];
   const normalizedPhonePrefix = normalizeDialCode(phonePrefixValue);
@@ -582,10 +583,17 @@ function Input({
 
     return String(option.label ?? "").trim().toLowerCase().includes(query);
   });
-  const showTagsBelowField =
+  const showSelectedTagsBelow =
     resolvedType === "Tags" &&
     resolvedState === "Focused" &&
-    (showTags || (showTagOptionsOnFocus && filteredSelectableTags.length > 0));
+    showTags &&
+    !showTagsInsideField;
+  const showTagsBelowField =
+    showSelectedTagsBelow ||
+    (resolvedType === "Tags" &&
+      resolvedState === "Focused" &&
+      showTagOptionsOnFocus &&
+      filteredSelectableTags.length > 0);
   const showResolvedHint =
     showHint && !(resolvedType === "Tags" && resolvedState === "Focused");
   const resolvedAriaDescribedBy = [
@@ -1073,21 +1081,23 @@ function Input({
             tagGroupAriaLabel ?? `${label}: opciones y elementos seleccionados`
           }
         >
-          {normalizedVisibleTags.map((tag, index) => (
-            <Tag
-              key={tag.id ?? `${tag.label}-${index}`}
-              size={sizing.tagSize}
-              label={tag.label}
-              avatar={tag.avatar ?? true}
-              avatarText={tag.avatarText ?? "A"}
-              avatarSrc={tag.avatarSrc ?? ""}
-              closeIcon={tag.closeIcon ?? true}
-              count={false}
-              disabled={disabled}
-              onMouseDown={(event) => event.preventDefault()}
-              onRemove={() => handleRemoveTag(tag.id)}
-            />
-          ))}
+          {showSelectedTagsBelow
+            ? normalizedVisibleTags.map((tag, index) => (
+                <Tag
+                  key={tag.id ?? `${tag.label}-${index}`}
+                  size={sizing.tagSize}
+                  label={tag.label}
+                  avatar={tag.avatar ?? true}
+                  avatarText={tag.avatarText ?? "A"}
+                  avatarSrc={tag.avatarSrc ?? ""}
+                  closeIcon={tag.closeIcon ?? true}
+                  count={false}
+                  disabled={disabled}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onRemove={() => handleRemoveTag(tag.id)}
+                />
+              ))
+            : null}
           {showTagOptionsOnFocus
             ? filteredSelectableTags.map((tag, index) => (
                 <Tag

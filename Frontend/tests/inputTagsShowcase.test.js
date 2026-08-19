@@ -36,6 +36,8 @@ test("tag input exposes accessible state, keyboard behavior and Figma hint rules
   assert.match(inputSource, /avatarSrc=\{tag\.avatarSrc \?\? ""\}/);
   assert.match(inputSource, /handleTagOptionSelection/);
   assert.match(inputSource, /closeIcon=\{false\}/);
+  assert.match(inputSource, /baseState === "Default" && isFocused/);
+  assert.match(inputSource, /showSelectedTagsBelow/);
 });
 
 test("tag avatars support real images with fallback initials", async () => {
