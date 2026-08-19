@@ -37,6 +37,7 @@ const EmptyProjectsExample = lazy(
 const Requests = lazy(() => import("./pages/Home.jsx"));
 const Home = lazy(() => import("./pages/Home.jsx"));
 const InactiveAccount = lazy(() => import("./pages/InactiveAccount.jsx"));
+const InputTagsShowcase = lazy(() => import("./pages/InputTagsShowcase.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
 const NewArchitectProjectPage = lazy(
   () => import("./pages/architect-dashboard/NewArchitectProjectPage.jsx"),
@@ -62,6 +63,8 @@ createRoot(document.getElementById("root")).render(
           <ThemeSync />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
+            <Route path="/componentes/input-tags" element={<InputTagsShowcase />} />
+
             <Route element={<PublicOnlyRoute />}>
               <Route path="/" element={<Login />} />
               <Route path="/crear-cuenta" element={<CreateAccount />} />

@@ -11,6 +11,7 @@ export const TAG_DEFAULT_PROPS = {
   countValue: "5",
   countryCode: "IN",
   avatarText: "A",
+  avatarSrc: "",
 };
 
 export const TAG_SIZE_STYLES = {

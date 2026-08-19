@@ -1,3 +1,4 @@
+import { useState } from "react";
 import clsx from "clsx";
 import Flag from "../../Flag.jsx";
 import {
@@ -39,16 +40,29 @@ function DotIndicator() {
   );
 }
 
-function Avatar({ className, text = "A" }) {
+function Avatar({ className, src = "", text = "A" }) {
+  const [failedSrc, setFailedSrc] = useState("");
+  const showImage = Boolean(src) && failedSrc !== src;
+
   return (
     <span
       className={clsx(
-        "inline-flex items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffe0cf_0%,#a86a4e_40%,#5b3b31_100%)] text-[10px] font-medium text-white",
+        "inline-flex items-center justify-center overflow-hidden rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffe0cf_0%,#a86a4e_40%,#5b3b31_100%)] text-[10px] font-medium text-white",
         className,
       )}
       aria-hidden="true"
     >
-      {text}
+      {showImage ? (
+        <img
+          src={src}
+          alt=""
+          className="size-full object-cover"
+          aria-hidden="true"
+          onError={() => setFailedSrc(src)}
+        />
+      ) : (
+        text
+      )}
     </span>
   );
 }
@@ -79,6 +93,7 @@ function Tag({
   countValue = "5",
   countryCode = "IN",
   avatarText = "A",
+  avatarSrc = "",
   selected = false,
   interactive = false,
   disabled = false,
@@ -128,7 +143,9 @@ function Tag({
     >
       {checkbox ? <Checkbox className={sizing.checkbox} /> : null}
       {flag ? <Flag countryCode={countryCode} size={resolvedSize === "L" ? "20px" : "16px"} title={countryCode} /> : null}
-      {avatar ? <Avatar className={sizing.avatar} text={avatarText} /> : null}
+      {avatar ? (
+        <Avatar className={sizing.avatar} src={avatarSrc} text={avatarText} />
+      ) : null}
       {dotIndicator ? <DotIndicator /> : null}
       <span className={clsx("inline-flex items-center whitespace-nowrap text-[var(--color-text-300)]", sizing.text)}>
         {label}

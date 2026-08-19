@@ -350,7 +350,7 @@ function Input({
   countryCode = "US",
   countryPrefix = "+1",
   phoneOptions = PHONE_COUNTRY_OPTIONS,
-  tags = INPUT_TAG_DEFAULT_ITEMS,
+  tags = [],
   tagOptions = INPUT_TAG_DEFAULT_ITEMS,
   tagGroupAriaLabel,
   showTagOptionsOnFocus = false,
@@ -363,16 +363,21 @@ function Input({
   onChange,
   onFocus,
   onBlur,
+  onKeyDown,
   onTagsChange,
   onTagOptionSelect,
   onClickRightIcon,
   inputRef,
   inputClassName,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
   style,
   ...props
 }) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
+  const hintId = `${inputId}-hint`;
+  const tagGroupId = `${inputId}-tags`;
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -581,6 +586,16 @@ function Input({
     resolvedType === "Tags" &&
     resolvedState === "Focused" &&
     (showTags || (showTagOptionsOnFocus && filteredSelectableTags.length > 0));
+  const showResolvedHint =
+    showHint && !(resolvedType === "Tags" && resolvedState === "Focused");
+  const resolvedAriaDescribedBy = [
+    ariaDescribedBy,
+    showResolvedHint ? hintId : null,
+  ]
+    .filter(Boolean)
+    .join(" ") || undefined;
+  const resolvedAriaInvalid =
+    ariaInvalid ?? (resolvedState === "Error" ? true : undefined);
 
   const handleTagSelection = () => {
     const nextTag =
@@ -599,10 +614,12 @@ function Input({
     }
 
     const exists = normalizedVisibleTags.some((tag) => {
-      const currentId = tag.id ?? "";
-      const nextId = nextTag.id ?? "";
+      const currentId = String(tag.id ?? "");
+      const nextId = String(nextTag.id ?? "");
+      const currentLabel = String(tag.label ?? "").trim().toLowerCase();
+      const nextLabel = String(nextTag.label ?? "").trim().toLowerCase();
 
-      return currentId === nextId || tag.label === nextTag.label;
+      return currentId === nextId || currentLabel === nextLabel;
     });
 
     if (exists) {
@@ -632,6 +649,31 @@ function Input({
     onTagsChange?.(nextTags);
   };
 
+  const handleInputKeyDown = (event) => {
+    if (resolvedType === "Tags") {
+      if (
+        (event.key === "Enter" || event.key === ",") &&
+        hasTextValue(currentValue)
+      ) {
+        event.preventDefault();
+        handleTagSelection();
+      } else if (
+        event.key === "Backspace" &&
+        !hasTextValue(currentValue) &&
+        normalizedVisibleTags.length > 0
+      ) {
+        event.preventDefault();
+        handleRemoveTag(
+          normalizedVisibleTags[normalizedVisibleTags.length - 1].id,
+        );
+      }
+    }
+
+    if (!event.defaultPrevented) {
+      onKeyDown?.(event);
+    }
+  };
+
   const content = (
     <div
       className={clsx(
@@ -642,6 +684,7 @@ function Input({
         stateStyles.shell,
         baseState === "Default" && !disabled && INPUT_INTERACTIVE_STYLES,
       )}
+      data-state={resolvedState.toLowerCase()}
       onMouseEnter={() => {
         if (!disabled && baseState === "Default") {
           setIsHovered(true);
@@ -799,6 +842,8 @@ function Input({
               disabled={disabled}
               value={fieldValue}
               placeholder={resolvedPlaceholder}
+              aria-describedby={resolvedAriaDescribedBy}
+              aria-invalid={resolvedAriaInvalid}
               className={clsx(
                 "text-body-3 min-w-0 flex-1 border-0 bg-transparent tracking-[-0.5px] outline-none",
                 disabled ? "cursor-not-allowed" : "cursor-text",
@@ -880,6 +925,7 @@ function Input({
                     label={tag.label}
                     avatar={tag.avatar ?? true}
                     avatarText={tag.avatarText ?? "A"}
+                    avatarSrc={tag.avatarSrc ?? ""}
                     closeIcon={tag.closeIcon ?? true}
                     count={false}
                     className="max-w-full"
@@ -896,6 +942,8 @@ function Input({
               disabled={disabled}
               value={fieldValue}
               placeholder={showTagsInsideField ? "" : resolvedPlaceholder}
+              aria-describedby={resolvedAriaDescribedBy}
+              aria-invalid={resolvedAriaInvalid}
               className={clsx(
                 "text-body-3 min-w-0 flex-1 border-0 bg-transparent tracking-[-0.5px] outline-none",
                 showTagsInsideField && "min-w-[48px]",
@@ -912,28 +960,7 @@ function Input({
                 setIsFocused(false);
                 onBlur?.(event);
               }}
-              onKeyDown={(event) => {
-                if (resolvedType !== "Tags") {
-                  return;
-                }
-
-                if ((event.key === "Enter" || event.key === ",") && hasTextValue(currentValue)) {
-                  event.preventDefault();
-                  handleTagSelection();
-                  return;
-                }
-
-                if (
-                  event.key === "Backspace" &&
-                  !hasTextValue(currentValue) &&
-                  normalizedVisibleTags.length > 0
-                ) {
-                  event.preventDefault();
-                  handleRemoveTag(
-                    normalizedVisibleTags[normalizedVisibleTags.length - 1].id,
-                  );
-                }
-              }}
+              onKeyDown={handleInputKeyDown}
               onChange={handleChange}
               {...props}
             />
@@ -981,6 +1008,7 @@ function Input({
         className,
       )}
       style={style}
+      data-state={resolvedState.toLowerCase()}
     >
       {showLabel ? (
         <Label
@@ -994,11 +1022,13 @@ function Input({
 
       {content}
 
-      {showHint ? (
+      {showResolvedHint ? (
         <HintText
+          id={hintId}
           state={stateStyles.hintState}
           hintText={hintText}
           className="w-full"
+          role={resolvedState === "Error" ? "alert" : undefined}
         />
       ) : null}
 
@@ -1015,6 +1045,7 @@ function Input({
 
       {showTagsBelowField ? (
         <div
+          id={tagGroupId}
           className="flex h-[22px] w-full flex-nowrap items-center gap-[4px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           role="group"
           aria-label={
@@ -1028,6 +1059,7 @@ function Input({
               label={tag.label}
               avatar={tag.avatar ?? true}
               avatarText={tag.avatarText ?? "A"}
+              avatarSrc={tag.avatarSrc ?? ""}
               closeIcon={tag.closeIcon ?? true}
               count={false}
               disabled={disabled}
@@ -1043,6 +1075,7 @@ function Input({
                   label={tag.label}
                   avatar={tag.avatar ?? true}
                   avatarText={tag.avatarText ?? "A"}
+                  avatarSrc={tag.avatarSrc ?? ""}
                   closeIcon={tag.closeIcon ?? true}
                   count={false}
                   disabled={disabled}

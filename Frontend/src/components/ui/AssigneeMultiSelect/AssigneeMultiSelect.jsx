@@ -26,6 +26,9 @@ function toTag(person, showAvatar) {
     label: person.name,
     avatar: showAvatar,
     avatarText: getInitials(person.name) || "E",
+    avatarSrc: showAvatar
+      ? person.profilePhotoUrl || person.avatarUrl || person.photo || ""
+      : "",
     closeIcon: true,
   };
 }

@@ -198,3 +198,34 @@ export const inputTypeStateItems = [
     defaultValue: "(444) 1234-5678",
   }),
 ];
+
+export const inputTagShowcaseSizes = ["S", "M", "L"];
+
+export const inputTagShowcaseStates = [
+  "Default",
+  "Hover",
+  "Focused",
+  "Filled",
+  "Disabled",
+  "Error",
+];
+
+export function createInputTagShowcaseMatrix(tags = []) {
+  return inputTagShowcaseSizes.flatMap((size) =>
+    inputTagShowcaseStates.map((state) => ({
+      id: `tags-${size.toLowerCase()}-${state.toLowerCase()}`,
+      size,
+      state,
+      props: createInputProps({
+        type: "Tags",
+        size,
+        state,
+        disabled: state === "Disabled",
+        defaultValue: "",
+        tags: ["Focused", "Filled", "Error"].includes(state) ? tags : [],
+        tagOptions: [],
+        showTagOptionsOnFocus: false,
+      }),
+    })),
+  );
+}
