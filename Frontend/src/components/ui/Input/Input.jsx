@@ -649,6 +649,27 @@ function Input({
     onTagsChange?.(nextTags);
   };
 
+  const handleTagOptionSelection = (tag) => {
+    if (disabled) {
+      return;
+    }
+
+    if (onTagOptionSelect) {
+      onTagOptionSelect(tag);
+      return;
+    }
+
+    const nextTags = [...normalizedVisibleTags, tag];
+    if (!tagsAreControlled) {
+      setSelectedTags(nextTags);
+    }
+    onTagsChange?.(nextTags);
+
+    if (!isControlled) {
+      setInternalValue("");
+    }
+  };
+
   const handleInputKeyDown = (event) => {
     if (resolvedType === "Tags") {
       if (
@@ -1076,12 +1097,12 @@ function Input({
                   avatar={tag.avatar ?? true}
                   avatarText={tag.avatarText ?? "A"}
                   avatarSrc={tag.avatarSrc ?? ""}
-                  closeIcon={tag.closeIcon ?? true}
+                  closeIcon={false}
                   count={false}
                   disabled={disabled}
                   interactive
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => onTagOptionSelect?.(tag)}
+                  onClick={() => handleTagOptionSelection(tag)}
                 />
               ))
             : null}

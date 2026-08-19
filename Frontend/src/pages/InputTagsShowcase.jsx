@@ -60,12 +60,6 @@ function InputTagsShowcase() {
     setQuery("");
   };
 
-  const handleOptionSelect = (tag) => {
-    if (selectedTags.some((selectedTag) => selectedTag.id === tag.id)) return;
-    setSelectedTags((current) => [...current, tag]);
-    setQuery("");
-  };
-
   return (
     <main className="min-h-screen overflow-x-hidden bg-[var(--color-neutral-bg)] px-[16px] py-[32px] text-[var(--color-text-300)] sm:px-[32px] lg:px-[48px]">
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-[40px]">
@@ -126,7 +120,6 @@ function InputTagsShowcase() {
                 onBlur={() => setFocused(false)}
                 onChange={(event) => setQuery(event.target.value)}
                 onTagsChange={handleTagsChange}
-                onTagOptionSelect={handleOptionSelect}
               />
             </div>
 
@@ -182,6 +175,11 @@ function InputTagsShowcase() {
               <p className="text-body-3 max-w-[620px] text-[var(--color-text-100)]">
                 También puedes escribir y confirmar con Enter o coma, eliminar la
                 última etiqueta con Backspace y recorrer todos los controles con teclado.
+              </p>
+              <p className="text-body-3 text-[var(--color-text-200)]" aria-live="polite">
+                {selectedTags.length === 0
+                  ? "Ninguna persona seleccionada."
+                  : `${selectedTags.length} ${selectedTags.length === 1 ? "persona seleccionada" : "personas seleccionadas"}.`}
               </p>
             </div>
           </div>

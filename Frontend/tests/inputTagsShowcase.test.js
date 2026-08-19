@@ -34,6 +34,8 @@ test("tag input exposes accessible state, keyboard behavior and Figma hint rules
   assert.match(inputSource, /onKeyDown=\{handleInputKeyDown\}/);
   assert.match(inputSource, /currentLabel === nextLabel/);
   assert.match(inputSource, /avatarSrc=\{tag\.avatarSrc \?\? ""\}/);
+  assert.match(inputSource, /handleTagOptionSelection/);
+  assert.match(inputSource, /closeIcon=\{false\}/);
 });
 
 test("tag avatars support real images with fallback initials", async () => {
@@ -59,5 +61,6 @@ test("public staging route renders the interactive example and the 18-state matr
   assert.match(pageSource, /createInputTagShowcaseMatrix\(FIGMA_TAGS\)/);
   assert.match(pageSource, /showTagOptionsOnFocus/);
   assert.match(pageSource, /onTagsChange=\{handleTagsChange\}/);
+  assert.doesNotMatch(pageSource, /onTagOptionSelect=\{handleOptionSelect\}/);
   assert.match(pageSource, /md:grid-cols-2 xl:grid-cols-3/);
 });
