@@ -16,7 +16,7 @@ export const TAG_DEFAULT_PROPS = {
 export const TAG_SIZE_STYLES = {
   S: {
     container:
-      "h-[20px] gap-[var(--spacing-gap-1)] px-[var(--spacing-gap-1)] py-[2px]",
+      "h-[22px] gap-[var(--spacing-gap-1)] px-[var(--spacing-gap-1)] py-[2px]",
     text: "text-body-4",
     countText: "text-body-5",
     icon: "size-3",

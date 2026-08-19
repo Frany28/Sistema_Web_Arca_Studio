@@ -352,6 +352,7 @@ function Input({
   phoneOptions = PHONE_COUNTRY_OPTIONS,
   tags = INPUT_TAG_DEFAULT_ITEMS,
   tagOptions = INPUT_TAG_DEFAULT_ITEMS,
+  tagGroupAriaLabel,
   showTagOptionsOnFocus = false,
   showPasswordStrength = false,
   passwordRequirements,
@@ -863,7 +864,14 @@ function Input({
             </span>
           ) : null}
 
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-[4px]">
+          <div
+            className={clsx(
+              "flex min-w-0 flex-1 items-center gap-[4px]",
+              resolvedType === "Tags"
+                ? "flex-nowrap overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                : "flex-wrap",
+            )}
+          >
             {showTagsInsideField
               ? normalizedVisibleTags.map((tag, index) => (
                   <Tag
@@ -1006,7 +1014,13 @@ function Input({
       ) : null}
 
       {showTagsBelowField ? (
-        <div className="flex w-full flex-wrap items-center gap-[4px]">
+        <div
+          className="flex h-[22px] w-full flex-nowrap items-center gap-[4px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          role="group"
+          aria-label={
+            tagGroupAriaLabel ?? `${label}: opciones y elementos seleccionados`
+          }
+        >
           {normalizedVisibleTags.map((tag, index) => (
             <Tag
               key={tag.id ?? `${tag.label}-${index}`}

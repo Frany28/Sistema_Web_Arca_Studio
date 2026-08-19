@@ -154,6 +154,7 @@ function AssigneeMultiSelect({
         value={query}
         tags={selectedTags}
         tagOptions={optionTags}
+        tagGroupAriaLabel={`${ariaLabel}: empleados disponibles y seleccionados`}
         showTagOptionsOnFocus
         onTagOptionSelect={handleTagOptionSelect}
         showLabel={false}

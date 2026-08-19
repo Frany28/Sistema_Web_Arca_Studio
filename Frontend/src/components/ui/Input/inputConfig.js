@@ -17,7 +17,7 @@ export const INPUT_DEFAULT_PROPS = {
 
 export const INPUT_SIZE_STYLES = {
   S: {
-    field: "min-h-9 px-[12px] py-[8px]",
+    field: "min-h-9 pl-[12px] pr-[8px] py-[8px]",
     shell: "min-h-9",
     phonePrefix: "min-h-9 px-[12px] py-[8px]",
     paymentBadge: "h-5 w-[28.75px] text-[10px]",
