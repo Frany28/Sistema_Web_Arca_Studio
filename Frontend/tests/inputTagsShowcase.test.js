@@ -38,6 +38,10 @@ test("tag input exposes accessible state, keyboard behavior and Figma hint rules
   assert.match(inputSource, /closeIcon=\{false\}/);
   assert.match(inputSource, /baseState === "Default" && isFocused/);
   assert.match(inputSource, /showSelectedTagsBelow/);
+  assert.match(inputSource, /maxVisibleTagOptions = 3/);
+  assert.match(inputSource, /visibleSelectableTags = filteredSelectableTags\.slice/);
+  assert.match(inputSource, /onMouseDown=\{\(event\) => event\.preventDefault\(\)\}/);
+  assert.match(inputSource, /requestAnimationFrame\(\(\) => resolvedInputRef\.current\?\.focus\(\)\)/);
 });
 
 test("tag avatars support real images with fallback initials", async () => {
@@ -50,6 +54,8 @@ test("tag avatars support real images with fallback initials", async () => {
   assert.match(tagSource, /failedSrc !== src/);
   assert.match(tagSource, /className="size-full object-cover"/);
   assert.match(tagSource, /showImage \?/);
+  assert.match(tagSource, /aria-label=\{`Quitar \$\{label\}`\}/);
+  assert.match(tagSource, /text-\[var\(--color-text-200\)\]/);
 });
 
 test("public staging route renders the interactive example and the 18-state matrix", async () => {

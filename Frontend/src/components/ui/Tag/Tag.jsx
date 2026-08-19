@@ -103,9 +103,8 @@ function Tag({
 }) {
   const resolvedSize = TAG_SIZE_STYLES[size] ? size : "S";
   const sizing = TAG_SIZE_STYLES[resolvedSize];
-  const hasAction = Boolean(onClick || onRemove);
-  const Component = hasAction ? "button" : "span";
-  const actionLabel = onRemove ? `Quitar ${label}` : `Seleccionar ${label}`;
+  const hasSelectAction = Boolean(onClick) && !onRemove;
+  const Component = hasSelectAction ? "button" : "span";
 
   if (type !== "Universal tag") {
     return null;
@@ -113,32 +112,23 @@ function Tag({
 
   return (
     <Component
-      type={hasAction ? "button" : undefined}
+      type={hasSelectAction ? "button" : undefined}
       className={clsx(
         TAG_BASE_STYLES,
         TAG_INTERACTIVE_STYLES.default,
         "shrink-0",
-        (interactive || hasAction) && !disabled && TAG_INTERACTIVE_STYLES.interactive,
+        (interactive || hasSelectAction) &&
+          !disabled &&
+          TAG_INTERACTIVE_STYLES.interactive,
         selected && TAG_INTERACTIVE_STYLES.selected,
         disabled && TAG_INTERACTIVE_STYLES.disabled,
         sizing.container,
         className,
       )}
-      onClick={
-        disabled
-          ? undefined
-          : (event) => {
-              if (onRemove) {
-                onRemove();
-                return;
-              }
-
-              onClick?.(event);
-            }
-      }
-      disabled={hasAction ? disabled : undefined}
-      aria-label={hasAction ? actionLabel : undefined}
-      aria-pressed={interactive || hasAction ? selected : undefined}
+      onClick={disabled || !hasSelectAction ? undefined : onClick}
+      disabled={hasSelectAction ? disabled : undefined}
+      aria-label={hasSelectAction ? `Seleccionar ${label}` : undefined}
+      aria-pressed={hasSelectAction ? selected : undefined}
       {...props}
     >
       {checkbox ? <Checkbox className={sizing.checkbox} /> : null}
@@ -147,7 +137,7 @@ function Tag({
         <Avatar className={sizing.avatar} src={avatarSrc} text={avatarText} />
       ) : null}
       {dotIndicator ? <DotIndicator /> : null}
-      <span className={clsx("inline-flex items-center whitespace-nowrap text-[var(--color-text-300)]", sizing.text)}>
+      <span className={clsx("inline-flex items-center whitespace-nowrap text-[var(--color-text-200)]", sizing.text)}>
         {label}
       </span>
       {count ? (
@@ -157,9 +147,29 @@ function Tag({
           </span>
         </span>
       ) : null}
-      {closeIcon ? (
+      {closeIcon && onRemove ? (
+        <button
+          type="button"
+          className={clsx(
+            "inline-flex items-center justify-center text-[var(--color-text-200)]",
+            disabled ? "cursor-not-allowed" : "cursor-pointer",
+            sizing.icon,
+          )}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (!disabled) onRemove();
+          }}
+          disabled={disabled}
+          aria-label={`Quitar ${label}`}
+        >
+          <CloseIcon className={sizing.icon} />
+        </button>
+      ) : closeIcon ? (
         <span
-          className={clsx("inline-flex items-center justify-center text-[var(--color-text-300)]", sizing.icon)}
+          className={clsx(
+            "inline-flex items-center justify-center text-[var(--color-text-200)]",
+            sizing.icon,
+          )}
           aria-hidden="true"
         >
           <CloseIcon className={sizing.icon} />

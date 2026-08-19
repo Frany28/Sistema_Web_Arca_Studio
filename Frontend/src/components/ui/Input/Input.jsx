@@ -354,6 +354,7 @@ function Input({
   tagOptions = INPUT_TAG_DEFAULT_ITEMS,
   tagGroupAriaLabel,
   showTagOptionsOnFocus = false,
+  maxVisibleTagOptions = 3,
   showPasswordStrength = false,
   passwordRequirements,
   passwordHintTitle,
@@ -378,6 +379,8 @@ function Input({
   const inputId = id ?? generatedId;
   const hintId = `${inputId}-hint`;
   const tagGroupId = `${inputId}-tags`;
+  const internalInputRef = useRef(null);
+  const resolvedInputRef = inputRef ?? internalInputRef;
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -583,6 +586,13 @@ function Input({
 
     return String(option.label ?? "").trim().toLowerCase().includes(query);
   });
+  const resolvedMaxVisibleTagOptions = Number.isFinite(maxVisibleTagOptions)
+    ? Math.max(0, Math.floor(maxVisibleTagOptions))
+    : 3;
+  const visibleSelectableTags = filteredSelectableTags.slice(
+    0,
+    resolvedMaxVisibleTagOptions,
+  );
   const showSelectedTagsBelow =
     resolvedType === "Tags" &&
     resolvedState === "Focused" &&
@@ -593,7 +603,7 @@ function Input({
     (resolvedType === "Tags" &&
       resolvedState === "Focused" &&
       showTagOptionsOnFocus &&
-      filteredSelectableTags.length > 0);
+      visibleSelectableTags.length > 0);
   const showResolvedHint =
     showHint && !(resolvedType === "Tags" && resolvedState === "Focused");
   const resolvedAriaDescribedBy = [
@@ -607,7 +617,7 @@ function Input({
 
   const handleTagSelection = () => {
     const nextTag =
-      filteredSelectableTags.find((option) => {
+      visibleSelectableTags.find((option) => {
         const optionLabel = String(option.label ?? "").trim().toLowerCase();
         const query = String(currentValue).trim().toLowerCase();
 
@@ -655,6 +665,8 @@ function Input({
       setSelectedTags(nextTags);
     }
     onTagsChange?.(nextTags);
+
+    requestAnimationFrame(() => resolvedInputRef.current?.focus());
   };
 
   const handleTagOptionSelection = (tag) => {
@@ -865,7 +877,7 @@ function Input({
           </div>
           <div className={clsx("flex min-w-0 flex-1 items-center gap-[8px]", sizing.field)}>
             <input
-              ref={inputRef}
+              ref={resolvedInputRef}
               id={inputId}
               type={inputType}
               disabled={disabled}
@@ -959,13 +971,14 @@ function Input({
                     count={false}
                     className="max-w-full"
                     disabled={disabled}
+                    onMouseDown={(event) => event.preventDefault()}
                     onRemove={() => handleRemoveTag(tag.id)}
                   />
                 ))
               : null}
 
             <input
-              ref={inputRef}
+              ref={resolvedInputRef}
               id={inputId}
               type={inputType}
               disabled={disabled}
@@ -1099,7 +1112,7 @@ function Input({
               ))
             : null}
           {showTagOptionsOnFocus
-            ? filteredSelectableTags.map((tag, index) => (
+            ? visibleSelectableTags.map((tag, index) => (
                 <Tag
                   key={tag.id ?? `${tag.label}-option-${index}`}
                   size={sizing.tagSize}
