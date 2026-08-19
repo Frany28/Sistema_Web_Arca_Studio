@@ -12,6 +12,8 @@ export const TAG_DEFAULT_PROPS = {
   countryCode: "IN",
   avatarText: "A",
   avatarSrc: "",
+  avatarTheme: "Neutral",
+  avatarContent: "Text",
 };
 
 export const TAG_SIZE_STYLES = {

@@ -20,6 +20,7 @@ import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
 import { getProjectImageSource } from "../utils/projectImage.js";
 import { getProjectPath } from "../utils/projectRoutes.js";
 import { getProjectTypeDisplay } from "../utils/projectTypeDisplay.js";
+import { getAvatarPresentation } from "../utils/avatarPresentation.js";
 import {
   filterPublicProjects,
   getPublicGalleryProjects,
@@ -53,17 +54,17 @@ function getCardAssignees(project) {
   if (architect) return [architect];
 
   const clientName = String(project?.client?.name || "Cliente");
+  const clientAvatar = getAvatarPresentation({
+    identity: project?.client?.id || clientName,
+    name: clientName,
+    roleCode: "client",
+    src: project?.client?.profilePhotoUrl || project?.client?.avatarUrl || "",
+  });
   return [
     {
-      content: "Text",
+      ...clientAvatar,
       decorative: false,
-      initials: clientName
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase())
-        .join(""),
       name: clientName,
-      theme: "Neutral",
     },
   ];
 }

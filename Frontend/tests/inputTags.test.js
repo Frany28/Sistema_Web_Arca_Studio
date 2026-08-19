@@ -39,7 +39,8 @@ test("tag avatars support real images with fallback initials", async () => {
 
   assert.match(tagSource, /avatarSrc = ""/);
   assert.match(tagSource, /size="XS"/);
-  assert.match(tagSource, /theme="Neutral"/);
+  assert.match(tagSource, /theme=\{avatarTheme\}/);
+  assert.match(tagSource, /content=\{avatarContent\}/);
   assert.match(avatarSource, /failedImageSrc !== src/);
   assert.match(avatarConfigSource, /size-\[16px\]/);
   assert.match(tagSource, /aria-label=\{`Quitar \$\{label\}`\}/);

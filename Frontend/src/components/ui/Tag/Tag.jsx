@@ -67,6 +67,8 @@ function Tag({
   countryCode = "IN",
   avatarText = "A",
   avatarSrc = "",
+  avatarTheme = "Neutral",
+  avatarContent = "Text",
   selected = false,
   interactive = false,
   disabled = false,
@@ -109,8 +111,8 @@ function Tag({
       {avatar ? (
         <Avatar
           size="XS"
-          theme="Neutral"
-          content="Text"
+          theme={avatarTheme}
+          content={avatarContent}
           initials={avatarText}
           name={label}
           src={avatarSrc}

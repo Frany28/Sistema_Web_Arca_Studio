@@ -992,6 +992,8 @@ function Input({
                     avatar={tag.avatar ?? true}
                     avatarText={tag.avatarText ?? "A"}
                     avatarSrc={tag.avatarSrc ?? ""}
+                    avatarTheme={tag.avatarTheme ?? "Neutral"}
+                    avatarContent={tag.avatarContent ?? "Text"}
                     closeIcon={tag.closeIcon ?? true}
                     count={false}
                     className="max-w-full"
@@ -1127,7 +1129,9 @@ function Input({
                   label={tag.label}
                   avatar={tag.avatar ?? true}
                   avatarText={tag.avatarText ?? "A"}
-                  avatarSrc={tag.avatarSrc ?? ""}
+              avatarSrc={tag.avatarSrc ?? ""}
+              avatarTheme={tag.avatarTheme ?? "Neutral"}
+              avatarContent={tag.avatarContent ?? "Text"}
                   closeIcon={tag.closeIcon ?? true}
                   count={false}
                   disabled={disabled}
@@ -1145,6 +1149,8 @@ function Input({
                   avatar={tag.avatar ?? true}
                   avatarText={tag.avatarText ?? "A"}
                   avatarSrc={tag.avatarSrc ?? ""}
+                  avatarTheme={tag.avatarTheme ?? "Neutral"}
+                  avatarContent={tag.avatarContent ?? "Text"}
                   closeIcon={false}
                   count={false}
                   disabled={disabled}

@@ -21,6 +21,7 @@ import Loader from "../../../components/ui/Loader/Loader.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar/ScrollBar.jsx";
 import Tag from "../../../components/ui/Tag/Tag.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
+import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
 import "./AdminActiveProjects.css";
 
 const STATUS_DETAILS = {
@@ -46,9 +47,16 @@ function getStatus(project) {
 
 function getClient(project) {
   const client = project.client || {};
+  const name = client.name || project.clientName || "Sin cliente";
+  const photo = client.profilePhotoUrl || client.avatarUrl || "";
   return {
-    name: client.name || project.clientName || "Sin cliente",
-    photo: client.profilePhotoUrl || client.avatarUrl || "",
+    avatar: getAvatarPresentation({
+      identity: client.id || project.clientId || name,
+      name,
+      roleCode: "client",
+      src: photo,
+    }),
+    name,
   };
 }
 
@@ -354,7 +362,7 @@ function AdminActiveProjects({
                     </td>
                     <td className="px-[24px] py-[16px]">
                       <div className="flex min-w-0 items-center gap-[8px]">
-                        <Avatar size="S" name={client.name} src={client.photo} content={client.photo ? "Image" : "Text"} />
+                        <Avatar size="S" name={client.name} {...client.avatar} />
                         <span className="text-body-4 min-w-0 truncate text-[var(--color-text-300)]">{client.name}</span>
                       </div>
                     </td>

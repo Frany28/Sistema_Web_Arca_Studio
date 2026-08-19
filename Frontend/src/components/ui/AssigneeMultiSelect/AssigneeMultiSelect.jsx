@@ -2,6 +2,7 @@ import { useId, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 
 import Input from "../Input/Input.jsx";
+import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
 
 function normalizeText(value) {
   return String(value || "")
@@ -21,14 +22,23 @@ function getInitials(name) {
 }
 
 function toTag(person, showAvatar) {
+  const avatar = getAvatarPresentation({
+    identity: person.id,
+    name: person.name,
+    roleCode: person.roleCode,
+    src: showAvatar
+      ? person.profilePhotoUrl || person.avatarUrl || person.photo || ""
+      : "",
+  });
+
   return {
     id: String(person.id),
     label: person.name,
     avatar: showAvatar,
-    avatarText: getInitials(person.name) || "E",
-    avatarSrc: showAvatar
-      ? person.profilePhotoUrl || person.avatarUrl || person.photo || ""
-      : "",
+    avatarText: avatar.initials || getInitials(person.name) || "E",
+    avatarSrc: showAvatar ? avatar.src : "",
+    avatarTheme: avatar.theme,
+    avatarContent: avatar.content,
     closeIcon: true,
   };
 }

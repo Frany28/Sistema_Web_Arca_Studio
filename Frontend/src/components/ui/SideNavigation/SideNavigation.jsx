@@ -9,6 +9,7 @@ import {
   mergeRecentProjectNavigationItems,
 } from "../../../utils/sideNavigationItems.js";
 import AvatarLabel from "../AvatarLabel/AvatarLabel.jsx";
+import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
 import Button from "../Button/Button.jsx";
 import Input from "../Input/Input.jsx";
 import TabItem from "../TabItem/TabItem.jsx";
@@ -359,6 +360,15 @@ function SideNavigation({
   ...props
 }) {
   const { user } = useAuth();
+  const userAvatar = getAvatarPresentation({
+    identity: user?.id || userEmail,
+    name: userName,
+    roleCode:
+      typeof user?.role === "string"
+        ? user.role
+        : user?.role?.code || user?.roleDetails?.code,
+    src: userAvatarSrc,
+  });
   const { projects: recentProjects } = useRecentProjects();
   const [searchValue, setSearchValue] = useState("");
   const [internalActiveItemId, setInternalActiveItemId] =
@@ -633,9 +643,10 @@ function SideNavigation({
           subtitle={userEmail}
           showLabel={isExpanded}
           showSubtitle={isExpanded}
-          avatarTheme="Neutral"
-          avatarContent={userAvatarSrc ? "Image" : "Icon"}
-          avatarSrc={userAvatarSrc}
+          avatarTheme={userAvatar.theme}
+          avatarContent={userAvatar.content}
+          avatarInitials={userAvatar.initials}
+          avatarSrc={userAvatar.src}
           avatarAlt={userName}
           avatarDecorative={false}
         />
