@@ -20,6 +20,10 @@ const INTERACTIVE_OPTIONS = [
   { id: "tag-andrea", label: "Andrea", avatarText: "A", avatarSrc: avatarOne },
   { id: "tag-carlos", label: "Carlos", avatarText: "C", avatarSrc: avatarTwo },
   { id: "tag-lucia", label: "Lucía", avatarText: "L", avatarSrc: avatarOne },
+  { id: "tag-mateo", label: "Mateo", avatarText: "M", avatarSrc: avatarTwo },
+  { id: "tag-sofia", label: "Sofía", avatarText: "S", avatarSrc: avatarOne },
+  { id: "tag-daniel", label: "Daniel", avatarText: "D", avatarSrc: avatarTwo },
+  { id: "tag-valentina", label: "Valentina", avatarText: "V", avatarSrc: avatarOne },
 ];
 
 function getLiveState({ disabled, error, focused, hovered, tags }) {
@@ -175,6 +179,7 @@ function InputTagsShowcase() {
               <p className="text-body-3 max-w-[620px] text-[var(--color-text-100)]">
                 También puedes escribir y confirmar con Enter o coma, eliminar la
                 última etiqueta con Backspace y recorrer todos los controles con teclado.
+                Se muestran hasta tres opciones; al seleccionar una aparece la siguiente.
               </p>
               <p className="text-body-3 text-[var(--color-text-200)]" aria-live="polite">
                 {selectedTags.length === 0

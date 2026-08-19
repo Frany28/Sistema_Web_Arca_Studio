@@ -258,6 +258,14 @@ function hasTextValue(value) {
   return String(value).trim().length > 0;
 }
 
+function normalizeTagSearchText(value) {
+  return String(value ?? "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es");
+}
+
 function getPhoneDigits(value) {
   return String(value ?? "").replace(/\D/g, "");
 }
@@ -578,13 +586,13 @@ function Input({
   }, [isPhoneMenuOpen]);
 
   const filteredSelectableTags = normalizedTagOptions.filter((option) => {
-    const query = String(currentValue).trim().toLowerCase();
+    const query = normalizeTagSearchText(currentValue);
 
     if (!query) {
       return true;
     }
 
-    return String(option.label ?? "").trim().toLowerCase().includes(query);
+    return normalizeTagSearchText(option.label).includes(query);
   });
   const resolvedMaxVisibleTagOptions = Number.isFinite(maxVisibleTagOptions)
     ? Math.max(0, Math.floor(maxVisibleTagOptions))
@@ -618,8 +626,8 @@ function Input({
   const handleTagSelection = () => {
     const nextTag =
       visibleSelectableTags.find((option) => {
-        const optionLabel = String(option.label ?? "").trim().toLowerCase();
-        const query = String(currentValue).trim().toLowerCase();
+        const optionLabel = normalizeTagSearchText(option.label);
+        const query = normalizeTagSearchText(currentValue);
 
         return (
           query &&
@@ -634,8 +642,8 @@ function Input({
     const exists = normalizedVisibleTags.some((tag) => {
       const currentId = String(tag.id ?? "");
       const nextId = String(nextTag.id ?? "");
-      const currentLabel = String(tag.label ?? "").trim().toLowerCase();
-      const nextLabel = String(nextTag.label ?? "").trim().toLowerCase();
+      const currentLabel = normalizeTagSearchText(tag.label);
+      const nextLabel = normalizeTagSearchText(nextTag.label);
 
       return currentId === nextId || currentLabel === nextLabel;
     });

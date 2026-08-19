@@ -40,6 +40,7 @@ test("tag input exposes accessible state, keyboard behavior and Figma hint rules
   assert.match(inputSource, /showSelectedTagsBelow/);
   assert.match(inputSource, /maxVisibleTagOptions = 3/);
   assert.match(inputSource, /visibleSelectableTags = filteredSelectableTags\.slice/);
+  assert.match(inputSource, /normalizeTagSearchText/);
   assert.match(inputSource, /onMouseDown=\{\(event\) => event\.preventDefault\(\)\}/);
   assert.match(inputSource, /requestAnimationFrame\(\(\) => resolvedInputRef\.current\?\.focus\(\)\)/);
 });
@@ -70,5 +71,6 @@ test("public staging route renders the interactive example and the 18-state matr
   assert.match(pageSource, /showTagOptionsOnFocus/);
   assert.match(pageSource, /onTagsChange=\{handleTagsChange\}/);
   assert.doesNotMatch(pageSource, /onTagOptionSelect=\{handleOptionSelect\}/);
+  assert.match(pageSource, /tag-valentina/);
   assert.match(pageSource, /md:grid-cols-2 xl:grid-cols-3/);
 });
