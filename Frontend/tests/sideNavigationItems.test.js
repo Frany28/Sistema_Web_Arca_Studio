@@ -12,13 +12,17 @@ import {
 } from "../src/utils/recentProjects.js";
 
 test("client navigation keeps requests in every environment", () => {
-  const ids = createUserSideNavigationItems([], "client").map(({ id }) => id);
+  const items = createUserSideNavigationItems([], "client");
+  const ids = items.map(({ id }) => id);
   assert.deepEqual(ids, ["dashboard", "requests", "more-projects", "settings"]);
+  assert.equal(items[0].label, "Dashboard");
 });
 
 test("architect navigation only exposes authorized shared destinations", () => {
-  const ids = createUserSideNavigationItems([], "architect").map(({ id }) => id);
+  const items = createUserSideNavigationItems([], "architect");
+  const ids = items.map(({ id }) => id);
   assert.deepEqual(ids, ["dashboard", "more-projects", "settings"]);
+  assert.equal(items[0].label, "Dashboard");
 });
 
 test("admin navigation follows the dedicated management design", () => {

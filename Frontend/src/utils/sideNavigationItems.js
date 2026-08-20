@@ -91,7 +91,7 @@ export function createUserSideNavigationItems(projects = [], roleCode = "client"
   return [
     {
       id: "dashboard",
-      label: "Panel",
+      label: "Dashboard",
       icon: "dashboard",
       wrapperHeight: "44px",
       to: getDashboardPath(roleCode),

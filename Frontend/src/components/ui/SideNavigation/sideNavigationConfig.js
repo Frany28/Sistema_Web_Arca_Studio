@@ -1,7 +1,7 @@
 export const SIDE_NAVIGATION_DEFAULT_ITEMS = [
   {
     id: "dashboard",
-    label: "Panel",
+    label: "Dashboard",
     icon: "dashboard",
     wrapperHeight: "44px",
   },
