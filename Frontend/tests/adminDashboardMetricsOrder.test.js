@@ -21,5 +21,7 @@ test("admin dashboard metrics preserve their approved visual order", async () =>
 
   assert.equal(positions.every((position) => position >= 0), true);
   assert.deepEqual(positions, [...positions].sort((first, second) => first - second));
+  assert.match(source, /min-\[640px\]:max-\[900px\]:grid-cols-2/);
   assert.match(source, /min-\[900px\]:grid-cols-5/);
+  assert.doesNotMatch(source, /sm:grid-cols-2/);
 });

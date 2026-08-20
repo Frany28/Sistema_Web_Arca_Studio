@@ -88,7 +88,7 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
       className="mx-auto w-full max-w-[1200px] px-[16px] sm:px-[24px] lg:px-[48px]"
       aria-label="Resumen de métricas administrativas"
     >
-      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 min-[900px]:grid-cols-5 min-[900px]:gap-x-[16px]">
+      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] min-[640px]:max-[900px]:grid-cols-2 min-[900px]:grid-cols-5 min-[900px]:gap-x-[16px]">
         <MetricItem
           label="Usuarios activos"
           value={metrics?.activeUsers?.total}
