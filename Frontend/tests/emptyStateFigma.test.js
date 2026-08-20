@@ -31,6 +31,10 @@ test("user management uses full M only for its primary empty collection", async 
   );
   assert.match(
     source,
+    /title="No hay usuarios registrados"[\s\S]*className="min-h-\[320px\] flex-1"/,
+  );
+  assert.match(
+    source,
     /title="No hay coincidencias"[\s\S]*size="S"[\s\S]*showSecondaryAction=\{false\}/,
   );
   assert.match(
