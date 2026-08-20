@@ -10,6 +10,7 @@ import Badge from "../../../components/ui/Badge/Badge.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import IconContainer from "../../../components/ui/IconContainer/IconContainer.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
+import { formatRelativeTime } from "../../../utils/relativeTime.js";
 
 const numberFormatter = new Intl.NumberFormat("es-VE");
 
@@ -26,25 +27,6 @@ function formatStorage(bytes) {
 
   const digits = amount >= 10 || unitIndex === 0 ? 0 : 1;
   return `${amount.toLocaleString("es-VE", { maximumFractionDigits: digits })} ${units[unitIndex]}`;
-}
-
-function formatRelativeTime(value) {
-  const timestamp = new Date(value).getTime();
-
-  if (!Number.isFinite(timestamp)) {
-    return "Sin eventos recientes";
-  }
-
-  const minutes = Math.max(Math.floor((Date.now() - timestamp) / 60000), 0);
-
-  if (minutes < 1) return "Hace menos de 1 min";
-  if (minutes < 60) return `Hace ${minutes} min`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Hace ${hours} h`;
-
-  const days = Math.floor(hours / 24);
-  return `Hace ${days} d`;
 }
 
 function MetricItem({ badge, badgeTheme = "Success", className = "", icon, iconType, label, supportingText, value }) {
@@ -106,9 +88,8 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
       className="mx-auto w-full max-w-[1200px] px-[16px] sm:px-[24px] lg:px-[48px]"
       aria-label="Resumen de métricas administrativas"
     >
-      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 min-[900px]:grid-cols-3 min-[1400px]:grid-cols-[181px_191px_214px_141px_176px] min-[1400px]:gap-0">
+      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 min-[1100px]:grid-cols-5 min-[1100px]:gap-x-[16px]">
         <MetricItem
-          className="min-[1400px]:w-[181px]"
           label="Usuarios activos"
           value={metrics?.activeUsers?.total}
           badge={`+${numberFormatter.format(metrics?.activeUsers?.thisMonth || 0)}`}
@@ -117,7 +98,6 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<People size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
-          className="min-[1400px]:w-[191px]"
           label="Proyectos activos"
           value={metrics?.activeProjects?.total}
           badge={`+${numberFormatter.format(metrics?.activeProjects?.thisMonth || 0)}`}
@@ -126,7 +106,6 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<Buildings2 size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
-          className="min-[1400px]:w-[214px]"
           label="Archivos registrados"
           value={metrics?.files?.total}
           badge={formatStorage(metrics?.files?.totalBytes)}
@@ -136,7 +115,6 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<Folder2 size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
-          className="min-[1400px]:w-[141px]"
           label="Solicitudes"
           value={metrics?.requests?.total}
           badge={`+${numberFormatter.format(metrics?.requests?.today || 0)}`}
@@ -145,10 +123,13 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<MessageNotif size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
-          className="min-[1400px]:w-[176px]"
           label="Eventos críticos"
           value={metrics?.criticalEvents?.total}
-          supportingText={formatRelativeTime(metrics?.criticalEvents?.latestAt)}
+          supportingText={formatRelativeTime(
+            metrics?.criticalEvents?.latestAt,
+            undefined,
+            "Sin eventos recientes",
+          )}
           iconType="Danger"
           icon={<Information size="24" variant="Linear" color="currentColor" />}
         />

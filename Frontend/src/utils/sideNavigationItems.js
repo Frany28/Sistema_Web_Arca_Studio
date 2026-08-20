@@ -12,10 +12,19 @@ function createProjectShortcutItems(projects) {
   }));
 }
 
-export function mergeRecentProjectNavigationItems(items = [], projects = []) {
+export function mergeRecentProjectNavigationItems(
+  items = [],
+  projects = [],
+  { includeProjectShortcuts = true } = {},
+) {
   const persistentItems = (Array.isArray(items) ? items : []).filter(
     (item) => !String(item?.id || "").startsWith("project-"),
   );
+
+  if (!includeProjectShortcuts) {
+    return persistentItems;
+  }
+
   const dashboardIndex = persistentItems.findIndex(
     (item) => item.id === "dashboard",
   );
@@ -31,6 +40,53 @@ export function mergeRecentProjectNavigationItems(items = [], projects = []) {
 export function createUserSideNavigationItems(projects = [], roleCode = "client") {
   const safeProjects = Array.isArray(projects) ? projects : [];
   const isClient = roleCode === "client";
+
+  if (roleCode === "admin") {
+    return [
+      {
+        id: "dashboard",
+        label: "Dashboard",
+        icon: "admin-dashboard",
+        wrapperHeight: "44px",
+        to: getDashboardPath(roleCode),
+      },
+      {
+        id: "users",
+        label: "Usuarios",
+        icon: "users",
+        wrapperHeight: "44px",
+        to: "/usuarios",
+      },
+      {
+        id: "projects",
+        label: "Proyectos",
+        icon: "projects",
+        wrapperHeight: "44px",
+        to: "/proyectos",
+      },
+      {
+        id: "files",
+        label: "Archivos",
+        icon: "files",
+        wrapperHeight: "44px",
+        to: "/archivos",
+      },
+      {
+        id: "history",
+        label: "Historial",
+        icon: "history",
+        wrapperHeight: "44px",
+        to: "/historial",
+      },
+      {
+        id: "settings",
+        label: "Configuraciones",
+        icon: "settings",
+        wrapperHeight: "44px",
+        to: "/configuraciones",
+      },
+    ];
+  }
 
   return [
     {

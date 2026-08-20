@@ -314,10 +314,12 @@ export async function getAdminDashboardOverview() {
             else 'Estado actualizado'
           end as activity_title,
           concat_ws(' ', actor.first_name, actor.last_name) as user_name,
+          role.code as user_role_code,
           history.changed_at as created_at
         from public.project_status_history history
         inner join public.projects project on project.id = history.project_id
         inner join public.users actor on actor.id = history.changed_by
+        inner join public.roles role on role.id = actor.role_id
         where project.deleted_at is null
 
         union all
@@ -329,17 +331,19 @@ export async function getAdminDashboardOverview() {
           project.name as project_name,
           'Archivo agregado'::text as activity_title,
           concat_ws(' ', actor.first_name, actor.last_name) as user_name,
+          role.code as user_role_code,
           file.created_at
         from public.files file
         inner join public.projects project on project.id = file.project_id
         inner join public.users actor on actor.id = file.uploaded_by
+        inner join public.roles role on role.id = actor.role_id
         where file.project_id is not null
           and file.deleted_at is null
           and file.status <> 'deleted'
           and project.deleted_at is null
       ) recent_activity
       order by created_at desc, activity_id desc
-      limit 3
+      limit 8
     `),
     query(`
       select

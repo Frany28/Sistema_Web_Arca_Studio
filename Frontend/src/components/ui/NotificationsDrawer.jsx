@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 import { orderCommentsByThread } from "../../utils/commentDisplay.js";
+import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
 import { SelectionPreview } from "./Gallery/Model3DViewerModal.jsx";
 
 import Avatar from "./Avatar/Avatar.jsx";
@@ -453,6 +454,7 @@ function MessageInput({
 }
 
 function ActivityItem({
+  avatarSrc,
   id,
   name,
   action,
@@ -462,6 +464,8 @@ function ActivityItem({
   fileType,
   fileName,
   fileSize,
+  projectName,
+  roleCode,
   onSelect,
 }) {
   const isInteractive = typeof onSelect === "function";
@@ -470,6 +474,12 @@ function ActivityItem({
     name && typeof name === "object"
       ? (name.name ?? name.email ?? String(name))
       : name;
+  const avatar = getAvatarPresentation({
+    identity: id,
+    name: displayName,
+    roleCode,
+    src: avatarSrc,
+  });
 
   return (
     <Container
@@ -481,7 +491,7 @@ function ActivityItem({
       onClick={isInteractive ? () => onSelect({ id, type }) : undefined}
     >
       <article className="flex w-full items-start gap-[8px] overflow-hidden rounded-[8px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[8px]">
-        <Avatar size="M" style="Icon" theme="Brand 1" decorative />
+        <Avatar size="M" name={displayName} {...avatar} decorative />
 
         <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
           <p className="text-[14px] leading-[17px] tracking-[-0.5px]">
@@ -491,6 +501,14 @@ function ActivityItem({
             <span className="font-normal text-[var(--color-text-200)]">
               {action}
             </span>
+            {projectName ? (
+              <>
+                {" "}
+                <span className="font-medium text-[var(--color-text-200)]">
+                  {projectName}
+                </span>
+              </>
+            ) : null}
           </p>
 
           {type === "file" ? (
@@ -507,11 +525,11 @@ function ActivityItem({
                 {fileSize}
               </span>
             </div>
-          ) : (
+          ) : type === "status" && status ? (
             <div className="flex items-center gap-[2px]">
               <Badge theme="Info" variation="Simple" size="S" label={status} />
             </div>
-          )}
+          ) : null}
         </div>
       </article>
 
@@ -523,6 +541,7 @@ function ActivityItem({
 }
 
 function NotificationsDrawer({
+  activityOnly = false,
   open = false,
   onClose,
   className,
@@ -530,6 +549,7 @@ function NotificationsDrawer({
   commentsError = "",
   commentsLoading = false,
   recentActivity = RECENT_ACTIVITY,
+  recentActivityError = "",
   recentActivityLoading = true,
   onActivitySelect,
   onCommentSelect,
@@ -648,7 +668,8 @@ function NotificationsDrawer({
       {...props}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-[24px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <section className="flex w-[280px] max-w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] pb-[24px]">
+        {!activityOnly ? (
+          <section className="flex w-[280px] max-w-full flex-col gap-[16px] border-b border-[var(--color-neutral-200)] pb-[24px]">
           {commentsLoading ? (
             <Loader
               preset="commentCard"
@@ -704,7 +725,8 @@ function NotificationsDrawer({
               </div>
             </div>
           )}
-        </section>
+          </section>
+        ) : null}
 
         <section className="flex w-[280px] max-w-full flex-col gap-[8px]">
           <h3 className="text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
@@ -718,7 +740,11 @@ function NotificationsDrawer({
                 count={3}
                 label="Cargando actividad reciente"
               />
-            ) : (
+            ) : recentActivityError ? (
+              <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-danger-100)]">
+                {recentActivityError}
+              </p>
+            ) : recentActivity.length ? (
               <div className="content-reveal flex flex-col gap-[8px]">
                 {recentActivity.map((item) => (
                   <ActivityItem
@@ -730,6 +756,10 @@ function NotificationsDrawer({
                   />
                 ))}
               </div>
+            ) : (
+              <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-100)]">
+                No hay actividad reciente.
+              </p>
             )}
           </div>
         </section>

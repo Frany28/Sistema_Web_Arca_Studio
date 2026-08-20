@@ -709,7 +709,11 @@ export default function ProjectDetailsPage({
 
         <SideNavigation
           activeItemId={
-            resolvedProjectId ? `project-${resolvedProjectId}` : undefined
+            currentUser.roleCode === "admin"
+              ? "projects"
+              : resolvedProjectId
+                ? `project-${resolvedProjectId}`
+                : undefined
           }
           expanded={isSidebarExpanded}
           items={createUserSideNavigationItems(

@@ -1,6 +1,13 @@
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { ElementPlus } from "iconsax-react";
+import {
+  Buildings2,
+  Clock,
+  DocumentText,
+  ElementPlus,
+  Grid2,
+  People,
+} from "iconsax-react";
 import { useAuth } from "../../../auth/AuthContext.jsx";
 import { useRecentProjects } from "../../../auth/RecentProjectsContext.jsx";
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
@@ -310,6 +317,18 @@ function getItemIcon(icon, className = "size-5 shrink-0") {
     return <DashboardIcon className={className} />;
   }
 
+  if (icon === "admin-dashboard") {
+    return (
+      <Grid2
+        className={className}
+        size="20"
+        color="currentColor"
+        variant="Linear"
+        aria-hidden="true"
+      />
+    );
+  }
+
   if (icon === "requests") {
     return (
       <ElementPlus
@@ -328,6 +347,26 @@ function getItemIcon(icon, className = "size-5 shrink-0") {
 
   if (icon === "settings") {
     return <SettingsIcon className={className} />;
+  }
+
+  const adminIcons = {
+    users: People,
+    projects: Buildings2,
+    files: DocumentText,
+    history: Clock,
+  };
+  const AdminIcon = adminIcons[icon];
+
+  if (AdminIcon) {
+    return (
+      <AdminIcon
+        className={className}
+        size="20"
+        color="currentColor"
+        variant="Linear"
+        aria-hidden="true"
+      />
+    );
   }
 
   return <ProjectIcon className={className} />;
@@ -384,7 +423,9 @@ function SideNavigation({
           ? items
           : SIDE_NAVIGATION_DEFAULT_ITEMS;
 
-    return mergeRecentProjectNavigationItems(baseItems, recentProjects);
+    return mergeRecentProjectNavigationItems(baseItems, recentProjects, {
+      includeProjectShortcuts: roleCode !== "admin",
+    });
   }, [items, recentProjects, user?.role]);
   const isActiveControlled =
     typeof activeItemId === "string" && activeItemId.length > 0;

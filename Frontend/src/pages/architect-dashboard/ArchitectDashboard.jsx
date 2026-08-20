@@ -19,6 +19,7 @@ import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getCommentNavigationParams } from "../../utils/commentSelection.js";
 import { getProjectImageSource } from "../../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js";
+import { formatRelativeTime } from "../../utils/relativeTime.js";
 import { groupProjectsByStatus } from "../../utils/projectStatusGroups.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
@@ -41,6 +42,26 @@ function mergeNotificationComments(comments) {
   });
 
   return Array.from(commentsById.values());
+}
+
+function toAdminDrawerActivity(activity) {
+  const isFileActivity = String(activity?.id || "").startsWith("file-");
+  const isCompleted = activity?.title === "Entrega finalizada";
+
+  return {
+    id: activity.id,
+    name: activity.userName,
+    action: isFileActivity
+      ? "subió un archivo al proyecto"
+      : isCompleted
+        ? "finalizó la entrega del proyecto"
+        : "actualizó el estado del proyecto",
+    projectId: activity.projectId,
+    projectName: activity.projectName,
+    roleCode: activity.userRoleCode,
+    timestamp: formatRelativeTime(activity.createdAt),
+    type: "event",
+  };
 }
 
 function toProjectRow(project, user) {
@@ -98,8 +119,11 @@ function ArchitectDashboard({ empty = false }) {
     [projects, user],
   );
   const commentProjectRows = useMemo(
-    () => projectRows.filter((project) => project.editable),
-    [projectRows],
+    () =>
+      currentUser.roleCode === "admin"
+        ? []
+        : projectRows.filter((project) => project.editable),
+    [currentUser.roleCode, projectRows],
   );
   const projectGroups = useMemo(
     () => groupProjectsByStatus(projectRows),
@@ -139,8 +163,6 @@ function ArchitectDashboard({ empty = false }) {
     drawerComments: submittedDrawerComments,
     submitComment,
     refresh: refreshSubmittedComments,
-    error: submittedCommentsError,
-    loading: submittedCommentsLoading,
   } = useProjectComments({
     enabled: false,
     projectId: commentsProjectId,
@@ -176,6 +198,10 @@ function ArchitectDashboard({ empty = false }) {
   const notificationComments = useMemo(
     () => mergeNotificationComments([...drawerComments, ...imageCommentNotifications]),
     [drawerComments, imageCommentNotifications],
+  );
+  const adminDrawerActivity = useMemo(
+    () => (adminOverview?.recentActivity || []).map(toAdminDrawerActivity),
+    [adminOverview?.recentActivity],
   );
 
   useEffect(() => {
@@ -390,12 +416,28 @@ function ArchitectDashboard({ empty = false }) {
   };
 
   const handleActivitySelect = (activity) => {
-    if (!activity?.to) {
-      return;
-    }
+    const targetProject = activity?.projectId
+      ? projectRows.find(
+          (project) => Number(project.id) === Number(activity.projectId),
+        )
+      : null;
+    const targetPath = activity?.to ||
+      (targetProject ? getProjectPath(targetProject) : null);
+
+    if (!targetPath) return;
 
     setIsNotificationsDrawerOpen(false);
-    navigate(activity.to);
+    navigate(targetPath);
+  };
+
+  const handleNotificationsToggle = () => {
+    const willOpen = !isNotificationsDrawerOpen;
+
+    setIsNotificationsDrawerOpen(willOpen);
+
+    if (willOpen && currentUser.roleCode === "admin") {
+      setAdminOverviewRequestKey((current) => current + 1);
+    }
   };
 
   const openImageComment = (comment) => {
@@ -497,9 +539,7 @@ function ArchitectDashboard({ empty = false }) {
         <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col self-stretch overflow-y-auto overflow-x-hidden transition-[width] duration-300 ease-out">
           <NavigationBar
             utilityActionActive={isNotificationsDrawerOpen}
-            onUtilityActionClick={() =>
-              setIsNotificationsDrawerOpen((current) => !current)
-            }
+            onUtilityActionClick={handleNotificationsToggle}
           />
 
           <div className="mx-auto flex w-full max-w-[1200px] px-[16px] pb-[16px] sm:px-[24px] lg:px-[48px]">
@@ -532,7 +572,7 @@ function ArchitectDashboard({ empty = false }) {
                 error={adminOverviewError}
                 loading={adminOverviewLoading}
                 newRequests={adminOverview?.newRequests}
-                recentActivity={adminOverview?.recentActivity}
+                recentActivity={(adminOverview?.recentActivity || []).slice(0, 3)}
                 onActivitySelect={(activity) => {
                   const project = projectRows.find(
                     (currentProject) =>
@@ -603,12 +643,23 @@ function ArchitectDashboard({ empty = false }) {
           ) : null}
 
           <NotificationsDrawer
+            activityOnly={currentUser.roleCode === "admin"}
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
             comments={notificationComments}
             commentsError={drawerCommentsError}
             commentsLoading={drawerCommentsLoading}
-            recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
+            recentActivity={
+              currentUser.roleCode === "admin"
+                ? adminDrawerActivity
+                : ARCHITECT_DRAWER_RECENT_ACTIVITY
+            }
+            recentActivityError={
+              currentUser.roleCode === "admin" ? adminOverviewError : ""
+            }
+            recentActivityLoading={
+              currentUser.roleCode === "admin" ? adminOverviewLoading : false
+            }
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
             onSubmitComment={submitComment}

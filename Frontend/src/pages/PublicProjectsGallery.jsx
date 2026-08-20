@@ -274,7 +274,8 @@ export default function PublicProjectsGallery() {
   };
 
   const sideNavigationProps = {
-    activeItemId: "more-projects",
+    activeItemId:
+      currentUser.roleCode === "admin" ? "projects" : "more-projects",
     expanded: true,
     items: navigationItems,
     newOpportunityLabel: isArchitect ? "Nuevo proyecto" : "Nueva oportunidad",

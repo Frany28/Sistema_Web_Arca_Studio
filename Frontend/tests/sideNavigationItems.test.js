@@ -16,11 +16,39 @@ test("client navigation keeps requests in every environment", () => {
   assert.deepEqual(ids, ["dashboard", "requests", "more-projects", "settings"]);
 });
 
-test("architect and admin navigation only exposes authorized shared destinations", () => {
-  for (const role of ["architect", "admin"]) {
-    const ids = createUserSideNavigationItems([], role).map(({ id }) => id);
-    assert.deepEqual(ids, ["dashboard", "more-projects", "settings"]);
-  }
+test("architect navigation only exposes authorized shared destinations", () => {
+  const ids = createUserSideNavigationItems([], "architect").map(({ id }) => id);
+  assert.deepEqual(ids, ["dashboard", "more-projects", "settings"]);
+});
+
+test("admin navigation follows the dedicated management design", () => {
+  const items = createUserSideNavigationItems(
+    [{ id: 10, name: "Proyecto reciente" }],
+    "admin",
+  );
+
+  assert.deepEqual(
+    items.map(({ id }) => id),
+    ["dashboard", "users", "projects", "files", "history", "settings"],
+  );
+  assert.deepEqual(
+    items.map(({ label }) => label),
+    ["Dashboard", "Usuarios", "Proyectos", "Archivos", "Historial", "Configuraciones"],
+  );
+  assert.equal(items.some(({ id }) => id.startsWith("project-")), false);
+});
+
+test("admin navigation does not receive recent project shortcuts", () => {
+  const items = mergeRecentProjectNavigationItems(
+    createUserSideNavigationItems([], "admin"),
+    [{ id: 10, name: "Proyecto reciente" }],
+    { includeProjectShortcuts: false },
+  );
+
+  assert.deepEqual(
+    items.map(({ id }) => id),
+    ["dashboard", "users", "projects", "files", "history", "settings"],
+  );
 });
 
 test("project shortcuts preserve the shared navigation actions", () => {

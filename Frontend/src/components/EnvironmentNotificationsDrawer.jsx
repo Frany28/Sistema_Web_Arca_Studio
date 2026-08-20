@@ -17,6 +17,7 @@ function mergeDrawerComments(environmentComments, projectComments) {
 }
 
 function EnvironmentNotificationsDrawer({
+  activityOnly = false,
   comments = [],
   commentsError = "",
   commentsLoading = false,
@@ -31,7 +32,7 @@ function EnvironmentNotificationsDrawer({
     loading: environmentCommentsLoading,
     submitComment: submitEnvironmentComment,
   } = useEnvironmentComments({
-    enabled: open,
+    enabled: open && !activityOnly,
     refreshIntervalMs: open ? 15000 : 0,
     user,
   });
@@ -43,6 +44,7 @@ function EnvironmentNotificationsDrawer({
   return (
     <NotificationsDrawer
       {...props}
+      activityOnly={activityOnly}
       open={open}
       comments={mergedComments}
       commentsError={environmentCommentsError || commentsError}

@@ -11,6 +11,7 @@ export function mapAdminDashboardActivity(row = {}) {
     projectName: row.project_name || "Proyecto",
     title: row.activity_title || "Actividad registrada",
     userName: row.user_name || "Usuario",
+    userRoleCode: row.user_role_code || null,
   };
 }
 

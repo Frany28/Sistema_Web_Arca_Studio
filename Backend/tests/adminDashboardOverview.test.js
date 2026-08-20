@@ -16,6 +16,7 @@ test("admin dashboard activity maps database rows to the public contract", () =>
       project_id: "4",
       project_name: "Quinta Bella Vista",
       user_name: "Sofía Tapia",
+      user_role_code: "architect",
     }),
     {
       createdAt: "2026-08-17T15:00:00.000Z",
@@ -24,6 +25,7 @@ test("admin dashboard activity maps database rows to the public contract", () =>
       projectName: "Quinta Bella Vista",
       title: "Entrega finalizada",
       userName: "Sofía Tapia",
+      userRoleCode: "architect",
     },
   );
 });
