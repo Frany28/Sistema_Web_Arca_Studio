@@ -708,37 +708,36 @@ function NotificationsDrawer({
                   showSecondaryAction={false}
                   primaryActionLabel="Reintentar"
                   onPrimaryAction={onRefreshComments}
-                  className="min-h-[220px]"
                 />
               ) : orderedComments.length ? (
                 <div className="flex flex-col gap-[8px]">
                   {orderedComments.map((item) => (
-                  <div key={item.id} className="flex flex-col gap-[8px]">
-                    <CommentCard
-                      {...item}
-                      showReplyAction={visibleReplyAction === item.id}
-                      onMoreClick={() => handleMoreClick(item.id)}
-                      onSelect={
-                        item.imageComment && onCommentSelect
-                          ? () => onCommentSelect(item)
-                          : undefined
-                      }
-                      onReplyClick={() => handleReplyClick(item.id)}
-                    />
-
-                    {activeReplyComposer === item.id ? (
-                      <ReplyComposer
-                        disabled={
-                          item.scope === "environment"
-                            ? !canSubmitEnvironmentComments
-                            : !canSubmitComments
+                    <div key={item.id} className="flex flex-col gap-[8px]">
+                      <CommentCard
+                        {...item}
+                        showReplyAction={visibleReplyAction === item.id}
+                        onMoreClick={() => handleMoreClick(item.id)}
+                        onSelect={
+                          item.imageComment && onCommentSelect
+                            ? () => onCommentSelect(item)
+                            : undefined
                         }
-                        onSubmit={(message) =>
-                          handleCommentSubmit(message, item)
-                        }
+                        onReplyClick={() => handleReplyClick(item.id)}
                       />
-                    ) : null}
-                  </div>
+
+                      {activeReplyComposer === item.id ? (
+                        <ReplyComposer
+                          disabled={
+                            item.scope === "environment"
+                              ? !canSubmitEnvironmentComments
+                              : !canSubmitComments
+                          }
+                          onSubmit={(message) =>
+                            handleCommentSubmit(message, item)
+                          }
+                        />
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -753,7 +752,6 @@ function NotificationsDrawer({
                   primaryActionLabel="Actualizar"
                   onSecondaryAction={focusCommentInput}
                   onPrimaryAction={onRefreshComments}
-                  className="min-h-[220px]"
                 />
               )}
             </div>
@@ -779,17 +777,18 @@ function NotificationsDrawer({
                 label="Cargando actividad reciente"
               />
             ) : recentActivityError ? (
-              <EmptyState
-                title="No se pudieron cargar los eventos"
-                description={recentActivityError}
-                size="S"
-                showFeaturedIcon={false}
-                showActions
-                showSecondaryAction={false}
-                primaryActionLabel="Reintentar"
-                onPrimaryAction={onRefreshActivity}
-                className={activityOnly ? "min-h-[320px] flex-1" : "min-h-[220px]"}
-              />
+              <div className={clsx(activityOnly && "flex min-h-0 flex-1 items-center justify-center")}>
+                <EmptyState
+                  title="No se pudieron cargar los eventos"
+                  description={recentActivityError}
+                  size="S"
+                  showFeaturedIcon={false}
+                  showActions
+                  showSecondaryAction={false}
+                  primaryActionLabel="Reintentar"
+                  onPrimaryAction={onRefreshActivity}
+                />
+              </div>
             ) : recentActivity.length ? (
               <div className="content-reveal flex flex-col gap-[8px]">
                 {recentActivity.map((item) => (
@@ -803,19 +802,20 @@ function NotificationsDrawer({
                 ))}
               </div>
             ) : (
-              <EmptyState
-                title="No hay eventos recientes"
-                description="Los eventos y cambios del proyecto aparecerán aquí."
-                size="S"
-                showFeaturedIcon={false}
-                showActions
-                showSecondaryAction
-                secondaryActionLabel="Cerrar"
-                primaryActionLabel="Actualizar"
-                onSecondaryAction={onClose}
-                onPrimaryAction={onRefreshActivity}
-                className={activityOnly ? "min-h-[320px] flex-1" : "min-h-[220px]"}
-              />
+              <div className={clsx(activityOnly && "flex min-h-0 flex-1 items-center justify-center")}>
+                <EmptyState
+                  title="No hay eventos recientes"
+                  description="Los eventos y cambios del proyecto aparecerán aquí."
+                  size="S"
+                  showFeaturedIcon={false}
+                  showActions
+                  showSecondaryAction
+                  secondaryActionLabel="Cerrar"
+                  primaryActionLabel="Actualizar"
+                  onSecondaryAction={onClose}
+                  onPrimaryAction={onRefreshActivity}
+                />
+              </div>
             )}
           </div>
         </section>
