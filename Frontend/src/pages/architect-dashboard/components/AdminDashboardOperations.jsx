@@ -124,7 +124,7 @@ function AdminDashboardOperations({ deliveries, deliveriesError, deliveriesLoadi
             title="No hay eventos críticos"
             description="Los eventos de seguridad y sistema aparecerán aquí."
             size="S"
-            showFeaturedIcon={false}
+            showFeaturedIcon
             showActions={false}
           />
         )}
@@ -170,7 +170,7 @@ function AdminDashboardOperations({ deliveries, deliveriesError, deliveriesLoadi
             title="No hay entregas próximas"
             description="Los proyectos con fechas de entrega aparecerán aquí."
             size="S"
-            showFeaturedIcon={false}
+            showFeaturedIcon
             showActions={false}
           />
         )}

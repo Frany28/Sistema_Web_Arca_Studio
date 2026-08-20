@@ -44,5 +44,13 @@ test("admin dashboard exposes every collection empty state", async () => {
     "No hay actividad reciente",
     "No hay solicitudes nuevas",
   ]) assert.match(overviewSource, new RegExp(label));
+  for (const label of [
+    "No hay eventos críticos",
+    "No hay entregas próximas",
+  ]) assert.match(operationsSource, new RegExp(`${label}[\\s\\S]*?showFeaturedIcon`));
+  for (const label of [
+    "No hay actividad reciente",
+    "No hay solicitudes nuevas",
+  ]) assert.match(overviewSource, new RegExp(`${label}[\\s\\S]*?showFeaturedIcon`));
   assert.match(projectsSource, /No hay proyectos activos/);
 });

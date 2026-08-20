@@ -163,7 +163,7 @@ function AdminDashboardOverview({
             title="No hay actividad reciente"
             description="Los cambios de estado y archivos nuevos aparecerán aquí."
             size="S"
-            showFeaturedIcon={false}
+            showFeaturedIcon
             showActions={false}
           />
         )}
@@ -210,7 +210,7 @@ function AdminDashboardOverview({
             title="No hay solicitudes nuevas"
             description="Las solicitudes pendientes aparecerán aquí."
             size="S"
-            showFeaturedIcon={false}
+            showFeaturedIcon
             showActions={false}
           />
         )}
