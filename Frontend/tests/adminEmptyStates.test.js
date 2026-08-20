@@ -52,5 +52,8 @@ test("admin dashboard exposes every collection empty state", async () => {
     "No hay actividad reciente",
     "No hay solicitudes nuevas",
   ]) assert.match(overviewSource, new RegExp(`${label}[\\s\\S]*?showFeaturedIcon`));
-  assert.match(projectsSource, /No hay proyectos activos/);
+  assert.match(
+    projectsSource,
+    /No hay proyectos activos[\s\S]*showFeaturedIcon=\{!hasFilters\}/,
+  );
 });
