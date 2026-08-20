@@ -93,23 +93,23 @@ function ArchitectDashboard({ empty = false }) {
     useState(false);
   const [projects, setProjects] = useState([]);
   const [projectsError, setProjectsError] = useState("");
-  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(!empty);
   const [projectsRequestKey, setProjectsRequestKey] = useState(0);
   const [adminMetrics, setAdminMetrics] = useState(null);
   const [adminMetricsError, setAdminMetricsError] = useState("");
   const [adminMetricsLoading, setAdminMetricsLoading] = useState(
-    currentUser.roleCode === "admin",
+    currentUser.roleCode === "admin" && !empty,
   );
   const [adminMetricsRequestKey, setAdminMetricsRequestKey] = useState(0);
   const [adminOverview, setAdminOverview] = useState(null);
   const [adminOverviewError, setAdminOverviewError] = useState("");
   const [adminOverviewLoading, setAdminOverviewLoading] = useState(
-    currentUser.roleCode === "admin",
+    currentUser.roleCode === "admin" && !empty,
   );
   const [adminOverviewRequestKey, setAdminOverviewRequestKey] = useState(0);
   const [adminAssignees, setAdminAssignees] = useState([]);
   const [adminAssigneesLoading, setAdminAssigneesLoading] = useState(
-    currentUser.roleCode === "admin",
+    currentUser.roleCode === "admin" && !empty,
   );
   const canManagePublication =
     user?.permissionCodes?.includes("projects.publish");
@@ -218,11 +218,23 @@ function ArchitectDashboard({ empty = false }) {
   useEffect(() => {
     let isMounted = true;
 
-    setProjectsLoading(true);
-    setProjectsError("");
+    if (empty) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    queueMicrotask(() => {
+      if (isMounted) {
+        setProjectsLoading(true);
+        setProjectsError("");
+      }
+    });
 
     if (!user) {
-      setProjectsLoading(false);
+      queueMicrotask(() => {
+        if (isMounted) setProjectsLoading(false);
+      });
       return () => {
         isMounted = false;
       };
@@ -250,10 +262,10 @@ function ArchitectDashboard({ empty = false }) {
     return () => {
       isMounted = false;
     };
-  }, [projectsRequestKey, user]);
+  }, [empty, projectsRequestKey, user]);
 
   useEffect(() => {
-    if (currentUser.roleCode !== "admin") {
+    if (currentUser.roleCode !== "admin" || empty) {
       return undefined;
     }
 
@@ -289,10 +301,10 @@ function ArchitectDashboard({ empty = false }) {
       });
 
     return () => abortController.abort();
-  }, [adminMetricsRequestKey, currentUser.roleCode]);
+  }, [adminMetricsRequestKey, currentUser.roleCode, empty]);
 
   useEffect(() => {
-    if (currentUser.roleCode !== "admin") {
+    if (currentUser.roleCode !== "admin" || empty) {
       return undefined;
     }
 
@@ -329,10 +341,10 @@ function ArchitectDashboard({ empty = false }) {
       });
 
     return () => abortController.abort();
-  }, [adminOverviewRequestKey, currentUser.roleCode]);
+  }, [adminOverviewRequestKey, currentUser.roleCode, empty]);
 
   useEffect(() => {
-    if (currentUser.roleCode !== "admin") {
+    if (currentUser.roleCode !== "admin" || empty) {
       return undefined;
     }
 
@@ -360,7 +372,7 @@ function ArchitectDashboard({ empty = false }) {
       });
 
     return () => abortController.abort();
-  }, [currentUser.roleCode]);
+  }, [currentUser.roleCode, empty]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(
@@ -563,6 +575,7 @@ function ArchitectDashboard({ empty = false }) {
                 deliveries={upcomingDeliveries}
                 deliveriesError={projectsError}
                 deliveriesLoading={projectsLoading}
+                events={empty ? [] : undefined}
                 onProjectSelect={(project) => navigate(getProjectPath(project))}
                 onViewProjects={() => navigate("/proyectos")}
               />

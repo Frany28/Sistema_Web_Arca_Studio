@@ -1,0 +1,47 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+test("admin empty-state routes reuse the production pages without API data", async () => {
+  const mainSource = await readFile(new URL("../src/main.jsx", import.meta.url), "utf8");
+  const dashboardSource = await readFile(
+    new URL("../src/pages/architect-dashboard/ArchitectDashboard.jsx", import.meta.url),
+    "utf8",
+  );
+  const usersSource = await readFile(
+    new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(mainSource, /path="\/dashboard-admin-vacio"[\s\S]*<ArchitectDashboard empty/);
+  assert.match(mainSource, /path="\/usuarios-vacio"[\s\S]*<AdminUsersPage empty/);
+  assert.match(dashboardSource, /events=\{empty \? \[\] : undefined\}/);
+  assert.match(dashboardSource, /currentUser\.roleCode !== "admin" \|\| empty/);
+  assert.match(usersSource, /function AdminUsersPage\(\{ empty = false \}\)/);
+  assert.match(usersSource, /if \(empty\) return undefined/);
+});
+
+test("admin dashboard exposes every collection empty state", async () => {
+  const operationsSource = await readFile(
+    new URL("../src/pages/architect-dashboard/components/AdminDashboardOperations.jsx", import.meta.url),
+    "utf8",
+  );
+  const overviewSource = await readFile(
+    new URL("../src/pages/architect-dashboard/components/AdminDashboardOverview.jsx", import.meta.url),
+    "utf8",
+  );
+  const projectsSource = await readFile(
+    new URL("../src/pages/architect-dashboard/components/AdminActiveProjects.jsx", import.meta.url),
+    "utf8",
+  );
+
+  for (const label of [
+    "No hay eventos críticos",
+    "No hay entregas próximas",
+  ]) assert.match(operationsSource, new RegExp(label));
+  for (const label of [
+    "No hay actividad reciente",
+    "No hay solicitudes nuevas",
+  ]) assert.match(overviewSource, new RegExp(label));
+  assert.match(projectsSource, /No hay proyectos activos/);
+});

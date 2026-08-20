@@ -104,6 +104,14 @@ createRoot(document.getElementById("root")).render(
 
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
               <Route path="/usuarios" element={<AdminUsersPage />} />
+              <Route
+                path="/usuarios-vacio"
+                element={<AdminUsersPage empty />}
+              />
+              <Route
+                path="/dashboard-admin-vacio"
+                element={<ArchitectDashboard empty />}
+              />
             </Route>
 
             <Route element={<ProtectedRoute />}>

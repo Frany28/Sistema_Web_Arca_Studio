@@ -73,7 +73,7 @@ function HeaderLabel({ children, filter = false }) {
   );
 }
 
-function AdminUsersPage() {
+function AdminUsersPage({ empty = false }) {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
@@ -82,7 +82,9 @@ function AdminUsersPage() {
   );
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [users, setUsers] = useState([]);
-  const [metrics, setMetrics] = useState(null);
+  const [metrics, setMetrics] = useState(() => empty
+    ? { total: 0, active: 0, suspended: 0, disabled: 0 }
+    : null);
   const [roles, setRoles] = useState([]);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -92,7 +94,7 @@ function AdminUsersPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [nextCursor, setNextCursor] = useState(null);
   const [selectedUserIds, setSelectedUserIds] = useState(() => new Set());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!empty);
   const [error, setError] = useState("");
   const [requestKey, setRequestKey] = useState(0);
 
@@ -123,6 +125,8 @@ function AdminUsersPage() {
   }, [query]);
 
   useEffect(() => {
+    if (empty) return undefined;
+
     const controller = new AbortController();
     api.admin.listRoles({ signal: controller.signal })
       .then((payload) => setRoles(payload?.roles || []))
@@ -130,9 +134,11 @@ function AdminUsersPage() {
         if (requestError?.name !== "AbortError") setRoles([]);
       });
     return () => controller.abort();
-  }, []);
+  }, [empty]);
 
   useEffect(() => {
+    if (empty) return undefined;
+
     const controller = new AbortController();
     queueMicrotask(() => {
       if (!controller.signal.aborted) {
@@ -160,7 +166,7 @@ function AdminUsersPage() {
       if (!controller.signal.aborted) setLoading(false);
     });
     return () => controller.abort();
-  }, [cursorHistory, debouncedQuery, pageIndex, requestKey, roleFilter, statusFilter]);
+  }, [cursorHistory, debouncedQuery, empty, pageIndex, requestKey, roleFilter, statusFilter]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(`(max-width: ${WEB_BREAKPOINT_PX - 1}px)`);
