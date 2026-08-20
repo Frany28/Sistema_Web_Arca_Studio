@@ -17,7 +17,7 @@ test("tag inputs keep large employee collections inside a single scrollable row"
   assert.match(inputSource, /\[&::-webkit-scrollbar\]:hidden/);
   assert.match(
     inputSource,
-    /className="flex h-\[22px\] w-full flex-nowrap items-center gap-\[4px\] overflow-x-auto/,
+    /"flex h-\[22px\] w-full flex-nowrap items-center gap-\[4px\] overflow-x-auto/,
   );
   assert.match(tagConfigSource, /h-\[22px\]/);
 });

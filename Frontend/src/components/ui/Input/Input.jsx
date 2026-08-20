@@ -361,6 +361,7 @@ function Input({
   tags = [],
   tagOptions = INPUT_TAG_DEFAULT_ITEMS,
   tagGroupAriaLabel,
+  tagGroupPlacement = "inline",
   showTagOptionsOnFocus = false,
   maxVisibleTagOptions = 3,
   showPasswordStrength = false,
@@ -616,6 +617,8 @@ function Input({
       resolvedState === "Focused" &&
       showTagOptionsOnFocus &&
       visibleSelectableTags.length > 0);
+  const showTagGroupAsOverlay =
+    resolvedType === "Tags" && tagGroupPlacement === "overlay";
   const showResolvedHint =
     showHint && !(resolvedType === "Tags" && resolvedState === "Focused");
   const resolvedAriaDescribedBy = [
@@ -1074,6 +1077,7 @@ function Input({
     <div
       className={clsx(
         "flex w-full max-w-[320px] flex-col items-start gap-[8px]",
+        showTagGroupAsOverlay && "relative",
         className,
       )}
       style={style}
@@ -1115,7 +1119,11 @@ function Input({
       {showTagsBelowField ? (
         <div
           id={tagGroupId}
-          className="flex h-[22px] w-full flex-nowrap items-center gap-[4px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className={clsx(
+            "flex h-[22px] w-full flex-nowrap items-center gap-[4px] overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+            showTagGroupAsOverlay &&
+              "absolute left-0 top-full z-[110] mt-[4px] rounded-[var(--radius-2)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]",
+          )}
           role="group"
           aria-label={
             tagGroupAriaLabel ?? `${label}: opciones y elementos seleccionados`
