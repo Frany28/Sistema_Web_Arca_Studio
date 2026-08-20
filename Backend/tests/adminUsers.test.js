@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { adminUserListSchema } from "../src/validation/adminUserSchemas.js";
+import {
+  adminUserCreateSchema,
+  adminUserListSchema,
+  adminUserStatusSchema,
+} from "../src/validation/adminUserSchemas.js";
 import { encodeCursor } from "../src/utils/pagination.js";
 import { mapAdminUser, mapAdminUserMetrics } from "../src/utils/adminUsers.js";
 
@@ -47,4 +51,38 @@ test("admin users expose the public management fields and normalized metrics", (
     suspended: 5,
     disabled: 5,
   });
+});
+
+test("admin user creation validates identity, roles, status and optional phones", () => {
+  const result = adminUserCreateSchema.safeParse({
+    body: {
+      fullName: "Ana Pérez",
+      companyName: "ARCA Studio",
+      email: "ANA@EXAMPLE.COM",
+      roleCode: "architect",
+      phone: "+58 414-123-4567",
+      secondaryPhone: "+1 (305) 555-0142",
+      status: "active",
+    },
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(result.data.body.fullName, { firstName: "Ana", lastName: "Pérez" });
+  assert.equal(result.data.body.email, "ana@example.com");
+  assert.equal(result.data.body.phone, "+584141234567");
+  assert.equal(result.data.body.secondaryPhone, "+13055550142");
+  assert.equal(adminUserCreateSchema.safeParse({ body: { ...result.data.body, fullName: "Ana" } }).success, false);
+  assert.equal(adminUserCreateSchema.safeParse({ body: { ...result.data.body, status: "deleted" } }).success, false);
+});
+
+test("admin user status changes accept only suspend and disable actions", () => {
+  const suspended = adminUserStatusSchema.safeParse({
+    params: { userId: "42" },
+    body: { status: "blocked" },
+  });
+
+  assert.equal(suspended.success, true);
+  assert.equal(suspended.data.params.userId, 42);
+  assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "0" }, body: { status: "inactive" } }).success, false);
+  assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "42" }, body: { status: "active" } }).success, false);
 });

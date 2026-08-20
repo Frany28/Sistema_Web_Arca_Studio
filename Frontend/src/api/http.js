@@ -260,6 +260,20 @@ export const adminApi = {
     return apiRequest(`/admin/users${query ? `?${query}` : ""}`, { signal });
   },
 
+  createUser(payload) {
+    return apiRequest("/admin/users", {
+      body: JSON.stringify(payload),
+      method: "POST",
+    });
+  },
+
+  updateUserStatus({ status, userId }) {
+    return apiRequest(`/admin/users/${encodeURIComponent(userId)}/status`, {
+      body: JSON.stringify({ status }),
+      method: "PATCH",
+    });
+  },
+
   async updateProjectAssignees({ assigneeIds, projectId }) {
     const payload = await apiRequest(`/admin/projects/${encodeURIComponent(projectId)}/assignees`, {
       body: JSON.stringify({ assigneeIds }),

@@ -8,6 +8,33 @@ const userCursor = z.string().optional().refine((value) => {
   return Boolean(decoded && !Number.isNaN(Date.parse(decoded[0])) && /^\d+$/.test(String(decoded[1])));
 }, "Cursor inválido.");
 
+function normalizeOptionalPhone(value, context) {
+  const rawValue = String(value || "").trim();
+  if (!rawValue) return null;
+
+  let digits = rawValue.replace(/\D/g, "");
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (!rawValue.startsWith("+") && digits.length === 10) digits = `1${digits}`;
+
+  if (digits.length < 8 || digits.length > 15) {
+    context.addIssue({ code: "custom", message: "Número de teléfono inválido." });
+    return z.NEVER;
+  }
+
+  return `+${digits}`;
+}
+
+const fullName = z.string().trim().min(3, "Ingresa nombre y apellido.").max(300).transform((value, context) => {
+  const parts = value.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) {
+    context.addIssue({ code: "custom", message: "Ingresa nombre y apellido." });
+    return z.NEVER;
+  }
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+});
+
+const optionalPhone = z.string().max(40).optional().transform(normalizeOptionalPhone);
+
 export const adminUserListSchema = z.object({
   query: z.object({
     cursor: userCursor,
@@ -16,4 +43,28 @@ export const adminUserListSchema = z.object({
     search: z.string().trim().max(100).optional(),
     status: z.enum(["active", "blocked", "inactive"]).optional(),
   }).passthrough(),
+});
+
+export const adminUserCreateSchema = z.object({
+  body: z.object({
+    fullName,
+    companyName: z.string().trim().max(150).optional().transform((value) => value || null),
+    email: z.string().trim().pipe(z.email("Correo inválido.")).transform((value) => value.toLowerCase()),
+    roleCode: z.string().trim().min(1).max(50).regex(/^[a-z0-9_-]+$/i),
+    phone: optionalPhone,
+    secondaryPhone: optionalPhone,
+    status: z.enum(["active", "blocked", "inactive"]),
+  }).refine(
+    (body) => !body.phone || body.phone !== body.secondaryPhone,
+    { message: "Los teléfonos deben ser diferentes.", path: ["secondaryPhone"] },
+  ),
+});
+
+export const adminUserStatusSchema = z.object({
+  params: z.object({
+    userId: z.coerce.number().int().positive(),
+  }),
+  body: z.object({
+    status: z.enum(["blocked", "inactive"]),
+  }),
 });

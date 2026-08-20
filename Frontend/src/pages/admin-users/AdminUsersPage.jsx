@@ -6,7 +6,6 @@ import {
   Eye,
   Filter,
   FilterRemove,
-  More,
   Profile2User,
   SearchNormal1,
   UserMinus,
@@ -34,6 +33,8 @@ import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
 import { formatRelativeTime } from "../../utils/relativeTime.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
+import CreateAdminUserModal from "./CreateAdminUserModal.jsx";
+import AdminUserActionsMenu from "./AdminUserActionsMenu.jsx";
 
 const WEB_BREAKPOINT_PX = 1280;
 const STATUS_FILTER_ITEMS = [
@@ -97,6 +98,10 @@ function AdminUsersPage({ empty = false }) {
   const [loading, setLoading] = useState(!empty);
   const [error, setError] = useState("");
   const [requestKey, setRequestKey] = useState(0);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [creationMessage, setCreationMessage] = useState("");
+  const [statusFeedback, setStatusFeedback] = useState(null);
+  const [updatingUserId, setUpdatingUserId] = useState(null);
 
   const navigationItems = useMemo(
     () => createUserSideNavigationItems([], "admin"),
@@ -226,6 +231,57 @@ function AdminUsersPage({ empty = false }) {
     setPageIndex((current) => current + 1);
   }
 
+  async function createUser(payload) {
+    const response = await api.admin.createUser(payload);
+    setCreationMessage(response?.message || "Usuario creado correctamente.");
+    setIsCreateUserOpen(false);
+    setCursorHistory([null]);
+    setPageIndex(0);
+    setRequestKey((key) => key + 1);
+  }
+
+  async function changeUserStatus(listedUser, status) {
+    setUpdatingUserId(String(listedUser.id));
+    setStatusFeedback(null);
+    try {
+      const response = await api.admin.updateUserStatus({ status, userId: listedUser.id });
+      const updatedUser = response?.user || { ...listedUser, status };
+      setUsers((current) => {
+        if (statusFilter !== "all" && statusFilter !== status) {
+          return current.filter((item) => String(item.id) !== String(listedUser.id));
+        }
+        return current.map((item) => (
+          String(item.id) === String(listedUser.id) ? updatedUser : item
+        ));
+      });
+      setSelectedUserIds((current) => {
+        const next = new Set(current);
+        next.delete(String(listedUser.id));
+        return next;
+      });
+      setMetrics((current) => {
+        if (!current || listedUser.status === status) return current;
+        const metricByStatus = { active: "active", blocked: "suspended", inactive: "disabled" };
+        return {
+          ...current,
+          [metricByStatus[listedUser.status]]: Math.max(0, current[metricByStatus[listedUser.status]] - 1),
+          [metricByStatus[status]]: current[metricByStatus[status]] + 1,
+        };
+      });
+      setStatusFeedback({
+        tone: "success",
+        message: response?.message || `El estado de ${listedUser.name} fue actualizado.`,
+      });
+    } catch (requestError) {
+      setStatusFeedback({
+        tone: "danger",
+        message: requestError?.message || "No se pudo actualizar el estado del usuario.",
+      });
+    } finally {
+      setUpdatingUserId(null);
+    }
+  }
+
   return (
     <main className="h-screen overflow-hidden bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex h-full min-h-0 w-full items-stretch">
@@ -257,14 +313,20 @@ function AdminUsersPage({ empty = false }) {
               <h1 id="admin-users-title" className="text-heading-3 m-0 text-[var(--color-text-50)] max-sm:text-[40px] max-sm:leading-[48px]">
                 Gestión de usuarios
               </h1>
-              <Tooltip text="Disponible al implementar el formulario de usuario" tipPosition="Bottom center" portal>
-                <span>
-                  <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon iconLeft={<Add size="20" color="currentColor" />} showRightIcon={false} disabled>
-                    Nuevo
-                  </Button>
-                </span>
-              </Tooltip>
+              <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon iconLeft={<Add size="20" color="currentColor" />} showRightIcon={false} onClick={() => { setCreationMessage(""); setIsCreateUserOpen(true); }}>
+                Nuevo
+              </Button>
             </div>
+
+            {creationMessage ? <p className="mb-[16px] text-body-3 text-[var(--color-success-200)]" role="status">{creationMessage}</p> : null}
+            {statusFeedback ? (
+              <p
+                className={`mb-[16px] text-body-3 ${statusFeedback.tone === "success" ? "text-[var(--color-success-200)]" : "text-[var(--color-danger-200)]"}`}
+                role={statusFeedback.tone === "success" ? "status" : "alert"}
+              >
+                {statusFeedback.message}
+              </p>
+            ) : null}
 
             {loading && !metrics ? (
               <Loader preset="adminUserMetrics" label="Cargando métricas de usuarios" />
@@ -334,8 +396,12 @@ function AdminUsersPage({ empty = false }) {
                                 {[
                                   { icon: <Eye size="20" color="currentColor" />, label: "Ver" },
                                   { icon: <Edit2 size="20" color="currentColor" />, label: "Editar" },
-                                  { icon: <More size="20" color="currentColor" />, label: "Más opciones" },
                                 ].map((action) => <Tooltip key={action.label} text={`${action.label}: disponible en una próxima sección`} tipPosition="Top center" portal><span><Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={action.icon} showRightIcon={false} disabled aria-label={`${action.label} ${listedUser.name}`} /></span></Tooltip>)}
+                                <AdminUserActionsMenu
+                                  user={listedUser}
+                                  disabled={updatingUserId === String(listedUser.id)}
+                                  onStatusChange={changeUserStatus}
+                                />
                               </div></td>
                             </tr>
                           );
@@ -373,7 +439,7 @@ function AdminUsersPage({ empty = false }) {
                   showSecondaryAction
                   secondaryActionLabel="Añadir"
                   primaryActionLabel="Actualizar"
-                  onSecondaryAction={() => navigate("/usuarios")}
+                  onSecondaryAction={() => setIsCreateUserOpen(true)}
                   onPrimaryAction={() => {
                     if (empty) navigate("/usuarios");
                     else setRequestKey((key) => key + 1);
@@ -385,6 +451,7 @@ function AdminUsersPage({ empty = false }) {
           </section>
 
           <NotificationsDrawer activityOnly open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} recentActivity={[]} />
+          {isCreateUserOpen ? <CreateAdminUserModal open roles={roles} onClose={() => setIsCreateUserOpen(false)} onCreate={createUser} /> : null}
         </div>
       </div>
     </main>

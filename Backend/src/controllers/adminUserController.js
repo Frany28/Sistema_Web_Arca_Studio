@@ -1,4 +1,23 @@
-import { getAdminUsersPage } from "../services/adminUserService.js";
+import {
+  createAdminUser,
+  getAdminUsersPage,
+  updateAdminUserStatus,
+} from "../services/adminUserService.js";
+
+export async function postAdminUser(req, res, next) {
+  try {
+    const user = await createAdminUser(req.body);
+    res.set("Cache-Control", "no-store");
+    res.status(201).json({
+      message: user.status === "active"
+        ? "Usuario creado. Enviamos un enlace para establecer su contraseña."
+        : "Usuario creado correctamente.",
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function getAdminUsers(req, res, next) {
   try {
@@ -6,6 +25,25 @@ export async function getAdminUsers(req, res, next) {
 
     res.set("Cache-Control", "private, max-age=15");
     res.status(200).json(page);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function patchAdminUserStatus(req, res, next) {
+  try {
+    const user = await updateAdminUserStatus({
+      actorUserId: req.user.id,
+      status: req.body.status,
+      userId: req.params.userId,
+    });
+    res.set("Cache-Control", "no-store");
+    res.status(200).json({
+      message: user.status === "blocked"
+        ? "Usuario suspendido correctamente."
+        : "Usuario deshabilitado correctamente.",
+      user,
+    });
   } catch (error) {
     next(error);
   }

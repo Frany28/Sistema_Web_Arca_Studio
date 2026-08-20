@@ -376,6 +376,7 @@ function Input({
   onKeyDown,
   onTagsChange,
   onTagOptionSelect,
+  onPhoneCountryChange,
   onClickRightIcon,
   inputRef,
   inputClassName,
@@ -808,6 +809,7 @@ function Input({
 
                   if (exactMatch) {
                     setSelectedPhoneOption(exactMatch);
+                    onPhoneCountryChange?.(exactMatch);
 
                     if (!isControlled) {
                       setInternalValue((current) =>
@@ -866,6 +868,7 @@ function Input({
                     onClick={() => {
                       setSelectedPhoneOption(option);
                       setPhonePrefixValue(option.dialCode);
+                      onPhoneCountryChange?.(option);
                       if (resolvedType === "Phone number") {
                         const reformattedValue = formatPhoneNumber(
                           currentValue,

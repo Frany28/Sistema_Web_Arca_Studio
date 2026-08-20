@@ -15,17 +15,32 @@ import {
   getRoles,
   updateRolePermissions,
 } from "../controllers/rolePermissionController.js";
-import { getAdminUsers } from "../controllers/adminUserController.js";
+import { getAdminUsers, patchAdminUserStatus, postAdminUser } from "../controllers/adminUserController.js";
 import { requireAuth, requireRoles } from "../middlewares/auth.js";
+import { createRateLimit } from "../middlewares/rateLimit.js";
 import { validate } from "../middlewares/validate.js";
 import {
   adminAssigneePhotoSchema,
   projectAssigneesSchema,
   projectRequestAssigneesSchema,
 } from "../validation/adminDashboardSchemas.js";
-import { adminUserListSchema } from "../validation/adminUserSchemas.js";
+import {
+  adminUserCreateSchema,
+  adminUserListSchema,
+  adminUserStatusSchema,
+} from "../validation/adminUserSchemas.js";
 
 const router = Router();
+const adminUserCreateRateLimit = createRateLimit({
+  name: "admin-user-create",
+  max: 20,
+  windowMs: 60 * 60 * 1000,
+});
+const adminUserStatusRateLimit = createRateLimit({
+  name: "admin-user-status",
+  max: 60,
+  windowMs: 60 * 60 * 1000,
+});
 
 router.use(requireAuth, requireRoles("admin"));
 
@@ -33,6 +48,18 @@ router.get("/dashboard-metrics", getDashboardMetrics);
 router.get("/dashboard-overview", getDashboardOverview);
 router.get("/assignees", getAdminAssignees);
 router.get("/users", validate(adminUserListSchema), getAdminUsers);
+router.post(
+  "/users",
+  adminUserCreateRateLimit,
+  validate(adminUserCreateSchema),
+  postAdminUser,
+);
+router.patch(
+  "/users/:userId/status",
+  adminUserStatusRateLimit,
+  validate(adminUserStatusSchema),
+  patchAdminUserStatus,
+);
 router.get(
   "/assignees/:userId/profile-photo",
   validate(adminAssigneePhotoSchema),
