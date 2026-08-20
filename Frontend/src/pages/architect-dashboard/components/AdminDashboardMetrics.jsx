@@ -88,7 +88,7 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
       className="mx-auto w-full max-w-[1200px] px-[16px] sm:px-[24px] lg:px-[48px]"
       aria-label="Resumen de métricas administrativas"
     >
-      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 min-[1100px]:grid-cols-5 min-[1100px]:gap-x-[16px]">
+      <div className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] border-y border-[var(--color-neutral-200)] py-[24px] sm:grid-cols-2 min-[900px]:grid-cols-5 min-[900px]:gap-x-[16px]">
         <MetricItem
           label="Usuarios activos"
           value={metrics?.activeUsers?.total}
@@ -106,14 +106,6 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           icon={<Buildings2 size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
-          label="Solicitudes"
-          value={metrics?.requests?.total}
-          badge={`+${numberFormatter.format(metrics?.requests?.today || 0)}`}
-          supportingText="hoy"
-          iconType="Warning"
-          icon={<MessageNotif size="24" variant="Linear" color="currentColor" />}
-        />
-        <MetricItem
           label="Archivos registrados"
           value={metrics?.files?.total}
           badge={formatStorage(metrics?.files?.totalBytes)}
@@ -121,6 +113,14 @@ function AdminDashboardMetrics({ error, loading, metrics, onRetry }) {
           supportingText="usado"
           iconType="Info"
           icon={<Folder2 size="24" variant="Linear" color="currentColor" />}
+        />
+        <MetricItem
+          label="Solicitudes"
+          value={metrics?.requests?.total}
+          badge={`+${numberFormatter.format(metrics?.requests?.today || 0)}`}
+          supportingText="hoy"
+          iconType="Warning"
+          icon={<MessageNotif size="24" variant="Linear" color="currentColor" />}
         />
         <MetricItem
           label="Eventos críticos"
