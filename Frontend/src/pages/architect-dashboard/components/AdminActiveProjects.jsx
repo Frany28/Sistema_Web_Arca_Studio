@@ -309,6 +309,7 @@ function AdminActiveProjects({
             size="S"
             showFeaturedIcon={false}
             showActions
+            showSecondaryAction={false}
             primaryActionLabel="Reintentar"
             onPrimaryAction={onRetry}
           />
@@ -404,7 +405,7 @@ function AdminActiveProjects({
           ) : null}
         </div>
       ) : (
-        <EmptyState title={hasFilters ? "No hay coincidencias" : "No hay proyectos activos"} description={hasFilters ? "Ajusta o elimina los filtros para ver otros proyectos." : "Los proyectos aparecerán aquí cuando estén disponibles."} size="S" showFeaturedIcon={false} showActions={hasFilters} primaryActionLabel="Quitar filtros" onPrimaryAction={clearFilters} />
+        <EmptyState title={hasFilters ? "No hay coincidencias" : "No hay proyectos activos"} description={hasFilters ? "Ajusta o elimina los filtros para ver otros proyectos." : "Los proyectos aparecerán aquí cuando estén disponibles."} size="S" showFeaturedIcon={false} showActions={hasFilters} showSecondaryAction={false} primaryActionLabel="Quitar filtros" onPrimaryAction={clearFilters} />
       )}
     </section>
   );

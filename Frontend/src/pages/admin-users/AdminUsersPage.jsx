@@ -291,7 +291,16 @@ function AdminUsersPage({ empty = false }) {
                 <Loader preset="adminUserTable" label="Cargando usuarios" />
               ) : error ? (
                 <div className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
-                  <EmptyState title="No se pudieron cargar los usuarios" description={error} size="S" showFeaturedIcon={false} showActions primaryActionLabel="Reintentar" onPrimaryAction={() => setRequestKey((key) => key + 1)} />
+                  <EmptyState
+                    title="No se pudieron cargar los usuarios"
+                    description={error}
+                    size="S"
+                    showFeaturedIcon={false}
+                    showActions
+                    showSecondaryAction={false}
+                    primaryActionLabel="Reintentar"
+                    onPrimaryAction={() => setRequestKey((key) => key + 1)}
+                  />
                 </div>
               ) : users.length ? (
                 <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
@@ -342,8 +351,33 @@ function AdminUsersPage({ empty = false }) {
                     </div>
                   </div>
                 </div>
+              ) : hasFilters ? (
+                <EmptyState
+                  title="No hay coincidencias"
+                  description="Ajusta o elimina los filtros para ver otros usuarios."
+                  size="S"
+                  showFeaturedIcon={false}
+                  showActions
+                  showSecondaryAction={false}
+                  primaryActionLabel="Quitar filtros"
+                  onPrimaryAction={clearFilters}
+                />
               ) : (
-                <EmptyState title={hasFilters ? "No hay coincidencias" : "No hay usuarios registrados"} description={hasFilters ? "Ajusta o elimina los filtros para ver otros usuarios." : "Los usuarios aparecerán aquí cuando estén disponibles."} size="S" showFeaturedIcon={false} showActions={hasFilters} primaryActionLabel="Quitar filtros" onPrimaryAction={clearFilters} />
+                <EmptyState
+                  title="No hay usuarios registrados"
+                  description="Los usuarios aparecerán aquí cuando estén disponibles."
+                  size="M"
+                  showFeaturedIcon
+                  showActions
+                  showSecondaryAction
+                  secondaryActionLabel="Añadir"
+                  primaryActionLabel="Actualizar"
+                  onSecondaryAction={() => navigate("/usuarios")}
+                  onPrimaryAction={() => {
+                    if (empty) navigate("/usuarios");
+                    else setRequestKey((key) => key + 1);
+                  }}
+                />
               )}
             </div>
           </section>

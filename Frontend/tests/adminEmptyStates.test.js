@@ -19,6 +19,7 @@ test("admin empty-state routes reuse the production pages without API data", asy
   assert.match(dashboardSource, /currentUser\.roleCode !== "admin" \|\| empty/);
   assert.match(usersSource, /function AdminUsersPage\(\{ empty = false \}\)/);
   assert.match(usersSource, /if \(empty\) return undefined/);
+  assert.match(usersSource, /title="No hay usuarios registrados"[\s\S]*size="M"/);
 });
 
 test("admin dashboard exposes every collection empty state", async () => {

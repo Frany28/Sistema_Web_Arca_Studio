@@ -18,7 +18,7 @@ const EMPTY_STATE_NODE_IDS = {
       full: "2061:24384",
     },
     M: {
-      full: "2061:24346",
+      full: "2061:24347",
     },
   },
   dark: {
@@ -34,56 +34,27 @@ const EMPTY_STATE_NODE_IDS = {
   },
 };
 
-function DecorativeDots({ isMedium, isDarkMode, isFeatured = false }) {
+function DecorativeDots({ isMedium, isFeatured = false }) {
   const featuredStyle = {
     left: "50%",
     top: "50%",
     transform: "translate(-50%, -50%)",
   };
 
-  if (isDarkMode) {
-    return (
-      <div
-        className={clsx(
-          "pointer-events-none absolute z-0",
-          !isFeatured && "left-1/2 -translate-x-1/2 -translate-y-1/2",
-          isMedium ? "h-[216px] w-[221px]" : "h-[196px] w-[201px]",
-        )}
-        aria-hidden="true"
-        style={isFeatured ? featuredStyle : { top: isMedium ? "42px" : "37px" }}
-      >
-        <img
-          src={circlesAsset}
-          alt=""
-          className="block h-full w-full max-w-none object-fill"
-        />
-      </div>
-    );
-  }
-
-  const dotColor = "rgba(232,232,232,0.92)";
-  const fadeMask =
-    "radial-gradient(circle at center, rgba(0,0,0,0.95) 14%, rgba(0,0,0,0.62) 48%, rgba(0,0,0,0.18) 66%, transparent 84%)";
-
   return (
     <div
       className={clsx(
         "pointer-events-none absolute z-0",
         !isFeatured && "left-1/2 -translate-x-1/2 -translate-y-1/2",
-        isMedium ? "size-[220px]" : "size-[200px]",
+        isMedium ? "h-[216px] w-[221px]" : "h-[196px] w-[201px]",
       )}
       aria-hidden="true"
       style={isFeatured ? featuredStyle : { top: isMedium ? "42px" : "37px" }}
     >
-      <div
-        className="size-full"
-        style={{
-          backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px)`,
-          backgroundPosition: "center",
-          backgroundSize: "6px 6px",
-          maskImage: fadeMask,
-          WebkitMaskImage: fadeMask,
-        }}
+      <img
+        src={circlesAsset}
+        alt=""
+        className="block h-full w-full max-w-none object-fill opacity-[0.12] dark:opacity-100"
       />
     </div>
   );
@@ -95,32 +66,6 @@ function getDocumentDarkMode() {
   }
 
   return document.documentElement.classList.contains("dark");
-}
-
-function ImageIcon({ size }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="none"
-      className={clsx(size === 24 ? "size-6" : "size-5")}
-    >
-      <path
-        d="M18.0664 14.133L15.4581 8.04137C14.5748 5.9747 12.9498 5.89137 11.8581 7.85803L10.2831 10.6997C9.48311 12.1414 7.99144 12.2664 6.95811 10.9747L6.77478 10.7414C5.69978 9.39137 4.18311 9.55803 3.40811 11.0997L1.97478 13.9747C0.966442 15.9747 2.42478 18.333 4.65811 18.333H15.2914C17.4581 18.333 18.9164 16.1247 18.0664 14.133Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M5.80811 6.66602C7.18882 6.66602 8.30811 5.54673 8.30811 4.16602C8.30811 2.7853 7.18882 1.66602 5.80811 1.66602C4.42739 1.66602 3.30811 2.7853 3.30811 4.16602C3.30811 5.54673 4.42739 6.66602 5.80811 6.66602Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }
 
 function resolveNodeId(themeKey, size, showFeaturedIcon, showActions) {
@@ -194,29 +139,12 @@ function EmptyState({
     Boolean(showActions),
   );
 
-  const titleColorClass = isDarkMode
-    ? "text-[var(--color-text-200,#6C6C6C)]"
-    : "text-[var(--color-text-200,#4e4e4e)]";
-  const descriptionColorClass = isDarkMode
-    ? "text-[var(--color-text-100,#484848)]"
-    : "text-[var(--color-text-100,#818181)]";
-  const iconBorderClass = "border-[var(--color-neutral-200,#e8e8e8)]";
-  const iconSurfaceClass = isDarkMode
-    ? "bg-[var(--color-neutral-100)] text-[var(--color-neutral-200)]"
-    : "bg-[var(--color-neutral-100,#fff)] text-[var(--color-text-100,#818181)]";
-  const isDarkCtasVariant =
-    isDarkMode && showActions && !showFeaturedIcon && !isMedium;
-  const secondaryButtonClass = isDarkCtasVariant
-    ? "border-[var(--color-neutral-300,#d2d2d2)] bg-transparent text-[var(--color-text-200,#4e4e4e)] hover:border-[var(--color-neutral-300,#d2d2d2)] hover:bg-transparent hover:text-[var(--color-text-200,#4e4e4e)] focus:border-[var(--color-neutral-300,#d2d2d2)] focus:bg-transparent focus:text-[var(--color-text-200,#4e4e4e)]"
-    : undefined;
-  const primaryButtonClass = isDarkCtasVariant
-    ? "border border-transparent bg-[var(--color-primary-300,#2a2929)] text-[var(--color-neutral-100-uniform,#fff)] hover:border-transparent hover:bg-[var(--color-primary-300,#2a2929)] hover:text-[var(--color-neutral-100-uniform,#fff)] focus:border-transparent focus:bg-[var(--color-primary-300,#2a2929)] focus:text-[var(--color-neutral-100-uniform,#fff)]"
-    : undefined;
+  const ImageIcon = IconsaxIcons.Image;
 
   return (
     <section
       className={clsx(
-        "relative flex w-full flex-col items-center justify-center overflow-visible",
+        "relative flex w-full flex-col items-center justify-center overflow-clip",
         isMedium
           ? "min-h-[254px] gap-[32px] px-[24px] py-[24px]"
           : "h-[206px] gap-[24px] px-[16px] py-[16px]",
@@ -227,31 +155,35 @@ function EmptyState({
       {...props}
     >
       {hasVisual && !showFeaturedIcon ? (
-        <DecorativeDots isMedium={isMedium} isDarkMode={isDarkMode} />
+        <DecorativeDots isMedium={isMedium} />
       ) : null}
 
       {showFeaturedIcon ? (
         <div className="relative z-[1] flex shrink-0 items-center justify-center overflow-visible">
           <DecorativeDots
             isMedium={isMedium}
-            isDarkMode={isDarkMode}
             isFeatured
           />
 
           <div
             className={clsx(
               "relative z-[1] shrink-0 rounded-[var(--radius-2,8px)] border shadow-[var(--shadow-e1,0px_0px_5px_0px_rgba(0,0,0,0.05))]",
-              iconBorderClass,
+              "border-[var(--color-neutral-200)]",
             )}
           >
             <div
               className={clsx(
                 "flex items-center justify-center rounded-[var(--radius-2,8px)]",
-                iconSurfaceClass,
+                "bg-[var(--color-neutral-100)] text-[var(--color-text-100)]",
                 isMedium ? "size-[48px] p-[8px]" : "size-[40px] p-[8px]",
               )}
             >
-              <ImageIcon size={isMedium ? 24 : 20} />
+              <ImageIcon
+                size={isMedium ? 24 : 20}
+                variant="Linear"
+                color="currentColor"
+                aria-hidden="true"
+              />
             </div>
           </div>
         </div>
@@ -265,17 +197,14 @@ function EmptyState({
       >
         <div
           className={clsx(
-            "flex flex-col items-center gap-[4px] text-center tracking-[-0.5px]",
+            "flex flex-col items-center gap-[4px] text-center",
             isMedium ? "max-w-[280px]" : "w-[261px] max-w-full",
           )}
         >
           <h3
             className={clsx(
-              "font-bold",
-              titleColorClass,
-              isMedium
-                ? "text-[18px] leading-[22px]"
-                : "text-[16px] leading-[19px]",
+              "text-[var(--color-text-200)]",
+              isMedium ? "text-heading-6" : "text-heading-7",
             )}
           >
             {title}
@@ -283,8 +212,7 @@ function EmptyState({
 
           <p
             className={clsx(
-              "text-[14px] leading-[17px] font-normal tracking-[-0.5px]",
-              descriptionColorClass,
+              "text-body-3 text-[var(--color-text-100)]",
             )}
           >
             {description}
@@ -299,7 +227,6 @@ function EmptyState({
                 type="Outline"
                 size="S"
                 fitContent
-                className={secondaryButtonClass}
                 showLeftIcon={false}
                 showRightIcon={false}
                 onClick={onSecondaryAction}
@@ -313,7 +240,6 @@ function EmptyState({
               type="Solid"
               size="S"
               fitContent
-              className={primaryButtonClass}
               showLeftIcon={false}
               showRightIcon={false}
               onClick={onPrimaryAction}

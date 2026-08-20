@@ -143,6 +143,7 @@ function AdminDashboardOverview({
             size="S"
             showFeaturedIcon={false}
             showActions
+            showSecondaryAction={false}
             primaryActionLabel="Reintentar"
             onPrimaryAction={onRetry}
           />
