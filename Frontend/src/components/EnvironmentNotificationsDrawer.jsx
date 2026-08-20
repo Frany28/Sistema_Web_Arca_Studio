@@ -21,6 +21,7 @@ function EnvironmentNotificationsDrawer({
   comments = [],
   commentsError = "",
   commentsLoading = false,
+  onRefreshComments,
   onSubmitComment,
   open = false,
   ...props
@@ -30,6 +31,7 @@ function EnvironmentNotificationsDrawer({
     drawerComments: environmentComments,
     error: environmentCommentsError,
     loading: environmentCommentsLoading,
+    refresh: refreshEnvironmentComments,
     submitComment: submitEnvironmentComment,
   } = useEnvironmentComments({
     enabled: open && !activityOnly,
@@ -49,6 +51,12 @@ function EnvironmentNotificationsDrawer({
       comments={mergedComments}
       commentsError={environmentCommentsError || commentsError}
       commentsLoading={environmentCommentsLoading || commentsLoading}
+      onRefreshComments={() =>
+        Promise.all([
+          refreshEnvironmentComments(),
+          onRefreshComments?.(),
+        ])
+      }
       onSubmitComment={onSubmitComment}
       onSubmitEnvironmentComment={submitEnvironmentComment}
     />

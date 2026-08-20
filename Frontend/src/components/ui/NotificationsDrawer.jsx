@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import clsx from "clsx";
 
 import { orderCommentsByThread } from "../../utils/commentDisplay.js";
@@ -9,6 +9,7 @@ import Avatar from "./Avatar/Avatar.jsx";
 import Badge from "./Badge/Badge.jsx";
 import Button from "./Button/Button.jsx";
 import FileAttachmentIcons from "./FileAttachmentIcons/FileAttachmentIcons.jsx";
+import EmptyState from "./EmptyState/EmptyState.jsx";
 import Loader from "./Loader/Loader.jsx";
 import SideOverlayDrawer from "./SideOverlayDrawer.jsx";
 import TextArea from "./TextArea/TextArea.jsx";
@@ -364,6 +365,7 @@ function ReplyComposer({
 
 function MessageInput({
   disabled = false,
+  id,
   multiline = false,
   onFocus,
   onSubmit,
@@ -384,6 +386,7 @@ function MessageInput({
   return multiline ? (
     <div className="flex flex-col gap-[8px]">
       <TextArea
+        id={id}
         label="Observación general"
         placeholder={placeholder}
         value={textAreaValue}
@@ -550,15 +553,18 @@ function NotificationsDrawer({
   commentsLoading = false,
   recentActivity = RECENT_ACTIVITY,
   recentActivityError = "",
-  recentActivityLoading = true,
+  recentActivityLoading = false,
   onActivitySelect,
   onCommentSelect,
+  onRefreshActivity,
+  onRefreshComments,
   onSubmitComment,
   onSubmitEnvironmentComment,
   ...props
 }) {
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
+  const generalCommentInputId = useId();
   const canSubmitComments = typeof onSubmitComment === "function";
   const canSubmitEnvironmentComments =
     typeof onSubmitEnvironmentComment === "function";
@@ -659,6 +665,10 @@ function NotificationsDrawer({
     }
   }
 
+  function focusCommentInput() {
+    document.getElementById(generalCommentInputId)?.focus();
+  }
+
   return (
     <SideOverlayDrawer
       open={open}
@@ -679,6 +689,7 @@ function NotificationsDrawer({
           ) : (
             <div className="content-reveal flex flex-col gap-[16px]">
               <MessageInput
+                id={generalCommentInputId}
                 multiline
                 disabled={
                   !canSubmitEnvironmentComments && !canSubmitComments
@@ -688,13 +699,20 @@ function NotificationsDrawer({
               />
 
               {commentsError ? (
-                <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-danger-100)]">
-                  {commentsError}
-                </p>
-              ) : null}
-
-              <div className="flex flex-col gap-[8px]">
-                {orderedComments.map((item) => (
+                <EmptyState
+                  title="No se pudieron cargar los comentarios"
+                  description={commentsError}
+                  size="S"
+                  showFeaturedIcon={false}
+                  showActions
+                  showSecondaryAction={false}
+                  primaryActionLabel="Reintentar"
+                  onPrimaryAction={onRefreshComments}
+                  className="min-h-[220px]"
+                />
+              ) : orderedComments.length ? (
+                <div className="flex flex-col gap-[8px]">
+                  {orderedComments.map((item) => (
                   <div key={item.id} className="flex flex-col gap-[8px]">
                     <CommentCard
                       {...item}
@@ -721,19 +739,39 @@ function NotificationsDrawer({
                       />
                     ) : null}
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No hay comentarios"
+                  description="Los comentarios y observaciones aparecerán aquí."
+                  size="S"
+                  showFeaturedIcon={false}
+                  showActions
+                  showSecondaryAction
+                  secondaryActionLabel="Añadir"
+                  primaryActionLabel="Actualizar"
+                  onSecondaryAction={focusCommentInput}
+                  onPrimaryAction={onRefreshComments}
+                  className="min-h-[220px]"
+                />
+              )}
             </div>
           )}
           </section>
         ) : null}
 
-        <section className="flex w-[280px] max-w-full flex-col gap-[8px]">
+        <section
+          className={clsx(
+            "flex w-[280px] max-w-full flex-col gap-[8px]",
+            activityOnly && "min-h-0 flex-1",
+          )}
+        >
           <h3 className="text-[14px] font-medium leading-[17px] tracking-[-0.5px] text-[var(--color-text-300)]">
             Actividad Reciente
           </h3>
 
-          <div className="flex flex-col gap-[8px]">
+          <div className={clsx("flex flex-col gap-[8px]", activityOnly && "min-h-0 flex-1")}>
             {recentActivityLoading ? (
               <Loader
                 preset="activityItem"
@@ -741,9 +779,17 @@ function NotificationsDrawer({
                 label="Cargando actividad reciente"
               />
             ) : recentActivityError ? (
-              <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-danger-100)]">
-                {recentActivityError}
-              </p>
+              <EmptyState
+                title="No se pudieron cargar los eventos"
+                description={recentActivityError}
+                size="S"
+                showFeaturedIcon={false}
+                showActions
+                showSecondaryAction={false}
+                primaryActionLabel="Reintentar"
+                onPrimaryAction={onRefreshActivity}
+                className={activityOnly ? "min-h-[320px] flex-1" : "min-h-[220px]"}
+              />
             ) : recentActivity.length ? (
               <div className="content-reveal flex flex-col gap-[8px]">
                 {recentActivity.map((item) => (
@@ -757,9 +803,19 @@ function NotificationsDrawer({
                 ))}
               </div>
             ) : (
-              <p className="text-[12px] leading-[14px] tracking-[-0.5px] text-[var(--color-text-100)]">
-                No hay actividad reciente.
-              </p>
+              <EmptyState
+                title="No hay eventos recientes"
+                description="Los eventos y cambios del proyecto aparecerán aquí."
+                size="S"
+                showFeaturedIcon={false}
+                showActions
+                showSecondaryAction
+                secondaryActionLabel="Cerrar"
+                primaryActionLabel="Actualizar"
+                onSecondaryAction={onClose}
+                onPrimaryAction={onRefreshActivity}
+                className={activityOnly ? "min-h-[320px] flex-1" : "min-h-[220px]"}
+              />
             )}
           </div>
         </section>

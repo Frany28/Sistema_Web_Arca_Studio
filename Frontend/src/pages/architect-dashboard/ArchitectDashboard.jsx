@@ -674,6 +674,9 @@ function ArchitectDashboard({ empty = false }) {
               currentUser.roleCode === "admin" ? adminOverviewLoading : false
             }
             onActivitySelect={handleActivitySelect}
+            onRefreshActivity={() =>
+              setAdminOverviewRequestKey((current) => current + 1)
+            }
             onCommentSelect={openImageComment}
             onSubmitComment={submitComment}
           />
