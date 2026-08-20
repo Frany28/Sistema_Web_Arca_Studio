@@ -1,6 +1,6 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm db:migrate:deploy",
+  "buildCommand": null,
   "functions": {
     "api/index.js": {
       "maxDuration": 30
