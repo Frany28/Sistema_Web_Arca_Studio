@@ -38,6 +38,8 @@ export const ICON_CONTAINER_TYPE_STYLES = {
     "border border-transparent bg-[var(--color-warning-10)] text-[var(--color-warning-200)] shadow-[var(--shadow-e1)]",
   Danger:
     "border border-transparent bg-[var(--color-danger-10)] text-[var(--color-danger-100)] shadow-[var(--shadow-e1)]",
+  Disabled:
+    "border border-transparent bg-[var(--color-neutral-200)] text-[var(--color-neutral-400)] shadow-[var(--shadow-e1)]",
 };
 
 export function createIconContainerProps(overrides = {}) {

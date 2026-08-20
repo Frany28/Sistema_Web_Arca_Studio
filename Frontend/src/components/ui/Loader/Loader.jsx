@@ -242,13 +242,13 @@ function AdminProjectTableSkeleton() {
 
 function AdminUserMetricsSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-[24px] border-y border-[var(--color-neutral-200)] py-[24px] min-[560px]:grid-cols-2 min-[900px]:grid-cols-4">
+    <div className="flex w-full flex-wrap content-center items-center gap-y-[16px] border-y border-[var(--color-neutral-200)] py-[24px]">
       {Array.from({ length: 4 }, (_, index) => (
-        <div key={index} className="flex min-w-0 flex-col gap-[8px]">
-          <SkeletonBlock className="h-[21px] w-[168px] max-w-full rounded-[var(--radius-1)]" delay={index * 55} tone="text" />
-          <div className="flex items-center gap-[12px]">
-            <SkeletonBlock className="size-[48px] shrink-0 rounded-[var(--radius-2)]" delay={60 + index * 55} />
-            <SkeletonBlock className="h-[56px] w-[54px] rounded-[var(--radius-2)]" delay={90 + index * 55} tone="text" />
+        <div key={index} className="flex w-[235px] min-w-[120px] shrink-0 items-center gap-[12px] pr-[16px]">
+          <SkeletonBlock className="size-[48px] shrink-0 rounded-[var(--radius-2)]" delay={index * 55} />
+          <div className="flex flex-col gap-[2px]">
+            <SkeletonBlock className="h-[17px] w-[142px] max-w-full rounded-[var(--radius-1)]" delay={35 + index * 55} tone="text" />
+            <SkeletonBlock className="h-[30px] w-[38px] rounded-[var(--radius-1)]" delay={65 + index * 55} tone="text" />
           </div>
         </div>
       ))}

@@ -7,7 +7,7 @@ import {
   Filter,
   FilterRemove,
   More,
-  People,
+  Profile2User,
   SearchNormal1,
   UserMinus,
   UserRemove,
@@ -51,11 +51,11 @@ const NUMBER_FORMATTER = new Intl.NumberFormat("es-VE");
 
 function Metric({ icon, iconType, label, value }) {
   return (
-    <article className="flex min-w-0 flex-col gap-[8px]">
-      <h2 className="text-body-1 m-0 whitespace-nowrap text-[var(--color-text-300)]">{label}</h2>
-      <div className="flex items-center gap-[12px]">
-        <IconContainer size="L" type={iconType} icon={icon} />
-        <strong className="text-heading-3 text-[var(--color-text-50)]">
+    <article className="flex w-[235px] min-w-[120px] shrink-0 items-center gap-[12px] pr-[16px]">
+      <IconContainer size="L" type={iconType} icon={icon} />
+      <div className="flex min-w-0 flex-col items-start justify-center gap-[2px]">
+        <h2 className="text-heading-8 m-0 whitespace-nowrap text-[var(--color-text-100)]">{label}</h2>
+        <strong className="text-heading-4 text-[var(--color-text-200)]">
           {value === null || value === undefined ? "—" : NUMBER_FORMATTER.format(value)}
         </strong>
       </div>
@@ -263,11 +263,11 @@ function AdminUsersPage() {
             {loading && !metrics ? (
               <Loader preset="adminUserMetrics" label="Cargando métricas de usuarios" />
             ) : (
-              <div className="grid grid-cols-1 gap-[24px] border-y border-[var(--color-neutral-200)] py-[24px] min-[560px]:grid-cols-2 min-[900px]:grid-cols-4">
-                <Metric label="Usuarios totales" value={metrics?.total} iconType="Accent" icon={<People size="24" color="currentColor" />} />
+              <div className="flex w-full flex-wrap content-center items-center gap-y-[16px] border-y border-[var(--color-neutral-200)] py-[24px]">
+                <Metric label="Usuarios totales" value={metrics?.total} iconType="Accent" icon={<Profile2User size="24" color="currentColor" />} />
                 <Metric label="Usuarios activos" value={metrics?.active} iconType="Success" icon={<UserTick size="24" color="currentColor" />} />
                 <Metric label="Usuarios suspendidos" value={metrics?.suspended} iconType="Danger" icon={<UserMinus size="24" color="currentColor" />} />
-                <Metric label="Usuarios Deshabilitados" value={metrics?.disabled} iconType="Outline" icon={<UserRemove size="24" color="currentColor" />} />
+                <Metric label="Usuarios Deshabilitados" value={metrics?.disabled} iconType="Disabled" icon={<UserRemove size="24" color="currentColor" />} />
               </div>
             )}
 

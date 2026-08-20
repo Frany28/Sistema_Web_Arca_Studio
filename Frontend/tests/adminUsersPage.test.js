@@ -11,7 +11,9 @@ test("admin user management keeps the shared navigation and users tab active", a
   assert.match(source, /components\/EnvironmentNavigationBar\.jsx/);
   assert.match(source, /activeItemId="users"/);
   assert.match(source, /Gestión de usuarios/);
-  assert.match(source, /min-\[900px\]:grid-cols-4/);
+  assert.match(source, /w-\[235px\]/);
+  assert.match(source, /text-heading-4/);
+  assert.match(source, /iconType="Disabled"/);
   assert.match(source, /api\.admin\.listUsers/);
 });
 
