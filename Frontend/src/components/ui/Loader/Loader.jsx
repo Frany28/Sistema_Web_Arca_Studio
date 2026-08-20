@@ -240,6 +240,37 @@ function AdminProjectTableSkeleton() {
   );
 }
 
+function AdminUserMetricsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-[24px] border-y border-[var(--color-neutral-200)] py-[24px] min-[560px]:grid-cols-2 min-[900px]:grid-cols-4">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="flex min-w-0 flex-col gap-[8px]">
+          <SkeletonBlock className="h-[21px] w-[168px] max-w-full rounded-[var(--radius-1)]" delay={index * 55} tone="text" />
+          <div className="flex items-center gap-[12px]">
+            <SkeletonBlock className="size-[48px] shrink-0 rounded-[var(--radius-2)]" delay={60 + index * 55} />
+            <SkeletonBlock className="h-[56px] w-[54px] rounded-[var(--radius-2)]" delay={90 + index * 55} tone="text" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AdminUserTableSkeleton() {
+  return (
+    <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)]">
+      <SkeletonBlock className="h-[49px] w-full rounded-none" />
+      {Array.from({ length: 10 }, (_, rowIndex) => (
+        <div key={rowIndex} className="grid h-[64px] grid-cols-[24px_100px_160px_220px_130px_110px_130px] items-center gap-[16px] border-b border-[var(--color-neutral-200)] px-[16px] last:border-b-0">
+          {Array.from({ length: 7 }, (_, cellIndex) => (
+            <SkeletonBlock key={cellIndex} className="h-[20px] w-full rounded-[var(--radius-1)]" delay={rowIndex * 35 + cellIndex * 15} tone={cellIndex < 4 ? "text" : "muted"} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function VideoStageSkeleton() {
   return (
     <div className="relative size-full overflow-hidden rounded-[inherit]">
@@ -448,6 +479,10 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = <AdminOverviewSkeleton />;
   } else if (preset === "adminProjectTable") {
     content = <AdminProjectTableSkeleton />;
+  } else if (preset === "adminUserMetrics") {
+    content = <AdminUserMetricsSkeleton />;
+  } else if (preset === "adminUserTable") {
+    content = <AdminUserTableSkeleton />;
   } else if (preset === "videoStage") {
     content = <VideoStageSkeleton />;
   } else if (preset === "documentPreview") {

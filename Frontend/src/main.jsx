@@ -11,6 +11,9 @@ import ThemeSync from "./components/ui/ThemeSync.jsx";
 const ArchitectDashboard = lazy(
   () => import("./pages/architect-dashboard/ArchitectDashboard.jsx"),
 );
+const AdminUsersPage = lazy(
+  () => import("./pages/admin-users/AdminUsersPage.jsx"),
+);
 const CreateAccount = lazy(() => import("./pages/CreateAccount.jsx"));
 const CreatePassword = lazy(() => import("./pages/CreatePassword.jsx"));
 const EmptyArchitectDashboardExample = lazy(
@@ -97,6 +100,10 @@ createRoot(document.getElementById("root")).render(
                 path="/dashboard-arquitecto-vacio"
                 element={<EmptyArchitectDashboardExample />}
               />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              <Route path="/usuarios" element={<AdminUsersPage />} />
             </Route>
 
             <Route element={<ProtectedRoute />}>

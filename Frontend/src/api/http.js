@@ -244,6 +244,22 @@ export const adminApi = {
     return withAdminAssigneeAvatars(payload);
   },
 
+  listRoles({ signal } = {}) {
+    return apiRequest("/admin/roles", { signal });
+  },
+
+  listUsers({ cursor, limit = 10, role, search, signal, status } = {}) {
+    const params = new URLSearchParams();
+    if (cursor) params.set("cursor", cursor);
+    if (limit) params.set("limit", String(limit));
+    if (role) params.set("role", role);
+    if (search) params.set("search", search);
+    if (status) params.set("status", status);
+    const query = params.toString();
+
+    return apiRequest(`/admin/users${query ? `?${query}` : ""}`, { signal });
+  },
+
   async updateProjectAssignees({ assigneeIds, projectId }) {
     const payload = await apiRequest(`/admin/projects/${encodeURIComponent(projectId)}/assignees`, {
       body: JSON.stringify({ assigneeIds }),

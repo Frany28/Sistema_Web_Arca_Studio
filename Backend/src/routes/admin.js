@@ -15,6 +15,7 @@ import {
   getRoles,
   updateRolePermissions,
 } from "../controllers/rolePermissionController.js";
+import { getAdminUsers } from "../controllers/adminUserController.js";
 import { requireAuth, requireRoles } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import {
@@ -22,6 +23,7 @@ import {
   projectAssigneesSchema,
   projectRequestAssigneesSchema,
 } from "../validation/adminDashboardSchemas.js";
+import { adminUserListSchema } from "../validation/adminUserSchemas.js";
 
 const router = Router();
 
@@ -30,6 +32,7 @@ router.use(requireAuth, requireRoles("admin"));
 router.get("/dashboard-metrics", getDashboardMetrics);
 router.get("/dashboard-overview", getDashboardOverview);
 router.get("/assignees", getAdminAssignees);
+router.get("/users", validate(adminUserListSchema), getAdminUsers);
 router.get(
   "/assignees/:userId/profile-photo",
   validate(adminAssigneePhotoSchema),

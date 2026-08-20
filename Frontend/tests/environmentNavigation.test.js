@@ -9,6 +9,7 @@ const AUTHENTICATED_PAGE_FILES = [
   "src/pages/EmptyProjectsExample.jsx",
   "src/pages/EmptyProjectRendersExample.jsx",
   "src/pages/architect-dashboard/ArchitectDashboard.jsx",
+  "src/pages/admin-users/AdminUsersPage.jsx",
   "src/pages/architect-dashboard/NewArchitectProjectPage.jsx",
   "src/pages/projects/ProjectDetailsPage.jsx",
   "src/pages/settings/SettingsPage.jsx",

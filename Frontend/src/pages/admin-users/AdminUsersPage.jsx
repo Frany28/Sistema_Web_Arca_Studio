@@ -1,0 +1,352 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  Add,
+  ArrowSwapVertical,
+  Edit2,
+  Eye,
+  Filter,
+  FilterRemove,
+  More,
+  People,
+  SearchNormal1,
+  UserMinus,
+  UserRemove,
+  UserTick,
+} from "iconsax-react";
+import { useNavigate } from "react-router-dom";
+
+import { api } from "../../api/http.js";
+import { useAuth } from "../../auth/AuthContext.jsx";
+import { getUserDisplay } from "../../auth/userDisplay.js";
+import NavigationBar from "../../components/EnvironmentNavigationBar.jsx";
+import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
+import Avatar from "../../components/ui/Avatar/Avatar.jsx";
+import Badge from "../../components/ui/Badge/Badge.jsx";
+import Button from "../../components/ui/Button/Button.jsx";
+import Checkbox from "../../components/ui/Checkbox/Checkbox.jsx";
+import DropdownMenu from "../../components/ui/DropdownMenu/DropdownMenu.jsx";
+import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
+import IconContainer from "../../components/ui/IconContainer/IconContainer.jsx";
+import Input from "../../components/ui/Input/Input.jsx";
+import Loader from "../../components/ui/Loader/Loader.jsx";
+import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
+import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
+import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
+import { formatRelativeTime } from "../../utils/relativeTime.js";
+import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
+
+const WEB_BREAKPOINT_PX = 1280;
+const STATUS_FILTER_ITEMS = [
+  { id: "all", label: "Filtrar por status", type: "Text" },
+  { id: "active", label: "Activo", type: "Text" },
+  { id: "blocked", label: "Suspendido", type: "Text" },
+  { id: "inactive", label: "Deshabilitado", type: "Text" },
+];
+const STATUS_DETAILS = {
+  active: { label: "Activo", theme: "Success" },
+  blocked: { label: "Suspendido", theme: "Danger" },
+  inactive: { label: "Deshabilitado", theme: "Disabled" },
+};
+const NUMBER_FORMATTER = new Intl.NumberFormat("es-VE");
+
+function Metric({ icon, iconType, label, value }) {
+  return (
+    <article className="flex min-w-0 flex-col gap-[8px]">
+      <h2 className="text-body-1 m-0 whitespace-nowrap text-[var(--color-text-300)]">{label}</h2>
+      <div className="flex items-center gap-[12px]">
+        <IconContainer size="L" type={iconType} icon={icon} />
+        <strong className="text-heading-3 text-[var(--color-text-50)]">
+          {value === null || value === undefined ? "—" : NUMBER_FORMATTER.format(value)}
+        </strong>
+      </div>
+    </article>
+  );
+}
+
+function HeaderLabel({ children, filter = false }) {
+  const Icon = filter ? Filter : ArrowSwapVertical;
+  return (
+    <span className="flex items-center gap-[8px] whitespace-nowrap">
+      {children}
+      <Icon size="16" variant="Linear" color="currentColor" aria-hidden="true" />
+    </span>
+  );
+}
+
+function AdminUsersPage() {
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+  const currentUser = getUserDisplay(user);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() =>
+    typeof window === "undefined" ? true : window.innerWidth >= WEB_BREAKPOINT_PX,
+  );
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [cursorHistory, setCursorHistory] = useState([null]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [selectedUserIds, setSelectedUserIds] = useState(() => new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [requestKey, setRequestKey] = useState(0);
+
+  const navigationItems = useMemo(
+    () => createUserSideNavigationItems([], "admin"),
+    [],
+  );
+  const roleItems = useMemo(() => [
+    { id: "all", label: "Filtrar por rol", type: "Text" },
+    ...roles.map((role) => ({ id: role.code, label: role.name, type: "Text" })),
+  ], [roles]);
+  const hasFilters = Boolean(query || roleFilter !== "all" || statusFilter !== "all");
+  const selectedCount = users.reduce(
+    (count, listedUser) => count + (selectedUserIds.has(String(listedUser.id)) ? 1 : 0),
+    0,
+  );
+  const allSelected = users.length > 0 && selectedCount === users.length;
+  const headerChecked = allSelected ? "Yes" : selectedCount ? "Indeterminate" : "No";
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setCursorHistory([null]);
+      setPageIndex(0);
+      setSelectedUserIds(new Set());
+    }, 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [query]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    api.admin.listRoles({ signal: controller.signal })
+      .then((payload) => setRoles(payload?.roles || []))
+      .catch((requestError) => {
+        if (requestError?.name !== "AbortError") setRoles([]);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setLoading(true);
+        setError("");
+      }
+    });
+    api.admin.listUsers({
+      cursor: cursorHistory[pageIndex],
+      limit: 10,
+      role: roleFilter === "all" ? undefined : roleFilter,
+      search: debouncedQuery || undefined,
+      signal: controller.signal,
+      status: statusFilter === "all" ? undefined : statusFilter,
+    }).then((payload) => {
+      setUsers(payload?.users || []);
+      setMetrics(payload?.metrics || null);
+      setNextCursor(payload?.nextCursor || null);
+      setSelectedUserIds(new Set());
+    }).catch((requestError) => {
+      if (requestError?.name !== "AbortError") {
+        setError(requestError?.message || "No se pudieron cargar los usuarios.");
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    return () => controller.abort();
+  }, [cursorHistory, debouncedQuery, pageIndex, requestKey, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(`(max-width: ${WEB_BREAKPOINT_PX - 1}px)`);
+    const syncSidebar = (event) => setIsSidebarExpanded(!event.matches);
+    syncSidebar(mediaQuery);
+    mediaQuery.addEventListener("change", syncSidebar);
+    return () => mediaQuery.removeEventListener("change", syncSidebar);
+  }, []);
+
+  function clearFilters() {
+    setQuery("");
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setCursorHistory([null]);
+    setPageIndex(0);
+    setSelectedUserIds(new Set());
+  }
+
+  function selectRoleFilter(item) {
+    setRoleFilter(item.id);
+    setCursorHistory([null]);
+    setPageIndex(0);
+    setSelectedUserIds(new Set());
+  }
+
+  function selectStatusFilter(item) {
+    setStatusFilter(item.id);
+    setCursorHistory([null]);
+    setPageIndex(0);
+    setSelectedUserIds(new Set());
+  }
+
+  function toggleAll() {
+    setSelectedUserIds((current) => {
+      const next = new Set(current);
+      users.forEach((listedUser) => {
+        if (allSelected) next.delete(String(listedUser.id));
+        else next.add(String(listedUser.id));
+      });
+      return next;
+    });
+  }
+
+  function toggleUser(userId) {
+    setSelectedUserIds((current) => {
+      const next = new Set(current);
+      const id = String(userId);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function goNext() {
+    if (!nextCursor) return;
+    setCursorHistory((current) => [...current.slice(0, pageIndex + 1), nextCursor]);
+    setPageIndex((current) => current + 1);
+  }
+
+  return (
+    <main className="h-screen overflow-hidden bg-[var(--color-neutral-bg)] transition-colors duration-200">
+      <div className="flex h-full min-h-0 w-full items-stretch">
+        <SideNavigation
+          activeItemId="users"
+          expanded={isSidebarExpanded}
+          items={navigationItems}
+          newOpportunityLabel="Nuevo proyecto"
+          userName={currentUser.name}
+          userEmail={currentUser.email}
+          userAvatarSrc={currentUser.profilePhotoUrl}
+          onExpandedChange={(expanded) => {
+            if (window.innerWidth >= WEB_BREAKPOINT_PX) setIsSidebarExpanded(expanded);
+          }}
+          onItemSelect={(item) => item?.to && navigate(item.to)}
+          onNewOpportunityClick={() => navigate("/dashboard-arquitecto/nuevo-proyecto")}
+          onLogoutClick={() => { logout(); navigate("/"); }}
+          className="h-screen shrink-0 self-stretch"
+        />
+
+        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          <NavigationBar
+            utilityActionActive={isNotificationsOpen}
+            onUtilityActionClick={() => setIsNotificationsOpen((open) => !open)}
+          />
+
+          <section className="mx-auto flex w-full max-w-[1200px] flex-col px-[16px] pb-[48px] sm:px-[24px] lg:px-[48px]" aria-labelledby="admin-users-title">
+            <div className="flex flex-wrap items-center justify-between gap-[16px] pb-[24px]">
+              <h1 id="admin-users-title" className="text-heading-3 m-0 text-[var(--color-text-50)] max-sm:text-[40px] max-sm:leading-[48px]">
+                Gestión de usuarios
+              </h1>
+              <Tooltip text="Disponible al implementar el formulario de usuario" tipPosition="Bottom center" portal>
+                <span>
+                  <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon iconLeft={<Add size="20" color="currentColor" />} showRightIcon={false} disabled>
+                    Nuevo
+                  </Button>
+                </span>
+              </Tooltip>
+            </div>
+
+            {loading && !metrics ? (
+              <Loader preset="adminUserMetrics" label="Cargando métricas de usuarios" />
+            ) : (
+              <div className="grid grid-cols-1 gap-[24px] border-y border-[var(--color-neutral-200)] py-[24px] min-[560px]:grid-cols-2 min-[900px]:grid-cols-4">
+                <Metric label="Usuarios totales" value={metrics?.total} iconType="Accent" icon={<People size="24" color="currentColor" />} />
+                <Metric label="Usuarios activos" value={metrics?.active} iconType="Success" icon={<UserTick size="24" color="currentColor" />} />
+                <Metric label="Usuarios suspendidos" value={metrics?.suspended} iconType="Danger" icon={<UserMinus size="24" color="currentColor" />} />
+                <Metric label="Usuarios Deshabilitados" value={metrics?.disabled} iconType="Outline" icon={<UserRemove size="24" color="currentColor" />} />
+              </div>
+            )}
+
+            <div className="flex flex-col gap-[16px] pt-[24px]">
+              <div className="flex flex-col justify-between gap-[12px] min-[900px]:flex-row">
+                <Input type="Default input" size="M" value={query} placeholder="Buscar..." showLabel={false} showHint={false} showLeftIcon showRightIcon={false} leftIcon={<SearchNormal1 size="20" color="currentColor" />} className="w-full min-[900px]:max-w-[320px]" aria-label="Buscar usuarios" onChange={(event) => setQuery(event.target.value)} />
+                <div className="grid w-full grid-cols-1 gap-[8px] min-[560px]:grid-cols-3 min-[900px]:w-auto">
+                  <DropdownMenu type="Text" label="Filtrar por rol" items={roleItems} selectedItemId={roleFilter} onItemSelect={selectRoleFilter} className="w-full min-[900px]:w-[180px]" aria-label="Filtrar usuarios por rol" />
+                  <DropdownMenu type="Text" label="Filtrar por status" items={STATUS_FILTER_ITEMS} selectedItemId={statusFilter} onItemSelect={selectStatusFilter} className="w-full min-[900px]:w-[180px]" aria-label="Filtrar usuarios por status" />
+                  <Button theme="Primary" type="Solid" size="S" fitContent showLeftIcon iconLeft={<FilterRemove size="20" color="currentColor" />} showRightIcon={false} disabled={!hasFilters} className="w-full" onClick={clearFilters}>Quitar filtros</Button>
+                </div>
+              </div>
+
+              {loading ? (
+                <Loader preset="adminUserTable" label="Cargando usuarios" />
+              ) : error ? (
+                <div className="rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+                  <EmptyState title="No se pudieron cargar los usuarios" description={error} size="S" showFeaturedIcon={false} showActions primaryActionLabel="Reintentar" onPrimaryAction={() => setRequestKey((key) => key + 1)} />
+                </div>
+              ) : users.length ? (
+                <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-[1092px] min-w-[1092px] table-fixed border-collapse text-left">
+                      <colgroup><col className="w-[48px]" /><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[250px]" /><col className="w-[160px]" /><col className="w-[140px]" /><col className="w-[174px]" /></colgroup>
+                      <thead className="bg-[var(--color-neutral-200)] text-[var(--color-text-300)]">
+                        <tr className="h-[49px] text-body-4">
+                          <th className="p-[16px]"><Checkbox size="S" checked={headerChecked} interactive aria-label="Seleccionar todos los usuarios visibles" onCheckedChange={toggleAll} /></th>
+                          <th className="px-[16px] py-[14px]"><HeaderLabel filter>Rol</HeaderLabel></th>
+                          <th className="px-[16px] py-[14px]"><HeaderLabel>Nombre</HeaderLabel></th>
+                          <th className="px-[16px] py-[14px]">Correo</th>
+                          <th className="px-[16px] py-[14px]"><HeaderLabel>Último acceso</HeaderLabel></th>
+                          <th className="px-[16px] py-[14px]"><HeaderLabel filter>Status</HeaderLabel></th>
+                          <th className="px-[16px] py-[14px]">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {users.map((listedUser) => {
+                          const status = STATUS_DETAILS[listedUser.status] || STATUS_DETAILS.inactive;
+                          const avatar = getAvatarPresentation({ identity: listedUser.id, name: listedUser.name, roleCode: listedUser.role?.code });
+                          return (
+                            <tr key={listedUser.id} className="h-[64px] border-b border-[var(--color-neutral-200)] last:border-b-0">
+                              <td className="p-[16px]"><Checkbox size="S" checked={selectedUserIds.has(String(listedUser.id)) ? "Yes" : "No"} interactive aria-label={`Seleccionar ${listedUser.name}`} onCheckedChange={() => toggleUser(listedUser.id)} /></td>
+                              <td className="px-[16px] py-[14px]"><Badge label={listedUser.role?.name || "Sin rol"} theme="Neutral" variation="Simple" size="S" /></td>
+                              <td className="px-[16px] py-[14px]"><div className="flex min-w-0 items-center gap-[8px]"><Avatar size="S" name={listedUser.name} {...avatar} /><span className="text-body-4 truncate text-[var(--color-text-300)]">{listedUser.name}</span></div></td>
+                              <td className="text-body-4 truncate px-[16px] py-[14px] text-[var(--color-text-200)]">{listedUser.email}</td>
+                              <td className="text-body-4 px-[16px] py-[14px] text-[var(--color-text-200)]">{formatRelativeTime(listedUser.lastLoginAt, undefined, "Sin acceso")}</td>
+                              <td className="px-[16px] py-[14px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
+                              <td className="px-[16px] py-[14px]"><div className="flex items-center gap-[4px]">
+                                {[
+                                  { icon: <Eye size="20" color="currentColor" />, label: "Ver" },
+                                  { icon: <Edit2 size="20" color="currentColor" />, label: "Editar" },
+                                  { icon: <More size="20" color="currentColor" />, label: "Más opciones" },
+                                ].map((action) => <Tooltip key={action.label} text={`${action.label}: disponible en una próxima sección`} tipPosition="Top center" portal><span><Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={action.icon} showRightIcon={false} disabled aria-label={`${action.label} ${listedUser.name}`} /></span></Tooltip>)}
+                              </div></td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex flex-col items-start justify-between gap-[12px] border-t border-[var(--color-neutral-200)] px-[16px] py-[12px] min-[560px]:flex-row min-[560px]:items-center">
+                    <span className="text-body-4 text-[var(--color-text-200)]">{selectedCount} de {users.length} seleccionados</span>
+                    <div className="flex items-center gap-[8px]">
+                      <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={pageIndex === 0} onClick={() => setPageIndex((index) => Math.max(index - 1, 0))}>Anterior</Button>
+                      <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={!nextCursor} onClick={goNext}>Siguiente</Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <EmptyState title={hasFilters ? "No hay coincidencias" : "No hay usuarios registrados"} description={hasFilters ? "Ajusta o elimina los filtros para ver otros usuarios." : "Los usuarios aparecerán aquí cuando estén disponibles."} size="S" showFeaturedIcon={false} showActions={hasFilters} primaryActionLabel="Quitar filtros" onPrimaryAction={clearFilters} />
+              )}
+            </div>
+          </section>
+
+          <NotificationsDrawer activityOnly open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} recentActivity={[]} />
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default AdminUsersPage;
