@@ -11,10 +11,10 @@
 }
 
 .admin-active-projects__personnel-menu {
-  width: max-content;
-  min-width: 100%;
-  max-width: min(320px, calc(100vw - 32px));
+  width: 100%;
+  max-width: 100%;
   max-height: 168px;
+  padding-inline: 4px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -25,7 +25,12 @@
 .admin-active-projects__personnel-menu > button {
   min-height: 35px;
   height: auto;
+  padding-inline: 4px;
   padding-block: 8px;
+}
+
+.admin-active-projects__personnel-menu > button > div {
+  gap: 8px;
 }
 
 .admin-active-projects__personnel-menu > button p {
