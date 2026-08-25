@@ -1,7 +1,11 @@
 function getRoleCode(userOrRoleCode) {
   const roleCode = typeof userOrRoleCode === "string"
     ? userOrRoleCode
-    : userOrRoleCode?.roleCode;
+    : userOrRoleCode?.roleCode
+      || (typeof userOrRoleCode?.role === "string"
+        ? userOrRoleCode.role
+        : userOrRoleCode?.role?.code)
+      || userOrRoleCode?.roleDetails?.code;
 
   return String(roleCode || "").trim().toLowerCase();
 }

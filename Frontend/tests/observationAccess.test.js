@@ -8,8 +8,14 @@ import {
 
 test("administrators always receive an activity-only environment drawer", () => {
   assert.equal(canAccessObservations({ roleCode: "admin" }), false);
+  assert.equal(canAccessObservations({ role: "admin" }), false);
+  assert.equal(canAccessObservations({ role: { code: "admin" } }), false);
+  assert.equal(
+    canAccessObservations({ roleDetails: { code: "ADMIN" } }),
+    false,
+  );
   assert.deepEqual(
-    getEnvironmentNotificationsPolicy({ roleCode: "ADMIN" }),
+    getEnvironmentNotificationsPolicy({ role: "ADMIN" }),
     {
       activityOnly: true,
       observationsAllowed: false,
