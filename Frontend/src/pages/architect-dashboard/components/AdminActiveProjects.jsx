@@ -354,7 +354,15 @@ function AdminActiveProjects({
                 const isSelected = selectedProjectIds.has(String(project.id));
 
                 return (
-                  <tr key={project.id} className="h-[68px] bg-[var(--color-neutral-100)]">
+                  <tr
+                    key={project.id}
+                    className={`h-[68px] transition-colors duration-150 ${
+                      isSelected
+                        ? "bg-[var(--color-neutral-300)]"
+                        : "bg-[var(--color-neutral-100)]"
+                    }`}
+                    data-selected={isSelected ? "true" : undefined}
+                  >
                     <td className="p-[16px]">
                       <Checkbox size="S" checked={isSelected ? "Yes" : "No"} interactive aria-label={`Seleccionar ${projectName}`} onCheckedChange={() => toggleProject(project.id)} />
                     </td>
