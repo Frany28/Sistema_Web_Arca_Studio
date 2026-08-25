@@ -10,6 +10,27 @@
   gap: 12px;
 }
 
+.admin-active-projects__personnel-menu {
+  max-height: 168px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--color-neutral-400) transparent;
+  scrollbar-width: thin;
+}
+
+.admin-active-projects__personnel-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-active-projects__personnel-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-active-projects__personnel-menu::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background: var(--color-neutral-400);
+}
+
 @container (min-width: 520px) {
   .admin-active-projects__filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));

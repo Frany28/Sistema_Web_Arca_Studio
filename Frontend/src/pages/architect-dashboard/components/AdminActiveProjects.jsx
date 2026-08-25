@@ -98,7 +98,7 @@ function AdminActiveProjects({
 }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [personFilter, setPersonFilter] = useState("all");
+  const [personFilterIds, setPersonFilterIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [selectedProjectIds, setSelectedProjectIds] = useState(() => new Set());
   const [bulkActionPending, setBulkActionPending] = useState("");
@@ -122,13 +122,22 @@ function AdminActiveProjects({
   }, [projects]);
 
   const personnelFilterItems = useMemo(() => [
-    { id: "all", label: "Filtrar por personal", type: "Text" },
     ...personnel.map((person) => ({
       id: String(person.id || person.name),
       label: person.name,
-      type: "Text",
+      type: "Checkbox",
+      checked: personFilterIds.includes(String(person.id || person.name))
+        ? "Yes"
+        : "No",
     })),
-  ], [personnel]);
+  ], [personFilterIds, personnel]);
+
+  const personnelFilterLabel = personFilterIds.length === 0
+    ? "Filtrar por personal"
+    : personFilterIds.length === 1
+      ? personnelFilterItems.find((item) => item.checked === "Yes")?.label
+        || "1 responsable"
+      : `${personFilterIds.length} responsables`;
 
   const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
@@ -137,12 +146,12 @@ function AdminActiveProjects({
       const matchesQuery = !normalizedQuery || [project.title, project.name, getClient(project).name]
         .some((value) => String(value || "").toLocaleLowerCase("es").includes(normalizedQuery));
       const matchesStatus = statusFilter === "all" || project.status === statusFilter;
-      const matchesPerson = personFilter === "all" || assignees.some(
-        (person) => String(person.id || person.name) === personFilter,
+      const matchesPerson = personFilterIds.length === 0 || assignees.some(
+        (person) => personFilterIds.includes(String(person.id || person.name)),
       );
       return matchesQuery && matchesStatus && matchesPerson;
     });
-  }, [personFilter, projects, query, statusFilter]);
+  }, [personFilterIds, projects, query, statusFilter]);
 
   const pagination = useMemo(
     () => getAdminProjectsPagination(filteredProjects, pageIndex),
@@ -169,7 +178,7 @@ function AdminActiveProjects({
     : selectedVisibleCount > 0
       ? "Indeterminate"
       : "No";
-  const hasFilters = Boolean(query || statusFilter !== "all" || personFilter !== "all");
+  const hasFilters = Boolean(query || statusFilter !== "all" || personFilterIds.length > 0);
 
   const syncTableScrollState = useCallback(() => {
     const viewport = tableViewportRef.current;
@@ -234,7 +243,7 @@ function AdminActiveProjects({
   const clearFilters = () => {
     setQuery("");
     setStatusFilter("all");
-    setPersonFilter("all");
+    setPersonFilterIds([]);
     setPageIndex(0);
     setSelectedProjectIds(new Set());
     setBulkActionFeedback(null);
@@ -247,8 +256,12 @@ function AdminActiveProjects({
     setBulkActionFeedback(null);
   };
 
-  const handlePersonFilterChange = (item) => {
-    setPersonFilter(item.id);
+  const handlePersonFilterItemsChange = (nextItems) => {
+    setPersonFilterIds(
+      nextItems
+        .filter((item) => item.checked === "Yes")
+        .map((item) => String(item.id)),
+    );
     setPageIndex(0);
     setSelectedProjectIds(new Set());
     setBulkActionFeedback(null);
@@ -360,11 +373,13 @@ function AdminActiveProjects({
         <div className="admin-active-projects__filters w-full">
           <DropdownMenu
             type="Text"
-            label="Filtrar por personal"
+            label={personnelFilterLabel}
             items={personnelFilterItems}
-            selectedItemId={personFilter}
-            onItemSelect={handlePersonFilterChange}
+            multiple
+            onItemsChange={handlePersonFilterItemsChange}
             className="w-full"
+            contentClassName="admin-active-projects__personnel-menu"
+            rowHeightClassName="h-[35px]"
             triggerWrapperClassName="h-[39px]"
             triggerHeightClassName="h-[37px]"
             triggerPaddingXClassName="px-[16px]"

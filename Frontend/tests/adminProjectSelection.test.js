@@ -102,6 +102,31 @@ test("admin project pagination clamps pages and reports button states", () => {
   });
 });
 
+test("admin personnel filter uses the four-row multiple-checkbox menu", async () => {
+  const source = await readFile(
+    new URL(
+      "../src/pages/architect-dashboard/components/AdminActiveProjects.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const styles = await readFile(
+    new URL(
+      "../src/pages/architect-dashboard/components/AdminActiveProjects.css",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(source, /type: "Checkbox"/);
+  assert.match(source, /<DropdownMenu[\s\S]*multiple[\s\S]*onItemsChange=\{handlePersonFilterItemsChange\}/);
+  assert.match(source, /rowHeightClassName="h-\[35px\]"/);
+  assert.match(source, /personFilterIds\.includes\(String\(person\.id \|\| person\.name\)\)/);
+  assert.match(styles, /admin-active-projects__personnel-menu[\s\S]*max-height: 168px/);
+  assert.match(styles, /scrollbar-width: thin/);
+  assert.match(styles, /::-webkit-scrollbar[\s\S]*width: 4px/);
+});
+
 test("bulk project actions follow the selection rules", () => {
   assert.deepEqual(getBulkActionAvailability([]), {
     canChangeVisibility: false,

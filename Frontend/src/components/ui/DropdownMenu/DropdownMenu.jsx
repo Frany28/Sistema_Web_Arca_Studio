@@ -9,6 +9,7 @@ import {
   DROPDOWN_MENU_STATES,
   DROPDOWN_MENU_TYPES,
 } from "./dropdownMenuConfig.js";
+import { updateDropdownCheckboxItems } from "./dropdownMenuSelection.js";
 
 const DROPDOWN_MENU_NODE_IDS = {
   trigger: {
@@ -437,6 +438,7 @@ function DropdownMenu({
   items = DROPDOWN_MENU_DEFAULT_PROPS.items,
   hoveredItemId = DROPDOWN_MENU_DEFAULT_PROPS.hoveredItemId,
   selectedItemId = DROPDOWN_MENU_DEFAULT_PROPS.selectedItemId,
+  multiple = false,
   preserveMenuSpace = DROPDOWN_MENU_DEFAULT_PROPS.preserveMenuSpace,
   onOpenChange,
   onItemSelect,
@@ -639,10 +641,11 @@ function DropdownMenu({
     const itemType = getResolvedType(item.type ?? resolvedType);
 
     if (itemType === "Checkbox") {
-      const nextItems = normalizedItems.map((currentItem) => ({
-        ...currentItem,
-        checked: currentItem.id === item.id ? "Yes" : "No",
-      }));
+      const nextItems = updateDropdownCheckboxItems(
+        normalizedItems,
+        item.id,
+        multiple,
+      );
 
       const nextSelectedItem =
         nextItems.find((currentItem) => currentItem.id === item.id) ?? item;
@@ -650,11 +653,13 @@ function DropdownMenu({
       const nextSelectedItemId = nextSelectedItem.id ?? null;
 
       setInternalItems(nextItems);
-      setInternalSelectedItemId(nextSelectedItemId);
+      setInternalSelectedItemId(multiple ? null : nextSelectedItemId);
       onItemsChange?.(nextItems);
       onItemSelect?.(nextSelectedItem);
-      setMenuOpen(false);
-      setInternalHoveredItemId(null);
+      if (!multiple) {
+        setMenuOpen(false);
+        setInternalHoveredItemId(null);
+      }
       return;
     }
 
