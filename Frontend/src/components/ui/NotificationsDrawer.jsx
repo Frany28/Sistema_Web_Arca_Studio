@@ -3,6 +3,7 @@ import clsx from "clsx";
 
 import { orderCommentsByThread } from "../../utils/commentDisplay.js";
 import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
+import { ENVIRONMENT_DRAWER_RECENT_ACTIVITY } from "../../data/environmentDrawerExamples.js";
 import { SelectionPreview } from "./Gallery/Model3DViewerModal.jsx";
 
 import Avatar from "./Avatar/Avatar.jsx";
@@ -50,45 +51,6 @@ const GENERAL_COMMENTS = [
     timestamp: "Hace 2 horas",
     message: "Sí, claro.",
     type: "reply",
-  },
-];
-
-const RECENT_ACTIVITY = [
-  {
-    id: "activity-1",
-    name: "Arq. Armando",
-    action: "subió un archivo",
-    timestamp: "Hace 30 minutos",
-    type: "file",
-    fileType: "PDF",
-    fileName: "Archivo.pdf",
-    fileSize: "200KB",
-  },
-  {
-    id: "activity-2",
-    name: "Arq. Armando",
-    action: "modificó el estado a",
-    timestamp: "Hace 30 minutos",
-    type: "status",
-    status: "En proceso",
-  },
-  {
-    id: "activity-3",
-    name: "Arq. Wilmer",
-    action: "subió un archivo",
-    timestamp: "Hace 30 minutos",
-    type: "file",
-    fileType: "PDF",
-    fileName: "Archivo.pdf",
-    fileSize: "200KB",
-  },
-  {
-    id: "activity-4",
-    name: "Arq. Wilmer",
-    action: "modificó el estado a",
-    timestamp: "Hace 30 minutos",
-    type: "status",
-    status: "En proceso",
   },
 ];
 
@@ -551,7 +513,7 @@ function NotificationsDrawer({
   comments = [],
   commentsError = "",
   commentsLoading = false,
-  recentActivity = RECENT_ACTIVITY,
+  recentActivity = ENVIRONMENT_DRAWER_RECENT_ACTIVITY,
   recentActivityError = "",
   recentActivityLoading = false,
   onActivitySelect,

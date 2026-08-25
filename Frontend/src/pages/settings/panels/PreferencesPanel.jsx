@@ -15,6 +15,7 @@ export default function PreferencesPanel({
   whatsappNotificationsEnabled,
   setWhatsappNotificationsEnabled,
   applyThemePreference,
+  showObservationNotifications = true,
 }) {
   const themeItems = [
     { id: "oscuro", label: "Oscuro", type: "Text" },
@@ -57,20 +58,22 @@ export default function PreferencesPanel({
         }
       />
 
-      <PreferenceItem
-        className="border-b border-[var(--color-neutral-200)]"
-        icon={<BellIcon className="size-5" />}
-        title="Notificaciones de observaciones"
-        description="Recibir notificaciones de nuevas observaciones."
-        rightContent={
-          <Toggle
-            size="S"
-            active={commentsNotificationsEnabled}
-            interactive
-            onActiveChange={setCommentsNotificationsEnabled}
-          />
-        }
-      />
+      {showObservationNotifications ? (
+        <PreferenceItem
+          className="border-b border-[var(--color-neutral-200)]"
+          icon={<BellIcon className="size-5" />}
+          title="Notificaciones de observaciones"
+          description="Recibir notificaciones de nuevas observaciones."
+          rightContent={
+            <Toggle
+              size="S"
+              active={commentsNotificationsEnabled}
+              interactive
+              onActiveChange={setCommentsNotificationsEnabled}
+            />
+          }
+        />
+      ) : null}
 
       <PreferenceItem
         className="border-b border-[var(--color-neutral-200)]"

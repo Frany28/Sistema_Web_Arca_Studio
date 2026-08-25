@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/http.js";
+import { canAccessObservations } from "../utils/observationAccess.js";
 import { decorateCommentForDisplay } from "../utils/commentDisplay.js";
 
 function getRelativeTimeLabel(value) {
@@ -319,6 +320,7 @@ export function useRecentProjectComments({
   refreshIntervalMs = 0,
   user,
 }) {
+  const observationsAllowed = enabled && canAccessObservations(user);
   const projectIdsKey = useMemo(
     () => normalizeProjectIds(projectIds).join(","),
     [projectIds],
@@ -335,7 +337,7 @@ export function useRecentProjectComments({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!enabled || normalizedProjectIds.length === 0) {
+    if (!observationsAllowed || normalizedProjectIds.length === 0) {
       const resetId = window.setTimeout(() => {
         setComments([]);
         setError("");
@@ -417,10 +419,10 @@ export function useRecentProjectComments({
       }
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
-  }, [enabled, normalizedProjectIds, refreshIntervalMs]);
+  }, [normalizedProjectIds, observationsAllowed, refreshIntervalMs]);
 
   const refresh = useCallback(async () => {
-    if (normalizedProjectIds.length === 0) {
+    if (!observationsAllowed || normalizedProjectIds.length === 0) {
       return;
     }
 
@@ -446,12 +448,13 @@ export function useRecentProjectComments({
     } finally {
       setLoading(false);
     }
-  }, [normalizedProjectIds]);
+  }, [normalizedProjectIds, observationsAllowed]);
 
   const drawerComments = useMemo(
-    () =>
-      comments.map((comment) => toDrawerComment(comment, user, projectNamesById)),
-    [comments, projectNamesById, user],
+    () => observationsAllowed
+      ? comments.map((comment) => toDrawerComment(comment, user, projectNamesById))
+      : [],
+    [comments, observationsAllowed, projectNamesById, user],
   );
 
   return {

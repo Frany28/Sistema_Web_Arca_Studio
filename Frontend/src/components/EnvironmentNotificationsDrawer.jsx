@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { useAuth } from "../auth/AuthContext.jsx";
 import { useEnvironmentComments } from "../hooks/useProjectComments.js";
+import { getEnvironmentNotificationsPolicy } from "../utils/observationAccess.js";
 import NotificationsDrawer from "./ui/NotificationsDrawer.jsx";
 
 function mergeDrawerComments(environmentComments, projectComments) {
@@ -27,6 +28,7 @@ function EnvironmentNotificationsDrawer({
   ...props
 }) {
   const { user } = useAuth();
+  const policy = getEnvironmentNotificationsPolicy(user, { activityOnly });
   const {
     drawerComments: environmentComments,
     error: environmentCommentsError,
@@ -34,31 +36,45 @@ function EnvironmentNotificationsDrawer({
     refresh: refreshEnvironmentComments,
     submitComment: submitEnvironmentComment,
   } = useEnvironmentComments({
-    enabled: open && !activityOnly,
+    enabled: open && policy.observationsAllowed,
     refreshIntervalMs: open ? 15000 : 0,
     user,
   });
   const mergedComments = useMemo(
-    () => mergeDrawerComments(environmentComments, comments),
-    [comments, environmentComments],
+    () => policy.observationsAllowed
+      ? mergeDrawerComments(environmentComments, comments)
+      : [],
+    [comments, environmentComments, policy.observationsAllowed],
   );
 
   return (
     <NotificationsDrawer
       {...props}
-      activityOnly={activityOnly}
+      activityOnly={policy.activityOnly}
       open={open}
       comments={mergedComments}
-      commentsError={environmentCommentsError || commentsError}
-      commentsLoading={environmentCommentsLoading || commentsLoading}
-      onRefreshComments={() =>
-        Promise.all([
-          refreshEnvironmentComments(),
-          onRefreshComments?.(),
-        ])
+      commentsError={
+        policy.observationsAllowed
+          ? environmentCommentsError || commentsError
+          : ""
       }
-      onSubmitComment={onSubmitComment}
-      onSubmitEnvironmentComment={submitEnvironmentComment}
+      commentsLoading={
+        policy.observationsAllowed
+          ? environmentCommentsLoading || commentsLoading
+          : false
+      }
+      onRefreshComments={
+        policy.observationsAllowed
+          ? () => Promise.all([
+              refreshEnvironmentComments(),
+              onRefreshComments?.(),
+            ])
+          : undefined
+      }
+      onSubmitComment={policy.observationsAllowed ? onSubmitComment : undefined}
+      onSubmitEnvironmentComment={
+        policy.observationsAllowed ? submitEnvironmentComment : undefined
+      }
     />
   );
 }

@@ -1,5 +1,6 @@
 import projectImage from "../../assets/fondos/Project Image.png";
 import standImage from "../../assets/fondos/Property 1=Variant2.png";
+import { ENVIRONMENT_DRAWER_RECENT_ACTIVITY } from "../../data/environmentDrawerExamples.js";
 
 export const ARCHITECT_NAVIGATION_ITEMS = [
   {
@@ -72,48 +73,8 @@ export const ARCHITECT_DRAWER_COMMENTS = [
   },
 ];
 
-export const ARCHITECT_DRAWER_RECENT_ACTIVITY = [
-  {
-    id: "architect-activity-file-1",
-    name: "Tú",
-    action: "subiste un archivo",
-    timestamp: "Hace 30 minutos",
-    type: "file",
-    fileType: "PDF",
-    fileName: "Archivo.pdf",
-    fileSize: "200KB",
-    to: "/proyectos/quinta-bella-vista/documentos-vacio",
-  },
-  {
-    id: "architect-activity-status-1",
-    name: "Tú",
-    action: "modificaste el estado a",
-    timestamp: "Hace 30 minutos",
-    type: "status",
-    status: "En proceso",
-    to: "/proyectos/quinta-bella-vista",
-  },
-  {
-    id: "architect-activity-file-2",
-    name: "Arq. Wilmer",
-    action: "subió un archivo",
-    timestamp: "Hace 30 minutos",
-    type: "file",
-    fileType: "PDF",
-    fileName: "Archivo.pdf",
-    fileSize: "200KB",
-    to: "/proyectos/quinta-bella-vista/documentos-vacio",
-  },
-  {
-    id: "architect-activity-status-2",
-    name: "Arq. Wilmer",
-    action: "modificó el estado a",
-    timestamp: "Hace 30 minutos",
-    type: "status",
-    status: "En proceso",
-    to: "/proyectos/quinta-bella-vista",
-  },
-];
+export const ARCHITECT_DRAWER_RECENT_ACTIVITY =
+  ENVIRONMENT_DRAWER_RECENT_ACTIVITY;
 
 export const ARCHITECT_PROJECT_GROUPS = [
   {

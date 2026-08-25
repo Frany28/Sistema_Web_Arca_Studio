@@ -13,6 +13,7 @@ import {
   getCommentableProjectsForUser,
   getProjectNamesById,
 } from "../../utils/commentDisplay.js";
+import { canAccessObservations } from "../../utils/observationAccess.js";
 import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import SettingsVerticalTabMenu from "../../components/ui/SettingsVerticalTabMenu.jsx";
@@ -520,6 +521,7 @@ export default function SettingsPage() {
         whatsappNotificationsEnabled={whatsappNotificationsEnabled}
         setWhatsappNotificationsEnabled={setWhatsappNotificationsEnabled}
         applyThemePreference={applyThemePreference}
+        showObservationNotifications={canAccessObservations(user)}
       />
     );
   } else if (activeSettingsTabId === "support") {

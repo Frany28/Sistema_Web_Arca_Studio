@@ -40,6 +40,31 @@ test("drawer empty-state actions are connected to real refresh handlers", async 
   );
 
   assert.match(environmentSource, /refresh: refreshEnvironmentComments/);
-  assert.match(environmentSource, /onRefreshComments=\{\(\) =>/);
+  assert.match(
+    environmentSource,
+    /onRefreshComments=\{[\s\S]*policy\.observationsAllowed[\s\S]*refreshEnvironmentComments\(\)/,
+  );
   assert.match(dashboardSource, /onRefreshActivity=\{\(\) =>[\s\S]*setAdminOverviewRequestKey/);
+});
+
+test("the shared environment drawer enforces the admin observation policy", async () => {
+  const environmentSource = await readFile(
+    new URL("../src/components/EnvironmentNotificationsDrawer.jsx", import.meta.url),
+    "utf8",
+  );
+  const hookSource = await readFile(
+    new URL("../src/hooks/useProjectComments.js", import.meta.url),
+    "utf8",
+  );
+  const settingsSource = await readFile(
+    new URL("../src/pages/settings/SettingsPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(environmentSource, /getEnvironmentNotificationsPolicy\(user, \{ activityOnly \}\)/);
+  assert.match(environmentSource, /enabled: open && policy\.observationsAllowed/);
+  assert.match(environmentSource, /activityOnly=\{policy\.activityOnly\}/);
+  assert.match(environmentSource, /policy\.observationsAllowed[\s\S]*: \[\]/);
+  assert.match(hookSource, /observationsAllowed = enabled && canAccessObservations\(user\)/);
+  assert.match(settingsSource, /showObservationNotifications=\{canAccessObservations\(user\)\}/);
 });

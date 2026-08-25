@@ -452,7 +452,7 @@ function AdminUsersPage({ empty = false }) {
             </div>
           </section>
 
-          <NotificationsDrawer activityOnly open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} recentActivity={[]} />
+          <NotificationsDrawer open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} recentActivity={[]} />
           {isCreateUserOpen ? <CreateAdminUserModal open roles={roles} onClose={() => setIsCreateUserOpen(false)} onCreate={createUser} /> : null}
         </div>
       </div>

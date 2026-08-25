@@ -682,7 +682,6 @@ function ArchitectDashboard({ empty = false }) {
           ) : null}
 
           <NotificationsDrawer
-            activityOnly={currentUser.roleCode === "admin"}
             open={isNotificationsDrawerOpen}
             onClose={() => setIsNotificationsDrawerOpen(false)}
             comments={notificationComments}

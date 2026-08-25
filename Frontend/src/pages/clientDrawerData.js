@@ -1,3 +1,5 @@
+import { ENVIRONMENT_DRAWER_RECENT_ACTIVITY } from "../data/environmentDrawerExamples.js";
+
 export const CLIENT_DRAWER_COMMENTS = [
   {
     id: "client-comment-1",
@@ -29,45 +31,5 @@ export const CLIENT_DRAWER_COMMENTS = [
   },
 ];
 
-export const CLIENT_DRAWER_RECENT_ACTIVITY = [
-  {
-    id: "client-activity-file-1",
-    name: "Arq. Armando",
-    action: "subió un archivo",
-    timestamp: "Hace 30 minutos",
-    type: "file",
-    fileType: "PDF",
-    fileName: "Archivo.pdf",
-    fileSize: "200KB",
-    to: "/proyectos/quinta-bella-vista",
-  },
-  {
-    id: "client-activity-status-1",
-    name: "Arq. Armando",
-    action: "modificó el estado a",
-    timestamp: "Hace 30 minutos",
-    type: "status",
-    status: "En proceso",
-    to: "/proyectos/quinta-bella-vista",
-  },
-  {
-    id: "client-activity-file-2",
-    name: "Arq. Wilmer",
-    action: "subió un archivo",
-    timestamp: "Hace 30 minutos",
-    type: "file",
-    fileType: "PDF",
-    fileName: "Plano.pdf",
-    fileSize: "200KB",
-    to: "/proyectos/quinta-bella-vista",
-  },
-  {
-    id: "client-activity-status-2",
-    name: "Arq. Wilmer",
-    action: "modificó el estado a",
-    timestamp: "Hace 30 minutos",
-    type: "status",
-    status: "En proceso",
-    to: "/proyectos/quinta-bella-vista",
-  },
-];
+export const CLIENT_DRAWER_RECENT_ACTIVITY =
+  ENVIRONMENT_DRAWER_RECENT_ACTIVITY;
