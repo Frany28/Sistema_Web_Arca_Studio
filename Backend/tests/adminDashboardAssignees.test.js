@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -39,6 +40,26 @@ test("admin project bulk actions validate supported actions and unique ids", () 
   assert.equal(duplicate.success, false);
   assert.equal(unsupported.success, false);
   assert.equal(empty.success, false);
+});
+
+test("archived projects use a recoverable status instead of disappearing", async () => {
+  const schema = await readFile(
+    new URL("../prisma/schema.prisma", import.meta.url),
+    "utf8",
+  );
+  const migration = await readFile(
+    new URL(
+      "../prisma/migrations/20260824101000_recover_admin_archived_projects/migration.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(schema, /archived_from_status\s+project_status\?/);
+  assert.match(schema, /enum project_status \{[\s\S]*archived[\s\S]*\}/);
+  assert.match(migration, /audit\.action = 'project\.archive'/);
+  assert.match(migration, /deleted_at = NULL/);
+  assert.match(migration, /status = 'archived'::public\.project_status/);
 });
 
 test("project assignments accept multiple unique employee ids", () => {

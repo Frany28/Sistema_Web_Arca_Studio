@@ -69,6 +69,18 @@ test("bulk project actions follow the selection rules", () => {
 
   assert.deepEqual(
     getBulkActionAvailability([
+      { id: 1, status: "archived" },
+      { id: 2, status: "archived" },
+    ]),
+    {
+      canChangeVisibility: false,
+      canArchive: true,
+      canUnarchive: true,
+    },
+  );
+
+  assert.deepEqual(
+    getBulkActionAvailability([
       { id: 1, status: "completed" },
       { id: 2, status: "finished" },
     ]),

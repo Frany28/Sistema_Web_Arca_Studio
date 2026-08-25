@@ -134,7 +134,7 @@ function ArchitectDashboard({ empty = false }) {
       [...projectRows]
         .filter(
           (project) =>
-            project.status !== "completed" && project.status !== "cancelled",
+            !["archived", "completed", "cancelled"].includes(project.status),
         )
         .sort((first, second) => {
           const firstDate = first.endDate
@@ -518,18 +518,12 @@ function ArchitectDashboard({ empty = false }) {
       (data.projects || []).map((project) => [Number(project.id), project]),
     );
 
-    setProjects((currentProjects) => {
-      if (action === "archive") {
-        return currentProjects.filter(
-          (project) => !updatedProjects.has(Number(project.id)),
-        );
-      }
-
-      return currentProjects.map((project) => {
+    setProjects((currentProjects) =>
+      currentProjects.map((project) => {
         const updatedProject = updatedProjects.get(Number(project.id));
         return updatedProject ? { ...project, ...updatedProject } : project;
-      });
-    });
+      }),
+    );
     setAdminMetricsRequestKey((current) => current + 1);
     setAdminOverviewRequestKey((current) => current + 1);
 

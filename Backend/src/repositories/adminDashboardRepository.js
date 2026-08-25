@@ -27,8 +27,8 @@ function mapAssignmentResult(row = {}) {
 
 function mapManagedProject(row = {}) {
   return {
-    archived: Boolean(row.deleted_at),
-    archivedAt: row.deleted_at || null,
+    archived: row.status === "archived",
+    archivedAt: null,
     id: Number(row.id),
     isPublic: Boolean(row.is_public),
     status: row.status,
@@ -47,7 +47,7 @@ export async function applyAdminProjectBulkAction({
     await client.query("begin");
     const lockedResult = await client.query(
       `
-        select id, status, is_public, deleted_at
+        select id, status, archived_from_status, is_public, deleted_at
         from public.projects
         where id = any($1::bigint[])
         order by id
@@ -75,7 +75,7 @@ export async function applyAdminProjectBulkAction({
 
     if (
       action === "unarchive"
-      && lockedResult.rows.some((project) => !project.deleted_at)
+      && lockedResult.rows.some((project) => project.status !== "archived")
     ) {
       await client.query("rollback");
       return { missingIds: [], outcome: "unarchive_requires_archived", projects: [] };
@@ -89,25 +89,39 @@ export async function applyAdminProjectBulkAction({
         update public.projects
         set is_public = $2, updated_at = now()
         where id = any($1::bigint[])
-        returning id, status, is_public, deleted_at
+        returning id, status, archived_from_status, is_public, deleted_at
       `;
       updateParams = [projectIds, isPublic];
     } else if (action === "archive") {
       updateSql = `
         update public.projects
         set
-          deleted_at = coalesce(deleted_at, now()),
+          archived_from_status = case
+            when status = 'archived'::public.project_status
+              then archived_from_status
+            else status
+          end,
+          status = 'archived'::public.project_status,
+          deleted_at = null,
           is_public = false,
           updated_at = now()
         where id = any($1::bigint[])
-        returning id, status, is_public, deleted_at
+        returning id, status, archived_from_status, is_public, deleted_at
       `;
     } else {
       updateSql = `
         update public.projects
-        set deleted_at = null, is_public = false, updated_at = now()
+        set
+          status = coalesce(
+            archived_from_status,
+            'pending'::public.project_status
+          ),
+          archived_from_status = null,
+          deleted_at = null,
+          is_public = false,
+          updated_at = now()
         where id = any($1::bigint[])
-        returning id, status, is_public, deleted_at
+        returning id, status, archived_from_status, is_public, deleted_at
       `;
     }
 
@@ -138,10 +152,12 @@ export async function applyAdminProjectBulkAction({
           JSON.stringify({
             archivedAt: previous.deleted_at,
             isPublic: previous.is_public,
+            status: previous.status,
           }),
           JSON.stringify({
             archivedAt: project.deleted_at,
             isPublic: project.is_public,
+            status: project.status,
           }),
         ],
       );

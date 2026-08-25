@@ -31,6 +31,7 @@ import "./AdminActiveProjects.css";
 const STATUS_DETAILS = {
   completed: { label: "Finalizado", theme: "Success" },
   finished: { label: "Finalizado", theme: "Success" },
+  archived: { label: "Archivado", theme: "Neutral" },
   in_process: { label: "En progreso", theme: "Info" },
   in_review: { label: "En revisión", theme: "Brand 2" },
   pending_approval: { label: "Solicitud", theme: "Neutral" },
@@ -42,7 +43,8 @@ const STATUS_FILTER_ITEMS = [
   { id: "in_process", label: "En progreso", type: "Text" },
   { id: "in_review", label: "En revisión", type: "Text" },
   { id: "pending_approval", label: "Solicitud", type: "Text" },
-  { id: "finished", label: "Finalizado", type: "Text" },
+  { id: "completed", label: "Finalizado", type: "Text" },
+  { id: "archived", label: "Archivado", type: "Text" },
 ];
 
 function getStatus(project) {
@@ -290,7 +292,7 @@ function AdminActiveProjects({
       aria-labelledby="admin-active-projects-title"
     >
       <h2 id="admin-active-projects-title" className="text-body-3 text-[var(--color-text-300)]">
-        Proyectos activos
+        Proyectos
       </h2>
 
       <div className="admin-active-projects__toolbar">
@@ -305,7 +307,7 @@ function AdminActiveProjects({
           showRightIcon={false}
           leftIcon={<SearchNormal1 size="20" color="currentColor" />}
           className="w-full"
-          aria-label="Buscar proyectos activos"
+          aria-label="Buscar proyectos"
           onChange={(event) => setQuery(event.target.value)}
         />
         <div className="admin-active-projects__filters w-full">
@@ -351,7 +353,7 @@ function AdminActiveProjects({
       </div>
 
       {loading ? (
-        <Loader preset="adminProjectTable" label="Cargando proyectos activos" />
+        <Loader preset="adminProjectTable" label="Cargando proyectos" />
       ) : error ? (
         <div className="w-full rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]">
           <EmptyState

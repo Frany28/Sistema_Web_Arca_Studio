@@ -6,7 +6,8 @@ export function isFinalizedProject(project) {
 
 export function isArchivedProject(project) {
   return Boolean(
-    project?.archived === true
+    project?.status === "archived"
+      || project?.archived === true
       || project?.isArchived === true
       || project?.archivedAt
       || project?.deletedAt

@@ -437,6 +437,7 @@ model projects {
   name                                        String                             @db.VarChar(150)
   description                                 String?
   status                                      project_status                     @default(pending)
+  archived_from_status                        project_status?
   start_date                                  DateTime                           @db.Date
   end_date                                    DateTime?                          @db.Date
   budget                                      Decimal?                           @db.Decimal(10, 2)
@@ -700,6 +701,7 @@ enum project_status {
   in_process
   completed
   cancelled
+  archived
 }
 
 enum project_type {
