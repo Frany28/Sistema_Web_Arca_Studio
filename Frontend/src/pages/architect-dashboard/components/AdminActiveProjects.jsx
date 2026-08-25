@@ -390,7 +390,6 @@ function AdminActiveProjects({
             label={personnelFilterLabel}
             items={personnelFilterItems}
             multiple
-            closeOnSelect
             onItemsChange={handlePersonFilterItemsChange}
             className="w-full"
             contentClassName="admin-active-projects__filter-menu"
@@ -405,7 +404,6 @@ function AdminActiveProjects({
             label="Filtrar por status"
             items={statusFilterItems}
             multiple
-            closeOnSelect
             onItemsChange={handleStatusFilterItemsChange}
             className="w-full"
             contentClassName="admin-active-projects__filter-menu"
@@ -589,15 +587,15 @@ function AdminActiveProjects({
                 >
                   Archivar
                 </Button>
-                <Button
-                  theme="Primary"
-                  type="Ghost"
-                  size="M"
-                  fitContent
-                  showLeftIcon
-                  iconLeft={<GlobalEdit size="20" color="currentColor" />}
-                  showRightIcon={false}
-                  disabled={!canUnarchive || Boolean(bulkActionPending) || !onBulkAction}
+                    <Button
+                      theme="Primary"
+                      type="Ghost"
+                      size="M"
+                      fitContent
+                      showLeftIcon
+                      iconLeft={<DocumentForward size="20" color="currentColor" />}
+                      showRightIcon={false}
+                      disabled={!canUnarchive || Boolean(bulkActionPending) || !onBulkAction}
                   aria-busy={bulkActionPending === "unarchive"}
                   onClick={() => handleBulkAction("unarchive")}
                 >

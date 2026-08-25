@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { updateDropdownCheckboxItems } from
@@ -33,17 +32,4 @@ test("single dropdown selection remains exclusive", () => {
     { id: "two", label: "Dos", checked: "Yes" },
     { id: "three", label: "Tres", checked: "No" },
   ]);
-});
-
-test("multiple dropdown can close after selection without becoming exclusive", async () => {
-  const source = await readFile(
-    new URL(
-      "../src/components/ui/DropdownMenu/DropdownMenu.jsx",
-      import.meta.url,
-    ),
-    "utf8",
-  );
-
-  assert.match(source, /closeOnSelect = false/);
-  assert.match(source, /if \(!multiple \|\| closeOnSelect\)/);
 });

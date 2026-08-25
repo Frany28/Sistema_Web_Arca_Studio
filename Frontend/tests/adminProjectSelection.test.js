@@ -46,6 +46,10 @@ test("the Figma table footer stays visible and exposes functional pagination", a
   assert.match(source, />\s*Cambiar visibilidad\s*<\/Button>/);
   assert.match(source, />\s*Archivar\s*<\/Button>/);
   assert.match(source, />\s*Desarchivar\s*<\/Button>/);
+  assert.match(
+    source,
+    /iconLeft=\{<DocumentForward size="20" color="currentColor" \/>\}[\s\S]*onClick=\{\(\) => handleBulkAction\("unarchive"\)\}[\s\S]*>\s*Desarchivar/,
+  );
   assert.match(source, /type="Outline"[\s\S]*>\s*Anterior\s*<\/Button>/);
   assert.match(source, /type="Solid"[\s\S]*>\s*Siguiente pág\.\s*<\/Button>/);
 
@@ -120,9 +124,8 @@ test("admin filters use connected four-row multiple-checkbox menus", async () =>
 
   assert.match(source, /type: "Checkbox"/);
   assert.match(source, /<DropdownMenu[\s\S]*multiple[\s\S]*onItemsChange=\{handlePersonFilterItemsChange\}/);
-  assert.match(source, /multiple[\s\S]*closeOnSelect/);
   assert.match(source, /const personnelFilterLabel = "Filtrar por personal"/);
-  assert.match(source, /label="Filtrar por status"[\s\S]*items=\{statusFilterItems\}[\s\S]*multiple[\s\S]*closeOnSelect/);
+  assert.match(source, /label="Filtrar por status"[\s\S]*items=\{statusFilterItems\}[\s\S]*multiple[\s\S]*onItemsChange=\{handleStatusFilterItemsChange\}/);
   assert.match(source, /onItemsChange=\{handleStatusFilterItemsChange\}/);
   assert.match(source, /statusFilterIds\.includes\(getStatusFilterId\(project\.status\)\)/);
   assert.match(source, /rowHeightClassName="h-\[35px\]"/);
@@ -137,6 +140,7 @@ test("admin filters use connected four-row multiple-checkbox menus", async () =>
   assert.match(styles, /scrollbar-width: thin/);
   assert.match(styles, /::-webkit-scrollbar[\s\S]*width: 4px/);
   assert.match(styles, /::-webkit-scrollbar[\s\S]*height: 0/);
+  assert.match(styles, /::-webkit-scrollbar-button[\s\S]*display: none/);
 });
 
 test("bulk project actions follow the selection rules", () => {

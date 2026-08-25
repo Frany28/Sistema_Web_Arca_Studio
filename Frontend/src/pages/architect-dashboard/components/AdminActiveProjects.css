@@ -46,6 +46,12 @@
   height: 0;
 }
 
+.admin-active-projects__filter-menu::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .admin-active-projects__filter-menu::-webkit-scrollbar-track {
   background: transparent;
 }
