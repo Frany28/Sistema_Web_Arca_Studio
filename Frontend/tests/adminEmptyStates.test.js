@@ -54,6 +54,10 @@ test("admin dashboard exposes every collection empty state", async () => {
   ]) assert.match(overviewSource, new RegExp(`${label}[\\s\\S]*?showFeaturedIcon`));
   assert.match(
     projectsSource,
-    /No hay proyectos activos[\s\S]*showFeaturedIcon=\{!hasFilters\}/,
+    /title="No hay coincidencias"[\s\S]*showFeaturedIcon=\{false\}[\s\S]*showActions=\{false\}/,
+  );
+  assert.match(
+    projectsSource,
+    /title="No hay proyectos"[\s\S]*showFeaturedIcon[\s\S]*showActions=\{false\}/,
   );
 });

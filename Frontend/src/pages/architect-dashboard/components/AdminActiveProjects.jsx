@@ -23,7 +23,6 @@ import Input from "../../../components/ui/Input/Input.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar/ScrollBar.jsx";
 import Tag from "../../../components/ui/Tag/Tag.jsx";
-import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
 import { getBulkActionAvailability } from "./adminProjectBulkActions.js";
 import { getAdminProjectsPagination } from "./adminProjectPagination.js";
@@ -445,9 +444,10 @@ function AdminActiveProjects({
             onPrimaryAction={onRetry}
           />
         </div>
-      ) : filteredProjects.length ? (
+      ) : (
         <>
-          <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+          {filteredProjects.length ? (
+            <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
             <div
               ref={tableViewportRef}
               className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -514,15 +514,9 @@ function AdminActiveProjects({
                     <td className="px-[24px] py-[16px]"><Badge label={`${progress}%`} theme="Neutral" variation="Simple" size="S" /></td>
                     <td className="px-[24px] py-[16px]">
                       <div className="flex items-center gap-[8px]">
-                        <Tooltip text="Ver proyecto" tipPosition="Top center" portal>
-                          <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Eye size="20" color="currentColor" />} showRightIcon={false} aria-label={`Ver ${projectName}`} onClick={() => onOpenProject(project)} />
-                        </Tooltip>
-                        <Tooltip text="Editar proyecto" tipPosition="Top center" portal>
-                          <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Edit2 size="20" color="currentColor" />} showRightIcon={false} aria-label={`Editar ${projectName}`} disabled={!project.editable} onClick={() => onOpenProject(project)} />
-                        </Tooltip>
-                        <Tooltip text="Más opciones" tipPosition="Top center" portal>
-                          <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<More size="20" color="currentColor" />} showRightIcon={false} aria-label={`Más opciones de ${projectName}`} aria-disabled="true" />
-                        </Tooltip>
+                        <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Eye size="20" color="currentColor" />} showRightIcon={false} tooltip="Ver proyecto" aria-label={`Ver ${projectName}`} onClick={() => onOpenProject(project)} />
+                        <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Edit2 size="20" color="currentColor" />} showRightIcon={false} tooltip="Editar proyecto" aria-label={`Editar ${projectName}`} disabled={!project.editable} onClick={() => onOpenProject(project)} />
+                        <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<More size="20" color="currentColor" />} showRightIcon={false} tooltip="Más opciones" aria-label={`Más opciones de ${projectName}`} aria-disabled="true" />
                       </div>
                     </td>
                   </tr>
@@ -543,7 +537,27 @@ function AdminActiveProjects({
                 className="block max-w-full"
               />
             ) : null}
-          </div>
+            </div>
+          ) : hasFilters ? (
+            <div className="w-full rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]">
+              <EmptyState
+                title="No hay coincidencias"
+                description="No existen proyectos que coincidan con los filtros seleccionados."
+                size="S"
+                showFeaturedIcon={false}
+                showActions={false}
+                aria-label="Sin resultados para los filtros seleccionados"
+              />
+            </div>
+          ) : (
+            <EmptyState
+              title="No hay proyectos"
+              description="Los proyectos aparecerán aquí cuando estén disponibles."
+              size="S"
+              showFeaturedIcon
+              showActions={false}
+            />
+          )}
 
           <footer
             className="flex min-h-[42px] w-full flex-wrap items-center justify-between gap-x-[12px] gap-y-[12px]"
@@ -653,29 +667,6 @@ function AdminActiveProjects({
             />
           ) : null}
         </>
-      ) : hasFilters ? (
-        <div className="w-full rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]">
-          <EmptyState
-            title={
-              statusFilterIds.length === 1 && statusFilterIds[0] === "archived"
-                ? "No hay proyectos archivados"
-                : "No hay coincidencias"
-            }
-            description="No existen proyectos que coincidan con los filtros seleccionados."
-            size="S"
-            showFeaturedIcon={false}
-            showActions={false}
-            aria-label="Sin resultados para los filtros seleccionados"
-          />
-        </div>
-      ) : (
-        <EmptyState
-          title="No hay proyectos"
-          description="Los proyectos aparecerán aquí cuando estén disponibles."
-          size="S"
-          showFeaturedIcon
-          showActions={false}
-        />
       )}
     </section>
   );

@@ -23,6 +23,11 @@ test("selected admin project rows use the Figma neutral selection surface", asyn
     source,
     /<table className="w-full min-w-\[1093px\] table-fixed border-collapse text-left">/,
   );
+  assert.doesNotMatch(source, /import Tooltip/);
+  assert.doesNotMatch(source, /<Tooltip/);
+  assert.match(source, /tooltip="Ver proyecto"/);
+  assert.match(source, /tooltip="Editar proyecto"/);
+  assert.match(source, /tooltip="Más opciones"/);
 });
 
 test("the Figma table footer stays visible and exposes functional pagination", async () => {
@@ -38,6 +43,11 @@ test("the Figma table footer stays visible and exposes functional pagination", a
     source,
     /<footer[\s\S]*data-selection-footer="true"/,
   );
+  assert.match(
+    source,
+    /title="No hay coincidencias"[\s\S]*data-selection-footer="true"/,
+  );
+  assert.doesNotMatch(source, /No hay proyectos archivados/);
   assert.match(
     source,
     /\{selectedVisibleCount\} de \{visibleProjects\.length\} seleccionados/,
