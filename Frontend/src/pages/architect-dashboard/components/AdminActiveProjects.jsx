@@ -12,7 +12,7 @@ import {
 } from "iconsax-react";
 
 import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
-import Alert from "../../../components/ui/Alert/Alert.jsx";
+import AlertToast from "../../../components/ui/AlertToast/AlertToast.jsx";
 import AssigneeMultiSelect from "../../../components/ui/AssigneeMultiSelect/AssigneeMultiSelect.jsx";
 import Badge from "../../../components/ui/Badge/Badge.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
@@ -274,9 +274,10 @@ function AdminActiveProjects({
         unarchive: "Los proyectos seleccionados fueron desarchivados.",
       };
       setSelectedProjectIds(new Set());
-      setBulkActionFeedback({ message: successMessages[action], type: "success" });
+      setBulkActionFeedback({ id: Date.now(), message: successMessages[action], type: "success" });
     } catch (actionError) {
       setBulkActionFeedback({
+        id: Date.now(),
         message: actionError?.message || "No se pudieron actualizar los proyectos.",
         type: "error",
       });
@@ -551,27 +552,21 @@ function AdminActiveProjects({
           ) : null}
 
           {bulkActionFeedback ? (
-            <Alert
-              visible
+            <AlertToast
+              trigger={bulkActionFeedback?.id}
               theme={bulkActionFeedback.type === "error" ? "Danger" : "Success"}
-              layout="Box"
               title={
                 bulkActionFeedback.type === "error"
                   ? "No se pudo realizar el cambio"
                   : "Cambio realizado con \u00e9xito"
               }
               description={bulkActionFeedback.message}
-              showIcon
-              showText
-              showActions={false}
-              showCloseButton
               onDismiss={() => setBulkActionFeedback(null)}
               aria-label={
                 bulkActionFeedback.type === "error"
                   ? "Error al actualizar los proyectos"
                   : "Proyectos actualizados correctamente"
               }
-              className="max-w-full"
             />
           ) : null}
         </>

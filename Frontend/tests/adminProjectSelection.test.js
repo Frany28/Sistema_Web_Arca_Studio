@@ -55,8 +55,8 @@ test("the Figma bulk action footer appears only with selected projects", async (
     source,
     /theme=\{bulkActionFeedback\.type === "error" \? "Danger" : "Success"\}/,
   );
-  assert.match(source, /layout="Box"/);
-  assert.match(source, /showActions=\{false\}/);
+  assert.match(source, /<AlertToast/);
+  assert.match(source, /trigger=\{bulkActionFeedback\?\.id\}/);
   assert.match(source, /onDismiss=\{\(\) => setBulkActionFeedback\(null\)\}/);
 });
 
