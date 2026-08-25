@@ -17,15 +17,25 @@ export function isArchivedProject(project) {
 
 export function getBulkActionAvailability(selectedProjects) {
   const hasSelection = selectedProjects.length > 0;
+  const allSelectedProjectsAreArchived =
+    hasSelection && selectedProjects.every(isArchivedProject);
+  const allSelectedProjectsAreUnarchived =
+    hasSelection && selectedProjects.every((project) => !isArchivedProject(project));
+  const selectedVisibility = Boolean(selectedProjects[0]?.isPublic);
+  const allSelectedProjectsShareVisibility =
+    hasSelection
+    && selectedProjects.every(
+      (project) => Boolean(project?.isPublic) === selectedVisibility,
+    );
 
   return {
     canChangeVisibility:
-      hasSelection
+      allSelectedProjectsAreUnarchived
+      && allSelectedProjectsShareVisibility
       && selectedProjects.every(
-        (project) => isFinalizedProject(project) && !isArchivedProject(project),
+        isFinalizedProject,
       ),
-    canArchive: hasSelection,
-    canUnarchive:
-      hasSelection && selectedProjects.every(isArchivedProject),
+    canArchive: allSelectedProjectsAreUnarchived,
+    canUnarchive: allSelectedProjectsAreArchived,
   };
 }

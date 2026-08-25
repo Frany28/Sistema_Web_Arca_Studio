@@ -34,15 +34,15 @@ const projectRequestBody = z
   .object({
     capitalAvailability: z.enum(PROJECT_REQUEST_VALUES.capitalAvailability),
     decisionMaker: optionalChoice(PROJECT_REQUEST_VALUES.decisionMaker),
-    description: nullableText(5000).refine(
-      (value) => value === null || value.length >= 10,
-      "La descripción debe tener al menos 10 caracteres.",
-    ),
+    description: z.string().trim().min(30).max(100),
     developmentMode: z.enum(PROJECT_REQUEST_VALUES.developmentMode),
     experience: optionalChoice(PROJECT_REQUEST_VALUES.experience),
     hasBlueprints: z.boolean().nullable().optional().default(null),
     investmentRange: z.enum(PROJECT_REQUEST_VALUES.investmentRange),
     landStatus: optionalChoice(PROJECT_REQUEST_VALUES.landStatus),
+    legalDocumentationStatus: z.enum(PROJECT_REQUEST_VALUES.legalDocumentationStatus),
+    legalDocumentTypes: z.array(z.enum(PROJECT_REQUEST_VALUES.legalDocumentTypes)).max(4),
+    hasMultipleOwners: z.boolean(),
     projectLocation: z.string().trim().min(5).max(255).refine(validManualAddress, "Ingresa una ubicación válida."),
     projectLocationFormattedAddress: nullableText(500),
     projectLocationLatitude: optionalCoordinate,
@@ -64,6 +64,28 @@ const projectRequestBody = z
   })
   .strict()
   .superRefine((body, context) => {
+    const uniqueLegalDocumentTypes = new Set(body.legalDocumentTypes);
+    if (uniqueLegalDocumentTypes.size !== body.legalDocumentTypes.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Los documentos no pueden repetirse.",
+        path: ["legalDocumentTypes"],
+      });
+    }
+    if (body.legalDocumentationStatus === "available" && body.legalDocumentTypes.length === 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Selecciona al menos un documento disponible.",
+        path: ["legalDocumentTypes"],
+      });
+    }
+    if (body.legalDocumentationStatus !== "available" && body.legalDocumentTypes.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Solo indica documentos que ya estén disponibles.",
+        path: ["legalDocumentTypes"],
+      });
+    }
     const hasLatitude = body.projectLocationLatitude !== null;
     const hasLongitude = body.projectLocationLongitude !== null;
     if (hasLatitude !== hasLongitude) {

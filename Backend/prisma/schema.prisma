@@ -301,6 +301,9 @@ model project_requests {
   location                                   String                 @db.VarChar(255)
   description                                String?
   has_plans                                  Boolean?
+  legal_documentation_status                 project_legal_documentation_status?
+  legal_document_types                       String[]                               @default([])
+  has_multiple_owners                        Boolean?
   project_size                               project_request_size?
   development_mode                           project_development_mode?
   land_status                                project_land_status?
@@ -702,6 +705,12 @@ enum project_status {
   completed
   cancelled
   archived
+}
+
+enum project_legal_documentation_status {
+  available
+  in_process
+  unavailable
 }
 
 enum project_type {

@@ -33,6 +33,21 @@ export const PROJECT_REQUEST_OPTIONS = {
     { label: "En proceso de adquirirlo", value: "acquiring" },
     { label: "No todavía", value: "unavailable" },
   ],
+  legalDocumentationStatus: [
+    { label: "Sí, tengo la documentación disponible", value: "available" },
+    { label: "La documentación está en trámite", value: "in_process" },
+    { label: "No dispongo de documentación", value: "unavailable" },
+  ],
+  legalDocumentTypes: [
+    { label: "Documento de propiedad", value: "property_deed" },
+    { label: "Contrato de compra", value: "purchase_contract" },
+    { label: "Contrato de arrendamiento", value: "lease_contract" },
+    { label: "Otro documento", value: "other" },
+  ],
+  multipleOwners: [
+    { label: "Sí", value: "yes" },
+    { label: "No", value: "no" },
+  ],
   projectSize: [
     { label: "Pequeño (menos de 80 m²)", value: "small_lt_80" },
     { label: "Mediano (80-200 m²)", value: "medium_80_200" },

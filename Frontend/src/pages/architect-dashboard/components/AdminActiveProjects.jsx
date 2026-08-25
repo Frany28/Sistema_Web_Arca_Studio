@@ -26,6 +26,7 @@ import Tag from "../../../components/ui/Tag/Tag.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
 import { getBulkActionAvailability } from "./adminProjectBulkActions.js";
+import { getAdminProjectsPagination } from "./adminProjectPagination.js";
 import "./AdminActiveProjects.css";
 
 const STATUS_DETAILS = {
@@ -98,6 +99,7 @@ function AdminActiveProjects({
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [personFilter, setPersonFilter] = useState("all");
+  const [pageIndex, setPageIndex] = useState(0);
   const [selectedProjectIds, setSelectedProjectIds] = useState(() => new Set());
   const [bulkActionPending, setBulkActionPending] = useState("");
   const [bulkActionFeedback, setBulkActionFeedback] = useState(null);
@@ -128,7 +130,7 @@ function AdminActiveProjects({
     })),
   ], [personnel]);
 
-  const visibleProjects = useMemo(() => {
+  const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
     return projects.filter((project) => {
       const assignees = getAssignees(project);
@@ -141,6 +143,12 @@ function AdminActiveProjects({
       return matchesQuery && matchesStatus && matchesPerson;
     });
   }, [personFilter, projects, query, statusFilter]);
+
+  const pagination = useMemo(
+    () => getAdminProjectsPagination(filteredProjects, pageIndex),
+    [filteredProjects, pageIndex],
+  );
+  const visibleProjects = pagination.pageProjects;
 
   const selectedVisibleProjects = useMemo(
     () => visibleProjects.filter(
@@ -227,6 +235,44 @@ function AdminActiveProjects({
     setQuery("");
     setStatusFilter("all");
     setPersonFilter("all");
+    setPageIndex(0);
+    setSelectedProjectIds(new Set());
+    setBulkActionFeedback(null);
+  };
+
+  const handleQueryChange = (event) => {
+    setQuery(event.target.value);
+    setPageIndex(0);
+    setSelectedProjectIds(new Set());
+    setBulkActionFeedback(null);
+  };
+
+  const handlePersonFilterChange = (item) => {
+    setPersonFilter(item.id);
+    setPageIndex(0);
+    setSelectedProjectIds(new Set());
+    setBulkActionFeedback(null);
+  };
+
+  const handleStatusFilterChange = (item) => {
+    setStatusFilter(item.id);
+    setPageIndex(0);
+    setSelectedProjectIds(new Set());
+    setBulkActionFeedback(null);
+  };
+
+  const goToPreviousPage = () => {
+    if (!pagination.canGoPrevious || bulkActionPending) return;
+    setPageIndex(pagination.pageIndex - 1);
+    setSelectedProjectIds(new Set());
+    setBulkActionFeedback(null);
+  };
+
+  const goToNextPage = () => {
+    if (!pagination.canGoNext || bulkActionPending) return;
+    setPageIndex(pagination.pageIndex + 1);
+    setSelectedProjectIds(new Set());
+    setBulkActionFeedback(null);
   };
 
   const toggleAllVisible = () => {
@@ -309,7 +355,7 @@ function AdminActiveProjects({
           leftIcon={<SearchNormal1 size="20" color="currentColor" />}
           className="w-full"
           aria-label="Buscar proyectos"
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={handleQueryChange}
         />
         <div className="admin-active-projects__filters w-full">
           <DropdownMenu
@@ -317,7 +363,7 @@ function AdminActiveProjects({
             label="Filtrar por personal"
             items={personnelFilterItems}
             selectedItemId={personFilter}
-            onItemSelect={(item) => setPersonFilter(item.id)}
+            onItemSelect={handlePersonFilterChange}
             className="w-full"
             triggerWrapperClassName="h-[39px]"
             triggerHeightClassName="h-[37px]"
@@ -329,7 +375,7 @@ function AdminActiveProjects({
             label="Filtrar por status"
             items={STATUS_FILTER_ITEMS}
             selectedItemId={statusFilter}
-            onItemSelect={(item) => setStatusFilter(item.id)}
+            onItemSelect={handleStatusFilterChange}
             className="w-full"
             triggerWrapperClassName="h-[39px]"
             triggerHeightClassName="h-[37px]"
@@ -368,7 +414,7 @@ function AdminActiveProjects({
             onPrimaryAction={onRetry}
           />
         </div>
-      ) : visibleProjects.length ? (
+      ) : filteredProjects.length ? (
         <>
           <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
             <div
@@ -468,19 +514,19 @@ function AdminActiveProjects({
             ) : null}
           </div>
 
-          {selectedVisibleCount > 0 ? (
-            <footer
-              className="flex w-full flex-wrap items-center justify-between gap-x-[12px] gap-y-[12px]"
-              aria-label="Acciones para proyectos seleccionados"
-              data-selection-footer="true"
+          <footer
+            className="flex min-h-[42px] w-full flex-wrap items-center justify-between gap-x-[12px] gap-y-[12px]"
+            aria-label="SelecciÃ³n y paginaciÃ³n de proyectos"
+            data-selection-footer="true"
+          >
+            <span
+              className="text-heading-8 shrink-0 text-[var(--color-text-300)]"
+              aria-live="polite"
             >
-              <span
-                className="text-heading-8 shrink-0 text-[var(--color-text-300)]"
-                aria-live="polite"
-              >
-                {selectedVisibleCount} de {visibleProjects.length} seleccionados
-              </span>
+              {selectedVisibleCount} de {visibleProjects.length} seleccionados
+            </span>
 
+            {selectedVisibleCount > 0 ? (
               <div className="flex flex-wrap items-center gap-[8px]">
                 <Button
                   theme="Primary"
@@ -525,6 +571,7 @@ function AdminActiveProjects({
                   Desarchivar
                 </Button>
               </div>
+              ) : null}
 
               <div className="flex items-center gap-[8px]">
                 <Button
@@ -534,6 +581,9 @@ function AdminActiveProjects({
                   fitContent
                   showLeftIcon={false}
                   showRightIcon={false}
+                  disabled={!pagination.canGoPrevious || Boolean(bulkActionPending)}
+                  aria-label="Ir a la pÃ¡gina anterior de proyectos"
+                  onClick={goToPreviousPage}
                 >
                   Anterior
                 </Button>
@@ -544,12 +594,14 @@ function AdminActiveProjects({
                   fitContent
                   showLeftIcon={false}
                   showRightIcon={false}
+                  disabled={!pagination.canGoNext || Boolean(bulkActionPending)}
+                  aria-label="Ir a la pÃ¡gina siguiente de proyectos"
+                  onClick={goToNextPage}
                 >
                   Siguiente pág.
                 </Button>
               </div>
             </footer>
-          ) : null}
 
           {bulkActionFeedback ? (
             <AlertToast

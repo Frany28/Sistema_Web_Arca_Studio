@@ -9,12 +9,15 @@ import {
 const VALID_BODY = {
   capitalAvailability: "available_now",
   decisionMaker: null,
-  description: null,
+  description: "Remodelación integral de cocina y sala principal.",
   developmentMode: "full",
   experience: null,
   hasBlueprints: null,
   investmentRange: "10k_50k",
   landStatus: null,
+  legalDocumentationStatus: "available",
+  legalDocumentTypes: ["property_deed"],
+  hasMultipleOwners: false,
   projectLocation: "Caracas, Venezuela",
   projectLocationFormattedAddress: null,
   projectLocationLatitude: null,
@@ -35,9 +38,30 @@ test("create schema accepts the complete normalized contract", () => {
   assert.equal(result.success, true);
 });
 
-test("description is optional but validated when present", () => {
+test("description is required between 30 and 100 characters", () => {
   assert.equal(updateProjectRequestSchema.safeParse({ body: VALID_BODY, params: { projectRequestId: "1" } }).success, true);
-  assert.equal(updateProjectRequestSchema.safeParse({ body: { ...VALID_BODY, description: "corta" }, params: { projectRequestId: "1" } }).success, false);
+  for (const description of [null, "corta", "x".repeat(101)]) {
+    assert.equal(updateProjectRequestSchema.safeParse({ body: { ...VALID_BODY, description }, params: { projectRequestId: "1" } }).success, false);
+  }
+});
+
+test("legal documentation enforces availability, types and ownership", () => {
+  assert.equal(updateProjectRequestSchema.safeParse({
+    body: { ...VALID_BODY, legalDocumentTypes: [] },
+    params: { projectRequestId: "1" },
+  }).success, false);
+  assert.equal(updateProjectRequestSchema.safeParse({
+    body: {
+      ...VALID_BODY,
+      legalDocumentationStatus: "in_process",
+      legalDocumentTypes: [],
+    },
+    params: { projectRequestId: "1" },
+  }).success, true);
+  assert.equal(updateProjectRequestSchema.safeParse({
+    body: { ...VALID_BODY, hasMultipleOwners: null },
+    params: { projectRequestId: "1" },
+  }).success, false);
 });
 
 test("coordinates must be paired and bounded", () => {

@@ -16,6 +16,13 @@ export const PROJECT_REQUEST_VALUES = {
     "over_150k",
   ],
   landStatus: ["available", "acquiring", "unavailable"],
+  legalDocumentationStatus: ["available", "in_process", "unavailable"],
+  legalDocumentTypes: [
+    "property_deed",
+    "purchase_contract",
+    "lease_contract",
+    "other",
+  ],
   projectSize: [
     "small_lt_80",
     "medium_80_200",
@@ -33,7 +40,7 @@ export const PROJECT_REQUEST_VALUES = {
   startTime: ["immediate", "1_3_months", "3_6_months", "over_6_months"],
 };
 
-export const COMPATIBILITY_SCORING_VERSION = "2.1";
+export const COMPATIBILITY_SCORING_VERSION = "2.2";
 
 export const COMPATIBILITY_OBSERVATIONS = {
   budgetUndefinedImmediate:
@@ -103,7 +110,7 @@ const BASE_SCORE = {
     seeking_financing: 10,
     undefined: 0,
   },
-  developmentMode: { phased: 15, full: 15, undecided: 0 },
+  developmentMode: { phased: 10, full: 10, undecided: 0 },
   investmentRange: {
     undefined: 0,
     under_10k: 15,
@@ -131,9 +138,20 @@ export function compatibilityLevel(score) {
 
 function descriptionScore(description) {
   const length = String(description || "").trim().length;
-  if (length >= 30) return 10;
-  if (length >= 10) return 4;
+  if (length >= 80) return 10;
+  if (length >= 30) return 4;
   return 0;
+}
+
+function legalDocumentationScore(payload) {
+  if (
+    payload.legalDocumentationStatus === "available"
+    && Array.isArray(payload.legalDocumentTypes)
+    && payload.legalDocumentTypes.length > 0
+  ) {
+    return 6;
+  }
+  return payload.legalDocumentationStatus === "in_process" ? 3 : 0;
 }
 
 function isValidReferenceLink(value) {
@@ -157,8 +175,10 @@ export function evaluateProjectCompatibility(payload) {
     (BASE_SCORE.landStatus[payload.landStatus] || 0) +
     (BASE_SCORE.investmentRange[payload.investmentRange] || 0) +
     (BASE_SCORE.capitalAvailability[payload.capitalAvailability] || 0) +
-    (hasFiles ? 6 : 0) +
-    (hasReferenceLink ? 4 : 0);
+    legalDocumentationScore(payload) +
+    (payload.hasPlans === true ? 2 : 0) +
+    (hasFiles ? 5 : 0) +
+    (hasReferenceLink ? 2 : 0);
   const deductions = [];
 
   const deduct = (code, points) => {

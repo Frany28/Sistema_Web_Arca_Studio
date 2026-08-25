@@ -4,7 +4,11 @@ export const PROJECT_REQUEST_REQUIRED_FIELDS = [
   "projectName",
   "projectType",
   "location",
+  "description",
   "developmentMode",
+  "legalDocumentationStatus",
+  "legalDocumentTypes",
+  "multipleOwners",
   "investmentRange",
   "capitalAvailability",
   "startTime",
@@ -58,14 +62,37 @@ export function getProjectRequestFieldErrors(values = {}) {
   if (!isValidLocation(location)) errors.location = "Ingresa una ubicación válida de al menos 5 caracteres.";
   else if (location.length > 255) errors.location = "Máximo 255 caracteres.";
 
-  if (description && description.length < 10) errors.description = "Usa al menos 10 caracteres o deja el campo vacío.";
-  else if (description.length > 5000) errors.description = "Máximo 5000 caracteres.";
+  if (description.length < 30) errors.description = "Ingresa una descripción de al menos 30 caracteres.";
+  else if (description.length > 100) errors.description = "Máximo 100 caracteres.";
 
   for (const field of ["developmentMode", "investmentRange", "capitalAvailability", "startTime"]) {
     if (!optionValues(field).has(values[field])) errors[field] = "Selecciona una opción válida.";
   }
   for (const field of ["projectSize", "landStatus", "decisionMaker", "quality", "experience"]) {
     if (values[field] && !optionValues(field).has(values[field])) errors[field] = "Selecciona una opción válida.";
+  }
+
+  if (!optionValues("legalDocumentationStatus").has(values.legalDocumentationStatus)) {
+    errors.legalDocumentationStatus = "Selecciona el estado de la documentación.";
+  }
+
+  const legalDocumentTypes = Array.isArray(values.legalDocumentTypes)
+    ? values.legalDocumentTypes
+    : [];
+  const allowedLegalDocumentTypes = optionValues("legalDocumentTypes");
+  const hasInvalidLegalDocumentType = legalDocumentTypes.some(
+    (type) => !allowedLegalDocumentTypes.has(type),
+  );
+  if (hasInvalidLegalDocumentType || new Set(legalDocumentTypes).size !== legalDocumentTypes.length) {
+    errors.legalDocumentTypes = "Selecciona documentos válidos sin repetirlos.";
+  } else if (values.legalDocumentationStatus === "available" && legalDocumentTypes.length === 0) {
+    errors.legalDocumentTypes = "Selecciona al menos un documento disponible.";
+  } else if (values.legalDocumentationStatus !== "available" && legalDocumentTypes.length > 0) {
+    errors.legalDocumentTypes = "Los documentos solo pueden seleccionarse cuando están disponibles.";
+  }
+
+  if (!optionValues("multipleOwners").has(values.multipleOwners)) {
+    errors.multipleOwners = "Indica si el inmueble tiene más de un propietario.";
   }
 
   if (referenceLink && (referenceLink.length > 500 || !isHttpUrl(referenceLink))) {
@@ -128,6 +155,11 @@ export function buildProjectRequestPayload(form, submissionId) {
       form.hasBlueprints === "Yes" ? true : form.hasBlueprints === "No" ? false : null,
     investmentRange: form.investmentRange,
     landStatus: form.landStatus || null,
+    legalDocumentationStatus: form.legalDocumentationStatus,
+    legalDocumentTypes: Array.isArray(form.legalDocumentTypes)
+      ? form.legalDocumentTypes
+      : [],
+    hasMultipleOwners: form.multipleOwners === "yes",
     projectLocation: String(form.location || "").trim(),
     projectLocationFormattedAddress: nullableText(form.locationFormattedAddress),
     projectLocationLatitude: form.locationLatitude ?? null,

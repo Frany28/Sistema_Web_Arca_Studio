@@ -4,13 +4,13 @@
 
 El sistema mide la preparación y la coherencia inicial de una solicitud entre `0` y `100`. No mide qué tan grande, costoso o lujoso es el proyecto. Tampoco aprueba, rechaza ni bloquea solicitudes.
 
-Las solicitudes nuevas utilizan la fórmula `2.1`:
+Las solicitudes nuevas utilizan la fórmula `2.2`:
 
 ```text
 Compatibilidad = puntos de preparación - deducciones por incoherencia
 ```
 
-Las solicitudes ya evaluadas con `1.0` o `2.0` conservan su resultado histórico.
+Las solicitudes ya evaluadas con `1.0`, `2.0` o `2.1` conservan su resultado histórico.
 
 ## Regla sobre el tamaño
 
@@ -70,17 +70,18 @@ Por eso un espacio pequeño con calidad premium, presupuesto coherente y buena p
 
 - Pertenece a: `Detalles del proyecto`.
 - Tipo de input: texto multilínea.
-- Obligatorio: no.
+- Obligatorio: sí.
+- Longitud válida: entre `30` y `100` caracteres.
 - Máximo: `10` puntos.
 - Uso: mide cuánta información inicial existe para comprender el proyecto.
 
 | Respuesta | Puntos |
 | --- | ---: |
-| 30 caracteres o más | 10 |
-| Entre 10 y 29 caracteres | 4 |
-| Sin descripción | 0 |
+| Entre 80 y 100 caracteres | 10 |
+| Entre 30 y 79 caracteres | 4 |
+| Menos de 30 caracteres o más de 100 | Solicitud inválida |
 
-Una descripción corta o vacía simplemente deja de obtener puntos. No recibe una segunda penalización.
+La descripción es obligatoria. Su longitud se valida tanto en el frontend como en el backend y no genera deducciones adicionales.
 
 ### Input 5: Tamaño aproximado del proyecto
 
@@ -106,13 +107,13 @@ Este input también participa en las reglas de coherencia entre tamaño e invers
 - Pertenece a: `Detalles del proyecto`.
 - Tipo de input: selección.
 - Obligatorio: sí.
-- Máximo: `15` puntos.
+- Máximo: `10` puntos.
 - Uso: mide si la modalidad de ejecución está definida.
 
 | Respuesta disponible | Puntos |
 | --- | ---: |
-| Por fases | 15 |
-| En su totalidad | 15 |
+| Por fases | 10 |
+| En su totalidad | 10 |
 | Por definir | 0 |
 
 “Por fases” y “En su totalidad” valen lo mismo. Si se solicita inicio inmediato y la modalidad sigue por definir, se aplican `-10` puntos de coherencia.
@@ -134,23 +135,69 @@ Este input también participa en las reglas de coherencia entre tamaño e invers
 
 Este input también se contrasta con el plazo de inicio.
 
-### Input 8: ¿Dispone de planos del lugar?
+### Input 8: ¿Cuenta con documentación que acredite la situación legal del inmueble?
 
-- Pertenece a: `Detalles del proyecto`.
-- Tipo de input: checkbox de tres estados.
-- Obligatorio: no.
+- Pertenece a: `Documentación legal del inmueble`.
+- Tipo de input: selección.
+- Obligatorio: sí.
+- Máximo: `6` puntos.
+- Uso: mide si la situación documental básica está preparada, sin favorecer una forma de tenencia sobre otra.
+
+| Respuesta | Puntos |
+| --- | ---: |
+| Sí, documentación disponible y al menos un tipo seleccionado | 6 |
+| Documentación en trámite | 3 |
+| No dispone de documentación | 0 |
+
+La ausencia de documentación no genera una deducción adicional.
+
+### Input 9: Documentación disponible
+
+- Pertenece a: `Documentación legal del inmueble`.
+- Tipo de input: selección múltiple.
+- Obligatorio: únicamente cuando la documentación está disponible.
+- Aporta puntos adicionales: no.
+- Uso: identifica qué respaldo podrá revisarse durante la reunión inicial.
+
+| Respuesta | Puntos adicionales |
+| --- | ---: |
+| Documento de propiedad | 0 |
+| Contrato de compra | 0 |
+| Contrato de arrendamiento | 0 |
+| Otro documento | 0 |
+
+Seleccionar varios documentos no multiplica los puntos. Todos los tipos válidos reciben el mismo trato.
+
+### Input 10: ¿El inmueble tiene más de un propietario?
+
+- Pertenece a: `Documentación legal del inmueble`.
+- Tipo de input: selección Sí/No.
+- Obligatorio: sí.
 - Aporta puntos: no.
-- Uso: información operativa para la revisión humana.
+- Uso: permite organizar la revisión y las autorizaciones necesarias sin juzgar negativamente la copropiedad.
 
 | Respuesta | Puntos |
 | --- | ---: |
 | Sí | 0 |
 | No | 0 |
+
+### Input 11: ¿Dispone de planos del lugar?
+
+- Pertenece a: `Documentación legal del inmueble`.
+- Tipo de input: checkbox de tres estados.
+- Obligatorio: no.
+- Máximo: `2` puntos.
+- Uso: información operativa para la revisión humana.
+
+| Respuesta | Puntos |
+| --- | ---: |
+| Sí | 2 |
+| No | 0 |
 | Sin responder | 0 |
 
 La ausencia de planos nunca genera una deducción.
 
-### Input 9: Rango de inversión estimado
+### Input 12: Rango de inversión estimado
 
 - Pertenece a: `Viabilidad financiera`.
 - Tipo de input: selección.
@@ -168,7 +215,7 @@ La ausencia de planos nunca genera una deducción.
 
 Los rangos concretos valen lo mismo. Después se revisa si la inversión es coherente con el tamaño y la calidad seleccionados.
 
-### Input 10: Disponibilidad de capital
+### Input 13: Disponibilidad de capital
 
 - Pertenece a: `Viabilidad financiera`.
 - Tipo de input: selección.
@@ -185,7 +232,7 @@ Los rangos concretos valen lo mismo. Después se revisa si la inversión es cohe
 
 La respuesta se contrasta con el plazo de inicio para detectar fechas incompatibles con la disponibilidad del capital.
 
-### Input 11: ¿Cuándo espera iniciar el proyecto?
+### Input 14: ¿Cuándo espera iniciar el proyecto?
 
 - Pertenece a: `Compatibilidad`.
 - Tipo de input: selección de botones.
@@ -202,7 +249,7 @@ La respuesta se contrasta con el plazo de inicio para detectar fechas incompatib
 
 Un proyecto no recibe más puntos por comenzar antes. Cualquier plazo puede ser excelente si es coherente con inmueble, capital, inversión y modalidad.
 
-### Input 12: ¿Quién toma la decisión final del proyecto?
+### Input 15: ¿Quién toma la decisión final del proyecto?
 
 - Pertenece a: `Compatibilidad`.
 - Tipo de input: selección.
@@ -220,7 +267,7 @@ Un proyecto no recibe más puntos por comenzar antes. Cualquier plazo puede ser 
 
 No genera deducciones porque el frontend no pregunta si la decisión ya fue aprobada.
 
-### Input 13: Expectativa de estilo / nivel de calidad
+### Input 16: Expectativa de estilo / nivel de calidad
 
 - Pertenece a: `Compatibilidad`.
 - Tipo de input: selección.
@@ -238,7 +285,7 @@ No genera deducciones porque el frontend no pregunta si la decisión ya fue apro
 
 Elegir premium o lujo no suma ni resta por sí solo. Solo genera una deducción cuando el rango de inversión resulta incoherente con esa expectativa.
 
-### Input 14: ¿Ha trabajado con un arquitecto o diseñador antes?
+### Input 17: ¿Ha trabajado con un arquitecto o diseñador antes?
 
 - Pertenece a: `Compatibilidad`.
 - Tipo de input: selección de botones.
@@ -253,32 +300,32 @@ Elegir premium o lujo no suma ni resta por sí solo. Solo genera una deducción 
 | No, es la primera vez | 0 |
 | Sin responder | 0 |
 
-### Input 15: Subir imágenes o archivos
+### Input 18: Subir imágenes o archivos
 
 - Pertenece a: `Referencias`.
 - Tipo de input: carga de archivos.
 - Obligatorio: no.
-- Máximo: `6` puntos.
+- Máximo: `5` puntos.
 - Uso: aporta material visual o documental para comprender el proyecto.
 
 | Respuesta | Puntos |
 | --- | ---: |
-| Uno o más archivos guardados correctamente | 6 |
+| Uno o más archivos guardados correctamente | 5 |
 | Sin archivos | 0 |
 
 La cantidad de archivos no multiplica los puntos. Uno y diez archivos válidos reciben los mismos `6` puntos. El servidor consulta los adjuntos realmente guardados; el navegador no puede declarar este valor.
 
-### Input 16: Links de referencia
+### Input 19: Links de referencia
 
 - Pertenece a: `Referencias`.
 - Tipo de input: URL.
 - Obligatorio: no.
-- Máximo: `4` puntos.
+- Máximo: `2` puntos.
 - Uso: aporta una referencia externa adicional.
 
 | Respuesta | Puntos |
 | --- | ---: |
-| Enlace `http` o `https` válido | 4 |
+| Enlace `http` o `https` válido | 2 |
 | Sin enlace | 0 |
 
 ## Resumen de los 100 puntos base
@@ -287,12 +334,14 @@ La cantidad de archivos no multiplica los puntos. Uno y diez archivos válidos r
 | --- | ---: |
 | Descripción | 10 |
 | Tamaño definido | 15 |
-| Modalidad definida | 15 |
+| Modalidad definida | 10 |
 | Disponibilidad del inmueble | 10 |
 | Inversión definida | 15 |
 | Disponibilidad de capital | 25 |
-| Archivos | 6 |
-| Enlace | 4 |
+| Situación documental definida | 6 |
+| Planos disponibles | 2 |
+| Archivos | 5 |
+| Enlace | 2 |
 | **Total** | **100** |
 
 ## Reglas de coherencia entre inputs
@@ -360,13 +409,15 @@ Una respuesta incompleta deja de obtener sus puntos base, pero no se descuenta n
 ## Ejemplo: espacio pequeño, premium y con buen presupuesto
 
 ```text
-Descripción completa: 10
+Descripción de 80–100 caracteres: 10
 Tamaño pequeño definido: 15
-Modalidad definida: 15
+Modalidad definida: 10
 Inmueble disponible: 10
 Inversión de USD 50.000–150.000: 15
 Capital disponible ahora: 25
-Archivos y enlace: 10
+Documentación legal disponible: 6
+Planos disponibles: 2
+Archivos y enlace: 7
 Calidad premium: 0 puntos base y 0 deducción
 Penalizaciones: 0
 Resultado: 100 — Excelente compatibilidad
@@ -390,7 +441,7 @@ Una puntuación baja nunca impide enviar la solicitud.
 
 - El backend calcula y guarda el resultado.
 - El frontend no puede enviar puntaje, nivel, versión ni presencia de archivos.
-- Las solicitudes nuevas guardan `compatibility_scoring_version = "2.1"`.
+- Las solicitudes nuevas guardan `compatibility_scoring_version = "2.2"`.
 - Las versiones históricas no se recalculan automáticamente.
 
 La fuente de verdad técnica se encuentra en `Backend/src/domain/projectRequest.js`.

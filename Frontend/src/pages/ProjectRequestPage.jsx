@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { CloudPlus, Edit2, InfoCircle, Link21, Location } from "iconsax-react";
+import { ArrowDown2, CloudPlus, Edit2, InfoCircle, Link21, Location } from "iconsax-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 
@@ -49,6 +49,9 @@ const INITIAL_FORM = {
   projectSize: "",
   developmentMode: "",
   landStatus: "",
+  legalDocumentationStatus: "",
+  legalDocumentTypes: [],
+  multipleOwners: "",
   investmentRange: "",
   capitalAvailability: "",
   startTime: "",
@@ -171,6 +174,79 @@ function CheckboxField({ label, value, onChange }) {
   );
 }
 
+function LegalDocumentTypesField({ error = "", invalid = false, value, onChange, disabled }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedValues = Array.isArray(value) ? value : [];
+  const selectedLabels = PROJECT_REQUEST_OPTIONS.legalDocumentTypes
+    .filter((option) => selectedValues.includes(option.value))
+    .map((option) => option.label);
+
+  const toggleDocument = (documentType) => {
+    const nextValues = selectedValues.includes(documentType)
+      ? selectedValues.filter((valueToKeep) => valueToKeep !== documentType)
+      : [...selectedValues, documentType];
+    onChange(nextValues);
+  };
+
+  return (
+    <div className="flex w-full flex-col gap-[8px]">
+      <FieldLabel>Documentación disponible</FieldLabel>
+      <div className="relative w-full">
+        <button
+          type="button"
+          disabled={disabled}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-invalid={invalid || undefined}
+          onClick={() => setIsOpen((current) => !current)}
+          className={clsx(
+            "flex h-[37px] w-full items-center justify-between gap-[8px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[12px] text-left text-[14px] text-[var(--color-text-300)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] disabled:cursor-not-allowed disabled:opacity-60",
+            invalid ? "border-[var(--color-danger-100)]" : "border-[var(--color-neutral-200)]",
+          )}
+        >
+          <span className="truncate">
+            {selectedLabels.length ? selectedLabels.join(", ") : "Selecciona la documentación"}
+          </span>
+          <ArrowDown2
+            size="18"
+            color="currentColor"
+            aria-hidden="true"
+            className={clsx("shrink-0 transition-transform", isOpen && "rotate-180")}
+          />
+        </button>
+        {isOpen && !disabled ? (
+          <div
+            role="listbox"
+            aria-multiselectable="true"
+            className="mt-[4px] flex w-full flex-col gap-[4px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[6px] shadow-[var(--shadow-e1)]"
+          >
+            {PROJECT_REQUEST_OPTIONS.legalDocumentTypes.map((option) => {
+              const selected = selectedValues.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => toggleDocument(option.value)}
+                  className={clsx(
+                    "flex min-h-[32px] w-full items-center gap-[8px] rounded-[8px] px-[8px] py-[6px] text-left text-[14px] text-[var(--color-text-300)]",
+                    selected && "bg-[var(--color-neutral-200)]",
+                  )}
+                >
+                  <Checkbox checked={selected ? "Yes" : "No"} size="S" />
+                  <span>{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+      {error ? <HintText state="Error" hintText={error} className="w-full" role="alert" /> : null}
+    </div>
+  );
+}
+
 function FormDivider() {
   return (
     <div aria-hidden="true" className="relative h-0 w-full">
@@ -224,6 +300,14 @@ export default function ProjectRequestPage() {
     projectSize: initialRequest?.projectSize || "",
     developmentMode: initialRequest?.developmentMode || "",
     landStatus: initialRequest?.landStatus || "",
+    legalDocumentationStatus: initialRequest?.legalDocumentationStatus || "",
+    legalDocumentTypes: initialRequest?.legalDocumentTypes || [],
+    multipleOwners:
+      initialRequest?.hasMultipleOwners === true
+        ? "yes"
+        : initialRequest?.hasMultipleOwners === false
+          ? "no"
+          : "",
     investmentRange: initialRequest?.investmentRange || "",
     capitalAvailability: initialRequest?.capitalAvailability || "",
     startTime: initialRequest?.startTime || "",
@@ -332,6 +416,21 @@ export default function ProjectRequestPage() {
       const nextErrors = getProjectRequestFieldErrors(nextForm);
       setFieldErrors(nextErrors);
       if (Object.keys(nextErrors).length === 0 && fileErrors.length === 0) setShowRequiredAlert(false);
+    }
+  };
+  const updateLegalDocumentationStatus = (status) => {
+    const nextForm = {
+      ...form,
+      legalDocumentationStatus: status,
+      legalDocumentTypes: status === "available" ? form.legalDocumentTypes : [],
+    };
+    setForm(nextForm);
+    if (hasAttemptedSubmit) {
+      const nextErrors = getProjectRequestFieldErrors(nextForm);
+      setFieldErrors(nextErrors);
+      if (Object.keys(nextErrors).length === 0 && fileErrors.length === 0) {
+        setShowRequiredAlert(false);
+      }
     }
   };
   const updateLocation = (event) => {
@@ -680,11 +779,24 @@ export default function ProjectRequestPage() {
                     />
                   ) : null}
                 </TextField>
-                <TextField error={hasAttemptedSubmit ? fieldErrors.description : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.description)} label="Descripción del proyecto" optional multiline placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
+                <TextField error={hasAttemptedSubmit ? fieldErrors.description : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.description)} label="Descripción del proyecto" multiline minLength={30} maxLength={100} placeholder="Describe brevemente qué quieres lograr, dónde está el inmueble y cualquier detalle relevante." value={form.description} onChange={update("description")} />
                 <SelectField error={hasAttemptedSubmit ? fieldErrors.projectSize : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.projectSize)} label="Tamaño aproximado del proyecto" optional value={form.projectSize} onChange={update("projectSize")} options={PROJECT_REQUEST_OPTIONS.projectSize} />
                 <SelectField error={hasAttemptedSubmit ? fieldErrors.developmentMode : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.developmentMode)} label="¿Cómo prefiere desarrollar el proyecto?" info value={form.developmentMode} onChange={update("developmentMode")} options={PROJECT_REQUEST_OPTIONS.developmentMode} />
                 <ChoiceGroup error={hasAttemptedSubmit ? fieldErrors.landStatus : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.landStatus)} label="¿Tiene terreno o inmueble disponible?" optional value={form.landStatus} onChange={update("landStatus")} options={PROJECT_REQUEST_OPTIONS.landStatus} />
-                <CheckboxField label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={(value) => setForm((current) => ({ ...current, hasBlueprints: value }))} />
+              </FormSection>
+
+              <FormDivider />
+
+              <FormSection title="Documentación legal del inmueble" description="Por favor, proporciona detalles sobre el estado legal de la propiedad que deseas intervenir. Esta información es crucial para evaluar la viabilidad del proyecto y asegurarnos de que se cumplan todos los requisitos legales antes de proceder.">
+                <SelectField error={hasAttemptedSubmit ? fieldErrors.legalDocumentationStatus : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.legalDocumentationStatus)} label="¿Cuenta con documentación que acredite la situación legal del inmueble?" value={form.legalDocumentationStatus} onChange={updateLegalDocumentationStatus} options={PROJECT_REQUEST_OPTIONS.legalDocumentationStatus} />
+                <LegalDocumentTypesField error={hasAttemptedSubmit ? fieldErrors.legalDocumentTypes : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.legalDocumentTypes)} value={form.legalDocumentTypes} onChange={update("legalDocumentTypes")} disabled={form.legalDocumentationStatus !== "available"} />
+                <div className="flex w-full flex-col gap-[8px]">
+                  <SelectField error={hasAttemptedSubmit ? fieldErrors.multipleOwners : ""} invalid={hasAttemptedSubmit && Boolean(fieldErrors.multipleOwners)} label="¿El inmueble tiene más de un propietario?" value={form.multipleOwners} onChange={update("multipleOwners")} options={PROJECT_REQUEST_OPTIONS.multipleOwners} />
+                  <HintText state="Default" hintText="La documentación podrá ser presentada posteriormente durante la reunión inicial." className="w-full" />
+                </div>
+                <div className="border-t border-[var(--color-neutral-200)] pt-[12px]">
+                  <CheckboxField label="¿Dispone de planos del lugar?" value={form.hasBlueprints} onChange={(value) => setForm((current) => ({ ...current, hasBlueprints: value }))} />
+                </div>
               </FormSection>
 
               <FormDivider />

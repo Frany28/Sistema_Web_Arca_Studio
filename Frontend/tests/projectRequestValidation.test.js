@@ -9,12 +9,15 @@ import {
 
 const VALID_VALUES = {
   capitalAvailability: "undefined",
-  description: "",
+  description: "Remodelación integral de cocina y sala principal.",
   developmentMode: "undecided",
   investmentRange: "undefined",
+  legalDocumentationStatus: "available",
+  legalDocumentTypes: ["property_deed"],
   location: "Maracaibo, Estado Zulia",
   projectName: "Casa Jardín",
   projectType: "residential",
+  multipleOwners: "no",
   referenceLink: "",
   startTime: "over_6_months",
 };
@@ -29,9 +32,27 @@ test("project request validation reports field-specific errors", () => {
   assert.match(errors.referenceLink, /http/);
 });
 
-test("optional description is validated only when provided", () => {
-  assert.equal(getProjectRequestFieldErrors({ ...VALID_VALUES, description: "" }).description, undefined);
+test("description is required between 30 and 100 characters", () => {
+  assert.ok(getProjectRequestFieldErrors({ ...VALID_VALUES, description: "" }).description);
   assert.ok(getProjectRequestFieldErrors({ ...VALID_VALUES, description: "muy corta" }).description);
+  assert.ok(getProjectRequestFieldErrors({ ...VALID_VALUES, description: "x".repeat(101) }).description);
+  assert.equal(getProjectRequestFieldErrors({ ...VALID_VALUES, description: "x".repeat(30) }).description, undefined);
+});
+
+test("legal documentation requires coherent document selections and ownership data", () => {
+  assert.ok(getProjectRequestFieldErrors({
+    ...VALID_VALUES,
+    legalDocumentTypes: [],
+  }).legalDocumentTypes);
+  assert.ok(getProjectRequestFieldErrors({
+    ...VALID_VALUES,
+    legalDocumentationStatus: "in_process",
+    legalDocumentTypes: ["property_deed"],
+  }).legalDocumentTypes);
+  assert.ok(getProjectRequestFieldErrors({
+    ...VALID_VALUES,
+    multipleOwners: "",
+  }).multipleOwners);
 });
 
 test("file validation enforces extension, mime, size and duplicate names", () => {
@@ -56,5 +77,7 @@ test("payload never includes the temporary code or computed score", () => {
   assert.equal(payload.code, undefined);
   assert.equal(payload.compatibilityScore, undefined);
   assert.equal(payload.hasBlueprints, null);
+  assert.equal(payload.hasMultipleOwners, false);
+  assert.deepEqual(payload.legalDocumentTypes, ["property_deed"]);
   assert.equal(payload.submissionId, "550e8400-e29b-41d4-a716-446655440000");
 });

@@ -10,11 +10,14 @@ import {
 const COMPLETE_PROJECT = {
   capitalAvailability: "available_now",
   decisionMaker: "self",
-  description: "Proyecto residencial completo, claramente definido y documentado.",
+  description: "Proyecto residencial con remodelación integral, alcance definido y documentación legal disponible.",
   developmentMode: "full",
   hasFiles: true,
+  hasPlans: true,
   investmentRange: "over_150k",
   landStatus: "available",
+  legalDocumentationStatus: "available",
+  legalDocumentTypes: ["property_deed"],
   location: "Caracas, Venezuela",
   projectName: "Apartamento Central",
   projectSize: "small_lt_80",
@@ -23,12 +26,12 @@ const COMPLETE_PROJECT = {
   startTime: "immediate",
 };
 
-test("a complete, prepared and coherent request receives 100 points in version 2.1", () => {
+test("a complete, prepared and coherent request receives 100 points in version 2.2", () => {
   assert.deepEqual(evaluateProjectCompatibility(COMPLETE_PROJECT), {
     level: "excellent",
     reasonCodes: [],
     score: 100,
-    version: "2.1",
+    version: "2.2",
   });
 });
 
@@ -69,12 +72,12 @@ test("every defined project size contributes the same 15 base points", () => {
   assert.deepEqual(scores, [100, 100, 100, 100]);
 });
 
-test("experience, blueprints and decision maker never change the score", () => {
+test("experience, decision maker and number of owners never change the score", () => {
   const baseline = evaluateProjectCompatibility(COMPLETE_PROJECT).score;
   for (const values of [
-    { experience: "positive", hasPlans: true },
-    { experience: "negative", hasPlans: false },
-    { experience: "first_time", hasPlans: null },
+    { experience: "positive", hasMultipleOwners: false },
+    { experience: "negative", hasMultipleOwners: true },
+    { experience: "first_time" },
     { decisionMaker: "partner" },
     { decisionMaker: "extended_family" },
     { decisionMaker: "company_board" },
@@ -88,19 +91,19 @@ test("experience, blueprints and decision maker never change the score", () => {
 
 test("description completeness contributes points without duplicate deductions", () => {
   assert.deepEqual(
-    evaluateProjectCompatibility({ ...COMPLETE_PROJECT, description: "Detalle útil" }),
-    { level: "excellent", reasonCodes: [], score: 94, version: "2.1" },
+    evaluateProjectCompatibility({ ...COMPLETE_PROJECT, description: "Descripción suficiente para evaluar alcance." }),
+    { level: "excellent", reasonCodes: [], score: 94, version: "2.2" },
   );
   assert.deepEqual(
     evaluateProjectCompatibility({ ...COMPLETE_PROJECT, description: null }),
-    { level: "excellent", reasonCodes: [], score: 90, version: "2.1" },
+    { level: "excellent", reasonCodes: [], score: 90, version: "2.2" },
   );
 });
 
 test("scope and financial readiness use the redistributed base points", () => {
   const cases = [
     [85, { projectSize: "unknown" }],
-    [85, { developmentMode: "undecided", startTime: "3_6_months" }],
+    [90, { developmentMode: "undecided", startTime: "3_6_months" }],
     [95, { landStatus: "acquiring", startTime: "3_6_months" }],
     [90, { landStatus: "unavailable", startTime: "3_6_months" }],
     [85, { investmentRange: "undefined", startTime: "3_6_months" }],
@@ -116,14 +119,14 @@ test("scope and financial readiness use the redistributed base points", () => {
   }
 });
 
-test("files and valid reference links contribute only 6 and 4 points", () => {
+test("files and valid reference links contribute only 5 and 2 points", () => {
   assert.equal(
     evaluateProjectCompatibility({ ...COMPLETE_PROJECT, hasFiles: false }).score,
-    94,
+    95,
   );
   assert.equal(
     evaluateProjectCompatibility({ ...COMPLETE_PROJECT, referenceLink: null }).score,
-    96,
+    98,
   );
   assert.equal(
     evaluateProjectCompatibility({
@@ -131,14 +134,51 @@ test("files and valid reference links contribute only 6 and 4 points", () => {
       hasFiles: false,
       referenceLink: null,
     }).score,
-    90,
+    93,
   );
   assert.equal(
     evaluateProjectCompatibility({
       ...COMPLETE_PROJECT,
       referenceLink: "javascript:alert(1)",
     }).score,
-    96,
+    98,
+  );
+});
+
+test("legal readiness and plans add preparation points without favoring document types", () => {
+  assert.equal(
+    evaluateProjectCompatibility({
+      ...COMPLETE_PROJECT,
+      legalDocumentTypes: ["lease_contract"],
+    }).score,
+    100,
+  );
+  assert.equal(
+    evaluateProjectCompatibility({
+      ...COMPLETE_PROJECT,
+      legalDocumentTypes: ["property_deed", "purchase_contract", "other"],
+    }).score,
+    100,
+  );
+  assert.equal(
+    evaluateProjectCompatibility({
+      ...COMPLETE_PROJECT,
+      legalDocumentationStatus: "in_process",
+      legalDocumentTypes: [],
+    }).score,
+    97,
+  );
+  assert.equal(
+    evaluateProjectCompatibility({
+      ...COMPLETE_PROJECT,
+      legalDocumentationStatus: "unavailable",
+      legalDocumentTypes: [],
+    }).score,
+    94,
+  );
+  assert.equal(
+    evaluateProjectCompatibility({ ...COMPLETE_PROJECT, hasPlans: false }).score,
+    98,
   );
 });
 
@@ -164,7 +204,7 @@ const PENALTY_CASES = [
   ["financingSoon", 77, { capitalAvailability: "seeking_financing", startTime: "1_3_months" }],
   ["budgetUndefinedImmediate", 75, { investmentRange: "undefined" }],
   ["budgetUndefinedSoon", 80, { investmentRange: "undefined", startTime: "1_3_months" }],
-  ["modeUndefinedImmediate", 75, { developmentMode: "undecided" }],
+  ["modeUndefinedImmediate", 80, { developmentMode: "undecided" }],
 ];
 
 test("every objective coherence penalty is applied with its exact value", () => {
@@ -193,14 +233,14 @@ test("quality only changes the score through budget coherence rules", () => {
 test("missing information is not deducted twice", () => {
   const result = evaluateProjectCompatibility({
     ...COMPLETE_PROJECT,
-    description: "Detalle útil",
+    description: "Descripción suficiente para evaluar alcance.",
     hasFiles: false,
     investmentRange: "undefined",
     projectSize: "unknown",
     referenceLink: null,
     startTime: "3_6_months",
   });
-  assert.equal(result.score, 54);
+  assert.equal(result.score, 57);
   assert.deepEqual(result.reasonCodes, []);
 });
 
@@ -241,7 +281,7 @@ test("score thresholds use 80, 60, 40 and 20", () => {
 });
 
 test("public compatibility preserves historical results without recalculating them", () => {
-  for (const version of ["1.0", "2.0"]) {
+  for (const version of ["1.0", "2.0", "2.1"]) {
     assert.deepEqual(
       publicCompatibility({
         level: "low",

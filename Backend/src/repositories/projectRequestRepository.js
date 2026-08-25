@@ -10,6 +10,9 @@ const SELECT_FIELDS = `
   location,
   description,
   has_plans,
+  legal_documentation_status,
+  legal_document_types,
+  has_multiple_owners,
   project_size,
   development_mode,
   land_status,
@@ -56,6 +59,11 @@ function toProjectRequestRecord(row) {
     experience: row.prior_design_experience,
     formattedAddress: row.formatted_address,
     hasPlans: row.has_plans,
+    legalDocumentationStatus: row.legal_documentation_status,
+    legalDocumentTypes: Array.isArray(row.legal_document_types)
+      ? row.legal_document_types
+      : [],
+    hasMultipleOwners: row.has_multiple_owners,
     id: Number(row.id),
     investmentRange: row.investment_range,
     landStatus: row.land_status,
@@ -192,7 +200,8 @@ export async function createProjectRequestDraft(user, payload) {
         investment_range, capital_availability, expected_start_time,
         decision_maker, quality_expectation, prior_design_experience,
         reference_link, status, location_latitude, location_longitude,
-        provider_place_id, formatted_address, submission_id
+        provider_place_id, formatted_address, submission_id,
+        legal_documentation_status, legal_document_types, has_multiple_owners
       )
       values (
         $1, $2, $3, $4::project_type, $5,
@@ -200,7 +209,8 @@ export async function createProjectRequestDraft(user, payload) {
         $10::project_land_status, $11::project_investment_range,
         $12::project_capital_availability, $13::project_start_time,
         $14::project_decision_maker, $15::project_quality_expectation,
-        $16::project_design_experience, $17, 'draft', $18, $19, $20, $21, $22::uuid
+        $16::project_design_experience, $17, 'draft', $18, $19, $20, $21, $22::uuid,
+        $23::project_legal_documentation_status, $24::text[], $25
       )
       on conflict (client_id, requested_by, submission_id)
         where submission_id is not null and deleted_at is null
@@ -239,15 +249,18 @@ export async function updateProjectRequestDraft(projectRequestId, user, payload)
         location_longitude = $19,
         provider_place_id = $20,
         formatted_address = $21,
+        legal_documentation_status = $23::project_legal_documentation_status,
+        legal_document_types = $24::text[],
+        has_multiple_owners = $25,
         updated_at = now()
-      where id = $22
+      where id = $26
         and client_id = $1
         and requested_by = $2
         and deleted_at is null
         and status = 'draft'
       returning ${SELECT_FIELDS}
     `,
-    [...params.slice(0, 21), projectRequestId],
+    [...params.slice(0, 25), projectRequestId],
   );
   return result.rows[0] ? toProjectRequestRecord(result.rows[0]) : null;
 }
@@ -308,5 +321,8 @@ function projectRequestParams(user, payload) {
     payload.projectLocationProviderPlaceId,
     payload.projectLocationFormattedAddress,
     payload.submissionId,
+    payload.legalDocumentationStatus,
+    payload.legalDocumentTypes,
+    payload.hasMultipleOwners,
   ];
 }
