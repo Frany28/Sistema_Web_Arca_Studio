@@ -1,4 +1,4 @@
-import { query } from "../config/db.js";
+import { pool, query } from "../config/db.js";
 import { mapAdminDashboardMetrics } from "../utils/adminDashboardMetrics.js";
 import {
   mapAdminDashboardActivity,
@@ -23,6 +23,142 @@ function mapAssignmentResult(row = {}) {
       : [],
     targetExists: Boolean(row.target_exists),
   };
+}
+
+function mapManagedProject(row = {}) {
+  return {
+    archived: Boolean(row.deleted_at),
+    archivedAt: row.deleted_at || null,
+    id: Number(row.id),
+    isPublic: Boolean(row.is_public),
+    status: row.status,
+  };
+}
+
+export async function applyAdminProjectBulkAction({
+  action,
+  isPublic,
+  projectIds,
+  userId,
+}) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("begin");
+    const lockedResult = await client.query(
+      `
+        select id, status, is_public, deleted_at
+        from public.projects
+        where id = any($1::bigint[])
+        order by id
+        for update
+      `,
+      [projectIds],
+    );
+    const foundIds = new Set(lockedResult.rows.map((row) => Number(row.id)));
+    const missingIds = projectIds.filter((id) => !foundIds.has(id));
+
+    if (missingIds.length) {
+      await client.query("rollback");
+      return { missingIds, outcome: "not_found", projects: [] };
+    }
+
+    if (
+      action === "change_visibility"
+      && lockedResult.rows.some(
+        (project) => project.status !== "completed" || project.deleted_at,
+      )
+    ) {
+      await client.query("rollback");
+      return { missingIds: [], outcome: "visibility_requires_completed", projects: [] };
+    }
+
+    if (
+      action === "unarchive"
+      && lockedResult.rows.some((project) => !project.deleted_at)
+    ) {
+      await client.query("rollback");
+      return { missingIds: [], outcome: "unarchive_requires_archived", projects: [] };
+    }
+
+    let updateSql;
+    let updateParams = [projectIds];
+
+    if (action === "change_visibility") {
+      updateSql = `
+        update public.projects
+        set is_public = $2, updated_at = now()
+        where id = any($1::bigint[])
+        returning id, status, is_public, deleted_at
+      `;
+      updateParams = [projectIds, isPublic];
+    } else if (action === "archive") {
+      updateSql = `
+        update public.projects
+        set
+          deleted_at = coalesce(deleted_at, now()),
+          is_public = false,
+          updated_at = now()
+        where id = any($1::bigint[])
+        returning id, status, is_public, deleted_at
+      `;
+    } else {
+      updateSql = `
+        update public.projects
+        set deleted_at = null, is_public = false, updated_at = now()
+        where id = any($1::bigint[])
+        returning id, status, is_public, deleted_at
+      `;
+    }
+
+    const updatedResult = await client.query(updateSql, updateParams);
+    const previousById = new Map(
+      lockedResult.rows.map((project) => [Number(project.id), project]),
+    );
+
+    for (const project of updatedResult.rows) {
+      const previous = previousById.get(Number(project.id));
+      await client.query(
+        `
+          insert into public.audit_logs (
+            user_id,
+            action,
+            entity_type,
+            entity_id,
+            description,
+            old_values,
+            new_values
+          ) values ($1, $2, 'project', $3, $4, $5::jsonb, $6::jsonb)
+        `,
+        [
+          userId,
+          `project.${action}`,
+          project.id,
+          `Accion administrativa masiva: ${action}`,
+          JSON.stringify({
+            archivedAt: previous.deleted_at,
+            isPublic: previous.is_public,
+          }),
+          JSON.stringify({
+            archivedAt: project.deleted_at,
+            isPublic: project.is_public,
+          }),
+        ],
+      );
+    }
+
+    await client.query("commit");
+    return {
+      missingIds: [],
+      outcome: "updated",
+      projects: updatedResult.rows.map(mapManagedProject),
+    };
+  } catch (error) {
+    await client.query("rollback").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function listAdminAssignees() {

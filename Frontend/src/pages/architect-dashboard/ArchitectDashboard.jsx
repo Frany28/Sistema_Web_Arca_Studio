@@ -505,6 +505,37 @@ function ArchitectDashboard({ empty = false }) {
     );
   };
 
+  const handleProjectBulkAction = async ({ action, projects: selectedProjects }) => {
+    const isPublic = action === "change_visibility"
+      ? !selectedProjects.every((project) => project.isPublic)
+      : undefined;
+    const data = await api.admin.updateProjects({
+      action,
+      isPublic,
+      projectIds: selectedProjects.map((project) => Number(project.id)),
+    });
+    const updatedProjects = new Map(
+      (data.projects || []).map((project) => [Number(project.id), project]),
+    );
+
+    setProjects((currentProjects) => {
+      if (action === "archive") {
+        return currentProjects.filter(
+          (project) => !updatedProjects.has(Number(project.id)),
+        );
+      }
+
+      return currentProjects.map((project) => {
+        const updatedProject = updatedProjects.get(Number(project.id));
+        return updatedProject ? { ...project, ...updatedProject } : project;
+      });
+    });
+    setAdminMetricsRequestKey((current) => current + 1);
+    setAdminOverviewRequestKey((current) => current + 1);
+
+    return data;
+  };
+
   const handleRequestAssigneesChange = async (request, assignees) => {
     const data = await api.admin.updateProjectRequestAssignees({
       assigneeIds: assignees.map((assignee) => Number(assignee.id)),
@@ -607,6 +638,7 @@ function ArchitectDashboard({ empty = false }) {
                 error={projectsError}
                 loading={projectsLoading}
                 projects={projectRows}
+                onBulkAction={handleProjectBulkAction}
                 onOpenProject={(project) => navigate(getProjectPath(project))}
                 onProjectAssigneesChange={handleProjectAssigneesChange}
                 onRetry={() => setProjectsRequestKey((current) => current + 1)}

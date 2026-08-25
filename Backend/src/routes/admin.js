@@ -5,6 +5,7 @@ import {
   getDashboardMetrics,
   getDashboardOverview,
   updateProjectAssignees,
+  updateAdminProjects,
   updateProjectRequestAssignees,
   streamAdminAssigneeProfilePhoto,
 } from "../controllers/adminDashboardController.js";
@@ -21,6 +22,7 @@ import { createRateLimit } from "../middlewares/rateLimit.js";
 import { validate } from "../middlewares/validate.js";
 import {
   adminAssigneePhotoSchema,
+  adminProjectBulkActionSchema,
   projectAssigneesSchema,
   projectRequestAssigneesSchema,
 } from "../validation/adminDashboardSchemas.js";
@@ -38,6 +40,11 @@ const adminUserCreateRateLimit = createRateLimit({
 });
 const adminUserStatusRateLimit = createRateLimit({
   name: "admin-user-status",
+  max: 60,
+  windowMs: 60 * 60 * 1000,
+});
+const adminProjectBulkActionRateLimit = createRateLimit({
+  name: "admin-project-bulk-action",
   max: 60,
   windowMs: 60 * 60 * 1000,
 });
@@ -69,6 +76,12 @@ router.put(
   "/projects/:projectId/assignees",
   validate(projectAssigneesSchema),
   updateProjectAssignees,
+);
+router.patch(
+  "/projects/bulk-action",
+  adminProjectBulkActionRateLimit,
+  validate(adminProjectBulkActionSchema),
+  updateAdminProjects,
 );
 router.put(
   "/project-requests/:projectRequestId/assignees",

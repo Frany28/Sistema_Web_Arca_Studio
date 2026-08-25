@@ -12,6 +12,7 @@ import {
 } from "iconsax-react";
 
 import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
+import Alert from "../../../components/ui/Alert/Alert.jsx";
 import AssigneeMultiSelect from "../../../components/ui/AssigneeMultiSelect/AssigneeMultiSelect.jsx";
 import Badge from "../../../components/ui/Badge/Badge.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
@@ -87,6 +88,7 @@ function AdminActiveProjects({
   error,
   loading,
   onOpenProject,
+  onBulkAction,
   onProjectAssigneesChange,
   onRetry,
   projects,
@@ -95,6 +97,9 @@ function AdminActiveProjects({
   const [statusFilter, setStatusFilter] = useState("all");
   const [personFilter, setPersonFilter] = useState("all");
   const [selectedProjectIds, setSelectedProjectIds] = useState(() => new Set());
+  const [bulkActionPending, setBulkActionPending] = useState("");
+  const [bulkActionFeedback, setBulkActionFeedback] = useState(null);
+  const bulkActionPendingRef = useRef(false);
   const tableViewportRef = useRef(null);
   const [tableScrollState, setTableScrollState] = useState({
     length: 1,
@@ -223,6 +228,7 @@ function AdminActiveProjects({
   };
 
   const toggleAllVisible = () => {
+    setBulkActionFeedback(null);
     setSelectedProjectIds((current) => {
       const next = new Set(current);
       visibleProjects.forEach((project) => {
@@ -235,6 +241,7 @@ function AdminActiveProjects({
   };
 
   const toggleProject = (projectId) => {
+    setBulkActionFeedback(null);
     setSelectedProjectIds((current) => {
       const next = new Set(current);
       const id = String(projectId);
@@ -242,6 +249,39 @@ function AdminActiveProjects({
       else next.add(id);
       return next;
     });
+  };
+
+  const handleBulkAction = async (action) => {
+    const actionIsAllowed = {
+      archive: canArchive,
+      change_visibility: canChangeVisibility,
+      unarchive: canUnarchive,
+    }[action];
+
+    if (!actionIsAllowed || bulkActionPendingRef.current || !onBulkAction) return;
+
+    bulkActionPendingRef.current = true;
+    setBulkActionPending(action);
+    setBulkActionFeedback(null);
+
+    try {
+      await onBulkAction({ action, projects: selectedVisibleProjects });
+      const successMessages = {
+        archive: "Los proyectos seleccionados fueron archivados.",
+        change_visibility: "La visibilidad de los proyectos fue actualizada.",
+        unarchive: "Los proyectos seleccionados fueron desarchivados.",
+      };
+      setSelectedProjectIds(new Set());
+      setBulkActionFeedback({ message: successMessages[action], type: "success" });
+    } catch (actionError) {
+      setBulkActionFeedback({
+        message: actionError?.message || "No se pudieron actualizar los proyectos.",
+        type: "error",
+      });
+    } finally {
+      bulkActionPendingRef.current = false;
+      setBulkActionPending("");
+    }
   };
 
   return (
@@ -447,7 +487,9 @@ function AdminActiveProjects({
                   showLeftIcon
                   iconLeft={<GlobalEdit size="20" color="currentColor" />}
                   showRightIcon={false}
-                  disabled={!canChangeVisibility}
+                  disabled={!canChangeVisibility || Boolean(bulkActionPending) || !onBulkAction}
+                  aria-busy={bulkActionPending === "change_visibility"}
+                  onClick={() => handleBulkAction("change_visibility")}
                 >
                   Cambiar visibilidad
                 </Button>
@@ -459,7 +501,9 @@ function AdminActiveProjects({
                   showLeftIcon
                   iconLeft={<DocumentForward size="20" color="currentColor" />}
                   showRightIcon={false}
-                  disabled={!canArchive}
+                  disabled={!canArchive || Boolean(bulkActionPending) || !onBulkAction}
+                  aria-busy={bulkActionPending === "archive"}
+                  onClick={() => handleBulkAction("archive")}
                 >
                   Archivar
                 </Button>
@@ -471,7 +515,9 @@ function AdminActiveProjects({
                   showLeftIcon
                   iconLeft={<GlobalEdit size="20" color="currentColor" />}
                   showRightIcon={false}
-                  disabled={!canUnarchive}
+                  disabled={!canUnarchive || Boolean(bulkActionPending) || !onBulkAction}
+                  aria-busy={bulkActionPending === "unarchive"}
+                  onClick={() => handleBulkAction("unarchive")}
                 >
                   Desarchivar
                 </Button>
@@ -500,6 +546,31 @@ function AdminActiveProjects({
                 </Button>
               </div>
             </footer>
+          ) : null}
+
+          {bulkActionFeedback ? (
+            <Alert
+              visible
+              theme={bulkActionFeedback.type === "error" ? "Danger" : "Success"}
+              layout="Box"
+              title={
+                bulkActionFeedback.type === "error"
+                  ? "No se pudo realizar el cambio"
+                  : "Cambio realizado con \u00e9xito"
+              }
+              description={bulkActionFeedback.message}
+              showIcon
+              showText
+              showActions={false}
+              showCloseButton
+              onDismiss={() => setBulkActionFeedback(null)}
+              aria-label={
+                bulkActionFeedback.type === "error"
+                  ? "Error al actualizar los proyectos"
+                  : "Proyectos actualizados correctamente"
+              }
+              className="max-w-full"
+            />
           ) : null}
         </>
       ) : (

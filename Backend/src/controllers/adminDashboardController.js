@@ -4,6 +4,7 @@ import {
   loadAdminDashboardMetrics,
   loadAdminDashboardOverview,
   loadAdminAssignees,
+  manageAdminProjects,
 } from "../services/adminDashboardService.js";
 import { getAdminAssigneeProfilePhoto } from "../services/profilePhotoService.js";
 
@@ -69,6 +70,22 @@ export async function updateProjectAssignees(req, res, next) {
 
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json({ assignees });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateAdminProjects(req, res, next) {
+  try {
+    const projects = await manageAdminProjects({
+      action: req.body.action,
+      isPublic: req.body.isPublic,
+      projectIds: req.body.projectIds,
+      userId: req.user.id,
+    });
+
+    res.setHeader("Cache-Control", "no-store");
+    res.status(200).json({ projects });
   } catch (error) {
     next(error);
   }

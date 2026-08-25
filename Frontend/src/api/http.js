@@ -282,6 +282,13 @@ export const adminApi = {
     return withAdminAssigneeAvatars(payload);
   },
 
+  updateProjects({ action, isPublic, projectIds }) {
+    return apiRequest("/admin/projects/bulk-action", {
+      body: JSON.stringify({ action, isPublic, projectIds }),
+      method: "PATCH",
+    });
+  },
+
   async updateProjectRequestAssignees({ assigneeIds, projectRequestId }) {
     const payload = await apiRequest(
       `/admin/project-requests/${encodeURIComponent(projectRequestId)}/assignees`,

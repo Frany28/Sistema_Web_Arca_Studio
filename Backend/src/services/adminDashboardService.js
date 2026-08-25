@@ -1,4 +1,5 @@
 import {
+  applyAdminProjectBulkAction,
   getAdminDashboardMetrics,
   getAdminDashboardOverview,
   listAdminAssignees,
@@ -17,6 +18,38 @@ export function loadAdminDashboardOverview() {
 
 export function loadAdminAssignees() {
   return listAdminAssignees();
+}
+
+export async function manageAdminProjects({ action, isPublic, projectIds, userId }) {
+  const result = await applyAdminProjectBulkAction({
+    action,
+    isPublic,
+    projectIds,
+    userId,
+  });
+
+  if (result.outcome === "not_found") {
+    throw new NotFoundError(
+      "PROJECT_NOT_FOUND",
+      "Uno o varios proyectos no existen.",
+    );
+  }
+
+  if (result.outcome === "visibility_requires_completed") {
+    throw new ValidationError(
+      "La visibilidad solo puede cambiarse en proyectos finalizados.",
+      { projectIds: "Incluye al menos un proyecto no finalizado o archivado." },
+    );
+  }
+
+  if (result.outcome === "unarchive_requires_archived") {
+    throw new ValidationError(
+      "Solo se pueden desarchivar proyectos archivados.",
+      { projectIds: "Incluye al menos un proyecto que no esta archivado." },
+    );
+  }
+
+  return result.projects;
 }
 
 function assertAssignmentResult(result, notFoundCode, notFoundMessage) {

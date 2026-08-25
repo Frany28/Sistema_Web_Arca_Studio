@@ -46,9 +46,18 @@ test("the Figma bulk action footer appears only with selected projects", async (
   assert.match(source, /type="Outline"[\s\S]*>\s*Anterior\s*<\/Button>/);
   assert.match(source, /type="Solid"[\s\S]*>\s*Siguiente pág\.\s*<\/Button>/);
 
-  assert.match(source, /disabled=\{!canChangeVisibility\}/);
-  assert.match(source, /disabled=\{!canArchive\}/);
-  assert.match(source, /disabled=\{!canUnarchive\}/);
+  assert.match(source, /handleBulkAction\("change_visibility"\)/);
+  assert.match(source, /handleBulkAction\("archive"\)/);
+  assert.match(source, /handleBulkAction\("unarchive"\)/);
+  assert.match(source, /await onBulkAction\(\{ action, projects: selectedVisibleProjects \}\)/);
+  assert.match(source, /Boolean\(bulkActionPending\)/);
+  assert.match(
+    source,
+    /theme=\{bulkActionFeedback\.type === "error" \? "Danger" : "Success"\}/,
+  );
+  assert.match(source, /layout="Box"/);
+  assert.match(source, /showActions=\{false\}/);
+  assert.match(source, /onDismiss=\{\(\) => setBulkActionFeedback\(null\)\}/);
 });
 
 test("bulk project actions follow the selection rules", () => {
@@ -88,7 +97,7 @@ test("bulk project actions follow the selection rules", () => {
       { id: 2, status: "completed", archived: true },
     ]),
     {
-      canChangeVisibility: true,
+      canChangeVisibility: false,
       canArchive: true,
       canUnarchive: true,
     },
@@ -100,7 +109,7 @@ test("bulk project actions follow the selection rules", () => {
       { id: 2, status: "completed" },
     ]),
     {
-      canChangeVisibility: true,
+      canChangeVisibility: false,
       canArchive: true,
       canUnarchive: false,
     },

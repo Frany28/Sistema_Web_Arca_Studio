@@ -2,10 +2,44 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  adminProjectBulkActionSchema,
   adminAssigneePhotoSchema,
   projectAssigneesSchema,
   projectRequestAssigneesSchema,
 } from "../src/validation/adminDashboardSchemas.js";
+
+test("admin project bulk actions validate supported actions and unique ids", () => {
+  const valid = adminProjectBulkActionSchema.safeParse({
+    body: { action: "archive", projectIds: [3, 8, 13] },
+  });
+  const visibility = adminProjectBulkActionSchema.safeParse({
+    body: {
+      action: "change_visibility",
+      isPublic: true,
+      projectIds: [3, 8],
+    },
+  });
+  const visibilityWithoutTarget = adminProjectBulkActionSchema.safeParse({
+    body: { action: "change_visibility", projectIds: [3, 8] },
+  });
+  const duplicate = adminProjectBulkActionSchema.safeParse({
+    body: { action: "unarchive", projectIds: [3, 3] },
+  });
+  const unsupported = adminProjectBulkActionSchema.safeParse({
+    body: { action: "delete", projectIds: [3] },
+  });
+  const empty = adminProjectBulkActionSchema.safeParse({
+    body: { action: "archive", projectIds: [] },
+  });
+
+  assert.equal(valid.success, true);
+  assert.equal(visibility.success, true);
+  assert.equal(visibilityWithoutTarget.success, false);
+  assert.deepEqual(valid.data.body.projectIds, [3, 8, 13]);
+  assert.equal(duplicate.success, false);
+  assert.equal(unsupported.success, false);
+  assert.equal(empty.success, false);
+});
 
 test("project assignments accept multiple unique employee ids", () => {
   const result = projectAssigneesSchema.safeParse({

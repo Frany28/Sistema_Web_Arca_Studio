@@ -19,7 +19,10 @@ export function getBulkActionAvailability(selectedProjects) {
 
   return {
     canChangeVisibility:
-      hasSelection && selectedProjects.every(isFinalizedProject),
+      hasSelection
+      && selectedProjects.every(
+        (project) => isFinalizedProject(project) && !isArchivedProject(project),
+      ),
     canArchive: hasSelection,
     canUnarchive:
       hasSelection && selectedProjects.every(isArchivedProject),
