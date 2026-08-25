@@ -439,6 +439,7 @@ function DropdownMenu({
   hoveredItemId = DROPDOWN_MENU_DEFAULT_PROPS.hoveredItemId,
   selectedItemId = DROPDOWN_MENU_DEFAULT_PROPS.selectedItemId,
   multiple = false,
+  closeOnSelect = false,
   preserveMenuSpace = DROPDOWN_MENU_DEFAULT_PROPS.preserveMenuSpace,
   onOpenChange,
   onItemSelect,
@@ -656,7 +657,7 @@ function DropdownMenu({
       setInternalSelectedItemId(multiple ? null : nextSelectedItemId);
       onItemsChange?.(nextItems);
       onItemSelect?.(nextSelectedItem);
-      if (!multiple) {
+      if (!multiple || closeOnSelect) {
         setMenuOpen(false);
         setInternalHoveredItemId(null);
       }

@@ -40,13 +40,18 @@ const STATUS_DETAILS = {
 };
 
 const STATUS_FILTER_ITEMS = [
-  { id: "all", label: "Filtrar por status", type: "Text" },
-  { id: "in_process", label: "En progreso", type: "Text" },
-  { id: "in_review", label: "En revisión", type: "Text" },
-  { id: "pending_approval", label: "Solicitud", type: "Text" },
-  { id: "completed", label: "Finalizado", type: "Text" },
-  { id: "archived", label: "Archivado", type: "Text" },
+  { id: "in_process", label: "En progreso", type: "Checkbox" },
+  { id: "in_review", label: "En revisión", type: "Checkbox" },
+  { id: "pending_approval", label: "Solicitud", type: "Checkbox" },
+  { id: "completed", label: "Finalizado", type: "Checkbox" },
+  { id: "archived", label: "Archivado", type: "Checkbox" },
 ];
+
+function getStatusFilterId(status) {
+  if (status === "finished") return "completed";
+  if (status === "request") return "pending_approval";
+  return status;
+}
 
 function getStatus(project) {
   return STATUS_DETAILS[project.status] || { label: "Solicitud", theme: "Neutral" };
@@ -97,7 +102,7 @@ function AdminActiveProjects({
   projects,
 }) {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilterIds, setStatusFilterIds] = useState([]);
   const [personFilterIds, setPersonFilterIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [selectedProjectIds, setSelectedProjectIds] = useState(() => new Set());
@@ -132,12 +137,14 @@ function AdminActiveProjects({
     })),
   ], [personFilterIds, personnel]);
 
-  const personnelFilterLabel = personFilterIds.length === 0
-    ? "Filtrar por personal"
-    : personFilterIds.length === 1
-      ? personnelFilterItems.find((item) => item.checked === "Yes")?.label
-        || "1 responsable"
-      : `${personFilterIds.length} responsables`;
+  const personnelFilterLabel = "Filtrar por personal";
+  const statusFilterItems = useMemo(
+    () => STATUS_FILTER_ITEMS.map((item) => ({
+      ...item,
+      checked: statusFilterIds.includes(item.id) ? "Yes" : "No",
+    })),
+    [statusFilterIds],
+  );
 
   const filteredProjects = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
@@ -145,13 +152,14 @@ function AdminActiveProjects({
       const assignees = getAssignees(project);
       const matchesQuery = !normalizedQuery || [project.title, project.name, getClient(project).name]
         .some((value) => String(value || "").toLocaleLowerCase("es").includes(normalizedQuery));
-      const matchesStatus = statusFilter === "all" || project.status === statusFilter;
+      const matchesStatus = statusFilterIds.length === 0
+        || statusFilterIds.includes(getStatusFilterId(project.status));
       const matchesPerson = personFilterIds.length === 0 || assignees.some(
         (person) => personFilterIds.includes(String(person.id || person.name)),
       );
       return matchesQuery && matchesStatus && matchesPerson;
     });
-  }, [personFilterIds, projects, query, statusFilter]);
+  }, [personFilterIds, projects, query, statusFilterIds]);
 
   const pagination = useMemo(
     () => getAdminProjectsPagination(filteredProjects, pageIndex),
@@ -178,7 +186,9 @@ function AdminActiveProjects({
     : selectedVisibleCount > 0
       ? "Indeterminate"
       : "No";
-  const hasFilters = Boolean(query || statusFilter !== "all" || personFilterIds.length > 0);
+  const hasFilters = Boolean(
+    query || statusFilterIds.length > 0 || personFilterIds.length > 0,
+  );
 
   const syncTableScrollState = useCallback(() => {
     const viewport = tableViewportRef.current;
@@ -242,7 +252,7 @@ function AdminActiveProjects({
 
   const clearFilters = () => {
     setQuery("");
-    setStatusFilter("all");
+    setStatusFilterIds([]);
     setPersonFilterIds([]);
     setPageIndex(0);
     setSelectedProjectIds(new Set());
@@ -267,8 +277,12 @@ function AdminActiveProjects({
     setBulkActionFeedback(null);
   };
 
-  const handleStatusFilterChange = (item) => {
-    setStatusFilter(item.id);
+  const handleStatusFilterItemsChange = (nextItems) => {
+    setStatusFilterIds(
+      nextItems
+        .filter((item) => item.checked === "Yes")
+        .map((item) => String(item.id)),
+    );
     setPageIndex(0);
     setSelectedProjectIds(new Set());
     setBulkActionFeedback(null);
@@ -376,9 +390,10 @@ function AdminActiveProjects({
             label={personnelFilterLabel}
             items={personnelFilterItems}
             multiple
+            closeOnSelect
             onItemsChange={handlePersonFilterItemsChange}
             className="w-full"
-            contentClassName="admin-active-projects__personnel-menu"
+            contentClassName="admin-active-projects__filter-menu"
             rowHeightClassName="h-[35px]"
             triggerWrapperClassName="h-[39px]"
             triggerHeightClassName="h-[37px]"
@@ -388,10 +403,13 @@ function AdminActiveProjects({
           <DropdownMenu
             type="Text"
             label="Filtrar por status"
-            items={STATUS_FILTER_ITEMS}
-            selectedItemId={statusFilter}
-            onItemSelect={handleStatusFilterChange}
+            items={statusFilterItems}
+            multiple
+            closeOnSelect
+            onItemsChange={handleStatusFilterItemsChange}
             className="w-full"
+            contentClassName="admin-active-projects__filter-menu"
+            rowHeightClassName="h-[35px]"
             triggerWrapperClassName="h-[39px]"
             triggerHeightClassName="h-[37px]"
             triggerPaddingXClassName="px-[16px]"
@@ -640,7 +658,11 @@ function AdminActiveProjects({
       ) : hasFilters ? (
         <div className="w-full rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]">
           <EmptyState
-            title={statusFilter === "archived" ? "No hay proyectos archivados" : "No hay coincidencias"}
+            title={
+              statusFilterIds.length === 1 && statusFilterIds[0] === "archived"
+                ? "No hay proyectos archivados"
+                : "No hay coincidencias"
+            }
             description="No existen proyectos que coincidan con los filtros seleccionados."
             size="S"
             showFeaturedIcon={false}

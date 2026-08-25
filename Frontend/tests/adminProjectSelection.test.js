@@ -102,7 +102,7 @@ test("admin project pagination clamps pages and reports button states", () => {
   });
 });
 
-test("admin personnel filter uses the four-row multiple-checkbox menu", async () => {
+test("admin filters use connected four-row multiple-checkbox menus", async () => {
   const source = await readFile(
     new URL(
       "../src/pages/architect-dashboard/components/AdminActiveProjects.jsx",
@@ -120,14 +120,20 @@ test("admin personnel filter uses the four-row multiple-checkbox menu", async ()
 
   assert.match(source, /type: "Checkbox"/);
   assert.match(source, /<DropdownMenu[\s\S]*multiple[\s\S]*onItemsChange=\{handlePersonFilterItemsChange\}/);
+  assert.match(source, /multiple[\s\S]*closeOnSelect/);
+  assert.match(source, /const personnelFilterLabel = "Filtrar por personal"/);
+  assert.match(source, /label="Filtrar por status"[\s\S]*items=\{statusFilterItems\}[\s\S]*multiple[\s\S]*closeOnSelect/);
+  assert.match(source, /onItemsChange=\{handleStatusFilterItemsChange\}/);
+  assert.match(source, /statusFilterIds\.includes\(getStatusFilterId\(project\.status\)\)/);
   assert.match(source, /rowHeightClassName="h-\[35px\]"/);
   assert.match(source, /personFilterIds\.includes\(String\(person\.id \|\| person\.name\)\)/);
-  assert.match(styles, /admin-active-projects__personnel-menu[\s\S]*max-height: 168px/);
-  assert.match(styles, /admin-active-projects__personnel-menu[\s\S]*width: 100%/);
-  assert.match(styles, /admin-active-projects__personnel-menu[\s\S]*max-width: 100%/);
-  assert.match(styles, /admin-active-projects__personnel-menu[\s\S]*overflow-x: hidden/);
-  assert.match(styles, /admin-active-projects__personnel-menu > button p[\s\S]*white-space: normal/);
-  assert.match(styles, /admin-active-projects__personnel-menu > button p[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styles, /admin-active-projects__filter-menu[\s\S]*top: calc\(100% - 1px\)/);
+  assert.match(styles, /admin-active-projects__filter-menu[\s\S]*max-height: 168px/);
+  assert.match(styles, /admin-active-projects__filter-menu[\s\S]*width: 100%/);
+  assert.match(styles, /admin-active-projects__filter-menu[\s\S]*max-width: 100%/);
+  assert.match(styles, /admin-active-projects__filter-menu[\s\S]*overflow-x: hidden/);
+  assert.match(styles, /admin-active-projects__filter-menu > button p[\s\S]*white-space: normal/);
+  assert.match(styles, /admin-active-projects__filter-menu > button p[\s\S]*overflow-wrap: anywhere/);
   assert.match(styles, /scrollbar-width: thin/);
   assert.match(styles, /::-webkit-scrollbar[\s\S]*width: 4px/);
   assert.match(styles, /::-webkit-scrollbar[\s\S]*height: 0/);
