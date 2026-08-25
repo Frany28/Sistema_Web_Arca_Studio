@@ -19,8 +19,6 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-color: var(--color-neutral-400) transparent;
-  scrollbar-width: thin;
 }
 
 .admin-active-projects__filter-menu > button {
@@ -46,10 +44,16 @@
   height: 0;
 }
 
-.admin-active-projects__filter-menu::-webkit-scrollbar-button {
+.admin-active-projects__filter-menu::-webkit-scrollbar-button,
+.admin-active-projects__filter-menu::-webkit-scrollbar-button:single-button,
+.admin-active-projects__filter-menu::-webkit-scrollbar-button:vertical:decrement,
+.admin-active-projects__filter-menu::-webkit-scrollbar-button:vertical:increment {
+  -webkit-appearance: none;
+  appearance: none;
   display: none;
   width: 0;
   height: 0;
+  background: transparent;
 }
 
 .admin-active-projects__filter-menu::-webkit-scrollbar-track {
@@ -59,6 +63,13 @@
 .admin-active-projects__filter-menu::-webkit-scrollbar-thumb {
   border-radius: var(--radius-full);
   background: var(--color-neutral-400);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .admin-active-projects__filter-menu {
+    scrollbar-color: var(--color-neutral-400) transparent;
+    scrollbar-width: thin;
+  }
 }
 
 @container (min-width: 520px) {

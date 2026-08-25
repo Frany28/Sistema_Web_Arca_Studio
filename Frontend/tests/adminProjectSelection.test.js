@@ -147,9 +147,13 @@ test("admin filters use connected four-row multiple-checkbox menus", async () =>
   assert.match(styles, /admin-active-projects__filter-menu[\s\S]*overflow-x: hidden/);
   assert.match(styles, /admin-active-projects__filter-menu > button p[\s\S]*white-space: normal/);
   assert.match(styles, /admin-active-projects__filter-menu > button p[\s\S]*overflow-wrap: anywhere/);
+  assert.match(styles, /@supports not selector\(::-webkit-scrollbar\)/);
   assert.match(styles, /scrollbar-width: thin/);
   assert.match(styles, /::-webkit-scrollbar[\s\S]*width: 4px/);
   assert.match(styles, /::-webkit-scrollbar[\s\S]*height: 0/);
+  assert.match(styles, /::-webkit-scrollbar-button:vertical:decrement/);
+  assert.match(styles, /::-webkit-scrollbar-button:vertical:increment/);
+  assert.match(styles, /::-webkit-scrollbar-button[\s\S]*appearance: none/);
   assert.match(styles, /::-webkit-scrollbar-button[\s\S]*display: none/);
 });
 
