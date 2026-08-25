@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { api } from "../../api/http.js";
+import { loadAdminDashboardOverview } from "../../api/adminDashboardOverview.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/EnvironmentNavigationBar.jsx";
@@ -19,7 +20,6 @@ import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getCommentNavigationParams } from "../../utils/commentSelection.js";
 import { getProjectImageSource } from "../../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js";
-import { formatRelativeTime } from "../../utils/relativeTime.js";
 import { groupProjectsByStatus } from "../../utils/projectStatusGroups.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
@@ -42,26 +42,6 @@ function mergeNotificationComments(comments) {
   });
 
   return Array.from(commentsById.values());
-}
-
-function toAdminDrawerActivity(activity) {
-  const isFileActivity = String(activity?.id || "").startsWith("file-");
-  const isCompleted = activity?.title === "Entrega finalizada";
-
-  return {
-    id: activity.id,
-    name: activity.userName,
-    action: isFileActivity
-      ? "subió un archivo al proyecto"
-      : isCompleted
-        ? "finalizó la entrega del proyecto"
-        : "actualizó el estado del proyecto",
-    projectId: activity.projectId,
-    projectName: activity.projectName,
-    roleCode: activity.userRoleCode,
-    timestamp: formatRelativeTime(activity.createdAt),
-    type: "event",
-  };
 }
 
 function toProjectRow(project, user) {
@@ -199,11 +179,6 @@ function ArchitectDashboard({ empty = false }) {
     () => mergeNotificationComments([...drawerComments, ...imageCommentNotifications]),
     [drawerComments, imageCommentNotifications],
   );
-  const adminDrawerActivity = useMemo(
-    () => (adminOverview?.recentActivity || []).map(toAdminDrawerActivity),
-    [adminOverview?.recentActivity],
-  );
-
   useEffect(() => {
     if (isNotificationsDrawerOpen) {
       refreshRecentComments?.();
@@ -318,13 +293,14 @@ function ArchitectDashboard({ empty = false }) {
 
         setAdminOverviewLoading(true);
         setAdminOverviewError("");
-        return api.admin.getDashboardOverview({
-          signal: abortController.signal,
+        return loadAdminDashboardOverview({
+          force: adminOverviewRequestKey > 0,
+          scopeKey: user?.id || user?.email,
         });
       })
-      .then((data) => {
-        if (data && !abortController.signal.aborted) {
-          setAdminOverview(data.overview || null);
+      .then((overview) => {
+        if (overview && !abortController.signal.aborted) {
+          setAdminOverview(overview);
         }
       })
       .catch((error) => {
@@ -341,7 +317,7 @@ function ArchitectDashboard({ empty = false }) {
       });
 
     return () => abortController.abort();
-  }, [adminOverviewRequestKey, currentUser.roleCode, empty]);
+  }, [adminOverviewRequestKey, currentUser.roleCode, empty, user]);
 
   useEffect(() => {
     if (currentUser.roleCode !== "admin" || empty) {
@@ -687,21 +663,8 @@ function ArchitectDashboard({ empty = false }) {
             comments={notificationComments}
             commentsError={drawerCommentsError}
             commentsLoading={drawerCommentsLoading}
-            recentActivity={
-              currentUser.roleCode === "admin"
-                ? adminDrawerActivity
-                : ARCHITECT_DRAWER_RECENT_ACTIVITY
-            }
-            recentActivityError={
-              currentUser.roleCode === "admin" ? adminOverviewError : ""
-            }
-            recentActivityLoading={
-              currentUser.roleCode === "admin" ? adminOverviewLoading : false
-            }
+            recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
-            onRefreshActivity={() =>
-              setAdminOverviewRequestKey((current) => current + 1)
-            }
             onCommentSelect={openImageComment}
             onSubmitComment={submitComment}
           />

@@ -38,13 +38,19 @@ test("drawer empty-state actions are connected to real refresh handlers", async 
     new URL("../src/pages/architect-dashboard/ArchitectDashboard.jsx", import.meta.url),
     "utf8",
   );
+  const adminActivityHookSource = await readFile(
+    new URL("../src/hooks/useAdminRecentActivity.js", import.meta.url),
+    "utf8",
+  );
 
   assert.match(environmentSource, /refresh: refreshEnvironmentComments/);
   assert.match(
     environmentSource,
     /onRefreshComments=\{[\s\S]*policy\.observationsAllowed[\s\S]*refreshEnvironmentComments\(\)/,
   );
-  assert.match(dashboardSource, /onRefreshActivity=\{\(\) =>[\s\S]*setAdminOverviewRequestKey/);
+  assert.match(environmentSource, /isAdmin \? adminActivity\.refresh : onRefreshActivity/);
+  assert.match(adminActivityHookSource, /loadAdminDashboardOverview\(\{ force, scopeKey \}\)/);
+  assert.doesNotMatch(dashboardSource, /adminDrawerActivity/);
 });
 
 test("the shared environment drawer enforces the admin observation policy", async () => {
@@ -64,6 +70,7 @@ test("the shared environment drawer enforces the admin observation policy", asyn
   assert.match(environmentSource, /getEnvironmentNotificationsPolicy\(user, \{ activityOnly \}\)/);
   assert.match(environmentSource, /enabled: open && policy\.observationsAllowed/);
   assert.match(environmentSource, /activityOnly=\{policy\.activityOnly\}/);
+  assert.match(environmentSource, /recentActivity=\{isAdmin \? adminActivity\.activity : recentActivity\}/);
   assert.match(environmentSource, /policy\.observationsAllowed[\s\S]*: \[\]/);
   assert.match(hookSource, /observationsAllowed = enabled && canAccessObservations\(user\)/);
   assert.match(settingsSource, /showObservationNotifications=\{canAccessObservations\(user\)\}/);

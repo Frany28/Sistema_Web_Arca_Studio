@@ -4,10 +4,12 @@ import test from "node:test";
 import {
   canAccessObservations,
   getEnvironmentNotificationsPolicy,
+  isAdministrator,
 } from "../src/utils/observationAccess.js";
 
 test("administrators always receive an activity-only environment drawer", () => {
   assert.equal(canAccessObservations({ roleCode: "admin" }), false);
+  assert.equal(isAdministrator({ role: "admin" }), true);
   assert.equal(canAccessObservations({ role: "admin" }), false);
   assert.equal(canAccessObservations({ role: { code: "admin" } }), false);
   assert.equal(

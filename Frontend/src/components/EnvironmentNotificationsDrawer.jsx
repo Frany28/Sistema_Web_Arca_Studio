@@ -1,8 +1,12 @@
 import { useMemo } from "react";
 
 import { useAuth } from "../auth/AuthContext.jsx";
+import { useAdminRecentActivity } from "../hooks/useAdminRecentActivity.js";
 import { useEnvironmentComments } from "../hooks/useProjectComments.js";
-import { getEnvironmentNotificationsPolicy } from "../utils/observationAccess.js";
+import {
+  getEnvironmentNotificationsPolicy,
+  isAdministrator,
+} from "../utils/observationAccess.js";
 import NotificationsDrawer from "./ui/NotificationsDrawer.jsx";
 
 function mergeDrawerComments(environmentComments, projectComments) {
@@ -25,10 +29,19 @@ function EnvironmentNotificationsDrawer({
   onRefreshComments,
   onSubmitComment,
   open = false,
+  recentActivity = [],
+  recentActivityError = "",
+  recentActivityLoading = false,
+  onRefreshActivity,
   ...props
 }) {
   const { user } = useAuth();
+  const isAdmin = isAdministrator(user);
   const policy = getEnvironmentNotificationsPolicy(user, { activityOnly });
+  const adminActivity = useAdminRecentActivity({
+    enabled: open && isAdmin,
+    user,
+  });
   const {
     drawerComments: environmentComments,
     error: environmentCommentsError,
@@ -52,6 +65,16 @@ function EnvironmentNotificationsDrawer({
       {...props}
       activityOnly={policy.activityOnly}
       open={open}
+      recentActivity={isAdmin ? adminActivity.activity : recentActivity}
+      recentActivityError={
+        isAdmin ? adminActivity.error : recentActivityError
+      }
+      recentActivityLoading={
+        isAdmin ? adminActivity.loading : recentActivityLoading
+      }
+      onRefreshActivity={
+        isAdmin ? adminActivity.refresh : onRefreshActivity
+      }
       comments={mergedComments}
       commentsError={
         policy.observationsAllowed

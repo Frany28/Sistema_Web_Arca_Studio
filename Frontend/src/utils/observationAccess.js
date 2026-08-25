@@ -1,4 +1,4 @@
-function getRoleCode(userOrRoleCode) {
+export function getRoleCode(userOrRoleCode) {
   const roleCode = typeof userOrRoleCode === "string"
     ? userOrRoleCode
     : userOrRoleCode?.roleCode
@@ -10,8 +10,12 @@ function getRoleCode(userOrRoleCode) {
   return String(roleCode || "").trim().toLowerCase();
 }
 
+export function isAdministrator(userOrRoleCode) {
+  return getRoleCode(userOrRoleCode) === "admin";
+}
+
 export function canAccessObservations(userOrRoleCode) {
-  return getRoleCode(userOrRoleCode) !== "admin";
+  return !isAdministrator(userOrRoleCode);
 }
 
 export function getEnvironmentNotificationsPolicy(
