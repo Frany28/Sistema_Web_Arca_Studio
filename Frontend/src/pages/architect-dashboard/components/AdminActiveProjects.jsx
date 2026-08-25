@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowSwapVertical,
+  DocumentForward,
   Edit2,
   Eye,
   Filter,
   FilterRemove,
+  GlobalEdit,
   More,
   SearchNormal1,
 } from "iconsax-react";
@@ -22,6 +24,7 @@ import ScrollBar from "../../../components/ui/ScrollBar/ScrollBar.jsx";
 import Tag from "../../../components/ui/Tag/Tag.jsx";
 import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
+import { getBulkActionAvailability } from "./adminProjectBulkActions.js";
 import "./AdminActiveProjects.css";
 
 const STATUS_DETAILS = {
@@ -132,10 +135,18 @@ function AdminActiveProjects({
     });
   }, [personFilter, projects, query, statusFilter]);
 
-  const selectedVisibleCount = visibleProjects.reduce(
-    (count, project) => count + (selectedProjectIds.has(String(project.id)) ? 1 : 0),
-    0,
+  const selectedVisibleProjects = useMemo(
+    () => visibleProjects.filter(
+      (project) => selectedProjectIds.has(String(project.id)),
+    ),
+    [selectedProjectIds, visibleProjects],
   );
+  const selectedVisibleCount = selectedVisibleProjects.length;
+  const {
+    canArchive,
+    canChangeVisibility,
+    canUnarchive,
+  } = getBulkActionAvailability(selectedVisibleProjects);
   const allVisibleSelected = visibleProjects.length > 0
     && selectedVisibleCount === visibleProjects.length;
   const headerChecked = allVisibleSelected
@@ -315,13 +326,14 @@ function AdminActiveProjects({
           />
         </div>
       ) : visibleProjects.length ? (
-        <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
-          <div
-            ref={tableViewportRef}
-            className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-            onScroll={syncTableScrollState}
-          >
-            <table className="w-[1093px] min-w-[1093px] table-fixed border-collapse text-left">
+        <>
+          <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+            <div
+              ref={tableViewportRef}
+              className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              onScroll={syncTableScrollState}
+            >
+              <table className="w-full min-w-[1093px] table-fixed border-collapse text-left">
             <colgroup>
               <col className="w-[48px]" />
               <col className="w-[155px]" />
@@ -397,21 +409,99 @@ function AdminActiveProjects({
                 );
               })}
             </tbody>
-            </table>
+              </table>
+            </div>
+            {tableScrollState.length < 0.999 && tableScrollState.width > 0 ? (
+              <ScrollBar
+                orientation="horizontal"
+                width={tableScrollState.width}
+                length={tableScrollState.length}
+                position={tableScrollState.position}
+                interactive
+                onPositionChange={handleTableScrollPositionChange}
+                aria-label="Desplazar tabla de proyectos horizontalmente"
+                className="block max-w-full"
+              />
+            ) : null}
           </div>
-          {tableScrollState.length < 0.999 && tableScrollState.width > 0 ? (
-            <ScrollBar
-              orientation="horizontal"
-              width={tableScrollState.width}
-              length={tableScrollState.length}
-              position={tableScrollState.position}
-              interactive
-              onPositionChange={handleTableScrollPositionChange}
-              aria-label="Desplazar tabla de proyectos horizontalmente"
-              className="block max-w-full"
-            />
+
+          {selectedVisibleCount > 0 ? (
+            <footer
+              className="flex w-full flex-wrap items-center justify-between gap-x-[12px] gap-y-[12px]"
+              aria-label="Acciones para proyectos seleccionados"
+              data-selection-footer="true"
+            >
+              <span
+                className="text-heading-8 shrink-0 text-[var(--color-text-300)]"
+                aria-live="polite"
+              >
+                {selectedVisibleCount} de {visibleProjects.length} seleccionados
+              </span>
+
+              <div className="flex flex-wrap items-center gap-[8px]">
+                <Button
+                  theme="Primary"
+                  type="Ghost"
+                  size="M"
+                  fitContent
+                  showLeftIcon
+                  iconLeft={<GlobalEdit size="20" color="currentColor" />}
+                  showRightIcon={false}
+                  disabled={!canChangeVisibility}
+                >
+                  Cambiar visibilidad
+                </Button>
+                <Button
+                  theme="Primary"
+                  type="Ghost"
+                  size="M"
+                  fitContent
+                  showLeftIcon
+                  iconLeft={<DocumentForward size="20" color="currentColor" />}
+                  showRightIcon={false}
+                  disabled={!canArchive}
+                >
+                  Archivar
+                </Button>
+                <Button
+                  theme="Primary"
+                  type="Ghost"
+                  size="M"
+                  fitContent
+                  showLeftIcon
+                  iconLeft={<GlobalEdit size="20" color="currentColor" />}
+                  showRightIcon={false}
+                  disabled={!canUnarchive}
+                >
+                  Desarchivar
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-[8px]">
+                <Button
+                  theme="Primary"
+                  type="Outline"
+                  size="M"
+                  fitContent
+                  showLeftIcon={false}
+                  showRightIcon={false}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  theme="Primary"
+                  type="Solid"
+                  size="M"
+                  fitContent
+                  showLeftIcon={false}
+                  showRightIcon={false}
+                >
+                  Siguiente pág.
+                </Button>
+              </div>
+            </footer>
           ) : null}
-        </div>
+        </>
       ) : (
         <EmptyState title={hasFilters ? "No hay coincidencias" : "No hay proyectos activos"} description={hasFilters ? "Ajusta o elimina los filtros para ver otros proyectos." : "Los proyectos aparecerán aquí cuando estén disponibles."} size="S" showFeaturedIcon={!hasFilters} showActions={hasFilters} showSecondaryAction={false} primaryActionLabel="Quitar filtros" onPrimaryAction={clearFilters} />
       )}
