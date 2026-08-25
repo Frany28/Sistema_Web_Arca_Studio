@@ -575,8 +575,25 @@ function AdminActiveProjects({
             />
           ) : null}
         </>
+      ) : hasFilters ? (
+        <div className="w-full rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]">
+          <EmptyState
+            title={statusFilter === "archived" ? "No hay proyectos archivados" : "No hay coincidencias"}
+            description="No existen proyectos que coincidan con los filtros seleccionados."
+            size="S"
+            showFeaturedIcon={false}
+            showActions={false}
+            aria-label="Sin resultados para los filtros seleccionados"
+          />
+        </div>
       ) : (
-        <EmptyState title={hasFilters ? "No hay coincidencias" : "No hay proyectos activos"} description={hasFilters ? "Ajusta o elimina los filtros para ver otros proyectos." : "Los proyectos aparecerán aquí cuando estén disponibles."} size="S" showFeaturedIcon={!hasFilters} showActions={hasFilters} showSecondaryAction={false} primaryActionLabel="Quitar filtros" onPrimaryAction={clearFilters} />
+        <EmptyState
+          title="No hay proyectos"
+          description="Los proyectos aparecerán aquí cuando estén disponibles."
+          size="S"
+          showFeaturedIcon
+          showActions={false}
+        />
       )}
     </section>
   );
