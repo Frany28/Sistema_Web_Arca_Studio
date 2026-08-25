@@ -176,6 +176,7 @@ function CheckboxField({ label, value, onChange }) {
 
 function LegalDocumentTypesField({ error = "", invalid = false, value, onChange, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [hoveredDocumentType, setHoveredDocumentType] = useState(null);
   const selectedValues = Array.isArray(value) ? value : [];
   const selectedLabels = PROJECT_REQUEST_OPTIONS.legalDocumentTypes
     .filter((option) => selectedValues.includes(option.value))
@@ -198,7 +199,10 @@ function LegalDocumentTypesField({ error = "", invalid = false, value, onChange,
           aria-expanded={isOpen}
           aria-haspopup="listbox"
           aria-invalid={invalid || undefined}
-          onClick={() => setIsOpen((current) => !current)}
+          onClick={() => {
+            setIsOpen((current) => !current);
+            setHoveredDocumentType(null);
+          }}
           className={clsx(
             "flex h-[37px] w-full items-center justify-between gap-[8px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[12px] text-left text-[14px] text-[var(--color-text-300)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] disabled:cursor-not-allowed disabled:opacity-60",
             invalid ? "border-[var(--color-danger-100)]" : "border-[var(--color-neutral-200)]",
@@ -229,12 +233,18 @@ function LegalDocumentTypesField({ error = "", invalid = false, value, onChange,
                   role="option"
                   aria-selected={selected}
                   onClick={() => toggleDocument(option.value)}
+                  onMouseEnter={() => setHoveredDocumentType(option.value)}
+                  onMouseLeave={() => setHoveredDocumentType(null)}
                   className={clsx(
-                    "flex min-h-[32px] w-full items-center gap-[8px] rounded-[8px] px-[8px] py-[6px] text-left text-[14px] text-[var(--color-text-300)]",
+                    "flex min-h-[32px] w-full items-center gap-[8px] rounded-[8px] px-[8px] py-[6px] text-left text-[14px] text-[var(--color-text-300)] hover:bg-[var(--color-neutral-200)] focus-visible:bg-[var(--color-neutral-200)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
                     selected && "bg-[var(--color-neutral-200)]",
                   )}
                 >
-                  <Checkbox checked={selected ? "Yes" : "No"} size="S" />
+                  <Checkbox
+                    checked={selected ? "Yes" : "No"}
+                    size="S"
+                    state={hoveredDocumentType === option.value ? "Hover" : undefined}
+                  />
                   <span>{option.label}</span>
                 </button>
               );

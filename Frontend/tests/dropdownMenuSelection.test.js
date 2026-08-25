@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { updateDropdownCheckboxItems } from
@@ -32,4 +33,32 @@ test("single dropdown selection remains exclusive", () => {
     { id: "two", label: "Dos", checked: "Yes" },
     { id: "three", label: "Tres", checked: "No" },
   ]);
+});
+
+test("composite checkbox options preserve selection while hovered", async () => {
+  const dropdownSource = await readFile(
+    new URL(
+      "../src/components/ui/DropdownMenu/DropdownMenu.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const projectRequestSource = await readFile(
+    new URL("../src/pages/ProjectRequestPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    dropdownSource,
+    /const resolvedChecked = visualState === "Selected" \? "Yes" : checked/,
+  );
+  assert.doesNotMatch(
+    dropdownSource,
+    /visualState === "Hover"\s*\?\s*"No"\s*:\s*checked/,
+  );
+  assert.match(projectRequestSource, /setHoveredDocumentType\(option\.value\)/);
+  assert.match(
+    projectRequestSource,
+    /state=\{hoveredDocumentType === option\.value \? "Hover" : undefined\}/,
+  );
 });

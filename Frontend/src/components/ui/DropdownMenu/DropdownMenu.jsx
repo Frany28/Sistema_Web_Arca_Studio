@@ -105,12 +105,7 @@ function DropdownCheckbox({
   visualState = "Default",
   className,
 }) {
-  const resolvedChecked =
-    visualState === "Selected"
-      ? "Yes"
-      : visualState === "Hover"
-        ? "No"
-        : checked;
+  const resolvedChecked = visualState === "Selected" ? "Yes" : checked;
 
   const resolvedState = visualState === "Hover" ? "Hover" : "Default";
 
