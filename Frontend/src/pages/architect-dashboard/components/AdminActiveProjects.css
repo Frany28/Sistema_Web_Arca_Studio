@@ -11,15 +11,33 @@
 }
 
 .admin-active-projects__personnel-menu {
+  width: max-content;
+  min-width: 100%;
+  max-width: min(320px, calc(100vw - 32px));
   max-height: 168px;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-color: var(--color-neutral-400) transparent;
   scrollbar-width: thin;
 }
 
+.admin-active-projects__personnel-menu > button {
+  min-height: 35px;
+  height: auto;
+  padding-block: 8px;
+}
+
+.admin-active-projects__personnel-menu > button p {
+  min-width: 0;
+  flex-shrink: 1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .admin-active-projects__personnel-menu::-webkit-scrollbar {
   width: 4px;
+  height: 0;
 }
 
 .admin-active-projects__personnel-menu::-webkit-scrollbar-track {

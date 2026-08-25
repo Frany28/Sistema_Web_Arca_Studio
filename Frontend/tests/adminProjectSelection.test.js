@@ -123,8 +123,12 @@ test("admin personnel filter uses the four-row multiple-checkbox menu", async ()
   assert.match(source, /rowHeightClassName="h-\[35px\]"/);
   assert.match(source, /personFilterIds\.includes\(String\(person\.id \|\| person\.name\)\)/);
   assert.match(styles, /admin-active-projects__personnel-menu[\s\S]*max-height: 168px/);
+  assert.match(styles, /admin-active-projects__personnel-menu[\s\S]*overflow-x: hidden/);
+  assert.match(styles, /admin-active-projects__personnel-menu > button p[\s\S]*white-space: normal/);
+  assert.match(styles, /admin-active-projects__personnel-menu > button p[\s\S]*overflow-wrap: anywhere/);
   assert.match(styles, /scrollbar-width: thin/);
   assert.match(styles, /::-webkit-scrollbar[\s\S]*width: 4px/);
+  assert.match(styles, /::-webkit-scrollbar[\s\S]*height: 0/);
 });
 
 test("bulk project actions follow the selection rules", () => {
