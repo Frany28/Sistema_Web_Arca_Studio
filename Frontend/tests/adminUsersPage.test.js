@@ -22,3 +22,15 @@ test("the admin users route is protected for administrators", async () => {
 
   assert.match(source, /allowedRoles=\{\["admin"\]\}[\s\S]*path="\/usuarios"/);
 });
+
+test("admin user table footer follows the detached Figma pagination layout", async () => {
+  const source = await readFile(
+    new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /text-heading-8 text-\[var\(--color-text-300\)\]/);
+  assert.match(source, /type="Outline" size="M"[\s\S]*Anterior/);
+  assert.match(source, /type="Solid" size="M"[\s\S]*Siguiente pág\./);
+  assert.doesNotMatch(source, /gap-\[12px\] border-t border-\[var\(--color-neutral-200\)\] px-\[16px\] py-\[12px\]/);
+});

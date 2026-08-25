@@ -365,9 +365,10 @@ function AdminUsersPage({ empty = false }) {
                   />
                 </div>
               ) : users.length ? (
-                <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
-                  <div className="w-full overflow-x-auto">
-                    <table className="w-[1092px] min-w-[1092px] table-fixed border-collapse text-left">
+                <>
+                  <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
+                    <div className="w-full overflow-x-auto">
+                      <table className="w-[1092px] min-w-[1092px] table-fixed border-collapse text-left">
                       <colgroup><col className="w-[48px]" /><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[250px]" /><col className="w-[160px]" /><col className="w-[140px]" /><col className="w-[174px]" /></colgroup>
                       <thead className="bg-[var(--color-neutral-200)] text-[var(--color-text-300)]">
                         <tr className="h-[49px] text-body-4">
@@ -407,16 +408,17 @@ function AdminUsersPage({ empty = false }) {
                           );
                         })}
                       </tbody>
-                    </table>
-                  </div>
-                  <div className="flex flex-col items-start justify-between gap-[12px] border-t border-[var(--color-neutral-200)] px-[16px] py-[12px] min-[560px]:flex-row min-[560px]:items-center">
-                    <span className="text-body-4 text-[var(--color-text-200)]">{selectedCount} de {users.length} seleccionados</span>
-                    <div className="flex items-center gap-[8px]">
-                      <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={pageIndex === 0} onClick={() => setPageIndex((index) => Math.max(index - 1, 0))}>Anterior</Button>
-                      <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={!nextCursor} onClick={goNext}>Siguiente</Button>
+                      </table>
                     </div>
                   </div>
-                </div>
+                  <div className="flex w-full flex-col items-start justify-between gap-[12px] min-[560px]:flex-row min-[560px]:items-center">
+                    <span className="text-heading-8 text-[var(--color-text-300)]">{selectedCount} de {users.length} seleccionados</span>
+                    <div className="flex items-center gap-[8px]">
+                      <Button theme="Primary" type="Outline" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled={pageIndex === 0} className="disabled:!border-[var(--color-neutral-400)] disabled:!text-[var(--color-neutral-400)]" onClick={() => setPageIndex((index) => Math.max(index - 1, 0))}>Anterior</Button>
+                      <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled={!nextCursor} onClick={goNext}>Siguiente pág.</Button>
+                    </div>
+                  </div>
+                </>
               ) : hasFilters ? (
                 <EmptyState
                   title="No hay coincidencias"
