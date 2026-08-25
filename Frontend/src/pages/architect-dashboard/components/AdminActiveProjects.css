@@ -40,7 +40,7 @@
 }
 
 .admin-active-projects__filter-menu::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
   height: 0;
 }
 
@@ -61,8 +61,10 @@
 }
 
 .admin-active-projects__filter-menu::-webkit-scrollbar-thumb {
+  border-right: 1px solid transparent;
   border-radius: var(--radius-full);
   background: var(--color-neutral-400);
+  background-clip: padding-box;
 }
 
 @supports not selector(::-webkit-scrollbar) {
