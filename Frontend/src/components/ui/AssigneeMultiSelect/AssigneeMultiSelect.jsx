@@ -3,6 +3,8 @@ import clsx from "clsx";
 
 import Input from "../Input/Input.jsx";
 import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
+import AssigneeRemovalModal from "./AssigneeRemovalModal.jsx";
+import { getRemovedAssignees } from "./assigneeSelection.js";
 
 function normalizeText(value) {
   return String(value || "")
@@ -46,10 +48,13 @@ function toTag(person, showAvatar) {
 function AssigneeMultiSelect({
   "aria-label": ariaLabel = "Seleccionar responsables",
   className,
+  confirmRemoval = false,
+  contextName = "",
   disabled = false,
   error = "",
   loading = false,
   onChange,
+  onRemovalSuccess,
   options = [],
   placeholder = "Asignar responsables...",
   showTagAvatars = true,
@@ -60,6 +65,7 @@ function AssigneeMultiSelect({
   const [isSaving, setIsSaving] = useState(false);
   const [query, setQuery] = useState("");
   const [localError, setLocalError] = useState("");
+  const [pendingRemoval, setPendingRemoval] = useState(null);
 
   const selectedIds = useMemo(
     () => new Set(value.map((person) => String(person.id))),
@@ -100,7 +106,7 @@ function AssigneeMultiSelect({
   const isDisabled = disabled || loading || isSaving;
   const resolvedError = localError || error;
 
-  const commit = async (nextValue) => {
+  const commit = async (nextValue, removedAssignees = []) => {
     if (!onChange || isDisabled) return;
 
     setIsSaving(true);
@@ -108,6 +114,9 @@ function AssigneeMultiSelect({
     try {
       await onChange(nextValue);
       setQuery("");
+      if (removedAssignees.length) {
+        onRemovalSuccess?.(removedAssignees);
+      }
       requestAnimationFrame(() => inputRef.current?.focus());
     } catch (changeError) {
       setLocalError(
@@ -118,12 +127,23 @@ function AssigneeMultiSelect({
     }
   };
 
+  const requestChange = (nextValue) => {
+    const removedAssignees = getRemovedAssignees(value, nextValue);
+
+    if (confirmRemoval && removedAssignees.length) {
+      setPendingRemoval({ nextValue, removedAssignees });
+      return;
+    }
+
+    void commit(nextValue);
+  };
+
   const handleTagsChange = (nextTags) => {
     const nextValue = nextTags
       .map((tag) => peopleById.get(String(tag.id)))
       .filter(Boolean);
 
-    void commit(nextValue);
+    requestChange(nextValue);
   };
 
   const handleTagOptionSelect = (tag) => {
@@ -153,58 +173,82 @@ function AssigneeMultiSelect({
 
     if (event.key === "Backspace" && !query && value.length) {
       event.preventDefault();
-      void commit(value.slice(0, -1));
+      requestChange(value.slice(0, -1));
+    }
+  };
+
+  const removedNames = pendingRemoval?.removedAssignees
+    ?.map((assignee) => assignee.name)
+    .filter(Boolean)
+    .join(", ");
+
+  const handleConfirmRemoval = () => {
+    const removal = pendingRemoval;
+
+    setPendingRemoval(null);
+    if (removal) {
+      void commit(removal.nextValue, removal.removedAssignees);
     }
   };
 
   return (
-    <div
-      className={clsx("min-w-0", className)}
-      onClick={() => {
-        if (!isDisabled) inputRef.current?.focus();
-      }}
-    >
-      <Input
-        id={inputId}
-        inputRef={inputRef}
-        type="Tags"
-        size="S"
-        state={resolvedError ? "Error" : "Default"}
-        value={query}
-        tags={selectedTags}
-        tagOptions={optionTags}
-        tagGroupAriaLabel={`${ariaLabel}: empleados disponibles y seleccionados`}
-        tagGroupPlacement="overlay"
-        showTagOptionsOnFocus
-        onTagOptionSelect={handleTagOptionSelect}
-        showLabel={false}
-        showHint={Boolean(resolvedError)}
-        hintText={resolvedError}
-        showLabelInfo={false}
-        showLeftIcon
-        showRightIcon={isSaving}
-        rightIcon={
-          isSaving ? (
-            <span
-              className="size-4 animate-spin rounded-full border-2 border-[var(--color-neutral-300)] border-t-[var(--color-primary-300)]"
-              aria-hidden="true"
-            />
-          ) : null
-        }
-        rightIconAriaLabel="Guardando responsables"
-        required={false}
-        disabled={isDisabled}
-        placeholder={loading ? "Cargando empleados..." : placeholder}
-        className="max-w-none"
-        inputClassName="[&::-webkit-search-cancel-button]:hidden"
-        aria-label={ariaLabel}
-        aria-invalid={Boolean(resolvedError)}
-        autoComplete="off"
-        onChange={(event) => setQuery(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onTagsChange={handleTagsChange}
+    <>
+      <div
+        className={clsx("min-w-0", className)}
+        onClick={() => {
+          if (!isDisabled) inputRef.current?.focus();
+        }}
+      >
+        <Input
+          id={inputId}
+          inputRef={inputRef}
+          type="Tags"
+          size="S"
+          state={resolvedError ? "Error" : "Default"}
+          value={query}
+          tags={selectedTags}
+          tagOptions={optionTags}
+          tagGroupAriaLabel={`${ariaLabel}: empleados disponibles y seleccionados`}
+          tagGroupPlacement="overlay"
+          showTagOptionsOnFocus
+          onTagOptionSelect={handleTagOptionSelect}
+          showLabel={false}
+          showHint={Boolean(resolvedError)}
+          hintText={resolvedError}
+          showLabelInfo={false}
+          showLeftIcon
+          showRightIcon={isSaving}
+          rightIcon={
+            isSaving ? (
+              <span
+                className="size-4 animate-spin rounded-full border-2 border-[var(--color-neutral-300)] border-t-[var(--color-primary-300)]"
+                aria-hidden="true"
+              />
+            ) : null
+          }
+          rightIconAriaLabel="Guardando responsables"
+          required={false}
+          disabled={isDisabled}
+          placeholder={loading ? "Cargando empleados..." : placeholder}
+          className="max-w-none"
+          inputClassName="[&::-webkit-search-cancel-button]:hidden"
+          aria-label={ariaLabel}
+          aria-invalid={Boolean(resolvedError)}
+          autoComplete="off"
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={handleKeyDown}
+          onTagsChange={handleTagsChange}
+        />
+      </div>
+
+      <AssigneeRemovalModal
+        open={Boolean(pendingRemoval)}
+        assigneeName={removedNames}
+        projectName={contextName}
+        onCancel={() => setPendingRemoval(null)}
+        onConfirm={handleConfirmRemoval}
       />
-    </div>
+    </>
   );
 }
 

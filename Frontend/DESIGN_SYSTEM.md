@@ -129,7 +129,7 @@ Usar `Badge` y sus temas semánticos para que un mismo estado conserve su identi
 - `Brand 2`: proyecto en revisión.
 - `Neutral`: solicitud pendiente.
 - `Success`: proyecto finalizado.
-- `Archived`: proyecto archivado. Usa la familia `warning` en borde, fondo sutil y punto, con texto neutral legible en tema claro y oscuro.
+- `Archived`: proyecto archivado. Usa la familia `warning` en borde, fondo sutil, texto y punto para conservar una identidad amarilla consistente.
 
 El tema `Archived` identifica contenido conservado pero fuera del flujo activo. No debe reutilizarse para advertencias, errores ni acciones destructivas.
 

@@ -125,6 +125,7 @@ function AdminActiveProjects({
   const [selectedProjectIds, setSelectedProjectIds] = useState(() => new Set());
   const [bulkActionPending, setBulkActionPending] = useState("");
   const [bulkActionFeedback, setBulkActionFeedback] = useState(null);
+  const [assigneeRemovalFeedback, setAssigneeRemovalFeedback] = useState(null);
   const bulkActionPendingRef = useRef(false);
   const tableViewportRef = useRef(null);
   const [tableScrollState, setTableScrollState] = useState({
@@ -529,7 +530,26 @@ function AdminActiveProjects({
                       </div>
                     </td>
                     <td className="px-[24px] py-[16px]">
-                      <AssigneeMultiSelect value={assignees} options={employeeOptions} loading={assigneesLoading} className="w-[252px]" aria-label={`Responsables de ${projectName}`} onChange={(nextAssignees) => onProjectAssigneesChange?.(project, nextAssignees)} />
+                      <AssigneeMultiSelect
+                        value={assignees}
+                        options={employeeOptions}
+                        loading={assigneesLoading}
+                        className="w-[252px]"
+                        aria-label={`Responsables de ${projectName}`}
+                        confirmRemoval
+                        contextName={projectName}
+                        onChange={(nextAssignees) => onProjectAssigneesChange?.(project, nextAssignees)}
+                        onRemovalSuccess={(removedAssignees) => {
+                          setAssigneeRemovalFeedback({
+                            id: Date.now(),
+                            names: removedAssignees
+                              .map((assignee) => assignee.name)
+                              .filter(Boolean),
+                            project,
+                            projectName,
+                          });
+                        }}
+                      />
                     </td>
                     <td className="px-[24px] py-[16px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
                     <td className="px-[24px] py-[16px]"><Badge label={`${progress}%`} theme="Neutral" variation="Simple" size="S" /></td>
@@ -677,6 +697,27 @@ function AdminActiveProjects({
               description={bulkActionFeedback.message}
               onDismiss={() => setBulkActionFeedback(null)}
               aria-label={bulkActionFeedback.title}
+            />
+          ) : null}
+          {assigneeRemovalFeedback ? (
+            <AlertToast
+              trigger={assigneeRemovalFeedback.id}
+              theme="Success"
+              title={assigneeRemovalFeedback.names.length === 1
+                ? "Encargado retirado"
+                : "Encargados retirados"}
+              description={`Se retiró a ${assigneeRemovalFeedback.names.join(", ") || "el encargado"} de ${assigneeRemovalFeedback.projectName}. Ya no ${assigneeRemovalFeedback.names.length === 1 ? "tendrá" : "tendrán"} acceso a su información ni funciones.`}
+              autoHideMs={0}
+              showActions
+              secondaryActionLabel="Cerrar"
+              primaryActionLabel="Ver proyecto"
+              onSecondaryAction={() => setAssigneeRemovalFeedback(null)}
+              onPrimaryAction={() => {
+                onOpenProject(assigneeRemovalFeedback.project);
+                setAssigneeRemovalFeedback(null);
+              }}
+              onDismiss={() => setAssigneeRemovalFeedback(null)}
+              aria-label="El encargado fue retirado correctamente"
             />
           ) : null}
         </>

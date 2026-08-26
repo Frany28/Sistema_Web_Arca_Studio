@@ -12,6 +12,11 @@ function AlertToast({
   description,
   theme = "Success",
   autoHideMs = 5000,
+  showActions = false,
+  secondaryActionLabel,
+  primaryActionLabel,
+  onSecondaryAction,
+  onPrimaryAction,
   onDismiss,
   "aria-label": ariaLabel,
 }) {
@@ -52,7 +57,9 @@ function AlertToast({
       setVisible(false);
     }, 0);
     showTimerRef.current = window.setTimeout(() => setVisible(true), 20);
-    hideTimerRef.current = window.setTimeout(dismiss, autoHideMs);
+    if (autoHideMs > 0) {
+      hideTimerRef.current = window.setTimeout(dismiss, autoHideMs);
+    }
   }, [autoHideMs, clearTimers, dismiss, trigger]);
 
   if (!mounted || typeof document === "undefined") return null;
@@ -60,9 +67,17 @@ function AlertToast({
   const resolvedDescription = theme === "Danger"
     ? getUserFacingErrorMessage(description)
     : description;
+  const handleSecondaryAction = () => {
+    onSecondaryAction?.();
+    dismiss();
+  };
+  const handlePrimaryAction = () => {
+    onPrimaryAction?.();
+    dismiss();
+  };
 
   return createPortal(
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-tooltip)] flex justify-center p-[16px] sm:left-auto sm:right-0 sm:w-[420px] sm:justify-end sm:p-[24px]">
+    <div className={`pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-tooltip)] flex justify-center p-[16px] sm:left-auto sm:right-0 sm:justify-end sm:p-[24px] ${showActions ? "sm:w-[722px]" : "sm:w-[420px]"}`}>
       <Alert
         visible
         theme={theme}
@@ -71,11 +86,15 @@ function AlertToast({
         description={resolvedDescription}
         showIcon
         showText
-        showActions={false}
+        showActions={showActions}
         showCloseButton
+        secondaryActionLabel={secondaryActionLabel}
+        primaryActionLabel={primaryActionLabel}
+        onSecondaryAction={handleSecondaryAction}
+        onPrimaryAction={handlePrimaryAction}
         onDismiss={dismiss}
         aria-label={ariaLabel}
-        className={`pointer-events-auto w-full max-w-[372px] shadow-[var(--shadow-e3)] ${
+        className={`pointer-events-auto w-full ${showActions ? "max-w-[722px]" : "max-w-[372px]"} shadow-[var(--shadow-e3)] ${
           visible ? "auth-toast auth-toast--visible" : "auth-toast"
         }`}
       />
