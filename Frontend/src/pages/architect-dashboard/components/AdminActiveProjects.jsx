@@ -709,7 +709,6 @@ function AdminActiveProjects({
                 ? "Encargado retirado"
                 : "Encargados retirados"}
               description={`Se retiró a ${assigneeRemovalFeedback.names.join(", ") || "el encargado"} de ${assigneeRemovalFeedback.projectName}. Ya no ${assigneeRemovalFeedback.names.length === 1 ? "tendrá" : "tendrán"} acceso a su información ni funciones.`}
-              autoHideMs={0}
               showActions
               secondaryActionLabel="Cerrar"
               primaryActionLabel="Deshacer"

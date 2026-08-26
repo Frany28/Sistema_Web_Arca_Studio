@@ -335,6 +335,7 @@ function Alert({
           iconLeft={<CloseIcon className="size-3" />}
           className={clsx("absolute right-0 top-0", visual.close)}
           aria-label="Cerrar alerta"
+          tooltip={false}
           onClick={handleDismiss}
           data-node-id={ALERT_NODE_IDS.close}
         />

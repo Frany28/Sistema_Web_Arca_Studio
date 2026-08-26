@@ -56,7 +56,7 @@ test("project assignee removals require confirmation and expose coherent success
   assert.match(projectsSource, /title=\{assigneeRemovalFeedback\.names\.length/);
   assert.match(projectsSource, /secondaryActionLabel="Cerrar"/);
   assert.match(projectsSource, /primaryActionLabel="Deshacer"/);
-  assert.match(projectsSource, /autoHideMs=\{0\}/);
+  assert.doesNotMatch(projectsSource, /autoHideMs=\{0\}/);
   assert.match(projectsSource, /previousAssignees: assignees/);
   assert.match(
     projectsSource,

@@ -41,3 +41,14 @@ test("an icon-only button without useful information gets no empty tooltip", () 
     null,
   );
 });
+
+test("an icon-only button can explicitly disable its automatic tooltip", () => {
+  assert.equal(
+    resolveIconButtonTooltip({
+      ariaLabel: "Cerrar alerta",
+      showText: false,
+      tooltip: false,
+    }),
+    null,
+  );
+});
