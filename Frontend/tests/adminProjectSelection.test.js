@@ -78,6 +78,10 @@ test("the Figma table footer stays visible and exposes functional pagination", a
     source,
     /theme=\{bulkActionFeedback\.type === "error" \? "Danger" : "Success"\}/,
   );
+  assert.match(source, /errorTitle: "No se pudieron archivar los proyectos"/);
+  assert.match(source, /errorTitle: "No se pudo cambiar la visibilidad"/);
+  assert.match(source, /errorTitle: "No se pudieron desarchivar los proyectos"/);
+  assert.match(source, /title=\{bulkActionFeedback\.title\}/);
   assert.match(source, /<AlertToast/);
   assert.match(source, /trigger=\{bulkActionFeedback\?\.id\}/);
   assert.match(source, /onDismiss=\{\(\) => setBulkActionFeedback\(null\)\}/);

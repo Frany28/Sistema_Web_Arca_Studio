@@ -13,5 +13,6 @@ test("alert toast floats over the viewport and reuses notification transitions",
   assert.match(source, /sm:right-0/);
   assert.match(source, /auth-toast auth-toast--visible/);
   assert.match(source, /autoHideMs = 5000/);
+  assert.match(source, /getUserFacingErrorMessage\(description\)/);
   assert.match(source, /onDismiss=\{dismiss\}/);
 });

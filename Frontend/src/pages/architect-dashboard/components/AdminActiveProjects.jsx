@@ -31,7 +31,7 @@ import "./AdminActiveProjects.css";
 const STATUS_DETAILS = {
   completed: { label: "Finalizado", theme: "Success" },
   finished: { label: "Finalizado", theme: "Success" },
-  archived: { label: "Archivado", theme: "Neutral" },
+  archived: { label: "Archivado", theme: "Archived" },
   in_process: { label: "En progreso", theme: "Info" },
   in_review: { label: "En revisión", theme: "Brand 2" },
   pending_approval: { label: "Solicitud", theme: "Neutral" },
@@ -45,6 +45,24 @@ const STATUS_FILTER_ITEMS = [
   { id: "completed", label: "Finalizado", type: "Checkbox" },
   { id: "archived", label: "Archivado", type: "Checkbox" },
 ];
+
+const BULK_ACTION_FEEDBACK = {
+  archive: {
+    successTitle: "Proyectos archivados",
+    successMessage: "Los proyectos seleccionados fueron archivados.",
+    errorTitle: "No se pudieron archivar los proyectos",
+  },
+  change_visibility: {
+    successTitle: "Visibilidad actualizada",
+    successMessage: "La visibilidad de los proyectos fue actualizada.",
+    errorTitle: "No se pudo cambiar la visibilidad",
+  },
+  unarchive: {
+    successTitle: "Proyectos desarchivados",
+    successMessage: "Los proyectos seleccionados fueron desarchivados.",
+    errorTitle: "No se pudieron desarchivar los proyectos",
+  },
+};
 
 function getStatusFilterId(status) {
   if (status === "finished") return "completed";
@@ -340,17 +358,20 @@ function AdminActiveProjects({
 
     try {
       await onBulkAction({ action, projects: selectedVisibleProjects });
-      const successMessages = {
-        archive: "Los proyectos seleccionados fueron archivados.",
-        change_visibility: "La visibilidad de los proyectos fue actualizada.",
-        unarchive: "Los proyectos seleccionados fueron desarchivados.",
-      };
+      const feedback = BULK_ACTION_FEEDBACK[action];
       setSelectedProjectIds(new Set());
-      setBulkActionFeedback({ id: Date.now(), message: successMessages[action], type: "success" });
+      setBulkActionFeedback({
+        id: Date.now(),
+        message: feedback.successMessage,
+        title: feedback.successTitle,
+        type: "success",
+      });
     } catch (actionError) {
+      const feedback = BULK_ACTION_FEEDBACK[action];
       setBulkActionFeedback({
         id: Date.now(),
         message: actionError?.message || "No se pudieron actualizar los proyectos.",
+        title: feedback.errorTitle,
         type: "error",
       });
     } finally {
@@ -652,18 +673,10 @@ function AdminActiveProjects({
             <AlertToast
               trigger={bulkActionFeedback?.id}
               theme={bulkActionFeedback.type === "error" ? "Danger" : "Success"}
-              title={
-                bulkActionFeedback.type === "error"
-                  ? "No se pudo realizar el cambio"
-                  : "Cambio realizado con \u00e9xito"
-              }
+              title={bulkActionFeedback.title}
               description={bulkActionFeedback.message}
               onDismiss={() => setBulkActionFeedback(null)}
-              aria-label={
-                bulkActionFeedback.type === "error"
-                  ? "Error al actualizar los proyectos"
-                  : "Proyectos actualizados correctamente"
-              }
+              aria-label={bulkActionFeedback.title}
             />
           ) : null}
         </>

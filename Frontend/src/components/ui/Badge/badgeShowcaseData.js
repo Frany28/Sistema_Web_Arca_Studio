@@ -21,6 +21,7 @@ export const badgeStatusItems = [
   createBadgeShowcaseItem("danger", { theme: "Danger" }),
   createBadgeShowcaseItem("success", { theme: "Success" }),
   createBadgeShowcaseItem("info", { theme: "Info" }),
+  createBadgeShowcaseItem("archived", { theme: "Archived" }),
   createBadgeShowcaseItem("disabled", { theme: "Disabled" }),
 ];
 
@@ -31,6 +32,7 @@ export const badgeMatrixThemes = [
   "Danger",
   "Success",
   "Info",
+  "Archived",
   "Disabled",
 ];
 

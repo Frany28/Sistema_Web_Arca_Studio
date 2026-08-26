@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { getUserFacingErrorMessage } from "../../../utils/userFacingError.js";
 import Alert from "../Alert/Alert.jsx";
 
 const EXIT_DURATION_MS = 320;
@@ -56,6 +57,10 @@ function AlertToast({
 
   if (!mounted || typeof document === "undefined") return null;
 
+  const resolvedDescription = theme === "Danger"
+    ? getUserFacingErrorMessage(description)
+    : description;
+
   return createPortal(
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-tooltip)] flex justify-center p-[16px] sm:left-auto sm:right-0 sm:w-[420px] sm:justify-end sm:p-[24px]">
       <Alert
@@ -63,7 +68,7 @@ function AlertToast({
         theme={theme}
         layout="Box"
         title={title}
-        description={description}
+        description={resolvedDescription}
         showIcon
         showText
         showActions={false}

@@ -121,6 +121,18 @@ No simular un botón con un `div`. Las acciones solo con icono necesitan nombre 
 
 Todo botón o control con `role="button"` que esté habilitado debe mostrar obligatoriamente `cursor: pointer`. Esta conducta se define de forma global y no debe eliminarse ni sobrescribirse con `cursor: default` o `cursor: auto`. Los controles deshabilitados deben usar `cursor: not-allowed` y declarar el estado mediante `disabled` o `aria-disabled="true"`.
 
+### Badges de estado
+
+Usar `Badge` y sus temas semánticos para que un mismo estado conserve su identidad en todas las vistas:
+
+- `Info`: proyecto en progreso.
+- `Brand 2`: proyecto en revisión.
+- `Neutral`: solicitud pendiente.
+- `Success`: proyecto finalizado.
+- `Archived`: proyecto archivado. Usa la familia `warning` en borde, fondo sutil y punto, con texto neutral legible en tema claro y oscuro.
+
+El tema `Archived` identifica contenido conservado pero fuera del flujo activo. No debe reutilizarse para advertencias, errores ni acciones destructivas.
+
 ### Formularios
 
 - Cada control debe tener una etiqueta visible o un nombre accesible.

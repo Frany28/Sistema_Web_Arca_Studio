@@ -1,3 +1,5 @@
+import { NETWORK_USER_ERROR_MESSAGE } from "../utils/userFacingError.js";
+
 const viteEnv = import.meta.env || {};
 const API_BASE_URL = (
   (viteEnv.DEV ? viteEnv.VITE_API_URL : "") ||
@@ -8,14 +10,25 @@ export function getApiUrl(path) {
 }
 
 async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  } catch (requestError) {
+    if (requestError?.name === "AbortError") throw requestError;
+
+    const networkError = new Error(NETWORK_USER_ERROR_MESSAGE);
+    networkError.code = "NETWORK_ERROR";
+    networkError.cause = requestError;
+    throw networkError;
+  }
 
   if (response.status === 204) {
     return null;

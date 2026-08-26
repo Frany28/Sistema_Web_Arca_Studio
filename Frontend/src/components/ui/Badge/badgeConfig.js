@@ -47,6 +47,12 @@ export const BADGE_THEME_STYLES = {
     content: "text-[var(--color-info-100)]",
     dot: "bg-[var(--color-info-100)]",
   },
+  Archived: {
+    container:
+      "border-[var(--color-warning-200)] bg-[var(--color-warning-10)] text-[var(--color-text-300)]",
+    content: "text-[var(--color-text-300)]",
+    dot: "bg-[var(--color-warning-200)]",
+  },
   Disabled: {
     container:
       "border-[var(--color-neutral-200)] bg-[var(--color-neutral-200)] text-[var(--color-neutral-400)]",
