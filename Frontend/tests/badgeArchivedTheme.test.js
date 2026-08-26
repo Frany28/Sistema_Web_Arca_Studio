@@ -13,7 +13,7 @@ import {
 test("archived badges use their registered warning palette theme", async () => {
   assert.deepEqual(BADGE_THEME_STYLES.Archived, {
     container:
-      "border-[var(--color-warning-200)] bg-[var(--color-warning-10)] text-[var(--color-warning-200)]",
+      "border-[var(--color-warning-10)] bg-[var(--color-warning-10)] text-[var(--color-warning-200)]",
     content: "text-[var(--color-warning-200)]",
     dot: "bg-[var(--color-warning-200)]",
   });

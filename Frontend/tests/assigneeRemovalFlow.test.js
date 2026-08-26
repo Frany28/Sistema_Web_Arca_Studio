@@ -55,8 +55,14 @@ test("project assignee removals require confirmation and expose coherent success
   assert.match(selectorSource, /onRemovalSuccess\?\.\(removedAssignees\)/);
   assert.match(projectsSource, /title=\{assigneeRemovalFeedback\.names\.length/);
   assert.match(projectsSource, /secondaryActionLabel="Cerrar"/);
-  assert.match(projectsSource, /primaryActionLabel="Ver proyecto"/);
+  assert.match(projectsSource, /primaryActionLabel="Deshacer"/);
   assert.match(projectsSource, /autoHideMs=\{0\}/);
+  assert.match(projectsSource, /previousAssignees: assignees/);
+  assert.match(
+    projectsSource,
+    /await onProjectAssigneesChange\?\.\([\s\S]*assigneeRemovalFeedback\.previousAssignees/,
+  );
+  assert.match(projectsSource, /No se pudo restaurar al encargado/);
   assert.match(modalSource, /¿Deseas retirar al usuario del proyecto\?/);
   assert.match(modalSource, /secondaryActionLabel="Cancelar"/);
   assert.match(modalSource, /primaryActionLabel="Confirmar"/);

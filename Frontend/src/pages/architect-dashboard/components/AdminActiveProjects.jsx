@@ -126,6 +126,7 @@ function AdminActiveProjects({
   const [bulkActionPending, setBulkActionPending] = useState("");
   const [bulkActionFeedback, setBulkActionFeedback] = useState(null);
   const [assigneeRemovalFeedback, setAssigneeRemovalFeedback] = useState(null);
+  const assigneeUndoPendingRef = useRef(false);
   const bulkActionPendingRef = useRef(false);
   const tableViewportRef = useRef(null);
   const [tableScrollState, setTableScrollState] = useState({
@@ -547,6 +548,7 @@ function AdminActiveProjects({
                               .filter(Boolean),
                             project,
                             projectName,
+                            previousAssignees: assignees,
                           });
                         }}
                       />
@@ -710,11 +712,29 @@ function AdminActiveProjects({
               autoHideMs={0}
               showActions
               secondaryActionLabel="Cerrar"
-              primaryActionLabel="Ver proyecto"
+              primaryActionLabel="Deshacer"
               onSecondaryAction={() => setAssigneeRemovalFeedback(null)}
-              onPrimaryAction={() => {
-                onOpenProject(assigneeRemovalFeedback.project);
-                setAssigneeRemovalFeedback(null);
+              onPrimaryAction={async () => {
+                if (assigneeUndoPendingRef.current) return;
+
+                assigneeUndoPendingRef.current = true;
+                try {
+                  await onProjectAssigneesChange?.(
+                    assigneeRemovalFeedback.project,
+                    assigneeRemovalFeedback.previousAssignees,
+                  );
+                } catch (undoError) {
+                  setBulkActionFeedback({
+                    id: Date.now(),
+                    type: "error",
+                    title: "No se pudo restaurar al encargado",
+                    message: undoError?.message
+                      || "Inténtalo nuevamente desde la asignación del proyecto.",
+                  });
+                } finally {
+                  assigneeUndoPendingRef.current = false;
+                  setAssigneeRemovalFeedback(null);
+                }
               }}
               onDismiss={() => setAssigneeRemovalFeedback(null)}
               aria-label="El encargado fue retirado correctamente"
