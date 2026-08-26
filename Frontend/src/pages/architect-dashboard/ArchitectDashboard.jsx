@@ -54,9 +54,11 @@ function toProjectRow(project, user) {
     ...project,
     assigneeAvatars: assigneeAvatar ? [assigneeAvatar] : [],
     editable:
-      user?.role === "admin" ||
-      project.assignedArchitect?.id === user?.id ||
-      isAssignedEmployee,
+      project.status !== "archived" && (
+        user?.role === "admin" ||
+        project.assignedArchitect?.id === user?.id ||
+        isAssignedEmployee
+      ),
     image: getProjectImageSource(project),
     title: project.name,
   };
@@ -448,6 +450,7 @@ function ArchitectDashboard({ empty = false }) {
   };
 
   const handlePublicationChange = async (project) => {
+    if (project.status === "archived") return;
     const nextIsPublic = !project.isPublic;
     const data = await api.projects.updatePublication({
       isPublic: nextIsPublic,
@@ -666,7 +669,7 @@ function ArchitectDashboard({ empty = false }) {
             recentActivity={ARCHITECT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
-            onSubmitComment={submitComment}
+            onSubmitComment={commentsProjectId ? submitComment : undefined}
           />
         </div>
       </div>

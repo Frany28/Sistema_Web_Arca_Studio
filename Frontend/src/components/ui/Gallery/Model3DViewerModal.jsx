@@ -40,6 +40,7 @@ import ArchitecturalModelEffects from "./ArchitecturalModelEffects.jsx";
 import ArchitecturalSettingsPanel from "./ArchitecturalSettingsPanel.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
+import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
 import VRModelViewer from "./VRModelViewer.jsx";
 import ObservationTooltip from "../ObservationTooltip/ObservationTooltip.jsx";
 import FileAttachmentIcons from "../FileAttachmentIcons/FileAttachmentIcons.jsx";
@@ -938,19 +939,17 @@ export function SelectionPreview({
           </p>
         </div>
         {onClear ? (
-          <Tooltip asChild portal showTip text="Quitar referencia" tipPosition="Top right">
-            <button
-              type="button"
-              aria-label="Quitar referencia"
-              className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-              onClick={(event) => {
-                event.stopPropagation();
-                onClear();
-              }}
-            >
-              <CloseIcon className="size-3" />
-            </button>
-          </Tooltip>
+          <button
+            type="button"
+            aria-label="Quitar referencia"
+            className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClear();
+            }}
+          >
+            <CloseIcon className="size-3" />
+          </button>
         ) : null}
       </Container>
     );
@@ -1090,19 +1089,17 @@ export function SelectionPreview({
         </p>
       </div>
       {onClear ? (
-        <Tooltip asChild portal showTip text="Quitar referencia" tipPosition="Top right">
-          <button
-            type="button"
-            aria-label="Quitar referencia"
-            className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
-            onClick={(event) => {
-              event.stopPropagation();
-              onClear();
-            }}
-          >
-            <CloseIcon className="size-3" />
-          </button>
-        </Tooltip>
+        <button
+          type="button"
+          aria-label="Quitar referencia"
+          className="flex size-[28px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
+          onClick={(event) => {
+            event.stopPropagation();
+            onClear();
+          }}
+        >
+          <CloseIcon className="size-3" />
+        </button>
       ) : null}
     </Container>
   );
@@ -1277,10 +1274,10 @@ function MessageInput({
   );
 }
 
-function ReplyComposer({ focusSignal, onSubmit, placeholder = "Escribe tu mensaje..." }) {
+function ReplyComposer({ disabled = false, focusSignal, onSubmit, placeholder = "Escribe tu mensaje..." }) {
   return (
     <div data-reply-interaction="true">
-      <MessageInput focusSignal={focusSignal} placeholder={placeholder} onSubmit={onSubmit} />
+      <MessageInput disabled={disabled} focusSignal={focusSignal} placeholder={placeholder} onSubmit={onSubmit} />
     </div>
   );
 }
@@ -1793,10 +1790,16 @@ export function GeneralCommentsDrawer({
   requireSelectionForRoot = false,
   selectionDisabled = false,
 }) {
+  const { message: readOnlyMessage, readOnly } = useProjectReadOnly();
   const [visibleReplyAction, setVisibleReplyAction] = useState(null);
   const [activeReplyComposer, setActiveReplyComposer] = useState(null);
   const commentRefs = useRef(new Map());
   const orderedComments = orderCommentsByThread(comments);
+  const resolvedComposerDisabled = composerDisabled || readOnly;
+  const resolvedComposerDisabledMessage = readOnly
+    ? readOnlyMessage
+    : composerDisabledMessage;
+  const resolvedSelectionDisabled = selectionDisabled || readOnly;
 
   useEffect(() => {
     if (!replyRequest?.commentId) return;
@@ -1851,6 +1854,7 @@ export function GeneralCommentsDrawer({
   }, [visibleReplyAction, activeReplyComposer]);
 
   function handleMoreClick(commentId) {
+    if (resolvedComposerDisabled) return;
     setActiveReplyComposer(null);
     setVisibleReplyAction((currentId) =>
       currentId === commentId ? null : commentId,
@@ -1858,6 +1862,7 @@ export function GeneralCommentsDrawer({
   }
 
   function handleReplyClick(commentId) {
+    if (resolvedComposerDisabled) return;
     setVisibleReplyAction(null);
     setActiveReplyComposer(commentId);
   }
@@ -1883,7 +1888,7 @@ export function GeneralCommentsDrawer({
     <aside className="flex h-full w-full shrink-0 flex-col rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px]">
       <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto pr-[2px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <MessageInput
-          disabled={composerDisabled}
+          disabled={resolvedComposerDisabled}
           fileType={mediaItem?.fileType}
           focusSignal={composerFocusSignal}
           multiline
@@ -1894,9 +1899,9 @@ export function GeneralCommentsDrawer({
           onClearSelection={onClearSelection}
           onSubmit={(message) => handleCommentSubmit(message)}
         />
-        {composerDisabled && composerDisabledMessage ? (
+        {resolvedComposerDisabled && resolvedComposerDisabledMessage ? (
           <p className="text-[12px] leading-[16px] text-[var(--color-text-100)]">
-            {composerDisabledMessage}
+            {resolvedComposerDisabledMessage}
           </p>
         ) : null}
         {commentsError ? (
@@ -1928,10 +1933,10 @@ export function GeneralCommentsDrawer({
                 selectionActive={
                   String(focusedSelectionCommentId) === String(comment.id)
                 }
-                selectionDisabled={selectionDisabled}
-                showReplyAction={visibleReplyAction === comment.id}
-                onMoreClick={() => handleMoreClick(comment.id)}
-                onReplyClick={() => handleReplyClick(comment.id)}
+                selectionDisabled={resolvedSelectionDisabled}
+                showReplyAction={!resolvedComposerDisabled && visibleReplyAction === comment.id}
+                onMoreClick={resolvedComposerDisabled ? undefined : () => handleMoreClick(comment.id)}
+                onReplyClick={resolvedComposerDisabled ? undefined : () => handleReplyClick(comment.id)}
                 onSelectionClick={
                   comment.selection
                     ? () => onSelectionPreviewClick?.(comment.id)
@@ -1941,6 +1946,7 @@ export function GeneralCommentsDrawer({
 
               {activeReplyComposer === comment.id ? (
                 <ReplyComposer
+                  disabled={resolvedComposerDisabled}
                   focusSignal={replyRequest?.requestId || comment.id}
                   onSubmit={(message) =>
                     handleCommentSubmit(message, comment)
@@ -1962,6 +1968,7 @@ export default function Model3DViewerModal({
   projectId,
   onClose,
 }) {
+  const { readOnly } = useProjectReadOnly();
   const [shouldRender, setShouldRender] = useState(visible);
   const [isActive, setIsActive] = useState(false);
   const [displayItem, setDisplayItem] = useState(item);
@@ -2273,6 +2280,7 @@ export default function Model3DViewerModal({
   };
 
   function handleSelectionChange(selection) {
+    if (readOnly) return;
     const previewImage = displayItem.image || displayItem.poster || null;
 
     setFocusedSelectionCommentId(null);
@@ -2367,7 +2375,7 @@ export default function Model3DViewerModal({
   }
 
   function handleModelPointerDown(event) {
-    if (!hasInteractiveModel || isModelLoading || event.button !== 0) {
+    if (readOnly || !hasInteractiveModel || isModelLoading || event.button !== 0) {
       return;
     }
 
@@ -2382,7 +2390,7 @@ export default function Model3DViewerModal({
     const pointerStart = modelPointerRef.current;
     modelPointerRef.current = null;
 
-    if (!pointerStart || !hasInteractiveModel || isModelLoading) {
+    if (readOnly || !pointerStart || !hasInteractiveModel || isModelLoading) {
       return;
     }
 
@@ -2642,7 +2650,7 @@ export default function Model3DViewerModal({
               annotations={annotationComments}
               focusedAnnotationId={focusedAnnotationId}
               imageSrc={displayItem.image}
-              onSelectionChange={handleSelectionChange}
+              onSelectionChange={readOnly ? undefined : handleSelectionChange}
               showAnnotationPoints
             />
           ) : (
@@ -2674,6 +2682,7 @@ export default function Model3DViewerModal({
             showRightIcon={false}
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar modelo 3D"
+            tooltip={false}
             onClick={onClose}
             className="absolute right-[8px] top-[8px] z-20 size-9 text-[var(--color-text-200)]"
           />
@@ -2722,7 +2731,7 @@ export default function Model3DViewerModal({
           annotations={annotationComments}
           item={displayItem}
           modelSrc={modelSrc}
-          onSubmitObservation={handleSubmitComment}
+          onSubmitObservation={readOnly ? undefined : handleSubmitComment}
           poster={displayItem.image || undefined}
           title={displayItem.title}
           renderSettings={renderSettings}

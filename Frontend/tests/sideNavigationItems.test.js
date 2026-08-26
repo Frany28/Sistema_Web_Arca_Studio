@@ -108,6 +108,7 @@ test("recent project cache excludes unrelated and sensitive project fields", () 
       name: "Proyecto seguro",
       publicSlug: "proyecto-seguro",
       isPublic: true,
+      status: "active",
       updatedAt: "2026-08-05T00:00:00.000Z",
       budget: 50000,
       client: { email: "cliente@example.com" },
@@ -120,10 +121,20 @@ test("recent project cache excludes unrelated and sensitive project fields", () 
     "isPublic",
     "name",
     "publicSlug",
+    "status",
     "updatedAt",
   ]);
   assert.equal(JSON.stringify(cachedProject).includes("cliente@example.com"), false);
   assert.equal(JSON.stringify(cachedProject).includes("InformaciÃ³n interna"), false);
+});
+
+test("archived projects do not occupy recent project shortcuts", () => {
+  const cachedProjects = toRecentProjectCacheEntries([
+    { id: 9, name: "Archivado", status: "archived", updatedAt: "2026-08-09" },
+    { id: 8, name: "Activo", status: "active", updatedAt: "2026-08-08" },
+  ]);
+
+  assert.deepEqual(cachedProjects.map(({ id }) => id), [8]);
 });
 
 test("client recent projects exclude public projects owned by other users", () => {

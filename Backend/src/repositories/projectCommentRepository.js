@@ -247,8 +247,10 @@ export async function createProjectCommentRecord({
         from public.projects p
         where p.id = $${projectIdParam}
           and p.deleted_at is null
+          and p.status <> 'archived'::public.project_status
           and (${access.sql})
         limit 1
+        for update of p
       ),
       parent_comment as (
         select
@@ -433,8 +435,12 @@ export async function createDocumentCommentRecord({
          and f.deleted_at is null and f.status = 'active'::file_status
         inner join public.file_versions fv
           on fv.file_id = f.id and fv.id = $${offset + 3} and fv.deleted_at is null
-        where p.id = $${offset + 1} and p.deleted_at is null and (${access.sql})
+        where p.id = $${offset + 1}
+          and p.deleted_at is null
+          and p.status <> 'archived'::public.project_status
+          and (${access.sql})
         limit 1
+        for update of p
       `,
       params,
     );

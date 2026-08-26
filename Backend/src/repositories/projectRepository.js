@@ -198,6 +198,39 @@ export async function findAssignedArchitectProfilePhotoForUser(projectId, user) 
   return result.rows[0]?.profile_photo_url || null;
 }
 
+export async function findProjectStateById(projectId) {
+  const result = await query(
+    `
+      select id, status
+      from public.projects
+      where id = $1
+        and deleted_at is null
+      limit 1
+    `,
+    [projectId],
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function findDirectProjectStateForUser(projectId, user) {
+  const { condition, params } = getDirectProjectAccess(user);
+  const projectIdParam = params.length + 1;
+  const result = await query(
+    `
+      select p.id, p.status
+      from public.projects p
+      where p.id = $${projectIdParam}
+        and p.deleted_at is null
+        and (${condition})
+      limit 1
+    `,
+    [...params, projectId],
+  );
+
+  return result.rows[0] || null;
+}
+
 export async function listProjectsForUser(
   user,
   { cursor = null, directOnly = false, limit = 25 } = {},
@@ -583,6 +616,7 @@ export async function updateProjectVisibility(projectId, isPublic, user) {
           updated_at = now()
         where id = $${projectIdParam}
           and deleted_at is null
+          and status <> 'archived'::public.project_status
           and (${condition})
         returning *
       )

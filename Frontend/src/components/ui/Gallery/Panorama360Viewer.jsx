@@ -4,6 +4,7 @@ import * as THREE from "three";
 import Button from "../Button/Button.jsx";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import { useImageComments } from "./useImageComments.js";
+import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
 
 function normalizeAngle(value) {
   return ((value + 180) % 360 + 360) % 360 - 180;
@@ -30,6 +31,7 @@ function pointToDirection({ yaw, pitch }) {
 }
 
 export default function Panorama360Viewer({ embedded = false, item, projectId, focusedCommentId = null }) {
+  const { readOnly } = useProjectReadOnly();
   const containerRef = useRef(null);
   const stageRef = useRef(null);
   const sceneRef = useRef(null);
@@ -97,7 +99,7 @@ export default function Panorama360Viewer({ embedded = false, item, projectId, f
     };
     const pointerUp = (event) => {
       dragging = false;
-      if (moved) return;
+      if (moved || readOnly) return;
       const bounds = renderer.domElement.getBoundingClientRect();
       const pointer = new THREE.Vector2(
         ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
@@ -141,7 +143,7 @@ export default function Panorama360Viewer({ embedded = false, item, projectId, f
       geometry.dispose(); texture.dispose(); mesh.material.dispose(); renderer.dispose();
       sceneRef.current = null;
     };
-  }, [item?.fileUrl]);
+  }, [item?.fileUrl, readOnly]);
 
   const pointPosition = useCallback((selection) => {
     const state = sceneRef.current;

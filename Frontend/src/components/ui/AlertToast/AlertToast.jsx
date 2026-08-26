@@ -15,6 +15,7 @@ function AlertToast({
   showActions = false,
   secondaryActionLabel,
   primaryActionLabel,
+  primaryActionDisabled = false,
   onSecondaryAction,
   onPrimaryAction,
   onDismiss,
@@ -90,6 +91,7 @@ function AlertToast({
         showCloseButton
         secondaryActionLabel={secondaryActionLabel}
         primaryActionLabel={primaryActionLabel}
+        primaryActionDisabled={primaryActionDisabled}
         onSecondaryAction={handleSecondaryAction}
         onPrimaryAction={handlePrimaryAction}
         onDismiss={dismiss}

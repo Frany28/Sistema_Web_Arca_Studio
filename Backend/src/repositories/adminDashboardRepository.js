@@ -228,6 +228,8 @@ export async function replaceProjectAssignees({
         from public.projects
         where id = $1
           and deleted_at is null
+          and status <> 'archived'::public.project_status
+        for update
       ),
       requested as (
         select distinct unnest($2::bigint[]) as user_id

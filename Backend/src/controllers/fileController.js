@@ -16,6 +16,7 @@ import {
   deleteProjectRequestAttachment as deleteProjectRequestAttachmentService,
   uploadProjectRequestAttachment as uploadProjectRequestAttachmentService,
 } from "../services/projectRequestFileService.js";
+import { assertProjectMutable } from "../services/projectService.js";
 
 export async function uploadProjectRequestAttachment(req, res, next) {
   try {
@@ -120,6 +121,20 @@ export async function deleteProjectAttachment(req, res, next) {
       });
       return;
     }
+
+    await assertProjectMutable(projectId);
+
+    const project = await findProjectForFileUpload(projectId, req.user);
+
+    if (!project) {
+      res.status(404).json({
+        code: "PROJECT_NOT_FOUND",
+        message: "No se encontro el proyecto.",
+      });
+      return;
+    }
+
+    await assertProjectMutable(projectId);
 
     const deletedFile = await deleteProjectFile({
       fileId,

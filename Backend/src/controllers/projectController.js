@@ -1,5 +1,5 @@
-import { updateProjectVisibility } from "../repositories/projectRepository.js";
 import {
+  changeProjectPublication,
   getProjectDetail as getProjectDetailService,
   listProjects,
 } from "../services/projectService.js";
@@ -103,7 +103,11 @@ export async function updateProjectPublication(req, res, next) {
       return;
     }
 
-    const project = await updateProjectVisibility(projectId, isPublic, req.user);
+    const project = await changeProjectPublication({
+      isPublic,
+      projectId,
+      user: req.user,
+    });
 
     if (!project) {
       res.status(404).json({

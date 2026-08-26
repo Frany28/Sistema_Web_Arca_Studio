@@ -239,6 +239,7 @@ export default function GalleryImagesModal({
             showRightIcon={false}
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar galería de imágenes"
+            tooltip={false}
             onClick={handleClose}
             className="size-9 shrink-0 text-[var(--Color-text-primary-200,var(--color-text-200,#4E4E4E))] dark:text-[var(--color-text-200)]"
           />

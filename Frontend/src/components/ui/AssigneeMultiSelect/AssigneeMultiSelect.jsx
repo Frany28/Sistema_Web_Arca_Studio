@@ -49,7 +49,6 @@ function AssigneeMultiSelect({
   "aria-label": ariaLabel = "Seleccionar responsables",
   className,
   confirmRemoval = false,
-  contextName = "",
   disabled = false,
   error = "",
   loading = false,
@@ -177,11 +176,6 @@ function AssigneeMultiSelect({
     }
   };
 
-  const removedNames = pendingRemoval?.removedAssignees
-    ?.map((assignee) => assignee.name)
-    .filter(Boolean)
-    .join(", ");
-
   const handleConfirmRemoval = () => {
     const removal = pendingRemoval;
 
@@ -243,8 +237,6 @@ function AssigneeMultiSelect({
 
       <AssigneeRemovalModal
         open={Boolean(pendingRemoval)}
-        assigneeName={removedNames}
-        projectName={contextName}
         onCancel={() => setPendingRemoval(null)}
         onConfirm={handleConfirmRemoval}
       />

@@ -121,6 +121,8 @@ No simular un botón con un `div`. Las acciones solo con icono necesitan nombre 
 
 Todo botón o control con `role="button"` que esté habilitado debe mostrar obligatoriamente `cursor: pointer`. Esta conducta se define de forma global y no debe eliminarse ni sobrescribirse con `cursor: default` o `cursor: auto`. Los controles deshabilitados deben usar `cursor: not-allowed` y declarar el estado mediante `disabled` o `aria-disabled="true"`.
 
+Los botones cuyo único contenido visual sea una `X` para cerrar o quitar contenido conservan un `aria-label` descriptivo, pero no muestran `Tooltip`.
+
 ### Badges de estado
 
 Usar `Badge` y sus temas semánticos para que un mismo estado conserve su identidad en todas las vistas:
@@ -230,6 +232,14 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 - Anunciar cambios asíncronos relevantes con el patrón accesible apropiado.
 
 ## Datos, paginación y tiempo real
+
+### Proyectos archivados
+
+- Un proyecto archivado es de solo lectura hasta que un administrador lo desarchive.
+- Se mantienen disponibles la consulta, navegación, búsqueda, filtros, galerías, visores y descargas autorizadas.
+- Se desactivan todas las mutaciones del proyecto: edición, publicación, asignación o retiro de encargados, carga o eliminación de archivos y creación o respuesta de observaciones en cualquier visor.
+- La interfaz debe comunicar el estado archivado y el backend debe rechazar igualmente cualquier mutación con `PROJECT_ARCHIVED`; no se puede depender solo de controles deshabilitados.
+- Desarchivar es la única mutación permitida sobre un proyecto archivado. Los accesos de proyectos recientes no incluyen proyectos archivados.
 
 ### Navegación superior persistente
 

@@ -192,6 +192,7 @@ function Alert({
   defaultVisible = ALERT_DEFAULT_PROPS.defaultVisible,
   secondaryActionLabel = ALERT_DEFAULT_PROPS.secondaryActionLabel,
   primaryActionLabel = ALERT_DEFAULT_PROPS.primaryActionLabel,
+  primaryActionDisabled = false,
   onDismiss,
   onPrimaryAction,
   onSecondaryAction,
@@ -315,6 +316,7 @@ function Alert({
                 fitContent
                 showLeftIcon={false}
                 showRightIcon={false}
+                disabled={primaryActionDisabled}
                 onClick={onPrimaryAction}
               >
                 {primaryActionLabel}

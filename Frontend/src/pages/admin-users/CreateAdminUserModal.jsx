@@ -7,7 +7,6 @@ import Label from "../../components/ui/Label/Label.jsx";
 import HintText from "../../components/ui/HintText/HintText.jsx";
 import DropdownMenu from "../../components/ui/DropdownMenu/DropdownMenu.jsx";
 import Button from "../../components/ui/Button/Button.jsx";
-import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
 
 const INITIAL_VALUES = {
   companyName: "",
@@ -158,9 +157,7 @@ function CreateAdminUserModal({ onClose, onCreate, open, roles = [] }) {
             <h2 id="create-admin-user-title" className="text-heading-6 text-[var(--color-text-300)]">Nuevo usuario</h2>
             <p className="text-body-3 text-[var(--color-text-200)]">Completa la información para crear una cuenta en ARCA Studio.</p>
           </div>
-          <Tooltip text="Cerrar" tipPosition="Bottom right" portal>
-            <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<CloseCircle size="20" color="currentColor" />} showRightIcon={false} disabled={submitting} aria-label="Cerrar formulario de nuevo usuario" onClick={onClose} />
-          </Tooltip>
+          <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<CloseCircle size="20" color="currentColor" />} showRightIcon={false} disabled={submitting} aria-label="Cerrar formulario de nuevo usuario" tooltip={false} onClick={onClose} />
         </div>
 
         <form id="create-admin-user-form" className="min-h-0 overflow-y-auto" onSubmit={handleSubmit} noValidate>

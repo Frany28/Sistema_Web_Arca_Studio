@@ -1,5 +1,4 @@
 import Button from "../Button/Button.jsx";
-import Tooltip from "../Tooltip/Tooltip.jsx";
 import Modal from "../Modal/Modal.jsx";
 
 function CloseIcon({ className }) {
@@ -93,16 +92,14 @@ function ProjectRequestSuccessStep({
               </p>
             </div>
 
-            <Tooltip asChild portal showTip text="Cerrar" tipPosition="Bottom right">
-              <button
-                type="button"
-                className=" absolute right-0 top-0 inline-flex size-9 items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-100)] transition-colors duration-150 hover:bg-[var(--color-neutral-200)]/40 hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]"
-                aria-label="Cerrar modal"
-                onClick={onClose}
-              >
-                <CloseIcon className="size-3" />
-              </button>
-            </Tooltip>
+            <button
+              type="button"
+              className=" absolute right-0 top-0 inline-flex size-9 items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-100)] transition-colors duration-150 hover:bg-[var(--color-neutral-200)]/40 hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]"
+              aria-label="Cerrar modal"
+              onClick={onClose}
+            >
+              <CloseIcon className="size-3" />
+            </button>
           </div>
 
           <footer className="flex w-full items-center gap-[16px] border-t border-[var(--color-neutral-200)] p-[16px]">

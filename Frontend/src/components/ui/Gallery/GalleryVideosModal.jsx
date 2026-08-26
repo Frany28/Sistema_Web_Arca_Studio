@@ -257,6 +257,7 @@ export default function GalleryVideosModal({
             showRightIcon={false}
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar galería de videos"
+            tooltip={false}
             onClick={onClose}
             className="size-9 shrink-0 text-[var(--color-text-200)]"
           />

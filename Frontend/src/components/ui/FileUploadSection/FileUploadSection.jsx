@@ -94,7 +94,7 @@ function getFileAttachmentType(file) {
   return extension || file?.type;
 }
 
-function FileUploadCard({ file, onAddFile, onRetryUpload }) {
+function FileUploadCard({ disabled = false, file, onAddFile, onRetryUpload }) {
   const isCompleted = file.status === "completed";
   const isUploading = file.status === "uploading";
   const isFailed = file.status === "failed";
@@ -157,6 +157,7 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
+            disabled={disabled}
             onClick={file.onRetryUpload || file.onRemove || onRetryUpload}
           >
             {file.onRetryUpload || onRetryUpload ? "Intenta de nuevo" : "Eliminar"}
@@ -180,6 +181,7 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
           iconLeft={<MoreIcon />}
           className="shrink-0"
           aria-label="Añadir archivo"
+          disabled={disabled}
           onClick={onAddFile}
         />
       ) : !isFailed && file.onRemove ? (
@@ -193,6 +195,7 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
           iconLeft={<TrashIcon />}
           className="shrink-0"
           aria-label="Eliminar archivo"
+          disabled={disabled}
           onClick={file.onRemove}
         />
       ) : null}
@@ -202,6 +205,7 @@ function FileUploadCard({ file, onAddFile, onRetryUpload }) {
 
 function FileUploadSection({
   className,
+  disabled = false,
   title = FILE_UPLOAD_SECTION_DEFAULT_PROPS.title,
   chooseFileLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS.chooseFileLabel,
   separatorLabel = FILE_UPLOAD_SECTION_DEFAULT_PROPS.separatorLabel,
@@ -294,8 +298,8 @@ function FileUploadSection({
   }, []);
 
   const handleChooseFiles = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
+    if (!disabled) fileInputRef.current?.click();
+  }, [disabled]);
 
   return (
     <section
@@ -327,7 +331,10 @@ function FileUploadSection({
       >
         <div
           className={clsx(
-            "flex w-full flex-col items-center gap-[12px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[24px] py-[32px] transition-colors duration-200 hover:border-[var(--color-neutral-600)] dark:hover:border-[var(--color-neutral-600)]",
+            "flex w-full flex-col items-center gap-[12px] rounded-[12px] border bg-[var(--color-neutral-100)] px-[24px] py-[32px] transition-colors duration-200",
+            disabled
+              ? "cursor-not-allowed opacity-60"
+              : "hover:border-[var(--color-neutral-600)] dark:hover:border-[var(--color-neutral-600)]",
             isDragActive
               ? "border-[var(--color-neutral-600)]"
               : "border-[var(--color-neutral-200)] dark:border-[var(--color-neutral-300)]",
@@ -335,6 +342,7 @@ function FileUploadSection({
           )}
           onDragOver={(event) => {
             event.preventDefault();
+            if (disabled) return;
             setIsDragActive(true);
           }}
           onDragLeave={(event) => {
@@ -345,7 +353,7 @@ function FileUploadSection({
           onDrop={(event) => {
             event.preventDefault();
             setIsDragActive(false);
-            onFilesSelected?.(event.dataTransfer.files);
+            if (!disabled) onFilesSelected?.(event.dataTransfer.files);
           }}
         >
           <div className="rounded-[8px] border border-[var(--color-neutral-200)] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.05)] dark:border-[var(--color-neutral-300)]">
@@ -363,6 +371,7 @@ function FileUploadSection({
                 fitContent
                 showLeftIcon={false}
                 showRightIcon={false}
+                disabled={disabled}
                 onClick={handleChooseFiles}
               >
                 {chooseFileLabel}
@@ -371,6 +380,7 @@ function FileUploadSection({
                 ref={fileInputRef}
                 type="file"
                 multiple
+                disabled={disabled}
                 accept={fileInputAccept}
                 className="sr-only"
                 onChange={(event) => {
@@ -410,6 +420,7 @@ function FileUploadSection({
             {resolvedFiles.map((file) => (
               <FileUploadCard
                 key={file.id}
+                disabled={disabled}
                 file={file}
                 onAddFile={handleChooseFiles}
                 onRetryUpload={onRetryUpload}

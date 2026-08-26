@@ -16,6 +16,7 @@ import { getFileDisplayName } from "../../../utils/fileDisplayName.js";
 import { getToggledCommentId } from "../../../utils/commentSelection.js";
 import { GeneralCommentsDrawer } from "../../../components/ui/Gallery/Model3DViewerModal.jsx";
 import { useDocumentComments } from "../../../hooks/useDocumentComments.js";
+import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
 import ProjectDocumentCard from "./ProjectDocumentCard.jsx";
 
 const MIN_ZOOM = 75;
@@ -157,6 +158,7 @@ const ViewerButton = forwardRef(function ViewerButton(
     disabled,
     label,
     onClick,
+    showTooltip = true,
     tooltipPosition = "Top center",
   },
   ref,
@@ -177,7 +179,7 @@ const ViewerButton = forwardRef(function ViewerButton(
     </button>
   );
 
-  return (
+  return showTooltip ? (
     <Tooltip
       asChild
       portal
@@ -187,6 +189,8 @@ const ViewerButton = forwardRef(function ViewerButton(
     >
       {button}
     </Tooltip>
+  ) : (
+    button
   );
 });
 
@@ -269,6 +273,7 @@ function PdfToolbar({
           <ViewerButton
             label="Cerrar visor"
             onClick={onClose}
+            showTooltip={false}
             tooltipPosition="Bottom center"
           >
             <CloseIcon />
@@ -896,6 +901,7 @@ export function ProjectDocumentViewerModal({
   projectId,
   triggerRef,
 }) {
+  const { readOnly } = useProjectReadOnly();
   const kind = getDocumentKind(document);
   const source = document?.fileUrl || "";
   const documentName = getFileDisplayName(document?.name);
@@ -1073,7 +1079,7 @@ export function ProjectDocumentViewerModal({
         focusedId={focusedCommentId}
         fullscreen
         onClose={onClose}
-        onPointCreate={handleSelectionChange}
+        onPointCreate={readOnly ? undefined : handleSelectionChange}
         onPointSelect={handlePointSelect}
         page={page}
         pageCount={loadState.pageCount}
@@ -1085,9 +1091,9 @@ export function ProjectDocumentViewerModal({
       />
     );
   } else if (kind === "docx") {
-    viewer = <DocxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={handleSelectionChange} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
+    viewer = <DocxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={readOnly ? undefined : handleSelectionChange} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
   } else if (kind === "xlsx") {
-    viewer = <XlsxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={handleSelectionChange} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
+    viewer = <XlsxViewerSurface annotations={comments} data={loadState.data} focusedId={focusedCommentId} onPointCreate={readOnly ? undefined : handleSelectionChange} onPointSelect={handlePointSelect} pendingSelection={pendingSelection} title={documentName} />;
   }
 
   return (

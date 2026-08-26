@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "../../../api/http.js";
 import { useAuth } from "../../../auth/AuthContext.jsx";
+import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
 import { decorateCommentForDisplay } from "../../../utils/commentDisplay.js";
 import { getVideoObservationTiming } from "../../../utils/videoObservation.js";
 
@@ -330,6 +331,7 @@ export function getStoredImageComments() {
 
 export function useImageComments(item, { commentType = "image", projectId } = {}) {
   const { user } = useAuth();
+  const { readOnly } = useProjectReadOnly();
   const imageKey = useMemo(() => getImageKey(item), [item]);
   const resolvedProjectId = normalizeProjectId(projectId);
   const projectIds = useMemo(
@@ -352,7 +354,7 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
 
   const addComment = useCallback(
     async ({ message, parentCommentId = null, selection = null }) => {
-      if (!resolvedProjectId) {
+      if (!resolvedProjectId || readOnly) {
         return null;
       }
 
@@ -384,6 +386,7 @@ export function useImageComments(item, { commentType = "image", projectId } = {}
       item?.label,
       item?.title,
       resolvedProjectId,
+      readOnly,
       setProjectComments,
     ],
   );

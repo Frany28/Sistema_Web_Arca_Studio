@@ -75,8 +75,7 @@ export default function ProjectDocumentCard({ closeIcon = null, document, onClos
             showText={false}
             size="S"
             theme="Primary"
-            tooltip="Cerrar"
-            tooltipPosition="Bottom right"
+            tooltip={false}
             type="Ghost"
             onClick={onClose}
           />

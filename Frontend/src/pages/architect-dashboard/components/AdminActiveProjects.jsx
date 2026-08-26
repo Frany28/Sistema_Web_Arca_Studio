@@ -134,6 +134,12 @@ function AdminActiveProjects({
     position: 0,
     width: 0,
   });
+  const assigneeUndoUnavailable = Boolean(
+    assigneeRemovalFeedback
+      && projects.find(
+        (project) => String(project.id) === String(assigneeRemovalFeedback.project.id),
+      )?.status === "archived",
+  );
 
   const personnel = useMemo(() => {
     const people = new Map();
@@ -507,6 +513,7 @@ function AdminActiveProjects({
                 const progress = Math.min(100, Math.max(0, Number(project.progress) || 0));
                 const projectName = project.title || project.name || "Proyecto";
                 const isSelected = selectedProjectIds.has(String(project.id));
+                const isArchived = project.status === "archived";
 
                 return (
                   <tr
@@ -535,10 +542,12 @@ function AdminActiveProjects({
                         value={assignees}
                         options={employeeOptions}
                         loading={assigneesLoading}
+                        disabled={isArchived}
                         className="w-[252px]"
-                        aria-label={`Responsables de ${projectName}`}
+                        aria-label={isArchived
+                          ? `Responsables de ${projectName}. Proyecto archivado, asignación deshabilitada`
+                          : `Responsables de ${projectName}`}
                         confirmRemoval
-                        contextName={projectName}
                         onChange={(nextAssignees) => onProjectAssigneesChange?.(project, nextAssignees)}
                         onRemovalSuccess={(removedAssignees) => {
                           setAssigneeRemovalFeedback({
@@ -712,9 +721,9 @@ function AdminActiveProjects({
               showActions
               secondaryActionLabel="Cerrar"
               primaryActionLabel="Deshacer"
-              onSecondaryAction={() => setAssigneeRemovalFeedback(null)}
+              primaryActionDisabled={assigneeUndoUnavailable}
               onPrimaryAction={async () => {
-                if (assigneeUndoPendingRef.current) return;
+                if (assigneeUndoPendingRef.current || assigneeUndoUnavailable) return;
 
                 assigneeUndoPendingRef.current = true;
                 try {

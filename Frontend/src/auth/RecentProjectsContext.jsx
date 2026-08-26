@@ -9,14 +9,17 @@ import {
 
 import { api } from "../api/http.js";
 import {
-  RECENT_PROJECTS_LIMIT,
+  RECENT_PROJECTS_FETCH_LIMIT,
   getRecentProjectsScope,
   toRecentProjectCacheEntries,
 } from "../utils/recentProjects.js";
 import { useAuth } from "./AuthContext.jsx";
 
-const RECENT_PROJECTS_CACHE_PREFIX = "arca_recent_projects_v2";
-const LEGACY_RECENT_PROJECTS_CACHE_PREFIX = "arca_recent_projects_v1";
+const RECENT_PROJECTS_CACHE_PREFIX = "arca_recent_projects_v3";
+const LEGACY_RECENT_PROJECTS_CACHE_PREFIXES = [
+  "arca_recent_projects_v1",
+  "arca_recent_projects_v2",
+];
 const pendingRequests = new Map();
 const RecentProjectsContext = createContext({
   loading: false,
@@ -73,7 +76,7 @@ function requestRecentProjects(cacheKey, scope) {
 
   if (!pendingRequests.has(requestKey)) {
     const request = api.projects
-      .list({ limit: RECENT_PROJECTS_LIMIT, scope })
+      .list({ limit: RECENT_PROJECTS_FETCH_LIMIT, scope })
       .then((data) => toRecentProjectCacheEntries(data.projects))
       .finally(() => pendingRequests.delete(requestKey));
 
@@ -145,9 +148,11 @@ export function RecentProjectsProvider({ children }) {
     }
 
     try {
-      window.sessionStorage.removeItem(
-        `${LEGACY_RECENT_PROJECTS_CACHE_PREFIX}:${userId}`,
-      );
+      LEGACY_RECENT_PROJECTS_CACHE_PREFIXES.forEach((prefix) => {
+        window.sessionStorage.removeItem(`${prefix}:${userId}`);
+        window.sessionStorage.removeItem(`${prefix}:${userId}:accessible`);
+        window.sessionStorage.removeItem(`${prefix}:${userId}:owned`);
+      });
     } catch {
       // Ignore storage errors in restricted browsers.
     }

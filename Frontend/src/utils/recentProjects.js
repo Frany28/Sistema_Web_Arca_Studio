@@ -1,4 +1,5 @@
 export const RECENT_PROJECTS_LIMIT = 3;
+export const RECENT_PROJECTS_FETCH_LIMIT = 25;
 
 export function getRecentProjectsScope(roleCode) {
   return roleCode === "client" ? "owned" : "accessible";
@@ -15,7 +16,9 @@ function getProjectTimestamp(project) {
 export function selectRecentProjects(projects = []) {
   const projectsById = new Map();
 
-  (Array.isArray(projects) ? projects : []).forEach((project) => {
+  (Array.isArray(projects) ? projects : [])
+    .filter((project) => project?.status !== "archived" && !project?.isArchived)
+    .forEach((project) => {
     if (project?.id !== undefined && project?.id !== null) {
       projectsById.set(String(project.id), project);
     }
@@ -41,6 +44,7 @@ export function toRecentProjectCacheEntries(projects = []) {
     isPublic: Boolean(project.isPublic),
     name: String(project.name || project.title || "Proyecto"),
     publicSlug: project.publicSlug ? String(project.publicSlug) : null,
+    status: project.status ? String(project.status) : null,
     updatedAt: project.updatedAt ? String(project.updatedAt) : null,
   }));
 }

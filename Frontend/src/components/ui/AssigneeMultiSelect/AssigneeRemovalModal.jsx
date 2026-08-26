@@ -13,11 +13,9 @@ const FOCUSABLE_SELECTOR = [
 ].join(",");
 
 function AssigneeRemovalModal({
-  assigneeName,
   open,
   onCancel,
   onConfirm,
-  projectName,
 }) {
   const cancelRef = useRef(onCancel);
   const previouslyFocusedRef = useRef(null);
@@ -90,9 +88,6 @@ function AssigneeRemovalModal({
     };
   }, [open]);
 
-  const personReference = assigneeName ? ` a ${assigneeName}` : " al usuario";
-  const projectReference = projectName ? ` “${projectName}”` : "";
-
   return (
     <Modal
       visible={open}
@@ -101,7 +96,7 @@ function AssigneeRemovalModal({
       overlayVariant="blurred"
       transitionPreset="fade-scale"
       title="¿Deseas retirar al usuario del proyecto?"
-      description={`¿Estás seguro de que deseas retirar${personReference} del proyecto${projectReference}? Perderá acceso completo a toda la información y funciones relacionadas.`}
+      description="¿Estás seguro de que deseas retirar al usuario del proyecto? Perderá acceso completo a toda la información y funciones relacionadas."
       secondaryActionLabel="Cancelar"
       primaryActionLabel="Confirmar"
       secondaryActionTheme="Danger"

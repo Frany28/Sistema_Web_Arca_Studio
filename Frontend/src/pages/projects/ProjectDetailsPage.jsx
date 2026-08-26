@@ -25,6 +25,8 @@ import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getCommentNavigationParams } from "../../utils/commentSelection.js";
 import { getProjectTypeDisplay } from "../../utils/projectTypeDisplay.js";
+import Alert from "../../components/ui/Alert/Alert.jsx";
+import { ProjectReadOnlyProvider } from "../../contexts/ProjectReadOnlyContext.jsx";
 import {
   createUserSideNavigationItems,
   getDashboardPath,
@@ -622,6 +624,11 @@ export default function ProjectDetailsPage({
   }, [resolvedProjectId]);
 
   const handleSubmitComment = async ({ message, parentCommentId = null }) => {
+    if (project?.status === "archived") {
+      setProjectCommentsError("Desarchiva el proyecto para realizar cambios.");
+      return;
+    }
+
     if (!resolvedProjectId) {
       setProjectCommentsError("No se encontro el proyecto para comentar.");
       return;
@@ -652,6 +659,7 @@ export default function ProjectDetailsPage({
   const presentedProject = project
     ? toProjectPresentation(project)
     : PROJECT_DETAIL_DATA;
+  const projectIsArchived = presentedProject.status === "archived";
   let activeProjectPanel = (
     <ProjectInfoPanel
       {...infoProps}
@@ -696,6 +704,7 @@ export default function ProjectDetailsPage({
   }
 
   return (
+    <ProjectReadOnlyProvider readOnly={projectIsArchived}>
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
         {isSidebarExpanded ? (
@@ -769,6 +778,18 @@ export default function ProjectDetailsPage({
             ) : (
               <>
                 <ProjectOverviewHeader project={presentedProject} />
+                {projectIsArchived ? (
+                  <Alert
+                    visible
+                    theme="Warning"
+                    layout="Box"
+                    title="Proyecto archivado"
+                    description="Puedes consultar y descargar su contenido, pero debes desarchivarlo para realizar cambios."
+                    showActions={false}
+                    showCloseButton={false}
+                    aria-label="Este proyecto está archivado y es de solo lectura"
+                  />
+                ) : null}
                 <ProjectDetailTabMenu
                   activeIndex={activeProjectTabIndex}
                   onChange={setActiveProjectTabIndex}
@@ -792,7 +813,7 @@ export default function ProjectDetailsPage({
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
-            onSubmitComment={handleSubmitComment}
+            onSubmitComment={projectIsArchived ? undefined : handleSubmitComment}
           />
           <ProjectDocumentViewerModal
             document={recentDocumentModal}
@@ -804,5 +825,6 @@ export default function ProjectDetailsPage({
         </div>
       </div>
     </main>
+    </ProjectReadOnlyProvider>
   );
 }

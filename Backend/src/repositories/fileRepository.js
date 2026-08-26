@@ -15,6 +15,14 @@ import { pool, query } from "../config/db.js";
 
 const DEFAULT_FILE_STATUS = "active";
 
+function createProjectArchivedError() {
+  const error = new Error("Archived projects are read-only");
+  error.code = "PROJECT_ARCHIVED";
+  error.status = 409;
+  error.publicMessage = "Desarchiva el proyecto antes de realizar cambios.";
+  return error;
+}
+
 function getFileType(contentType, originalName) {
   if (contentType) {
     return String(contentType).split(";")[0].trim().toLowerCase();
@@ -456,6 +464,21 @@ export async function uploadProjectFile({
   try {
     await client.query("begin");
 
+    const projectStateResult = await client.query(
+      `
+        select status
+        from public.projects
+        where id = $1
+          and deleted_at is null
+        for update
+      `,
+      [projectId],
+    );
+
+    if (projectStateResult.rows[0]?.status === "archived") {
+      throw createProjectArchivedError();
+    }
+
     const fileResult = await client.query(
       `
         insert into public.files (
@@ -591,6 +614,7 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
           p.client_id,
           p.assigned_architect_id,
           p.is_public,
+          p.status as project_status,
           exists (
             select 1 from public.project_assignees assignment
             where assignment.project_id = p.id
@@ -605,6 +629,7 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
           and f.status <> 'deleted'
           and p.deleted_at is null
         limit 1
+        for update of p, f
       `,
       [fileId, projectId, user.id],
     );
@@ -613,6 +638,10 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
     if (!file) {
       await client.query("rollback");
       return null;
+    }
+
+    if (file.project_status === "archived") {
+      throw createProjectArchivedError();
     }
 
     const roleCode = user?.role?.code;

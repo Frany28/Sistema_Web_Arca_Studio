@@ -412,7 +412,7 @@ export default function VRModelViewer({
         <header className="pointer-events-auto relative z-40 flex min-h-[64px] flex-wrap items-center justify-between gap-[10px] border-b border-white/10 bg-black/55 px-[16px] py-[8px] backdrop-blur-md">
           <div><p className="text-[14px] font-semibold">{title}</p><p className="text-[12px] text-white/62">Panorámica inmersiva VR</p></div>
           <div className="flex flex-wrap items-center gap-[8px]" onPointerDown={(event) => event.stopPropagation()}>
-            <Button theme="Primary" type="Solid" size="S" showText={false} showLeftIcon iconLeft={<CloseIcon />} aria-label="Cerrar modo VR" onClick={onClose} />
+            <Button theme="Primary" type="Solid" size="S" showText={false} showLeftIcon iconLeft={<CloseIcon />} aria-label="Cerrar modo VR" tooltip={false} onClick={onClose} />
           </div>
         </header>
         <main className="relative min-h-0 flex-1 overflow-hidden">

@@ -267,6 +267,10 @@ function Home({ view = "dashboard" }) {
       projectRows.filter((project) => project.client?.id === user?.clientId),
     [projectRows, user?.clientId],
   );
+  const commentProjectRows = useMemo(
+    () => ownedProjectRows.filter((project) => project.status !== "archived"),
+    [ownedProjectRows],
+  );
   const publicProjectRows = useMemo(
     () =>
       projectRows.filter(
@@ -301,11 +305,11 @@ function Home({ view = "dashboard" }) {
     [ownedProjectRows],
   );
   const imageCommentNotifications = useImageCommentNotifications({
-    projectIds: ownedProjectRows.map((project) => project.id),
-    projectNamesById: getProjectNamesById(ownedProjectRows),
+    projectIds: commentProjectRows.map((project) => project.id),
+    projectNamesById: getProjectNamesById(commentProjectRows),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
   });
-  const commentsProjectId = ownedProjectRows[0]?.id ?? null;
+  const commentsProjectId = commentProjectRows[0]?.id ?? null;
   const {
     drawerComments: submittedDrawerComments,
     submitComment,
@@ -324,9 +328,9 @@ function Home({ view = "dashboard" }) {
     loading: recentProjectCommentsLoading,
     refresh: refreshRecentComments,
   } = useRecentProjectComments({
-    enabled: ownedProjectRows.length > 0,
-    projectIds: ownedProjectRows.map((project) => project.id),
-    projectNamesById: getProjectNamesById(ownedProjectRows),
+    enabled: commentProjectRows.length > 0,
+    projectIds: commentProjectRows.map((project) => project.id),
+    projectNamesById: getProjectNamesById(commentProjectRows),
     refreshIntervalMs: isNotificationsDrawerOpen ? 5000 : 15000,
     user,
   });
@@ -796,7 +800,7 @@ function Home({ view = "dashboard" }) {
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
-            onSubmitComment={submitComment}
+            onSubmitComment={commentsProjectId ? submitComment : undefined}
           />
         </div>
       </div>

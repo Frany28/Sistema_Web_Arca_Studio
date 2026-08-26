@@ -15,6 +15,7 @@ import {
   createDocumentComment,
   getDocumentComments,
 } from "../services/documentCommentService.js";
+import { assertProjectMutable } from "../services/projectService.js";
 
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
 const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "panorama", "document"]);
@@ -122,6 +123,18 @@ export async function createProjectComment(req, res, next) {
       });
       return;
     }
+
+    const canAccess = await canAccessProjectComments(projectId, req.user);
+
+    if (!canAccess) {
+      res.status(404).json({
+        code: "PROJECT_NOT_FOUND",
+        message: "Proyecto no encontrado.",
+      });
+      return;
+    }
+
+    await assertProjectMutable(projectId);
 
     const content = String(req.body?.content || "").trim();
     const parentCommentId = parseParentCommentId(req.body?.parentCommentId);

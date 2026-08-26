@@ -8,6 +8,7 @@ import Tooltip from "../../ui/Tooltip/Tooltip.jsx";
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import ImageHighlighter from "./ImageHighlighter.jsx";
 import { useImageComments } from "./useImageComments.js";
+import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -166,6 +167,7 @@ export default function ImageViewerModal({
   projectId,
   onClose,
 }) {
+  const { readOnly } = useProjectReadOnly();
   const galleryItems = useMemo(() => normalizeItems(items), [items]);
   const initialIndex = useMemo(() => {
     const index = galleryItems.findIndex(
@@ -330,6 +332,7 @@ export default function ImageViewerModal({
   };
 
   const handleSelectionChange = (selection) => {
+    if (readOnly) return;
     setFocusedSelectionCommentId(null);
     setPendingSelection({
       ...selection,
@@ -393,7 +396,7 @@ export default function ImageViewerModal({
               annotations={annotationComments}
               focusedAnnotationId={focusedAnnotationId}
               imageSrc={displayItem.image}
-              onSelectionChange={handleSelectionChange}
+              onSelectionChange={readOnly ? undefined : handleSelectionChange}
             />
           </div>
 
@@ -414,6 +417,7 @@ export default function ImageViewerModal({
             showRightIcon={false}
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar imagen"
+            tooltip={false}
             onClick={onClose}
             className="absolute right-[8px] top-[8px] size-9 text-[var(--color-text-200)]"
           />

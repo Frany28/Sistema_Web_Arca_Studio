@@ -4,6 +4,7 @@ import { api } from "../../../api/http.js";
 import AuthToast from "../../../components/ui/AuthToast/AuthToast.jsx";
 import FileUploadSection from "../../../components/ui/FileUploadSection/FileUploadSection.jsx";
 import HintText from "../../../components/ui/HintText/HintText.jsx";
+import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
 
 const ALLOWED_FILE_EXTENSIONS = new Set(["jpeg", "jpg", "mp4", "pdf", "png"]);
 const ALLOWED_FILE_TYPES = new Set([
@@ -64,6 +65,7 @@ function getFileError(file, existingFiles) {
 }
 
 export default function ProjectUploadFilesPanel({ onFilesChanged, projectId }) {
+  const { message: readOnlyMessage, readOnly } = useProjectReadOnly();
   const [uploadToastTrigger, setUploadToastTrigger] = useState(null);
   const [files, setFiles] = useState([]);
   const [submitError, setSubmitError] = useState("");
@@ -78,6 +80,28 @@ export default function ProjectUploadFilesPanel({ onFilesChanged, projectId }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!readOnly) return;
+
+    const controllers = uploadControllersRef.current;
+    controllers.forEach((controller) => controller.abort());
+    controllers.clear();
+    queueMicrotask(() => {
+      setFiles((current) => current.map((fileItem) =>
+        fileItem.status === "uploading"
+          ? {
+              ...fileItem,
+              canUpload: false,
+              errorMessage: readOnlyMessage,
+              progress: 0,
+              status: "failed",
+            }
+          : fileItem,
+      ));
+      setSubmitError(readOnlyMessage);
+    });
+  }, [readOnly, readOnlyMessage]);
+
   const updateFile = (fileId, nextValues) => {
     setFiles((current) =>
       current.map((fileItem) =>
@@ -87,6 +111,7 @@ export default function ProjectUploadFilesPanel({ onFilesChanged, projectId }) {
   };
 
   const uploadFile = async (fileItem) => {
+    if (readOnly) return;
     if (!projectId) {
       updateFile(fileItem.id, {
         errorMessage: "No se encontro el proyecto para subir el archivo.",
@@ -151,6 +176,7 @@ export default function ProjectUploadFilesPanel({ onFilesChanged, projectId }) {
   };
 
   const handleFilesSelected = (fileList) => {
+    if (readOnly) return;
     const selectedFiles = Array.from(fileList || []);
 
     if (selectedFiles.length === 0) {
@@ -192,6 +218,7 @@ export default function ProjectUploadFilesPanel({ onFilesChanged, projectId }) {
   };
 
   const handleFileRemove = async (fileItem) => {
+    if (readOnly) return;
     setSubmitError("");
     const controller = uploadControllersRef.current.get(fileItem.id);
 
@@ -265,6 +292,7 @@ export default function ProjectUploadFilesPanel({ onFilesChanged, projectId }) {
       <div className="w-[528px] max-w-full shrink-0">
         <FileUploadSection
           className="w-full"
+          disabled={readOnly}
           files={visibleFiles}
           title="Subir archivos"
           chooseFileLabel="Elige un archivo"
@@ -277,6 +305,9 @@ export default function ProjectUploadFilesPanel({ onFilesChanged, projectId }) {
           onFilesSelected={handleFilesSelected}
           onRetryUpload={() => setUploadToastTrigger((current) => (current || 0) + 1)}
         />
+        {readOnly ? (
+          <HintText state="Default" hintText={readOnlyMessage} className="mt-[8px] w-full" />
+        ) : null}
         {submitError ? (
           <HintText state="Error" hintText={submitError} className="mt-[8px] w-full" />
         ) : null}

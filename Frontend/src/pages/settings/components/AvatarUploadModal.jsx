@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Modal from "../../../components/ui/Modal/Modal.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import Avatar from "../../../components/ui/Avatar/Avatar.jsx";
-import Tooltip from "../../../components/ui/Tooltip/Tooltip.jsx";
 import FileUploadSection from "../../../components/ui/FileUploadSection/FileUploadSection.jsx";
 
 const AVATAR_UPLOAD_INITIAL_STATE = {
@@ -371,16 +370,14 @@ function AvatarUploadModal({
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex w-full flex-col gap-[16px] px-[16px] pb-[16px] pt-[16px]">
-            <Tooltip asChild portal showTip text="Cerrar" tipPosition="Bottom right">
-              <button
-                type="button"
-                className="absolute right-0 top-0 inline-flex size-9 items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-100)] transition-colors duration-150 hover:bg-[var(--color-neutral-200)]/40 hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]"
-                aria-label="Cerrar modal"
-                onClick={handleClose}
-              >
-                <CloseIcon className="size-3" />
-              </button>
-            </Tooltip>
+            <button
+              type="button"
+              className="absolute right-0 top-0 inline-flex size-9 items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-100)] transition-colors duration-150 hover:bg-[var(--color-neutral-200)]/40 hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]"
+              aria-label="Cerrar modal"
+              onClick={handleClose}
+            >
+              <CloseIcon className="size-3" />
+            </button>
 
             <div className="flex w-full flex-col gap-[4px]">
               <h2

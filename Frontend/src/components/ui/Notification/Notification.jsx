@@ -209,6 +209,7 @@ function Notification({
           iconLeft={<CloseIcon className="size-3" />}
           className="absolute right-0 top-0"
           aria-label="Cerrar notificación"
+          tooltip={false}
           onClick={handleDismiss}
           data-node-id={NOTIFICATION_NODE_IDS.closeAction}
         />

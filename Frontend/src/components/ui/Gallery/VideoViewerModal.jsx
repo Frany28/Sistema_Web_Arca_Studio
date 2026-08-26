@@ -13,6 +13,7 @@ import {
 import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import { useImageComments } from "./useImageComments.js";
 import { useVideoThumbnail } from "./useVideoThumbnail.js";
+import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -386,6 +387,7 @@ function PlaybackBar({
             aria-label="Comentar video"
             className="flex size-[44px] cursor-pointer items-center justify-center rounded-[var(--radius-2)] bg-[var(--color-neutral-300)] text-[var(--color-neutral-100-uniform)] shadow-[0_8px_20px_rgba(0,0,0,0.22)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)]"
             onClick={onCommentClick}
+            disabled={!onCommentClick}
           >
             <CommentIcon className="size-5" />
           </button>
@@ -412,6 +414,7 @@ export default function VideoViewerModal({
   projectId,
   onClose,
 }) {
+  const { readOnly } = useProjectReadOnly();
   const [shouldRender, setShouldRender] = useState(visible);
   const [isActive, setIsActive] = useState(false);
   const [displayItem, setDisplayItem] = useState(item);
@@ -540,6 +543,7 @@ export default function VideoViewerModal({
   }
 
   function handleCommentClick() {
+    if (readOnly) return;
     const video = videoRef.current;
     const selection = createVideoTimeSelection(
       video?.currentTime ?? currentTime,
@@ -738,6 +742,7 @@ export default function VideoViewerModal({
             showRightIcon={false}
             iconLeft={<CloseIcon className="size-3" />}
             aria-label="Cerrar video"
+            tooltip={false}
             onClick={onClose}
             className="absolute right-[8px] top-[8px] z-30 size-9 text-[var(--color-text-200)]"
           />
@@ -749,7 +754,7 @@ export default function VideoViewerModal({
             isMuted={isMuted}
             focusedCommentId={focusedCommentId}
             markers={timelineMarkers}
-            onCommentClick={handleCommentClick}
+            onCommentClick={readOnly ? undefined : handleCommentClick}
             onFullscreen={handleFullscreen}
             onSeek={handleSeek}
             onMarkerClick={handleTemporalCommentSelect}

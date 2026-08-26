@@ -1,8 +1,26 @@
 import {
   findProjectDetailByPublicSlugForUser,
   findProjectDetailForUser,
+  findDirectProjectStateForUser,
+  findProjectStateById,
   listProjectsForUser,
+  updateProjectVisibility,
 } from "../repositories/projectRepository.js";
+import { assertMutableProjectState } from "./projectMutationPolicy.js";
+
+export async function assertProjectMutable(
+  projectId,
+  { findProjectState = findProjectStateById } = {},
+) {
+  const project = await findProjectState(projectId);
+  return assertMutableProjectState(project);
+}
+
+export async function changeProjectPublication({ isPublic, projectId, user }) {
+  const project = await findDirectProjectStateForUser(projectId, user);
+  assertMutableProjectState(project);
+  return updateProjectVisibility(projectId, isPublic, user);
+}
 
 export function listProjects({ cursor = null, limit, scope, user }) {
   return listProjectsForUser(user, {

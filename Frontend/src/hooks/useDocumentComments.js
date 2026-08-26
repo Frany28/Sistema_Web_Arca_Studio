@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/http.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { useProjectReadOnly } from "../contexts/ProjectReadOnlyContext.jsx";
 import { decorateCommentForDisplay } from "../utils/commentDisplay.js";
 
 const CACHE_TTL_MS = 30_000;
@@ -82,6 +83,7 @@ function loadComments(cacheKey, input) {
 
 export function useDocumentComments({ enabled, fileId, fileVersionId, projectId }) {
   const { user } = useAuth();
+  const { message: readOnlyMessage, readOnly } = useProjectReadOnly();
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -151,6 +153,11 @@ export function useDocumentComments({ enabled, fileId, fileVersionId, projectId 
   const addComment = useCallback(async ({ message, parentCommentId = null, selection = null }) => {
     if (submitPromiseRef.current) return submitPromiseRef.current;
 
+    if (readOnly) {
+      setError(readOnlyMessage);
+      throw new Error(readOnlyMessage);
+    }
+
     const validationError = !isPositiveId(projectId) || !isPositiveId(fileId) || !isPositiveId(fileVersionId)
       ? "No se pudo identificar el documento o su versión."
       : parentCommentId
@@ -197,7 +204,7 @@ export function useDocumentComments({ enabled, fileId, fileVersionId, projectId 
     });
     submitPromiseRef.current = request;
     return request;
-  }, [cacheKey, fileId, fileVersionId, projectId]);
+  }, [cacheKey, fileId, fileVersionId, projectId, readOnly, readOnlyMessage]);
 
   return { addComment, comments, error, isLoading, isSubmitting };
 }

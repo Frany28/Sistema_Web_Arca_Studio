@@ -63,6 +63,7 @@ function ArchitectProjectRow({
             fitContent
             showLeftIcon={false}
             showRightIcon={false}
+            disabled={project.status === "archived"}
             onClick={() => onPublicationChange?.(project)}
           >
             {project.isPublic ? "Ocultar" : "Publicar"}
