@@ -121,7 +121,12 @@ function Tag({
         />
       ) : null}
       {dotIndicator ? <DotIndicator /> : null}
-      <span className={clsx("inline-flex items-center whitespace-nowrap text-[var(--color-text-200)]", sizing.text)}>
+      <span
+        className={clsx(
+          "inline-flex min-w-0 flex-1 items-center overflow-hidden text-ellipsis whitespace-nowrap text-[var(--color-text-200)]",
+          sizing.text,
+        )}
+      >
         {label}
       </span>
       {count ? (

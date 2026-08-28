@@ -533,7 +533,16 @@ function AdminActiveProjects({
                       <Checkbox size="S" checked={isSelected ? "Yes" : "No"} interactive aria-label={`Seleccionar ${projectName}`} onCheckedChange={() => toggleProject(project.id)} />
                     </td>
                     <td className="px-[24px] py-[16px]">
-                      <Tag label={projectName} size="M" avatar={false} checkbox={false} closeIcon={false} count={false} className="max-w-[107px]" />
+                      <Tag
+                        label={projectName}
+                        title={projectName}
+                        size="M"
+                        avatar={false}
+                        checkbox={false}
+                        closeIcon={false}
+                        count={false}
+                        className="w-full max-w-[107px]"
+                      />
                     </td>
                     <td className="px-[24px] py-[16px]">
                       <div className="flex min-w-0 items-center gap-[8px]">

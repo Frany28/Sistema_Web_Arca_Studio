@@ -50,7 +50,7 @@ export const TAG_SIZE_STYLES = {
 };
 
 export const TAG_BASE_STYLES =
-  "inline-flex items-center rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)] tracking-[-0.5px]";
+  "inline-flex min-w-0 max-w-full items-center rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)] tracking-[-0.5px]";
 
 export const TAG_INTERACTIVE_STYLES = {
   default:
