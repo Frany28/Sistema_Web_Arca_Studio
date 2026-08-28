@@ -65,7 +65,7 @@ test("project assignee removals require confirmation and expose coherent success
   );
   assert.doesNotMatch(projectsSource, /autoHideMs=\{0\}/);
   assert.match(projectsSource, /previousAssignees: assignees/);
-  assert.match(projectsSource, /disabled=\{isArchived\}/);
+  assert.match(projectsSource, /disabled=\{assignmentDisabled\}/);
   assert.match(projectsSource, /primaryActionDisabled=\{assigneeUndoUnavailable\}/);
   assert.match(
     projectsSource,

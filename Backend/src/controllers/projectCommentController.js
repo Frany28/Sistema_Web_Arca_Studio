@@ -15,7 +15,7 @@ import {
   createDocumentComment,
   getDocumentComments,
 } from "../services/documentCommentService.js";
-import { assertProjectMutable } from "../services/projectService.js";
+import { assertProjectOperationallyMutable } from "../services/projectService.js";
 
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
 const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "panorama", "document"]);
@@ -134,7 +134,7 @@ export async function createProjectComment(req, res, next) {
       return;
     }
 
-    await assertProjectMutable(projectId);
+    await assertProjectOperationallyMutable(projectId);
 
     const content = String(req.body?.content || "").trim();
     const parentCommentId = parseParentCommentId(req.body?.parentCommentId);

@@ -15,11 +15,14 @@ import { pool, query } from "../config/db.js";
 
 const DEFAULT_FILE_STATUS = "active";
 
-function createProjectArchivedError() {
-  const error = new Error("Archived projects are read-only");
-  error.code = "PROJECT_ARCHIVED";
+function createProjectReadOnlyError(status) {
+  const finalized = status === "completed";
+  const error = new Error("Read-only project");
+  error.code = finalized ? "PROJECT_FINALIZED" : "PROJECT_ARCHIVED";
   error.status = 409;
-  error.publicMessage = "Desarchiva el proyecto antes de realizar cambios.";
+  error.publicMessage = finalized
+    ? "El proyecto finalizado es de solo lectura."
+    : "Desarchiva el proyecto antes de realizar cambios.";
   return error;
 }
 
@@ -475,8 +478,8 @@ export async function uploadProjectFile({
       [projectId],
     );
 
-    if (projectStateResult.rows[0]?.status === "archived") {
-      throw createProjectArchivedError();
+    if (["archived", "completed"].includes(projectStateResult.rows[0]?.status)) {
+      throw createProjectReadOnlyError(projectStateResult.rows[0].status);
     }
 
     const fileResult = await client.query(
@@ -640,8 +643,8 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
       return null;
     }
 
-    if (file.project_status === "archived") {
-      throw createProjectArchivedError();
+    if (["archived", "completed"].includes(file.project_status)) {
+      throw createProjectReadOnlyError(file.project_status);
     }
 
     const roleCode = user?.role?.code;

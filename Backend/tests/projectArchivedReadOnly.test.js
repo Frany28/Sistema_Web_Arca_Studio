@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { assertMutableProjectState } from "../src/services/projectMutationPolicy.js";
+import {
+  assertMutableProjectState,
+  assertOperationallyMutableProjectState,
+} from "../src/services/projectMutationPolicy.js";
 
 test("archived projects are rejected by the shared mutation policy", async () => {
   await assert.rejects(
@@ -19,6 +22,16 @@ test("active projects pass the shared mutation policy", async () => {
   assert.equal(project.id, 17);
 });
 
+test("finalized projects reject operational changes but still allow publication", async () => {
+  const finalizedProject = { id: 18, status: "completed" };
+
+  assert.equal(assertMutableProjectState(finalizedProject), finalizedProject);
+  assert.throws(
+    () => assertOperationallyMutableProjectState(finalizedProject),
+    (error) => error.code === "PROJECT_FINALIZED" && error.status === 409,
+  );
+});
+
 test("missing projects remain indistinguishable from deleted projects", async () => {
   await assert.rejects(
     Promise.resolve().then(() => assertMutableProjectState(null)),
@@ -26,7 +39,7 @@ test("missing projects remain indistinguishable from deleted projects", async ()
   );
 });
 
-test("every project mutation path enforces archived state in depth", async () => {
+test("every operational mutation path enforces closed project states in depth", async () => {
   const [
     assignmentService,
     assignmentRepository,
@@ -36,6 +49,7 @@ test("every project mutation path enforces archived state in depth", async () =>
     fileRepository,
     projectController,
     projectRepository,
+    seedSource,
   ] = await Promise.all([
     readFile(new URL("../src/services/adminDashboardService.js", import.meta.url), "utf8"),
     readFile(new URL("../src/repositories/adminDashboardRepository.js", import.meta.url), "utf8"),
@@ -45,14 +59,16 @@ test("every project mutation path enforces archived state in depth", async () =>
     readFile(new URL("../src/repositories/fileRepository.js", import.meta.url), "utf8"),
     readFile(new URL("../src/controllers/projectController.js", import.meta.url), "utf8"),
     readFile(new URL("../src/repositories/projectRepository.js", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/seed-project-visibility-examples.mjs", import.meta.url), "utf8"),
   ]);
 
-  assert.match(assignmentService, /assignEmployeesToProject[\s\S]*assertProjectMutable\(projectId\)/);
-  assert.match(assignmentRepository, /replaceProjectAssignees[\s\S]*status <> 'archived'/);
-  assert.match(commentController, /createProjectComment[\s\S]*assertProjectMutable\(projectId\)/);
-  assert.equal((commentRepository.match(/status <> 'archived'/g) || []).length >= 2, true);
-  assert.equal((fileController.match(/assertProjectMutable\(projectId\)/g) || []).length >= 2, true);
-  assert.match(fileRepository, /PROJECT_ARCHIVED/);
+  assert.match(assignmentService, /assignEmployeesToProject[\s\S]*assertProjectOperationallyMutable\(projectId\)/);
+  assert.match(assignmentRepository, /replaceProjectAssignees[\s\S]*status not in[\s\S]*'completed'/);
+  assert.match(commentController, /createProjectComment[\s\S]*assertProjectOperationallyMutable\(projectId\)/);
+  assert.equal((commentRepository.match(/status not in/g) || []).length >= 2, true);
+  assert.equal((fileController.match(/assertProjectOperationallyMutable\(projectId\)/g) || []).length >= 2, true);
+  assert.match(fileRepository, /PROJECT_FINALIZED/);
   assert.match(projectController, /changeProjectPublication/);
   assert.match(projectRepository, /updateProjectVisibility[\s\S]*status <> 'archived'/);
+  assert.match(seedSource, /name: "Residencia Horizonte Finalizada"[\s\S]*status: "completed"/);
 });

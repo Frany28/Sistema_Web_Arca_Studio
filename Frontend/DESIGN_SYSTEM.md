@@ -241,6 +241,13 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 - La interfaz debe comunicar el estado archivado y el backend debe rechazar igualmente cualquier mutación con `PROJECT_ARCHIVED`; no se puede depender solo de controles deshabilitados.
 - Desarchivar es la única mutación permitida sobre un proyecto archivado. Los accesos de proyectos recientes no incluyen proyectos archivados.
 
+### Proyectos finalizados
+
+- Un proyecto finalizado conserva la consulta, navegación, filtros, galerías, visores, descargas, publicación y archivado.
+- Se bloquean las mutaciones operativas: edición, progreso, etapas, asignación o retiro de responsables, carga o eliminación de archivos y creación o respuesta de observaciones.
+- Los responsables y contenidos existentes se conservan como historial. Si se necesita acceso posterior, debe resolverse con un flujo administrativo específico y no alterando el equipo finalizado.
+- El frontend debe comunicar el cierre y el backend debe rechazar las mutaciones operativas con `PROJECT_FINALIZED`.
+
 ### Navegación superior persistente
 
 - Todas las pantallas del entorno autenticado deben renderizar `EnvironmentNavigationBar`; las páginas no pueden importar directamente `ui/NavigationBar/NavigationBar.jsx` ni recrear el navbar con JSX o estilos locales.

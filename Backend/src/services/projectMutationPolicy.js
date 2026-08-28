@@ -14,3 +14,16 @@ export function assertMutableProjectState(project) {
 
   return project;
 }
+
+export function assertOperationallyMutableProjectState(project) {
+  const mutableProject = assertMutableProjectState(project);
+
+  if (mutableProject.status === "completed") {
+    throw new ConflictError(
+      "PROJECT_FINALIZED",
+      "El proyecto finalizado es de solo lectura.",
+    );
+  }
+
+  return mutableProject;
+}

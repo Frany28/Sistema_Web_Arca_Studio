@@ -6,7 +6,10 @@ import {
   listProjectsForUser,
   updateProjectVisibility,
 } from "../repositories/projectRepository.js";
-import { assertMutableProjectState } from "./projectMutationPolicy.js";
+import {
+  assertMutableProjectState,
+  assertOperationallyMutableProjectState,
+} from "./projectMutationPolicy.js";
 
 export async function assertProjectMutable(
   projectId,
@@ -14,6 +17,14 @@ export async function assertProjectMutable(
 ) {
   const project = await findProjectState(projectId);
   return assertMutableProjectState(project);
+}
+
+export async function assertProjectOperationallyMutable(
+  projectId,
+  { findProjectState = findProjectStateById } = {},
+) {
+  const project = await findProjectState(projectId);
+  return assertOperationallyMutableProjectState(project);
 }
 
 export async function changeProjectPublication({ isPublic, projectId, user }) {

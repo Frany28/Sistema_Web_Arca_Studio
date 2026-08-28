@@ -7,7 +7,7 @@ import {
   replaceProjectRequestAssignees,
 } from "../repositories/adminDashboardRepository.js";
 import { NotFoundError, ValidationError } from "../errors/appError.js";
-import { assertProjectMutable } from "./projectService.js";
+import { assertProjectOperationallyMutable } from "./projectService.js";
 
 export function loadAdminDashboardMetrics() {
   return getAdminDashboardMetrics();
@@ -73,7 +73,7 @@ export async function assignEmployeesToProject({
   assignedBy,
   projectId,
 }) {
-  await assertProjectMutable(projectId);
+  await assertProjectOperationallyMutable(projectId);
   const result = await replaceProjectAssignees({
     assigneeIds,
     assignedBy,

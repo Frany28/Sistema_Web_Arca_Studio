@@ -22,6 +22,7 @@ import { getProjectImageSource } from "../../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../../utils/projectAssigneeDisplay.js";
 import { groupProjectsByStatus } from "../../utils/projectStatusGroups.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
+import { isProjectOperationallyReadOnly } from "../../utils/projectReadOnly.js";
 import { ARCHITECT_DRAWER_RECENT_ACTIVITY } from "./architectDashboardData.js";
 import AdminDashboardHeader from "./components/AdminDashboardHeader.jsx";
 import AdminDashboardMetrics from "./components/AdminDashboardMetrics.jsx";
@@ -54,7 +55,7 @@ function toProjectRow(project, user) {
     ...project,
     assigneeAvatars: assigneeAvatar ? [assigneeAvatar] : [],
     editable:
-      project.status !== "archived" && (
+      !isProjectOperationallyReadOnly(project) && (
         user?.role === "admin" ||
         project.assignedArchitect?.id === user?.id ||
         isAssignedEmployee

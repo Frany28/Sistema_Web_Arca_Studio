@@ -24,6 +24,7 @@ import Loader from "../../../components/ui/Loader/Loader.jsx";
 import ScrollBar from "../../../components/ui/ScrollBar/ScrollBar.jsx";
 import Tag from "../../../components/ui/Tag/Tag.jsx";
 import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
+import { isProjectOperationallyReadOnly } from "../../../utils/projectReadOnly.js";
 import { getBulkActionAvailability } from "./adminProjectBulkActions.js";
 import { getAdminProjectsPagination } from "./adminProjectPagination.js";
 import "./AdminActiveProjects.css";
@@ -134,11 +135,14 @@ function AdminActiveProjects({
     position: 0,
     width: 0,
   });
+  const assigneeFeedbackProject = assigneeRemovalFeedback
+    ? projects.find(
+        (project) => String(project.id) === String(assigneeRemovalFeedback.project.id),
+      )
+    : null;
   const assigneeUndoUnavailable = Boolean(
     assigneeRemovalFeedback
-      && projects.find(
-        (project) => String(project.id) === String(assigneeRemovalFeedback.project.id),
-      )?.status === "archived",
+      && isProjectOperationallyReadOnly(assigneeFeedbackProject),
   );
 
   const personnel = useMemo(() => {
@@ -513,7 +517,7 @@ function AdminActiveProjects({
                 const progress = Math.min(100, Math.max(0, Number(project.progress) || 0));
                 const projectName = project.title || project.name || "Proyecto";
                 const isSelected = selectedProjectIds.has(String(project.id));
-                const isArchived = project.status === "archived";
+                const assignmentDisabled = isProjectOperationallyReadOnly(project);
 
                 return (
                   <tr
@@ -542,10 +546,10 @@ function AdminActiveProjects({
                         value={assignees}
                         options={employeeOptions}
                         loading={assigneesLoading}
-                        disabled={isArchived}
+                        disabled={assignmentDisabled}
                         className="w-[252px]"
-                        aria-label={isArchived
-                          ? `Responsables de ${projectName}. Proyecto archivado, asignación deshabilitada`
+                        aria-label={assignmentDisabled
+                          ? `Responsables de ${projectName}. Proyecto cerrado, asignación deshabilitada`
                           : `Responsables de ${projectName}`}
                         confirmRemoval
                         onChange={(nextAssignees) => onProjectAssigneesChange?.(project, nextAssignees)}

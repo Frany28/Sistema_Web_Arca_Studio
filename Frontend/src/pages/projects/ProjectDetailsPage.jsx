@@ -25,6 +25,11 @@ import { PROJECT_DETAIL_DATA } from "./projectDetailsData.js";
 import { getProjectPath } from "../../utils/projectRoutes.js";
 import { getCommentNavigationParams } from "../../utils/commentSelection.js";
 import { getProjectTypeDisplay } from "../../utils/projectTypeDisplay.js";
+import {
+  getProjectReadOnlyMessage,
+  isProjectFinalized,
+  isProjectOperationallyReadOnly,
+} from "../../utils/projectReadOnly.js";
 import Alert from "../../components/ui/Alert/Alert.jsx";
 import { ProjectReadOnlyProvider } from "../../contexts/ProjectReadOnlyContext.jsx";
 import {
@@ -624,8 +629,8 @@ export default function ProjectDetailsPage({
   }, [resolvedProjectId]);
 
   const handleSubmitComment = async ({ message, parentCommentId = null }) => {
-    if (project?.status === "archived") {
-      setProjectCommentsError("Desarchiva el proyecto para realizar cambios.");
+    if (isProjectOperationallyReadOnly(project)) {
+      setProjectCommentsError(getProjectReadOnlyMessage(project));
       return;
     }
 
@@ -659,7 +664,9 @@ export default function ProjectDetailsPage({
   const presentedProject = project
     ? toProjectPresentation(project)
     : PROJECT_DETAIL_DATA;
-  const projectIsArchived = presentedProject.status === "archived";
+  const projectIsFinalized = isProjectFinalized(presentedProject);
+  const projectIsReadOnly = isProjectOperationallyReadOnly(presentedProject);
+  const projectReadOnlyMessage = getProjectReadOnlyMessage(presentedProject);
   let activeProjectPanel = (
     <ProjectInfoPanel
       {...infoProps}
@@ -704,7 +711,10 @@ export default function ProjectDetailsPage({
   }
 
   return (
-    <ProjectReadOnlyProvider readOnly={projectIsArchived}>
+    <ProjectReadOnlyProvider
+      readOnly={projectIsReadOnly}
+      message={projectReadOnlyMessage}
+    >
     <main className="min-h-screen bg-[var(--color-neutral-bg)] transition-colors duration-200">
       <div className="flex min-h-screen w-full items-stretch">
         {isSidebarExpanded ? (
@@ -778,16 +788,18 @@ export default function ProjectDetailsPage({
             ) : (
               <>
                 <ProjectOverviewHeader project={presentedProject} />
-                {projectIsArchived ? (
+                {projectIsReadOnly ? (
                   <Alert
                     visible
                     theme="Warning"
                     layout="Box"
-                    title="Proyecto archivado"
-                    description="Puedes consultar y descargar su contenido, pero debes desarchivarlo para realizar cambios."
+                    title={projectIsFinalized ? "Proyecto finalizado" : "Proyecto archivado"}
+                    description={projectIsFinalized
+                      ? "Puedes consultar, descargar, publicar o archivar su contenido, pero las operaciones del proyecto están cerradas."
+                      : "Puedes consultar y descargar su contenido, pero debes desarchivarlo para realizar cambios."}
                     showActions={false}
                     showCloseButton={false}
-                    aria-label="Este proyecto está archivado y es de solo lectura"
+                    aria-label={`Este proyecto está ${projectIsFinalized ? "finalizado" : "archivado"} y es de solo lectura`}
                   />
                 ) : null}
                 <ProjectDetailTabMenu
@@ -813,7 +825,7 @@ export default function ProjectDetailsPage({
             recentActivity={CLIENT_DRAWER_RECENT_ACTIVITY}
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
-            onSubmitComment={projectIsArchived ? undefined : handleSubmitComment}
+            onSubmitComment={projectIsReadOnly ? undefined : handleSubmitComment}
           />
           <ProjectDocumentViewerModal
             document={recentDocumentModal}

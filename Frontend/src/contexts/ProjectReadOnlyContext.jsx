@@ -6,10 +6,10 @@ const ProjectReadOnlyContext = createContext({
   readOnly: false,
 });
 
-export function ProjectReadOnlyProvider({ children, readOnly = false }) {
+export function ProjectReadOnlyProvider({ children, message = "", readOnly = false }) {
   const value = readOnly
     ? {
-        message: "Desarchiva el proyecto para realizar cambios.",
+        message: message || "El proyecto es de solo lectura.",
         readOnly: true,
       }
     : { message: "", readOnly: false };

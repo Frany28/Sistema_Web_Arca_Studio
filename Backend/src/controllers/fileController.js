@@ -16,7 +16,7 @@ import {
   deleteProjectRequestAttachment as deleteProjectRequestAttachmentService,
   uploadProjectRequestAttachment as uploadProjectRequestAttachmentService,
 } from "../services/projectRequestFileService.js";
-import { assertProjectMutable } from "../services/projectService.js";
+import { assertProjectOperationallyMutable } from "../services/projectService.js";
 
 export async function uploadProjectRequestAttachment(req, res, next) {
   try {
@@ -85,6 +85,8 @@ export async function uploadProjectAttachment(req, res, next) {
       return;
     }
 
+    await assertProjectOperationallyMutable(projectId);
+
     const file = await runUpload({ req, policy: uploadPolicies.document, operation: (upload) => uploadProjectFile({ ...upload, projectId, user: req.user }) });
 
     res.status(201).json({ file });
@@ -122,8 +124,6 @@ export async function deleteProjectAttachment(req, res, next) {
       return;
     }
 
-    await assertProjectMutable(projectId);
-
     const project = await findProjectForFileUpload(projectId, req.user);
 
     if (!project) {
@@ -134,7 +134,7 @@ export async function deleteProjectAttachment(req, res, next) {
       return;
     }
 
-    await assertProjectMutable(projectId);
+    await assertProjectOperationallyMutable(projectId);
 
     const deletedFile = await deleteProjectFile({
       fileId,

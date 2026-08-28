@@ -50,6 +50,22 @@ const examples = [
     location: "San Cristobal, Tachira",
     name: "Loft Privado Arca",
   },
+  {
+    assignedArchitectId: 2,
+    budget: 36500,
+    clientId: 1,
+    constructionArea: 138,
+    description:
+      "Proyecto finalizado de demostracion para validar el cierre operativo, la consulta historica y la publicacion.",
+    endDate: "2026-07-31",
+    generalArea: 190,
+    isPublic: false,
+    location: "Caracas, Distrito Capital",
+    name: "Residencia Horizonte Finalizada",
+    progress: 100,
+    startDate: "2026-02-03",
+    status: "completed",
+  },
 ];
 
 async function ensureShowcaseClient() {
@@ -147,11 +163,11 @@ async function upsertProject(example) {
     example.assignedArchitectId,
     example.name,
     example.description,
-    "in_process",
-    "2026-06-13",
-    "2026-09-30",
+    example.status || "in_process",
+    example.startDate || "2026-06-13",
+    example.endDate || "2026-09-30",
     example.budget,
-    25,
+    example.progress ?? 25,
     "residential",
     example.location,
     "Venezuela",
@@ -192,7 +208,7 @@ async function upsertProject(example) {
           public_slug = coalesce(public_slug, $19),
           updated_at = now()
         where id = $20
-        returning id, name, is_public, assigned_architect_id
+        returning id, name, status, progress, is_public, assigned_architect_id
       `,
       [...params, publicSlug, existing.rows[0].id],
     );
@@ -231,7 +247,7 @@ async function upsertProject(example) {
         $1, $2, $3, $4, $5, $6, $7, $8, $9,
         $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
       )
-      returning id, name, is_public, assigned_architect_id
+      returning id, name, status, progress, is_public, assigned_architect_id
     `,
     [...params, publicSlug],
   );

@@ -228,7 +228,10 @@ export async function replaceProjectAssignees({
         from public.projects
         where id = $1
           and deleted_at is null
-          and status <> 'archived'::public.project_status
+          and status not in (
+            'archived'::public.project_status,
+            'completed'::public.project_status
+          )
         for update
       ),
       requested as (

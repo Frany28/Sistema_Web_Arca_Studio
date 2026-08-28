@@ -247,7 +247,10 @@ export async function createProjectCommentRecord({
         from public.projects p
         where p.id = $${projectIdParam}
           and p.deleted_at is null
-          and p.status <> 'archived'::public.project_status
+          and p.status not in (
+            'archived'::public.project_status,
+            'completed'::public.project_status
+          )
           and (${access.sql})
         limit 1
         for update of p
@@ -437,7 +440,10 @@ export async function createDocumentCommentRecord({
           on fv.file_id = f.id and fv.id = $${offset + 3} and fv.deleted_at is null
         where p.id = $${offset + 1}
           and p.deleted_at is null
-          and p.status <> 'archived'::public.project_status
+          and p.status not in (
+            'archived'::public.project_status,
+            'completed'::public.project_status
+          )
           and (${access.sql})
         limit 1
         for update of p

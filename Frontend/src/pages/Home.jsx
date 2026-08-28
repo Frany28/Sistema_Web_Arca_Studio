@@ -29,6 +29,7 @@ import { getProjectPath } from "../utils/projectRoutes.js";
 import { getCommentNavigationParams } from "../utils/commentSelection.js";
 import { getProjectImageSource } from "../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
+import { isProjectOperationallyReadOnly } from "../utils/projectReadOnly.js";
 import { groupProjectsByStatus } from "../utils/projectStatusGroups.js";
 import { createUserSideNavigationItems } from "../utils/sideNavigationItems.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
@@ -268,7 +269,7 @@ function Home({ view = "dashboard" }) {
     [projectRows, user?.clientId],
   );
   const commentProjectRows = useMemo(
-    () => ownedProjectRows.filter((project) => project.status !== "archived"),
+    () => ownedProjectRows.filter((project) => !isProjectOperationallyReadOnly(project)),
     [ownedProjectRows],
   );
   const publicProjectRows = useMemo(
