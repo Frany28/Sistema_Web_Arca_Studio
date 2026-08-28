@@ -296,7 +296,8 @@ export default function ProjectRequestPage() {
   const location = useLocation();
   const { logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
-  const initialRequest = location.state?.initialRequest;
+  const viewRequest = location.state?.viewRequest || null;
+  const initialRequest = location.state?.initialRequest || viewRequest;
   const [form, setForm] = useState(() => ({
     ...INITIAL_FORM,
     projectName: initialRequest?.projectName || "",
@@ -344,9 +345,11 @@ export default function ProjectRequestPage() {
   const [isRequestActionModalOpen, setIsRequestActionModalOpen] = useState(false);
   const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
   const [validationCode, setValidationCode] = useState("");
-  const [isRequestReceived, setIsRequestReceived] = useState(false);
-  const [receivedRequest, setReceivedRequest] = useState(null);
-  const [draftId, setDraftId] = useState(null);
+  const [isRequestReceived, setIsRequestReceived] = useState(Boolean(viewRequest));
+  const [receivedRequest, setReceivedRequest] = useState(viewRequest);
+  const [draftId, setDraftId] = useState(
+    initialRequest?.status === "changes_requested" ? initialRequest.id : null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
@@ -830,7 +833,7 @@ export default function ProjectRequestPage() {
               <FormSection title="Referencias" description="Comparte imágenes, enlaces o cualquier material de referencia que represente tu visión del proyecto. Esto nos ayudará a comprender mejor el estilo, la atmósfera y los acabados que deseas lograr.">
                 <div className="flex flex-col gap-[8px]">
                   <FieldLabel optional>Subir imágenes o archivos (opcional)</FieldLabel>
-                  <button type="button" disabled={isSubmitting || Boolean(draftId)} onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFilesChange(event.dataTransfer.files); }} className="flex min-h-[177px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] disabled:cursor-not-allowed disabled:opacity-60 min-[480px]:h-[177px]">
+                  <button type="button" disabled={isSubmitting} onClick={() => fileInputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFilesChange(event.dataTransfer.files); }} className="flex min-h-[177px] w-full flex-col items-center justify-center gap-[12px] rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] px-[24px] py-[32px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)] disabled:cursor-not-allowed disabled:opacity-60 min-[480px]:h-[177px]">
                     <span className="flex size-[40px] items-center justify-center rounded-[8px] border border-[var(--color-neutral-200)] text-[var(--color-text-100)] shadow-[var(--shadow-e1)]"><CloudPlus size="20" color="currentColor" /></span>
                     <span className="flex w-full flex-col items-center gap-[8px] text-[14px] leading-[17px] tracking-[-0.5px] text-[var(--color-text-100)]">
                       <span className="flex min-h-[36px] flex-wrap items-center justify-center gap-[8px]">

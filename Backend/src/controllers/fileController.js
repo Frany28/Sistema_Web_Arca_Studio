@@ -2,6 +2,7 @@ import {
   deleteProjectFile,
   findProjectForFileUpload,
   findProjectFileForDownload,
+  findProjectRequestFileForDownload,
   getProjectFileObject,
   uploadProjectFile,
 } from "../repositories/fileRepository.js";
@@ -238,6 +239,42 @@ export async function streamProjectFile(req, res, next) {
       res.setHeader("Content-Length", file.fileSize);
     }
 
+    object.Body.pipe(res);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function streamProjectRequestFile(req, res, next) {
+  try {
+    const projectRequestId = Number(req.params.projectRequestId);
+    const fileId = Number(req.params.fileId);
+    const file = await findProjectRequestFileForDownload({
+      fileId,
+      projectRequestId,
+      user: req.user,
+    });
+    if (!file) {
+      res.status(404).json({ code: "FILE_NOT_FOUND", message: "No se encontró el archivo." });
+      return;
+    }
+
+    const object = await getProjectFileObject({
+      fileName: file.fileName,
+      range: req.headers.range,
+    });
+    if (req.headers.range && object.ContentRange) {
+      res.status(206);
+      res.setHeader("Content-Range", object.ContentRange);
+      res.setHeader("Accept-Ranges", "bytes");
+    } else {
+      res.status(200);
+    }
+    res.setHeader("Content-Type", object.ContentType || file.fileType || "application/octet-stream");
+    res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+    res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(file.originalName)}"`);
+    res.vary("Cookie");
+    if (object.ContentLength) res.setHeader("Content-Length", object.ContentLength);
     object.Body.pipe(res);
   } catch (error) {
     next(error);

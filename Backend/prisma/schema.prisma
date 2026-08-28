@@ -288,6 +288,22 @@ model project_request_assignees {
   @@index([user_id, project_request_id], map: "idx_project_request_assignees_user_id")
 }
 
+/// Technical recommendations recorded by assigned reviewers.
+model project_request_reviews {
+  id                       BigInt                                @id @default(autoincrement())
+  project_request_id       BigInt
+  reviewer_id              BigInt
+  recommendation           project_request_review_recommendation
+  note                     String
+  created_at               DateTime                              @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                              @default(now()) @db.Timestamptz(6)
+  project_requests         project_requests                     @relation(fields: [project_request_id], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_project_request_reviews_request")
+  users                    users                                @relation(fields: [reviewer_id], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "fk_project_request_reviews_reviewer")
+
+  @@unique([project_request_id, reviewer_id], map: "uq_project_request_reviews_reviewer")
+  @@index([reviewer_id, updated_at(sort: Desc)], map: "idx_project_request_reviews_reviewer")
+}
+
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -342,10 +358,13 @@ model project_requests {
   compatibility_scoring_version              String?                @db.VarChar(20)
   files                                      files[]
   project_request_assignees                  project_request_assignees[]
+  project_request_reviews                    project_request_reviews[]
   clients                                    clients                @relation(fields: [client_id], references: [id], map: "fk_project_requests_client")
   projects                                   projects?              @relation(fields: [converted_project_id], references: [id], map: "fk_project_requests_converted_project")
   users_project_requests_requested_byTousers users                  @relation("project_requests_requested_byTousers", fields: [requested_by], references: [id], map: "fk_project_requests_requested_by")
   users_project_requests_reviewed_byTousers  users?                 @relation("project_requests_reviewed_byTousers", fields: [reviewed_by], references: [id], map: "fk_project_requests_reviewed_by")
+  correction_reason                          String?
+  internal_review_notes                      String?
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -550,6 +569,7 @@ model users {
   project_request_assignees_project_assigned_by         project_request_assignees[] @relation("project_request_assignees_assigned_by")
   project_requests_project_requests_requested_byTousers project_requests[]         @relation("project_requests_requested_byTousers")
   project_requests_project_requests_reviewed_byTousers  project_requests[]         @relation("project_requests_reviewed_byTousers")
+  project_request_reviews                               project_request_reviews[]
   project_status_history                                project_status_history[]
   projects_projects_assigned_architect_idTousers        projects[]                 @relation("projects_assigned_architect_idTousers")
   projects_projects_created_byTousers                   projects[]                 @relation("projects_created_byTousers")
@@ -624,9 +644,16 @@ enum project_request_status {
   draft
   pending_verification
   pending_review
+  changes_requested
   approved
   rejected
   converted
+}
+
+enum project_request_review_recommendation {
+  approve
+  reject
+  changes_requested
 }
 
 enum project_request_size {

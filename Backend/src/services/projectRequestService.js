@@ -68,8 +68,7 @@ export async function createProjectRequest({ payload, user }) {
 export async function updateProjectRequest({ payload, projectRequestId, user }) {
   requireClient(user);
   const current = await findProjectRequestOwnedByUser(projectRequestId, user);
-  if (current?.status === "pending_review") return toPublicProjectRequest(current);
-  if (!current || current.status !== "draft") {
+  if (!current || !["draft", "changes_requested"].includes(current.status)) {
     throw new NotFoundError(
       "PROJECT_REQUEST_NOT_FOUND",
       "No se encontró un borrador editable.",
@@ -107,10 +106,13 @@ export async function submitProjectRequest({ projectRequestId, user }) {
       "No se encontró la solicitud de proyecto.",
     );
   }
-  if (current.status === "pending_review" && current.compatibility) {
+  if (
+    ["pending_verification", "pending_review"].includes(current.status)
+    && current.compatibility
+  ) {
     return toPublicProjectRequest(current);
   }
-  if (current.status !== "draft") {
+  if (!["draft", "changes_requested"].includes(current.status)) {
     throw new AppError({
       code: "PROJECT_REQUEST_NOT_SUBMITTABLE",
       message: "La solicitud no se encuentra en un estado que permita enviarla.",

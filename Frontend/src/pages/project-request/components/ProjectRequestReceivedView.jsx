@@ -78,7 +78,7 @@ const LEVEL_LABELS = {
   poorly_defined: "Solicitud poco definida",
 };
 
-function ProjectRequestReceivedView({ compatibility, onBackToDashboard, onViewRequest }) {
+function ProjectRequestReceivedView({ compatibility, onBackToDashboard, onViewRequest, projectRequest }) {
   const score = Number.isFinite(Number(compatibility?.score))
     ? Math.max(0, Math.min(100, Number(compatibility.score)))
     : 0;
@@ -86,6 +86,55 @@ function ProjectRequestReceivedView({ compatibility, onBackToDashboard, onViewRe
   const observations = Array.isArray(compatibility?.observations)
     ? compatibility.observations.slice(0, 3)
     : [];
+  const currentStatus = projectRequest?.status;
+  const verificationCompleted = [
+    "pending_review",
+    "changes_requested",
+    "approved",
+    "rejected",
+    "converted",
+  ].includes(currentStatus);
+  const reviewCompleted = [
+    "changes_requested",
+    "approved",
+    "rejected",
+    "converted",
+  ].includes(currentStatus);
+  const requestSteps = REQUEST_STATUS_STEPS.map((step, index) => {
+    if (index === 0) return step;
+    if (index === 1) {
+      return {
+        ...step,
+        state: verificationCompleted ? "Completed" : "Active",
+        subtext: verificationCompleted ? "Completado" : "En proceso",
+        title: "Verificación administrativa",
+      };
+    }
+    if (index === 2) {
+      return {
+        ...step,
+        state: reviewCompleted ? "Completed" : verificationCompleted ? "Active" : "Incomplete",
+        subtext: reviewCompleted ? "Completado" : verificationCompleted ? "En proceso" : "Pendiente",
+        title: "Revisión técnica",
+      };
+    }
+    if (index === 3) {
+      return {
+        ...step,
+        state: reviewCompleted ? "Completed" : "Incomplete",
+        subtext: reviewCompleted ? "Completado" : "Pendiente",
+        title: currentStatus === "changes_requested"
+          ? "Correcciones solicitadas"
+          : currentStatus === "rejected"
+            ? "Solicitud rechazada"
+            : currentStatus === "converted"
+              ? "Proyecto creado"
+              : "Decisión final",
+      };
+    }
+    return null;
+  }).filter(Boolean);
+  const decisionMessage = projectRequest?.correctionReason || projectRequest?.rejectionReason;
   return (
     <div className="content-reveal mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[48px] px-[16px] pb-[48px] min-[768px]:px-[24px] min-[1024px]:px-[48px]">
       <header className="flex w-full max-w-[850px] flex-col gap-[4px]">
@@ -133,7 +182,7 @@ function ProjectRequestReceivedView({ compatibility, onBackToDashboard, onViewRe
           className="grid w-full grid-cols-1 gap-x-[24px] gap-y-[24px] min-[480px]:grid-cols-2 min-[1024px]:grid-cols-5"
           aria-label="Progreso de la solicitud"
         >
-          {REQUEST_STATUS_STEPS.map((step, index) => (
+          {requestSteps.map((step, index) => (
             <AnimatedRequestStep
               key={step.id}
               {...step}
@@ -142,6 +191,15 @@ function ProjectRequestReceivedView({ compatibility, onBackToDashboard, onViewRe
           ))}
         </div>
       </section>
+
+      {decisionMessage ? (
+        <p
+          className="w-full max-w-[850px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px] text-body-3 text-[var(--color-text-200)]"
+          role="status"
+        >
+          {decisionMessage}
+        </p>
+      ) : null}
 
       <SectionDivider />
 

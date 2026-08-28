@@ -312,6 +312,16 @@ export const adminApi = {
     );
     return withAdminAssigneeAvatars(payload);
   },
+
+  decideProjectRequest({ action, internalNotes, projectRequestId, reason }) {
+    return apiRequest(
+      `/admin/project-requests/${encodeURIComponent(projectRequestId)}/decision`,
+      {
+        body: JSON.stringify({ action, internalNotes, reason }),
+        method: "PATCH",
+      },
+    );
+  },
 };
 
 export const projectsApi = {
@@ -584,6 +594,25 @@ export const projectRequestsApi = {
     return apiRequest("/project-requests", {
       body: JSON.stringify(payload),
       method: "POST",
+    });
+  },
+
+  listReviewQueue({ cursor, limit = 25 } = {}) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set("cursor", cursor);
+    return apiRequest(`/project-requests/review-queue?${params.toString()}`);
+  },
+
+  getFileContentUrl({ fileId, projectRequestId }) {
+    return getApiUrl(
+      `/project-requests/${encodeURIComponent(projectRequestId)}/files/${encodeURIComponent(fileId)}/content`,
+    );
+  },
+
+  review({ note, projectRequestId, recommendation }) {
+    return apiRequest(`/project-requests/${projectRequestId}/review`, {
+      body: JSON.stringify({ note, recommendation }),
+      method: "PUT",
     });
   },
 

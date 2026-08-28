@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { spawn } from "node:child_process";
 import { readdirSync } from "node:fs";
 import path from "node:path";
@@ -6,6 +7,22 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const prismaDirectory = path.dirname(require.resolve("prisma/package.json"));
 let engineBinary = process.env.PRISMA_SCHEMA_ENGINE_BINARY;
+
+function normalizeConnectionString(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) return normalized;
+  const startsWithQuote = normalized.startsWith('"');
+  const endsWithQuote = normalized.endsWith('"');
+  if (startsWithQuote === endsWithQuote) return normalized;
+  return startsWithQuote ? normalized.slice(1) : normalized.slice(0, -1);
+}
+
+const childEnvironment = { ...process.env };
+for (const key of ["DATABASE_URL", "DIRECT_URL"]) {
+  if (childEnvironment[key]) {
+    childEnvironment[key] = normalizeConnectionString(childEnvironment[key]);
+  }
+}
 
 if (!engineBinary) {
   try {
@@ -25,7 +42,7 @@ if (!engineBinary) {
 const prismaCli = require.resolve("prisma/build/index.js");
 const child = spawn(process.execPath, [prismaCli, ...process.argv.slice(2)], {
   env: {
-    ...process.env,
+    ...childEnvironment,
     ...(engineBinary ? { PRISMA_SCHEMA_ENGINE_BINARY: engineBinary } : {}),
   },
   shell: false,

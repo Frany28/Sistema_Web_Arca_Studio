@@ -30,6 +30,7 @@ import { getCommentNavigationParams } from "../utils/commentSelection.js";
 import { getProjectImageSource } from "../utils/projectImage.js";
 import { getProjectAssigneeAvatar } from "../utils/projectAssigneeDisplay.js";
 import { isProjectOperationallyReadOnly } from "../utils/projectReadOnly.js";
+import { getProjectRequestStatus } from "../utils/projectRequestStatus.js";
 import { groupProjectsByStatus } from "../utils/projectStatusGroups.js";
 import { createUserSideNavigationItems } from "../utils/sideNavigationItems.js";
 import { CLIENT_DRAWER_RECENT_ACTIVITY } from "./clientDrawerData.js";
@@ -118,6 +119,18 @@ function ProjectRow({ project }) {
 }
 
 function ProjectRequestRow({ projectRequest, onReview }) {
+  const status = getProjectRequestStatus(projectRequest.status);
+  const supportingMessage = projectRequest.correctionReason
+    || projectRequest.rejectionReason
+    || "Puedes consultar el avance y la decisión de nuestro equipo.";
+  const actionLabel = projectRequest.status === "changes_requested"
+    ? "Corregir solicitud"
+    : projectRequest.status === "rejected"
+      ? "Crear nueva"
+      : projectRequest.status === "converted"
+        ? "Ver proyecto"
+        : "Ver solicitud";
+
   return (
     <article className="grid grid-cols-1 items-center gap-[16px] border-b border-[var(--color-neutral-200)] py-[16px] min-[768px]:grid-cols-[120px_minmax(0,1fr)_auto] min-[1024px]:grid-cols-[160px_minmax(300px,1fr)_auto] min-[1024px]:gap-[24px]">
       <ProjectImage
@@ -129,7 +142,14 @@ function ProjectRequestRow({ projectRequest, onReview }) {
         <h2 className="truncate text-heading-4 text-[var(--color-text-50)]">
           {projectRequest.projectName}
         </h2>
-        <ProjectProgress />
+        <div className="flex min-w-0 flex-col gap-[4px]">
+          <span className="text-body-3 text-[var(--color-text-300)]">
+            {status.label}
+          </span>
+          <span className="truncate text-body-4 text-[var(--color-text-100)]">
+            {supportingMessage}
+          </span>
+        </div>
       </div>
 
       <Button
@@ -142,7 +162,7 @@ function ProjectRequestRow({ projectRequest, onReview }) {
         className="w-full min-[768px]:w-auto"
         onClick={() => onReview(projectRequest)}
       >
-        Revisar solicitud
+        {actionLabel}
       </Button>
     </article>
   );
@@ -687,7 +707,21 @@ function Home({ view = "dashboard" }) {
                           <ProjectRequestRow
                             key={projectRequest.id}
                             projectRequest={projectRequest}
-                            onReview={(request) => navigate("/solicitudes/nueva", { state: { initialRequest: request } })}
+                            onReview={(request) => {
+                              if (request.status === "converted" && request.convertedProjectId) {
+                                navigate(`/proyectos/${request.convertedProjectId}`);
+                                return;
+                              }
+                              if (["changes_requested", "rejected"].includes(request.status)) {
+                                navigate("/solicitudes/nueva", {
+                                  state: { initialRequest: request },
+                                });
+                                return;
+                              }
+                              navigate("/solicitudes/nueva", {
+                                state: { viewRequest: request },
+                              });
+                            }}
                           />
                         ))}
                       </div>

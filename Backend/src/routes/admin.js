@@ -9,6 +9,7 @@ import {
   updateProjectRequestAssignees,
   streamAdminAssigneeProfilePhoto,
 } from "../controllers/adminDashboardController.js";
+import { patchProjectRequestDecision } from "../controllers/projectRequestWorkflowController.js";
 import {
   getPermissions,
   getRolePermissionMatrix,
@@ -26,6 +27,7 @@ import {
   projectAssigneesSchema,
   projectRequestAssigneesSchema,
 } from "../validation/adminDashboardSchemas.js";
+import { projectRequestDecisionSchema } from "../validation/projectRequestWorkflowSchemas.js";
 import {
   adminUserCreateSchema,
   adminUserListSchema,
@@ -45,6 +47,11 @@ const adminUserStatusRateLimit = createRateLimit({
 });
 const adminProjectBulkActionRateLimit = createRateLimit({
   name: "admin-project-bulk-action",
+  max: 60,
+  windowMs: 60 * 60 * 1000,
+});
+const adminProjectRequestDecisionRateLimit = createRateLimit({
+  name: "admin-project-request-decision",
   max: 60,
   windowMs: 60 * 60 * 1000,
 });
@@ -87,6 +94,12 @@ router.put(
   "/project-requests/:projectRequestId/assignees",
   validate(projectRequestAssigneesSchema),
   updateProjectRequestAssignees,
+);
+router.patch(
+  "/project-requests/:projectRequestId/decision",
+  adminProjectRequestDecisionRateLimit,
+  validate(projectRequestDecisionSchema),
+  patchProjectRequestDecision,
 );
 router.get("/roles", getRoles);
 router.get("/permissions", getPermissions);

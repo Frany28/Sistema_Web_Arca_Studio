@@ -248,6 +248,18 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 - Los responsables y contenidos existentes se conservan como historial. Si se necesita acceso posterior, debe resolverse con un flujo administrativo específico y no alterando el equipo finalizado.
 - El frontend debe comunicar el cierre y el backend debe rechazar las mutaciones operativas con `PROJECT_FINALIZED`.
 
+### Solicitudes de proyecto
+
+- El flujo usa los estados `draft`, `pending_verification`, `pending_review`, `changes_requested`, `rejected` y `converted`.
+- El cliente solo edita borradores y solicitudes devueltas para corrección. Al reenviar una corrección, la solicitud vuelve a verificación administrativa.
+- Asignar el primer arquitecto inicia la revisión técnica. Una solicitud en revisión debe conservar al menos un arquitecto asignado.
+- Solamente administradores y arquitectos asignados consultan la cola técnica. El arquitecto registra una recomendación con motivo; el administrador conserva la decisión final.
+- Aprobar, rechazar o solicitar correcciones exige al menos una revisión de un arquitecto que continúe asignado.
+- Correcciones y rechazo son decisiones diferentes: `changes_requested` vuelve a habilitar la edición del cliente; `rejected` es final y permite iniciar una solicitud nueva reutilizando los datos.
+- El rechazo conserva responsables, datos y archivos como historial y siempre muestra al cliente un motivo. Las notas internas nunca se exponen al cliente.
+- La aprobación crea el proyecto y convierte la solicitud de forma atómica. La solicitud conserva `converted_project_id` para impedir conversiones duplicadas y permitir navegar al proyecto resultante.
+- Toda transición se valida en backend, se registra en auditoría y genera una notificación al cliente cuando existe una decisión administrativa.
+
 ### Navegación superior persistente
 
 - Todas las pantallas del entorno autenticado deben renderizar `EnvironmentNavigationBar`; las páginas no pueden importar directamente `ui/NavigationBar/NavigationBar.jsx` ni recrear el navbar con JSX o estilos locales.

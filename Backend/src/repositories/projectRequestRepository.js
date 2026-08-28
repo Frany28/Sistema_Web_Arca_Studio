@@ -34,7 +34,12 @@ const SELECT_FIELDS = `
   compatibility_score,
   compatibility_level,
   compatibility_reason_codes,
-  compatibility_scoring_version
+  compatibility_scoring_version,
+  reviewed_by,
+  reviewed_at,
+  rejection_reason,
+  correction_reason,
+  converted_project_id
 `;
 
 function toProjectRequestRecord(row) {
@@ -84,6 +89,12 @@ function toProjectRequestRecord(row) {
     providerPlaceId: row.provider_place_id,
     quality: row.quality_expectation,
     referenceLink: row.reference_link,
+    correctionReason: row.correction_reason || null,
+    convertedProjectId: row.converted_project_id == null
+      ? null
+      : Number(row.converted_project_id),
+    rejectionReason: row.rejection_reason || null,
+    reviewedAt: row.reviewed_at || null,
     requestedBy: Number(row.requested_by),
     startTime: row.expected_start_time,
     status: row.status,
@@ -109,7 +120,7 @@ export async function listProjectRequestsForUser(user, { cursor, limit }) {
       where client_id = $1
         and requested_by = $2
         and deleted_at is null
-        and status in ('pending_verification', 'pending_review')
+        and status <> 'draft'
         ${cursorCondition}
       order by created_at desc, id desc
       limit $${params.length}
@@ -257,7 +268,7 @@ export async function updateProjectRequestDraft(projectRequestId, user, payload)
         and client_id = $1
         and requested_by = $2
         and deleted_at is null
-        and status = 'draft'
+        and status in ('draft', 'changes_requested')
       returning ${SELECT_FIELDS}
     `,
     [...params.slice(0, 25), projectRequestId],
@@ -268,20 +279,46 @@ export async function updateProjectRequestDraft(projectRequestId, user, payload)
 export async function submitProjectRequestForUser(projectRequestId, user, evaluation) {
   const result = await query(
     `
-      update public.project_requests
-      set
-        status = 'pending_review',
-        compatibility_score = $4,
-        compatibility_level = $5::project_compatibility_level,
-        compatibility_reason_codes = $6::jsonb,
-        compatibility_scoring_version = $7,
-        updated_at = now()
-      where id = $1
-        and client_id = $2
-        and requested_by = $3
-        and deleted_at is null
-        and status = 'draft'
-      returning ${SELECT_FIELDS}
+      with target as (
+        select id as target_id, status as old_status
+        from public.project_requests
+        where id = $1
+          and client_id = $2
+          and requested_by = $3
+          and deleted_at is null
+          and status in ('draft', 'changes_requested')
+        for update
+      ),
+      updated as (
+        update public.project_requests request
+        set
+          status = 'pending_verification',
+          compatibility_score = $4,
+          compatibility_level = $5::project_compatibility_level,
+          compatibility_reason_codes = $6::jsonb,
+          compatibility_scoring_version = $7,
+          updated_at = now()
+        from target
+        where request.id = target.target_id
+        returning ${SELECT_FIELDS}
+      ),
+      audited as (
+        insert into public.audit_logs (
+          user_id, action, entity_type, entity_id, description, old_values, new_values
+        )
+        select
+          $3,
+          'project_request.submit',
+          'project_request',
+          target.target_id,
+          'Solicitud enviada para verificacion',
+          jsonb_build_object('status', target.old_status),
+          jsonb_build_object('status', 'pending_verification')
+        from target
+        inner join updated on updated.id = target.target_id
+        returning id
+      )
+      select * from updated
     `,
     [
       projectRequestId,

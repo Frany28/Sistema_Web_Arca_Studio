@@ -52,7 +52,7 @@ export async function findProjectRequestForFileUpload(projectRequestId, user) {
       from public.project_requests
       where id = $1
         and deleted_at is null
-        and status = 'draft'
+        and status in ('draft', 'changes_requested')
       limit 1
     `,
     [projectRequestId],
@@ -287,7 +287,7 @@ export async function deleteProjectRequestFile({
           and f.deleted_at is null
           and f.status <> 'deleted'
           and pr.deleted_at is null
-          and pr.status = 'draft'
+          and pr.status in ('draft', 'changes_requested')
         limit 1
       `,
       [fileId, projectRequestId],
@@ -788,6 +788,66 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
     return null;
   }
 
+  return {
+    fileName: file.file_name,
+    fileSize: file.file_size === null ? null : Number(file.file_size),
+    fileType: file.file_type,
+    id: Number(file.id),
+    currentVersionId: Number(file.version_id),
+    originalName: file.original_name || file.title || "archivo",
+    title: file.title,
+  };
+}
+
+export async function findProjectRequestFileForDownload({ fileId, projectRequestId, user }) {
+  const params = [projectRequestId, fileId];
+  const roleCode = user?.role?.code;
+  let accessCondition = "false";
+
+  if (roleCode === "admin") {
+    accessCondition = "true";
+  } else if (roleCode === "architect") {
+    params.push(user.id);
+    accessCondition = `exists (
+      select 1
+      from public.project_request_assignees assignment
+      where assignment.project_request_id = request.id
+        and assignment.user_id = $3
+    )`;
+  } else if (roleCode === "client" && user.clientId) {
+    params.push(user.id, user.clientId);
+    accessCondition = `(request.requested_by = $3 or request.client_id = $4)`;
+  }
+
+  const result = await query(
+    `
+      select
+        file.id,
+        file.title,
+        file.file_type,
+        version.id as version_id,
+        version.file_name,
+        version.original_name,
+        version.file_size
+      from public.files file
+      inner join public.project_requests request
+        on request.id = file.project_request_id
+      left join public.file_versions version
+        on version.file_id = file.id
+        and version.version_number = file.current_version
+        and version.deleted_at is null
+      where file.project_request_id = $1
+        and file.id = $2
+        and file.deleted_at is null
+        and file.status <> 'deleted'
+        and request.deleted_at is null
+        and (${accessCondition})
+      limit 1
+    `,
+    params,
+  );
+  const file = result.rows[0];
+  if (!file?.file_name) return null;
   return {
     fileName: file.file_name,
     fileSize: file.file_size === null ? null : Number(file.file_size),

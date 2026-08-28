@@ -30,6 +30,8 @@ import AdminDashboardOperations from "./components/AdminDashboardOperations.jsx"
 import AdminDashboardOverview from "./components/AdminDashboardOverview.jsx";
 import AdminActiveProjects from "./components/AdminActiveProjects.jsx";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
+import ProjectRequestReviewQueue from "./components/ProjectRequestReviewQueue.jsx";
+import ProjectRequestWorkflowModal from "./components/ProjectRequestWorkflowModal.jsx";
 
 const WEB_BREAKPOINT_PX = 1280;
 
@@ -94,6 +96,15 @@ function ArchitectDashboard({ empty = false }) {
   const [adminAssigneesLoading, setAdminAssigneesLoading] = useState(
     currentUser.roleCode === "admin" && !empty,
   );
+  const [reviewRequests, setReviewRequests] = useState([]);
+  const [reviewRequestsError, setReviewRequestsError] = useState("");
+  const [reviewRequestsLoading, setReviewRequestsLoading] = useState(
+    ["admin", "architect"].includes(currentUser.roleCode) && !empty,
+  );
+  const [reviewRequestsRevision, setReviewRequestsRevision] = useState(0);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [workflowError, setWorkflowError] = useState("");
+  const [workflowSubmitting, setWorkflowSubmitting] = useState(false);
   const canManagePublication =
     user?.permissionCodes?.includes("projects.publish");
 
@@ -323,6 +334,36 @@ function ArchitectDashboard({ empty = false }) {
   }, [adminOverviewRequestKey, currentUser.roleCode, empty, user]);
 
   useEffect(() => {
+    if (!["admin", "architect"].includes(currentUser.roleCode) || empty) {
+      setReviewRequests([]);
+      setReviewRequestsLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+    setReviewRequestsLoading(true);
+    setReviewRequestsError("");
+    api.projectRequests
+      .listReviewQueue()
+      .then((data) => {
+        if (active) setReviewRequests(data.projectRequests || []);
+      })
+      .catch((error) => {
+        if (active) {
+          setReviewRequests([]);
+          setReviewRequestsError(error?.message || "No se pudieron cargar las solicitudes.");
+        }
+      })
+      .finally(() => {
+        if (active) setReviewRequestsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentUser.roleCode, empty, reviewRequestsRevision]);
+
+  useEffect(() => {
     if (currentUser.roleCode !== "admin" || empty) {
       return undefined;
     }
@@ -524,6 +565,46 @@ function ArchitectDashboard({ empty = false }) {
           : currentRequest,
       ),
     }));
+    setReviewRequestsRevision((current) => current + 1);
+  };
+
+  const openRequestWorkflow = (request) => {
+    const detailedRequest = reviewRequests.find(
+      (candidate) => Number(candidate.id) === Number(request.id),
+    );
+    setWorkflowError("");
+    setSelectedRequest(detailedRequest || request);
+  };
+
+  const submitRequestWorkflow = async ({ action, note }) => {
+    if (!selectedRequest) return;
+    setWorkflowSubmitting(true);
+    setWorkflowError("");
+    try {
+      if (currentUser.roleCode === "admin") {
+        await api.admin.decideProjectRequest({
+          action: action === "changes_requested" ? "request_changes" : action,
+          internalNotes: action === "approve" ? note || undefined : undefined,
+          projectRequestId: selectedRequest.id,
+          reason: action === "approve" ? undefined : note,
+        });
+        setAdminOverviewRequestKey((current) => current + 1);
+        setAdminMetricsRequestKey((current) => current + 1);
+        setProjectsRequestKey((current) => current + 1);
+      } else {
+        await api.projectRequests.review({
+          note,
+          projectRequestId: selectedRequest.id,
+          recommendation: action,
+        });
+      }
+      setSelectedRequest(null);
+      setReviewRequestsRevision((current) => current + 1);
+    } catch (error) {
+      setWorkflowError(error?.message || "No se pudo guardar la revisión.");
+    } finally {
+      setWorkflowSubmitting(false);
+    }
   };
 
   return (
@@ -602,6 +683,7 @@ function ArchitectDashboard({ empty = false }) {
                   }
                 }}
                 onRequestAssigneesChange={handleRequestAssigneesChange}
+                onRequestOpen={openRequestWorkflow}
                 onRetry={() =>
                   setAdminOverviewRequestKey((current) => current + 1)
                 }
@@ -618,6 +700,16 @@ function ArchitectDashboard({ empty = false }) {
                 onRetry={() => setProjectsRequestKey((current) => current + 1)}
               />
             </>
+          ) : null}
+
+          {currentUser.roleCode === "architect" ? (
+            <ProjectRequestReviewQueue
+              error={reviewRequestsError}
+              loading={reviewRequestsLoading}
+              requests={reviewRequests}
+              onOpen={openRequestWorkflow}
+              onRetry={() => setReviewRequestsRevision((current) => current + 1)}
+            />
           ) : null}
 
           {currentUser.roleCode !== "admin" && projectsLoading ? (
@@ -671,6 +763,18 @@ function ArchitectDashboard({ empty = false }) {
             onActivitySelect={handleActivitySelect}
             onCommentSelect={openImageComment}
             onSubmitComment={commentsProjectId ? submitComment : undefined}
+          />
+          <ProjectRequestWorkflowModal
+            key={selectedRequest?.id || "closed-request-workflow"}
+            error={workflowError}
+            mode={currentUser.roleCode === "admin" ? "decision" : "review"}
+            open={Boolean(selectedRequest)}
+            projectRequest={selectedRequest}
+            submitting={workflowSubmitting}
+            onClose={() => {
+              if (!workflowSubmitting) setSelectedRequest(null);
+            }}
+            onSubmit={submitRequestWorkflow}
           />
         </div>
       </div>

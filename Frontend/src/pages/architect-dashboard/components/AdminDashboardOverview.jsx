@@ -71,6 +71,7 @@ function RequestRow({
   assigneesLoading,
   isLast,
   onAssigneesChange,
+  onOpenRequest,
   request,
 }) {
   return (
@@ -106,8 +107,8 @@ function RequestRow({
         showLeftIcon
         showRightIcon={false}
         iconLeft={<Eye size="20" variant="Linear" color="currentColor" />}
-        aria-label={`Ver solicitud ${request.projectName} (próximamente)`}
-        aria-disabled="true"
+        aria-label={`Ver solicitud ${request.projectName}`}
+        onClick={() => onOpenRequest?.(request)}
       />
     </div>
   );
@@ -121,6 +122,7 @@ function AdminDashboardOverview({
   newRequests = [],
   onActivitySelect,
   onRequestAssigneesChange,
+  onRequestOpen,
   onRetry,
   recentActivity = [],
 }) {
@@ -202,6 +204,7 @@ function AdminDashboardOverview({
                 assignees={assignees}
                 assigneesLoading={assigneesLoading}
                 onAssigneesChange={onRequestAssigneesChange}
+                onOpenRequest={onRequestOpen}
               />
             ))}
           </div>

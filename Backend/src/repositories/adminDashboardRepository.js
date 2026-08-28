@@ -25,6 +25,15 @@ function mapAssignmentResult(row = {}) {
   };
 }
 
+function mapRequestAssignmentResult(row = {}) {
+  return {
+    ...mapAssignmentResult(row),
+    assignmentAllowed: Boolean(row.assignment_allowed),
+    mutable: Boolean(row.mutable),
+    status: row.status || null,
+  };
+}
+
 function mapManagedProject(row = {}) {
   return {
     archived: row.status === "archived",
@@ -329,10 +338,16 @@ export async function replaceProjectRequestAssignees({
   const result = await query(
     `
       with target as (
-        select id
+        select id, status
         from public.project_requests
         where id = $1
           and deleted_at is null
+        for update
+      ),
+      mutable_target as (
+        select id, status
+        from target
+        where status in ('pending_verification', 'pending_review')
       ),
       requested as (
         select distinct unnest($2::bigint[]) as user_id
@@ -355,7 +370,18 @@ export async function replaceProjectRequestAssignees({
       validation as (
         select
           (select count(*) from requested) = (select count(*) from eligible)
-            as all_eligible
+            as all_eligible,
+          exists(select 1 from eligible where role_code = 'architect')
+            as has_architect
+      ),
+      permission as (
+        select
+          (select all_eligible from validation)
+          and (
+            mutable_target.status = 'pending_verification'
+            or (select has_architect from validation)
+          ) as assignment_allowed
+        from mutable_target
       ),
       upserted as (
         insert into public.project_request_assignees (
@@ -363,33 +389,64 @@ export async function replaceProjectRequestAssignees({
           user_id,
           assigned_by
         )
-        select target.id, eligible.id, $3
-        from target
+        select mutable_target.id, eligible.id, $3
+        from mutable_target
         cross join eligible
-        where (select all_eligible from validation)
+        where (select assignment_allowed from permission)
         on conflict (project_request_id, user_id) do update
           set assigned_by = excluded.assigned_by
         returning user_id
       ),
       removed as (
         delete from public.project_request_assignees assignment
-        using target
-        where assignment.project_request_id = target.id
-          and (select all_eligible from validation)
+        using mutable_target
+        where assignment.project_request_id = mutable_target.id
+          and (select assignment_allowed from permission)
           and not (assignment.user_id = any($2::bigint[]))
         returning assignment.user_id
       ),
       updated as (
         update public.project_requests request
-        set updated_at = now()
+        set
+          status = case
+            when (select has_architect from validation)
+              then 'pending_review'::public.project_request_status
+            else request.status
+          end,
+          updated_at = now()
+        from mutable_target
+        where request.id = mutable_target.id
+          and (select assignment_allowed from permission)
+        returning request.id, request.status
+      ),
+      audited as (
+        insert into public.audit_logs (
+          user_id, action, entity_type, entity_id, description, old_values, new_values
+        )
+        select
+          $3,
+          'project_request.assign',
+          'project_request',
+          target.id,
+          'Responsables de solicitud actualizados',
+          jsonb_build_object('status', target.status),
+          jsonb_build_object(
+            'assigneeIds', $2::bigint[],
+            'status', updated.status
+          )
         from target
-        where request.id = target.id
-          and (select all_eligible from validation)
-        returning request.id
+        inner join updated on updated.id = target.id
+        returning id
       )
       select
         exists(select 1 from target) as target_exists,
+        exists(select 1 from mutable_target) as mutable,
         (select all_eligible from validation) as all_eligible,
+        coalesce((select assignment_allowed from permission), false) as assignment_allowed,
+        coalesce(
+          (select status::text from updated),
+          (select status::text from target)
+        ) as status,
         coalesce(
           (
             select json_agg(
@@ -410,7 +467,7 @@ export async function replaceProjectRequestAssignees({
     [projectRequestId, assigneeIds, assignedBy],
   );
 
-  return mapAssignmentResult(result.rows[0]);
+  return mapRequestAssignmentResult(result.rows[0]);
 }
 
 export async function getAdminDashboardMetrics() {

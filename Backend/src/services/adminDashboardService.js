@@ -6,7 +6,7 @@ import {
   replaceProjectAssignees,
   replaceProjectRequestAssignees,
 } from "../repositories/adminDashboardRepository.js";
-import { NotFoundError, ValidationError } from "../errors/appError.js";
+import { ConflictError, NotFoundError, ValidationError } from "../errors/appError.js";
 import { assertProjectOperationallyMutable } from "./projectService.js";
 
 export function loadAdminDashboardMetrics() {
@@ -98,9 +98,30 @@ export async function assignEmployeesToProjectRequest({
     projectRequestId,
   });
 
-  return assertAssignmentResult(
-    result,
-    "PROJECT_REQUEST_NOT_FOUND",
-    "Solicitud de proyecto no encontrada.",
-  );
+  if (!result.targetExists) {
+    throw new NotFoundError(
+      "PROJECT_REQUEST_NOT_FOUND",
+      "Solicitud de proyecto no encontrada.",
+    );
+  }
+  if (!result.mutable) {
+    throw new ConflictError(
+      "PROJECT_REQUEST_CLOSED",
+      "Los responsables solo pueden cambiarse durante la verificación o revisión.",
+    );
+  }
+  if (!result.allEligible) {
+    throw new ValidationError(
+      "Solo se pueden asignar administradores o arquitectos activos.",
+      { assigneeIds: "Incluye al menos un usuario no elegible." },
+    );
+  }
+  if (!result.assignmentAllowed) {
+    throw new ValidationError(
+      "Una solicitud en revisión debe conservar al menos un arquitecto asignado.",
+      { assigneeIds: "Selecciona al menos un arquitecto." },
+    );
+  }
+
+  return result.assignees;
 }
