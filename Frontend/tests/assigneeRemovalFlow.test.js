@@ -51,6 +51,9 @@ test("project assignee removals require confirmation and expose coherent success
   assert.match(projectsSource, /<AssigneeMultiSelect[\s\S]*confirmRemoval/);
   assert.match(projectsSource, /onRemovalSuccess=\{\(removedAssignees\) =>/);
   assert.match(selectorSource, /getRemovedAssignees\(value, nextValue\)/);
+  assert.match(selectorSource, /function AssigneeIcon\(\)/);
+  assert.match(selectorSource, /leftIcon=\{<AssigneeIcon \/>\}/);
+  assert.match(selectorSource, /M17\.1585 18\.3333C17\.1585 15\.1083/);
   assert.match(selectorSource, /onRemovalSuccess\?\.\(removedAssignees\)/);
   assert.match(projectsSource, /title=\{assigneeRemovalFeedback\.names\.length/);
   assert.match(projectsSource, /secondaryActionLabel="Cerrar"/);

@@ -6,6 +6,34 @@ import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
 import AssigneeRemovalModal from "./AssigneeRemovalModal.jsx";
 import { getRemovedAssignees } from "./assigneeSelection.js";
 
+function AssigneeIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M9.99967 9.99984C12.3009 9.99984 14.1663 8.13436 14.1663 5.83317C14.1663 3.53198 12.3009 1.6665 9.99967 1.6665C7.69849 1.6665 5.83301 3.53198 5.83301 5.83317C5.83301 8.13436 7.69849 9.99984 9.99967 9.99984Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M17.1585 18.3333C17.1585 15.1083 13.9501 12.5 10.0001 12.5C6.05013 12.5 2.8418 15.1083 2.8418 18.3333"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function normalizeText(value) {
   return String(value || "")
     .normalize("NFD")
@@ -211,6 +239,7 @@ function AssigneeMultiSelect({
           hintText={resolvedError}
           showLabelInfo={false}
           showLeftIcon
+          leftIcon={<AssigneeIcon />}
           showRightIcon={isSaving}
           rightIcon={
             isSaving ? (
