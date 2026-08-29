@@ -70,6 +70,16 @@ test("the Figma table footer stays visible and exposes functional pagination", a
   assert.match(source, /disabled=\{!pagination\.canGoNext/);
   assert.match(source, /onClick=\{goToPreviousPage\}/);
   assert.match(source, /onClick=\{goToNextPage\}/);
+  assert.match(
+    source,
+    /scrollToTableEndAfterPreviousRef\.current = true;[\s\S]*setPageIndex\(pagination\.pageIndex - 1\)/,
+  );
+  assert.match(source, /ref=\{tableFooterRef\}/);
+  assert.match(
+    source,
+    /tableFooterRef\.current\?\.scrollIntoView\(\{[\s\S]*block: "end"/,
+  );
+  assert.match(source, /prefers-reduced-motion: reduce/);
   assert.match(source, /setPageIndex\(pagination\.pageIndex - 1\);[\s\S]*setSelectedProjectIds\(new Set\(\)\)/);
   assert.match(source, /setPageIndex\(pagination\.pageIndex \+ 1\);[\s\S]*setSelectedProjectIds\(new Set\(\)\)/);
   assert.match(source, /await onBulkAction\(\{ action, projects: selectedVisibleProjects \}\)/);

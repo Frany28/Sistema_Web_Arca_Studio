@@ -19,7 +19,18 @@ function formatActivityTime(value) {
 
   return Number.isNaN(date.getTime())
     ? "--:--"
-    : activityTimeFormatter.format(date).toUpperCase();
+    : activityTimeFormatter
+        .format(date)
+        .toUpperCase()
+        .replace(/\s*([AP])\.\s*M\.$/, " $1M");
+}
+
+function ActivityTime({ value }) {
+  return (
+    <span className="text-body-4 inline-flex h-[34px] w-[73px] shrink-0 items-center justify-center rounded-[var(--radius-full)] border border-[var(--color-text-300)] bg-[var(--color-neutral-100)] text-[var(--color-text-300)] shadow-[0_0_0_var(--stroke-2)_var(--color-primary-10)]">
+      {formatActivityTime(value)}
+    </span>
+  );
 }
 
 function ActivityRow({ activity, isLast, onSelect }) {
@@ -31,9 +42,7 @@ function ActivityRow({ activity, isLast, onSelect }) {
           : "border-b border-[var(--color-neutral-200)] pb-[16px]"
       }`}
     >
-      <span className="text-body-4 inline-flex h-9 w-[73px] shrink-0 items-center justify-center rounded-[var(--radius-full)] border border-[var(--color-neutral-600)] text-[var(--color-text-300)]">
-        {formatActivityTime(activity.createdAt)}
-      </span>
+      <ActivityTime value={activity.createdAt} />
       <span className="flex min-w-0 flex-1 flex-col gap-[4px]">
         <span className="text-body-3 truncate text-[var(--color-text-300)]">
           {activity.title}
@@ -184,7 +193,10 @@ function AdminDashboardOverview({
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-[16px] py-[16px]">
+      <div
+        className="flex min-w-0 flex-col gap-[16px] py-[16px]"
+        data-admin-new-requests="true"
+      >
         <Label label="Nuevas solicitudes" required={false} information={false} />
         {error ? (
           <EmptyState

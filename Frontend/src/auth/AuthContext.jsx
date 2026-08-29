@@ -54,6 +54,7 @@ export function AuthProvider({ children }) {
     AUTH_SESSION_STATUS.LOADING,
   );
   const [user, setUser] = useState(null);
+  const [loginEventId, setLoginEventId] = useState(0);
   const [sessionRestorer] = useState(() =>
     createAuthSessionRestorer({ fetchSession: api.auth.me }),
   );
@@ -108,6 +109,7 @@ export function AuthProvider({ children }) {
     const nextUser = normalizeUser(data.user);
     setUser(nextUser);
     setSessionStatus(AUTH_SESSION_STATUS.AUTHENTICATED);
+    setLoginEventId((current) => current + 1);
     return nextUser;
   }, []);
 
@@ -176,6 +178,7 @@ export function AuthProvider({ children }) {
       isLoading: sessionStatus === AUTH_SESSION_STATUS.LOADING,
       isSessionUnavailable:
         sessionStatus === AUTH_SESSION_STATUS.TEMPORARILY_UNAVAILABLE,
+      loginEventId,
       completeRegistration,
       login,
       logout,
@@ -187,6 +190,7 @@ export function AuthProvider({ children }) {
     [
       completeRegistration,
       login,
+      loginEventId,
       logout,
       restoreSession,
       sessionStatus,

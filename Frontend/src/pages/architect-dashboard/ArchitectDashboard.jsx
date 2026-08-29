@@ -7,6 +7,7 @@ import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/EnvironmentNavigationBar.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
+import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
 import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
@@ -29,6 +30,8 @@ import AdminDashboardMetrics from "./components/AdminDashboardMetrics.jsx";
 import AdminDashboardOperations from "./components/AdminDashboardOperations.jsx";
 import AdminDashboardOverview from "./components/AdminDashboardOverview.jsx";
 import AdminActiveProjects from "./components/AdminActiveProjects.jsx";
+import AdminRequestLoginAlert from "./components/AdminRequestLoginAlert.jsx";
+import AdminRequestAssignmentModal from "./components/AdminRequestAssignmentModal.jsx";
 import ArchitectProjectGroup from "./components/ArchitectProjectGroup.jsx";
 import ProjectRequestReviewQueue from "./components/ProjectRequestReviewQueue.jsx";
 import ProjectRequestWorkflowModal from "./components/ProjectRequestWorkflowModal.jsx";
@@ -69,7 +72,7 @@ function toProjectRow(project, user) {
 
 function ArchitectDashboard({ empty = false }) {
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { loginEventId, logout, user } = useAuth();
   const currentUser = getUserDisplay(user);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() =>
     typeof window === "undefined" ? true : window.innerWidth >= WEB_BREAKPOINT_PX,
@@ -105,6 +108,11 @@ function ArchitectDashboard({ empty = false }) {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [workflowError, setWorkflowError] = useState("");
   const [workflowSubmitting, setWorkflowSubmitting] = useState(false);
+  const [assignmentModalRequest, setAssignmentModalRequest] = useState(null);
+  const [assignmentDraft, setAssignmentDraft] = useState([]);
+  const [assignmentSubmitting, setAssignmentSubmitting] = useState(false);
+  const [assignmentFeedback, setAssignmentFeedback] = useState(null);
+  const [assignmentModalRequested, setAssignmentModalRequested] = useState(false);
   const canManagePublication =
     user?.permissionCodes?.includes("projects.publish");
 
@@ -576,6 +584,79 @@ function ArchitectDashboard({ empty = false }) {
     setSelectedRequest(detailedRequest || request);
   };
 
+  const loginNotificationRequest =
+    adminOverview?.newRequests?.[0] || reviewRequests[0] || null;
+
+  useEffect(() => {
+    if (!assignmentModalRequested || !loginNotificationRequest) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+
+      setAssignmentDraft(loginNotificationRequest.assignees || []);
+      setAssignmentModalRequest(loginNotificationRequest);
+      setAssignmentModalRequested(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assignmentModalRequested, loginNotificationRequest]);
+
+  const handleLoginNotificationAssign = () => {
+    setAssignmentModalRequested(true);
+  };
+
+  const handleLoginNotificationView = () => {
+    if (loginNotificationRequest) {
+      openRequestWorkflow(loginNotificationRequest);
+    }
+  };
+
+  const closeAssignmentModal = () => {
+    if (assignmentSubmitting) return;
+
+    setAssignmentModalRequest(null);
+    setAssignmentDraft([]);
+  };
+
+  const confirmRequestAssignment = async () => {
+    if (!assignmentModalRequest || !assignmentDraft.length || assignmentSubmitting) {
+      return;
+    }
+
+    const request = assignmentModalRequest;
+    const selectedNames = assignmentDraft.map((assignee) => assignee.name).join(", ");
+
+    setAssignmentSubmitting(true);
+    try {
+      await handleRequestAssigneesChange(request, assignmentDraft);
+      setAssignmentModalRequest(null);
+      setAssignmentDraft([]);
+      setAssignmentFeedback({
+        id: `request-assignment-success-${Date.now()}`,
+        type: "success",
+        title: "Responsable asignado",
+        message: `${selectedNames} revisará ${request.projectName}.`,
+      });
+    } catch (error) {
+      setAssignmentModalRequest(null);
+      setAssignmentDraft([]);
+      setAssignmentFeedback({
+        id: `request-assignment-error-${Date.now()}`,
+        type: "error",
+        title: "No se pudo asignar al responsable",
+        message: error?.message || "Inténtalo nuevamente.",
+      });
+    } finally {
+      setAssignmentSubmitting(false);
+    }
+  };
+
   const submitRequestWorkflow = async ({ action, note }) => {
     if (!selectedRequest) return;
     setWorkflowSubmitting(true);
@@ -776,6 +857,33 @@ function ArchitectDashboard({ empty = false }) {
             }}
             onSubmit={submitRequestWorkflow}
           />
+          <AdminRequestAssignmentModal
+            open={Boolean(assignmentModalRequest)}
+            assignees={adminAssignees}
+            assigneesLoading={adminAssigneesLoading}
+            selectedAssignees={assignmentDraft}
+            submitting={assignmentSubmitting}
+            onSelectionChange={setAssignmentDraft}
+            onCancel={closeAssignmentModal}
+            onConfirm={confirmRequestAssignment}
+          />
+          {currentUser.roleCode === "admin" ? (
+            <AdminRequestLoginAlert
+              trigger={loginEventId || null}
+              onAssign={handleLoginNotificationAssign}
+              onView={handleLoginNotificationView}
+            />
+          ) : null}
+          {assignmentFeedback ? (
+            <AlertToast
+              trigger={assignmentFeedback.id}
+              theme={assignmentFeedback.type === "error" ? "Danger" : "Success"}
+              title={assignmentFeedback.title}
+              description={assignmentFeedback.message}
+              onDismiss={() => setAssignmentFeedback(null)}
+              aria-label={assignmentFeedback.title}
+            />
+          ) : null}
         </div>
       </div>
     </main>

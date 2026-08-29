@@ -40,12 +40,13 @@ test("administrative rejection and corrections require a public reason", () => {
 });
 
 test("the request workflow enforces assignment, review and atomic conversion", async () => {
-  const [assignmentSource, repositorySource, routesSource, migrationSource, fileSource] = await Promise.all([
+  const [assignmentSource, repositorySource, routesSource, migrationSource, fileSource, seedSource] = await Promise.all([
     readFile(new URL("../src/repositories/adminDashboardRepository.js", import.meta.url), "utf8"),
     readFile(new URL("../src/repositories/projectRequestWorkflowRepository.js", import.meta.url), "utf8"),
     readFile(new URL("../src/routes/projectRequests.js", import.meta.url), "utf8"),
     readFile(new URL("../prisma/migrations/20260828160000_project_request_review_flow/migration.sql", import.meta.url), "utf8"),
     readFile(new URL("../src/repositories/fileRepository.js", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/seed-project-request-workflow-example.mjs", import.meta.url), "utf8"),
   ]);
 
   assert.match(assignmentSource, /status in \('pending_verification', 'pending_review'\)/);
@@ -61,4 +62,7 @@ test("the request workflow enforces assignment, review and atomic conversion", a
   assert.match(migrationSource, /project_request_reviews/);
   assert.match(fileSource, /findProjectRequestFileForDownload/);
   assert.match(fileSource, /project_request_assignees/);
+  assert.match(seedSource, /Café Mirador Solicitud Demo/);
+  assert.match(seedSource, /pending_verification/);
+  assert.match(seedSource, /DEMO_SUBMISSION_ID/);
 });

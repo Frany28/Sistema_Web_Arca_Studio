@@ -47,3 +47,22 @@ test("admin drawer activity is centralized and isolated by authenticated scope",
   assert.match(cacheSource, /String\(scopeKey \|\| "admin-session"\)/);
   assert.match(cacheSource, /if \(inFlightByScope\.has\(resolvedScopeKey\)\)/);
 });
+
+test("recent activity time matches the double-ring Figma component", async () => {
+  const source = await readFile(
+    new URL(
+      "../src/pages/architect-dashboard/components/AdminDashboardOverview.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(source, /function ActivityTime\(\{ value \}\)/);
+  assert.match(source, /h-\[34px\] w-\[73px\]/);
+  assert.match(source, /border-\[var\(--color-text-300\)\]/);
+  assert.match(
+    source,
+    /shadow-\[0_0_0_var\(--stroke-2\)_var\(--color-primary-10\)\]/,
+  );
+  assert.match(source, /replace\(\/\\s\*\(\[AP\]\)\\\.\\s\*M\\\.\$\/, " \$1M"\)/);
+});

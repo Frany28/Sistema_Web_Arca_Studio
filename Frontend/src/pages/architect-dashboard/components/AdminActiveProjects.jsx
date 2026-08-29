@@ -130,6 +130,8 @@ function AdminActiveProjects({
   const assigneeUndoPendingRef = useRef(false);
   const bulkActionPendingRef = useRef(false);
   const tableViewportRef = useRef(null);
+  const tableFooterRef = useRef(null);
+  const scrollToTableEndAfterPreviousRef = useRef(false);
   const [tableScrollState, setTableScrollState] = useState({
     length: 1,
     position: 0,
@@ -264,6 +266,26 @@ function AdminActiveProjects({
     return () => resizeObserver.disconnect();
   }, [error, loading, syncTableScrollState, visibleProjects.length]);
 
+  useEffect(() => {
+    if (!scrollToTableEndAfterPreviousRef.current) {
+      return undefined;
+    }
+
+    scrollToTableEndAfterPreviousRef.current = false;
+    const animationFrame = window.requestAnimationFrame(() => {
+      const prefersReducedMotion = window.matchMedia?.(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      tableFooterRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "end",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [pagination.pageIndex, visibleProjects.length]);
+
   const handleTableScrollPositionChange = useCallback(
     (position) => {
       const viewport = tableViewportRef.current;
@@ -319,6 +341,7 @@ function AdminActiveProjects({
 
   const goToPreviousPage = () => {
     if (!pagination.canGoPrevious || bulkActionPending) return;
+    scrollToTableEndAfterPreviousRef.current = true;
     setPageIndex(pagination.pageIndex - 1);
     setSelectedProjectIds(new Set());
     setBulkActionFeedback(null);
@@ -625,6 +648,7 @@ function AdminActiveProjects({
           )}
 
           <footer
+            ref={tableFooterRef}
             className="flex min-h-[42px] w-full flex-wrap items-center justify-between gap-x-[12px] gap-y-[12px]"
             aria-label="SelecciÃ³n y paginaciÃ³n de proyectos"
             data-selection-footer="true"
