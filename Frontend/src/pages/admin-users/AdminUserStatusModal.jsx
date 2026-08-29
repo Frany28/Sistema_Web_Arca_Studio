@@ -51,7 +51,7 @@ function AdminUserStatusModal({ change, onCancel, onConfirm }) {
         <Warning2
           size="20"
           color="currentColor"
-          className="size-5 text-[var(--color-warning-200)]"
+          className="size-5 text-[var(--color-danger-100)]"
         />
       )}
       onClose={onCancel}

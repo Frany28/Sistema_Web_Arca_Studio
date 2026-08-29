@@ -157,7 +157,7 @@ function Modal({
     : "flex-col";
   const buttonClassName = isHorizontalSplit
     ? "h-[40px] min-w-0 w-[90px]"
-    : "h-[40px] min-w-0 w-auto flex-1";
+    : "h-[41px] min-w-0 w-auto flex-1";
   const overlayClassName =
     resolvedTransitionPreset === "fade-scale"
       ? clsx("transition-opacity", isActive ? "opacity-100" : "opacity-0")
@@ -210,7 +210,7 @@ function Modal({
           >
             {children ?? (
               <div
-                className="relative flex w-full max-w-[400px] flex-col overflow-hidden rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e1)]"
+                className="relative flex w-full max-w-[400px] flex-col overflow-hidden rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e2)]"
                 onClick={(event) => event.stopPropagation()}
               >
                 {showDialogCloseButton ? (
@@ -220,7 +220,7 @@ function Modal({
                     onClick={onClose}
                     aria-label="Cerrar modal"
                   >
-                    <CloseIcon className="size-3" />
+                    <CloseIcon className="size-5" />
                   </button>
                 ) : null}
 

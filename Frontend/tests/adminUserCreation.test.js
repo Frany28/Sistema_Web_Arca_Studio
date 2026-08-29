@@ -39,6 +39,10 @@ test("admin user row actions expose the connected Figma status menu", async () =
   assert.match(modal, /¿Deseas reactivar al usuario\?/);
   assert.match(modal, /¿Deseas habilitar al usuario\?/);
   assert.match(modal, /onPrimaryAction=\{onConfirm\}/);
+  assert.match(modal, /secondaryActionTheme="Danger"/);
+  assert.match(modal, /primaryActionTheme=\{change\.status === "active" \? "Primary" : "Danger"\}/);
+  assert.match(modal, /text-\[var\(--color-danger-100\)\]/);
+  assert.doesNotMatch(modal, /text-\[var\(--color-warning-200\)\]/);
   assert.match(page, /if \(change\) changeUserStatus\(change\.user, change\.status\)/);
   assert.match(page, /String\(user\?\.id\) === String\(listedUser\.id\)/);
   assert.match(menu, /createPortal/);
