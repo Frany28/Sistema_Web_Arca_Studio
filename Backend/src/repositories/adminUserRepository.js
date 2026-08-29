@@ -177,10 +177,10 @@ export async function updateAdminUserStatusRecord({ status, userId }) {
       await client.query(
         `
           update public.clients
-          set status = 'inactive', updated_at = now()
+          set status = $2::public.client_status, updated_at = now()
           where id = $1 and deleted_at is null
         `,
-        [updatedUser.client_id],
+        [updatedUser.client_id, status === "active" ? "active" : "inactive"],
       );
     }
 

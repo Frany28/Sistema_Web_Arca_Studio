@@ -75,7 +75,7 @@ test("admin user creation validates identity, roles, status and optional phones"
   assert.equal(adminUserCreateSchema.safeParse({ body: { ...result.data.body, status: "deleted" } }).success, false);
 });
 
-test("admin user status changes accept only suspend and disable actions", () => {
+test("admin user status changes accept suspend, disable and enable actions", () => {
   const suspended = adminUserStatusSchema.safeParse({
     params: { userId: "42" },
     body: { status: "blocked" },
@@ -84,5 +84,6 @@ test("admin user status changes accept only suspend and disable actions", () => 
   assert.equal(suspended.success, true);
   assert.equal(suspended.data.params.userId, 42);
   assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "0" }, body: { status: "inactive" } }).success, false);
-  assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "42" }, body: { status: "active" } }).success, false);
+  assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "42" }, body: { status: "active" } }).success, true);
+  assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "42" }, body: { status: "deleted" } }).success, false);
 });

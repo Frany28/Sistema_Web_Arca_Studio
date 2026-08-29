@@ -38,10 +38,13 @@ export async function patchAdminUserStatus(req, res, next) {
       userId: req.params.userId,
     });
     res.set("Cache-Control", "no-store");
+    const statusMessages = {
+      active: "Usuario habilitado correctamente.",
+      blocked: "Usuario suspendido correctamente.",
+      inactive: "Usuario deshabilitado correctamente.",
+    };
     res.status(200).json({
-      message: user.status === "blocked"
-        ? "Usuario suspendido correctamente."
-        : "Usuario deshabilitado correctamente.",
+      message: statusMessages[user.status],
       user,
     });
   } catch (error) {

@@ -105,7 +105,7 @@ export async function updateAdminUserStatus({ actorUserId, status, userId }) {
   if (Number(actorUserId) === Number(userId)) {
     throw new ConflictError(
       "SELF_STATUS_CHANGE_NOT_ALLOWED",
-      "No puedes suspender o deshabilitar tu propia cuenta.",
+      "No puedes cambiar el estado de tu propia cuenta.",
     );
   }
 

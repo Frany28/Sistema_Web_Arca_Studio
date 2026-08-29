@@ -28,6 +28,7 @@ import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import IconContainer from "../../components/ui/IconContainer/IconContainer.jsx";
 import Input from "../../components/ui/Input/Input.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
+import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
@@ -35,6 +36,7 @@ import { formatRelativeTime } from "../../utils/relativeTime.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import CreateAdminUserModal from "./CreateAdminUserModal.jsx";
 import AdminUserActionsMenu from "./AdminUserActionsMenu.jsx";
+import AdminUserStatusModal from "./AdminUserStatusModal.jsx";
 
 const WEB_BREAKPOINT_PX = 1280;
 const STATUS_FILTER_ITEMS = [
@@ -102,6 +104,7 @@ function AdminUsersPage({ empty = false }) {
   const [creationMessage, setCreationMessage] = useState("");
   const [statusFeedback, setStatusFeedback] = useState(null);
   const [updatingUserId, setUpdatingUserId] = useState(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState(null);
 
   const navigationItems = useMemo(
     () => createUserSideNavigationItems([], "admin"),
@@ -270,11 +273,23 @@ function AdminUsersPage({ empty = false }) {
       });
       setStatusFeedback({
         tone: "success",
-        message: response?.message || `El estado de ${listedUser.name} fue actualizado.`,
+        title: status === "blocked"
+          ? "Usuario suspendido"
+          : status === "inactive"
+            ? "Usuario deshabilitado"
+            : listedUser.status === "blocked"
+              ? "Usuario reactivado"
+              : "Usuario habilitado",
+        message: status === "active"
+          ? listedUser.status === "blocked"
+            ? `${listedUser.name} recuperó el acceso al sistema.`
+            : `${listedUser.name} fue habilitado y recuperó el acceso al sistema.`
+          : response?.message || `El estado de ${listedUser.name} fue actualizado.`,
       });
     } catch (requestError) {
       setStatusFeedback({
         tone: "danger",
+        title: "No se pudo actualizar el usuario",
         message: requestError?.message || "No se pudo actualizar el estado del usuario.",
       });
     } finally {
@@ -319,15 +334,6 @@ function AdminUsersPage({ empty = false }) {
             </div>
 
             {creationMessage ? <p className="mb-[16px] text-body-3 text-[var(--color-success-200)]" role="status">{creationMessage}</p> : null}
-            {statusFeedback ? (
-              <p
-                className={`mb-[16px] text-body-3 ${statusFeedback.tone === "success" ? "text-[var(--color-success-200)]" : "text-[var(--color-danger-200)]"}`}
-                role={statusFeedback.tone === "success" ? "status" : "alert"}
-              >
-                {statusFeedback.message}
-              </p>
-            ) : null}
-
             {loading && !metrics ? (
               <Loader preset="adminUserMetrics" label="Cargando métricas de usuarios" />
             ) : (
@@ -368,40 +374,55 @@ function AdminUsersPage({ empty = false }) {
                 <>
                   <div className="w-full overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
                     <div className="w-full overflow-x-auto">
-                      <table className="w-[1092px] min-w-[1092px] table-fixed border-collapse text-left">
+                      <table className="w-full min-w-[1092px] table-fixed border-collapse text-left">
                       <colgroup><col className="w-[48px]" /><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[250px]" /><col className="w-[160px]" /><col className="w-[140px]" /><col className="w-[174px]" /></colgroup>
                       <thead className="bg-[var(--color-neutral-200)] text-[var(--color-text-300)]">
                         <tr className="h-[49px] text-body-4">
                           <th className="p-[16px]"><Checkbox size="S" checked={headerChecked} interactive aria-label="Seleccionar todos los usuarios visibles" onCheckedChange={toggleAll} /></th>
-                          <th className="px-[16px] py-[14px]"><HeaderLabel filter>Rol</HeaderLabel></th>
-                          <th className="px-[16px] py-[14px]"><HeaderLabel>Nombre</HeaderLabel></th>
-                          <th className="px-[16px] py-[14px]">Correo</th>
-                          <th className="px-[16px] py-[14px]"><HeaderLabel>Último acceso</HeaderLabel></th>
-                          <th className="px-[16px] py-[14px]"><HeaderLabel filter>Status</HeaderLabel></th>
-                          <th className="px-[16px] py-[14px]">Acciones</th>
+                          <th className="px-[24px] py-[16px]"><HeaderLabel filter>Rol</HeaderLabel></th>
+                          <th className="px-[24px] py-[16px]"><HeaderLabel>Nombre</HeaderLabel></th>
+                          <th className="px-[24px] py-[16px]">Correo</th>
+                          <th className="px-[24px] py-[16px]"><HeaderLabel>Último acceso</HeaderLabel></th>
+                          <th className="px-[24px] py-[16px]"><HeaderLabel filter>Status</HeaderLabel></th>
+                          <th className="px-[24px] py-[16px]">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
                         {users.map((listedUser) => {
                           const status = STATUS_DETAILS[listedUser.status] || STATUS_DETAILS.inactive;
                           const avatar = getAvatarPresentation({ identity: listedUser.id, name: listedUser.name, roleCode: listedUser.role?.code });
+                          const isSelected = selectedUserIds.has(String(listedUser.id));
                           return (
-                            <tr key={listedUser.id} className="h-[64px] border-b border-[var(--color-neutral-200)] last:border-b-0">
-                              <td className="p-[16px]"><Checkbox size="S" checked={selectedUserIds.has(String(listedUser.id)) ? "Yes" : "No"} interactive aria-label={`Seleccionar ${listedUser.name}`} onCheckedChange={() => toggleUser(listedUser.id)} /></td>
-                              <td className="px-[16px] py-[14px]"><Badge label={listedUser.role?.name || "Sin rol"} theme="Neutral" variation="Simple" size="S" /></td>
-                              <td className="px-[16px] py-[14px]"><div className="flex min-w-0 items-center gap-[8px]"><Avatar size="S" name={listedUser.name} {...avatar} /><span className="text-body-4 truncate text-[var(--color-text-300)]">{listedUser.name}</span></div></td>
-                              <td className="text-body-4 truncate px-[16px] py-[14px] text-[var(--color-text-200)]">{listedUser.email}</td>
-                              <td className="text-body-4 px-[16px] py-[14px] text-[var(--color-text-200)]">{formatRelativeTime(listedUser.lastLoginAt, undefined, "Sin acceso")}</td>
-                              <td className="px-[16px] py-[14px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
-                              <td className="px-[16px] py-[14px]"><div className="flex items-center gap-[4px]">
+                            <tr
+                              key={listedUser.id}
+                              className={`h-[68px] transition-colors duration-150 ${
+                                isSelected
+                                  ? "bg-[var(--color-neutral-300)]"
+                                  : "bg-[var(--color-neutral-100)]"
+                              }`}
+                              data-selected={isSelected ? "true" : undefined}
+                            >
+                              <td className="p-[16px]"><Checkbox size="S" checked={isSelected ? "Yes" : "No"} interactive aria-label={`Seleccionar ${listedUser.name}`} onCheckedChange={() => toggleUser(listedUser.id)} /></td>
+                              <td className="px-[24px] py-[16px]"><Badge label={listedUser.role?.name || "Sin rol"} theme="Neutral" variation="Simple" size="S" /></td>
+                              <td className="px-[24px] py-[16px]"><div className="flex min-w-0 items-center gap-[8px]"><Avatar size="S" name={listedUser.name} {...avatar} /><span className="text-body-4 truncate text-[var(--color-text-300)]">{listedUser.name}</span></div></td>
+                              <td className="text-heading-8 truncate px-[24px] py-[16px] text-[var(--color-text-300)]">{listedUser.email}</td>
+                              <td className="text-heading-8 px-[24px] py-[16px] text-[var(--color-text-300)]">{formatRelativeTime(listedUser.lastLoginAt, undefined, "Sin acceso")}</td>
+                              <td className="px-[24px] py-[16px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
+                              <td className="px-[24px] py-[16px]"><div className="flex items-center gap-[8px]">
                                 {[
                                   { icon: <Eye size="20" color="currentColor" />, label: "Ver" },
                                   { icon: <Edit2 size="20" color="currentColor" />, label: "Editar" },
                                 ].map((action) => <Tooltip key={action.label} text={`${action.label}: disponible en una próxima sección`} tipPosition="Top center" portal><span><Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={action.icon} showRightIcon={false} disabled aria-label={`${action.label} ${listedUser.name}`} /></span></Tooltip>)}
                                 <AdminUserActionsMenu
                                   user={listedUser}
-                                  disabled={updatingUserId === String(listedUser.id)}
-                                  onStatusChange={changeUserStatus}
+                                  disabled={
+                                    updatingUserId === String(listedUser.id)
+                                    || String(user?.id) === String(listedUser.id)
+                                  }
+                                  onStatusChange={(selectedUser, status) => {
+                                    setStatusFeedback(null);
+                                    setPendingStatusChange({ user: selectedUser, status });
+                                  }}
                                 />
                               </div></td>
                             </tr>
@@ -454,6 +475,23 @@ function AdminUsersPage({ empty = false }) {
 
           <NotificationsDrawer open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} recentActivity={[]} />
           {isCreateUserOpen ? <CreateAdminUserModal open roles={roles} onClose={() => setIsCreateUserOpen(false)} onCreate={createUser} /> : null}
+          <AdminUserStatusModal
+            change={pendingStatusChange}
+            onCancel={() => setPendingStatusChange(null)}
+            onConfirm={() => {
+              const change = pendingStatusChange;
+              setPendingStatusChange(null);
+              if (change) changeUserStatus(change.user, change.status);
+            }}
+          />
+          <AlertToast
+            trigger={statusFeedback}
+            title={statusFeedback?.title || "Estado del usuario actualizado"}
+            description={statusFeedback?.message || ""}
+            theme={statusFeedback?.tone === "danger" ? "Danger" : "Success"}
+            aria-label={statusFeedback?.tone === "danger" ? "Error al actualizar el usuario" : "Usuario actualizado correctamente"}
+            onDismiss={() => setStatusFeedback(null)}
+          />
         </div>
       </div>
     </main>

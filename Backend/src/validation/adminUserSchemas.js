@@ -65,6 +65,6 @@ export const adminUserStatusSchema = z.object({
     userId: z.coerce.number().int().positive(),
   }),
   body: z.object({
-    status: z.enum(["blocked", "inactive"]),
+    status: z.enum(["active", "blocked", "inactive"]),
   }),
 });

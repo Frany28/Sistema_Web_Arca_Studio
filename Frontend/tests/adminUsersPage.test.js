@@ -34,3 +34,28 @@ test("admin user table footer follows the detached Figma pagination layout", asy
   assert.match(source, /type="Solid" size="M"[\s\S]*Siguiente pág\./);
   assert.doesNotMatch(source, /gap-\[12px\] border-t border-\[var\(--color-neutral-200\)\] px-\[16px\] py-\[12px\]/);
 });
+
+test("selected admin user rows share the dashboard selection surface", async () => {
+  const source = await readFile(
+    new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /const isSelected = selectedUserIds\.has\(String\(listedUser\.id\)\)/);
+  assert.match(source, /isSelected[\s\S]*bg-\[var\(--color-neutral-300\)\]/);
+  assert.match(source, /data-selected=\{isSelected \? "true" : undefined\}/);
+  assert.match(source, /checked=\{isSelected \? "Yes" : "No"\}/);
+  assert.match(source, /className={`h-\[68px\] transition-colors duration-150/);
+  assert.match(source, /<table className="w-full min-w-\[1092px\] table-fixed border-collapse text-left">/);
+});
+
+test("admin user body rows follow the Figma typography hierarchy", async () => {
+  const source = await readFile(
+    new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /text-body-4 truncate text-\[var\(--color-text-300\)\]">\{listedUser\.name\}/);
+  assert.match(source, /text-heading-8 truncate px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{listedUser\.email\}/);
+  assert.match(source, /text-heading-8 px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{formatRelativeTime/);
+});

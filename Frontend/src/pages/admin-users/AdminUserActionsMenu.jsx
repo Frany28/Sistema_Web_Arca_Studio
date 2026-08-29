@@ -1,40 +1,61 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { LockCircle, MinusCirlce, More } from "iconsax-react";
+import { LockCircle, MinusCirlce, More, UserTick } from "iconsax-react";
 
 import Button from "../../components/ui/Button/Button.jsx";
 
 const MENU_WIDTH = 160;
-const MENU_HEIGHT = 80;
+const MENU_ITEM_HEIGHT = 38;
 const VIEWPORT_MARGIN = 8;
 const MENU_GAP = 4;
 
-function getMenuPosition(anchor) {
+function getMenuPosition(anchor, itemCount) {
   const rect = anchor.getBoundingClientRect();
+  const menuHeight = itemCount * MENU_ITEM_HEIGHT + 6;
   const left = Math.min(
     Math.max(VIEWPORT_MARGIN, rect.right - MENU_WIDTH),
     window.innerWidth - MENU_WIDTH - VIEWPORT_MARGIN,
   );
-  const fitsBelow = rect.bottom + MENU_GAP + MENU_HEIGHT <= window.innerHeight - VIEWPORT_MARGIN;
+  const fitsBelow = rect.bottom + MENU_GAP + menuHeight <= window.innerHeight - VIEWPORT_MARGIN;
 
   return {
     left,
     top: fitsBelow
       ? rect.bottom + MENU_GAP
-      : Math.max(VIEWPORT_MARGIN, rect.top - MENU_GAP - MENU_HEIGHT),
+      : Math.max(VIEWPORT_MARGIN, rect.top - MENU_GAP - menuHeight),
   };
+}
+
+function getStatusActions(status) {
+  if (status === "blocked") {
+    return [
+      { icon: UserTick, label: "Reactivar", status: "active" },
+      { icon: LockCircle, label: "Deshabilitar", status: "inactive" },
+    ];
+  }
+
+  if (status === "inactive") {
+    return [{ icon: UserTick, label: "Habilitar", status: "active" }];
+  }
+
+  return [
+    { icon: MinusCirlce, label: "Suspender", status: "blocked" },
+    { icon: LockCircle, label: "Deshabilitar", status: "inactive" },
+  ];
 }
 
 function AdminUserActionsMenu({ disabled = false, onStatusChange, user }) {
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
+  const focusFirstItemOnOpenRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState(null);
+  const actions = getStatusActions(user.status);
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return undefined;
 
-    const updatePosition = () => setPosition(getMenuPosition(triggerRef.current));
+    const updatePosition = () => setPosition(getMenuPosition(triggerRef.current, actions.length));
     updatePosition();
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
@@ -43,10 +64,12 @@ function AdminUserActionsMenu({ disabled = false, onStatusChange, user }) {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [open]);
+  }, [actions.length, open]);
 
   useEffect(() => {
     if (!open) return undefined;
+
+    let focusFrameId;
 
     const closeOnOutsidePress = (event) => {
       if (triggerRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) return;
@@ -60,13 +83,24 @@ function AdminUserActionsMenu({ disabled = false, onStatusChange, user }) {
 
     document.addEventListener("pointerdown", closeOnOutsidePress, true);
     document.addEventListener("keydown", closeOnEscape);
-    window.requestAnimationFrame(() => menuRef.current?.querySelector("button")?.focus());
+    if (focusFirstItemOnOpenRef.current) {
+      focusFrameId = window.requestAnimationFrame(() => {
+        menuRef.current?.querySelector("button")?.focus();
+      });
+    }
+    focusFirstItemOnOpenRef.current = false;
 
     return () => {
+      window.cancelAnimationFrame(focusFrameId);
       document.removeEventListener("pointerdown", closeOnOutsidePress, true);
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [open]);
+
+  function toggleMenu(event) {
+    focusFirstItemOnOpenRef.current = event.detail === 0;
+    setOpen((current) => !current);
+  }
 
   function selectStatus(status) {
     setOpen(false);
@@ -110,7 +144,7 @@ function AdminUserActionsMenu({ disabled = false, onStatusChange, user }) {
           aria-label={`Más opciones para ${user.name}`}
           aria-haspopup="menu"
           aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
+          onClick={toggleMenu}
         />
       </span>
 
@@ -124,24 +158,21 @@ function AdminUserActionsMenu({ disabled = false, onStatusChange, user }) {
             style={position}
             onKeyDown={handleMenuKeyDown}
           >
-            <button
-              type="button"
-              role="menuitem"
-              className="text-heading-8 flex h-[36px] w-full items-center gap-[12px] rounded-[var(--radius-2)] px-[8px] text-left text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] focus:bg-[var(--color-neutral-200)] focus:outline-none"
-              onClick={() => selectStatus("blocked")}
-            >
-              <MinusCirlce size="20" color="currentColor" aria-hidden="true" />
-              <span>Suspender</span>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className="text-heading-8 flex h-[36px] w-full items-center gap-[12px] rounded-[var(--radius-2)] px-[8px] text-left text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] focus:bg-[var(--color-neutral-200)] focus:outline-none"
-              onClick={() => selectStatus("inactive")}
-            >
-              <LockCircle size="20" color="currentColor" aria-hidden="true" />
-              <span>Deshabilitar</span>
-            </button>
+            {actions.map((action) => {
+              const ActionIcon = action.icon;
+              return (
+                <button
+                  key={action.label}
+                  type="button"
+                  role="menuitem"
+                  className="text-heading-8 flex h-[36px] w-full items-center gap-[12px] rounded-[var(--radius-2)] px-[8px] text-left text-[var(--color-text-200)] transition-colors hover:bg-[var(--color-neutral-200)] focus:bg-[var(--color-neutral-200)] focus:outline-none"
+                  onClick={() => selectStatus(action.status)}
+                >
+                  <ActionIcon size="20" color="currentColor" aria-hidden="true" />
+                  <span>{action.label}</span>
+                </button>
+              );
+            })}
           </div>,
           document.body,
         )

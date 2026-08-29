@@ -260,6 +260,14 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 - La aprobación crea el proyecto y convierte la solicitud de forma atómica. La solicitud conserva `converted_project_id` para impedir conversiones duplicadas y permitir navegar al proyecto resultante.
 - Toda transición se valida en backend, se registra en auditoría y genera una notificación al cliente cuando existe una decisión administrativa.
 
+### Estados de usuarios administrativos
+
+- Un usuario `active` puede suspenderse temporalmente (`blocked`) o deshabilitarse de forma indefinida (`inactive`).
+- Un usuario suspendido muestra las acciones “Reactivar” y “Deshabilitar”; un usuario deshabilitado muestra únicamente “Habilitar”.
+- Reactivar o habilitar devuelve la cuenta a `active`. Suspender o deshabilitar impide el acceso y excluye al usuario de nuevas asignaciones, sin eliminar su historial ni sus asignaciones existentes.
+- Toda transición requiere un modal de confirmación. Los alerts de éxito o error solo se muestran después de confirmar y recibir el resultado de la API.
+- El frontend adapta las acciones al estado actual y el backend valida la transición; nunca se depende únicamente del texto o la disponibilidad visual del menú.
+
 ### Navegación superior persistente
 
 - Todas las pantallas del entorno autenticado deben renderizar `EnvironmentNavigationBar`; las páginas no pueden importar directamente `ui/NavigationBar/NavigationBar.jsx` ni recrear el navbar con JSX o estilos locales.

@@ -19,9 +19,10 @@ test("admin users expose the connected creation modal from both new actions", as
 });
 
 test("admin user row actions expose the connected Figma status menu", async () => {
-  const [page, menu, http] = await Promise.all([
+  const [page, menu, modal, http] = await Promise.all([
     readFile(new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/admin-users/AdminUserActionsMenu.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin-users/AdminUserStatusModal.jsx", import.meta.url), "utf8"),
     readFile(new URL("../src/api/http.js", import.meta.url), "utf8"),
   ]);
 
@@ -29,6 +30,17 @@ test("admin user row actions expose the connected Figma status menu", async () =
   assert.match(menu, /role="menu"/);
   assert.match(menu, /Suspender/);
   assert.match(menu, /Deshabilitar/);
+  assert.match(menu, /Reactivar/);
+  assert.match(menu, /Habilitar/);
+  assert.match(page, /<AdminUserStatusModal/);
+  assert.match(page, /<AlertToast/);
+  assert.match(modal, /¿Deseas suspender al usuario\?/);
+  assert.match(modal, /¿Deseas deshabilitar al usuario\?/);
+  assert.match(modal, /¿Deseas reactivar al usuario\?/);
+  assert.match(modal, /¿Deseas habilitar al usuario\?/);
+  assert.match(modal, /onPrimaryAction=\{onConfirm\}/);
+  assert.match(page, /if \(change\) changeUserStatus\(change\.user, change\.status\)/);
+  assert.match(page, /String\(user\?\.id\) === String\(listedUser\.id\)/);
   assert.match(menu, /createPortal/);
   assert.match(http, /updateUserStatus[\s\S]*\/admin\/users\/\$\{encodeURIComponent\(userId\)\}\/status[\s\S]*method: "PATCH"/);
 });
