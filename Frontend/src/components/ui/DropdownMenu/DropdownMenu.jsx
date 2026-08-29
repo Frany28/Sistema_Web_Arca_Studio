@@ -772,7 +772,7 @@ function DropdownMenu({
           id={`${menuId}-content`}
           role="menu"
           className={clsx(
-            "absolute left-0 top-full z-[110] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
+            "absolute left-0 top-[calc(100%_-_1px)] z-[110] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
             contentPaddingClassName,
             resolvedOpen ? "flex flex-col gap-[4px]" : "hidden",
             contentClassName,

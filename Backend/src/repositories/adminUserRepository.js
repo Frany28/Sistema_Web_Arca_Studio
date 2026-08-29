@@ -134,16 +134,16 @@ export async function listAdminUsers({ cursor, limit, role, search, status }) {
           u.email ilike '%' || $1 || '%'
           or concat_ws(' ', u.first_name, u.last_name) ilike '%' || $1 || '%'
         ))
-        and ($2::text is null or r.code = $2)
-        and ($3::public.user_status is null or u.status = $3)
+        and ($2::text[] is null or r.code = any($2::text[]))
+        and ($3::public.user_status[] is null or u.status = any($3::public.user_status[]))
         and ($4::timestamptz is null or (u.created_at, u.id) < ($4, $5::bigint))
       order by u.created_at desc, u.id desc
       limit $6
     `,
     [
       search || null,
-      role || null,
-      status || null,
+      role?.length ? role : null,
+      status?.length ? status : null,
       cursor?.[0] || null,
       cursor?.[1] || null,
       limit + 1,

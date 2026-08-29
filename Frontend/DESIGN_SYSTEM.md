@@ -143,6 +143,7 @@ El tema `Archived` identifica contenido conservado pero fuera del flujo activo. 
 - Diferenciar claramente estados normal, hover, focus, disabled y error.
 - No validar la misma regla de manera distinta en dos formularios; compartir esquema o utilidad cuando aplique.
 - Deshabilitar o proteger el envío mientras exista una petición equivalente en curso.
+- Los filtros de tablas que admiten más de un valor usan `DropdownMenu` con opciones `Checkbox` y selección múltiple. El menú muestra como máximo cuatro filas simultáneas y habilita desplazamiento vertical cuando existen más opciones.
 
 ### Modales y capas
 

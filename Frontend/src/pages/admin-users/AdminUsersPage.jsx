@@ -40,10 +40,9 @@ import AdminUserStatusModal from "./AdminUserStatusModal.jsx";
 
 const WEB_BREAKPOINT_PX = 1280;
 const STATUS_FILTER_ITEMS = [
-  { id: "all", label: "Filtrar por status", type: "Text" },
-  { id: "active", label: "Activo", type: "Text" },
-  { id: "blocked", label: "Suspendido", type: "Text" },
-  { id: "inactive", label: "Deshabilitado", type: "Text" },
+  { id: "active", label: "Activo", type: "Checkbox" },
+  { id: "blocked", label: "Suspendido", type: "Checkbox" },
+  { id: "inactive", label: "Deshabilitado", type: "Checkbox" },
 ];
 const STATUS_DETAILS = {
   active: { label: "Activo", theme: "Success" },
@@ -91,8 +90,8 @@ function AdminUsersPage({ empty = false }) {
   const [roles, setRoles] = useState([]);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilterIds, setRoleFilterIds] = useState([]);
+  const [statusFilterIds, setStatusFilterIds] = useState([]);
   const [cursorHistory, setCursorHistory] = useState([null]);
   const [pageIndex, setPageIndex] = useState(0);
   const [nextCursor, setNextCursor] = useState(null);
@@ -110,11 +109,17 @@ function AdminUsersPage({ empty = false }) {
     () => createUserSideNavigationItems([], "admin"),
     [],
   );
-  const roleItems = useMemo(() => [
-    { id: "all", label: "Filtrar por rol", type: "Text" },
-    ...roles.map((role) => ({ id: role.code, label: role.name, type: "Text" })),
-  ], [roles]);
-  const hasFilters = Boolean(query || roleFilter !== "all" || statusFilter !== "all");
+  const roleItems = useMemo(() => roles.map((role) => ({
+    id: role.code,
+    label: role.name,
+    type: "Checkbox",
+    checked: roleFilterIds.includes(role.code) ? "Yes" : "No",
+  })), [roleFilterIds, roles]);
+  const statusItems = useMemo(() => STATUS_FILTER_ITEMS.map((item) => ({
+    ...item,
+    checked: statusFilterIds.includes(item.id) ? "Yes" : "No",
+  })), [statusFilterIds]);
+  const hasFilters = Boolean(query || roleFilterIds.length || statusFilterIds.length);
   const selectedCount = users.reduce(
     (count, listedUser) => count + (selectedUserIds.has(String(listedUser.id)) ? 1 : 0),
     0,
@@ -157,10 +162,10 @@ function AdminUsersPage({ empty = false }) {
     api.admin.listUsers({
       cursor: cursorHistory[pageIndex],
       limit: 10,
-      role: roleFilter === "all" ? undefined : roleFilter,
+      role: roleFilterIds.length ? roleFilterIds : undefined,
       search: debouncedQuery || undefined,
       signal: controller.signal,
-      status: statusFilter === "all" ? undefined : statusFilter,
+      status: statusFilterIds.length ? statusFilterIds : undefined,
     }).then((payload) => {
       setUsers(payload?.users || []);
       setMetrics(payload?.metrics || null);
@@ -174,7 +179,7 @@ function AdminUsersPage({ empty = false }) {
       if (!controller.signal.aborted) setLoading(false);
     });
     return () => controller.abort();
-  }, [cursorHistory, debouncedQuery, empty, pageIndex, requestKey, roleFilter, statusFilter]);
+  }, [cursorHistory, debouncedQuery, empty, pageIndex, requestKey, roleFilterIds, statusFilterIds]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(`(max-width: ${WEB_BREAKPOINT_PX - 1}px)`);
@@ -186,22 +191,26 @@ function AdminUsersPage({ empty = false }) {
 
   function clearFilters() {
     setQuery("");
-    setRoleFilter("all");
-    setStatusFilter("all");
+    setRoleFilterIds([]);
+    setStatusFilterIds([]);
     setCursorHistory([null]);
     setPageIndex(0);
     setSelectedUserIds(new Set());
   }
 
-  function selectRoleFilter(item) {
-    setRoleFilter(item.id);
+  function changeRoleFilters(nextItems) {
+    setRoleFilterIds(nextItems
+      .filter((item) => item.checked === "Yes")
+      .map((item) => String(item.id)));
     setCursorHistory([null]);
     setPageIndex(0);
     setSelectedUserIds(new Set());
   }
 
-  function selectStatusFilter(item) {
-    setStatusFilter(item.id);
+  function changeStatusFilters(nextItems) {
+    setStatusFilterIds(nextItems
+      .filter((item) => item.checked === "Yes")
+      .map((item) => String(item.id)));
     setCursorHistory([null]);
     setPageIndex(0);
     setSelectedUserIds(new Set());
@@ -250,7 +259,7 @@ function AdminUsersPage({ empty = false }) {
       const response = await api.admin.updateUserStatus({ status, userId: listedUser.id });
       const updatedUser = response?.user || { ...listedUser, status };
       setUsers((current) => {
-        if (statusFilter !== "all" && statusFilter !== status) {
+        if (statusFilterIds.length && !statusFilterIds.includes(status)) {
           return current.filter((item) => String(item.id) !== String(listedUser.id));
         }
         return current.map((item) => (
@@ -348,10 +357,33 @@ function AdminUsersPage({ empty = false }) {
             <div className="flex min-h-0 flex-1 flex-col gap-[16px] pt-[24px]">
               <div className="flex flex-col justify-between gap-[12px] min-[900px]:flex-row">
                 <Input type="Default input" size="M" value={query} placeholder="Buscar..." showLabel={false} showHint={false} showLeftIcon showRightIcon={false} leftIcon={<SearchNormal1 size="20" color="currentColor" />} className="w-full min-[900px]:max-w-[320px]" aria-label="Buscar usuarios" onChange={(event) => setQuery(event.target.value)} />
-                <div className="grid w-full grid-cols-1 gap-[8px] min-[560px]:grid-cols-3 min-[900px]:w-auto">
-                  <DropdownMenu type="Text" label="Filtrar por rol" items={roleItems} selectedItemId={roleFilter} onItemSelect={selectRoleFilter} className="w-full min-[900px]:w-[180px]" aria-label="Filtrar usuarios por rol" />
-                  <DropdownMenu type="Text" label="Filtrar por status" items={STATUS_FILTER_ITEMS} selectedItemId={statusFilter} onItemSelect={selectStatusFilter} className="w-full min-[900px]:w-[180px]" aria-label="Filtrar usuarios por status" />
-                  <Button theme="Primary" type="Solid" size="S" fitContent showLeftIcon iconLeft={<FilterRemove size="20" color="currentColor" />} showRightIcon={false} disabled={!hasFilters} className="w-full" onClick={clearFilters}>Quitar filtros</Button>
+                <div className="grid w-full grid-cols-1 items-center gap-[12px] min-[560px]:grid-cols-3 min-[900px]:w-auto min-[900px]:grid-cols-[180px_180px_129px]">
+                  <DropdownMenu
+                    type="Text"
+                    label="Filtrar por rol"
+                    items={roleItems}
+                    multiple
+                    interactive={roleItems.length > 0}
+                    onItemsChange={changeRoleFilters}
+                    className="w-full min-[900px]:w-[180px]"
+                    contentClassName="max-h-[168px] max-w-full overflow-x-hidden overflow-y-auto overscroll-contain [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]"
+                    contentPaddingClassName="px-[4px] py-[8px]"
+                    rowHeightClassName="h-[35px]"
+                    aria-label="Filtrar usuarios por rol"
+                  />
+                  <DropdownMenu
+                    type="Text"
+                    label="Filtrar por status"
+                    items={statusItems}
+                    multiple
+                    onItemsChange={changeStatusFilters}
+                    className="w-full min-[900px]:w-[180px]"
+                    contentClassName="max-h-[168px] max-w-full overflow-x-hidden overflow-y-auto overscroll-contain [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]"
+                    contentPaddingClassName="px-[4px] py-[8px]"
+                    rowHeightClassName="h-[35px]"
+                    aria-label="Filtrar usuarios por status"
+                  />
+                  <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon iconLeft={<FilterRemove size="20" color="currentColor" />} showRightIcon={false} disabled={!hasFilters} className="w-full" onClick={clearFilters}>Quitar filtros</Button>
                 </div>
               </div>
 

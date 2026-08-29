@@ -265,9 +265,9 @@ export const adminApi = {
     const params = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     if (limit) params.set("limit", String(limit));
-    if (role) params.set("role", role);
+    if (role) params.set("role", Array.isArray(role) ? role.join(",") : role);
     if (search) params.set("search", search);
-    if (status) params.set("status", status);
+    if (status) params.set("status", Array.isArray(status) ? status.join(",") : status);
     const query = params.toString();
 
     return apiRequest(`/admin/users${query ? `?${query}` : ""}`, { signal });

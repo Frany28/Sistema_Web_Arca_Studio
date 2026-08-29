@@ -62,3 +62,16 @@ test("composite checkbox options preserve selection while hovered", async () => 
     /state=\{hoveredDocumentType === option\.value \? "Hover" : undefined\}/,
   );
 });
+
+test("dropdown content overlaps the trigger border without a visible gap", async () => {
+  const dropdownSource = await readFile(
+    new URL(
+      "../src/components/ui/DropdownMenu/DropdownMenu.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(dropdownSource, /top-\[calc\(100%_-_1px\)\]/);
+  assert.doesNotMatch(dropdownSource, /absolute left-0 top-full/);
+});

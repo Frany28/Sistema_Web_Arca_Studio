@@ -14,15 +14,18 @@ test("admin user filters validate cursor, role and database statuses", () => {
     query: {
       cursor: encodeCursor(["2026-08-19T12:00:00.000Z", "42"]),
       limit: "10",
-      role: "architect",
+      role: "architect,admin",
       search: "Ana",
-      status: "blocked",
+      status: "blocked,inactive",
     },
   });
 
   assert.equal(result.success, true);
   assert.equal(result.data.query.limit, 10);
+  assert.deepEqual(result.data.query.role, ["architect", "admin"]);
+  assert.deepEqual(result.data.query.status, ["blocked", "inactive"]);
   assert.equal(adminUserListSchema.safeParse({ query: { status: "deleted" } }).success, false);
+  assert.equal(adminUserListSchema.safeParse({ query: { status: "active,blocked,inactive,active" } }).success, true);
 });
 
 test("admin users expose the public management fields and normalized metrics", () => {
