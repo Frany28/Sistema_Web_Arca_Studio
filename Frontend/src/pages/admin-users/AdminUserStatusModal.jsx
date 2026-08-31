@@ -28,12 +28,16 @@ const ACTION_DETAILS = {
 function getBulkActionDetails(change) {
   const count = change.users.length;
   const isPlural = count !== 1;
-  const subject = count === 1 ? "al usuario seleccionado" : `a los ${count} usuarios seleccionados`;
+  const selectedCount = change.selectionCount || count;
+  const subject = count === 1 ? "a 1 usuario" : `a ${count} usuarios`;
+  const eligibilityNote = count < selectedCount
+    ? ` La acción se aplicará a ${count} de los ${selectedCount} seleccionados; los demás no cumplen las condiciones para este cambio.`
+    : "";
 
   if (change.status === "blocked") {
     return {
       title: `¿Deseas suspender ${subject}?`,
-      description: `${isPlural ? "Perderán" : "Perderá"} temporalmente el acceso al sistema hasta que un administrador ${isPlural ? "los reactive" : "lo reactive"}.`,
+      description: `${isPlural ? "Perderán" : "Perderá"} temporalmente el acceso al sistema hasta que un administrador ${isPlural ? "los reactive" : "lo reactive"}.${eligibilityNote}`,
       ariaLabel: "Confirmar suspensión de usuarios seleccionados",
     };
   }
@@ -41,14 +45,14 @@ function getBulkActionDetails(change) {
   if (change.status === "inactive") {
     return {
       title: `¿Deseas deshabilitar ${subject}?`,
-      description: `${isPlural ? "Perderán" : "Perderá"} el acceso y no ${isPlural ? "estarán disponibles" : "estará disponible"} para nuevas asignaciones. Su historial se conservará.`,
+      description: `${isPlural ? "Perderán" : "Perderá"} el acceso y no ${isPlural ? "estarán disponibles" : "estará disponible"} para nuevas asignaciones. Su historial se conservará.${eligibilityNote}`,
       ariaLabel: "Confirmar deshabilitación de usuarios seleccionados",
     };
   }
 
   return {
     title: `¿Deseas activar ${subject}?`,
-    description: `${isPlural ? "Recuperarán" : "Recuperará"} el acceso al sistema y ${isPlural ? "podrán" : "podrá"} volver a realizar las acciones permitidas por su rol.`,
+    description: `${isPlural ? "Recuperarán" : "Recuperará"} el acceso al sistema y ${isPlural ? "podrán" : "podrá"} volver a realizar las acciones permitidas por su rol.${eligibilityNote}`,
     ariaLabel: "Confirmar activación de usuarios seleccionados",
   };
 }

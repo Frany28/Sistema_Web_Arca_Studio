@@ -36,3 +36,16 @@ test("bulk status policy rejects unsupported transitions", () => {
   assert.deepEqual(targetIds("deleted"), []);
 });
 
+test("a mixed partial selection routes every action to its eligible statuses", () => {
+  const mixedSelection = new Set(["1", "2", "3"]);
+  const targetsFor = (status) => getBulkStatusTargets({
+    actorUserId: 99,
+    selectedUserIds: mixedSelection,
+    status,
+    users: USERS,
+  }).map(({ id }) => id);
+
+  assert.deepEqual(targetsFor("blocked"), [1]);
+  assert.deepEqual(targetsFor("inactive"), [1, 2]);
+  assert.deepEqual(targetsFor("active"), [2, 3]);
+});
