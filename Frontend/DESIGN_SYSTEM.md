@@ -140,6 +140,7 @@ El tema `Archived` identifica contenido conservado pero fuera del flujo activo. 
 - Cada control debe tener una etiqueta visible o un nombre accesible.
 - Mostrar ayuda con `HintText` y errores junto al campo correspondiente.
 - Conservar los datos escritos cuando una petición falle.
+- La asignación de responsables muestra el `AlertToast` compartido con tema `Success` únicamente después de que la API confirme el alta. Si falla, mantiene el contenido del control, presenta el error junto al campo y muestra el mismo alert con tema `Danger`. Esta regla aplica a cualquier uso de `AssigneeMultiSelect`.
 - Diferenciar claramente estados normal, hover, focus, disabled y error.
 - No validar la misma regla de manera distinta en dos formularios; compartir esquema o utilidad cuando aplique.
 - Deshabilitar o proteger el envío mientras exista una petición equivalente en curso.

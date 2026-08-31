@@ -7,3 +7,13 @@ export function getRemovedAssignees(currentAssignees = [], nextAssignees = []) {
     (assignee) => !nextIds.has(String(assignee.id)),
   );
 }
+
+export function getAddedAssignees(currentAssignees = [], nextAssignees = []) {
+  const currentIds = new Set(
+    currentAssignees.map((assignee) => String(assignee.id)),
+  );
+
+  return nextAssignees.filter(
+    (assignee) => !currentIds.has(String(assignee.id)),
+  );
+}

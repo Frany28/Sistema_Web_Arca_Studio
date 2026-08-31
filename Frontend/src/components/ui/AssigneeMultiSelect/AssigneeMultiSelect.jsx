@@ -1,10 +1,14 @@
 import { useId, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 
+import AlertToast from "../AlertToast/AlertToast.jsx";
 import Input from "../Input/Input.jsx";
 import { getAvatarPresentation } from "../../../utils/avatarPresentation.js";
 import AssigneeRemovalModal from "./AssigneeRemovalModal.jsx";
-import { getRemovedAssignees } from "./assigneeSelection.js";
+import {
+  getAddedAssignees,
+  getRemovedAssignees,
+} from "./assigneeSelection.js";
 
 function AssigneeIcon() {
   return (
@@ -93,6 +97,7 @@ function AssigneeMultiSelect({
   const [query, setQuery] = useState("");
   const [localError, setLocalError] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState(null);
+  const [assignmentFeedback, setAssignmentFeedback] = useState(null);
 
   const selectedIds = useMemo(
     () => new Set(value.map((person) => String(person.id))),
@@ -136,19 +141,48 @@ function AssigneeMultiSelect({
   const commit = async (nextValue, removedAssignees = []) => {
     if (!onChange || isDisabled) return;
 
+    const addedAssignees = getAddedAssignees(value, nextValue);
     setIsSaving(true);
     setLocalError("");
     try {
       await onChange(nextValue);
       setQuery("");
+      if (addedAssignees.length) {
+        const names = addedAssignees
+          .map((assignee) => assignee.name)
+          .filter(Boolean)
+          .join(", ");
+
+        setAssignmentFeedback({
+          id: `assignee-success-${Date.now()}`,
+          theme: "Success",
+          title: addedAssignees.length === 1
+            ? "Responsable asignado exitosamente"
+            : "Responsables asignados exitosamente",
+          description: names
+            ? `${names} ${addedAssignees.length === 1 ? "fue asignado" : "fueron asignados"} correctamente.`
+            : "La asignación se guardó correctamente.",
+        });
+      }
       if (removedAssignees.length) {
         onRemovalSuccess?.(removedAssignees);
       }
       requestAnimationFrame(() => inputRef.current?.focus());
     } catch (changeError) {
-      setLocalError(
-        changeError?.message || "No se pudieron guardar los responsables.",
-      );
+      const errorMessage =
+        changeError?.message || "No se pudieron guardar los responsables.";
+
+      setLocalError(errorMessage);
+      if (addedAssignees.length) {
+        setAssignmentFeedback({
+          id: `assignee-error-${Date.now()}`,
+          theme: "Danger",
+          title: addedAssignees.length === 1
+            ? "No se pudo asignar al responsable"
+            : "No se pudieron asignar los responsables",
+          description: errorMessage,
+        });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -269,6 +303,17 @@ function AssigneeMultiSelect({
         onCancel={() => setPendingRemoval(null)}
         onConfirm={handleConfirmRemoval}
       />
+
+      {assignmentFeedback ? (
+        <AlertToast
+          trigger={assignmentFeedback.id}
+          theme={assignmentFeedback.theme}
+          title={assignmentFeedback.title}
+          description={assignmentFeedback.description}
+          onDismiss={() => setAssignmentFeedback(null)}
+          aria-label={assignmentFeedback.title}
+        />
+      ) : null}
     </>
   );
 }

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { getRemovedAssignees } from
+import { getAddedAssignees, getRemovedAssignees } from
   "../src/components/ui/AssigneeMultiSelect/assigneeSelection.js";
 
 test("assignee changes distinguish additions from removals", () => {
@@ -16,6 +16,29 @@ test("assignee changes distinguish additions from removals", () => {
     [],
   );
   assert.deepEqual(getRemovedAssignees(current, [current[1]]), [current[0]]);
+  assert.deepEqual(
+    getAddedAssignees(current, [...current, { id: 3, name: "Arq. Sofía" }]),
+    [{ id: 3, name: "Arq. Sofía" }],
+  );
+  assert.deepEqual(getAddedAssignees(current, [current[1]]), []);
+});
+
+test("assignee additions show shared success and error alerts after the API result", async () => {
+  const source = await readFile(
+    new URL(
+      "../src/components/ui/AssigneeMultiSelect/AssigneeMultiSelect.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(source, /const addedAssignees = getAddedAssignees\(value, nextValue\)/);
+  assert.match(source, /await onChange\(nextValue\);[\s\S]*Responsable asignado exitosamente/);
+  assert.match(source, /catch \(changeError\)[\s\S]*No se pudo asignar al responsable/);
+  assert.match(source, /theme: "Success"/);
+  assert.match(source, /theme: "Danger"/);
+  assert.match(source, /<AlertToast/);
+  assert.match(source, /onDismiss=\{\(\) => setAssignmentFeedback\(null\)\}/);
 });
 
 test("project assignee removals require confirmation and expose coherent success actions", async () => {
