@@ -419,6 +419,7 @@ function Input({
     normalizeDialCode(countryPrefix || phoneOptions[0]?.dialCode),
   );
   const phoneMenuRef = useRef(null);
+  const phonePrefixInputRef = useRef(null);
   const tagFieldScrollRef = useRef(null);
 
   const resolvedSize = INPUT_SIZE_STYLES[size] ? size : "S";
@@ -477,7 +478,16 @@ function Input({
     showTags;
   const resolvedPhoneOption = selectedPhoneOption ?? phoneOptions[0];
   const normalizedPhonePrefix = normalizeDialCode(phonePrefixValue);
-  const filteredPhoneOptions = phoneOptions;
+  const filteredPhoneOptions =
+    resolvedType === "Phone number"
+      ? phoneOptions.filter((option) => {
+          const optionDigits = getPhoneDigits(option.dialCode);
+          const prefixDigits = getPhoneDigits(normalizedPhonePrefix);
+
+          if (!prefixDigits) return true;
+          return optionDigits.startsWith(prefixDigits);
+        })
+      : phoneOptions;
   const resolvedPlaceholder =
     resolvedType === "Phone number"
       ? placeholder ?? resolvedPhoneOption?.placeholder ?? typeConfig.placeholder
@@ -768,45 +778,73 @@ function Input({
             ref={phoneMenuRef}
             className="relative"
           >
-            <Tooltip
-              asChild
-              portal
-              showTip
-              text="Seleccionar código de país"
-              tipPosition="Top center"
+            <div
+              className={clsx(
+                "flex shrink-0 items-center gap-[8px] border-r border-[var(--color-neutral-200)]",
+                disabled ? "cursor-not-allowed" : "cursor-text",
+                sizing.phonePrefix,
+              )}
+              onMouseDown={(event) => {
+                if (disabled || event.target.closest("input, button")) return;
+                event.preventDefault();
+                setIsPhoneMenuOpen(true);
+                phonePrefixInputRef.current?.focus();
+              }}
             >
-              <button
-                type="button"
-                className={clsx(
-                  "flex shrink-0 items-center gap-[8px] border-0 border-r border-[var(--color-neutral-200)] bg-transparent text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary-10)]",
-                  disabled ? "cursor-not-allowed" : "cursor-pointer",
-                  sizing.phonePrefix,
-                )}
-                onClick={() => setIsPhoneMenuOpen((current) => !current)}
-                disabled={disabled}
-                aria-label={`Seleccionar código de país. Actual: ${resolvedPhoneOption.label}, ${normalizedPhonePrefix}`}
-                aria-expanded={isPhoneMenuOpen}
-                aria-controls={isPhoneMenuOpen ? `${inputId}-phone-options` : undefined}
-                aria-haspopup="listbox"
-              >
-                <Flag
-                  countryCode={resolvedPhoneOption.countryCode}
-                  size="20px"
-                  title={resolvedPhoneOption.label}
-                  useSvg
-                  loading="lazy"
+              <Flag countryCode={resolvedPhoneOption.countryCode} size="20px" title={resolvedPhoneOption.label} useSvg loading="lazy" />
+              <span className={clsx("flex w-[44px] items-center", stateStyles.prefix)}>
+                <span className="text-body-3 shrink-0" aria-hidden="true">+</span>
+                <input
+                  ref={phonePrefixInputRef}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={getPhoneDigits(normalizedPhonePrefix)}
+                  disabled={disabled}
+                  className={clsx(
+                    "text-body-3 min-w-0 flex-1 border-0 bg-transparent tracking-[0px] outline-none",
+                    disabled ? "cursor-not-allowed" : "cursor-text",
+                    stateStyles.prefix,
+                  )}
+                  onFocus={() => setIsPhoneMenuOpen(true)}
+                  onChange={(event) => {
+                    const nextPrefix = normalizeDialCode(event.target.value);
+                    setPhonePrefixValue(nextPrefix);
+                    const exactMatches = phoneOptions.filter((option) => option.dialCode === nextPrefix);
+                    const exactMatch = exactMatches.find(
+                      (option) => option.countryCode === resolvedPhoneOption.countryCode,
+                    ) ?? (exactMatches.length === 1 ? exactMatches[0] : null);
+                    if (exactMatch) {
+                      setSelectedPhoneOption(exactMatch);
+                      onPhoneCountryChange?.(exactMatch);
+                      if (!isControlled) {
+                        setInternalValue((current) => formatPhoneNumber(current, exactMatch));
+                      }
+                    }
+                    setIsPhoneMenuOpen(true);
+                  }}
+                  role="combobox"
+                  aria-label="Buscar código de país por prefijo; el signo más es fijo"
+                  aria-expanded={isPhoneMenuOpen}
+                  aria-controls={isPhoneMenuOpen ? `${inputId}-phone-options` : undefined}
+                  aria-autocomplete="list"
+                  aria-haspopup="listbox"
                 />
-                <span className={clsx("text-body-3 w-[44px] tracking-[0px]", stateStyles.prefix)}>
-                  {normalizedPhonePrefix}
-                </span>
-                <span
-                  className={clsx("inline-flex size-5 items-center justify-center", stateStyles.trailingIcon)}
-                  aria-hidden="true"
+              </span>
+              <Tooltip asChild portal showTip text="Mostrar países" tipPosition="Top center">
+                <button
+                  type="button"
+                  className={clsx("inline-flex size-5 items-center justify-center", disabled ? "cursor-not-allowed" : "cursor-pointer", stateStyles.trailingIcon)}
+                  onClick={() => setIsPhoneMenuOpen((current) => !current)}
+                  disabled={disabled}
+                  aria-label={isPhoneMenuOpen ? "Cerrar países" : "Mostrar países"}
+                  tabIndex={-1}
                 >
                   <ChevronDownIcon className="size-5" />
-                </span>
-              </button>
-            </Tooltip>
+                </button>
+              </Tooltip>
+            </div>
 
             {isPhoneMenuOpen ? (
               <div

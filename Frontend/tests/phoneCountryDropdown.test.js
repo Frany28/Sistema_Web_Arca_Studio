@@ -19,9 +19,15 @@ test("phone country options reuse the attached four-row dropdown pattern", async
   assert.match(source, /grid-cols-\[20px_44px_minmax\(0,1fr\)\]/);
   assert.match(source, /\{option\.abbreviation\}/);
   assert.match(source, /aria-haspopup="listbox"/);
-  assert.match(source, /aria-label=\{`Seleccionar código de país\. Actual:/);
+  assert.match(source, /aria-label="Buscar código de país por prefijo; el signo más es fijo"/);
+  assert.match(source, /role="combobox"/);
+  assert.match(source, /aria-autocomplete="list"/);
   assert.match(source, /onClick=\{\(\) => setIsPhoneMenuOpen\(\(current\) => !current\)\}/);
-  assert.match(source, /\{normalizedPhonePrefix\}/);
+  assert.match(source, /value=\{getPhoneDigits\(normalizedPhonePrefix\)\}/);
+  assert.match(source, /aria-hidden="true">\+<\/span>/);
+  assert.match(source, /inputMode="numeric"/);
+  assert.match(source, /setPhonePrefixValue\(nextPrefix\)/);
+  assert.match(source, /optionDigits\.startsWith\(prefixDigits\)/);
   assert.doesNotMatch(source, /aria-label="Código de país"/);
   assert.match(source, /event\.key === "Escape"/);
   assert.doesNotMatch(source, /top-\[calc\(100%\+8px\)\]/);
