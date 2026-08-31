@@ -243,6 +243,27 @@ function withAdminAssigneeAvatars(payload) {
   return { ...payload, assignees };
 }
 
+function withAdminUserAvatar(listedUser) {
+  if (!listedUser) return listedUser;
+
+  return {
+    ...listedUser,
+    profilePhotoUrl: listedUser.hasProfilePhoto
+      ? getApiUrl(
+          `/admin/users/${encodeURIComponent(listedUser.id)}/profile-photo`,
+        )
+      : "",
+  };
+}
+
+function withAdminUserAvatars(payload) {
+  const users = Array.isArray(payload?.users)
+    ? payload.users.map(withAdminUserAvatar)
+    : [];
+
+  return { ...payload, users };
+}
+
 export const adminApi = {
   getDashboardMetrics({ signal } = {}) {
     return apiRequest("/admin/dashboard-metrics", { signal });
@@ -261,7 +282,7 @@ export const adminApi = {
     return apiRequest("/admin/roles", { signal });
   },
 
-  listUsers({ cursor, limit = 10, role, search, signal, status } = {}) {
+  async listUsers({ cursor, limit = 10, role, search, signal, status } = {}) {
     const params = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     if (limit) params.set("limit", String(limit));
@@ -270,7 +291,8 @@ export const adminApi = {
     if (status) params.set("status", Array.isArray(status) ? status.join(",") : status);
     const query = params.toString();
 
-    return apiRequest(`/admin/users${query ? `?${query}` : ""}`, { signal });
+    const payload = await apiRequest(`/admin/users${query ? `?${query}` : ""}`, { signal });
+    return withAdminUserAvatars(payload);
   },
 
   createUser(payload) {
@@ -280,11 +302,12 @@ export const adminApi = {
     });
   },
 
-  updateUserStatus({ status, userId }) {
-    return apiRequest(`/admin/users/${encodeURIComponent(userId)}/status`, {
+  async updateUserStatus({ status, userId }) {
+    const payload = await apiRequest(`/admin/users/${encodeURIComponent(userId)}/status`, {
       body: JSON.stringify({ status }),
       method: "PATCH",
     });
+    return { ...payload, user: withAdminUserAvatar(payload?.user) };
   },
 
   async updateProjectAssignees({ assigneeIds, projectId }) {

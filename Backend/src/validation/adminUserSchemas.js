@@ -79,3 +79,9 @@ export const adminUserStatusSchema = z.object({
     status: z.enum(["active", "blocked", "inactive"]),
   }),
 });
+
+export const adminUserPhotoSchema = z.object({
+  params: z.object({
+    userId: z.coerce.number().int().positive(),
+  }),
+});

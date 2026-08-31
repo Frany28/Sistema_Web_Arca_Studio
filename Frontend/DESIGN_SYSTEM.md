@@ -281,6 +281,7 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 ### Estados de usuarios administrativos
 
 - En el cuerpo de la tabla de gestión de usuarios, el rol se presenta con `Badge` en tema `Brand 1`, variación `Simple` y tamaño `S`; la celda conserva `24px` de padding horizontal y `16px` vertical según el componente de Figma.
+- La celda de nombre de cada usuario debe mostrar su foto de perfil real mediante la URL autenticada del recurso cuando `hasProfilePhoto` sea verdadero. Las iniciales o el icono correspondiente al rol se utilizan únicamente como fallback si no existe una foto o si su carga falla; nunca deben sustituir preventivamente una imagen disponible.
 - Un usuario `active` puede suspenderse temporalmente (`blocked`) o deshabilitarse de forma indefinida (`inactive`).
 - Un usuario suspendido muestra las acciones “Reactivar” y “Deshabilitar”; un usuario deshabilitado muestra únicamente “Habilitar”.
 - Reactivar o habilitar devuelve la cuenta a `active`. Suspender o deshabilitar impide el acceso y excluye al usuario de nuevas asignaciones, sin eliminar su historial ni sus asignaciones existentes.

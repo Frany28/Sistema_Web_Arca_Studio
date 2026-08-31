@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   adminUserCreateSchema,
   adminUserListSchema,
+  adminUserPhotoSchema,
   adminUserStatusSchema,
 } from "../src/validation/adminUserSchemas.js";
 import { encodeCursor } from "../src/utils/pagination.js";
@@ -37,6 +38,7 @@ test("admin users expose the public management fields and normalized metrics", (
     role_code: "architect",
     role_name: "Arquitecto",
     status: "active",
+    has_profile_photo: true,
     last_login_at: null,
     created_at: "2026-08-19T12:00:00.000Z",
   }), {
@@ -45,6 +47,7 @@ test("admin users expose the public management fields and normalized metrics", (
     email: "ana@example.com",
     role: { code: "architect", name: "Arquitecto" },
     status: "active",
+    hasProfilePhoto: true,
     lastLoginAt: null,
     createdAt: "2026-08-19T12:00:00.000Z",
   });
@@ -89,4 +92,9 @@ test("admin user status changes accept suspend, disable and enable actions", () 
   assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "0" }, body: { status: "inactive" } }).success, false);
   assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "42" }, body: { status: "active" } }).success, true);
   assert.equal(adminUserStatusSchema.safeParse({ params: { userId: "42" }, body: { status: "deleted" } }).success, false);
+});
+
+test("admin user profile photos require a positive user identifier", () => {
+  assert.equal(adminUserPhotoSchema.safeParse({ params: { userId: "42" } }).success, true);
+  assert.equal(adminUserPhotoSchema.safeParse({ params: { userId: "0" } }).success, false);
 });

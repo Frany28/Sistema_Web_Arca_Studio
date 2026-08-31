@@ -91,6 +91,23 @@ test("admin user role cells use the filled brand badge from Figma", async () => 
   );
 });
 
+test("admin user rows use authenticated profile photos with avatar fallback", async () => {
+  const [pageSource, httpSource] = await Promise.all([
+    readFile(new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/api/http.js", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(pageSource, /src: listedUser\.profilePhotoUrl/);
+  assert.match(httpSource, /function withAdminUserAvatar/);
+  assert.match(httpSource, /function withAdminUserAvatars/);
+  assert.match(
+    httpSource,
+    /\/admin\/users\/\$\{encodeURIComponent\(listedUser\.id\)\}\/profile-photo/,
+  );
+  assert.match(httpSource, /return withAdminUserAvatars\(payload\)/);
+  assert.match(httpSource, /user: withAdminUserAvatar\(payload\?\.user\)/);
+});
+
 test("admin user filters match the Figma control dimensions", async () => {
   const source = await readFile(
     new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),

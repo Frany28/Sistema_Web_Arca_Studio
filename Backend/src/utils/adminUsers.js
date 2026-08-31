@@ -8,6 +8,7 @@ export function mapAdminUser(row = {}) {
       name: row.role_name,
     },
     status: row.status,
+    hasProfilePhoto: Boolean(row.has_profile_photo ?? row.hasProfilePhoto),
     lastLoginAt: row.last_login_at || null,
     createdAt: row.created_at,
   };

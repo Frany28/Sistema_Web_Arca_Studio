@@ -3,6 +3,24 @@ import {
   getAdminUsersPage,
   updateAdminUserStatus,
 } from "../services/adminUserService.js";
+import { getAdminUserProfilePhoto } from "../services/profilePhotoService.js";
+
+export async function streamAdminUserProfilePhoto(req, res, next) {
+  try {
+    const photo = await getAdminUserProfilePhoto({ userId: req.params.userId });
+
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Content-Type", photo.contentType);
+    res.setHeader("Cache-Control", "private, max-age=60, must-revalidate");
+    if (photo.contentLength !== undefined) {
+      res.setHeader("Content-Length", String(photo.contentLength));
+    }
+    photo.body.on?.("error", next);
+    photo.body.pipe(res.status(200));
+  } catch (error) {
+    next(error);
+  }
+}
 
 export async function postAdminUser(req, res, next) {
   try {

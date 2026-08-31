@@ -123,6 +123,7 @@ export async function listAdminUsers({ cursor, limit, role, search, status }) {
         u.first_name,
         u.last_name,
         u.status,
+        (u.profile_photo_url is not null and btrim(u.profile_photo_url) <> '') as has_profile_photo,
         u.last_login_at,
         u.created_at,
         r.code as role_code,
@@ -166,7 +167,9 @@ export async function updateAdminUserStatusRecord({ status, userId }) {
           and u.deleted_at is null
           and r.id = u.role_id
         returning u.id, u.client_id, u.email, u.first_name, u.last_name,
-          u.status, u.last_login_at, u.created_at,
+          u.status,
+          (u.profile_photo_url is not null and btrim(u.profile_photo_url) <> '') as has_profile_photo,
+          u.last_login_at, u.created_at,
           r.code as role_code, r.name as role_name
       `,
       [userId, status],
@@ -192,4 +195,19 @@ export async function updateAdminUserStatusRecord({ status, userId }) {
   } finally {
     client.release();
   }
+}
+
+export async function findAdminUserProfilePhoto(userId) {
+  const result = await query(
+    `
+      select profile_photo_url
+      from public.users
+      where id = $1
+        and deleted_at is null
+      limit 1
+    `,
+    [userId],
+  );
+
+  return result.rows[0]?.profile_photo_url || null;
 }

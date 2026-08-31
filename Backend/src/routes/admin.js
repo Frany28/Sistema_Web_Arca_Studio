@@ -17,7 +17,12 @@ import {
   getRoles,
   updateRolePermissions,
 } from "../controllers/rolePermissionController.js";
-import { getAdminUsers, patchAdminUserStatus, postAdminUser } from "../controllers/adminUserController.js";
+import {
+  getAdminUsers,
+  patchAdminUserStatus,
+  postAdminUser,
+  streamAdminUserProfilePhoto,
+} from "../controllers/adminUserController.js";
 import { requireAuth, requireRoles } from "../middlewares/auth.js";
 import { createRateLimit } from "../middlewares/rateLimit.js";
 import { validate } from "../middlewares/validate.js";
@@ -31,6 +36,7 @@ import { projectRequestDecisionSchema } from "../validation/projectRequestWorkfl
 import {
   adminUserCreateSchema,
   adminUserListSchema,
+  adminUserPhotoSchema,
   adminUserStatusSchema,
 } from "../validation/adminUserSchemas.js";
 
@@ -62,6 +68,11 @@ router.get("/dashboard-metrics", getDashboardMetrics);
 router.get("/dashboard-overview", getDashboardOverview);
 router.get("/assignees", getAdminAssignees);
 router.get("/users", validate(adminUserListSchema), getAdminUsers);
+router.get(
+  "/users/:userId/profile-photo",
+  validate(adminUserPhotoSchema),
+  streamAdminUserProfilePhoto,
+);
 router.post(
   "/users",
   adminUserCreateRateLimit,

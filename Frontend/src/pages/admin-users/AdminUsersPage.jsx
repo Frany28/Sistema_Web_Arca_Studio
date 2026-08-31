@@ -529,7 +529,12 @@ function AdminUsersPage({ empty = false }) {
                       <tbody>
                         {users.map((listedUser) => {
                           const status = STATUS_DETAILS[listedUser.status] || STATUS_DETAILS.inactive;
-                          const avatar = getAvatarPresentation({ identity: listedUser.id, name: listedUser.name, roleCode: listedUser.role?.code });
+                          const avatar = getAvatarPresentation({
+                            identity: listedUser.id,
+                            name: listedUser.name,
+                            roleCode: listedUser.role?.code,
+                            src: listedUser.profilePhotoUrl,
+                          });
                           const isSelected = selectedUserIds.has(String(listedUser.id));
                           return (
                             <tr
