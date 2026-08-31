@@ -477,19 +477,7 @@ function Input({
     showTags;
   const resolvedPhoneOption = selectedPhoneOption ?? phoneOptions[0];
   const normalizedPhonePrefix = normalizeDialCode(phonePrefixValue);
-  const filteredPhoneOptions =
-    resolvedType === "Phone number"
-      ? phoneOptions.filter((option) => {
-          const optionDigits = getPhoneDigits(option.dialCode);
-          const prefixDigits = getPhoneDigits(normalizedPhonePrefix);
-
-          if (!prefixDigits) {
-            return true;
-          }
-
-          return optionDigits.startsWith(prefixDigits);
-        })
-      : phoneOptions;
+  const filteredPhoneOptions = phoneOptions;
   const resolvedPlaceholder =
     resolvedType === "Phone number"
       ? placeholder ?? resolvedPhoneOption?.placeholder ?? typeConfig.placeholder
@@ -780,94 +768,52 @@ function Input({
             ref={phoneMenuRef}
             className="relative"
           >
-            <div
-              className={clsx(
-                "flex shrink-0 items-center gap-[8px] border-r border-[var(--color-neutral-200)]",
-                disabled ? "cursor-not-allowed" : "cursor-pointer",
-                sizing.phonePrefix,
-              )}
+            <Tooltip
+              asChild
+              portal
+              showTip
+              text="Seleccionar código de país"
+              tipPosition="Top center"
             >
-              <Flag
-                countryCode={resolvedPhoneOption.countryCode}
-                size="20px"
-                title={resolvedPhoneOption.label}
-                useSvg
-                loading="lazy"
-              />
-              <input
-                type="text"
-                value={normalizedPhonePrefix}
-                disabled={disabled}
-                className={clsx(
-                  "text-body-3 w-[44px] border-0 bg-transparent tracking-[0px] outline-none",
-                  disabled ? "cursor-not-allowed" : "cursor-text",
-                  stateStyles.prefix,
-                )}
-                onFocus={() => {
-                  if (!disabled) {
-                    setIsPhoneMenuOpen(true);
-                  }
-                }}
-                onChange={(event) => {
-                  const nextPrefix = normalizeDialCode(event.target.value);
-                  setPhonePrefixValue(nextPrefix);
-                  const exactMatch = phoneOptions.find(
-                    (option) => option.dialCode === nextPrefix,
-                  );
-
-                  if (exactMatch) {
-                    setSelectedPhoneOption(exactMatch);
-                    onPhoneCountryChange?.(exactMatch);
-
-                    if (!isControlled) {
-                      setInternalValue((current) =>
-                        formatPhoneNumber(current, exactMatch),
-                      );
-                    }
-                  }
-
-                  if (!disabled) {
-                    setIsPhoneMenuOpen(true);
-                  }
-                }}
-                aria-label="Código de país"
-              />
-              <Tooltip
-                asChild
-                portal
-                showTip
-                text="Seleccionar código de país"
-                tipPosition="Top center"
-              >
-                <button
+              <button
                 type="button"
                 className={clsx(
-                  "inline-flex size-5 items-center justify-center",
+                  "flex shrink-0 items-center gap-[8px] border-0 border-r border-[var(--color-neutral-200)] bg-transparent text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-primary-10)]",
                   disabled ? "cursor-not-allowed" : "cursor-pointer",
-                  stateStyles.trailingIcon,
+                  sizing.phonePrefix,
                 )}
-                onClick={() => {
-                  if (!disabled) {
-                    setIsPhoneMenuOpen((current) => !current);
-                  }
-                }}
+                onClick={() => setIsPhoneMenuOpen((current) => !current)}
                 disabled={disabled}
-                aria-label="Seleccionar código de país"
+                aria-label={`Seleccionar código de país. Actual: ${resolvedPhoneOption.label}, ${normalizedPhonePrefix}`}
                 aria-expanded={isPhoneMenuOpen}
                 aria-controls={isPhoneMenuOpen ? `${inputId}-phone-options` : undefined}
                 aria-haspopup="listbox"
               >
-                <ChevronDownIcon className="size-5" />
+                <Flag
+                  countryCode={resolvedPhoneOption.countryCode}
+                  size="20px"
+                  title={resolvedPhoneOption.label}
+                  useSvg
+                  loading="lazy"
+                />
+                <span className={clsx("text-body-3 w-[44px] tracking-[0px]", stateStyles.prefix)}>
+                  {normalizedPhonePrefix}
+                </span>
+                <span
+                  className={clsx("inline-flex size-5 items-center justify-center", stateStyles.trailingIcon)}
+                  aria-hidden="true"
+                >
+                  <ChevronDownIcon className="size-5" />
+                </span>
               </button>
-              </Tooltip>
-            </div>
+            </Tooltip>
 
             {isPhoneMenuOpen ? (
               <div
                 id={`${inputId}-phone-options`}
                 role="listbox"
                 aria-label="Países y códigos telefónicos"
-                className="absolute left-0 top-[calc(100%_-_1px)] z-20 flex max-h-[168px] w-[220px] max-w-[calc(100vw-32px)] flex-col gap-[4px] overflow-x-hidden overflow-y-auto overscroll-contain rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)] px-[4px] py-[8px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]"
+                className="absolute left-0 top-[calc(100%_-_1px)] z-20 flex max-h-[168px] w-full min-w-0 flex-col gap-[4px] overflow-x-hidden overflow-y-auto overscroll-contain rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)] px-[4px] py-[8px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]"
               >
                 {filteredPhoneOptions.map((option) => (
                   <button
@@ -879,7 +825,7 @@ function Input({
                       option.dialCode === resolvedPhoneOption.dialCode
                     }
                     className={clsx(
-                      "flex h-[35px] shrink-0 items-center gap-[8px] rounded-[8px] px-[8px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+                      "grid h-[35px] shrink-0 grid-cols-[20px_44px_minmax(0,1fr)] items-center gap-[4px] rounded-[8px] px-[8px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
                       option.countryCode === resolvedPhoneOption.countryCode &&
                         option.dialCode === resolvedPhoneOption.dialCode
                         ? "bg-[var(--color-neutral-200)]"
@@ -909,14 +855,14 @@ function Input({
                       useSvg
                       loading="lazy"
                     />
-                    <span className="text-body-3 shrink-0 text-[var(--color-text-300)]">
+                    <span className="text-body-4 whitespace-nowrap text-[var(--color-text-300)]">
                       {option.dialCode}
                     </span>
                     <span
-                      className="text-body-4 min-w-0 flex-1 truncate text-[var(--color-text-200)]"
+                      className="text-body-4 min-w-0 truncate text-[var(--color-text-200)]"
                       title={option.label}
                     >
-                      {option.label}
+                      {option.abbreviation}
                     </span>
                   </button>
                 ))}

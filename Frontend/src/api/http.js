@@ -299,6 +299,26 @@ export const adminApi = {
     return apiRequest(`/admin/users/${encodeURIComponent(userId)}`, { signal });
   },
 
+  listUserNotes({ cursor, limit = 25, signal, userId }) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set("cursor", cursor);
+    return apiRequest(`/admin/users/${encodeURIComponent(userId)}/notes?${params.toString()}`, { signal });
+  },
+
+  createUserNote({ content, userId }) {
+    return apiRequest(`/admin/users/${encodeURIComponent(userId)}/notes`, {
+      body: JSON.stringify({ content }),
+      method: "POST",
+    });
+  },
+
+  updateUserNote({ content, noteId, userId }) {
+    return apiRequest(`/admin/users/${encodeURIComponent(userId)}/notes/${encodeURIComponent(noteId)}`, {
+      body: JSON.stringify({ content }),
+      method: "PATCH",
+    });
+  },
+
   createUser(payload) {
     return apiRequest("/admin/users", {
       body: JSON.stringify(payload),

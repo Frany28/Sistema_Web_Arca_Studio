@@ -92,3 +92,26 @@ export const adminUserDetailSchema = z.object({
     userId: z.coerce.number().int().positive(),
   }),
 });
+
+const adminUserNoteContent = z.string().trim().min(1, "Escribe una nota.").max(1000, "La nota no puede superar 1000 caracteres.");
+
+export const adminUserNoteListSchema = z.object({
+  params: z.object({ userId: z.coerce.number().int().positive() }),
+  query: z.object({
+    cursor: userCursor,
+    limit: z.coerce.number().int().min(1).max(25).optional(),
+  }).passthrough(),
+});
+
+export const adminUserNoteCreateSchema = z.object({
+  params: z.object({ userId: z.coerce.number().int().positive() }),
+  body: z.object({ content: adminUserNoteContent }),
+});
+
+export const adminUserNoteUpdateSchema = z.object({
+  params: z.object({
+    userId: z.coerce.number().int().positive(),
+    noteId: z.coerce.number().int().positive(),
+  }),
+  body: z.object({ content: adminUserNoteContent }),
+});

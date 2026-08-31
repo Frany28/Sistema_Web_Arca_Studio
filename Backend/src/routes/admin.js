@@ -20,8 +20,11 @@ import {
 import {
   getAdminUsers,
   getAdminUser,
+  getAdminUserNotes,
+  patchAdminUserNote,
   patchAdminUserStatus,
   postAdminUser,
+  postAdminUserNote,
   streamAdminUserProfilePhoto,
 } from "../controllers/adminUserController.js";
 import { requireAuth, requireRoles } from "../middlewares/auth.js";
@@ -38,6 +41,9 @@ import {
   adminUserCreateSchema,
   adminUserDetailSchema,
   adminUserListSchema,
+  adminUserNoteCreateSchema,
+  adminUserNoteListSchema,
+  adminUserNoteUpdateSchema,
   adminUserPhotoSchema,
   adminUserStatusSchema,
 } from "../validation/adminUserSchemas.js";
@@ -51,6 +57,11 @@ const adminUserCreateRateLimit = createRateLimit({
 const adminUserStatusRateLimit = createRateLimit({
   name: "admin-user-status",
   max: 60,
+  windowMs: 60 * 60 * 1000,
+});
+const adminUserNoteRateLimit = createRateLimit({
+  name: "admin-user-note",
+  max: 120,
   windowMs: 60 * 60 * 1000,
 });
 const adminProjectBulkActionRateLimit = createRateLimit({
@@ -71,6 +82,19 @@ router.get("/dashboard-overview", getDashboardOverview);
 router.get("/assignees", getAdminAssignees);
 router.get("/users", validate(adminUserListSchema), getAdminUsers);
 router.get("/users/:userId", validate(adminUserDetailSchema), getAdminUser);
+router.get("/users/:userId/notes", validate(adminUserNoteListSchema), getAdminUserNotes);
+router.post(
+  "/users/:userId/notes",
+  adminUserNoteRateLimit,
+  validate(adminUserNoteCreateSchema),
+  postAdminUserNote,
+);
+router.patch(
+  "/users/:userId/notes/:noteId",
+  adminUserNoteRateLimit,
+  validate(adminUserNoteUpdateSchema),
+  patchAdminUserNote,
+);
 router.get(
   "/users/:userId/profile-photo",
   validate(adminUserPhotoSchema),

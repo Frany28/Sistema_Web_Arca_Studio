@@ -20,11 +20,21 @@ export function mapAdminUserDetails(row = {}) {
     companyName: row.company_name || null,
     phone: row.phone || null,
     secondaryPhone: row.secondary_phone || null,
-    notes: row.notes || null,
+    notes: (Array.isArray(row.notes) ? row.notes : []).map(mapAdminUserNote),
+    notesTotal: Number(row.notes_total || 0),
     projects: (Array.isArray(row.projects) ? row.projects : []).map((project) => ({
       id: Number(project.id),
       name: project.name,
     })),
+  };
+}
+
+export function mapAdminUserNote(row = {}) {
+  return {
+    id: Number(row.id),
+    content: row.content,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 

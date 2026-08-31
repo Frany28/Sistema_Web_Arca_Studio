@@ -13,6 +13,14 @@ const PHONE_MASK_OVERRIDES = {
   PE: { mask: "### ### ###", placeholder: "912 345 678" },
 };
 
+// Compact labels used only in the constrained phone-country selector.
+// The full country name remains available through accessible labels and titles.
+const PHONE_COUNTRY_ABBREVIATION_OVERRIDES = {
+  NO: "NOR",
+  US: "USA",
+  VE: "VE",
+};
+
 function createDefaultPhonePresentation(dialCode) {
   const digits = String(dialCode ?? "").replace(/\D/g, "");
 
@@ -43,6 +51,7 @@ export const PHONE_COUNTRY_OPTIONS = rawPhoneCountryOptions
     const defaults = createDefaultPhonePresentation(item.dial_code);
 
     return {
+      abbreviation: PHONE_COUNTRY_ABBREVIATION_OVERRIDES[normalizedCode] ?? normalizedCode,
       countryCode: normalizedCode,
       dialCode: item.dial_code,
       label: String(item.name ?? "").trim(),

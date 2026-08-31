@@ -154,7 +154,7 @@ export async function listAdminUsers({ cursor, limit, role, search, status }) {
   return result.rows;
 }
 
-export async function findAdminUserDetails(userId) {
+export async function findAdminUserDetails({ actorUserId, userId }) {
   const result = await query(
     `
       select
@@ -169,7 +169,28 @@ export async function findAdminUserDetails(userId) {
         u.created_at,
         r.code as role_code,
         r.name as role_name,
-        c.notes,
+        coalesce((
+          select jsonb_agg(
+            jsonb_build_object(
+              'id', private_note.id,
+              'content', private_note.content,
+              'created_at', private_note.created_at,
+              'updated_at', private_note.updated_at
+            ) order by private_note.created_at desc, private_note.id desc
+          )
+          from (
+            select id, content, created_at, updated_at
+            from public.admin_user_notes
+            where admin_user_id = $2 and target_user_id = u.id
+            order by created_at desc, id desc
+            limit 3
+          ) private_note
+        ), '[]'::jsonb) as notes,
+        (
+          select count(*)::int
+          from public.admin_user_notes
+          where admin_user_id = $2 and target_user_id = u.id
+        ) as notes_total,
         coalesce((
           select jsonb_agg(
             jsonb_build_object('id', related_project.id, 'name', related_project.name)
@@ -198,9 +219,60 @@ export async function findAdminUserDetails(userId) {
         and u.deleted_at is null
       limit 1
     `,
-    [userId],
+    [userId, actorUserId],
   );
 
+  return result.rows[0] || null;
+}
+
+export async function adminUserExists(userId) {
+  const result = await query(
+    `select exists(select 1 from public.users where id = $1 and deleted_at is null) as exists`,
+    [userId],
+  );
+  return Boolean(result.rows[0]?.exists);
+}
+
+export async function listAdminUserNotes({ adminUserId, cursor, limit, targetUserId }) {
+  const result = await query(
+    `
+      select id, content, created_at, updated_at
+      from public.admin_user_notes
+      where admin_user_id = $1
+        and target_user_id = $2
+        and ($3::timestamptz is null or (created_at, id) < ($3, $4::bigint))
+      order by created_at desc, id desc
+      limit $5
+    `,
+    [adminUserId, targetUserId, cursor?.[0] || null, cursor?.[1] || null, limit + 1],
+  );
+  return result.rows;
+}
+
+export async function createAdminUserNoteRecord({ adminUserId, content, targetUserId }) {
+  const result = await query(
+    `
+      insert into public.admin_user_notes (admin_user_id, target_user_id, content)
+      select $1, u.id, $3
+      from public.users u
+      where u.id = $2 and u.deleted_at is null
+      returning id, content, created_at, updated_at
+    `,
+    [adminUserId, targetUserId, content],
+  );
+  return result.rows[0] || null;
+}
+
+export async function updateAdminUserNoteRecord({ adminUserId, content, noteId, targetUserId }) {
+  const result = await query(
+    `
+      update public.admin_user_notes
+      set content = $4, updated_at = now()
+      where id = $3 and admin_user_id = $1 and target_user_id = $2
+      returning id, content, created_at, updated_at
+    `,
+    [adminUserId, targetUserId, noteId, content],
+  );
   return result.rows[0] || null;
 }
 

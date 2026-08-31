@@ -153,7 +153,13 @@ test("the user details action opens the Figma drawer with live API data", async 
   assert.match(drawerSource, /api\.admin\.getUserDetails/);
   assert.match(drawerSource, /text-heading-8 text-\[var\(--color-text-300\)\]">\{label\}/);
   assert.match(drawerSource, /text-heading-8 m-0 break-words text-\[var\(--color-text-200\)\]/);
-  assert.match(drawerSource, /<TextArea(?:(?!\/>)[\s\S])*readOnly/);
-  assert.doesNotMatch(drawerSource, /<TextArea(?:(?!\/>)[\s\S])*disabled/);
+  assert.match(drawerSource, /Añadir nota/);
+  assert.match(drawerSource, /Ver todas \(\$\{notesTotal\}\)/);
+  assert.match(drawerSource, /max-h-\[248px\][^"\n]*overflow-y-auto/);
+  assert.match(drawerSource, /api\.admin\.createUserNote/);
+  assert.match(drawerSource, /api\.admin\.updateUserNote/);
+  assert.match(drawerSource, /<AlertToast/);
+  assert.doesNotMatch(drawerSource, /readOnly/);
   assert.match(httpSource, /getUserDetails\(\{ signal, userId \}\)/);
+  assert.match(httpSource, /listUserNotes\(\{ cursor, limit = 25, signal, userId \}\)/);
 });

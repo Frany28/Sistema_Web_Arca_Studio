@@ -1,15 +1,19 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
   adminUserCreateSchema,
   adminUserDetailSchema,
   adminUserListSchema,
+  adminUserNoteCreateSchema,
+  adminUserNoteListSchema,
+  adminUserNoteUpdateSchema,
   adminUserPhotoSchema,
   adminUserStatusSchema,
 } from "../src/validation/adminUserSchemas.js";
 import { encodeCursor } from "../src/utils/pagination.js";
-import { mapAdminUser, mapAdminUserDetails, mapAdminUserMetrics } from "../src/utils/adminUsers.js";
+import { mapAdminUser, mapAdminUserDetails, mapAdminUserMetrics, mapAdminUserNote } from "../src/utils/adminUsers.js";
 
 test("admin user filters validate cursor, role and database statuses", () => {
   const result = adminUserListSchema.safeParse({
@@ -117,7 +121,8 @@ test("admin user details validate identifiers and expose real related data", () 
     company_name: "Nextj",
     phone: "+14441234567",
     secondary_phone: null,
-    notes: "Cliente referido.",
+    notes: [{ id: "7", content: "Cliente referido.", created_at: "2026-08-30T12:00:00.000Z", updated_at: "2026-08-30T12:00:00.000Z" }],
+    notes_total: "1",
     projects: [{ id: "9", name: "Torre Empresarial Nextj" }],
   }), {
     id: 42,
@@ -131,7 +136,30 @@ test("admin user details validate identifiers and expose real related data", () 
     companyName: "Nextj",
     phone: "+14441234567",
     secondaryPhone: null,
-    notes: "Cliente referido.",
+    notes: [{ id: 7, content: "Cliente referido.", createdAt: "2026-08-30T12:00:00.000Z", updatedAt: "2026-08-30T12:00:00.000Z" }],
+    notesTotal: 1,
     projects: [{ id: 9, name: "Torre Empresarial Nextj" }],
   });
+});
+
+test("admin user notes validate private, bounded and paginated content", () => {
+  assert.equal(adminUserNoteCreateSchema.safeParse({ params: { userId: "42" }, body: { content: " Seguimiento privado " } }).success, true);
+  assert.equal(adminUserNoteCreateSchema.safeParse({ params: { userId: "42" }, body: { content: " " } }).success, false);
+  assert.equal(adminUserNoteCreateSchema.safeParse({ params: { userId: "42" }, body: { content: "x".repeat(1001) } }).success, false);
+  assert.equal(adminUserNoteUpdateSchema.safeParse({ params: { userId: "42", noteId: "7" }, body: { content: "Actualizada" } }).success, true);
+  assert.equal(adminUserNoteListSchema.safeParse({ params: { userId: "42" }, query: { limit: "25" } }).success, true);
+  assert.equal(adminUserNoteListSchema.safeParse({ params: { userId: "42" }, query: { limit: "26" } }).success, false);
+  assert.deepEqual(mapAdminUserNote({ id: "7", content: "Nota", created_at: "2026-08-30T12:00:00.000Z", updated_at: "2026-08-31T12:00:00.000Z" }), {
+    id: 7,
+    content: "Nota",
+    createdAt: "2026-08-30T12:00:00.000Z",
+    updatedAt: "2026-08-31T12:00:00.000Z",
+  });
+});
+
+test("admin user note queries are scoped to the authenticated administrator", () => {
+  const repository = readFileSync(new URL("../src/repositories/adminUserRepository.js", import.meta.url), "utf8");
+  assert.match(repository, /where admin_user_id = \$1\s+and target_user_id = \$2/);
+  assert.match(repository, /where id = \$3 and admin_user_id = \$1 and target_user_id = \$2/);
+  assert.match(repository, /where admin_user_id = \$2 and target_user_id = u\.id/);
 });

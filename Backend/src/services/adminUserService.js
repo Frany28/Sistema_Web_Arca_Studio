@@ -5,11 +5,15 @@ import { ADMIN_USERS_PAGE_SIZE } from "../config/adminUsers.js";
 import { ConflictError, NotFoundError } from "../errors/appError.js";
 import {
   createAdminUserRecord,
+  createAdminUserNoteRecord,
   deleteCreatedAdminUser,
+  adminUserExists,
   findAdminUserDetails,
   findAdminUserConflict,
   getAdminUserMetrics,
   listAdminUsers,
+  listAdminUserNotes,
+  updateAdminUserNoteRecord,
   updateAdminUserStatusRecord,
 } from "../repositories/adminUserRepository.js";
 import {
@@ -20,7 +24,7 @@ import {
   createPasswordResetPayload,
   sendPasswordResetEmail,
 } from "./passwordResetEmailService.js";
-import { mapAdminUser, mapAdminUserDetails } from "../utils/adminUsers.js";
+import { mapAdminUser, mapAdminUserDetails, mapAdminUserNote } from "../utils/adminUsers.js";
 import { invalidateCachedUser } from "./userSessionCache.js";
 import {
   decodeCursor,
@@ -56,13 +60,42 @@ export async function getAdminUsersPage(query = {}) {
   };
 }
 
-export async function getAdminUserDetails(userId) {
-  const user = await findAdminUserDetails(userId);
+export async function getAdminUserDetails({ actorUserId, userId }) {
+  const user = await findAdminUserDetails({ actorUserId, userId });
   if (!user) {
     throw new NotFoundError("USER_NOT_FOUND", "El usuario seleccionado no existe.");
   }
 
   return mapAdminUserDetails(user);
+}
+
+export async function getAdminUserNotesPage({ actorUserId, query = {}, userId }) {
+  const limit = Math.min(parsePageLimit(query.limit || 25), 25);
+  const exists = await adminUserExists(userId);
+  if (!exists) throw new NotFoundError("USER_NOT_FOUND", "El usuario seleccionado no existe.");
+  const rows = await listAdminUserNotes({
+    adminUserId: actorUserId,
+    cursor: decodeCursor(query.cursor),
+    limit,
+    targetUserId: userId,
+  });
+  const page = pageResult(rows, limit, mapAdminUserNote, (row) => [
+    new Date(row.created_at).toISOString(),
+    String(row.id),
+  ]);
+  return { notes: page.items, nextCursor: page.nextCursor };
+}
+
+export async function createAdminUserNote({ actorUserId, content, userId }) {
+  const note = await createAdminUserNoteRecord({ adminUserId: actorUserId, content, targetUserId: userId });
+  if (!note) throw new NotFoundError("USER_NOT_FOUND", "El usuario seleccionado no existe.");
+  return mapAdminUserNote(note);
+}
+
+export async function updateAdminUserNote({ actorUserId, content, noteId, userId }) {
+  const note = await updateAdminUserNoteRecord({ adminUserId: actorUserId, content, noteId, targetUserId: userId });
+  if (!note) throw new NotFoundError("NOTE_NOT_FOUND", "La nota seleccionada no existe.");
+  return mapAdminUserNote(note);
 }
 
 export async function createAdminUser(payload) {

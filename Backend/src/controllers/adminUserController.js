@@ -1,8 +1,11 @@
 import {
   createAdminUser,
+  createAdminUserNote,
   getAdminUserDetails,
+  getAdminUserNotesPage,
   getAdminUsersPage,
   updateAdminUserStatus,
+  updateAdminUserNote,
 } from "../services/adminUserService.js";
 import { getAdminUserProfilePhoto } from "../services/profilePhotoService.js";
 
@@ -51,12 +54,45 @@ export async function getAdminUsers(req, res, next) {
 
 export async function getAdminUser(req, res, next) {
   try {
-    const user = await getAdminUserDetails(req.params.userId);
-    res.set("Cache-Control", "private, max-age=15, must-revalidate");
+    const user = await getAdminUserDetails({ actorUserId: req.user.id, userId: req.params.userId });
+    res.set("Cache-Control", "no-store");
     res.status(200).json({ user });
   } catch (error) {
     next(error);
   }
+}
+
+export async function getAdminUserNotes(req, res, next) {
+  try {
+    const page = await getAdminUserNotesPage({
+      actorUserId: req.user.id,
+      query: req.validatedQuery,
+      userId: req.params.userId,
+    });
+    res.set("Cache-Control", "no-store");
+    res.status(200).json(page);
+  } catch (error) { next(error); }
+}
+
+export async function postAdminUserNote(req, res, next) {
+  try {
+    const note = await createAdminUserNote({ actorUserId: req.user.id, content: req.body.content, userId: req.params.userId });
+    res.set("Cache-Control", "no-store");
+    res.status(201).json({ message: "Nota guardada correctamente.", note });
+  } catch (error) { next(error); }
+}
+
+export async function patchAdminUserNote(req, res, next) {
+  try {
+    const note = await updateAdminUserNote({
+      actorUserId: req.user.id,
+      content: req.body.content,
+      noteId: req.params.noteId,
+      userId: req.params.userId,
+    });
+    res.set("Cache-Control", "no-store");
+    res.status(200).json({ message: "Nota actualizada correctamente.", note });
+  } catch (error) { next(error); }
 }
 
 export async function patchAdminUserStatus(req, res, next) {
