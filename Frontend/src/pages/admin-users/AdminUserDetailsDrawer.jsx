@@ -13,8 +13,8 @@ import { formatCalendarDate } from "../../utils/relativeTime.js";
 function DetailField({ children, label }) {
   return (
     <div className="flex min-w-0 flex-col gap-[8px]">
-      <dt className="text-heading-8 text-[var(--color-text-100)]">{label}</dt>
-      <dd className="text-body-3 m-0 break-words text-[var(--color-text-300)]">{children}</dd>
+      <dt className="text-heading-8 text-[var(--color-text-300)]">{label}</dt>
+      <dd className="text-heading-8 m-0 break-words text-[var(--color-text-200)]">{children}</dd>
     </div>
   );
 }
@@ -41,7 +41,7 @@ function UserDetails({ user }) {
       <div className="h-px w-full bg-[var(--color-neutral-200)]" aria-hidden="true" />
 
       <section className="flex flex-col gap-[8px]" aria-labelledby="admin-user-projects-title">
-        <h3 id="admin-user-projects-title" className="text-heading-8 m-0 text-[var(--color-text-100)]">Proyectos</h3>
+        <h3 id="admin-user-projects-title" className="text-heading-8 m-0 text-[var(--color-text-300)]">Proyectos</h3>
         {projects.length ? (
           <div className="flex flex-wrap gap-[8px]">
             {projects.map((project) => (
@@ -58,7 +58,7 @@ function UserDetails({ user }) {
             ))}
           </div>
         ) : (
-          <p className="text-body-3 m-0 text-[var(--color-text-300)]">Sin proyectos asignados</p>
+          <p className="text-heading-8 m-0 text-[var(--color-text-200)]">Sin proyectos asignados</p>
         )}
       </section>
 
@@ -69,7 +69,7 @@ function UserDetails({ user }) {
         hintText="Información interna visible para administradores."
         showLabelInfo={false}
         minHeight={130}
-        disabled
+        readOnly
         className="max-w-none"
         aria-label="Notas internas del usuario"
       />

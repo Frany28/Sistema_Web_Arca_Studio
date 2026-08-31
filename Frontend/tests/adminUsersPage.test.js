@@ -151,5 +151,9 @@ test("the user details action opens the Figma drawer with live API data", async 
   assert.match(drawerSource, /formatCalendarDate\(user\.createdAt\)/);
   assert.match(drawerSource, /projects\.map/);
   assert.match(drawerSource, /api\.admin\.getUserDetails/);
+  assert.match(drawerSource, /text-heading-8 text-\[var\(--color-text-300\)\]">\{label\}/);
+  assert.match(drawerSource, /text-heading-8 m-0 break-words text-\[var\(--color-text-200\)\]/);
+  assert.match(drawerSource, /<TextArea(?:(?!\/>)[\s\S])*readOnly/);
+  assert.doesNotMatch(drawerSource, /<TextArea(?:(?!\/>)[\s\S])*disabled/);
   assert.match(httpSource, /getUserDetails\(\{ signal, userId \}\)/);
 });

@@ -584,10 +584,18 @@ function Input({
       }
     };
 
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsPhoneMenuOpen(false);
+      }
+    };
+
     document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isPhoneMenuOpen]);
 
@@ -846,6 +854,8 @@ function Input({
                 disabled={disabled}
                 aria-label="Seleccionar código de país"
                 aria-expanded={isPhoneMenuOpen}
+                aria-controls={isPhoneMenuOpen ? `${inputId}-phone-options` : undefined}
+                aria-haspopup="listbox"
               >
                 <ChevronDownIcon className="size-5" />
               </button>
@@ -853,13 +863,23 @@ function Input({
             </div>
 
             {isPhoneMenuOpen ? (
-              <div className="absolute left-0 top-[calc(100%+8px)] z-20 flex min-w-[190px] flex-col overflow-hidden rounded-[12px] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[0px_8px_24px_rgba(27,28,29,0.08)]">
+              <div
+                id={`${inputId}-phone-options`}
+                role="listbox"
+                aria-label="Países y códigos telefónicos"
+                className="absolute left-0 top-[calc(100%_-_1px)] z-20 flex max-h-[168px] w-[220px] max-w-[calc(100vw-32px)] flex-col gap-[4px] overflow-x-hidden overflow-y-auto overscroll-contain rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)] px-[4px] py-[8px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]"
+              >
                 {filteredPhoneOptions.map((option) => (
                   <button
                     key={`${option.countryCode}-${option.dialCode}`}
                     type="button"
+                    role="option"
+                    aria-selected={
+                      option.countryCode === resolvedPhoneOption.countryCode &&
+                      option.dialCode === resolvedPhoneOption.dialCode
+                    }
                     className={clsx(
-                      "flex items-center gap-[8px] px-3 py-2 text-left transition-colors",
+                      "flex h-[35px] shrink-0 items-center gap-[8px] rounded-[8px] px-[8px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
                       option.countryCode === resolvedPhoneOption.countryCode &&
                         option.dialCode === resolvedPhoneOption.dialCode
                         ? "bg-[var(--color-neutral-200)]"
@@ -889,16 +909,19 @@ function Input({
                       useSvg
                       loading="lazy"
                     />
-                    <span className="text-body-3 text-[var(--color-text-300)]">
+                    <span className="text-body-3 shrink-0 text-[var(--color-text-300)]">
                       {option.dialCode}
                     </span>
-                    <span className="text-body-4 text-[var(--color-text-200)]">
+                    <span
+                      className="text-body-4 min-w-0 flex-1 truncate text-[var(--color-text-200)]"
+                      title={option.label}
+                    >
                       {option.label}
                     </span>
                   </button>
                 ))}
                 {filteredPhoneOptions.length === 0 ? (
-                  <div className="px-3 py-2 text-body-4 text-[var(--color-text-100)]">
+                  <div className="flex h-[35px] shrink-0 items-center px-[8px] text-body-4 text-[var(--color-text-100)]">
                     Sin coincidencias
                   </div>
                 ) : null}
