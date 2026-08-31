@@ -234,6 +234,23 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 
 ## Datos, paginación y tiempo real
 
+### Presentación de fechas recientes
+
+Cuando una fecha represente cuánto tiempo ha transcurrido desde una acción —por ejemplo, último acceso, última modificación o una actividad equivalente— y la interfaz requiera este estilo progresivo, debe reutilizar `src/utils/relativeTime.js` mediante `formatHumanDate`. No se deben recrear umbrales, pluralizaciones ni formatos locales dentro de páginas o componentes.
+
+La presentación estándar es:
+
+- Menos de un minuto: “Hace menos de un minuto”.
+- De 1 a 59 minutos: “Hace 1 minuto” o “Hace N minutos”.
+- De 1 a 23 horas: “Hace 1 hora” o “Hace N horas”.
+- De 1 a 30 días: “Hace 1 día” o “Hace N días”.
+- De 31 a 59 días: “Hace un mes”.
+- Desde 60 días: fecha exacta localizada en español, como “19 jun”.
+- Si la fecha pertenece a otro año, se incluye el año para evitar ambigüedad, como “17 feb 2025”.
+- Los valores ausentes o inválidos usan un texto contextual, como “Sin acceso” o “Sin fecha”.
+
+El formato relativo compacto destinado a espacios restringidos constituye una variante diferente y solo debe utilizarse cuando el diseño aprobado exija expresamente abreviaturas.
+
 ### Proyectos archivados
 
 - Un proyecto archivado es de solo lectura hasta que un administrador lo desarchive.
@@ -263,11 +280,16 @@ Antes de entregar, comprobar contraste, bordes, overlays, estados disabled y fee
 
 ### Estados de usuarios administrativos
 
+- En el cuerpo de la tabla de gestión de usuarios, el rol se presenta con `Badge` en tema `Brand 1`, variación `Simple` y tamaño `S`; la celda conserva `24px` de padding horizontal y `16px` vertical según el componente de Figma.
 - Un usuario `active` puede suspenderse temporalmente (`blocked`) o deshabilitarse de forma indefinida (`inactive`).
 - Un usuario suspendido muestra las acciones “Reactivar” y “Deshabilitar”; un usuario deshabilitado muestra únicamente “Habilitar”.
 - Reactivar o habilitar devuelve la cuenta a `active`. Suspender o deshabilitar impide el acceso y excluye al usuario de nuevas asignaciones, sin eliminar su historial ni sus asignaciones existentes.
 - Toda transición requiere un modal de confirmación. Los alerts de éxito o error solo se muestran después de confirmar y recibir el resultado de la API.
 - El frontend adapta las acciones al estado actual y el backend valida la transición; nunca se depende únicamente del texto o la disponibilidad visual del menú.
+- Al seleccionar uno o más usuarios, el footer muestra las acciones masivas centradas entre el contador y la paginación. Sin selección, ese grupo de acciones no se renderiza.
+- “Suspender” actúa únicamente sobre usuarios activos; “Deshabilitar” actúa sobre usuarios activos o suspendidos; “Activar” actúa únicamente sobre usuarios suspendidos o deshabilitados. Una cuenta que ya se encuentra en el estado solicitado no genera una petición redundante.
+- La cuenta del administrador autenticado se excluye de cualquier cambio masivo. Cada botón permanece deshabilitado cuando la selección no contiene al menos un usuario elegible para esa transición.
+- Las acciones masivas reutilizan el modal de advertencia antes de ejecutarse, bloquean envíos equivalentes mientras están en curso y muestran el alert compartido de éxito, error o resultado parcial. Los usuarios actualizados se deseleccionan; los que fallen permanecen seleccionados para permitir un reintento.
 
 ### Navegación superior persistente
 

@@ -25,13 +25,42 @@ const ACTION_DETAILS = {
   },
 };
 
+function getBulkActionDetails(change) {
+  const count = change.users.length;
+  const isPlural = count !== 1;
+  const subject = count === 1 ? "al usuario seleccionado" : `a los ${count} usuarios seleccionados`;
+
+  if (change.status === "blocked") {
+    return {
+      title: `¿Deseas suspender ${subject}?`,
+      description: `${isPlural ? "Perderán" : "Perderá"} temporalmente el acceso al sistema hasta que un administrador ${isPlural ? "los reactive" : "lo reactive"}.`,
+      ariaLabel: "Confirmar suspensión de usuarios seleccionados",
+    };
+  }
+
+  if (change.status === "inactive") {
+    return {
+      title: `¿Deseas deshabilitar ${subject}?`,
+      description: `${isPlural ? "Perderán" : "Perderá"} el acceso y no ${isPlural ? "estarán disponibles" : "estará disponible"} para nuevas asignaciones. Su historial se conservará.`,
+      ariaLabel: "Confirmar deshabilitación de usuarios seleccionados",
+    };
+  }
+
+  return {
+    title: `¿Deseas activar ${subject}?`,
+    description: `${isPlural ? "Recuperarán" : "Recuperará"} el acceso al sistema y ${isPlural ? "podrán" : "podrá"} volver a realizar las acciones permitidas por su rol.`,
+    ariaLabel: "Confirmar activación de usuarios seleccionados",
+  };
+}
+
 function AdminUserStatusModal({ change, onCancel, onConfirm }) {
   if (!change) return null;
 
-  const actionKey = change.status === "active"
+  const isBulkChange = Array.isArray(change.users);
+  const actionKey = !isBulkChange && change.status === "active"
     ? `activeFrom${change.user.status === "blocked" ? "Blocked" : "Inactive"}`
     : change.status;
-  const details = ACTION_DETAILS[actionKey];
+  const details = isBulkChange ? getBulkActionDetails(change) : ACTION_DETAILS[actionKey];
 
   return (
     <Modal

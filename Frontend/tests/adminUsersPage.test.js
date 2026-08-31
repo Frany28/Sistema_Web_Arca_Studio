@@ -35,6 +35,23 @@ test("admin user table footer follows the detached Figma pagination layout", asy
   assert.doesNotMatch(source, /gap-\[12px\] border-t border-\[var\(--color-neutral-200\)\] px-\[16px\] py-\[12px\]/);
 });
 
+test("selected admin users expose centered bulk status actions", async () => {
+  const [source, modalSource] = await Promise.all([
+    readFile(new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin-users/AdminUserStatusModal.jsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(source, /grid-cols-\[1fr_auto_1fr\]/);
+  assert.match(source, /selectedCount \? BULK_STATUS_ACTIONS\.map/);
+  assert.match(source, /label: "Suspender", status: "blocked"/);
+  assert.match(source, /label: "Deshabilitar", status: "inactive"/);
+  assert.match(source, /label: "Activar", status: "active"/);
+  assert.match(source, /Promise\.allSettled/);
+  assert.match(source, /<AlertToast/);
+  assert.match(modalSource, /getBulkActionDetails/);
+  assert.match(modalSource, /<Modal/);
+});
+
 test("selected admin user rows share the dashboard selection surface", async () => {
   const source = await readFile(
     new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
@@ -57,7 +74,19 @@ test("admin user body rows follow the Figma typography hierarchy", async () => {
 
   assert.match(source, /text-body-4 truncate text-\[var\(--color-text-300\)\]">\{listedUser\.name\}/);
   assert.match(source, /text-heading-8 truncate px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{listedUser\.email\}/);
-  assert.match(source, /text-heading-8 px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{formatLastAccessTime/);
+  assert.match(source, /text-heading-8 px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{formatHumanDate/);
+});
+
+test("admin user role cells use the filled brand badge from Figma", async () => {
+  const source = await readFile(
+    new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /<td className="px-\[24px\] py-\[16px\]"><Badge label=\{listedUser\.role\?\.name \|\| "Sin rol"\} theme="Brand 1" variation="Simple" size="S" \/><\/td>/,
+  );
 });
 
 test("admin user filters match the Figma control dimensions", async () => {

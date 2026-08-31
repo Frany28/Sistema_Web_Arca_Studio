@@ -6,8 +6,11 @@ import {
   Eye,
   Filter,
   FilterRemove,
+  LockCircle,
+  MinusCirlce,
   Profile2User,
   SearchNormal1,
+  TickCircle,
   UserMinus,
   UserRemove,
   UserTick,
@@ -32,11 +35,12 @@ import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
-import { formatLastAccessTime } from "../../utils/relativeTime.js";
+import { formatHumanDate } from "../../utils/relativeTime.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import CreateAdminUserModal from "./CreateAdminUserModal.jsx";
 import AdminUserActionsMenu from "./AdminUserActionsMenu.jsx";
 import AdminUserStatusModal from "./AdminUserStatusModal.jsx";
+import { getBulkStatusTargets } from "./adminUserStatusPolicy.js";
 
 const WEB_BREAKPOINT_PX = 1280;
 const STATUS_FILTER_ITEMS = [
@@ -50,6 +54,21 @@ const STATUS_DETAILS = {
   inactive: { label: "Deshabilitado", theme: "Disabled" },
 };
 const NUMBER_FORMATTER = new Intl.NumberFormat("es-VE");
+const METRIC_BY_STATUS = {
+  active: "active",
+  blocked: "suspended",
+  inactive: "disabled",
+};
+const BULK_STATUS_ACTIONS = [
+  { icon: MinusCirlce, label: "Suspender", status: "blocked" },
+  { icon: LockCircle, label: "Deshabilitar", status: "inactive" },
+  { icon: TickCircle, label: "Activar", status: "active" },
+];
+const BULK_FEEDBACK = {
+  active: { singular: "Usuario activado", plural: "Usuarios activados", singularVerb: "activó", pluralVerb: "activaron" },
+  blocked: { singular: "Usuario suspendido", plural: "Usuarios suspendidos", singularVerb: "suspendió", pluralVerb: "suspendieron" },
+  inactive: { singular: "Usuario deshabilitado", plural: "Usuarios deshabilitados", singularVerb: "deshabilitó", pluralVerb: "deshabilitaron" },
+};
 
 function Metric({ icon, iconType, label, value }) {
   return (
@@ -103,6 +122,7 @@ function AdminUsersPage({ empty = false }) {
   const [creationMessage, setCreationMessage] = useState("");
   const [statusFeedback, setStatusFeedback] = useState(null);
   const [updatingUserId, setUpdatingUserId] = useState(null);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
 
   const navigationItems = useMemo(
@@ -126,6 +146,17 @@ function AdminUsersPage({ empty = false }) {
   );
   const allSelected = users.length > 0 && selectedCount === users.length;
   const headerChecked = allSelected ? "Yes" : selectedCount ? "Indeterminate" : "No";
+  const bulkTargetsByStatus = useMemo(() => Object.fromEntries(
+    BULK_STATUS_ACTIONS.map((action) => [
+      action.status,
+      getBulkStatusTargets({
+        actorUserId: user?.id,
+        selectedUserIds,
+        status: action.status,
+        users,
+      }),
+    ]),
+  ), [selectedUserIds, user?.id, users]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -217,6 +248,7 @@ function AdminUsersPage({ empty = false }) {
   }
 
   function toggleAll() {
+    if (isBulkUpdating) return;
     setSelectedUserIds((current) => {
       const next = new Set(current);
       users.forEach((listedUser) => {
@@ -228,6 +260,7 @@ function AdminUsersPage({ empty = false }) {
   }
 
   function toggleUser(userId) {
+    if (isBulkUpdating) return;
     setSelectedUserIds((current) => {
       const next = new Set(current);
       const id = String(userId);
@@ -273,11 +306,10 @@ function AdminUsersPage({ empty = false }) {
       });
       setMetrics((current) => {
         if (!current || listedUser.status === status) return current;
-        const metricByStatus = { active: "active", blocked: "suspended", inactive: "disabled" };
         return {
           ...current,
-          [metricByStatus[listedUser.status]]: Math.max(0, current[metricByStatus[listedUser.status]] - 1),
-          [metricByStatus[status]]: current[metricByStatus[status]] + 1,
+          [METRIC_BY_STATUS[listedUser.status]]: Math.max(0, current[METRIC_BY_STATUS[listedUser.status]] - 1),
+          [METRIC_BY_STATUS[status]]: current[METRIC_BY_STATUS[status]] + 1,
         };
       });
       setStatusFeedback({
@@ -303,6 +335,81 @@ function AdminUsersPage({ empty = false }) {
       });
     } finally {
       setUpdatingUserId(null);
+    }
+  }
+
+  function requestBulkStatusChange(status) {
+    const targets = bulkTargetsByStatus[status] || [];
+    if (!targets.length || isBulkUpdating || updatingUserId !== null) return;
+    setStatusFeedback(null);
+    setPendingStatusChange({ users: targets, status });
+  }
+
+  async function changeUsersStatus(targets, status) {
+    setIsBulkUpdating(true);
+    setStatusFeedback(null);
+
+    try {
+      const results = await Promise.allSettled(targets.map(async (listedUser) => ({
+        listedUser,
+        response: await api.admin.updateUserStatus({ status, userId: listedUser.id }),
+      })));
+      const successfulChanges = results
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value);
+      const failedResults = results.filter((result) => result.status === "rejected");
+      const successfulIds = new Set(successfulChanges.map(({ listedUser }) => String(listedUser.id)));
+      const updatedById = new Map(successfulChanges.map(({ listedUser, response }) => [
+        String(listedUser.id),
+        response?.user || { ...listedUser, status },
+      ]));
+
+      if (successfulChanges.length) {
+        setUsers((current) => current
+          .filter((listedUser) => !(
+            successfulIds.has(String(listedUser.id))
+            && statusFilterIds.length
+            && !statusFilterIds.includes(status)
+          ))
+          .map((listedUser) => updatedById.get(String(listedUser.id)) || listedUser));
+        setSelectedUserIds((current) => {
+          const next = new Set(current);
+          successfulIds.forEach((id) => next.delete(id));
+          return next;
+        });
+        setMetrics((current) => successfulChanges.reduce((nextMetrics, { listedUser }) => {
+          if (!nextMetrics || listedUser.status === status) return nextMetrics;
+          return {
+            ...nextMetrics,
+            [METRIC_BY_STATUS[listedUser.status]]: Math.max(
+              0,
+              nextMetrics[METRIC_BY_STATUS[listedUser.status]] - 1,
+            ),
+            [METRIC_BY_STATUS[status]]: nextMetrics[METRIC_BY_STATUS[status]] + 1,
+          };
+        }, current));
+      }
+
+      const feedback = BULK_FEEDBACK[status];
+      if (!failedResults.length) {
+        setStatusFeedback({
+          tone: "success",
+          title: successfulChanges.length === 1 ? feedback.singular : feedback.plural,
+          message: `Se ${successfulChanges.length === 1 ? feedback.singularVerb : feedback.pluralVerb} ${successfulChanges.length} ${successfulChanges.length === 1 ? "usuario" : "usuarios"} correctamente.`,
+        });
+      } else {
+        setStatusFeedback({
+          tone: "danger",
+          title: successfulChanges.length
+            ? "Algunos usuarios no se pudieron actualizar"
+            : "No se pudieron actualizar los usuarios",
+          message: successfulChanges.length
+            ? `${successfulChanges.length} ${successfulChanges.length === 1 ? "usuario fue actualizado" : "usuarios fueron actualizados"} y ${failedResults.length} ${failedResults.length === 1 ? "no pudo actualizarse" : "no pudieron actualizarse"}.`
+            : failedResults[0]?.reason?.message || "No se pudo actualizar el estado de los usuarios seleccionados.",
+        });
+      }
+    } finally {
+      setIsBulkUpdating(false);
     }
   }
 
@@ -410,7 +517,7 @@ function AdminUsersPage({ empty = false }) {
                       <colgroup><col className="w-[48px]" /><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[250px]" /><col className="w-[160px]" /><col className="w-[140px]" /><col className="w-[174px]" /></colgroup>
                       <thead className="bg-[var(--color-neutral-200)] text-[var(--color-text-300)]">
                         <tr className="h-[49px] text-body-4">
-                          <th className="p-[16px]"><Checkbox size="S" checked={headerChecked} interactive aria-label="Seleccionar todos los usuarios visibles" onCheckedChange={toggleAll} /></th>
+                          <th className="p-[16px]"><Checkbox size="S" checked={headerChecked} interactive={!isBulkUpdating} aria-label="Seleccionar todos los usuarios visibles" onCheckedChange={toggleAll} /></th>
                           <th className="px-[24px] py-[16px]"><HeaderLabel filter>Rol</HeaderLabel></th>
                           <th className="px-[24px] py-[16px]"><HeaderLabel>Nombre</HeaderLabel></th>
                           <th className="px-[24px] py-[16px]">Correo</th>
@@ -434,11 +541,11 @@ function AdminUsersPage({ empty = false }) {
                               }`}
                               data-selected={isSelected ? "true" : undefined}
                             >
-                              <td className="p-[16px]"><Checkbox size="S" checked={isSelected ? "Yes" : "No"} interactive aria-label={`Seleccionar ${listedUser.name}`} onCheckedChange={() => toggleUser(listedUser.id)} /></td>
-                              <td className="px-[24px] py-[16px]"><Badge label={listedUser.role?.name || "Sin rol"} theme="Neutral" variation="Simple" size="S" /></td>
+                              <td className="p-[16px]"><Checkbox size="S" checked={isSelected ? "Yes" : "No"} interactive={!isBulkUpdating} aria-label={`Seleccionar ${listedUser.name}`} onCheckedChange={() => toggleUser(listedUser.id)} /></td>
+                              <td className="px-[24px] py-[16px]"><Badge label={listedUser.role?.name || "Sin rol"} theme="Brand 1" variation="Simple" size="S" /></td>
                               <td className="px-[24px] py-[16px]"><div className="flex min-w-0 items-center gap-[8px]"><Avatar size="S" name={listedUser.name} {...avatar} /><span className="text-body-4 truncate text-[var(--color-text-300)]">{listedUser.name}</span></div></td>
                               <td className="text-heading-8 truncate px-[24px] py-[16px] text-[var(--color-text-300)]">{listedUser.email}</td>
-                              <td className="text-heading-8 px-[24px] py-[16px] text-[var(--color-text-300)]">{formatLastAccessTime(listedUser.lastLoginAt)}</td>
+                              <td className="text-heading-8 px-[24px] py-[16px] text-[var(--color-text-300)]">{formatHumanDate(listedUser.lastLoginAt, undefined, "Sin acceso")}</td>
                               <td className="px-[24px] py-[16px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
                               <td className="px-[24px] py-[16px]"><div className="flex items-center gap-[8px]">
                                 {[
@@ -448,7 +555,8 @@ function AdminUsersPage({ empty = false }) {
                                 <AdminUserActionsMenu
                                   user={listedUser}
                                   disabled={
-                                    updatingUserId === String(listedUser.id)
+                                    isBulkUpdating
+                                    || updatingUserId === String(listedUser.id)
                                     || String(user?.id) === String(listedUser.id)
                                   }
                                   onStatusChange={(selectedUser, status) => {
@@ -464,9 +572,31 @@ function AdminUsersPage({ empty = false }) {
                       </table>
                     </div>
                   </div>
-                  <div className="flex w-full flex-col items-start justify-between gap-[12px] min-[560px]:flex-row min-[560px]:items-center">
+                  <div className="grid w-full grid-cols-1 items-center gap-[12px] min-[900px]:grid-cols-[1fr_auto_1fr]">
                     <span className="text-heading-8 text-[var(--color-text-300)]">{selectedCount} de {users.length} seleccionados</span>
-                    <div className="flex items-center gap-[8px]">
+                    <div className="flex min-h-[44px] flex-wrap items-center justify-center gap-[8px]" aria-label="Acciones para usuarios seleccionados">
+                      {selectedCount ? BULK_STATUS_ACTIONS.map((action) => {
+                        const ActionIcon = action.icon;
+                        const targets = bulkTargetsByStatus[action.status] || [];
+                        return (
+                          <Button
+                            key={action.status}
+                            theme="Primary"
+                            type="Ghost"
+                            size="M"
+                            fitContent
+                            showLeftIcon
+                            iconLeft={<ActionIcon size="20" color="currentColor" />}
+                            showRightIcon={false}
+                            disabled={isBulkUpdating || updatingUserId !== null || targets.length === 0}
+                            onClick={() => requestBulkStatusChange(action.status)}
+                          >
+                            {action.label}
+                          </Button>
+                        );
+                      }) : null}
+                    </div>
+                    <div className="flex items-center gap-[8px] justify-self-end">
                       <Button theme="Primary" type="Outline" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled={pageIndex === 0} className="disabled:!border-[var(--color-neutral-400)] disabled:!text-[var(--color-neutral-400)]" onClick={() => setPageIndex((index) => Math.max(index - 1, 0))}>Anterior</Button>
                       <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled={!nextCursor} onClick={goNext}>Siguiente pág.</Button>
                     </div>
@@ -513,7 +643,8 @@ function AdminUsersPage({ empty = false }) {
             onConfirm={() => {
               const change = pendingStatusChange;
               setPendingStatusChange(null);
-              if (change) changeUserStatus(change.user, change.status);
+              if (change?.users) changeUsersStatus(change.users, change.status);
+              else if (change) changeUserStatus(change.user, change.status);
             }}
           />
           <AlertToast

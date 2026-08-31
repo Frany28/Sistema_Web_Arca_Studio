@@ -49,7 +49,7 @@ export function formatRelativeTime(value, now = Date.now(), fallback = "Sin fech
   return `Hace ${days} d`;
 }
 
-export function formatLastAccessTime(value, now = Date.now(), fallback = "Sin acceso") {
+export function formatHumanDate(value, now = Date.now(), fallback = "Sin fecha") {
   const timestamp = resolveTimestamp(value);
   if (timestamp === null) return fallback;
 
