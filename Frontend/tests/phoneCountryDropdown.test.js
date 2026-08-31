@@ -30,6 +30,10 @@ test("phone country options reuse the attached four-row dropdown pattern", async
   assert.match(source, /inputMode="numeric"/);
   assert.match(source, /setPhonePrefixValue\(nextPrefix\)/);
   assert.match(source, /optionDigits\.startsWith\(prefixDigits\)/);
+  assert.match(source, /event\.key !== "Enter" \|\| !isPhoneMenuOpen/);
+  assert.match(source, /const firstVisibleOption = filteredPhoneOptions\[0\]/);
+  assert.match(source, /event\.preventDefault\(\);\s*handlePhoneOptionSelection\(firstVisibleOption\)/);
+  assert.match(source, /onClick=\{\(\) => handlePhoneOptionSelection\(option\)\}/);
   assert.doesNotMatch(source, /aria-label="Código de país"/);
   assert.doesNotMatch(source, /text="Mostrar países"/);
   assert.match(source, /<ScrollBar/);

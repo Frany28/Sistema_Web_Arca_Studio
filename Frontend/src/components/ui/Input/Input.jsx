@@ -744,6 +744,20 @@ function Input({
     }
   };
 
+  const handlePhoneOptionSelection = (option) => {
+    if (!option) return;
+
+    setSelectedPhoneOption(option);
+    setPhonePrefixValue(option.dialCode);
+    onPhoneCountryChange?.(option);
+
+    if (!isControlled) {
+      setInternalValue((current) => formatPhoneNumber(current, option));
+    }
+
+    setIsPhoneMenuOpen(false);
+  };
+
   const handleInputKeyDown = (event) => {
     if (resolvedType === "Tags") {
       if (
@@ -845,6 +859,15 @@ function Input({
                     }
                     setIsPhoneMenuOpen(true);
                   }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" || !isPhoneMenuOpen) return;
+
+                    const firstVisibleOption = filteredPhoneOptions[0];
+                    if (!firstVisibleOption) return;
+
+                    event.preventDefault();
+                    handlePhoneOptionSelection(firstVisibleOption);
+                  }}
                   role="combobox"
                   aria-label="Buscar código de país por prefijo; el signo más es fijo"
                   aria-expanded={isPhoneMenuOpen}
@@ -893,22 +916,7 @@ function Input({
                         ? "bg-[var(--color-neutral-200)]"
                         : "hover:bg-[var(--color-neutral-200)]",
                     )}
-                    onClick={() => {
-                      setSelectedPhoneOption(option);
-                      setPhonePrefixValue(option.dialCode);
-                      onPhoneCountryChange?.(option);
-                      if (resolvedType === "Phone number") {
-                        const reformattedValue = formatPhoneNumber(
-                          currentValue,
-                          option,
-                        );
-
-                        if (!isControlled) {
-                          setInternalValue(reformattedValue);
-                        }
-                      }
-                      setIsPhoneMenuOpen(false);
-                    }}
+                    onClick={() => handlePhoneOptionSelection(option)}
                   >
                     <Flag
                       countryCode={option.countryCode}
