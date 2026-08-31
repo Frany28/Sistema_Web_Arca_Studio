@@ -293,7 +293,6 @@ export default function SupportPanel({
                 selectedItemId={selectedSupportIssue?.id}
                 open={isSupportIssueTypeMenuOpen}
                 onOpenChange={setIsSupportIssueTypeMenuOpen}
-                showDivider={isSupportIssueTypeMenuOpen}
                 onItemSelect={(item) => {
                   setSupportIssueType(item.id);
                   setIsSupportIssueTypeMenuOpen(false);

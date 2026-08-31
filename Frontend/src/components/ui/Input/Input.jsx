@@ -4,6 +4,7 @@ import Flag from "../../Flag.jsx";
 import Tag from "../Tag/Tag.jsx";
 import Label from "../Label/Label.jsx";
 import HintText from "../HintText/HintText.jsx";
+import ScrollBar from "../ScrollBar/ScrollBar.jsx";
 import Tooltip from "../Tooltip/Tooltip.jsx";
 import {
   INPUT_INTERACTIVE_STYLES,
@@ -280,6 +281,15 @@ function normalizeDialCode(value) {
   return `+${digits}`;
 }
 
+function getVerticalScrollMetrics(element) {
+  if (!element) return { length: 1, position: 0 };
+  const maxScroll = Math.max(element.scrollHeight - element.clientHeight, 0);
+  return {
+    length: Math.min(element.clientHeight / Math.max(element.scrollHeight, 1), 1),
+    position: maxScroll > 0 ? element.scrollTop / maxScroll : 0,
+  };
+}
+
 function formatPhoneNumber(value, option) {
   const digits = getPhoneDigits(value);
   const mask = option?.mask ?? "(###) ####-####";
@@ -420,6 +430,8 @@ function Input({
   );
   const phoneMenuRef = useRef(null);
   const phonePrefixInputRef = useRef(null);
+  const phoneOptionsScrollRef = useRef(null);
+  const [phoneScrollMetrics, setPhoneScrollMetrics] = useState({ length: 1, position: 0 });
   const tagFieldScrollRef = useRef(null);
 
   const resolvedSize = INPUT_SIZE_STYLES[size] ? size : "S";
@@ -492,6 +504,14 @@ function Input({
     resolvedType === "Phone number"
       ? placeholder ?? resolvedPhoneOption?.placeholder ?? typeConfig.placeholder
       : placeholder ?? typeConfig.placeholder;
+
+  useEffect(() => {
+    if (!isPhoneMenuOpen) return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      setPhoneScrollMetrics(getVerticalScrollMetrics(phoneOptionsScrollRef.current));
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [filteredPhoneOptions.length, isPhoneMenuOpen]);
 
   const inputType = useMemo(() => {
     if (resolvedType !== "Password") {
@@ -832,18 +852,16 @@ function Input({
                   aria-haspopup="listbox"
                 />
               </span>
-              <Tooltip asChild portal showTip text="Mostrar países" tipPosition="Top center">
-                <button
-                  type="button"
-                  className={clsx("inline-flex size-5 items-center justify-center", disabled ? "cursor-not-allowed" : "cursor-pointer", stateStyles.trailingIcon)}
-                  onClick={() => setIsPhoneMenuOpen((current) => !current)}
-                  disabled={disabled}
-                  aria-label={isPhoneMenuOpen ? "Cerrar países" : "Mostrar países"}
-                  tabIndex={-1}
-                >
-                  <ChevronDownIcon className="size-5" />
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                className={clsx("inline-flex size-5 items-center justify-center", disabled ? "cursor-not-allowed" : "cursor-pointer", stateStyles.trailingIcon)}
+                onClick={() => setIsPhoneMenuOpen((current) => !current)}
+                disabled={disabled}
+                aria-label={isPhoneMenuOpen ? "Cerrar países" : "Mostrar países"}
+                tabIndex={-1}
+              >
+                <ChevronDownIcon className="size-5" />
+              </button>
             </div>
 
             {isPhoneMenuOpen ? (
@@ -851,8 +869,13 @@ function Input({
                 id={`${inputId}-phone-options`}
                 role="listbox"
                 aria-label="Países y códigos telefónicos"
-                className="absolute left-0 top-[calc(100%_-_1px)] z-20 flex max-h-[168px] w-full min-w-0 flex-col gap-[4px] overflow-x-hidden overflow-y-auto overscroll-contain rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)] px-[4px] py-[8px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]"
+                className="absolute left-[-1px] top-full z-20 w-[calc(100%+1px)] min-w-0 rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)] px-[4px] py-[8px]"
               >
+                <div
+                  ref={phoneOptionsScrollRef}
+                  className="flex max-h-[152px] flex-col gap-[4px] overflow-x-hidden overflow-y-auto overscroll-contain pr-[12px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  onScroll={(event) => setPhoneScrollMetrics(getVerticalScrollMetrics(event.currentTarget))}
+                >
                 {filteredPhoneOptions.map((option) => (
                   <button
                     key={`${option.countryCode}-${option.dialCode}`}
@@ -863,7 +886,7 @@ function Input({
                       option.dialCode === resolvedPhoneOption.dialCode
                     }
                     className={clsx(
-                      "grid h-[35px] shrink-0 grid-cols-[20px_44px_minmax(0,1fr)] items-center gap-[4px] rounded-[8px] px-[8px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+                      "grid h-[35px] shrink-0 grid-cols-[20px_40px_minmax(0,1fr)] items-center gap-[2px] rounded-[8px] px-[6px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
                       option.countryCode === resolvedPhoneOption.countryCode &&
                         option.dialCode === resolvedPhoneOption.dialCode
                         ? "bg-[var(--color-neutral-200)]"
@@ -908,6 +931,25 @@ function Input({
                   <div className="flex h-[35px] shrink-0 items-center px-[8px] text-body-4 text-[var(--color-text-100)]">
                     Sin coincidencias
                   </div>
+                ) : null}
+                </div>
+                {phoneScrollMetrics.length < 1 ? (
+                  <ScrollBar
+                    height={152}
+                    length={phoneScrollMetrics.length}
+                    position={phoneScrollMetrics.position}
+                    interactive
+                    onPositionChange={(nextPosition) => {
+                      const container = phoneOptionsScrollRef.current;
+                      if (!container) return;
+                      const maxScroll = Math.max(container.scrollHeight - container.clientHeight, 0);
+                      container.scrollTop = maxScroll * nextPosition;
+                      setPhoneScrollMetrics(getVerticalScrollMetrics(container));
+                    }}
+                    aria-label="Desplazar países"
+                    className="absolute right-0 top-[8px]"
+                    trackContainerClassName="bg-transparent"
+                  />
                 ) : null}
               </div>
             ) : null}

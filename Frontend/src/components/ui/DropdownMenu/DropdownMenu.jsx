@@ -422,6 +422,7 @@ function DropdownMenu({
   type = DROPDOWN_MENU_DEFAULT_PROPS.type,
   label = DROPDOWN_MENU_DEFAULT_PROPS.label,
   supportingText = DROPDOWN_MENU_DEFAULT_PROPS.supportingText,
+  showDivider = DROPDOWN_MENU_DEFAULT_PROPS.showDivider,
   showContainer = DROPDOWN_MENU_DEFAULT_PROPS.showContainer,
   checked = DROPDOWN_MENU_DEFAULT_PROPS.checked,
   countryCode = DROPDOWN_MENU_DEFAULT_PROPS.countryCode,
@@ -676,9 +677,14 @@ function DropdownMenu({
     >
       <div
         className={clsx(
-          "relative z-[1] w-full rounded-[12px] border border-[var(--color-neutral-200)] bg-transparent",
-          resolvedOpen && "rounded-b-none border-b-[var(--color-neutral-200)]",
-          !shouldShowContainer && "border-transparent bg-transparent",
+          "relative z-[1] w-full border bg-transparent",
+          shouldShowContainer
+            ? "rounded-[12px] border-[var(--color-neutral-200)]"
+            : "rounded-none border-x-transparent border-t-transparent border-b-[var(--color-neutral-400)]",
+          resolvedOpen && "rounded-b-none",
+          resolvedOpen && showDivider
+            ? "border-b-[var(--color-neutral-200)]"
+            : resolvedOpen && "border-b-transparent",
           triggerWrapperClassName,
         )}
         data-node-id={
@@ -772,7 +778,7 @@ function DropdownMenu({
           id={`${menuId}-content`}
           role="menu"
           className={clsx(
-            "absolute left-0 top-[calc(100%_-_1px)] z-[110] w-full rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
+            "absolute inset-x-0 top-full z-[110] box-border w-auto rounded-b-[12px] border border-[var(--color-neutral-200)] border-t-0 bg-[var(--color-neutral-100)]",
             contentPaddingClassName,
             resolvedOpen ? "flex flex-col gap-[4px]" : "hidden",
             contentClassName,

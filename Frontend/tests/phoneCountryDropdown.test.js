@@ -8,15 +8,15 @@ test("phone country options reuse the attached four-row dropdown pattern", async
     "utf8",
   );
 
-  assert.match(source, /top-\[calc\(100%_-_1px\)\]/);
-  assert.match(source, /max-h-\[168px\]/);
+  assert.match(source, /left-\[-1px\] top-full/);
+  assert.match(source, /max-h-\[152px\]/);
   assert.match(source, /overflow-y-auto/);
-  assert.match(source, /\[scrollbar-width:thin\]/);
+  assert.match(source, /\[scrollbar-width:none\]/);
   assert.match(source, /border-t-0/);
   assert.match(source, /rounded-b-\[12px\]/);
   assert.match(source, /h-\[35px\] shrink-0/);
-  assert.match(source, /max-h-\[168px\] w-full min-w-0/);
-  assert.match(source, /grid-cols-\[20px_44px_minmax\(0,1fr\)\]/);
+  assert.match(source, /left-\[-1px\][^"\n]*w-\[calc\(100%\+1px\)\]/);
+  assert.match(source, /grid-cols-\[20px_40px_minmax\(0,1fr\)\]/);
   assert.match(source, /\{option\.abbreviation\}/);
   assert.match(source, /aria-haspopup="listbox"/);
   assert.match(source, /aria-label="Buscar código de país por prefijo; el signo más es fijo"/);
@@ -29,8 +29,11 @@ test("phone country options reuse the attached four-row dropdown pattern", async
   assert.match(source, /setPhonePrefixValue\(nextPrefix\)/);
   assert.match(source, /optionDigits\.startsWith\(prefixDigits\)/);
   assert.doesNotMatch(source, /aria-label="Código de país"/);
+  assert.doesNotMatch(source, /text="Mostrar países"/);
+  assert.match(source, /<ScrollBar/);
+  assert.match(source, /aria-label="Desplazar países"/);
   assert.match(source, /event\.key === "Escape"/);
-  assert.doesNotMatch(source, /top-\[calc\(100%\+8px\)\]/);
+  assert.doesNotMatch(source, /top-\[calc\(100%_-_1px\)\]/);
 });
 
 test("phone country options expose compact labels for the narrow selector", async () => {

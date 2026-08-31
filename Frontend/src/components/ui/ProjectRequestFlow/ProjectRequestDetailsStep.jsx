@@ -442,7 +442,6 @@ function ProjectRequestDetailsStep({
                 selectedItemId={selectedProjectType?.id}
                 open={isProjectTypeMenuOpen}
                 onOpenChange={setIsProjectTypeMenuOpen}
-                showDivider={isProjectTypeMenuOpen}
                 onItemSelect={(item) => {
                   setHasAttemptedSubmit(false);
                   onProjectTypeChange?.(item.id);

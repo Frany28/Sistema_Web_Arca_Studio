@@ -63,7 +63,7 @@ test("composite checkbox options preserve selection while hovered", async () => 
   );
 });
 
-test("dropdown content overlaps the trigger border without a visible gap", async () => {
+test("dropdown content starts below the trigger divider and shares its width", async () => {
   const dropdownSource = await readFile(
     new URL(
       "../src/components/ui/DropdownMenu/DropdownMenu.jsx",
@@ -72,6 +72,8 @@ test("dropdown content overlaps the trigger border without a visible gap", async
     "utf8",
   );
 
-  assert.match(dropdownSource, /top-\[calc\(100%_-_1px\)\]/);
-  assert.doesNotMatch(dropdownSource, /absolute left-0 top-full/);
+  assert.match(dropdownSource, /absolute inset-x-0 top-full/);
+  assert.match(dropdownSource, /box-border w-auto/);
+  assert.match(dropdownSource, /border-b-\[var\(--color-neutral-400\)\]/);
+  assert.doesNotMatch(dropdownSource, /top-\[calc\(100%_-_1px\)\]/);
 });

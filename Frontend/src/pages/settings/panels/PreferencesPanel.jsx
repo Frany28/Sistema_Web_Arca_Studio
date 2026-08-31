@@ -41,7 +41,6 @@ export default function PreferencesPanel({
             selectedItemId={selectedTheme.id}
             open={isThemeMenuOpen}
             onOpenChange={setIsThemeMenuOpen}
-            showDivider={false}
             onItemSelect={(item) => {
               setThemePreference(item.id);
               applyThemePreference(item.id);
