@@ -800,8 +800,9 @@ function Input({
           >
             <div
               className={clsx(
-                "flex shrink-0 items-center gap-[8px] border-r border-[var(--color-neutral-200)]",
+                "relative flex shrink-0 items-center gap-[8px] border-r border-[var(--color-neutral-200)]",
                 disabled ? "cursor-not-allowed" : "cursor-text",
+                isPhoneMenuOpen && "after:pointer-events-none after:absolute after:bottom-0 after:left-[-1px] after:right-0 after:h-px after:bg-[var(--color-neutral-200)]",
                 sizing.phonePrefix,
               )}
               onMouseDown={(event) => {
@@ -886,7 +887,7 @@ function Input({
                       option.dialCode === resolvedPhoneOption.dialCode
                     }
                     className={clsx(
-                      "grid h-[35px] shrink-0 grid-cols-[20px_40px_minmax(0,1fr)] items-center gap-[2px] rounded-[8px] px-[6px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+                      "grid h-[35px] shrink-0 grid-cols-[20px_40px_minmax(0,1fr)] items-center gap-[2px] rounded-[8px] px-[8px] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
                       option.countryCode === resolvedPhoneOption.countryCode &&
                         option.dialCode === resolvedPhoneOption.dialCode
                         ? "bg-[var(--color-neutral-200)]"

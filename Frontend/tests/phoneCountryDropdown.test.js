@@ -16,7 +16,9 @@ test("phone country options reuse the attached four-row dropdown pattern", async
   assert.match(source, /rounded-b-\[12px\]/);
   assert.match(source, /h-\[35px\] shrink-0/);
   assert.match(source, /left-\[-1px\][^"\n]*w-\[calc\(100%\+1px\)\]/);
+  assert.match(source, /after:left-\[-1px\][^"\n]*after:h-px/);
   assert.match(source, /grid-cols-\[20px_40px_minmax\(0,1fr\)\]/);
+  assert.match(source, /gap-\[2px\][^"\n]*px-\[8px\]/);
   assert.match(source, /\{option\.abbreviation\}/);
   assert.match(source, /aria-haspopup="listbox"/);
   assert.match(source, /aria-label="Buscar código de país por prefijo; el signo más es fijo"/);
