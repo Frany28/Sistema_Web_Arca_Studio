@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  formatCalendarDate,
   formatHumanDate,
   formatRelativeTime,
 } from "../src/utils/relativeTime.js";
 
 const NOW = new Date("2026-08-18T12:00:00.000Z").getTime();
+
+test("calendar dates use the complete Figma date style", () => {
+  assert.equal(formatCalendarDate("2026-03-22T12:00:00.000Z"), "22 Mar 2026");
+  assert.equal(formatCalendarDate(null), "Sin fecha");
+});
 
 test("relative time formats recent administrative events", () => {
   assert.equal(

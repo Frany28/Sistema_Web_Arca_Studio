@@ -33,6 +33,8 @@ test("admin user table footer follows the detached Figma pagination layout", asy
   assert.match(source, /type="Outline" size="M"[\s\S]*Anterior/);
   assert.match(source, /type="Solid" size="M"[\s\S]*Siguiente pág\./);
   assert.doesNotMatch(source, /gap-\[12px\] border-t border-\[var\(--color-neutral-200\)\] px-\[16px\] py-\[12px\]/);
+  assert.match(source, /const ADMIN_USERS_PAGE_SIZE = 10/);
+  assert.match(source, /limit: ADMIN_USERS_PAGE_SIZE/);
 });
 
 test("selected admin users expose centered bulk status actions", async () => {
@@ -133,4 +135,21 @@ test("admin user filters support multiple checkbox selections and four visible r
   assert.equal((source.match(/rowHeightClassName="h-\[35px\]"/g) || []).length, 2);
   assert.match(httpSource, /Array\.isArray\(role\) \? role\.join\(","\) : role/);
   assert.match(httpSource, /Array\.isArray\(status\) \? status\.join\(","\) : status/);
+});
+
+test("the user details action opens the Figma drawer with live API data", async () => {
+  const [pageSource, drawerSource, httpSource] = await Promise.all([
+    readFile(new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin-users/AdminUserDetailsDrawer.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/api/http.js", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(pageSource, /tooltip="Detalles de usuario"/);
+  assert.match(pageSource, /onClick=\{\(\) => setDetailsUserId\(listedUser\.id\)\}/);
+  assert.match(pageSource, /<AdminUserDetailsDrawer/);
+  assert.match(drawerSource, /Detalles de Usuario/);
+  assert.match(drawerSource, /formatCalendarDate\(user\.createdAt\)/);
+  assert.match(drawerSource, /projects\.map/);
+  assert.match(drawerSource, /api\.admin\.getUserDetails/);
+  assert.match(httpSource, /getUserDetails\(\{ signal, userId \}\)/);
 });

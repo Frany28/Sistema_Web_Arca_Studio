@@ -271,6 +271,28 @@ function AdminUserTableSkeleton() {
   );
 }
 
+function AdminUserDetailsSkeleton() {
+  return (
+    <div className="flex w-full flex-col gap-[24px]">
+      <div className="grid grid-cols-2 gap-[16px]">
+        {Array.from({ length: 2 }, (_, index) => (
+          <div key={index} className="flex flex-col gap-[8px]">
+            <SkeletonBlock className="h-[14px] w-[82px] rounded-[var(--radius-1)]" delay={index * 55} tone="muted" />
+            <SkeletonBlock className="h-[24px] w-[96px] rounded-[var(--radius-full)]" delay={40 + index * 55} tone="text" />
+          </div>
+        ))}
+      </div>
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="flex flex-col gap-[8px]">
+          <SkeletonBlock className="h-[14px] w-[76px] rounded-[var(--radius-1)]" delay={110 + index * 45} tone="muted" />
+          <SkeletonBlock className="h-[17px] w-[min(220px,85%)] rounded-[var(--radius-1)]" delay={140 + index * 45} tone="text" />
+        </div>
+      ))}
+      <SkeletonBlock className="h-[130px] w-full rounded-[var(--radius-2)]" delay={320} />
+    </div>
+  );
+}
+
 function VideoStageSkeleton() {
   return (
     <div className="relative size-full overflow-hidden rounded-[inherit]">
@@ -483,6 +505,8 @@ function Loader({ className, count = 1, label = "Cargando contenido", preset = "
     content = <AdminUserMetricsSkeleton />;
   } else if (preset === "adminUserTable") {
     content = <AdminUserTableSkeleton />;
+  } else if (preset === "adminUserDetails") {
+    content = <AdminUserDetailsSkeleton />;
   } else if (preset === "videoStage") {
     content = <VideoStageSkeleton />;
   } else if (preset === "documentPreview") {

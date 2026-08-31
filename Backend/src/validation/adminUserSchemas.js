@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ADMIN_USERS_PAGE_SIZE } from "../config/adminUsers.js";
 import { decodeCursor } from "../utils/pagination.js";
 
 const userCursor = z.string().optional().refine((value) => {
@@ -49,7 +50,7 @@ function optionalCsvList(itemSchema, maxItems = 50) {
 export const adminUserListSchema = z.object({
   query: z.object({
     cursor: userCursor,
-    limit: z.coerce.number().int().min(1).max(50).optional(),
+    limit: z.coerce.number().int().min(1).max(ADMIN_USERS_PAGE_SIZE).optional(),
     role: optionalCsvList(z.string().min(1).max(64).regex(/^[a-z0-9_-]+$/i)),
     search: z.string().trim().max(100).optional(),
     status: optionalCsvList(z.enum(["active", "blocked", "inactive"]), 3),
@@ -81,6 +82,12 @@ export const adminUserStatusSchema = z.object({
 });
 
 export const adminUserPhotoSchema = z.object({
+  params: z.object({
+    userId: z.coerce.number().int().positive(),
+  }),
+});
+
+export const adminUserDetailSchema = z.object({
   params: z.object({
     userId: z.coerce.number().int().positive(),
   }),

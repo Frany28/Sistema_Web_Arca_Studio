@@ -15,12 +15,15 @@ function SideOverlayDrawer({
   children,
   side = "right",
   widthClassName = "w-[312px]",
+  ariaLabel = "Panel lateral",
   ...props
 }) {
   const [shouldRender, setShouldRender] = useState(open);
   const [isActive, setIsActive] = useState(false);
   const closeTimeoutRef = useRef(null);
   const frameRef = useRef(null);
+  const panelRef = useRef(null);
+  const previousFocusRef = useRef(null);
 
   useEffect(() => {
     window.clearTimeout(closeTimeoutRef.current);
@@ -67,6 +70,24 @@ function SideOverlayDrawer({
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open || !shouldRender) return undefined;
+
+    if (!previousFocusRef.current) {
+      previousFocusRef.current = document.activeElement;
+    }
+    const focusFrame = window.requestAnimationFrame(() => panelRef.current?.focus());
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [open, shouldRender]);
+
+  useEffect(() => {
+    if (open) return;
+    previousFocusRef.current?.focus?.();
+    previousFocusRef.current = null;
+  }, [open]);
+
+  useEffect(() => () => previousFocusRef.current?.focus?.(), []);
+
   if (!shouldRender) {
     return null;
   }
@@ -96,6 +117,11 @@ function SideOverlayDrawer({
       />
 
       <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
+        tabIndex={-1}
         className={clsx(
           "absolute bottom-0 top-0 max-w-full overflow-hidden bg-[var(--color-neutral-100)] shadow-[0_0_5px_0_rgba(0,0,0,0.1)] transition-[transform,opacity] transform-gpu will-change-transform will-change-opacity",
           side === "left"

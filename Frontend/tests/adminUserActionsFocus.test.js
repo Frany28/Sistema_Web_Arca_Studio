@@ -25,3 +25,16 @@ test("admin user actions do not focus Suspend when opened with a pointer", async
     /document\.addEventListener\("keydown", closeOnEscape\);\s*window\.requestAnimationFrame/,
   );
 });
+
+test("enable and disable actions use the same lock icon", async () => {
+  const source = await readFile(
+    new URL(
+      "../src/pages/admin-users/AdminUserActionsMenu.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(source, /icon: LockCircle, label: "Habilitar", status: "active"/);
+  assert.match(source, /icon: LockCircle, label: "Deshabilitar", status: "inactive"/);
+});

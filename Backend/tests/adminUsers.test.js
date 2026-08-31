@@ -3,12 +3,13 @@ import test from "node:test";
 
 import {
   adminUserCreateSchema,
+  adminUserDetailSchema,
   adminUserListSchema,
   adminUserPhotoSchema,
   adminUserStatusSchema,
 } from "../src/validation/adminUserSchemas.js";
 import { encodeCursor } from "../src/utils/pagination.js";
-import { mapAdminUser, mapAdminUserMetrics } from "../src/utils/adminUsers.js";
+import { mapAdminUser, mapAdminUserDetails, mapAdminUserMetrics } from "../src/utils/adminUsers.js";
 
 test("admin user filters validate cursor, role and database statuses", () => {
   const result = adminUserListSchema.safeParse({
@@ -23,6 +24,7 @@ test("admin user filters validate cursor, role and database statuses", () => {
 
   assert.equal(result.success, true);
   assert.equal(result.data.query.limit, 10);
+  assert.equal(adminUserListSchema.safeParse({ query: { limit: "11" } }).success, false);
   assert.deepEqual(result.data.query.role, ["architect", "admin"]);
   assert.deepEqual(result.data.query.status, ["blocked", "inactive"]);
   assert.equal(adminUserListSchema.safeParse({ query: { status: "deleted" } }).success, false);
@@ -97,4 +99,39 @@ test("admin user status changes accept suspend, disable and enable actions", () 
 test("admin user profile photos require a positive user identifier", () => {
   assert.equal(adminUserPhotoSchema.safeParse({ params: { userId: "42" } }).success, true);
   assert.equal(adminUserPhotoSchema.safeParse({ params: { userId: "0" } }).success, false);
+});
+
+test("admin user details validate identifiers and expose real related data", () => {
+  assert.equal(adminUserDetailSchema.safeParse({ params: { userId: "42" } }).success, true);
+  assert.equal(adminUserDetailSchema.safeParse({ params: { userId: "0" } }).success, false);
+
+  assert.deepEqual(mapAdminUserDetails({
+    id: "42",
+    first_name: "Esteban",
+    last_name: "Ruiz",
+    email: "esteban@example.com",
+    role_code: "client",
+    role_name: "Cliente",
+    status: "active",
+    created_at: "2026-03-22T12:00:00.000Z",
+    company_name: "Nextj",
+    phone: "+14441234567",
+    secondary_phone: null,
+    notes: "Cliente referido.",
+    projects: [{ id: "9", name: "Torre Empresarial Nextj" }],
+  }), {
+    id: 42,
+    name: "Esteban Ruiz",
+    email: "esteban@example.com",
+    role: { code: "client", name: "Cliente" },
+    status: "active",
+    hasProfilePhoto: false,
+    lastLoginAt: null,
+    createdAt: "2026-03-22T12:00:00.000Z",
+    companyName: "Nextj",
+    phone: "+14441234567",
+    secondaryPhone: null,
+    notes: "Cliente referido.",
+    projects: [{ id: 9, name: "Torre Empresarial Nextj" }],
+  });
 });

@@ -295,6 +295,10 @@ export const adminApi = {
     return withAdminUserAvatars(payload);
   },
 
+  getUserDetails({ signal, userId }) {
+    return apiRequest(`/admin/users/${encodeURIComponent(userId)}`, { signal });
+  },
+
   createUser(payload) {
     return apiRequest("/admin/users", {
       body: JSON.stringify(payload),

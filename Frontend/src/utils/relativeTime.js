@@ -33,6 +33,22 @@ function resolveTimestamp(value) {
   return timestamp;
 }
 
+export function formatCalendarDate(value, fallback = "Sin fecha") {
+  const timestamp = resolveTimestamp(value);
+  if (timestamp === null) return fallback;
+
+  const parts = new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).formatToParts(new Date(timestamp));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const month = String(values.month || "").replaceAll(".", "");
+  const titleCaseMonth = month ? `${month[0].toUpperCase()}${month.slice(1)}` : "";
+
+  return [values.day, titleCaseMonth, values.year].filter(Boolean).join(" ");
+}
+
 export function formatRelativeTime(value, now = Date.now(), fallback = "Sin fecha") {
   const timestamp = resolveTimestamp(value);
   if (timestamp === null) return fallback;

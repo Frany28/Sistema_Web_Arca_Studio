@@ -280,10 +280,13 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 
 ### Estados de usuarios administrativos
 
+- La tabla de gestión de usuarios muestra un máximo de 10 usuarios reales por página. La API y el frontend aplican el mismo límite y la navegación continúa mediante cursor; cuando existen menos de 10 resultados no se crean filas vacías ni datos de demostración.
+- El icono de vista de cada fila abre el drawer compartido de detalles del usuario. El panel consulta el registro seleccionado por identificador y muestra rol, fecha de creación, identidad, empresa, correo, teléfono, proyectos asociados y notas internas reales; nunca completa campos ausentes con datos de demostración. Debe conservar estados de carga, error recuperable y ausencia de datos, cerrarse con `Escape` o al seleccionar el overlay y adaptarse al ancho móvil.
 - En el cuerpo de la tabla de gestión de usuarios, el rol se presenta con `Badge` en tema `Brand 1`, variación `Simple` y tamaño `S`; la celda conserva `24px` de padding horizontal y `16px` vertical según el componente de Figma.
 - La celda de nombre de cada usuario debe mostrar su foto de perfil real mediante la URL autenticada del recurso cuando `hasProfilePhoto` sea verdadero. Las iniciales o el icono correspondiente al rol se utilizan únicamente como fallback si no existe una foto o si su carga falla; nunca deben sustituir preventivamente una imagen disponible.
 - Un usuario `active` puede suspenderse temporalmente (`blocked`) o deshabilitarse de forma indefinida (`inactive`).
 - Un usuario suspendido muestra las acciones “Reactivar” y “Deshabilitar”; un usuario deshabilitado muestra únicamente “Habilitar”.
+- Las acciones individuales “Habilitar” y “Deshabilitar” utilizan el mismo icono de bloqueo para conservar su relación visual; “Reactivar” mantiene el icono de usuario habilitado por corresponder a una suspensión temporal.
 - Reactivar o habilitar devuelve la cuenta a `active`. Suspender o deshabilitar impide el acceso y excluye al usuario de nuevas asignaciones, sin eliminar su historial ni sus asignaciones existentes.
 - Toda transición requiere un modal de confirmación. Los alerts de éxito o error solo se muestran después de confirmar y recibir el resultado de la API.
 - El frontend adapta las acciones al estado actual y el backend valida la transición; nunca se depende únicamente del texto o la disponibilidad visual del menú.

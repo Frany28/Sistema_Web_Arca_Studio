@@ -1,10 +1,12 @@
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 
+import { ADMIN_USERS_PAGE_SIZE } from "../config/adminUsers.js";
 import { ConflictError, NotFoundError } from "../errors/appError.js";
 import {
   createAdminUserRecord,
   deleteCreatedAdminUser,
+  findAdminUserDetails,
   findAdminUserConflict,
   getAdminUserMetrics,
   listAdminUsers,
@@ -18,7 +20,7 @@ import {
   createPasswordResetPayload,
   sendPasswordResetEmail,
 } from "./passwordResetEmailService.js";
-import { mapAdminUser } from "../utils/adminUsers.js";
+import { mapAdminUser, mapAdminUserDetails } from "../utils/adminUsers.js";
 import { invalidateCachedUser } from "./userSessionCache.js";
 import {
   decodeCursor,
@@ -27,7 +29,10 @@ import {
 } from "../utils/pagination.js";
 
 export async function getAdminUsersPage(query = {}) {
-  const limit = Math.min(parsePageLimit(query.limit || 10), 50);
+  const limit = Math.min(
+    parsePageLimit(query.limit || ADMIN_USERS_PAGE_SIZE),
+    ADMIN_USERS_PAGE_SIZE,
+  );
   const cursor = decodeCursor(query.cursor);
   const [rows, metrics] = await Promise.all([
     listAdminUsers({
@@ -49,6 +54,15 @@ export async function getAdminUsersPage(query = {}) {
     nextCursor: page.nextCursor,
     users: page.items,
   };
+}
+
+export async function getAdminUserDetails(userId) {
+  const user = await findAdminUserDetails(userId);
+  if (!user) {
+    throw new NotFoundError("USER_NOT_FOUND", "El usuario seleccionado no existe.");
+  }
+
+  return mapAdminUserDetails(user);
 }
 
 export async function createAdminUser(payload) {

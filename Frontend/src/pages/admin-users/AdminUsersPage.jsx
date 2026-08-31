@@ -39,10 +39,12 @@ import { formatHumanDate } from "../../utils/relativeTime.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import CreateAdminUserModal from "./CreateAdminUserModal.jsx";
 import AdminUserActionsMenu from "./AdminUserActionsMenu.jsx";
+import AdminUserDetailsDrawer from "./AdminUserDetailsDrawer.jsx";
 import AdminUserStatusModal from "./AdminUserStatusModal.jsx";
 import { getBulkStatusTargets } from "./adminUserStatusPolicy.js";
 
 const WEB_BREAKPOINT_PX = 1280;
+const ADMIN_USERS_PAGE_SIZE = 10;
 const STATUS_FILTER_ITEMS = [
   { id: "active", label: "Activo", type: "Checkbox" },
   { id: "blocked", label: "Suspendido", type: "Checkbox" },
@@ -124,6 +126,7 @@ function AdminUsersPage({ empty = false }) {
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
+  const [detailsUserId, setDetailsUserId] = useState(null);
 
   const navigationItems = useMemo(
     () => createUserSideNavigationItems([], "admin"),
@@ -192,7 +195,7 @@ function AdminUsersPage({ empty = false }) {
     });
     api.admin.listUsers({
       cursor: cursorHistory[pageIndex],
-      limit: 10,
+      limit: ADMIN_USERS_PAGE_SIZE,
       role: roleFilterIds.length ? roleFilterIds : undefined,
       search: debouncedQuery || undefined,
       signal: controller.signal,
@@ -553,10 +556,21 @@ function AdminUsersPage({ empty = false }) {
                               <td className="text-heading-8 px-[24px] py-[16px] text-[var(--color-text-300)]">{formatHumanDate(listedUser.lastLoginAt, undefined, "Sin acceso")}</td>
                               <td className="px-[24px] py-[16px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
                               <td className="px-[24px] py-[16px]"><div className="flex items-center gap-[8px]">
-                                {[
-                                  { icon: <Eye size="20" color="currentColor" />, label: "Ver" },
-                                  { icon: <Edit2 size="20" color="currentColor" />, label: "Editar" },
-                                ].map((action) => <Tooltip key={action.label} text={`${action.label}: disponible en una próxima sección`} tipPosition="Top center" portal><span><Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={action.icon} showRightIcon={false} disabled aria-label={`${action.label} ${listedUser.name}`} /></span></Tooltip>)}
+                                <Button
+                                  theme="Primary"
+                                  type="Ghost"
+                                  size="S"
+                                  showText={false}
+                                  showLeftIcon
+                                  iconLeft={<Eye size="20" color="currentColor" />}
+                                  showRightIcon={false}
+                                  tooltip="Detalles de usuario"
+                                  aria-label={`Ver detalles de ${listedUser.name}`}
+                                  onClick={() => setDetailsUserId(listedUser.id)}
+                                />
+                                <Tooltip text="Editar: disponible en una próxima sección" tipPosition="Top center" portal>
+                                  <span><Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Edit2 size="20" color="currentColor" />} showRightIcon={false} disabled aria-label={`Editar ${listedUser.name}`} /></span>
+                                </Tooltip>
                                 <AdminUserActionsMenu
                                   user={listedUser}
                                   disabled={
@@ -641,6 +655,11 @@ function AdminUsersPage({ empty = false }) {
           </section>
 
           <NotificationsDrawer open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} recentActivity={[]} />
+          <AdminUserDetailsDrawer
+            open={detailsUserId !== null}
+            userId={detailsUserId}
+            onClose={() => setDetailsUserId(null)}
+          />
           {isCreateUserOpen ? <CreateAdminUserModal open roles={roles} onClose={() => setIsCreateUserOpen(false)} onCreate={createUser} /> : null}
           <AdminUserStatusModal
             change={pendingStatusChange}

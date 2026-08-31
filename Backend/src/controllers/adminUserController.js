@@ -1,5 +1,6 @@
 import {
   createAdminUser,
+  getAdminUserDetails,
   getAdminUsersPage,
   updateAdminUserStatus,
 } from "../services/adminUserService.js";
@@ -43,6 +44,16 @@ export async function getAdminUsers(req, res, next) {
 
     res.set("Cache-Control", "private, max-age=15");
     res.status(200).json(page);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getAdminUser(req, res, next) {
+  try {
+    const user = await getAdminUserDetails(req.params.userId);
+    res.set("Cache-Control", "private, max-age=15, must-revalidate");
+    res.status(200).json({ user });
   } catch (error) {
     next(error);
   }

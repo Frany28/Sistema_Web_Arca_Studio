@@ -19,6 +19,7 @@ import {
 } from "../controllers/rolePermissionController.js";
 import {
   getAdminUsers,
+  getAdminUser,
   patchAdminUserStatus,
   postAdminUser,
   streamAdminUserProfilePhoto,
@@ -35,6 +36,7 @@ import {
 import { projectRequestDecisionSchema } from "../validation/projectRequestWorkflowSchemas.js";
 import {
   adminUserCreateSchema,
+  adminUserDetailSchema,
   adminUserListSchema,
   adminUserPhotoSchema,
   adminUserStatusSchema,
@@ -68,6 +70,7 @@ router.get("/dashboard-metrics", getDashboardMetrics);
 router.get("/dashboard-overview", getDashboardOverview);
 router.get("/assignees", getAdminAssignees);
 router.get("/users", validate(adminUserListSchema), getAdminUsers);
+router.get("/users/:userId", validate(adminUserDetailSchema), getAdminUser);
 router.get(
   "/users/:userId/profile-photo",
   validate(adminUserPhotoSchema),

@@ -154,6 +154,56 @@ export async function listAdminUsers({ cursor, limit, role, search, status }) {
   return result.rows;
 }
 
+export async function findAdminUserDetails(userId) {
+  const result = await query(
+    `
+      select
+        u.id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.phone,
+        u.secondary_phone,
+        coalesce(u.company_name, c.company_name) as company_name,
+        u.status,
+        u.created_at,
+        r.code as role_code,
+        r.name as role_name,
+        c.notes,
+        coalesce((
+          select jsonb_agg(
+            jsonb_build_object('id', related_project.id, 'name', related_project.name)
+            order by related_project.created_at desc, related_project.id desc
+          )
+          from (
+            select distinct p.id, p.name, p.created_at
+            from public.projects p
+            where p.deleted_at is null
+              and (
+                (u.client_id is not null and p.client_id = u.client_id)
+                or p.assigned_architect_id = u.id
+                or exists (
+                  select 1
+                  from public.project_assignees assignment
+                  where assignment.project_id = p.id
+                    and assignment.user_id = u.id
+                )
+              )
+          ) related_project
+        ), '[]'::jsonb) as projects
+      from public.users u
+      inner join public.roles r on r.id = u.role_id
+      left join public.clients c on c.id = u.client_id and c.deleted_at is null
+      where u.id = $1
+        and u.deleted_at is null
+      limit 1
+    `,
+    [userId],
+  );
+
+  return result.rows[0] || null;
+}
+
 export async function updateAdminUserStatusRecord({ status, userId }) {
   const client = await pool.connect();
   try {

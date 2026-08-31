@@ -35,7 +35,7 @@ function getStatusActions(status) {
   }
 
   if (status === "inactive") {
-    return [{ icon: UserTick, label: "Habilitar", status: "active" }];
+    return [{ icon: LockCircle, label: "Habilitar", status: "active" }];
   }
 
   return [

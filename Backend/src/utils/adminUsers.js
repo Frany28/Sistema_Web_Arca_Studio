@@ -14,6 +14,20 @@ export function mapAdminUser(row = {}) {
   };
 }
 
+export function mapAdminUserDetails(row = {}) {
+  return {
+    ...mapAdminUser(row),
+    companyName: row.company_name || null,
+    phone: row.phone || null,
+    secondaryPhone: row.secondary_phone || null,
+    notes: row.notes || null,
+    projects: (Array.isArray(row.projects) ? row.projects : []).map((project) => ({
+      id: Number(project.id),
+      name: project.name,
+    })),
+  };
+}
+
 export function mapAdminUserMetrics(row = {}) {
   return {
     total: Number(row.total || 0),
