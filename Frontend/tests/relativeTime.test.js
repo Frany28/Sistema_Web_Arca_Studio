@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatRelativeTime } from "../src/utils/relativeTime.js";
+import {
+  formatLastAccessTime,
+  formatRelativeTime,
+} from "../src/utils/relativeTime.js";
 
 const NOW = new Date("2026-08-18T12:00:00.000Z").getTime();
 
@@ -16,9 +19,54 @@ test("relative time formats recent administrative events", () => {
   );
 });
 
+test("last access time uses natural singular labels", () => {
+  assert.equal(
+    formatLastAccessTime("2026-08-18T11:59:00.000Z", NOW),
+    "Hace 1 minuto",
+  );
+  assert.equal(
+    formatLastAccessTime("2026-08-18T11:00:00.000Z", NOW),
+    "Hace 1 hora",
+  );
+  assert.equal(
+    formatLastAccessTime("2026-08-17T12:00:00.000Z", NOW),
+    "Hace 1 día",
+  );
+});
+
+test("last access time switches from days to one month after 30 days", () => {
+  assert.equal(
+    formatLastAccessTime("2026-07-19T12:00:00.000Z", NOW),
+    "Hace 30 días",
+  );
+  assert.equal(
+    formatLastAccessTime("2026-07-18T12:00:00.000Z", NOW),
+    "Hace un mes",
+  );
+  assert.equal(
+    formatLastAccessTime("2026-06-20T12:00:00.000Z", NOW),
+    "Hace un mes",
+  );
+});
+
+test("last access time uses an exact localized date after the one-month range", () => {
+  assert.equal(
+    formatLastAccessTime("2026-06-19T12:00:00.000Z", NOW),
+    "19 jun",
+  );
+  assert.equal(
+    formatLastAccessTime("2025-02-17T12:00:00.000Z", NOW),
+    "17 feb 2025",
+  );
+});
+
 test("relative time accepts a contextual fallback", () => {
   assert.equal(
     formatRelativeTime(null, NOW, "Sin eventos recientes"),
     "Sin eventos recientes",
   );
+});
+
+test("last access time uses its user-specific fallback", () => {
+  assert.equal(formatLastAccessTime(null, NOW), "Sin acceso");
 });

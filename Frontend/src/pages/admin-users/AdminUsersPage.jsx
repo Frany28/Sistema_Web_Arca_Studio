@@ -32,7 +32,7 @@ import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
-import { formatRelativeTime } from "../../utils/relativeTime.js";
+import { formatLastAccessTime } from "../../utils/relativeTime.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import CreateAdminUserModal from "./CreateAdminUserModal.jsx";
 import AdminUserActionsMenu from "./AdminUserActionsMenu.jsx";
@@ -438,7 +438,7 @@ function AdminUsersPage({ empty = false }) {
                               <td className="px-[24px] py-[16px]"><Badge label={listedUser.role?.name || "Sin rol"} theme="Neutral" variation="Simple" size="S" /></td>
                               <td className="px-[24px] py-[16px]"><div className="flex min-w-0 items-center gap-[8px]"><Avatar size="S" name={listedUser.name} {...avatar} /><span className="text-body-4 truncate text-[var(--color-text-300)]">{listedUser.name}</span></div></td>
                               <td className="text-heading-8 truncate px-[24px] py-[16px] text-[var(--color-text-300)]">{listedUser.email}</td>
-                              <td className="text-heading-8 px-[24px] py-[16px] text-[var(--color-text-300)]">{formatRelativeTime(listedUser.lastLoginAt, undefined, "Sin acceso")}</td>
+                              <td className="text-heading-8 px-[24px] py-[16px] text-[var(--color-text-300)]">{formatLastAccessTime(listedUser.lastLoginAt)}</td>
                               <td className="px-[24px] py-[16px]"><Badge label={status.label} theme={status.theme} variation="Simple" size="S" /></td>
                               <td className="px-[24px] py-[16px]"><div className="flex items-center gap-[8px]">
                                 {[

@@ -57,7 +57,7 @@ test("admin user body rows follow the Figma typography hierarchy", async () => {
 
   assert.match(source, /text-body-4 truncate text-\[var\(--color-text-300\)\]">\{listedUser\.name\}/);
   assert.match(source, /text-heading-8 truncate px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{listedUser\.email\}/);
-  assert.match(source, /text-heading-8 px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{formatRelativeTime/);
+  assert.match(source, /text-heading-8 px-\[24px\] py-\[16px\] text-\[var\(--color-text-300\)\]">\{formatLastAccessTime/);
 });
 
 test("admin user filters match the Figma control dimensions", async () => {
