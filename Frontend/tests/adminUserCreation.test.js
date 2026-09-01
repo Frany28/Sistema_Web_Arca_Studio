@@ -13,7 +13,9 @@ test("admin users expose the connected creation modal from both new actions", as
   assert.match(page, /api\.admin\.createUser\(payload\)/);
   assert.match(page, /<CreateAdminUserModal/);
   assert.match(modal, /role="dialog"/);
-  assert.match(modal, /Crear usuario/);
+  assert.match(modal, /Enviar código de activación/);
+  assert.match(modal, /<footer className="flex flex-col-reverse gap-\[16px\][^\n]*sm:flex-row sm:items-center">/);
+  assert.equal((modal.match(/className="!w-full sm:min-w-0 sm:flex-1"/g) || []).length, 2);
   assert.match(modal, /Ingresa nombre y apellido/);
   assert.match(http, /createUser\(payload\)[\s\S]*\/admin\/users[\s\S]*method: "POST"/);
 });

@@ -185,10 +185,10 @@ function CreateAdminUserModal({ onClose, onCreate, open, roles = [] }) {
           </fieldset>
         </form>
 
-        <div className="flex flex-col-reverse gap-[12px] border-t border-[var(--color-neutral-200)] p-[16px] sm:flex-row sm:justify-end">
-          <Button theme="Primary" type="Outline" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled={submitting} className="w-full sm:w-auto" onClick={onClose}>Cancelar</Button>
-          <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled={submitting || roles.length === 0} className="w-full sm:w-auto" htmlType="submit" form="create-admin-user-form">{submitting ? "Creando..." : "Crear usuario"}</Button>
-        </div>
+        <footer className="flex flex-col-reverse gap-[16px] border-t border-[var(--color-neutral-200)] p-[16px] sm:flex-row sm:items-center">
+          <Button theme="Primary" type="Outline" size="M" showLeftIcon={false} showRightIcon={false} disabled={submitting} className="!w-full sm:min-w-0 sm:flex-1" onClick={onClose}>Cancelar</Button>
+          <Button theme="Primary" type="Solid" size="M" showLeftIcon={false} showRightIcon={false} disabled={submitting || roles.length === 0} className="!w-full sm:min-w-0 sm:flex-1" htmlType="submit" form="create-admin-user-form">{submitting ? "Enviando..." : "Enviar código de activación"}</Button>
+        </footer>
       </div>
     </Modal>
   );
