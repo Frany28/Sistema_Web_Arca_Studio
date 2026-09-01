@@ -10,6 +10,7 @@ import {
   MinusCirlce,
   Profile2User,
   SearchNormal1,
+  ShieldSecurity,
   TickCircle,
   UserMinus,
   UserRemove,
@@ -31,6 +32,7 @@ import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import IconContainer from "../../components/ui/IconContainer/IconContainer.jsx";
 import Input from "../../components/ui/Input/Input.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
+import Modal from "../../components/ui/Modal/Modal.jsx";
 import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
 import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
@@ -121,7 +123,7 @@ function AdminUsersPage({ empty = false }) {
   const [error, setError] = useState("");
   const [requestKey, setRequestKey] = useState(0);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
-  const [creationMessage, setCreationMessage] = useState("");
+  const [createdUser, setCreatedUser] = useState(null);
   const [statusFeedback, setStatusFeedback] = useState(null);
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
@@ -281,7 +283,7 @@ function AdminUsersPage({ empty = false }) {
 
   async function createUser(payload) {
     const response = await api.admin.createUser(payload);
-    setCreationMessage(response?.message || "Usuario creado correctamente.");
+    setCreatedUser(response?.user || { email: payload.email });
     setIsCreateUserOpen(false);
     setCursorHistory([null]);
     setPageIndex(0);
@@ -447,12 +449,11 @@ function AdminUsersPage({ empty = false }) {
               <h1 id="admin-users-title" className="text-heading-3 m-0 text-[var(--color-text-50)] max-sm:text-[40px] max-sm:leading-[48px]">
                 Gestión de usuarios
               </h1>
-              <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon iconLeft={<Add size="20" color="currentColor" />} showRightIcon={false} onClick={() => { setCreationMessage(""); setIsCreateUserOpen(true); }}>
+              <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon iconLeft={<Add size="20" color="currentColor" />} showRightIcon={false} onClick={() => { setCreatedUser(null); setIsCreateUserOpen(true); }}>
                 Nuevo
               </Button>
             </div>
 
-            {creationMessage ? <p className="mb-[16px] text-body-3 text-[var(--color-success-200)]" role="status">{creationMessage}</p> : null}
             {loading && !metrics ? (
               <Loader preset="adminUserMetrics" label="Cargando métricas de usuarios" />
             ) : (
@@ -661,6 +662,24 @@ function AdminUsersPage({ empty = false }) {
             onClose={() => setDetailsUserId(null)}
           />
           {isCreateUserOpen ? <CreateAdminUserModal open roles={roles} onClose={() => setIsCreateUserOpen(false)} onCreate={createUser} /> : null}
+          <Modal
+            mount="viewport"
+            visible={Boolean(createdUser)}
+            showDialog
+            alignment="Centered"
+            overlayVariant="blurred"
+            transitionPreset="fade-scale"
+            title="Usuario creado correctamente"
+            description="El usuario quedó registrado. El enlace de activación se enviará cuando se habilite este flujo."
+            secondaryActionLabel="Cancelar"
+            primaryActionLabel="Aceptar"
+            icon={<ShieldSecurity size="20" color="currentColor" />}
+            onClose={() => setCreatedUser(null)}
+            onSecondaryAction={() => setCreatedUser(null)}
+            onPrimaryAction={() => setCreatedUser(null)}
+            className="z-[90]"
+            aria-label="Usuario creado correctamente"
+          />
           <AdminUserStatusModal
             change={pendingStatusChange}
             onCancel={() => setPendingStatusChange(null)}

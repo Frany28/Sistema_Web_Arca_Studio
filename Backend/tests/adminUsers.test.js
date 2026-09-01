@@ -88,6 +88,16 @@ test("admin user creation validates identity, roles, status and optional phones"
   assert.equal(adminUserCreateSchema.safeParse({ body: { ...result.data.body, status: "deleted" } }).success, false);
 });
 
+test("admin user creation persists during staging without requiring activation email", () => {
+  const service = readFileSync(new URL("../src/services/adminUserService.js", import.meta.url), "utf8");
+  const controller = readFileSync(new URL("../src/controllers/adminUserController.js", import.meta.url), "utf8");
+
+  assert.match(service, /Staging temporal:[\s\S]*creación debe persistir/);
+  assert.doesNotMatch(service, /sendPasswordResetEmail|createPasswordResetToken|deleteCreatedAdminUser/);
+  assert.match(controller, /message: "Usuario creado correctamente\."/);
+  assert.doesNotMatch(controller, /Enviamos un enlace/);
+});
+
 test("admin user status changes accept suspend, disable and enable actions", () => {
   const suspended = adminUserStatusSchema.safeParse({
     params: { userId: "42" },

@@ -32,9 +32,7 @@ export async function postAdminUser(req, res, next) {
     const user = await createAdminUser(req.body);
     res.set("Cache-Control", "no-store");
     res.status(201).json({
-      message: user.status === "active"
-        ? "Usuario creado. Enviamos un enlace para establecer su contraseña."
-        : "Usuario creado correctamente.",
+      message: "Usuario creado correctamente.",
       user,
     });
   } catch (error) {

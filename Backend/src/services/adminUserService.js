@@ -7,7 +7,6 @@ import {
   createAdminUserRecord,
   createAdminUserNoteRecord,
   deleteAdminUserNoteRecord,
-  deleteCreatedAdminUser,
   adminUserExists,
   findAdminUserDetails,
   findAdminUserConflict,
@@ -17,14 +16,6 @@ import {
   updateAdminUserNoteRecord,
   updateAdminUserStatusRecord,
 } from "../repositories/adminUserRepository.js";
-import {
-  createPasswordResetToken,
-  deletePasswordResetTokensForUser,
-} from "../repositories/passwordResetRepository.js";
-import {
-  createPasswordResetPayload,
-  sendPasswordResetEmail,
-} from "./passwordResetEmailService.js";
 import { mapAdminUser, mapAdminUserDetails, mapAdminUserNote } from "../utils/adminUsers.js";
 import { invalidateCachedUser } from "./userSessionCache.js";
 import {
@@ -139,17 +130,8 @@ export async function createAdminUser(payload) {
   }
   if (!created) throw new NotFoundError("ROLE_NOT_FOUND", "El rol seleccionado no está disponible.");
 
-  if (created.status === "active") {
-    const invitation = createPasswordResetPayload(created);
-    try {
-      await createPasswordResetToken(created.id, invitation.tokenHash, invitation.expiresAt);
-      await sendPasswordResetEmail({ email: created.email, ...invitation });
-    } catch (error) {
-      await deletePasswordResetTokensForUser(created.id).catch(() => {});
-      await deleteCreatedAdminUser({ userId: created.id, clientId: created.client_id }).catch(() => {});
-      throw error;
-    }
-  }
+  // Staging temporal: el futuro enlace de activación no forma parte todavía de
+  // este flujo. La creación debe persistir para permitir las pruebas autorizadas.
 
   return mapAdminUser(created);
 }
