@@ -153,7 +153,10 @@ test("the user details action opens the Figma drawer with live API data", async 
   assert.match(drawerSource, /api\.admin\.getUserDetails/);
   assert.match(drawerSource, /text-heading-8 text-\[var\(--color-text-300\)\]">\{label\}/);
   assert.match(drawerSource, /text-heading-8 m-0 break-words text-\[var\(--color-text-200\)\]/);
-  assert.match(drawerSource, /Añadir nota/);
+  assert.doesNotMatch(drawerSource, /Añadir nota/);
+  assert.match(drawerSource, /<ComposerSubmitButton/);
+  assert.match(drawerSource, /event\.key === "Enter" && !event\.shiftKey/);
+  assert.match(drawerSource, /ariaLabel=\{editor === "new" \? "Guardar nota" : "Guardar cambios"\}/);
   assert.match(drawerSource, /placeholder="Anotaciones\.\.\."/);
   assert.match(drawerSource, /hintText="Solo visible para ti\."/);
   assert.match(drawerSource, /showLabel=\{false\}/);

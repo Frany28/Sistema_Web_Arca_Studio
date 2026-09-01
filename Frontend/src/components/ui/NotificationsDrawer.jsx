@@ -9,6 +9,7 @@ import { SelectionPreview } from "./Gallery/Model3DViewerModal.jsx";
 import Avatar from "./Avatar/Avatar.jsx";
 import Badge from "./Badge/Badge.jsx";
 import Button from "./Button/Button.jsx";
+import ComposerSubmitButton from "./ComposerSubmitButton.jsx";
 import FileAttachmentIcons from "./FileAttachmentIcons/FileAttachmentIcons.jsx";
 import EmptyState from "./EmptyState/EmptyState.jsx";
 import Loader from "./Loader/Loader.jsx";
@@ -368,17 +369,11 @@ function MessageInput({
         }}
       />
       <div className="flex justify-end">
-        <Tooltip asChild portal showTip text="Enviar observación" tipPosition="Top right">
-          <button
-            type="button"
-            aria-label="Enviar observación"
-            disabled={!trimmedValue || disabled}
-            className="flex size-8 cursor-pointer items-center justify-center rounded-[8px] text-[var(--color-neutral-300)] transition-colors duration-200 hover:bg-[var(--color-neutral-200)] hover:text-[var(--color-text-300)] disabled:cursor-not-allowed disabled:opacity-40"
-            onClick={handleSubmit}
-          >
-            <SendIcon />
-          </button>
-        </Tooltip>
+        <ComposerSubmitButton
+          ariaLabel="Enviar observación"
+          disabled={!trimmedValue || disabled}
+          onClick={handleSubmit}
+        />
       </div>
     </div>
   ) : (

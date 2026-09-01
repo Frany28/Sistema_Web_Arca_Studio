@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Add, Edit2 } from "iconsax-react";
+import { Edit2 } from "iconsax-react";
 
 import { api } from "../../api/http.js";
 import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
 import Badge from "../../components/ui/Badge/Badge.jsx";
 import Button from "../../components/ui/Button/Button.jsx";
+import ComposerSubmitButton from "../../components/ui/ComposerSubmitButton.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
 import SideOverlayDrawer from "../../components/ui/SideOverlayDrawer.jsx";
@@ -46,12 +47,10 @@ function UserNotes({ user }) {
     if (!allNotes.length && notesTotal) await loadNotes();
   };
 
-  const openEditor = (note = null) => {
-    setEditor(note ? note.id : "new");
-    setDraft(note?.content || "");
-    requestAnimationFrame(() => {
-      document.getElementById(`admin-user-note-${user.id}`)?.focus();
-    });
+  const openEditor = (note) => {
+    setEditor(note.id);
+    setDraft(note.content || "");
+    requestAnimationFrame(() => document.getElementById(`admin-user-note-${user.id}`)?.focus());
   };
 
   const resetEditor = () => {
@@ -86,10 +85,7 @@ function UserNotes({ user }) {
 
   return (
     <section className="flex flex-col gap-[12px]" aria-labelledby="admin-user-notes-title">
-      <div className="flex items-center justify-between gap-[8px]">
-        <h3 id="admin-user-notes-title" className="text-heading-8 m-0 text-[var(--color-text-300)]">Notas</h3>
-        <Button theme="Primary" type="Link" size="S" fitContent iconLeft={<Add size="16" color="currentColor" />} showLeftIcon showRightIcon={false} disabled={saving} onClick={() => openEditor()}>Añadir nota</Button>
-      </div>
+      <h3 id="admin-user-notes-title" className="text-heading-8 m-0 text-[var(--color-text-300)]">Notas</h3>
 
       <div className="flex flex-col gap-[12px]">
         <TextArea
@@ -104,10 +100,20 @@ function UserNotes({ user }) {
           minHeight={104}
           maxLength={1000}
           className="max-w-none"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              saveNote();
+            }
+          }}
         />
         <div className="flex justify-end gap-[8px]">
           {draft || editor !== "new" ? <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={saving} onClick={resetEditor}>Cancelar</Button> : null}
-          <Button theme="Primary" type="Solid" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={!draft.trim() || saving} onClick={saveNote}>{saving ? "Guardando..." : editor === "new" ? "Guardar nota" : "Guardar cambios"}</Button>
+          <ComposerSubmitButton
+            ariaLabel={editor === "new" ? "Guardar nota" : "Guardar cambios"}
+            disabled={!draft.trim() || saving}
+            onClick={saveNote}
+          />
         </div>
       </div>
 
