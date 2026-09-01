@@ -36,7 +36,7 @@ export const TEXT_AREA_STATE_STYLES = {
   },
   Focused: {
     shell:
-      "border-[4px] border-[var(--color-primary-10)] bg-[var(--color-neutral-100)] shadow-[0px_2px_4px_0px_rgba(27,28,29,0.04)] dark:border-[#2a29291a]",
+      "border border-[var(--color-primary-10)] bg-[var(--color-neutral-100)] shadow-[0_0_0_3px_var(--color-primary-10),0px_2px_4px_0px_rgba(27,28,29,0.04)]",
     field:
       "border border-[var(--color-primary-300)] bg-transparent",
     text: "text-[var(--color-text-300)] placeholder:text-[var(--color-text-100)]",
@@ -75,6 +75,40 @@ export const TEXT_AREA_STATE_STYLES = {
     handle: "text-[var(--color-danger-100)]",
   },
 };
+
+export function resolveTextAreaState({
+  disabled = false,
+  state = "Default",
+  isFocused = false,
+  isHovered = false,
+  hasValue = false,
+} = {}) {
+  if (disabled || state === "Disabled") {
+    return "Disabled";
+  }
+
+  if (state === "Error") {
+    return "Error";
+  }
+
+  if (state !== "Default" && TEXT_AREA_STATE_STYLES[state]) {
+    return state;
+  }
+
+  if (isFocused) {
+    return "Focused";
+  }
+
+  if (isHovered) {
+    return "Hover";
+  }
+
+  if (hasValue) {
+    return "Filled";
+  }
+
+  return "Default";
+}
 
 export function createTextAreaProps(overrides = {}) {
   return {

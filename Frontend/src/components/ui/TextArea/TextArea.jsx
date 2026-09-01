@@ -2,7 +2,10 @@ import { useId, useState } from "react";
 import clsx from "clsx";
 import Label from "../Label/Label.jsx";
 import HintText from "../HintText/HintText.jsx";
-import { TEXT_AREA_STATE_STYLES } from "./textAreaConfig.js";
+import {
+  resolveTextAreaState,
+  TEXT_AREA_STATE_STYLES,
+} from "./textAreaConfig.js";
 
 function hasTextValue(value) {
   if (value == null) {
@@ -70,34 +73,13 @@ function TextArea({
   const isControlled = value !== undefined;
   const currentValue = isControlled ? value : internalValue;
   const isFilled = hasTextValue(currentValue);
-  const baseState = disabled ? "Disabled" : state;
-  const resolvedState = (() => {
-    if (baseState === "Disabled" || baseState === "Error") {
-      return baseState;
-    }
-
-    if (baseState === "Focused") {
-      return "Focused";
-    }
-
-    if (baseState === "Hover") {
-      return "Hover";
-    }
-
-    if (baseState === "Filled" || isFilled) {
-      return "Filled";
-    }
-
-    if (isFocused) {
-      return "Focused";
-    }
-
-    if (isHovered) {
-      return "Hover";
-    }
-
-    return "Default";
-  })();
+  const resolvedState = resolveTextAreaState({
+    disabled,
+    state,
+    isFocused,
+    isHovered,
+    hasValue: isFilled,
+  });
   const styles = TEXT_AREA_STATE_STYLES[resolvedState] ?? TEXT_AREA_STATE_STYLES.Default;
 
   const handleChange = (event) => {
@@ -184,7 +166,7 @@ function TextArea({
         </div>
       </div>
 
-      {showHint ? (
+      {showHint && resolvedState !== "Focused" ? (
         <HintText state={styles.hintState} hintText={hintText} className="w-full" />
       ) : null}
     </div>

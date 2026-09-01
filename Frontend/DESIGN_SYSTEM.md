@@ -139,6 +139,7 @@ El tema `Archived` identifica contenido conservado pero fuera del flujo activo. 
 
 - Cada control debe tener una etiqueta visible o un nombre accesible.
 - Mostrar ayuda con `HintText` y errores junto al campo correspondiente.
+- El `TextArea` compartido reproduce las variantes de Figma `Default`, `Hover`, `Focused`, `Filled`, `Disabled` y `Error`. En interacción normal, `Focused` y `Hover` prevalecen sobre `Filled`; `Disabled` y `Error` conservan prioridad semántica. El foco usa el anillo de cuatro píxeles formado con `--color-primary-10` sin modificar las dimensiones del campo, y oculta temporalmente el hint tal como define la variante enfocada de Figma.
 - Conservar los datos escritos cuando una petición falle.
 - La asignación de responsables muestra el `AlertToast` compartido con tema `Success` únicamente después de que la API confirme el alta. Si falla, mantiene el contenido del control, presenta el error junto al campo y muestra el mismo alert con tema `Danger`. Esta regla aplica a cualquier uso de `AssigneeMultiSelect`.
 - Diferenciar claramente estados normal, hover, focus, disabled y error.
