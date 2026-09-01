@@ -1,6 +1,7 @@
 import {
   createAdminUser,
   createAdminUserNote,
+  deleteAdminUserNote,
   getAdminUserDetails,
   getAdminUserNotesPage,
   getAdminUsersPage,
@@ -92,6 +93,18 @@ export async function patchAdminUserNote(req, res, next) {
     });
     res.set("Cache-Control", "no-store");
     res.status(200).json({ message: "Nota actualizada correctamente.", note });
+  } catch (error) { next(error); }
+}
+
+export async function deleteAdminUserNoteById(req, res, next) {
+  try {
+    await deleteAdminUserNote({
+      actorUserId: req.user.id,
+      noteId: req.params.noteId,
+      userId: req.params.userId,
+    });
+    res.set("Cache-Control", "no-store");
+    res.status(204).end();
   } catch (error) { next(error); }
 }
 

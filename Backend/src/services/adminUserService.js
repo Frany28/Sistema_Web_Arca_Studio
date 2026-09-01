@@ -6,6 +6,7 @@ import { ConflictError, NotFoundError } from "../errors/appError.js";
 import {
   createAdminUserRecord,
   createAdminUserNoteRecord,
+  deleteAdminUserNoteRecord,
   deleteCreatedAdminUser,
   adminUserExists,
   findAdminUserDetails,
@@ -96,6 +97,11 @@ export async function updateAdminUserNote({ actorUserId, content, noteId, userId
   const note = await updateAdminUserNoteRecord({ adminUserId: actorUserId, content, noteId, targetUserId: userId });
   if (!note) throw new NotFoundError("NOTE_NOT_FOUND", "La nota seleccionada no existe.");
   return mapAdminUserNote(note);
+}
+
+export async function deleteAdminUserNote({ actorUserId, noteId, userId }) {
+  const note = await deleteAdminUserNoteRecord({ adminUserId: actorUserId, noteId, targetUserId: userId });
+  if (!note) throw new NotFoundError("NOTE_NOT_FOUND", "La nota seleccionada no existe.");
 }
 
 export async function createAdminUser(payload) {

@@ -7,6 +7,7 @@ import {
   adminUserDetailSchema,
   adminUserListSchema,
   adminUserNoteCreateSchema,
+  adminUserNoteDeleteSchema,
   adminUserNoteListSchema,
   adminUserNoteUpdateSchema,
   adminUserPhotoSchema,
@@ -147,6 +148,8 @@ test("admin user notes validate private, bounded and paginated content", () => {
   assert.equal(adminUserNoteCreateSchema.safeParse({ params: { userId: "42" }, body: { content: " " } }).success, false);
   assert.equal(adminUserNoteCreateSchema.safeParse({ params: { userId: "42" }, body: { content: "x".repeat(1001) } }).success, false);
   assert.equal(adminUserNoteUpdateSchema.safeParse({ params: { userId: "42", noteId: "7" }, body: { content: "Actualizada" } }).success, true);
+  assert.equal(adminUserNoteDeleteSchema.safeParse({ params: { userId: "42", noteId: "7" } }).success, true);
+  assert.equal(adminUserNoteDeleteSchema.safeParse({ params: { userId: "42", noteId: "0" } }).success, false);
   assert.equal(adminUserNoteListSchema.safeParse({ params: { userId: "42" }, query: { limit: "25" } }).success, true);
   assert.equal(adminUserNoteListSchema.safeParse({ params: { userId: "42" }, query: { limit: "26" } }).success, false);
   assert.deepEqual(mapAdminUserNote({ id: "7", content: "Nota", created_at: "2026-08-30T12:00:00.000Z", updated_at: "2026-08-31T12:00:00.000Z" }), {
@@ -161,5 +164,7 @@ test("admin user note queries are scoped to the authenticated administrator", ()
   const repository = readFileSync(new URL("../src/repositories/adminUserRepository.js", import.meta.url), "utf8");
   assert.match(repository, /where admin_user_id = \$1\s+and target_user_id = \$2/);
   assert.match(repository, /where id = \$3 and admin_user_id = \$1 and target_user_id = \$2/);
+  assert.match(repository, /delete from public\.admin_user_notes[\s\S]*where id = \$3 and admin_user_id = \$1 and target_user_id = \$2/);
   assert.match(repository, /where admin_user_id = \$2 and target_user_id = u\.id/);
+  assert.match(repository, /private_note[\s\S]*limit 2/);
 });

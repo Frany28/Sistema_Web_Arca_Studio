@@ -183,7 +183,7 @@ export async function findAdminUserDetails({ actorUserId, userId }) {
             from public.admin_user_notes
             where admin_user_id = $2 and target_user_id = u.id
             order by created_at desc, id desc
-            limit 3
+            limit 2
           ) private_note
         ), '[]'::jsonb) as notes,
         (
@@ -272,6 +272,18 @@ export async function updateAdminUserNoteRecord({ adminUserId, content, noteId, 
       returning id, content, created_at, updated_at
     `,
     [adminUserId, targetUserId, noteId, content],
+  );
+  return result.rows[0] || null;
+}
+
+export async function deleteAdminUserNoteRecord({ adminUserId, noteId, targetUserId }) {
+  const result = await query(
+    `
+      delete from public.admin_user_notes
+      where id = $3 and admin_user_id = $1 and target_user_id = $2
+      returning id
+    `,
+    [adminUserId, targetUserId, noteId],
   );
   return result.rows[0] || null;
 }
