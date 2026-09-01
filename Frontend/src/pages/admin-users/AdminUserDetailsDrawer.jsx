@@ -7,6 +7,7 @@ import Badge from "../../components/ui/Badge/Badge.jsx";
 import Button from "../../components/ui/Button/Button.jsx";
 import ComposerSubmitButton from "../../components/ui/ComposerSubmitButton.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
+import HintText from "../../components/ui/HintText/HintText.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
 import SideOverlayDrawer from "../../components/ui/SideOverlayDrawer.jsx";
 import Tag from "../../components/ui/Tag/Tag.jsx";
@@ -94,7 +95,7 @@ function UserNotes({ user }) {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Anotaciones..."
-          hintText="Solo visible para ti."
+          showHint={false}
           showLabel={false}
           showLabelInfo={false}
           minHeight={104}
@@ -107,8 +108,8 @@ function UserNotes({ user }) {
             }
           }}
         />
-        <div className="flex justify-end gap-[8px]">
-          {draft || editor !== "new" ? <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={saving} onClick={resetEditor}>Cancelar</Button> : null}
+        <div className="flex min-w-0 items-start justify-between gap-[8px]">
+          <HintText hintText="Solo visible para ti." className="min-w-0 flex-1" />
           <ComposerSubmitButton
             ariaLabel={editor === "new" ? "Guardar nota" : "Guardar cambios"}
             disabled={!draft.trim() || saving}
@@ -119,13 +120,13 @@ function UserNotes({ user }) {
 
       {loading && !visibleNotes.length ? <Loader preset="adminUserDetails" label="Cargando notas" /> : visibleNotes.length ? (
         <div className={expanded ? "max-h-[248px] overflow-y-auto pr-[4px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]" : ""}>
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-[8px]">
             {visibleNotes.map((note) => (
-              <article key={note.id} className="flex flex-col gap-[6px] border-b border-[var(--color-neutral-200)] py-[12px] first:pt-0 last:border-b-0">
+              <article key={note.id} className="flex min-w-0 flex-col gap-[8px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-10)] p-[12px] transition-colors duration-150 hover:border-[var(--color-neutral-300)] motion-reduce:transition-none">
                 <p className="text-body-3 m-0 whitespace-pre-wrap break-words text-[var(--color-text-200)]">{note.content}</p>
-                <div className="flex items-center justify-between gap-[8px]">
-                  <time className="text-body-4 text-[var(--color-text-300)]" dateTime={note.updatedAt}>{formatHumanDate(note.updatedAt)}</time>
-                  <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Edit2 size="16" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" onClick={() => openEditor(note)} />
+                <div className="flex min-w-0 items-center justify-between gap-[8px] border-t border-[var(--color-neutral-200)] pt-[8px]">
+                  <time className="text-body-4 min-w-0 text-[var(--color-text-100)]" dateTime={note.updatedAt}>{formatHumanDate(note.updatedAt)}</time>
+                  <Button theme="Primary" type="Ghost" size="S" className="!size-8 shrink-0 !p-[6px]" showText={false} showLeftIcon iconLeft={<Edit2 size="16" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" tooltipPosition="Top right" onClick={() => openEditor(note)} />
                 </div>
               </article>
             ))}
