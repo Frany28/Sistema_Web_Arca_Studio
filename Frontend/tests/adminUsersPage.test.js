@@ -171,7 +171,7 @@ test("the user details action opens the Figma drawer with live API data", async 
   assert.match(drawerSource, /max-h-\[248px\][^"\n]*overflow-y-auto/);
   assert.match(drawerSource, /overflow-hidden rounded-\[var\(--radius-2\)\][^"\n]*border[^"\n]*bg-\[var\(--color-neutral-100\)\]/);
   assert.match(drawerSource, /last:border-b-0[^"\n]*hover:bg-\[var\(--color-neutral-10\)\]/);
-  assert.match(drawerSource, /className="!size-7 shrink-0 !p-\[5px\]"/);
+  assert.match(drawerSource, /className="!size-7 !p-\[5px\]"/);
   assert.match(drawerSource, /api\.admin\.createUserNote/);
   assert.match(drawerSource, /api\.admin\.updateUserNote/);
   assert.match(drawerSource, /api\.admin\.deleteUserNote/);
