@@ -120,14 +120,14 @@ function UserNotes({ user }) {
 
       {loading && !visibleNotes.length ? <Loader preset="adminUserDetails" label="Cargando notas" /> : visibleNotes.length ? (
         <div className={expanded ? "max-h-[248px] overflow-y-auto pr-[4px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]" : ""}>
-          <div className="flex flex-col gap-[4px]">
+          <div className="overflow-hidden rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)]">
             {visibleNotes.map((note) => (
-              <article key={note.id} className="flex min-w-0 flex-col gap-[4px] rounded-[var(--radius-2)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[8px] transition-colors duration-150 hover:bg-[var(--color-neutral-10)] motion-reduce:transition-none">
-                <p className="text-body-4 m-0 whitespace-pre-wrap break-words text-[var(--color-text-200)]">{note.content}</p>
-                <div className="flex min-w-0 items-center justify-between gap-[8px]">
-                  <time className="text-body-4 min-w-0 text-[var(--color-text-100)]" dateTime={note.updatedAt}>{formatHumanDate(note.updatedAt)}</time>
-                  <Button theme="Primary" type="Ghost" size="S" className="!size-7 shrink-0 !p-[4px]" showText={false} showLeftIcon iconLeft={<Edit2 size="14" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" tooltipPosition="Top right" onClick={() => openEditor(note)} />
+              <article key={note.id} className="flex min-w-0 items-center justify-between gap-[8px] border-b border-[var(--color-neutral-200)] px-[8px] py-[6px] transition-colors duration-150 last:border-b-0 hover:bg-[var(--color-neutral-10)] motion-reduce:transition-none">
+                <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
+                  <p className="text-body-4 m-0 truncate text-[var(--color-text-200)]" title={note.content}>{note.content}</p>
+                  <time className="text-body-4 min-w-0 truncate text-[var(--color-text-100)]" dateTime={note.updatedAt}>{formatHumanDate(note.updatedAt)}</time>
                 </div>
+                <Button theme="Primary" type="Ghost" size="S" className="!size-7 shrink-0 !p-[5px]" showText={false} showLeftIcon iconLeft={<Edit2 size="13" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" tooltipPosition="Top right" onClick={() => openEditor(note)} />
               </article>
             ))}
           </div>
