@@ -23,7 +23,7 @@ function UserNotes({ user }) {
   const [expanded, setExpanded] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [editor, setEditor] = useState(null);
+  const [editor, setEditor] = useState("new");
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -49,6 +49,14 @@ function UserNotes({ user }) {
   const openEditor = (note = null) => {
     setEditor(note ? note.id : "new");
     setDraft(note?.content || "");
+    requestAnimationFrame(() => {
+      document.getElementById(`admin-user-note-${user.id}`)?.focus();
+    });
+  };
+
+  const resetEditor = () => {
+    setEditor("new");
+    setDraft("");
   };
 
   const saveNote = async () => {
@@ -69,8 +77,7 @@ function UserNotes({ user }) {
         setPreviewNotes(replace);
         setAllNotes(replace);
       }
-      setEditor(null);
-      setDraft("");
+      resetEditor();
       setFeedback({ id: Date.now(), theme: "Success", title: editor === "new" ? "Nota guardada" : "Nota actualizada", description: "La nota es privada y solo está disponible para ti." });
     } catch (error) {
       setFeedback({ id: Date.now(), theme: "Danger", title: "No se pudo guardar la nota", description: error.message });
@@ -81,39 +88,46 @@ function UserNotes({ user }) {
     <section className="flex flex-col gap-[12px]" aria-labelledby="admin-user-notes-title">
       <div className="flex items-center justify-between gap-[8px]">
         <h3 id="admin-user-notes-title" className="text-heading-8 m-0 text-[var(--color-text-300)]">Notas</h3>
-        {!editor ? <Button theme="Primary" type="Link" size="S" fitContent iconLeft={<Add size="16" color="currentColor" />} showLeftIcon showRightIcon={false} onClick={() => openEditor()}>Añadir nota</Button> : null}
+        <Button theme="Primary" type="Link" size="S" fitContent iconLeft={<Add size="16" color="currentColor" />} showLeftIcon showRightIcon={false} disabled={saving} onClick={() => openEditor()}>Añadir nota</Button>
       </div>
 
-      {editor ? (
-        <div className="flex flex-col gap-[12px]">
-          <TextArea label={editor === "new" ? "Nueva nota" : "Editar nota"} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Escribe una anotación..." hintText={`${draft.length}/1000 · Solo visible para ti.`} showLabelInfo={false} minHeight={112} maxLength={1000} className="max-w-none" autoFocus />
-          <div className="flex justify-end gap-[8px]">
-            <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={saving} onClick={() => { setEditor(null); setDraft(""); }}>Cancelar</Button>
-            <Button theme="Primary" type="Solid" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={!draft.trim() || saving} onClick={saveNote}>{saving ? "Guardando..." : "Guardar"}</Button>
-          </div>
+      <div className="flex flex-col gap-[12px]">
+        <TextArea
+          id={`admin-user-note-${user.id}`}
+          aria-label={editor === "new" ? "Nueva nota" : "Editar nota"}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Anotaciones..."
+          hintText="Solo visible para ti."
+          showLabel={false}
+          showLabelInfo={false}
+          minHeight={104}
+          maxLength={1000}
+          className="max-w-none"
+        />
+        <div className="flex justify-end gap-[8px]">
+          {draft || editor !== "new" ? <Button theme="Primary" type="Outline" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={saving} onClick={resetEditor}>Cancelar</Button> : null}
+          <Button theme="Primary" type="Solid" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={!draft.trim() || saving} onClick={saveNote}>{saving ? "Guardando..." : editor === "new" ? "Guardar nota" : "Guardar cambios"}</Button>
         </div>
-      ) : (
-        <>
-          {loading && !visibleNotes.length ? <Loader preset="adminUserDetails" label="Cargando notas" /> : visibleNotes.length ? (
-            <div className={expanded ? "max-h-[248px] overflow-y-auto pr-[4px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]" : ""}>
-              <div className="flex flex-col">
-                {visibleNotes.map((note) => (
-                  <article key={note.id} className="flex flex-col gap-[6px] border-b border-[var(--color-neutral-200)] py-[12px] first:pt-0 last:border-b-0">
-                    <p className="text-body-3 m-0 whitespace-pre-wrap break-words text-[var(--color-text-200)]">{note.content}</p>
-                    <div className="flex items-center justify-between gap-[8px]">
-                      <time className="text-body-4 text-[var(--color-text-300)]" dateTime={note.updatedAt}>{formatHumanDate(note.updatedAt)}</time>
-                      <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Edit2 size="16" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" onClick={() => openEditor(note)} />
-                    </div>
-                  </article>
-                ))}
-              </div>
-              {expanded && nextCursor ? <Button theme="Primary" type="Link" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={loading} onClick={() => loadNotes({ append: true, cursor: nextCursor })}>{loading ? "Cargando..." : "Cargar más"}</Button> : null}
-            </div>
-          ) : <p className="text-body-3 m-0 text-[var(--color-text-300)]">Sin anotaciones.</p>}
-          {notesTotal > 3 ? <Button theme="Primary" type="Link" size="S" fitContent showLeftIcon={false} showRightIcon={false} onClick={toggleAllNotes}>{expanded ? "Ver recientes" : `Ver todas (${notesTotal})`}</Button> : null}
-          <p className="text-body-4 m-0 text-[var(--color-text-300)]">Solo visible para ti.</p>
-        </>
-      )}
+      </div>
+
+      {loading && !visibleNotes.length ? <Loader preset="adminUserDetails" label="Cargando notas" /> : visibleNotes.length ? (
+        <div className={expanded ? "max-h-[248px] overflow-y-auto pr-[4px] [scrollbar-color:var(--color-neutral-400)_transparent] [scrollbar-width:thin]" : ""}>
+          <div className="flex flex-col">
+            {visibleNotes.map((note) => (
+              <article key={note.id} className="flex flex-col gap-[6px] border-b border-[var(--color-neutral-200)] py-[12px] first:pt-0 last:border-b-0">
+                <p className="text-body-3 m-0 whitespace-pre-wrap break-words text-[var(--color-text-200)]">{note.content}</p>
+                <div className="flex items-center justify-between gap-[8px]">
+                  <time className="text-body-4 text-[var(--color-text-300)]" dateTime={note.updatedAt}>{formatHumanDate(note.updatedAt)}</time>
+                  <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Edit2 size="16" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" onClick={() => openEditor(note)} />
+                </div>
+              </article>
+            ))}
+          </div>
+          {expanded && nextCursor ? <Button theme="Primary" type="Link" size="S" fitContent showLeftIcon={false} showRightIcon={false} disabled={loading} onClick={() => loadNotes({ append: true, cursor: nextCursor })}>{loading ? "Cargando..." : "Cargar más"}</Button> : null}
+        </div>
+      ) : <p className="text-body-3 m-0 text-[var(--color-text-300)]">Sin anotaciones.</p>}
+      {notesTotal > 3 ? <Button theme="Primary" type="Link" size="S" fitContent showLeftIcon={false} showRightIcon={false} onClick={toggleAllNotes}>{expanded ? "Ver recientes" : `Ver todas (${notesTotal})`}</Button> : null}
       <AlertToast trigger={feedback?.id} theme={feedback?.theme} title={feedback?.title} description={feedback?.description} onDismiss={() => setFeedback(null)} />
     </section>
   );
