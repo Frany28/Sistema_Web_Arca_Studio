@@ -1,25 +1,128 @@
 import { pool, query } from "../config/db.js";
 import { mapAdminUserMetrics } from "../utils/adminUsers.js";
 
-export async function findAdminUserConflict({ email, phone, secondaryPhone }) {
+export async function findAdminUserConflict({ email, excludeUserId = null, phone, secondaryPhone }) {
   const phones = [phone, secondaryPhone].filter(Boolean);
   const result = await query(
     `
       select
         exists(
           select 1 from public.users
-          where deleted_at is null and lower(email) = lower($1)
+          where deleted_at is null
+            and lower(email) = lower($1)
+            and ($3::bigint is null or id <> $3)
         ) as email_exists,
         exists(
           select 1 from public.users
           where deleted_at is null
+            and ($3::bigint is null or id <> $3)
             and $2::text[] <> '{}'::text[]
             and (phone = any($2::text[]) or secondary_phone = any($2::text[]))
         ) as phone_exists
     `,
-    [email, phones],
+    [email, phones, excludeUserId],
   );
   return result.rows[0] || { email_exists: false, phone_exists: false };
+}
+
+export async function findAdminUserAccessRecord(userId) {
+  const result = await query(
+    `
+      select u.status, r.code as role_code
+      from public.users u
+      inner join public.roles r on r.id = u.role_id
+      where u.id = $1 and u.deleted_at is null
+      limit 1
+    `,
+    [userId],
+  );
+  return result.rows[0] || null;
+}
+
+export async function updateAdminUserRecord({
+  companyName,
+  email,
+  firstName,
+  lastName,
+  phone,
+  roleCode,
+  secondaryPhone,
+  status,
+  userId,
+}) {
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const currentResult = await client.query(
+      `select client_id from public.users where id = $1 and deleted_at is null for update`,
+      [userId],
+    );
+    const current = currentResult.rows[0];
+    if (!current) {
+      await client.query("rollback");
+      return { reason: "user", user: null };
+    }
+
+    const roleResult = await client.query(
+      `select id, code, name from public.roles where code = $1 and is_active = true limit 1`,
+      [roleCode],
+    );
+    const role = roleResult.rows[0];
+    if (!role) {
+      await client.query("rollback");
+      return { reason: "role", user: null };
+    }
+
+    let clientId = role.code === "client" ? current.client_id : null;
+    if (role.code === "client" && clientId) {
+      const clientResult = await client.query(
+        `
+          update public.clients
+          set name = $2, company_name = $3, email = $4, phone = $5,
+            status = $6::public.client_status, updated_at = now()
+          where id = $1 and deleted_at is null
+          returning id
+        `,
+        [clientId, `${firstName} ${lastName}`, companyName, email, phone, status === "active" ? "active" : "inactive"],
+      );
+      clientId = clientResult.rows[0]?.id || null;
+    }
+    if (role.code === "client" && !clientId) {
+      const clientResult = await client.query(
+        `
+          insert into public.clients (name, company_name, email, phone, status)
+          values ($1, $2, $3, $4, $5::public.client_status)
+          returning id
+        `,
+        [`${firstName} ${lastName}`, companyName, email, phone, status === "active" ? "active" : "inactive"],
+      );
+      clientId = clientResult.rows[0].id;
+    }
+
+    const userResult = await client.query(
+      `
+        update public.users u
+        set client_id = $2, role_id = $3, email = $4, first_name = $5,
+          last_name = $6, phone = $7, secondary_phone = $8,
+          company_name = $9, status = $10::public.user_status, updated_at = now()
+        where u.id = $1 and u.deleted_at is null
+        returning u.id, u.email, u.first_name, u.last_name, u.status,
+          (u.profile_photo_url is not null and btrim(u.profile_photo_url) <> '') as has_profile_photo,
+          u.last_login_at, u.created_at
+      `,
+      [userId, clientId, role.id, email, firstName, lastName, phone, secondaryPhone, companyName, status],
+    );
+    await client.query("commit");
+    return {
+      reason: null,
+      user: { ...userResult.rows[0], role_code: role.code, role_name: role.name },
+    };
+  } catch (error) {
+    await client.query("rollback").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function createAdminUserRecord({

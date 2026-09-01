@@ -12,6 +12,7 @@ import {
   adminUserNoteUpdateSchema,
   adminUserPhotoSchema,
   adminUserStatusSchema,
+  adminUserUpdateSchema,
 } from "../src/validation/adminUserSchemas.js";
 import { encodeCursor } from "../src/utils/pagination.js";
 import { mapAdminUser, mapAdminUserDetails, mapAdminUserMetrics, mapAdminUserNote } from "../src/utils/adminUsers.js";
@@ -86,6 +87,27 @@ test("admin user creation validates identity, roles, status and optional phones"
   assert.equal(result.data.body.secondaryPhone, "+13055550142");
   assert.equal(adminUserCreateSchema.safeParse({ body: { ...result.data.body, fullName: "Ana" } }).success, false);
   assert.equal(adminUserCreateSchema.safeParse({ body: { ...result.data.body, status: "deleted" } }).success, false);
+});
+
+test("admin user editing validates the identifier and the shared account fields", () => {
+  const result = adminUserUpdateSchema.safeParse({
+    params: { userId: "42" },
+    body: {
+      fullName: "Armando Carroz",
+      companyName: "ARCA Studio",
+      email: "ARMANDO@ARCASTUDIO.COM",
+      roleCode: "architect",
+      phone: "+1 (444) 1234-5678",
+      secondaryPhone: "+58 412-123-4567",
+      status: "active",
+    },
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.data.params.userId, 42);
+  assert.deepEqual(result.data.body.fullName, { firstName: "Armando", lastName: "Carroz" });
+  assert.equal(result.data.body.email, "armando@arcastudio.com");
+  assert.equal(adminUserUpdateSchema.safeParse({ params: { userId: "0" }, body: result.data.body }).success, false);
 });
 
 test("admin user creation persists during staging without requiring activation email", () => {

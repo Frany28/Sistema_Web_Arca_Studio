@@ -14,6 +14,7 @@ import SideOverlayDrawer from "../../components/ui/SideOverlayDrawer.jsx";
 import Tag from "../../components/ui/Tag/Tag.jsx";
 import TextArea from "../../components/ui/TextArea/TextArea.jsx";
 import { formatCalendarDate, formatHumanDate } from "../../utils/relativeTime.js";
+import EditAdminUserModal from "./EditAdminUserModal.jsx";
 
 function DetailField({ children, label }) {
   return <div className="flex min-w-0 flex-col gap-[8px]"><dt className="text-heading-8 text-[var(--color-text-300)]">{label}</dt><dd className="text-heading-8 m-0 break-words text-[var(--color-text-200)]">{children}</dd></div>;
@@ -199,11 +200,12 @@ function UserDetails({ user }) {
   </>;
 }
 
-function AdminUserDetailsDrawer({ open, onClose, userId }) {
+function AdminUserDetailsDrawer({ onUserUpdated, open, onClose, roles = [], userId }) {
   const [details, setDetails] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
+  const [editing, setEditing] = useState(false);
   useEffect(() => {
     if (!open || !userId) return undefined;
     const controller = new AbortController();
@@ -211,8 +213,20 @@ function AdminUserDetailsDrawer({ open, onClose, userId }) {
     api.admin.getUserDetails({ signal: controller.signal, userId }).then((payload) => setDetails(payload?.user || null)).catch((requestError) => { if (requestError?.name !== "AbortError") setError(requestError?.message || "No se pudieron cargar los detalles del usuario."); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [open, requestKey, userId]);
+  const updateUser = async (payload) => {
+    const response = await api.admin.updateUser({ payload, userId });
+    setEditing(false);
+    setRequestKey((key) => key + 1);
+    onUserUpdated?.(response?.user);
+  };
+  const closeDrawer = () => {
+    setEditing(false);
+    onClose();
+  };
+
   return (
-    <SideOverlayDrawer open={open} onClose={onClose} widthClassName="w-[min(312px,calc(100vw-32px))]" ariaLabel="Detalles de usuario" className="z-[90]">
+    <>
+    <SideOverlayDrawer open={open} onClose={closeDrawer} widthClassName="w-[min(312px,calc(100vw-32px))]" ariaLabel="Detalles de usuario" className="z-[90]">
       <div className="flex h-full min-h-0 flex-col">
         <header className="flex shrink-0 flex-col gap-[24px] px-[16px] pt-[16px]">
           <h2 className="text-heading-5 m-0 text-[var(--color-text-50)]">Detalles de Usuario</h2>
@@ -224,10 +238,20 @@ function AdminUserDetailsDrawer({ open, onClose, userId }) {
         </div>
 
         <footer className="flex shrink-0 border-t border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] p-[16px]">
-          <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled aria-label="Editar usuario; función no disponible" title="La edición de usuarios estará disponible en su flujo correspondiente.">Editar</Button>
+          <Button theme="Primary" type="Solid" size="M" fitContent showLeftIcon={false} showRightIcon={false} disabled={!details || loading} onClick={() => setEditing(true)}>Editar</Button>
         </footer>
       </div>
     </SideOverlayDrawer>
+    {editing && details ? (
+      <EditAdminUserModal
+        open
+        roles={roles}
+        user={details}
+        onClose={() => setEditing(false)}
+        onUpdate={updateUser}
+      />
+    ) : null}
+    </>
   );
 }
 

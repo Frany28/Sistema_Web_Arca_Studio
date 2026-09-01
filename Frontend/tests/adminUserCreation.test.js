@@ -54,3 +54,21 @@ test("admin user row actions expose the connected Figma status menu", async () =
   assert.match(menu, /createPortal/);
   assert.match(http, /updateUserStatus[\s\S]*\/admin\/users\/\$\{encodeURIComponent\(userId\)\}\/status[\s\S]*method: "PATCH"/);
 });
+
+test("the user details drawer opens the connected Figma edit modal", async () => {
+  const [drawer, editModal, formModal, http] = await Promise.all([
+    readFile(new URL("../src/pages/admin-users/AdminUserDetailsDrawer.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin-users/EditAdminUserModal.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin-users/CreateAdminUserModal.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/api/http.js", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(drawer, /onClick=\{\(\) => setEditing\(true\)\}>Editar<\/Button>/);
+  assert.match(drawer, /<EditAdminUserModal/);
+  assert.match(drawer, /api\.admin\.updateUser/);
+  assert.match(editModal, /mode="edit"/);
+  assert.match(formModal, /Editar usuario/);
+  assert.match(formModal, /max-w-\[696px\]/);
+  assert.match(formModal, /editing \? "Siguiente" : "Crear usuario"/);
+  assert.match(http, /updateUser\(\{ payload, userId \}\)[\s\S]*method: "PATCH"/);
+});

@@ -5,8 +5,9 @@ import {
   getAdminUserDetails,
   getAdminUserNotesPage,
   getAdminUsersPage,
-  updateAdminUserStatus,
+  updateAdminUser,
   updateAdminUserNote,
+  updateAdminUserStatus,
 } from "../services/adminUserService.js";
 import { getAdminUserProfilePhoto } from "../services/profilePhotoService.js";
 
@@ -46,6 +47,20 @@ export async function getAdminUsers(req, res, next) {
 
     res.set("Cache-Control", "private, max-age=15");
     res.status(200).json(page);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function patchAdminUser(req, res, next) {
+  try {
+    const user = await updateAdminUser({
+      actorUserId: req.user.id,
+      payload: req.body,
+      userId: req.params.userId,
+    });
+    res.set("Cache-Control", "no-store");
+    res.status(200).json({ message: "Usuario actualizado correctamente.", user });
   } catch (error) {
     next(error);
   }

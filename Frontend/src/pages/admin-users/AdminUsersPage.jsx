@@ -659,7 +659,9 @@ function AdminUsersPage({ empty = false }) {
           <AdminUserDetailsDrawer
             open={detailsUserId !== null}
             userId={detailsUserId}
+            roles={roles}
             onClose={() => setDetailsUserId(null)}
+            onUserUpdated={() => setRequestKey((key) => key + 1)}
           />
           {isCreateUserOpen ? <CreateAdminUserModal open roles={roles} onClose={() => setIsCreateUserOpen(false)} onCreate={createUser} /> : null}
           <Modal

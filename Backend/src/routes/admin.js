@@ -22,6 +22,7 @@ import {
   getAdminUsers,
   getAdminUser,
   getAdminUserNotes,
+  patchAdminUser,
   patchAdminUserNote,
   patchAdminUserStatus,
   postAdminUser,
@@ -48,6 +49,7 @@ import {
   adminUserNoteUpdateSchema,
   adminUserPhotoSchema,
   adminUserStatusSchema,
+  adminUserUpdateSchema,
 } from "../validation/adminUserSchemas.js";
 
 const router = Router();
@@ -90,6 +92,12 @@ router.post(
   adminUserNoteRateLimit,
   validate(adminUserNoteCreateSchema),
   postAdminUserNote,
+);
+router.patch(
+  "/users/:userId",
+  adminUserStatusRateLimit,
+  validate(adminUserUpdateSchema),
+  patchAdminUser,
 );
 router.patch(
   "/users/:userId/notes/:noteId",

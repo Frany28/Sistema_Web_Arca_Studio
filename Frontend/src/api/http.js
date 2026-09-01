@@ -332,6 +332,14 @@ export const adminApi = {
     });
   },
 
+  async updateUser({ payload, userId }) {
+    const response = await apiRequest(`/admin/users/${encodeURIComponent(userId)}`, {
+      body: JSON.stringify(payload),
+      method: "PATCH",
+    });
+    return { ...response, user: withAdminUserAvatar(response?.user) };
+  },
+
   async updateUserStatus({ status, userId }) {
     const payload = await apiRequest(`/admin/users/${encodeURIComponent(userId)}/status`, {
       body: JSON.stringify({ status }),

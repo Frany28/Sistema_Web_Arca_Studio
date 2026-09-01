@@ -8,6 +8,7 @@ import {
   createAdminUserNoteRecord,
   deleteAdminUserNoteRecord,
   adminUserExists,
+  findAdminUserAccessRecord,
   findAdminUserDetails,
   findAdminUserConflict,
   getAdminUserMetrics,
@@ -15,6 +16,7 @@ import {
   listAdminUserNotes,
   updateAdminUserNoteRecord,
   updateAdminUserStatusRecord,
+  updateAdminUserRecord,
 } from "../repositories/adminUserRepository.js";
 import { mapAdminUser, mapAdminUserDetails, mapAdminUserNote } from "../utils/adminUsers.js";
 import { invalidateCachedUser } from "./userSessionCache.js";
@@ -151,4 +153,62 @@ export async function updateAdminUserStatus({ actorUserId, status, userId }) {
 
   invalidateCachedUser(userId);
   return mapAdminUser(updatedUser);
+}
+
+export async function updateAdminUser({ actorUserId, payload, userId }) {
+  const current = await findAdminUserAccessRecord(userId);
+  if (!current) {
+    throw new NotFoundError("USER_NOT_FOUND", "El usuario seleccionado no existe.");
+  }
+  if (
+    Number(actorUserId) === Number(userId)
+    && (current.status !== payload.status || current.role_code !== payload.roleCode)
+  ) {
+    throw new ConflictError(
+      "SELF_ACCESS_CHANGE_NOT_ALLOWED",
+      "No puedes cambiar tu propio rol o estado.",
+    );
+  }
+
+  const conflict = await findAdminUserConflict({
+    email: payload.email,
+    excludeUserId: userId,
+    phone: payload.phone,
+    secondaryPhone: payload.secondaryPhone,
+  });
+  if (conflict.email_exists) {
+    throw new ConflictError("EMAIL_ALREADY_EXISTS", "Este correo electrónico ya está registrado.");
+  }
+  if (conflict.phone_exists) {
+    throw new ConflictError("PHONE_ALREADY_EXISTS", "Uno de los teléfonos ya está registrado.");
+  }
+
+  let updated;
+  try {
+    updated = await updateAdminUserRecord({
+      ...payload,
+      firstName: payload.fullName.firstName,
+      lastName: payload.fullName.lastName,
+      userId,
+    });
+  } catch (error) {
+    if (error?.code === "23505") {
+      const phoneConflict = String(error.constraint || "").includes("phone");
+      throw new ConflictError(
+        phoneConflict ? "PHONE_ALREADY_EXISTS" : "EMAIL_ALREADY_EXISTS",
+        phoneConflict ? "Uno de los teléfonos ya está registrado." : "Este correo electrónico ya está registrado.",
+        error,
+      );
+    }
+    throw error;
+  }
+  if (updated?.reason === "role") {
+    throw new NotFoundError("ROLE_NOT_FOUND", "El rol seleccionado no está disponible.");
+  }
+  if (!updated?.user) {
+    throw new NotFoundError("USER_NOT_FOUND", "El usuario seleccionado no existe.");
+  }
+
+  invalidateCachedUser(userId);
+  return mapAdminUser(updated.user);
 }

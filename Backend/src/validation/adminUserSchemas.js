@@ -57,19 +57,28 @@ export const adminUserListSchema = z.object({
   }).passthrough(),
 });
 
+const adminUserMutationBody = z.object({
+  fullName,
+  companyName: z.string().trim().max(150).optional().transform((value) => value || null),
+  email: z.string().trim().pipe(z.email("Correo inválido.")).transform((value) => value.toLowerCase()),
+  roleCode: z.string().trim().min(1).max(50).regex(/^[a-z0-9_-]+$/i),
+  phone: optionalPhone,
+  secondaryPhone: optionalPhone,
+  status: z.enum(["active", "blocked", "inactive"]),
+}).refine(
+  (body) => !body.phone || body.phone !== body.secondaryPhone,
+  { message: "Los teléfonos deben ser diferentes.", path: ["secondaryPhone"] },
+);
+
 export const adminUserCreateSchema = z.object({
-  body: z.object({
-    fullName,
-    companyName: z.string().trim().max(150).optional().transform((value) => value || null),
-    email: z.string().trim().pipe(z.email("Correo inválido.")).transform((value) => value.toLowerCase()),
-    roleCode: z.string().trim().min(1).max(50).regex(/^[a-z0-9_-]+$/i),
-    phone: optionalPhone,
-    secondaryPhone: optionalPhone,
-    status: z.enum(["active", "blocked", "inactive"]),
-  }).refine(
-    (body) => !body.phone || body.phone !== body.secondaryPhone,
-    { message: "Los teléfonos deben ser diferentes.", path: ["secondaryPhone"] },
-  ),
+  body: adminUserMutationBody,
+});
+
+export const adminUserUpdateSchema = z.object({
+  params: z.object({
+    userId: z.coerce.number().int().positive(),
+  }),
+  body: adminUserMutationBody,
 });
 
 export const adminUserStatusSchema = z.object({
