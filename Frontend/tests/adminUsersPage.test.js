@@ -167,7 +167,9 @@ test("the user details action opens the Figma drawer with live API data", async 
   assert.match(drawerSource, /slice\(0, 2\)/);
   assert.match(drawerSource, /Mostrar más \(\$\{notesTotal - 2\}\)/);
   assert.match(drawerSource, /notesTotal > 2/);
-  assert.match(drawerSource, /flex flex-col gap-\[12px\][\s\S]*<UserNotes user=\{user\}/);
+  assert.match(drawerSource, /<UserNotes user=\{user\}/);
+  assert.match(drawerSource, /flex min-h-0 flex-1 flex-col gap-\[24px\] overflow-y-auto/);
+  assert.match(drawerSource, /<footer className="flex shrink-0 border-t[^\n]*>[\s\S]*>Editar<\/Button>[\s\S]*<\/footer>/);
   assert.match(drawerSource, /max-h-\[248px\][^"\n]*overflow-y-auto/);
   assert.match(drawerSource, /overflow-hidden rounded-\[var\(--radius-2\)\][^"\n]*border[^"\n]*bg-\[var\(--color-neutral-100\)\]/);
   assert.match(drawerSource, /last:border-b-0[^"\n]*hover:bg-\[var\(--color-neutral-10\)\]/);
