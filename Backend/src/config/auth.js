@@ -2,6 +2,14 @@ import crypto from "node:crypto";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+
+/**
+ * Obtiene el valor de required production secret para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 function getRequiredProductionSecret() {
   if (process.env.AUTH_TOKEN_SECRET) {
     return process.env.AUTH_TOKEN_SECRET;
@@ -14,6 +22,13 @@ function getRequiredProductionSecret() {
   return crypto.randomBytes(32).toString("hex");
 }
 
+/**
+ * Resuelve la configuración de la cookie de autenticación a partir de la solicitud y la configuración disponible.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {unknown} [environment] - Valor de `environment` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function resolveAuthCookieConfig(environment = process.env) {
   const production = environment.NODE_ENV === "production";
   return {

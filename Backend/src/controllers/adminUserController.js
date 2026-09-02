@@ -11,6 +11,15 @@ import {
 } from "../services/adminUserService.js";
 import { getAdminUserProfilePhoto } from "../services/profilePhotoService.js";
 
+/**
+ * Transmite la foto de perfil de un usuario administrado sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function streamAdminUserProfilePhoto(req, res, next) {
   try {
     const photo = await getAdminUserProfilePhoto({ userId: req.params.userId });
@@ -28,6 +37,15 @@ export async function streamAdminUserProfilePhoto(req, res, next) {
   }
 }
 
+/**
+ * Procesa la creación de el valor de administrativo usuario y construye la respuesta HTTP correspondiente.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function postAdminUser(req, res, next) {
   try {
     const user = await createAdminUser(req.body);
@@ -41,6 +59,15 @@ export async function postAdminUser(req, res, next) {
   }
 }
 
+/**
+ * Obtiene el valor de administrativo usuarios para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getAdminUsers(req, res, next) {
   try {
     const page = await getAdminUsersPage(req.validatedQuery);
@@ -52,6 +79,15 @@ export async function getAdminUsers(req, res, next) {
   }
 }
 
+/**
+ * Procesa el valor de patch administrativo usuario para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function patchAdminUser(req, res, next) {
   try {
     const user = await updateAdminUser({
@@ -66,6 +102,15 @@ export async function patchAdminUser(req, res, next) {
   }
 }
 
+/**
+ * Obtiene el valor de administrativo usuario para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getAdminUser(req, res, next) {
   try {
     const user = await getAdminUserDetails({ actorUserId: req.user.id, userId: req.params.userId });
@@ -76,6 +121,15 @@ export async function getAdminUser(req, res, next) {
   }
 }
 
+/**
+ * Obtiene el valor de administrativo usuario notes para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getAdminUserNotes(req, res, next) {
   try {
     const page = await getAdminUserNotesPage({
@@ -88,6 +142,15 @@ export async function getAdminUserNotes(req, res, next) {
   } catch (error) { next(error); }
 }
 
+/**
+ * Procesa la creación de una nota de usuario administrado y construye la respuesta HTTP correspondiente.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function postAdminUserNote(req, res, next) {
   try {
     const note = await createAdminUserNote({ actorUserId: req.user.id, content: req.body.content, userId: req.params.userId });
@@ -96,6 +159,15 @@ export async function postAdminUserNote(req, res, next) {
   } catch (error) { next(error); }
 }
 
+/**
+ * Procesa el valor de patch administrativo usuario note para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function patchAdminUserNote(req, res, next) {
   try {
     const note = await updateAdminUserNote({
@@ -109,6 +181,13 @@ export async function patchAdminUserNote(req, res, next) {
   } catch (error) { next(error); }
 }
 
+/**
+ * Archiva el valor de usuario note y conserva su historial sin eliminarlo físicamente.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 async function archiveUserNote(req) {
   await archiveAdminUserNote({
     actorUserId: req.user.id,
@@ -117,6 +196,15 @@ async function archiveUserNote(req) {
   });
 }
 
+/**
+ * Archiva el valor de administrativo usuario note by id y conserva su historial sin eliminarlo físicamente.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function archiveAdminUserNoteById(req, res, next) {
   try {
     await archiveUserNote(req);
@@ -126,6 +214,15 @@ export async function archiveAdminUserNoteById(req, res, next) {
 }
 
 // Compatibilidad temporal: el antiguo DELETE conserva su contrato, pero nunca elimina datos.
+/**
+ * Archiva el valor de administrativo usuario note by legacy delete y conserva su historial sin eliminarlo físicamente.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function archiveAdminUserNoteByLegacyDelete(req, res, next) {
   try {
     await archiveUserNote(req);
@@ -134,6 +231,15 @@ export async function archiveAdminUserNoteByLegacyDelete(req, res, next) {
   } catch (error) { next(error); }
 }
 
+/**
+ * Procesa el valor de patch administrativo usuario estado para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function patchAdminUserStatus(req, res, next) {
   try {
     const user = await updateAdminUserStatus({

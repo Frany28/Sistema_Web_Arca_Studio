@@ -406,3 +406,18 @@ Esta excepción existe para facilitar las pruebas y demostraciones de ARCA Studi
 Cada regla indicada en este documento puede ser modificada, suspendida o revertida mediante una instrucción explícita del desarrollador responsable del proyecto.
 
 > **El desarrollador puede revertir cualquiera de estas reglas, sin excepciones.**
+
+---
+
+# 18. Documentación JSDoc del backend
+
+Toda función o método existente o nuevo dentro de `Backend/src` debe incluir un bloque JSDoc escrito en español inmediatamente antes de su declaración.
+
+* La descripción inicial debe ocupar dos o tres líneas y explicar el propósito funcional, no limitarse a repetir el nombre del elemento.
+* Se deben documentar funciones declaradas, métodos, constructores, helpers privados y funciones asignadas a constantes o propiedades.
+* Deben incluirse `@param`, `@returns` y `@throws` únicamente cuando correspondan, con tipos y descripciones claros.
+* Las funciones asíncronas que retornan un valor deben expresar su resultado como `Promise<T>`.
+* La descripción debe mencionar reglas de negocio o efectos secundarios relevantes, como acceso a PostgreSQL, almacenamiento, correo, caché o publicación de eventos.
+* Los callbacks anónimos simples quedan exentos. Si un callback concentra lógica relevante, debe extraerse como función nombrada y documentarse.
+* Todo cambio de comportamiento debe actualizar también el JSDoc relacionado.
+* `pnpm lint:docs` y `pnpm verify` deben rechazar funciones o métodos que incumplan la estructura verificable de esta regla.

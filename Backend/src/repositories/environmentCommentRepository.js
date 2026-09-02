@@ -2,6 +2,13 @@ import { query } from "../config/db.js";
 import { getEnvironmentCommentAccess } from "../utils/environmentCommentAccess.js";
 import { pageResult } from "../utils/pagination.js";
 
+/**
+ * Transforma el comentario de entorno a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toEnvironmentComment(row) {
   const authorName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
 
@@ -25,6 +32,16 @@ function toEnvironmentComment(row) {
   };
 }
 
+/**
+ * Lista los comentarios de entorno respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} [options.cursor] - Valor de `options.cursor` requerido por esta operación.
+ * @param {number} [options.limit] - Valor de `options.limit` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listEnvironmentComments(
   user,
   { cursor = null, limit = 25 } = {},
@@ -81,6 +98,16 @@ export async function listEnvironmentComments(
   );
 }
 
+/**
+ * Crea el comentario de entorno con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.content - Valor de `options.content` requerido por esta operación.
+ * @param {string} [options.parentCommentId] - Valor de `options.parentCommentId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function createEnvironmentComment({
   content,
   parentCommentId = null,
@@ -153,6 +180,14 @@ export async function createEnvironmentComment({
   return result.rows[0] ? toEnvironmentComment(result.rows[0]) : null;
 }
 
+/**
+ * Busca la foto del autor del comentario de entorno y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} authorUserId - Valor de `authorUserId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findEnvironmentCommentAuthorProfilePhoto(
   authorUserId,
   user,

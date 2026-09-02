@@ -5,6 +5,15 @@ import {
 import { getEnvironmentCommentAuthorProfilePhoto } from "../services/profilePhotoService.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
+/**
+ * Lista los comentarios de entorno respetando el alcance y la paginación solicitados.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function listEnvironmentComments(req, res, next) {
   try {
     const query = req.validatedQuery || req.query;
@@ -23,6 +32,15 @@ export async function listEnvironmentComments(req, res, next) {
   }
 }
 
+/**
+ * Crea el comentario de entorno con los datos validados recibidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function createEnvironmentComment(req, res, next) {
   try {
     const comment = await addEnvironmentComment({
@@ -37,6 +55,15 @@ export async function createEnvironmentComment(req, res, next) {
   }
 }
 
+/**
+ * Transmite la foto del autor del comentario de entorno sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function streamEnvironmentCommentAuthorProfilePhoto(
   req,
   res,

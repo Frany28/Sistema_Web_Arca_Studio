@@ -1,14 +1,39 @@
 const stores = new Map();
 
+/**
+ * Procesa el valor de cliente ip para completar la responsabilidad asignada al módulo.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function clientIp(req) {
   return req.ip || req.socket.remoteAddress || "unknown";
 }
 
+/**
+ * Procesa el valor de store for para completar la responsabilidad asignada al módulo.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {string} name - Valor de `name` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function storeFor(name) {
   if (!stores.has(name)) stores.set(name, new Map());
   return stores.get(name);
 }
 
+/**
+ * Crea el valor de rate limit con los datos validados recibidos.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.name - Valor de `options.name` requerido por esta operación.
+ * @param {number} options.max - Valor de `options.max` requerido por esta operación.
+ * @param {number} options.windowMs - Valor de `options.windowMs` requerido por esta operación.
+ * @param {string} [options.key] - Valor de `options.key` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function createRateLimit({ name, max, windowMs, key = (req) => `${clientIp(req)}:${req.user?.id || req.body?.email || "anonymous"}` }) {
   return (req, res, next) => {
     const now = Date.now();

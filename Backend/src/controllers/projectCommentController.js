@@ -20,12 +20,26 @@ import { assertProjectOperationallyMutable } from "../services/projectService.js
 const COMMENT_CONTENT_MAX_LENGTH = 2000;
 const ALLOWED_COMMENT_TYPES = new Set(["general", "image", "video", "panorama", "document"]);
 
+/**
+ * Interpreta el valor de proyecto id y descarta los formatos que no sean válidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function parseProjectId(req) {
   const projectId = Number(req.params.projectId);
 
   return Number.isInteger(projectId) && projectId > 0 ? projectId : null;
 }
 
+/**
+ * Interpreta el valor de parent comentario id y descarta los formatos que no sean válidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function parseParentCommentId(value) {
   if (value === null || value === undefined || value === "") {
     return null;
@@ -38,12 +52,26 @@ function parseParentCommentId(value) {
     : Number.NaN;
 }
 
+/**
+ * Interpreta el valor de comentario tipo y descarta los formatos que no sean válidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function parseCommentType(value) {
   const commentType = String(value || "general").trim();
 
   return ALLOWED_COMMENT_TYPES.has(commentType) ? commentType : null;
 }
 
+/**
+ * Interpreta el valor de target id y descarta los formatos que no sean válidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function parseTargetId(value) {
   if (value === null || value === undefined || value === "") {
     return null;
@@ -52,12 +80,28 @@ function parseTargetId(value) {
   return String(value).trim() || null;
 }
 
+/**
+ * Interpreta el valor de plain objeto y descarta los formatos que no sean válidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function parsePlainObject(value) {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value
     : null;
 }
 
+/**
+ * Obtiene los comentarios del proyecto para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function getProjectComments(req, res, next) {
   try {
     const projectId = parseProjectId(req);
@@ -91,6 +135,15 @@ export async function getProjectComments(req, res, next) {
   }
 }
 
+/**
+ * Transmite la foto del autor del comentario de proyecto sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function streamProjectCommentAuthorProfilePhoto(req, res, next) {
   try {
     const photo = await getProjectCommentAuthorProfilePhoto({
@@ -112,6 +165,15 @@ export async function streamProjectCommentAuthorProfilePhoto(req, res, next) {
   }
 }
 
+/**
+ * Crea el comentario del proyecto con los datos validados recibidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function createProjectComment(req, res, next) {
   try {
     const projectId = parseProjectId(req);
@@ -241,6 +303,15 @@ export async function createProjectComment(req, res, next) {
   }
 }
 
+/**
+ * Obtiene el valor de proyecto documento comentarios para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getProjectDocumentComments(req, res, next) {
   try {
     const projectId = Number(req.params.projectId);
@@ -262,6 +333,16 @@ export async function getProjectDocumentComments(req, res, next) {
   }
 }
 
+/**
+ * Transmite el valor de proyecto comentario events sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function streamProjectCommentEvents(req, res, next) {
   try {
     const projectId = parseProjectId(req);

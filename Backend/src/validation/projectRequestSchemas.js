@@ -3,6 +3,13 @@ import { z } from "zod";
 import { PROJECT_REQUEST_VALUES } from "../domain/projectRequest.js";
 
 const positiveId = z.coerce.number().int().positive();
+/**
+ * Procesa el valor de nullable text para completar la responsabilidad asignada al módulo.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {number} maximum - Valor de `maximum` requerido por esta operación.
+ * @returns {void} Finalización de la operación.
+ */
 const nullableText = (maximum) =>
   z.preprocess(
     (value) => {
@@ -12,9 +19,23 @@ const nullableText = (maximum) =>
     },
     z.string().max(maximum).nullable(),
   );
+/**
+ * Procesa el valor de optional choice para completar la responsabilidad asignada al módulo.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {Array<unknown>} values - Valor de `values` requerido por esta operación.
+ * @returns {void} Finalización de la operación.
+ */
 const optionalChoice = (values) => z.enum(values).nullable().optional().default(null);
 const optionalCoordinate = z.number().finite().nullable().optional().default(null);
 
+/**
+ * Normaliza el valor de address para mantener un formato interno consistente.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function normalizeAddress(value) {
   return String(value || "")
     .trim()
@@ -23,6 +44,13 @@ function normalizeAddress(value) {
     .toLowerCase();
 }
 
+/**
+ * Determina si es válida el valor de manual address según las reglas del dominio.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function validManualAddress(value) {
   const normalized = normalizeAddress(value);
   if (normalized.length < 5 || !/[a-z]/.test(normalized)) return false;

@@ -6,6 +6,13 @@ const RESOURCE_LINK_KEYS = new Set([
   "downloadurl",
 ]);
 
+/**
+ * Determina si el valor de resource enlace cumple la condición esperada.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isResourceLink(value) {
   return (
     typeof value === "string" &&
@@ -13,6 +20,13 @@ function isResourceLink(value) {
   );
 }
 
+/**
+ * Sanea el valor de comentario metadatos antes de exponerlo fuera del backend.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function sanitizeCommentMetadata(value) {
   if (Array.isArray(value)) {
     return value

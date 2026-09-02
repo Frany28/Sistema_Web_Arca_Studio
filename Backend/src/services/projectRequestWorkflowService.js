@@ -5,10 +5,31 @@ import {
   upsertProjectRequestReview,
 } from "../repositories/projectRequestWorkflowRepository.js";
 
+/**
+ * Carga la cola de revisión de solicitudes y deja el resultado disponible para el flujo actual.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.cursor - Valor de `options.cursor` requerido por esta operación.
+ * @param {number} options.limit - Valor de `options.limit` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function loadProjectRequestReviewQueue({ cursor, limit, user }) {
   return listProjectRequestReviewQueue({ cursor, limit, user });
 }
 
+/**
+ * Envía la revisión de la solicitud de proyecto después de validar el estado y las reglas aplicables.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.payload - Valor de `options.payload` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function submitProjectRequestReview({ payload, projectRequestId, user }) {
   const result = await upsertProjectRequestReview({
     note: payload.note,
@@ -40,6 +61,17 @@ export async function submitProjectRequestReview({ payload, projectRequestId, us
   return result.review;
 }
 
+/**
+ * Procesa el valor de apply proyecto solicitud decisión para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.payload - Valor de `options.payload` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function applyProjectRequestDecision({
   payload,
   projectRequestId,

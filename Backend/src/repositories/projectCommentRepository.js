@@ -5,6 +5,13 @@ import { pageResult } from "../utils/pagination.js";
 const GENERAL_COMMENT_TYPE = "general";
 const ACTIVE_COMMENT_STATUS = "active";
 
+/**
+ * Transforma el comentario del proyecto a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toProjectComment(row) {
   const authorName = `${row.first_name || ""} ${row.last_name || ""}`.trim();
   const targetMetadata = sanitizeCommentMetadata(row.target_metadata) || null;
@@ -37,6 +44,13 @@ function toProjectComment(row) {
   };
 }
 
+/**
+ * Transforma el comentario de documento a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toDocumentComment(row) {
   const comment = toProjectComment(row);
   const anchorContext = row.anchor_context_json || null;
@@ -62,6 +76,14 @@ function toDocumentComment(row) {
   };
 }
 
+/**
+ * Obtiene la condición SQL de acceso al proyecto para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} [projectAlias] - Valor de `projectAlias` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function getProjectAccessCondition(user, projectAlias = "p") {
   const roleCode = user?.role?.code;
 
@@ -96,6 +118,14 @@ function getProjectAccessCondition(user, projectAlias = "p") {
   };
 }
 
+/**
+ * Determina si se permite el valor de access proyecto comentarios según las reglas de acceso vigentes.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<boolean>} Resultado producido por la operación.
+ */
 export async function canAccessProjectComments(projectId, user) {
   const access = getProjectAccessCondition(user);
   const result = await query(
@@ -113,6 +143,15 @@ export async function canAccessProjectComments(projectId, user) {
   return Boolean(result.rows[0]);
 }
 
+/**
+ * Busca la foto del autor del comentario de proyecto y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {string} authorUserId - Valor de `authorUserId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findProjectCommentAuthorProfilePhoto(
   projectId,
   authorUserId,
@@ -148,6 +187,17 @@ export async function findProjectCommentAuthorProfilePhoto(
   return result.rows[0]?.profile_photo_url || null;
 }
 
+/**
+ * Lista los comentarios del proyecto respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} [options.cursor] - Valor de `options.cursor` requerido por esta operación.
+ * @param {number} [options.limit] - Valor de `options.limit` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listProjectComments(projectId, user, { cursor = null, limit = 25 } = {}) {
   const access = getProjectAccessCondition(user);
   const result = await query(
@@ -210,6 +260,20 @@ export async function listProjectComments(projectId, user, { cursor = null, limi
   );
 }
 
+/**
+ * Crea el valor de proyecto comentario registro con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} [options.commentType] - Valor de `options.commentType` requerido por esta operación.
+ * @param {string} options.content - Valor de `options.content` requerido por esta operación.
+ * @param {string} [options.parentCommentId] - Valor de `options.parentCommentId` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @param {string} [options.targetId] - Valor de `options.targetId` requerido por esta operación.
+ * @param {unknown} [options.targetMetadata] - Valor de `options.targetMetadata` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function createProjectCommentRecord({
   commentType = GENERAL_COMMENT_TYPE,
   content,
@@ -365,6 +429,19 @@ export async function createProjectCommentRecord({
   return result.rows[0] ? toProjectComment(result.rows[0]) : null;
 }
 
+/**
+ * Lista los comentarios de documento respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} [options.cursor] - Valor de `options.cursor` requerido por esta operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {string} options.fileVersionId - Valor de `options.fileVersionId` requerido por esta operación.
+ * @param {number} [options.limit] - Valor de `options.limit` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listDocumentComments({
   cursor = null,
   fileId,
@@ -414,6 +491,21 @@ export async function listDocumentComments({
   return pageResult(result.rows, limit, toDocumentComment, (row) => [row.created_at, String(row.id)]);
 }
 
+/**
+ * Crea el valor de documento comentario registro con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.content - Valor de `options.content` requerido por esta operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {string} options.fileVersionId - Valor de `options.fileVersionId` requerido por esta operación.
+ * @param {string} [options.parentCommentId] - Valor de `options.parentCommentId` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @param {unknown} options.selection - Valor de `options.selection` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function createDocumentCommentRecord({
   content,
   fileId,

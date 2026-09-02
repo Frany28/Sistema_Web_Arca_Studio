@@ -1,6 +1,13 @@
 import { pool, query } from "../config/db.js";
 import { pageResult } from "../utils/pagination.js";
 
+/**
+ * Transforma el valor de person a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function toPerson(value) {
   return value && value.id
     ? {
@@ -12,6 +19,13 @@ function toPerson(value) {
     : null;
 }
 
+/**
+ * Transforma el valor de flujo solicitud a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toWorkflowRequest(row) {
   return {
     assignees: Array.isArray(row.assignees)
@@ -52,6 +66,13 @@ function toWorkflowRequest(row) {
   };
 }
 
+/**
+ * Busca el valor de proyecto solicitud flujo state y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectRequestId - Valor de `projectRequestId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findProjectRequestWorkflowState(projectRequestId) {
   const result = await query(
     `
@@ -65,6 +86,16 @@ export async function findProjectRequestWorkflowState(projectRequestId) {
   return result.rows[0] || null;
 }
 
+/**
+ * Lista la cola de revisión de solicitudes respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.cursor - Valor de `options.cursor` requerido por esta operación.
+ * @param {number} options.limit - Valor de `options.limit` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listProjectRequestReviewQueue({ cursor, limit, user }) {
   const isAdmin = user.role?.code === "admin";
   const params = [user.id, isAdmin];
@@ -176,6 +207,18 @@ export async function listProjectRequestReviewQueue({ cursor, limit, user }) {
   );
 }
 
+/**
+ * Procesa el valor de upsert proyecto solicitud review para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.note - Valor de `options.note` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.recommendation - Valor de `options.recommendation` requerido por esta operación.
+ * @param {string} options.reviewerId - Valor de `options.reviewerId` requerido por esta operación.
+ * @param {string} options.reviewerRole - Valor de `options.reviewerRole` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function upsertProjectRequestReview({
   note,
   projectRequestId,
@@ -243,6 +286,19 @@ export async function upsertProjectRequestReview({
   };
 }
 
+/**
+ * Procesa el valor de decide proyecto solicitud para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.action - Valor de `options.action` requerido por esta operación.
+ * @param {unknown} options.internalNotes - Valor de `options.internalNotes` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.reason - Valor de `options.reason` requerido por esta operación.
+ * @param {unknown} options.reviewedBy - Valor de `options.reviewedBy` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function decideProjectRequest({
   action,
   internalNotes,

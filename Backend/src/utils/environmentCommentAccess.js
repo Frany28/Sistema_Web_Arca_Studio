@@ -1,3 +1,14 @@
+/**
+ * Obtiene los permisos sobre comentarios de entorno para que el flujo llamador pueda continuar.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} [options.projectAlias] - Valor de `options.projectAlias` requerido por esta operación.
+ * @param {string} [options.roleAlias] - Valor de `options.roleAlias` requerido por esta operación.
+ * @param {unknown} [options.userAlias] - Valor de `options.userAlias` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function getEnvironmentCommentAccess(
   user,
   { projectAlias = "shared_project", roleAlias = "scope_role", userAlias = "scope_user" } = {},

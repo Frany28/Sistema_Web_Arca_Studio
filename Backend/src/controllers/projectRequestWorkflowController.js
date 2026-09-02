@@ -5,6 +5,15 @@ import {
 } from "../services/projectRequestWorkflowService.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
+/**
+ * Lista el valor de proyecto solicitud reviews respetando el alcance y la paginación solicitados.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function listProjectRequestReviews(req, res, next) {
   try {
     const query = req.validatedQuery || req.query;
@@ -20,6 +29,15 @@ export async function listProjectRequestReviews(req, res, next) {
   }
 }
 
+/**
+ * Procesa el valor de put proyecto solicitud review para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function putProjectRequestReview(req, res, next) {
   try {
     const review = await submitProjectRequestReview({
@@ -34,6 +52,15 @@ export async function putProjectRequestReview(req, res, next) {
   }
 }
 
+/**
+ * Procesa el valor de patch proyecto solicitud decisión para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function patchProjectRequestDecision(req, res, next) {
   try {
     const result = await applyProjectRequestDecision({

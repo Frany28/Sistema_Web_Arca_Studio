@@ -10,6 +10,14 @@ import {
 } from "../repositories/projectRequestRepository.js";
 import { getProjectRequestFileUsage } from "../repositories/fileRepository.js";
 
+/**
+ * Exige el valor de cliente y detiene el flujo cuando la condición no se cumple.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {void} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 function requireClient(user) {
   if (!user?.clientId) {
     throw new AppError({
@@ -20,6 +28,13 @@ function requireClient(user) {
   }
 }
 
+/**
+ * Transforma la representación pública de la solicitud a la representación pública esperada.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} record - Valor de `record` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function toPublicProjectRequest(record) {
   const { compatibility, submissionId: _submissionId, ...projectRequest } = record;
   return {
@@ -28,6 +43,16 @@ export function toPublicProjectRequest(record) {
   };
 }
 
+/**
+ * Comprueba el valor de available nombre y rechaza la operación cuando no se cumple.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @param {string} [excludeProjectRequestId] - Valor de `excludeProjectRequestId` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 async function assertAvailableName(user, payload, excludeProjectRequestId = null) {
   const existing = await findExistingProjectNameForClient(
     user.clientId,
@@ -42,6 +67,16 @@ async function assertAvailableName(user, payload, excludeProjectRequestId = null
   }
 }
 
+/**
+ * Crea la solicitud de proyecto con los datos validados recibidos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.payload - Valor de `options.payload` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function createProjectRequest({ payload, user }) {
   requireClient(user);
   const idempotentDraft = await findProjectRequestBySubmissionId(payload.submissionId, user);
@@ -65,6 +100,17 @@ export async function createProjectRequest({ payload, user }) {
   }
 }
 
+/**
+ * Actualiza la solicitud de proyecto conservando las reglas de acceso e integridad.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.payload - Valor de `options.payload` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function updateProjectRequest({ payload, projectRequestId, user }) {
   requireClient(user);
   const current = await findProjectRequestOwnedByUser(projectRequestId, user);
@@ -97,6 +143,16 @@ export async function updateProjectRequest({ payload, projectRequestId, user }) 
   return toPublicProjectRequest(updated);
 }
 
+/**
+ * Envía la solicitud de proyecto después de validar el estado y las reglas aplicables.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function submitProjectRequest({ projectRequestId, user }) {
   requireClient(user);
   const current = await findProjectRequestOwnedByUser(projectRequestId, user);

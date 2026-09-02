@@ -5,6 +5,13 @@ import {
   mapAdminDashboardRequest,
 } from "../utils/adminDashboardOverview.js";
 
+/**
+ * Transforma el valor de responsable a la representación estable utilizada por la aplicación.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function mapAssignee(row = {}) {
   return {
     hasProfilePhoto: Boolean(row.has_profile_photo ?? row.hasProfilePhoto),
@@ -15,6 +22,13 @@ function mapAssignee(row = {}) {
   };
 }
 
+/**
+ * Transforma el valor de assignment result a la representación estable utilizada por la aplicación.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function mapAssignmentResult(row = {}) {
   return {
     allEligible: Boolean(row.all_eligible),
@@ -25,6 +39,13 @@ function mapAssignmentResult(row = {}) {
   };
 }
 
+/**
+ * Transforma el valor de solicitud assignment result a la representación estable utilizada por la aplicación.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function mapRequestAssignmentResult(row = {}) {
   return {
     ...mapAssignmentResult(row),
@@ -34,6 +55,13 @@ function mapRequestAssignmentResult(row = {}) {
   };
 }
 
+/**
+ * Transforma el valor de managed proyecto a la representación estable utilizada por la aplicación.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function mapManagedProject(row = {}) {
   return {
     archived: row.status === "archived",
@@ -44,6 +72,18 @@ function mapManagedProject(row = {}) {
   };
 }
 
+/**
+ * Procesa el valor de apply administrativo proyecto bulk action para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.action - Valor de `options.action` requerido por esta operación.
+ * @param {boolean} options.isPublic - Valor de `options.isPublic` requerido por esta operación.
+ * @param {Array<unknown>} options.projectIds - Valor de `options.projectIds` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function applyAdminProjectBulkAction({
   action,
   isPublic,
@@ -186,6 +226,12 @@ export async function applyAdminProjectBulkAction({
   }
 }
 
+/**
+ * Lista los responsables disponibles para administración respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listAdminAssignees() {
   const result = await query(`
     select
@@ -206,6 +252,13 @@ export async function listAdminAssignees() {
   return result.rows.map(mapAssignee);
 }
 
+/**
+ * Busca la foto de perfil del responsable administrativo y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} userId - Valor de `userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findAdminAssigneeProfilePhoto(userId) {
   const result = await query(
     `
@@ -225,6 +278,16 @@ export async function findAdminAssigneeProfilePhoto(userId) {
   return result.rows[0]?.profile_photo_url || null;
 }
 
+/**
+ * Reemplaza el valor de proyecto responsables de forma atómica con los valores solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {Array<unknown>} options.assigneeIds - Valor de `options.assigneeIds` requerido por esta operación.
+ * @param {unknown} options.assignedBy - Valor de `options.assignedBy` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function replaceProjectAssignees({
   assigneeIds,
   assignedBy,
@@ -330,6 +393,16 @@ export async function replaceProjectAssignees({
   return mapAssignmentResult(result.rows[0]);
 }
 
+/**
+ * Reemplaza el valor de proyecto solicitud responsables de forma atómica con los valores solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {Array<unknown>} options.assigneeIds - Valor de `options.assigneeIds` requerido por esta operación.
+ * @param {unknown} options.assignedBy - Valor de `options.assignedBy` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function replaceProjectRequestAssignees({
   assigneeIds,
   assignedBy,
@@ -470,6 +543,12 @@ export async function replaceProjectRequestAssignees({
   return mapRequestAssignmentResult(result.rows[0]);
 }
 
+/**
+ * Obtiene las métricas del panel administrativo para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function getAdminDashboardMetrics() {
   const result = await query(`
     select
@@ -512,6 +591,12 @@ export async function getAdminDashboardMetrics() {
   return mapAdminDashboardMetrics(result.rows[0]);
 }
 
+/**
+ * Obtiene el resumen del panel administrativo para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function getAdminDashboardOverview() {
   const [activityResult, requestsResult] = await Promise.all([
     query(`

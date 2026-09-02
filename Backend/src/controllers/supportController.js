@@ -7,6 +7,15 @@ import { runUpload, uploadPolicies } from "../services/fileUploadService.js";
 
 const MAX_SUPPORT_SUBJECT_LENGTH = 150;
 const MAX_SUPPORT_DESCRIPTION_LENGTH = 5000;
+/**
+ * Crea la solicitud de soporte con los datos validados recibidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function createSupportRequest(req, res, next) {
   try {
     const subject = String(req.body?.subject || "").trim();
@@ -42,6 +51,15 @@ export async function createSupportRequest(req, res, next) {
   }
 }
 
+/**
+ * Carga el adjunto de la solicitud de soporte coordinando la persistencia y el almacenamiento.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function uploadSupportRequestAttachment(req, res, next) {
   try {
     const supportRequestId = Number(req.params.supportRequestId);
@@ -67,7 +85,14 @@ export async function uploadSupportRequestAttachment(req, res, next) {
       return;
     }
 
-    const file = await runUpload({ req, policy: uploadPolicies.document, operation: (upload) => uploadSupportRequestFile({ ...upload, supportRequestId, user: req.user }) });
+    const file = await runUpload({ req, policy: uploadPolicies.document,     /**
+     * Procesa el valor de operation para completar la responsabilidad asignada al módulo.
+     * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+     *
+     * @param {unknown} upload - Valor de `upload` requerido por esta operación.
+     * @returns {void} Finalización de la operación.
+     */
+operation: (upload) => uploadSupportRequestFile({ ...upload, supportRequestId, user: req.user }) });
 
     res.status(201).json({ file });
   } catch (error) {

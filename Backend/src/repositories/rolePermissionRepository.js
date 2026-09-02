@@ -1,5 +1,12 @@
 import { pool, query } from "../config/db.js";
 
+/**
+ * Transforma el valor de rol a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toRole(row) {
   return {
     code: row.code,
@@ -10,6 +17,13 @@ function toRole(row) {
   };
 }
 
+/**
+ * Transforma el valor de permiso a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toPermission(row) {
   return {
     code: row.code,
@@ -21,6 +35,13 @@ function toPermission(row) {
   };
 }
 
+/**
+ * Agrupa el valor de permisos by module en una estructura útil para sus consumidores.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {Array<unknown>} permissions - Valor de `permissions` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function groupPermissionsByModule(permissions) {
   return permissions.reduce((groups, permission) => {
     if (!groups[permission.module]) {
@@ -32,6 +53,13 @@ function groupPermissionsByModule(permissions) {
   }, {});
 }
 
+/**
+ * Construye la matriz de permisos de un rol a partir de datos previamente validados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {Array<unknown>} rows - Filas obtenidas desde PostgreSQL.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function buildRolePermissionBoundary(rows) {
   const rolesById = new Map();
 
@@ -75,6 +103,14 @@ function buildRolePermissionBoundary(rows) {
   }));
 }
 
+/**
+ * Lista los roles del sistema respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {boolean} [options.includeInactive] - Valor de `options.includeInactive` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listRoles({ includeInactive = false } = {}) {
   const result = await query(
     `
@@ -89,6 +125,14 @@ export async function listRoles({ includeInactive = false } = {}) {
   return result.rows.map(toRole);
 }
 
+/**
+ * Lista los permisos del sistema respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {boolean} [options.includeInactive] - Valor de `options.includeInactive` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listPermissions({ includeInactive = false } = {}) {
   const result = await query(
     `
@@ -103,6 +147,14 @@ export async function listPermissions({ includeInactive = false } = {}) {
   return result.rows.map(toPermission);
 }
 
+/**
+ * Obtiene las matrices de permisos por rol para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {boolean} [options.includeInactive] - Valor de `options.includeInactive` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function getRolePermissionBoundaries({
   includeInactive = false,
 } = {}) {
@@ -136,11 +188,27 @@ export async function getRolePermissionBoundaries({
   return buildRolePermissionBoundary(result.rows);
 }
 
+/**
+ * Obtiene la matriz de permisos de un rol para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} roleCode - Valor de `roleCode` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function getRolePermissionBoundary(roleCode) {
   const boundaries = await getRolePermissionBoundaries();
   return boundaries.find((boundary) => boundary.role.code === roleCode) || null;
 }
 
+/**
+ * Reemplaza los permisos asociados con un rol de forma atómica con los valores solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} roleCode - Valor de `roleCode` requerido por esta operación.
+ * @param {Array<unknown>} permissionCodes - Valor de `permissionCodes` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function replaceRolePermissions(roleCode, permissionCodes) {
   const client = await pool.connect();
 

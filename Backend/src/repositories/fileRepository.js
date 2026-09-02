@@ -15,6 +15,13 @@ import { pool, query } from "../config/db.js";
 
 const DEFAULT_FILE_STATUS = "active";
 
+/**
+ * Crea el error de proyecto de solo lectura con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} status - Valor de `status` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function createProjectReadOnlyError(status) {
   const finalized = status === "completed";
   const error = new Error("Read-only project");
@@ -26,6 +33,14 @@ function createProjectReadOnlyError(status) {
   return error;
 }
 
+/**
+ * Obtiene el tipo funcional del archivo para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} contentType - Valor de `contentType` requerido por esta operación.
+ * @param {string} originalName - Valor de `originalName` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getFileType(contentType, originalName) {
   if (contentType) {
     return String(contentType).split(";")[0].trim().toLowerCase();
@@ -35,6 +50,13 @@ function getFileType(contentType, originalName) {
   return extension || "application/octet-stream";
 }
 
+/**
+ * Transforma los datos públicos del archivo cargado a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toFileUpload(row) {
   return {
     fileCategory: row.file_category,
@@ -45,6 +67,14 @@ function toFileUpload(row) {
   };
 }
 
+/**
+ * Busca el valor de proyecto solicitud for archivo carga y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectRequestId - Valor de `projectRequestId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function findProjectRequestForFileUpload(projectRequestId, user) {
   const result = await query(
     `
@@ -72,6 +102,13 @@ export async function findProjectRequestForFileUpload(projectRequestId, user) {
   return isOwner || isAdmin ? projectRequest : null;
 }
 
+/**
+ * Obtiene el uso de archivos de la solicitud para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectRequestId - Valor de `projectRequestId` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function getProjectRequestFileUsage(projectRequestId) {
   const result = await query(
     `
@@ -91,6 +128,16 @@ export async function getProjectRequestFileUsage(projectRequestId) {
   };
 }
 
+/**
+ * Busca el archivo existente de la solicitud y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findExistingProjectRequestFile({
   originalName,
   projectRequestId,
@@ -113,6 +160,20 @@ export async function findExistingProjectRequestFile({
   return result.rows[0] || null;
 }
 
+/**
+ * Carga el archivo de la solicitud de proyecto coordinando la persistencia y el almacenamiento.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.body - Valor de `options.body` requerido por esta operación.
+ * @param {string} options.contentType - Valor de `options.contentType` requerido por esta operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {number} options.size - Valor de `options.size` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function uploadProjectRequestFile({
   body,
   contentType,
@@ -263,6 +324,17 @@ export async function uploadProjectRequestFile({
   }
 }
 
+/**
+ * Elimina el archivo de la solicitud de proyecto después de comprobar acceso y existencia.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function deleteProjectRequestFile({
   fileId,
   projectRequestId,
@@ -370,6 +442,14 @@ export async function deleteProjectRequestFile({
   return { deleted: true, fileId: Number(fileId) };
 }
 
+/**
+ * Busca el valor de proyecto for archivo carga y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function findProjectForFileUpload(projectId, user) {
   const result = await query(
     `
@@ -410,6 +490,15 @@ export async function findProjectForFileUpload(projectId, user) {
   return hasAccess ? project : null;
 }
 
+/**
+ * Busca el archivo existente del proyecto y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findExistingProjectFile({
   originalName,
   projectId,
@@ -430,6 +519,20 @@ export async function findExistingProjectFile({
   return result.rows[0] || null;
 }
 
+/**
+ * Carga el archivo del proyecto coordinando la persistencia y el almacenamiento.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.body - Valor de `options.body` requerido por esta operación.
+ * @param {string} options.contentType - Valor de `options.contentType` requerido por esta operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @param {number} options.size - Valor de `options.size` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function uploadProjectFile({
   body,
   contentType,
@@ -599,6 +702,17 @@ export async function uploadProjectFile({
   }
 }
 
+/**
+ * Elimina el archivo del proyecto después de comprobar acceso y existencia.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function deleteProjectFile({ fileId, projectId, user }) {
   const storageConfig = getSupabaseStorageConfig();
   const s3Client = getSupabaseS3Client();
@@ -725,6 +839,16 @@ export async function deleteProjectFile({ fileId, projectId, user }) {
   return { deleted: true, fileId: Number(fileId) };
 }
 
+/**
+ * Busca el valor de proyecto archivo for download y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function findProjectFileForDownload({ fileId, projectId, user }) {
   const params = [projectId, fileId];
   const roleCode = user?.role?.code;
@@ -799,6 +923,16 @@ export async function findProjectFileForDownload({ fileId, projectId, user }) {
   };
 }
 
+/**
+ * Busca el valor de proyecto solicitud archivo for download y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function findProjectRequestFileForDownload({ fileId, projectRequestId, user }) {
   const params = [projectRequestId, fileId];
   const roleCode = user?.role?.code;
@@ -859,6 +993,15 @@ export async function findProjectRequestFileForDownload({ fileId, projectRequest
   };
 }
 
+/**
+ * Obtiene el objeto almacenado del archivo de proyecto para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.fileName - Valor de `options.fileName` requerido por esta operación.
+ * @param {string} options.range - Valor de `options.range` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function getProjectFileObject({ fileName, range }) {
   return objectStorage.get(fileName, { range });
 }

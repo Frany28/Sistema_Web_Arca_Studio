@@ -5,14 +5,36 @@ import { createAuthToken } from "../utils/tokens.js";
 
 const EXPIRES_IN_SECONDS = 15 * 60;
 
+/**
+ * Obtiene el valor de URL desde la configuración del entorno.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function frontendUrl() {
   return String(process.env.FRONTEND_URL || process.env.PUBLIC_APP_URL || process.env.APP_URL || "https://arcastudio.netlify.app").replace(/\/$/, "");
 }
 
+/**
+ * Escapa el valor de html para impedir que se interprete como contenido HTML.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function escapeHtml(value) {
   return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
+/**
+ * Procesa el valor de correo error para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} message - Valor de `message` requerido por esta operación.
+ * @param {string} code - Valor de `code` requerido por esta operación.
+ * @param {unknown} [status] - Valor de `status` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function emailError(message, code, status = 502) {
   return Object.assign(new Error(message), {
     code,
@@ -21,10 +43,24 @@ function emailError(message, code, status = 502) {
   });
 }
 
+/**
+ * Calcula la huella de el token de registro para compararlo sin conservar el valor original.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} token - Valor de `token` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 export function hashRegistrationToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * Crea los datos del correo de registro con los datos validados recibidos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} email - Valor de `email` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function createRegistrationEmailPayload(email) {
   const token = createAuthToken(
     { email, purpose: "user_registration" },
@@ -38,6 +74,16 @@ export function createRegistrationEmailPayload(email) {
   };
 }
 
+/**
+ * Envía el valor de registro correo y traduce los fallos externos al contrato de errores.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {string} options.registrationUrl - Valor de `options.registrationUrl` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function sendRegistrationEmail({ email, registrationUrl }) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.MAIL_FROM || process.env.RESEND_FROM_EMAIL;

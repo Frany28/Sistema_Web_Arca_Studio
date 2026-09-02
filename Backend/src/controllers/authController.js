@@ -43,6 +43,13 @@ const PASSWORD_RESET_ACCEPTED_RESPONSE = {
   message: "Si el correo está registrado, enviaremos un enlace de recuperación.",
 };
 
+/**
+ * Obtiene el tipo MIME permitido para la foto de perfil para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getProfilePhotoContentType(value) {
   const contentType = String(value || "").split(";")[0].trim().toLowerCase();
 
@@ -51,10 +58,24 @@ function getProfilePhotoContentType(value) {
     : "image/jpeg";
 }
 
+/**
+ * Determina si el valor de valid correo cumple la condición esperada.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {string} email - Valor de `email` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/**
+ * Determina si el valor de valid contraseña cumple la condición esperada.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {string} password - Valor de `password` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isValidPassword(password) {
   return (
     typeof password === "string" &&
@@ -65,6 +86,13 @@ function isValidPassword(password) {
   );
 }
 
+/**
+ * Interpreta el token de restablecimiento y descarta los formatos que no sean válidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {string} token - Valor de `token` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function parseResetToken(token) {
   if (!token || typeof token !== "string") {
     return null;
@@ -90,6 +118,15 @@ function parseResetToken(token) {
   };
 }
 
+/**
+ * Procesa el valor de login para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function login(req, res, next) {
   try {
     preventAuthResponseCaching(res);
@@ -156,6 +193,14 @@ export async function login(req, res, next) {
   }
 }
 
+/**
+ * Devuelve la operación me como respuesta HTTP para la sesión actual.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @returns {void} Finalización de la operación.
+ */
 export function me(req, res) {
   preventAuthResponseCaching(res);
   res.status(200).json({
@@ -163,12 +208,29 @@ export function me(req, res) {
   });
 }
 
+/**
+ * Procesa el valor de logout para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} _req - Solicitud HTTP que este controlador no necesita inspeccionar.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @returns {void} Finalización de la operación.
+ */
 export function logout(_req, res) {
   preventAuthResponseCaching(res);
   res.setHeader("Set-Cookie", buildExpiredSessionCookie());
   res.status(204).end();
 }
 
+/**
+ * Cambia el valor de contraseña aplicando las reglas de negocio correspondientes.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function changePassword(req, res, next) {
   try {
     const currentPassword = String(req.body?.currentPassword || "");
@@ -236,6 +298,16 @@ export async function changePassword(req, res, next) {
   }
 }
 
+/**
+ * Carga el valor de perfil foto coordinando la persistencia y el almacenamiento.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function uploadProfilePhoto(req, res, next) {
   let uploadedStorageKey = null;
 
@@ -326,6 +398,15 @@ export async function uploadProfilePhoto(req, res, next) {
   }
 }
 
+/**
+ * Obtiene el valor de perfil foto image para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getProfilePhotoImage(req, res, next) {
   try {
     // Helmet defaults this header to same-origin. The authenticated image route
@@ -367,6 +448,15 @@ export async function getProfilePhotoImage(req, res, next) {
   }
 }
 
+/**
+ * Procesa el valor de forgot contraseña para completar la responsabilidad asignada al módulo.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function forgotPassword(req, res, next) {
   try {
     const email = String(req.body?.email || "")
@@ -406,6 +496,15 @@ export async function forgotPassword(req, res, next) {
   }
 }
 
+/**
+ * Verifica el token de restablecimiento y rechaza valores vencidos o inconsistentes.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function verifyResetToken(req, res, next) {
   try {
     const token = String(req.body?.token || "").trim();
@@ -438,6 +537,15 @@ export async function verifyResetToken(req, res, next) {
   }
 }
 
+/**
+ * Restablece el valor de contraseña después de validar la credencial temporal.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function resetPassword(req, res, next) {
   try {
     const token = String(req.body?.token || "").trim();

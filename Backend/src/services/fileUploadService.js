@@ -64,6 +64,14 @@ export const uploadPolicies = {
   },
 };
 
+/**
+ * Procesa el valor de has expected signature para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} buffer - Valor de `buffer` requerido por esta operación.
+ * @param {string} contentType - Valor de `contentType` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function hasExpectedSignature(buffer, contentType) {
   if (contentType === "image/jpeg") {
     return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
@@ -80,6 +88,12 @@ function hasExpectedSignature(buffer, contentType) {
   return false;
 }
 
+/**
+ * Procesa el valor de signature error para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function signatureError() {
   return new AppError({
     code: "INVALID_FILE_SIGNATURE",
@@ -88,13 +102,30 @@ function signatureError() {
   });
 }
 
+/**
+ * Valida el valor de archivo signature y genera un error cuando no cumple el contrato.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} body - Valor de `body` requerido por esta operación.
+ * @param {string} contentType - Valor de `contentType` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function validateFileSignature(body, contentType) {
   const inspectionBytes = 1024;
   let buffered = [];
   let bufferedLength = 0;
   let validated = false;
   const validator = new Transform({
-    transform(chunk, _encoding, callback) {
+        /**
+     * Inspecciona los primeros bytes del flujo antes de permitir que continúe la carga.
+     * Valida la firma real del archivo y entrega cada fragmento sin acumularlo completo.
+     *
+     * @param {unknown} chunk - Valor de `chunk` requerido por esta operación.
+     * @param {unknown} _encoding - Valor de `_encoding` requerido por esta operación.
+     * @param {Function} callback - Función que recibe el resultado de la operación asíncrona.
+     * @returns {void} Finalización de la operación.
+     */
+transform(chunk, _encoding, callback) {
       if (validated) {
         callback(null, chunk);
         return;
@@ -114,7 +145,14 @@ function validateFileSignature(body, contentType) {
       buffered = [];
       callback(null, combined);
     },
-    flush(callback) {
+        /**
+     * Completa la inspección de firma cuando el flujo termina con pocos bytes.
+     * Libera el contenido retenido o informa el error de validación al pipeline.
+     *
+     * @param {Function} callback - Función que recibe el resultado de la operación asíncrona.
+     * @returns {void} Finalización de la operación.
+     */
+flush(callback) {
       if (validated) {
         callback();
         return;
@@ -133,16 +171,42 @@ function validateFileSignature(body, contentType) {
   return validator;
 }
 
+/**
+ * Obtiene el valor de nombre desde los encabezados o valores alternativos disponibles.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {unknown} fallback - Valor de `fallback` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function originalName(req, fallback) {
   const raw = req.headers["x-file-name"] || req.headers["x-original-file-name"] || fallback;
   try { return decodeURIComponent(String(raw)); } catch { return String(raw); }
 }
 
+/**
+ * Procesa el valor de extension para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} name - Valor de `name` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function extension(name) {
   const index = name.lastIndexOf(".");
   return index > 0 && index < name.length - 1 ? name.slice(index + 1).toLowerCase() : "";
 }
 
+/**
+ * Prepara el valor de carga validando metadatos antes de iniciar la transferencia.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {unknown} policy - Valor de `policy` requerido por esta operación.
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} [options.fallbackName] - Valor de `options.fallbackName` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export function prepareUpload(req, policy, { fallbackName = "archivo" } = {}) {
   const name = originalName(req, fallbackName).trim();
   const contentType = String(req.headers["content-type"] || "").split(";")[0].trim().toLowerCase();
@@ -165,14 +229,38 @@ export function prepareUpload(req, policy, { fallbackName = "archivo" } = {}) {
   };
 }
 
+/**
+ * Prepara el valor de proyecto carga validando metadatos antes de iniciar la transferencia.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function prepareProjectUpload(req) {
   return prepareUpload(req, uploadPolicies.document);
 }
 
+/**
+ * Prepara el valor de proyecto solicitud carga validando metadatos antes de iniciar la transferencia.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function prepareProjectRequestUpload(req) {
   return prepareUpload(req, uploadPolicies.projectRequest);
 }
 
+/**
+ * Ejecuta el valor de proyecto carga coordinando la operación y la limpieza ante fallos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.operation - Valor de `options.operation` requerido por esta operación.
+ * @param {unknown} options.req - Valor de `options.req` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function runProjectUpload({ operation, req }) {
   if (req.destroyed) {
     throw new AppError({
@@ -185,6 +273,18 @@ export async function runProjectUpload({ operation, req }) {
   return operation(prepareProjectUpload(req));
 }
 
+/**
+ * Ejecuta el valor de carga coordinando la operación y la limpieza ante fallos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.operation - Valor de `options.operation` requerido por esta operación.
+ * @param {unknown} options.req - Valor de `options.req` requerido por esta operación.
+ * @param {unknown} options.policy - Valor de `options.policy` requerido por esta operación.
+ * @param {string} options.fallbackName - Valor de `options.fallbackName` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function runUpload({ operation, req, policy, fallbackName }) {
   if (req.destroyed) throw new AppError({ code: "UPLOAD_ABORTED", message: "La carga fue cancelada.", status: 499 });
   const upload = prepareUpload(req, policy, { fallbackName });

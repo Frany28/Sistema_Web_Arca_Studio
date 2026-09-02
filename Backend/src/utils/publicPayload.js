@@ -13,10 +13,24 @@ const PRIVATE_RESOURCE_KEYS = new Set([
 
 const ALLOWED_EXTERNAL_LINK_KEYS = new Set(["referencelink"]);
 
+/**
+ * Normaliza el valor de key para mantener un formato interno consistente.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {string} key - Valor de `key` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function normalizeKey(key) {
   return String(key || "").toLowerCase().replaceAll(/[^a-z0-9]/g, "");
 }
 
+/**
+ * Determina si el valor de URL like cumple la condición esperada.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isUrlLike(value) {
   if (typeof value !== "string") return false;
   const normalized = value.trim();
@@ -32,6 +46,14 @@ function isUrlLike(value) {
   );
 }
 
+/**
+ * Sanea el valor de público datos antes de exponerlo fuera del backend.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @param {string} [parentKey] - Valor de `parentKey` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function sanitizePublicPayload(value, parentKey = "") {
   if (Array.isArray(value)) {
     const sanitizedItems = value

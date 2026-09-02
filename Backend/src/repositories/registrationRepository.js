@@ -1,5 +1,14 @@
 import { pool, query } from "../config/db.js";
 
+/**
+ * Busca el valor de registro usuario conflict y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {unknown} options.phone - Valor de `options.phone` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findRegistrationUserConflict({ email, phone }) {
   const result = await query(
     `
@@ -12,6 +21,13 @@ export async function findRegistrationUserConflict({ email, phone }) {
   return result.rows[0] || { email_exists: false, phone_exists: false };
 }
 
+/**
+ * Busca el valor de pending registro by correo y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} email - Valor de `email` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findPendingRegistrationByEmail(email) {
   const result = await query(
     `select id, email from public.user_registrations where lower(email) = lower($1) limit 1`,
@@ -20,6 +36,13 @@ export async function findPendingRegistrationByEmail(email) {
   return result.rows[0] || null;
 }
 
+/**
+ * Procesa el valor de upsert pending registro para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function upsertPendingRegistration(payload) {
   const result = await query(
     `
@@ -53,6 +76,16 @@ export async function upsertPendingRegistration(payload) {
   return result.rows[0];
 }
 
+/**
+ * Procesa el valor de refresh pending registro para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {string} options.tokenHash - Valor de `options.tokenHash` requerido por esta operación.
+ * @param {unknown} options.expiresAt - Valor de `options.expiresAt` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function refreshPendingRegistration({ email, tokenHash, expiresAt }) {
   const result = await query(
     `
@@ -66,6 +99,15 @@ export async function refreshPendingRegistration({ email, tokenHash, expiresAt }
   return result.rows[0] || null;
 }
 
+/**
+ * Busca el valor de valid pending registro y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {string} options.tokenHash - Valor de `options.tokenHash` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findValidPendingRegistration({ email, tokenHash }) {
   const result = await query(
     `
@@ -82,6 +124,17 @@ export async function findValidPendingRegistration({ email, tokenHash }) {
   return result.rows[0] || null;
 }
 
+/**
+ * Procesa el valor de complete pending registro para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {string} options.tokenHash - Valor de `options.tokenHash` requerido por esta operación.
+ * @param {string} options.passwordHash - Valor de `options.passwordHash` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function completePendingRegistration({ email, tokenHash, passwordHash }) {
   const client = await pool.connect();
   try {

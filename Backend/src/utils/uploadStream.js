@@ -1,3 +1,12 @@
+/**
+ * Obtiene el valor de carga stream para que el flujo llamador pueda continuar.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {number} maxBytes - Valor de `maxBytes` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export function getUploadStream(req, maxBytes) {
   const contentLength = Number(req.headers["content-length"]);
   if (!Number.isInteger(contentLength) || contentLength <= 0) {

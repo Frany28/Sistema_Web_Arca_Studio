@@ -17,13 +17,14 @@
     "load:mixed": "k6 run load-tests/mixed-workload.js",
     "load:files": "k6 run load-tests/file-workload.js",
     "load:sse": "node load-tests/sse-probe.mjs",
+    "lint:docs": "eslint src",
     "test": "node --test tests/*.test.js",
     "db:pull": "node scripts/prisma.mjs db pull",
     "db:migrate:dev": "node scripts/prisma.mjs migrate dev",
     "db:migrate:deploy": "node scripts/prisma.mjs migrate deploy",
     "db:migrate:status": "node scripts/prisma.mjs migrate status",
     "db:studio": "node scripts/prisma.mjs studio",
-    "verify": "node scripts/prisma.mjs validate && node scripts/prisma.mjs migrate status && pnpm test && pnpm --dir ../Frontend build"
+    "verify": "pnpm lint:docs && node scripts/prisma.mjs validate && node scripts/prisma.mjs migrate status && pnpm test && pnpm --dir ../Frontend build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
@@ -46,6 +47,8 @@
     ]
   },
   "devDependencies": {
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsdoc": "^64.3.4",
     "prisma": "^7.8.0"
   }
 }

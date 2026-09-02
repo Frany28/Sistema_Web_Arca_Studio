@@ -1,6 +1,17 @@
 import { pool, query } from "../config/db.js";
 import { mapAdminUserMetrics } from "../utils/adminUsers.js";
 
+/**
+ * Busca el valor de administrativo usuario conflict y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {string} [options.excludeUserId] - Valor de `options.excludeUserId` requerido por esta operación.
+ * @param {unknown} options.phone - Valor de `options.phone` requerido por esta operación.
+ * @param {unknown} options.secondaryPhone - Valor de `options.secondaryPhone` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findAdminUserConflict({ email, excludeUserId = null, phone, secondaryPhone }) {
   const phones = [phone, secondaryPhone].filter(Boolean);
   const result = await query(
@@ -25,6 +36,13 @@ export async function findAdminUserConflict({ email, excludeUserId = null, phone
   return result.rows[0] || { email_exists: false, phone_exists: false };
 }
 
+/**
+ * Busca el valor de administrativo usuario access registro y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} userId - Valor de `userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findAdminUserAccessRecord(userId) {
   const result = await query(
     `
@@ -39,6 +57,24 @@ export async function findAdminUserAccessRecord(userId) {
   return result.rows[0] || null;
 }
 
+/**
+ * Actualiza el valor de administrativo usuario registro conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.companyName - Valor de `options.companyName` requerido por esta operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {string} options.firstName - Valor de `options.firstName` requerido por esta operación.
+ * @param {string} options.lastName - Valor de `options.lastName` requerido por esta operación.
+ * @param {string} options.passwordHash - Valor de `options.passwordHash` requerido por esta operación.
+ * @param {unknown} options.phone - Valor de `options.phone` requerido por esta operación.
+ * @param {string} options.roleCode - Valor de `options.roleCode` requerido por esta operación.
+ * @param {unknown} options.secondaryPhone - Valor de `options.secondaryPhone` requerido por esta operación.
+ * @param {unknown} options.status - Valor de `options.status` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function updateAdminUserRecord({
   companyName,
   email,
@@ -127,6 +163,23 @@ export async function updateAdminUserRecord({
   }
 }
 
+/**
+ * Crea el valor de administrativo usuario registro con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.companyName - Valor de `options.companyName` requerido por esta operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {string} options.firstName - Valor de `options.firstName` requerido por esta operación.
+ * @param {string} options.lastName - Valor de `options.lastName` requerido por esta operación.
+ * @param {string} options.passwordHash - Valor de `options.passwordHash` requerido por esta operación.
+ * @param {unknown} options.phone - Valor de `options.phone` requerido por esta operación.
+ * @param {string} options.roleCode - Valor de `options.roleCode` requerido por esta operación.
+ * @param {unknown} options.secondaryPhone - Valor de `options.secondaryPhone` requerido por esta operación.
+ * @param {unknown} options.status - Valor de `options.status` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function createAdminUserRecord({
   companyName,
   email,
@@ -191,6 +244,16 @@ export async function createAdminUserRecord({
   }
 }
 
+/**
+ * Elimina el valor de created administrativo usuario después de comprobar acceso y existencia.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @param {string} options.clientId - Valor de `options.clientId` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function deleteCreatedAdminUser({ userId, clientId }) {
   const client = await pool.connect();
   try {
@@ -206,6 +269,12 @@ export async function deleteCreatedAdminUser({ userId, clientId }) {
   }
 }
 
+/**
+ * Obtiene el valor de administrativo usuario métricas para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function getAdminUserMetrics() {
   const result = await query(`
     select
@@ -219,6 +288,18 @@ export async function getAdminUserMetrics() {
   return mapAdminUserMetrics(result.rows[0]);
 }
 
+/**
+ * Lista el valor de administrativo usuarios respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.cursor - Valor de `options.cursor` requerido por esta operación.
+ * @param {number} options.limit - Valor de `options.limit` requerido por esta operación.
+ * @param {string} options.role - Valor de `options.role` requerido por esta operación.
+ * @param {unknown} options.search - Valor de `options.search` requerido por esta operación.
+ * @param {unknown} options.status - Valor de `options.status` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listAdminUsers({ cursor, limit, role, search, status }) {
   const result = await query(
     `
@@ -259,6 +340,15 @@ export async function listAdminUsers({ cursor, limit, role, search, status }) {
   return result.rows;
 }
 
+/**
+ * Busca el detalle de un usuario administrado y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findAdminUserDetails({ actorUserId, userId }) {
   const result = await query(
     `
@@ -332,6 +422,13 @@ export async function findAdminUserDetails({ actorUserId, userId }) {
   return result.rows[0] || null;
 }
 
+/**
+ * Procesa el valor de administrativo usuario exists para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} userId - Valor de `userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function adminUserExists(userId) {
   const result = await query(
     `select exists(select 1 from public.users where id = $1 and deleted_at is null) as exists`,
@@ -340,6 +437,17 @@ export async function adminUserExists(userId) {
   return Boolean(result.rows[0]?.exists);
 }
 
+/**
+ * Lista el valor de administrativo usuario notes respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.adminUserId - Valor de `options.adminUserId` requerido por esta operación.
+ * @param {string} options.cursor - Valor de `options.cursor` requerido por esta operación.
+ * @param {number} options.limit - Valor de `options.limit` requerido por esta operación.
+ * @param {string} options.targetUserId - Valor de `options.targetUserId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listAdminUserNotes({ adminUserId, cursor, limit, targetUserId }) {
   const result = await query(
     `
@@ -357,6 +465,16 @@ export async function listAdminUserNotes({ adminUserId, cursor, limit, targetUse
   return result.rows;
 }
 
+/**
+ * Crea el valor de administrativo usuario note registro con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.adminUserId - Valor de `options.adminUserId` requerido por esta operación.
+ * @param {string} options.content - Valor de `options.content` requerido por esta operación.
+ * @param {string} options.targetUserId - Valor de `options.targetUserId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function createAdminUserNoteRecord({ adminUserId, content, targetUserId }) {
   const result = await query(
     `
@@ -371,6 +489,17 @@ export async function createAdminUserNoteRecord({ adminUserId, content, targetUs
   return result.rows[0] || null;
 }
 
+/**
+ * Actualiza el valor de administrativo usuario note registro conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.adminUserId - Valor de `options.adminUserId` requerido por esta operación.
+ * @param {string} options.content - Valor de `options.content` requerido por esta operación.
+ * @param {string} options.noteId - Valor de `options.noteId` requerido por esta operación.
+ * @param {string} options.targetUserId - Valor de `options.targetUserId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function updateAdminUserNoteRecord({ adminUserId, content, noteId, targetUserId }) {
   const result = await query(
     `
@@ -385,6 +514,16 @@ export async function updateAdminUserNoteRecord({ adminUserId, content, noteId, 
   return result.rows[0] || null;
 }
 
+/**
+ * Archiva el valor de administrativo usuario note registro y conserva su historial sin eliminarlo físicamente.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.adminUserId - Valor de `options.adminUserId` requerido por esta operación.
+ * @param {string} options.noteId - Valor de `options.noteId` requerido por esta operación.
+ * @param {string} options.targetUserId - Valor de `options.targetUserId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function archiveAdminUserNoteRecord({ adminUserId, noteId, targetUserId }) {
   const result = await query(
     `
@@ -399,6 +538,16 @@ export async function archiveAdminUserNoteRecord({ adminUserId, noteId, targetUs
   return result.rows[0] || null;
 }
 
+/**
+ * Actualiza el estado persistido de un usuario administrado conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.status - Valor de `options.status` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function updateAdminUserStatusRecord({ status, userId }) {
   const client = await pool.connect();
   try {
@@ -442,6 +591,13 @@ export async function updateAdminUserStatusRecord({ status, userId }) {
   }
 }
 
+/**
+ * Busca la foto de perfil de un usuario administrado y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} userId - Valor de `userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findAdminUserProfilePhoto(userId) {
   const result = await query(
     `

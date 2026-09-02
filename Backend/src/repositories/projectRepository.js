@@ -1,10 +1,24 @@
 import { query } from "../config/db.js";
 import { pageResult } from "../utils/pagination.js";
 
+/**
+ * Transforma el valor de number a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function toNumber(value) {
   return value === null || value === undefined ? null : Number(value);
 }
 
+/**
+ * Transforma el valor de proyecto a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toProject(row) {
   const assignedArchitects = Array.isArray(row.assigned_employees)
     ? row.assigned_employees.map((assignee) => ({
@@ -73,6 +87,13 @@ function toProject(row) {
   };
 }
 
+/**
+ * Transforma el valor de público proyecto archivo a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} file - Valor de `file` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toPublicProjectFile(file) {
   return {
     available: Boolean(file.file_name),
@@ -100,6 +121,13 @@ function toPublicProjectFile(file) {
   };
 }
 
+/**
+ * Transforma el valor de recent proyecto documento a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} file - Valor de `file` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function toRecentProjectDocument(file) {
   return toPublicProjectFile({
     ...file,
@@ -107,6 +135,14 @@ function toRecentProjectDocument(file) {
   });
 }
 
+/**
+ * Obtiene el valor de proyecto access para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} [projectAlias] - Valor de `projectAlias` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function getProjectAccess(user, projectAlias = "p") {
   const roleCode = user?.role?.code;
   const params = [];
@@ -129,6 +165,14 @@ function getProjectAccess(user, projectAlias = "p") {
   return { condition, params };
 }
 
+/**
+ * Obtiene el valor de direct proyecto access para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} [projectAlias] - Valor de `projectAlias` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function getDirectProjectAccess(user, projectAlias = "p") {
   const roleCode = user?.role?.code;
 
@@ -153,6 +197,14 @@ function getDirectProjectAccess(user, projectAlias = "p") {
   return { condition: "false", params: [] };
 }
 
+/**
+ * Procesa el valor de has direct proyecto access para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} project - Valor de `project` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function hasDirectProjectAccess(project, user) {
   const roleCode = user?.role?.code;
   if (roleCode === "admin") return true;
@@ -172,11 +224,26 @@ function hasDirectProjectAccess(project, user) {
   );
 }
 
+/**
+ * Determina si el valor de público showcase archivo cumple la condición esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} file - Valor de `file` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isPublicShowcaseFile(file) {
   const type = String(file.file_type || "").toLowerCase();
   return type.startsWith("image/") || type.startsWith("video/");
 }
 
+/**
+ * Busca el valor de assigned architect perfil foto for usuario y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findAssignedArchitectProfilePhotoForUser(projectId, user) {
   const { condition, params } = getDirectProjectAccess(user);
   const projectIdParam = params.length + 1;
@@ -198,6 +265,13 @@ export async function findAssignedArchitectProfilePhotoForUser(projectId, user) 
   return result.rows[0]?.profile_photo_url || null;
 }
 
+/**
+ * Busca el valor de proyecto state by id y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findProjectStateById(projectId) {
   const result = await query(
     `
@@ -213,6 +287,14 @@ export async function findProjectStateById(projectId) {
   return result.rows[0] || null;
 }
 
+/**
+ * Busca el valor de direct proyecto state for usuario y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findDirectProjectStateForUser(projectId, user) {
   const { condition, params } = getDirectProjectAccess(user);
   const projectIdParam = params.length + 1;
@@ -231,6 +313,17 @@ export async function findDirectProjectStateForUser(projectId, user) {
   return result.rows[0] || null;
 }
 
+/**
+ * Lista el valor de proyectos for usuario respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} [options.cursor] - Valor de `options.cursor` requerido por esta operación.
+ * @param {unknown} [options.directOnly] - Valor de `options.directOnly` requerido por esta operación.
+ * @param {number} [options.limit] - Valor de `options.limit` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listProjectsForUser(
   user,
   { cursor = null, directOnly = false, limit = 25 } = {},
@@ -326,6 +419,18 @@ export async function listProjectsForUser(
   return pageResult(result.rows, limit, toProject, (row) => [row.updated_at, String(row.id)]);
 }
 
+/**
+ * Busca el valor de proyecto detail by condition for usuario y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.conditionSql - Valor de `options.conditionSql` requerido por esta operación.
+ * @param {unknown} options.conditionValue - Valor de `options.conditionValue` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @param {string} [options.fileCursor] - Valor de `options.fileCursor` requerido por esta operación.
+ * @param {number} [options.fileLimit] - Valor de `options.fileLimit` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 async function findProjectDetailByConditionForUser({
   conditionSql,
   conditionValue,
@@ -585,24 +690,65 @@ async function findProjectDetailByConditionForUser({
   };
 }
 
+/**
+ * Busca el valor de proyecto detail for usuario y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findProjectDetailForUser(projectId, user, options = {}) {
   return findProjectDetailByConditionForUser({
-    conditionSql: (parameter) => `p.id = ${parameter}`,
+        /**
+     * Procesa el valor de condition sql para completar la responsabilidad asignada al módulo.
+     * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+     *
+     * @param {unknown} parameter - Valor de `parameter` requerido por esta operación.
+     * @returns {void} Finalización de la operación.
+     */
+conditionSql: (parameter) => `p.id = ${parameter}`,
     conditionValue: projectId,
     user,
     ...options,
   });
 }
 
+/**
+ * Busca el valor de proyecto detail by público slug for usuario y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} publicSlug - Valor de `publicSlug` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findProjectDetailByPublicSlugForUser(publicSlug, user, options = {}) {
   return findProjectDetailByConditionForUser({
-    conditionSql: (parameter) => `p.public_slug = ${parameter}`,
+        /**
+     * Procesa el valor de condition sql para completar la responsabilidad asignada al módulo.
+     * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+     *
+     * @param {unknown} parameter - Valor de `parameter` requerido por esta operación.
+     * @returns {void} Finalización de la operación.
+     */
+conditionSql: (parameter) => `p.public_slug = ${parameter}`,
     conditionValue: publicSlug,
     user,
     ...options,
   });
 }
 
+/**
+ * Actualiza el valor de proyecto visibility conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectId - Valor de `projectId` requerido por esta operación.
+ * @param {boolean} isPublic - Valor de `isPublic` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function updateProjectVisibility(projectId, isPublic, user) {
   const { condition, params } = getDirectProjectAccess(user);
   const projectIdParam = params.length + 1;

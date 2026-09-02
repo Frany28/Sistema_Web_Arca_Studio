@@ -26,6 +26,13 @@ import {
   parsePageLimit,
 } from "../utils/pagination.js";
 
+/**
+ * Obtiene la página de usuarios administrados para que el flujo llamador pueda continuar.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} [query] - Criterios de consulta y paginación solicitados.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function getAdminUsersPage(query = {}) {
   const limit = Math.min(
     parsePageLimit(query.limit || ADMIN_USERS_PAGE_SIZE),
@@ -54,6 +61,16 @@ export async function getAdminUsersPage(query = {}) {
   };
 }
 
+/**
+ * Obtiene el detalle de un usuario administrado para que el flujo llamador pueda continuar.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function getAdminUserDetails({ actorUserId, userId }) {
   const user = await findAdminUserDetails({ actorUserId, userId });
   if (!user) {
@@ -63,6 +80,17 @@ export async function getAdminUserDetails({ actorUserId, userId }) {
   return mapAdminUserDetails(user);
 }
 
+/**
+ * Obtiene la página de notas de un usuario administrado para que el flujo llamador pueda continuar.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {unknown} [options.query] - Valor de `options.query` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function getAdminUserNotesPage({ actorUserId, query = {}, userId }) {
   const limit = Math.min(parsePageLimit(query.limit || 25), 25);
   const exists = await adminUserExists(userId);
@@ -80,23 +108,65 @@ export async function getAdminUserNotesPage({ actorUserId, query = {}, userId })
   return { notes: page.items, nextCursor: page.nextCursor };
 }
 
+/**
+ * Crea una nota de usuario administrado con los datos validados recibidos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {string} options.content - Valor de `options.content` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function createAdminUserNote({ actorUserId, content, userId }) {
   const note = await createAdminUserNoteRecord({ adminUserId: actorUserId, content, targetUserId: userId });
   if (!note) throw new NotFoundError("USER_NOT_FOUND", "El usuario seleccionado no existe.");
   return mapAdminUserNote(note);
 }
 
+/**
+ * Actualiza una nota de usuario administrado conservando las reglas de acceso e integridad.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {string} options.content - Valor de `options.content` requerido por esta operación.
+ * @param {string} options.noteId - Valor de `options.noteId` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function updateAdminUserNote({ actorUserId, content, noteId, userId }) {
   const note = await updateAdminUserNoteRecord({ adminUserId: actorUserId, content, noteId, targetUserId: userId });
   if (!note) throw new NotFoundError("NOTE_NOT_FOUND", "La nota seleccionada no existe.");
   return mapAdminUserNote(note);
 }
 
+/**
+ * Archiva una nota de usuario administrado y conserva su historial sin eliminarlo físicamente.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {string} options.noteId - Valor de `options.noteId` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function archiveAdminUserNote({ actorUserId, noteId, userId }) {
   const note = await archiveAdminUserNoteRecord({ adminUserId: actorUserId, noteId, targetUserId: userId });
   if (!note) throw new NotFoundError("NOTE_NOT_FOUND", "La nota seleccionada no existe.");
 }
 
+/**
+ * Crea el valor de administrativo usuario con los datos validados recibidos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function createAdminUser(payload) {
   const conflict = await findAdminUserConflict({
     email: payload.email,
@@ -138,6 +208,17 @@ export async function createAdminUser(payload) {
   return mapAdminUser(created);
 }
 
+/**
+ * Actualiza el valor de administrativo usuario estado conservando las reglas de acceso e integridad.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {unknown} options.status - Valor de `options.status` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function updateAdminUserStatus({ actorUserId, status, userId }) {
   if (Number(actorUserId) === Number(userId)) {
     throw new ConflictError(
@@ -155,6 +236,17 @@ export async function updateAdminUserStatus({ actorUserId, status, userId }) {
   return mapAdminUser(updatedUser);
 }
 
+/**
+ * Actualiza el valor de administrativo usuario conservando las reglas de acceso e integridad.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.actorUserId - Valor de `options.actorUserId` requerido por esta operación.
+ * @param {unknown} options.payload - Valor de `options.payload` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function updateAdminUser({ actorUserId, payload, userId }) {
   const current = await findAdminUserAccessRecord(userId);
   if (!current) {

@@ -19,6 +19,15 @@ import {
 } from "../services/projectRequestFileService.js";
 import { assertProjectOperationallyMutable } from "../services/projectService.js";
 
+/**
+ * Carga el adjunto de la solicitud de proyecto coordinando la persistencia y el almacenamiento.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function uploadProjectRequestAttachment(req, res, next) {
   try {
     const upload = prepareProjectRequestUpload(req);
@@ -50,6 +59,15 @@ export async function uploadProjectRequestAttachment(req, res, next) {
   }
 }
 
+/**
+ * Elimina el adjunto de la solicitud de proyecto después de comprobar acceso y existencia.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function deleteProjectRequestAttachment(req, res, next) {
   try {
     const deletedFile = await deleteProjectRequestAttachmentService({
@@ -64,6 +82,15 @@ export async function deleteProjectRequestAttachment(req, res, next) {
   }
 }
 
+/**
+ * Carga el valor de proyecto attachment coordinando la persistencia y el almacenamiento.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function uploadProjectAttachment(req, res, next) {
   try {
     const projectId = Number(req.params.projectId);
@@ -88,7 +115,14 @@ export async function uploadProjectAttachment(req, res, next) {
 
     await assertProjectOperationallyMutable(projectId);
 
-    const file = await runUpload({ req, policy: uploadPolicies.document, operation: (upload) => uploadProjectFile({ ...upload, projectId, user: req.user }) });
+    const file = await runUpload({ req, policy: uploadPolicies.document,     /**
+     * Procesa el valor de operation para completar la responsabilidad asignada al módulo.
+     * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+     *
+     * @param {unknown} upload - Valor de `upload` requerido por esta operación.
+     * @returns {void} Finalización de la operación.
+     */
+operation: (upload) => uploadProjectFile({ ...upload, projectId, user: req.user }) });
 
     res.status(201).json({ file });
   } catch (error) {
@@ -104,6 +138,15 @@ export async function uploadProjectAttachment(req, res, next) {
   }
 }
 
+/**
+ * Elimina el valor de proyecto attachment después de comprobar acceso y existencia.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function deleteProjectAttachment(req, res, next) {
   try {
     const projectId = Number(req.params.projectId);
@@ -157,6 +200,15 @@ export async function deleteProjectAttachment(req, res, next) {
   }
 }
 
+/**
+ * Transmite el archivo del proyecto sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function streamProjectFile(req, res, next) {
   try {
     const projectId = Number(req.params.projectId);
@@ -245,6 +297,15 @@ export async function streamProjectFile(req, res, next) {
   }
 }
 
+/**
+ * Transmite el archivo de la solicitud de proyecto sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function streamProjectRequestFile(req, res, next) {
   try {
     const projectRequestId = Number(req.params.projectRequestId);

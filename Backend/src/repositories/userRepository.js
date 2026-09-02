@@ -40,6 +40,13 @@ const USER_SELECT = `
     and r.is_active = true
 `;
 
+/**
+ * Normaliza los permisos del sistema para mantener un formato interno consistente.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {Array<unknown>} Resultado producido por la operación.
+ */
 function normalizePermissions(value) {
   if (!value) {
     return [];
@@ -57,6 +64,13 @@ function normalizePermissions(value) {
   }
 }
 
+/**
+ * Transforma el valor de safe usuario a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toSafeUser(row) {
   if (!row) {
     return null;
@@ -92,6 +106,13 @@ function toSafeUser(row) {
   };
 }
 
+/**
+ * Busca el valor de usuario by correo y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} email - Valor de `email` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findUserByEmail(email) {
   const result = await query(
     `
@@ -105,6 +126,13 @@ export async function findUserByEmail(email) {
   return result.rows[0] || null;
 }
 
+/**
+ * Busca el valor de active usuario by id y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} id - Valor de `id` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findActiveUserById(id) {
   const result = await query(
     `
@@ -119,6 +147,13 @@ export async function findActiveUserById(id) {
   return toSafeUser(result.rows[0]);
 }
 
+/**
+ * Busca el valor de active usuario credentials by id y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} id - Valor de `id` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findActiveUserCredentialsById(id) {
   const result = await query(
     `
@@ -135,6 +170,13 @@ export async function findActiveUserCredentialsById(id) {
   return result.rows[0] || null;
 }
 
+/**
+ * Actualiza el valor de last login at conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} id - Valor de `id` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function updateLastLoginAt(id) {
   await query(
     `
@@ -146,6 +188,14 @@ export async function updateLastLoginAt(id) {
   );
 }
 
+/**
+ * Actualiza el valor de usuario contraseña conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} id - Valor de `id` requerido por esta operación.
+ * @param {string} passwordHash - Valor de `passwordHash` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function updateUserPassword(id, passwordHash) {
   await query(
     `
@@ -157,6 +207,14 @@ export async function updateUserPassword(id, passwordHash) {
   );
 }
 
+/**
+ * Actualiza el valor de usuario perfil foto URL conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} id - Valor de `id` requerido por esta operación.
+ * @param {string} profilePhotoUrl - Valor de `profilePhotoUrl` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function updateUserProfilePhotoUrl(id, profilePhotoUrl) {
   await query(
     `
@@ -172,10 +230,24 @@ export async function updateUserProfilePhotoUrl(id, profilePhotoUrl) {
   return findActiveUserById(id);
 }
 
+/**
+ * Sanea el usuario antes de exponerlo fuera del backend.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function sanitizeUser(row) {
   return toSafeUser(row);
 }
 
+/**
+ * Transforma el valor de público usuario a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function toPublicUser(user) {
   if (!user) return null;
 

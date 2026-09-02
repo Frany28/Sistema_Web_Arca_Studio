@@ -18,24 +18,56 @@ import {
   sendRegistrationEmail,
 } from "./registrationEmailService.js";
 
+/**
+ * Procesa el valor de conflict error para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} code - Valor de `code` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function conflictError(code) {
   return code === "PHONE_ALREADY_EXISTS"
     ? new ConflictError(code, "Este número de teléfono ya está registrado.")
     : new ConflictError("EMAIL_ALREADY_EXISTS", "Este correo electrónico ya está registrado.");
 }
 
+/**
+ * Interpreta el valor de token y descarta los formatos que no sean válidos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} token - Valor de `token` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function parseToken(token) {
   const payload = verifyAuthToken(token, { secret: authConfig.tokenSecret });
   if (!payload || payload.purpose !== "user_registration" || !payload.email) return null;
   return { email: String(payload.email).toLowerCase(), tokenHash: hashRegistrationToken(token) };
 }
 
+/**
+ * Comprueba el valor de no usuario conflict y rechaza la operación cuando no se cumple.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {unknown} options.phone - Valor de `options.phone` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 async function assertNoUserConflict({ email, phone }) {
   const conflict = await findRegistrationUserConflict({ email, phone });
   if (conflict.email_exists) throw conflictError("EMAIL_ALREADY_EXISTS");
   if (conflict.phone_exists) throw conflictError("PHONE_ALREADY_EXISTS");
 }
 
+/**
+ * Inicia el valor de registro y conserva el estado necesario para completarlo después.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function startRegistration(payload) {
   await assertNoUserConflict(payload);
   const mail = createRegistrationEmailPayload(payload.email);
@@ -55,6 +87,14 @@ export async function startRegistration(payload) {
   return { message: "Enviamos un enlace de verificación a tu correo electrónico." };
 }
 
+/**
+ * Reenvía el valor de registro generando credenciales temporales nuevas cuando corresponde.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} email - Valor de `email` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function resendRegistration(email) {
   const pending = await findPendingRegistrationByEmail(email);
   if (!pending) throw new NotFoundError("REGISTRATION_NOT_FOUND", "No encontramos un registro pendiente para este correo.");
@@ -64,6 +104,14 @@ export async function resendRegistration(email) {
   return { message: "Enviamos un nuevo enlace de verificación." };
 }
 
+/**
+ * Verifica el valor de registro y rechaza valores vencidos o inconsistentes.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} token - Valor de `token` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function verifyRegistration(token) {
   const parsed = parseToken(token);
   const pending = parsed ? await findValidPendingRegistration(parsed) : null;
@@ -71,6 +119,16 @@ export async function verifyRegistration(token) {
   return { email: pending.email, valid: true };
 }
 
+/**
+ * Procesa el valor de complete registro para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.token - Valor de `options.token` requerido por esta operación.
+ * @param {string} options.password - Valor de `options.password` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function completeRegistration({ token, password }) {
   const parsed = parseToken(token);
   if (!parsed) throw new NotFoundError("INVALID_REGISTRATION_TOKEN", "El enlace de registro no es válido, expiró o ya fue utilizado.");

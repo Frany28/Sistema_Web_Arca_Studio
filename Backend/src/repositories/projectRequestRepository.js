@@ -42,6 +42,13 @@ const SELECT_FIELDS = `
   converted_project_id
 `;
 
+/**
+ * Transforma el valor de proyecto solicitud registro a la representación pública esperada.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} row - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 function toProjectRequestRecord(row) {
   return {
     capitalAvailability: row.capital_availability,
@@ -103,6 +110,16 @@ function toProjectRequestRecord(row) {
   };
 }
 
+/**
+ * Lista el valor de proyecto solicitudes for usuario respetando el alcance y la paginación solicitados.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.cursor - Valor de `options.cursor` requerido por esta operación.
+ * @param {number} options.limit - Valor de `options.limit` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function listProjectRequestsForUser(user, { cursor, limit }) {
   const params = [user.clientId, user.id];
   let cursorCondition = "";
@@ -136,6 +153,16 @@ export async function listProjectRequestsForUser(user, { cursor, limit }) {
   );
 }
 
+/**
+ * Busca un nombre de proyecto ya usado por el cliente y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} clientId - Valor de `clientId` requerido por esta operación.
+ * @param {string} projectName - Valor de `projectName` requerido por esta operación.
+ * @param {object} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} [options.excludeProjectRequestId] - Valor de `options.excludeProjectRequestId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findExistingProjectNameForClient(
   clientId,
   projectName,
@@ -170,6 +197,14 @@ export async function findExistingProjectNameForClient(
   return result.rows[0] || null;
 }
 
+/**
+ * Busca el valor de proyecto solicitud by submission id y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} submissionId - Valor de `submissionId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findProjectRequestBySubmissionId(submissionId, user) {
   const result = await query(
     `
@@ -186,6 +221,14 @@ export async function findProjectRequestBySubmissionId(submissionId, user) {
   return result.rows[0] ? toProjectRequestRecord(result.rows[0]) : null;
 }
 
+/**
+ * Busca el valor de proyecto solicitud owned by usuario y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectRequestId - Valor de `projectRequestId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function findProjectRequestOwnedByUser(projectRequestId, user) {
   const result = await query(
     `
@@ -202,6 +245,14 @@ export async function findProjectRequestOwnedByUser(projectRequestId, user) {
   return result.rows[0] ? toProjectRequestRecord(result.rows[0]) : null;
 }
 
+/**
+ * Crea el borrador de solicitud de proyecto con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function createProjectRequestDraft(user, payload) {
   const result = await query(
     `
@@ -235,6 +286,15 @@ export async function createProjectRequestDraft(user, payload) {
   return findProjectRequestBySubmissionId(payload.submissionId, user);
 }
 
+/**
+ * Actualiza el borrador de solicitud de proyecto conservando las reglas de acceso e integridad.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectRequestId - Valor de `projectRequestId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function updateProjectRequestDraft(projectRequestId, user, payload) {
   const params = projectRequestParams(user, payload);
   const result = await query(
@@ -276,6 +336,15 @@ export async function updateProjectRequestDraft(projectRequestId, user, payload)
   return result.rows[0] ? toProjectRequestRecord(result.rows[0]) : null;
 }
 
+/**
+ * Envía el valor de proyecto solicitud for usuario después de validar el estado y las reglas aplicables.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} projectRequestId - Valor de `projectRequestId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} evaluation - Valor de `evaluation` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function submitProjectRequestForUser(projectRequestId, user, evaluation) {
   const result = await query(
     `
@@ -334,6 +403,14 @@ export async function submitProjectRequestForUser(projectRequestId, user, evalua
   return findProjectRequestOwnedByUser(projectRequestId, user);
 }
 
+/**
+ * Procesa el valor de proyecto solicitud params para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {Array<unknown>} Resultado producido por la operación.
+ */
 function projectRequestParams(user, payload) {
   return [
     user.clientId,

@@ -1,3 +1,10 @@
+/**
+ * Transforma el valor de administrativo usuario a la representación estable utilizada por la aplicación.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function mapAdminUser(row = {}) {
   return {
     id: Number(row.id),
@@ -14,6 +21,13 @@ export function mapAdminUser(row = {}) {
   };
 }
 
+/**
+ * Transforma el detalle de un usuario administrado a la representación estable utilizada por la aplicación.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function mapAdminUserDetails(row = {}) {
   return {
     ...mapAdminUser(row),
@@ -29,6 +43,13 @@ export function mapAdminUserDetails(row = {}) {
   };
 }
 
+/**
+ * Transforma una nota de usuario administrado a la representación estable utilizada por la aplicación.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function mapAdminUserNote(row = {}) {
   return {
     id: Number(row.id),
@@ -38,6 +59,13 @@ export function mapAdminUserNote(row = {}) {
   };
 }
 
+/**
+ * Transforma el valor de administrativo usuario métricas a la representación estable utilizada por la aplicación.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function mapAdminUserMetrics(row = {}) {
   return {
     total: Number(row.total || 0),

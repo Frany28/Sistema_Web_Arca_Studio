@@ -6,6 +6,15 @@ import {
 import { getAssignedArchitectProfilePhoto } from "../services/profilePhotoService.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
+/**
+ * Obtiene el valor de my proyectos para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function getMyProjects(req, res, next) {
   try {
     const query = req.validatedQuery || req.query;
@@ -28,6 +37,15 @@ export async function getMyProjects(req, res, next) {
   }
 }
 
+/**
+ * Obtiene el detalle del proyecto para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getProjectDetail(req, res, next) {
   try {
     const projectIdentifier = String(req.params?.projectId || "").trim();
@@ -62,6 +80,15 @@ export async function getProjectDetail(req, res, next) {
   }
 }
 
+/**
+ * Transmite la foto de perfil del arquitecto asignado sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function streamAssignedArchitectProfilePhoto(req, res, next) {
   try {
     const photo = await getAssignedArchitectProfilePhoto({
@@ -82,6 +109,15 @@ export async function streamAssignedArchitectProfilePhoto(req, res, next) {
   }
 }
 
+/**
+ * Actualiza el valor de proyecto publication conservando las reglas de acceso e integridad.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function updateProjectPublication(req, res, next) {
   try {
     const projectId = Number(req.params?.projectId);

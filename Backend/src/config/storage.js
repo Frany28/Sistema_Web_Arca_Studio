@@ -3,6 +3,14 @@ import { randomUUID } from "node:crypto";
 
 let s3Client = null;
 
+/**
+ * Obtiene el valor de required env para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} name - Valor de `name` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 function getRequiredEnv(name) {
   const value = process.env[name];
 
@@ -13,6 +21,12 @@ function getRequiredEnv(name) {
   return value;
 }
 
+/**
+ * Obtiene la configuración de almacenamiento Supabase para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {object} Resultado producido por la operación.
+ */
 export function getSupabaseStorageConfig() {
   return {
     accessKeyId: getRequiredEnv("SUPABASE_STORAGE_S3_ACCESS_KEY_ID"),
@@ -23,6 +37,12 @@ export function getSupabaseStorageConfig() {
   };
 }
 
+/**
+ * Obtiene el cliente S3 compatible de Supabase para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function getSupabaseS3Client() {
   if (s3Client) {
     return s3Client;
@@ -43,6 +63,14 @@ export function getSupabaseS3Client() {
   return s3Client;
 }
 
+/**
+ * Convierte el valor de segment en un identificador legible y seguro para URL.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @param {unknown} fallback - Valor de `fallback` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function slugifySegment(value, fallback) {
   const normalized = String(value || "")
     .normalize("NFD")
@@ -55,6 +83,13 @@ function slugifySegment(value, fallback) {
   return normalized || fallback;
 }
 
+/**
+ * Sanea el nombre seguro para almacenamiento antes de exponerlo fuera del backend.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} fileName - Valor de `fileName` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function sanitizeStorageFileName(fileName) {
   const normalized = String(fileName || "").trim();
   const lastDotIndex = normalized.lastIndexOf(".");
@@ -69,6 +104,13 @@ export function sanitizeStorageFileName(fileName) {
   return safeExtension ? `${safeBaseName}.${safeExtension}` : safeBaseName;
 }
 
+/**
+ * Obtiene la extensión segura del archivo para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} fileName - Valor de `fileName` requerido por esta operación.
+ * @returns {string} Resultado producido por la operación.
+ */
 export function getFileExtension(fileName) {
   const safeName = sanitizeStorageFileName(fileName);
   const lastDotIndex = safeName.lastIndexOf(".");
@@ -80,6 +122,20 @@ export function getFileExtension(fileName) {
   return safeName.slice(lastDotIndex + 1);
 }
 
+/**
+ * Construye la clave del objeto en almacenamiento a partir de datos previamente validados.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.belongsTo - Valor de `options.belongsTo` requerido por esta operación.
+ * @param {string} options.ownerId - Valor de `options.ownerId` requerido por esta operación.
+ * @param {string} options.parentId - Valor de `options.parentId` requerido por esta operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {unknown} options.versionNumber - Valor de `options.versionNumber` requerido por esta operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {unknown} [options.uploadedAt] - Valor de `options.uploadedAt` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function buildStorageObjectKey({
   belongsTo,
   ownerId,
@@ -108,6 +164,16 @@ export function buildStorageObjectKey({
   ].join("/");
 }
 
+/**
+ * Construye el valor de usuario perfil foto objeto key a partir de datos previamente validados.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {unknown} [options.uploadedAt] - Valor de `options.uploadedAt` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function buildUserProfilePhotoObjectKey({
   originalName,
   uploadedAt = new Date(),
@@ -129,6 +195,13 @@ export function buildUserProfilePhotoObjectKey({
   ].join("/");
 }
 
+/**
+ * Construye la URL pública del archivo almacenado a partir de datos previamente validados.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} objectKey - Valor de `objectKey` requerido por esta operación.
+ * @returns {string} Resultado producido por la operación.
+ */
 export function buildStorageFileUrl(objectKey) {
   const { bucket } = getSupabaseStorageConfig();
 
@@ -140,6 +213,17 @@ export function buildStorageFileUrl(objectKey) {
   return bucket ? `s3://${bucket}/${objectKey}` : objectKey;
 }
 
+/**
+ * Construye el valor de model staging objeto key a partir de datos previamente validados.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @param {unknown} [options.uploadedAt] - Valor de `options.uploadedAt` requerido por esta operación.
+ * @param {unknown} options.uploadedBy - Valor de `options.uploadedBy` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function buildModelStagingObjectKey({
   originalName,
   projectId,
@@ -162,6 +246,13 @@ export function buildModelStagingObjectKey({
   ].join("/");
 }
 
+/**
+ * Obtiene el valor de almacenamiento objeto key from archivo URL para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} fileUrl - Valor de `fileUrl` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function getStorageObjectKeyFromFileUrl(fileUrl) {
   const { bucket } = getSupabaseStorageConfig();
   const normalizedFileUrl = String(fileUrl || "").trim();

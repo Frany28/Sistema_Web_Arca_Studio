@@ -128,6 +128,13 @@ const BASE_SCORE = {
   },
 };
 
+/**
+ * Clasifica el valor de nivel a partir de la puntuación calculada.
+ * Mantiene esta regla de dominio aislada de HTTP y de la persistencia.
+ *
+ * @param {number} score - Valor de `score` requerido por esta operación.
+ * @returns {string} Resultado producido por la operación.
+ */
 export function compatibilityLevel(score) {
   if (score >= 80) return "excellent";
   if (score >= 60) return "high";
@@ -136,6 +143,13 @@ export function compatibilityLevel(score) {
   return "poorly_defined";
 }
 
+/**
+ * Procesa el valor de descripción puntuación para completar la responsabilidad asignada al módulo.
+ * Mantiene esta regla de dominio aislada de HTTP y de la persistencia.
+ *
+ * @param {string} description - Valor de `description` requerido por esta operación.
+ * @returns {number} Resultado producido por la operación.
+ */
 function descriptionScore(description) {
   const length = String(description || "").trim().length;
   if (length >= 80) return 10;
@@ -143,6 +157,13 @@ function descriptionScore(description) {
   return 0;
 }
 
+/**
+ * Procesa el valor de legal documentation puntuación para completar la responsabilidad asignada al módulo.
+ * Mantiene esta regla de dominio aislada de HTTP y de la persistencia.
+ *
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {number} Resultado producido por la operación.
+ */
 function legalDocumentationScore(payload) {
   if (
     payload.legalDocumentationStatus === "available"
@@ -154,6 +175,13 @@ function legalDocumentationScore(payload) {
   return payload.legalDocumentationStatus === "in_process" ? 3 : 0;
 }
 
+/**
+ * Determina si el valor de valid reference enlace cumple la condición esperada.
+ * Mantiene esta regla de dominio aislada de HTTP y de la persistencia.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isValidReferenceLink(value) {
   const link = String(value || "").trim();
   if (!link || link.length > 500) return false;
@@ -165,6 +193,13 @@ function isValidReferenceLink(value) {
   }
 }
 
+/**
+ * Evalúa el valor de proyecto compatibility aplicando las reglas y ponderaciones del dominio.
+ * Mantiene esta regla de dominio aislada de HTTP y de la persistencia.
+ *
+ * @param {unknown} payload - Datos validados necesarios para completar la operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function evaluateProjectCompatibility(payload) {
   const hasReferenceLink = isValidReferenceLink(payload.referenceLink);
   const hasFiles = payload.hasFiles === true;
@@ -181,7 +216,15 @@ export function evaluateProjectCompatibility(payload) {
     (hasReferenceLink ? 2 : 0);
   const deductions = [];
 
-  const deduct = (code, points) => {
+    /**
+   * Procesa el valor de deduct para completar la responsabilidad asignada al módulo.
+   * Mantiene esta regla de dominio aislada de HTTP y de la persistencia.
+   *
+   * @param {string} code - Valor de `code` requerido por esta operación.
+   * @param {unknown} points - Valor de `points` requerido por esta operación.
+   * @returns {void} Finalización de la operación.
+   */
+const deduct = (code, points) => {
     deductions.push({ code, points });
     score -= points;
   };
@@ -239,6 +282,13 @@ export function evaluateProjectCompatibility(payload) {
   };
 }
 
+/**
+ * Procesa la evaluación pública de compatibilidad para completar la responsabilidad asignada al módulo.
+ * Mantiene esta regla de dominio aislada de HTTP y de la persistencia.
+ *
+ * @param {unknown} evaluation - Valor de `evaluation` requerido por esta operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function publicCompatibility(evaluation) {
   if (!evaluation || evaluation.score === null || evaluation.score === undefined) {
     return null;

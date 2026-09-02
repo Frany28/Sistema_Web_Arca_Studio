@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+/**
+ * Normaliza el valor de registro phone para mantener un formato interno consistente.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function normalizeRegistrationPhone(value) {
   let digits = String(value || "").replace(/\D/g, "");
   if (digits.startsWith("58")) digits = digits.slice(2);

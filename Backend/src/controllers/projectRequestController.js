@@ -6,6 +6,15 @@ import {
 import { listUserProjectRequests } from "../services/projectRequestQueryService.js";
 import { decodeCursor, parsePageLimit } from "../utils/pagination.js";
 
+/**
+ * Lista las solicitudes de proyecto respetando el alcance y la paginación solicitados.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function listProjectRequests(req, res, next) {
   try {
     const query = req.validatedQuery || req.query;
@@ -20,6 +29,15 @@ export async function listProjectRequests(req, res, next) {
   }
 }
 
+/**
+ * Crea la solicitud de proyecto con los datos validados recibidos.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function createProjectRequest(req, res, next) {
   try {
     const projectRequest = await createProjectRequestService({
@@ -32,6 +50,15 @@ export async function createProjectRequest(req, res, next) {
   }
 }
 
+/**
+ * Actualiza la solicitud de proyecto conservando las reglas de acceso e integridad.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function updateProjectRequest(req, res, next) {
   try {
     const projectRequest = await updateProjectRequestService({
@@ -45,6 +72,15 @@ export async function updateProjectRequest(req, res, next) {
   }
 }
 
+/**
+ * Envía la solicitud de proyecto después de validar el estado y las reglas aplicables.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function submitProjectRequest(req, res, next) {
   try {
     const projectRequest = await submitProjectRequestService({

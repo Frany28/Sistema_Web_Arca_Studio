@@ -9,6 +9,12 @@ const RESET_TOKEN_EXPIRES_IN_SECONDS = Number(
 
 const DEFAULT_FRONTEND_URL = "https://arcastudio.netlify.app";
 
+/**
+ * Obtiene la URL base del frontend para que el flujo llamador pueda continuar.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getFrontendBaseUrl() {
   const baseUrl =
     process.env.FRONTEND_URL ||
@@ -19,10 +25,25 @@ function getFrontendBaseUrl() {
   return String(baseUrl).replace(/\/$/, "");
 }
 
+/**
+ * Obtiene el remitente configurado del correo para que el flujo llamador pueda continuar.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getMailFrom() {
   return process.env.MAIL_FROM || process.env.RESEND_FROM_EMAIL;
 }
 
+/**
+ * Crea el valor de correo service error con los datos validados recibidos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} message - Valor de `message` requerido por esta operación.
+ * @param {string} code - Valor de `code` requerido por esta operación.
+ * @param {unknown} [status] - Valor de `status` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function createEmailServiceError(message, code, status = 502) {
   const error = new Error(message);
   error.code = code;
@@ -31,6 +52,13 @@ function createEmailServiceError(message, code, status = 502) {
   return error;
 }
 
+/**
+ * Escapa el valor de html para impedir que se interprete como contenido HTML.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -40,10 +68,24 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+/**
+ * Calcula la huella de el valor de contraseña restablecimiento token para compararlo sin conservar el valor original.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {string} token - Valor de `token` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 export function hashPasswordResetToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * Crea el valor de contraseña restablecimiento datos con los datos validados recibidos.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function createPasswordResetPayload(user) {
   const token = createAuthToken(
     {
@@ -69,6 +111,17 @@ export function createPasswordResetPayload(user) {
   };
 }
 
+/**
+ * Envía el valor de contraseña restablecimiento correo y traduce los fallos externos al contrato de errores.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.email - Valor de `options.email` requerido por esta operación.
+ * @param {unknown} options.expiresInMinutes - Valor de `options.expiresInMinutes` requerido por esta operación.
+ * @param {string} options.resetUrl - Valor de `options.resetUrl` requerido por esta operación.
+ * @returns {Promise<void>} Finalización de la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function sendPasswordResetEmail({
   email,
   expiresInMinutes,

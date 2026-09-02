@@ -9,18 +9,48 @@ import {
 import { ConflictError, NotFoundError, ValidationError } from "../errors/appError.js";
 import { assertProjectOperationallyMutable } from "./projectService.js";
 
+/**
+ * Carga las métricas del panel administrativo y deja el resultado disponible para el flujo actual.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function loadAdminDashboardMetrics() {
   return getAdminDashboardMetrics();
 }
 
+/**
+ * Carga el resumen del panel administrativo y deja el resultado disponible para el flujo actual.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function loadAdminDashboardOverview() {
   return getAdminDashboardOverview();
 }
 
+/**
+ * Carga los responsables disponibles para administración y deja el resultado disponible para el flujo actual.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function loadAdminAssignees() {
   return listAdminAssignees();
 }
 
+/**
+ * Procesa el valor de manage administrativo proyectos para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.action - Valor de `options.action` requerido por esta operación.
+ * @param {boolean} options.isPublic - Valor de `options.isPublic` requerido por esta operación.
+ * @param {Array<unknown>} options.projectIds - Valor de `options.projectIds` requerido por esta operación.
+ * @param {string} options.userId - Valor de `options.userId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function manageAdminProjects({ action, isPublic, projectIds, userId }) {
   const result = await applyAdminProjectBulkAction({
     action,
@@ -53,6 +83,16 @@ export async function manageAdminProjects({ action, isPublic, projectIds, userId
   return result.projects;
 }
 
+/**
+ * Comprueba el valor de assignment result y rechaza la operación cuando no se cumple.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {unknown} result - Valor de `result` requerido por esta operación.
+ * @param {string} notFoundCode - Valor de `notFoundCode` requerido por esta operación.
+ * @param {unknown} notFoundMessage - Valor de `notFoundMessage` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 function assertAssignmentResult(result, notFoundCode, notFoundMessage) {
   if (!result.targetExists) {
     throw new NotFoundError(notFoundCode, notFoundMessage);
@@ -68,6 +108,16 @@ function assertAssignmentResult(result, notFoundCode, notFoundMessage) {
   return result.assignees;
 }
 
+/**
+ * Procesa el valor de assign employees to proyecto para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {Array<unknown>} options.assigneeIds - Valor de `options.assigneeIds` requerido por esta operación.
+ * @param {unknown} options.assignedBy - Valor de `options.assignedBy` requerido por esta operación.
+ * @param {string} options.projectId - Valor de `options.projectId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ */
 export async function assignEmployeesToProject({
   assigneeIds,
   assignedBy,
@@ -87,6 +137,17 @@ export async function assignEmployeesToProject({
   );
 }
 
+/**
+ * Procesa el valor de assign employees to proyecto solicitud para completar la responsabilidad asignada al módulo.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {Array<unknown>} options.assigneeIds - Valor de `options.assigneeIds` requerido por esta operación.
+ * @param {unknown} options.assignedBy - Valor de `options.assignedBy` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function assignEmployeesToProjectRequest({
   assigneeIds,
   assignedBy,

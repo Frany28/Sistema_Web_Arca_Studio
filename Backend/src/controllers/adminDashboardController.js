@@ -8,6 +8,15 @@ import {
 } from "../services/adminDashboardService.js";
 import { getAdminAssigneeProfilePhoto } from "../services/profilePhotoService.js";
 
+/**
+ * Transmite la foto de perfil del responsable administrativo sin cargar el contenido completo en memoria.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function streamAdminAssigneeProfilePhoto(req, res, next) {
   try {
     const photo = await getAdminAssigneeProfilePhoto({
@@ -27,6 +36,15 @@ export async function streamAdminAssigneeProfilePhoto(req, res, next) {
   }
 }
 
+/**
+ * Obtiene los responsables disponibles para administración para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} _req - Solicitud HTTP que este controlador no necesita inspeccionar.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getAdminAssignees(_req, res, next) {
   try {
     const assignees = await loadAdminAssignees();
@@ -38,6 +56,15 @@ export async function getAdminAssignees(_req, res, next) {
   }
 }
 
+/**
+ * Obtiene las métricas del panel para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} _req - Solicitud HTTP que este controlador no necesita inspeccionar.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getDashboardMetrics(_req, res, next) {
   try {
     const metrics = await loadAdminDashboardMetrics();
@@ -49,6 +76,15 @@ export async function getDashboardMetrics(_req, res, next) {
   }
 }
 
+/**
+ * Obtiene el resumen del panel para que el flujo llamador pueda continuar.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} _req - Solicitud HTTP que este controlador no necesita inspeccionar.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function getDashboardOverview(_req, res, next) {
   try {
     const overview = await loadAdminDashboardOverview();
@@ -60,6 +96,15 @@ export async function getDashboardOverview(_req, res, next) {
   }
 }
 
+/**
+ * Actualiza el valor de proyecto responsables conservando las reglas de acceso e integridad.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function updateProjectAssignees(req, res, next) {
   try {
     const assignees = await assignEmployeesToProject({
@@ -75,6 +120,15 @@ export async function updateProjectAssignees(req, res, next) {
   }
 }
 
+/**
+ * Actualiza los proyectos gestionados desde administración conservando las reglas de acceso e integridad.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function updateAdminProjects(req, res, next) {
   try {
     const projects = await manageAdminProjects({
@@ -91,6 +145,15 @@ export async function updateAdminProjects(req, res, next) {
   }
 }
 
+/**
+ * Actualiza el valor de proyecto solicitud responsables conservando las reglas de acceso e integridad.
+ * Coordina la solicitud HTTP, delega la lógica y construye la respuesta correspondiente.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function updateProjectRequestAssignees(req, res, next) {
   try {
     const assignees = await assignEmployeesToProjectRequest({

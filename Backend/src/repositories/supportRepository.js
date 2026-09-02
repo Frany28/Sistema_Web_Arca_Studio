@@ -12,6 +12,12 @@ import { pool, query } from "../config/db.js";
 
 let supportTablesReady = false;
 
+/**
+ * Procesa el valor de ensure soporte tables para completar la responsabilidad asignada al módulo.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 async function ensureSupportTables() {
   if (supportTablesReady) {
     return;
@@ -50,6 +56,14 @@ async function ensureSupportTables() {
   supportTablesReady = true;
 }
 
+/**
+ * Obtiene el tipo funcional del archivo para que el flujo llamador pueda continuar.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} contentType - Valor de `contentType` requerido por esta operación.
+ * @param {string} originalName - Valor de `originalName` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getFileType(contentType, originalName) {
   if (contentType) {
     return String(contentType).split(";")[0].trim().toLowerCase();
@@ -58,6 +72,17 @@ function getFileType(contentType, originalName) {
   return getFileExtension(originalName) || "application/octet-stream";
 }
 
+/**
+ * Crea el valor de soporte solicitud for usuario con los datos validados recibidos.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.description - Valor de `options.description` requerido por esta operación.
+ * @param {string} options.issueType - Valor de `options.issueType` requerido por esta operación.
+ * @param {string} options.subject - Valor de `options.subject` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function createSupportRequestForUser({
   description,
   issueType,
@@ -98,6 +123,14 @@ export async function createSupportRequestForUser({
   };
 }
 
+/**
+ * Busca el valor de soporte solicitud for carga y devuelve null cuando no existe un registro accesible.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {string} supportRequestId - Valor de `supportRequestId` requerido por esta operación.
+ * @param {unknown} user - Usuario autenticado que ejecuta la operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 export async function findSupportRequestForUpload(supportRequestId, user) {
   await ensureSupportTables();
 
@@ -123,6 +156,20 @@ export async function findSupportRequestForUpload(supportRequestId, user) {
   return isOwner || isAdmin ? supportRequest : null;
 }
 
+/**
+ * Carga el valor de soporte solicitud archivo coordinando la persistencia y el almacenamiento.
+ * Consulta o modifica PostgreSQL mediante parámetros y devuelve una representación estable.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {unknown} options.body - Valor de `options.body` requerido por esta operación.
+ * @param {string} options.contentType - Valor de `options.contentType` requerido por esta operación.
+ * @param {string} options.originalName - Valor de `options.originalName` requerido por esta operación.
+ * @param {number} options.size - Valor de `options.size` requerido por esta operación.
+ * @param {string} options.supportRequestId - Valor de `options.supportRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function uploadSupportRequestFile({
   body,
   contentType,

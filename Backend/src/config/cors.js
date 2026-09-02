@@ -3,6 +3,14 @@ const defaultOrigins = isProduction
   ? ["https://arcastudio.netlify.app"]
   : ["http://localhost:5173"];
 
+/**
+ * Interpreta el valor de boolean y descarta los formatos que no sean válidos.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @param {unknown} [fallback] - Valor de `fallback` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function parseBoolean(value, fallback = false) {
   if (value === undefined || value === "") {
     return fallback;
@@ -11,6 +19,13 @@ function parseBoolean(value, fallback = false) {
   return String(value).trim().toLowerCase() === "true";
 }
 
+/**
+ * Interpreta el valor de lista y descarta los formatos que no sean válidos.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {Array<unknown>} Resultado producido por la operación.
+ */
 function parseList(value) {
   if (!value) {
     return [];
@@ -22,10 +37,23 @@ function parseList(value) {
     .filter(Boolean);
 }
 
+/**
+ * Combina el valor de unique eliminando valores repetidos.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {Array<unknown>} values - Valor de `values` requerido por esta operación.
+ * @returns {Array<unknown>} Resultado producido por la operación.
+ */
 function mergeUnique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+/**
+ * Obtiene los encabezados permitidos por CORS para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getAllowedHeaders() {
   const defaultHeaders = [
     "Accept",
@@ -44,6 +72,12 @@ function getAllowedHeaders() {
   ]);
 }
 
+/**
+ * Obtiene los encabezados expuestos por CORS para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getExposedHeaders() {
   const defaultHeaders = [
     "Accept-Ranges",
@@ -59,6 +93,14 @@ function getExposedHeaders() {
   ]);
 }
 
+/**
+ * Normaliza el valor de origen para mantener un formato interno consistente.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} origin - Valor de `origin` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 function normalizeOrigin(origin) {
   if (origin === "*") {
     if (isProduction) {
@@ -75,6 +117,13 @@ function normalizeOrigin(origin) {
   }
 }
 
+/**
+ * Determina si el valor de wildcard subdomain origen cumple la condición esperada.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} origin - Valor de `origin` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isWildcardSubdomainOrigin(origin) {
   try {
     const url = new URL(origin);
@@ -84,6 +133,14 @@ function isWildcardSubdomainOrigin(origin) {
   }
 }
 
+/**
+ * Procesa el valor de origen matches para completar la responsabilidad asignada al módulo.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {boolean} allowedOrigin - Valor de `allowedOrigin` requerido por esta operación.
+ * @param {string} requestOrigin - Valor de `requestOrigin` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function originMatches(allowedOrigin, requestOrigin) {
   if (allowedOrigin === "*") {
     return true;
@@ -113,6 +170,12 @@ function originMatches(allowedOrigin, requestOrigin) {
   }
 }
 
+/**
+ * Obtiene los orígenes permitidos por CORS para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function getAllowedOrigins() {
   const configuredOrigins = mergeUnique([
     ...defaultOrigins,
@@ -124,6 +187,13 @@ export function getAllowedOrigins() {
   return configuredOrigins.map(normalizeOrigin);
 }
 
+/**
+ * Determina si el valor de allowed origen cumple la condición esperada.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} origin - Valor de `origin` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 export function isAllowedOrigin(origin) {
   if (!origin) {
     return false;
@@ -134,6 +204,12 @@ export function isAllowedOrigin(origin) {
   );
 }
 
+/**
+ * Procesa las opciones de CORS para completar la responsabilidad asignada al módulo.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {object} Resultado producido por la operación.
+ */
 export function corsOptions() {
   const allowedOrigins = getAllowedOrigins();
   const allowRequestsWithoutOrigin = parseBoolean(
@@ -149,7 +225,15 @@ export function corsOptions() {
     maxAge: 86400,
     optionsSuccessStatus: 204,
     preflightContinue: false,
-    origin(origin, callback) {
+        /**
+     * Decide si el origen de una solicitud puede acceder mediante CORS.
+     * Entrega la decisión al middleware sin exponer detalles internos de configuración.
+     *
+     * @param {string} origin - Valor de `origin` requerido por esta operación.
+     * @param {Function} callback - Función que recibe el resultado de la operación asíncrona.
+     * @returns {void} Finalización de la operación.
+     */
+origin(origin, callback) {
       if (!origin) {
         callback(null, allowRequestsWithoutOrigin);
         return;

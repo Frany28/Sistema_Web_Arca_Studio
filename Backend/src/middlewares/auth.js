@@ -5,6 +5,14 @@ import { verifyAuthToken } from "../utils/tokens.js";
 import { getOrLoadUser } from "../services/userSessionCache.js";
 import { isTokenOlderThanUser } from "../utils/sessionFreshness.js";
 
+/**
+ * Interpreta el valor de boolean y descarta los formatos que no sean válidos.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @param {unknown} [fallback] - Valor de `fallback` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function parseBoolean(value, fallback = false) {
   if (value === undefined || value === "") {
     return fallback;
@@ -18,6 +26,12 @@ const ROUTE_AUTH_DISABLED_FOR_TESTS = parseBoolean(
   false,
 ) && process.env.NODE_ENV !== "production";
 
+/**
+ * Obtiene el usuario público de pruebas para que el flujo llamador pueda continuar.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @returns {object} Resultado producido por la operación.
+ */
 function getPublicTestUser() {
   const id = Number(process.env.PUBLIC_TEST_USER_ID || 1);
 
@@ -60,6 +74,12 @@ function getPublicTestUser() {
   };
 }
 
+/**
+ * Obtiene el valor de empty sesión para que el flujo llamador pueda continuar.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @returns {object} Resultado producido por la operación.
+ */
 function getEmptySession() {
   return {
     isAuthenticated: false,
@@ -68,6 +88,13 @@ function getEmptySession() {
   };
 }
 
+/**
+ * Obtiene el token Bearer de la solicitud para que el flujo llamador pueda continuar.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @returns {object} Resultado producido por la operación.
+ */
 function getBearerToken(req) {
   const authorization = req.headers.authorization;
 
@@ -84,6 +111,13 @@ function getBearerToken(req) {
   return token.trim();
 }
 
+/**
+ * Resuelve la sesión autenticada a partir de la solicitud y la configuración disponible.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ */
 async function resolveSession(req) {
   const cookies = parseCookies(req.headers.cookie);
   const token = getBearerToken(req) || cookies[authConfig.cookieName];
@@ -119,6 +153,15 @@ async function resolveSession(req) {
   };
 }
 
+/**
+ * Carga la sesión autenticada y deja el resultado disponible para el flujo actual.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} _res - Valor de `_res` requerido por esta operación.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function loadSession(req, _res, next) {
   try {
     const { session, user } = await resolveSession(req);
@@ -131,6 +174,15 @@ export async function loadSession(req, _res, next) {
   }
 }
 
+/**
+ * Exige el valor de autenticación y detiene el flujo cuando la condición no se cumple.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {import("express").Request} req - Solicitud HTTP con los datos previamente validados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para devolver el resultado.
+ * @param {Function} next - Función que entrega errores o continúa la cadena de middlewares.
+ * @returns {Promise<void>} Finalización de la operación.
+ */
 export async function requireAuth(req, res, next) {
   if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
     req.session = req.session || {
@@ -169,6 +221,13 @@ export async function requireAuth(req, res, next) {
   next();
 }
 
+/**
+ * Exige los roles del sistema y detiene el flujo cuando la condición no se cumple.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {Array<unknown>} ...allowedRoles - Valor de `allowedRoles` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function requireRoles(...allowedRoles) {
   return (req, res, next) => {
     if (ROUTE_AUTH_DISABLED_FOR_TESTS) {
@@ -197,6 +256,13 @@ export function requireRoles(...allowedRoles) {
   };
 }
 
+/**
+ * Exige los permisos del sistema y detiene el flujo cuando la condición no se cumple.
+ * Participa en la cadena HTTP y continúa o rechaza la solicitud según el resultado.
+ *
+ * @param {Array<unknown>} ...requiredPermissions - Valor de `requiredPermissions` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function requirePermissions(...requiredPermissions) {
   return (req, res, next) => {
     if (ROUTE_AUTH_DISABLED_FOR_TESTS) {

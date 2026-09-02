@@ -9,6 +9,14 @@ const userCursor = z.string().optional().refine((value) => {
   return Boolean(decoded && !Number.isNaN(Date.parse(decoded[0])) && /^\d+$/.test(String(decoded[1])));
 }, "Cursor inválido.");
 
+/**
+ * Normaliza el valor de optional phone para mantener un formato interno consistente.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @param {string} context - Contexto utilizado durante la validación.
+ * @returns {object} Resultado producido por la operación.
+ */
 function normalizeOptionalPhone(value, context) {
   const rawValue = String(value || "").trim();
   if (!rawValue) return null;
@@ -36,6 +44,14 @@ const fullName = z.string().trim().min(3, "Ingresa nombre y apellido.").max(300)
 
 const optionalPhone = z.string().max(40).optional().transform(normalizeOptionalPhone);
 
+/**
+ * Procesa el valor de optional csv lista para completar la responsabilidad asignada al módulo.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {unknown} itemSchema - Valor de `itemSchema` requerido por esta operación.
+ * @param {number} [maxItems] - Valor de `maxItems` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function optionalCsvList(itemSchema, maxItems = 50) {
   return z.preprocess((value) => {
     if (value === undefined || value === null || value === "") return undefined;
@@ -74,6 +90,13 @@ const passwordsMatchPolicy = z.string()
   .regex(/\d/, "La contraseña debe incluir un número.")
   .regex(/[^A-Za-z0-9]/, "La contraseña debe incluir un carácter especial.");
 
+/**
+ * Procesa el valor de different phones para completar la responsabilidad asignada al módulo.
+ * Se utiliza para normalizar entradas y construir contratos Zod reutilizables.
+ *
+ * @param {unknown} body - Valor de `body` requerido por esta operación.
+ * @returns {void} Finalización de la operación.
+ */
 const differentPhones = (body) => !body.phone || body.phone !== body.secondaryPhone;
 const differentPhonesIssue = { message: "Los teléfonos deben ser diferentes.", path: ["secondaryPhone"] };
 

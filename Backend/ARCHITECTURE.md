@@ -198,3 +198,9 @@ Una funcionalidad está terminada cuando:
 6. tiene pruebas proporcionales al riesgo;
 7. documenta cambios públicos o migraciones;
 8. `pnpm verify` finaliza correctamente.
+
+## Documentación de la lógica
+
+Toda función o método de `src` debe tener un JSDoc en español cuya descripción inicial ocupe dos o tres líneas. El texto debe permitir que una persona externa entienda el propósito, las reglas de negocio y los efectos secundarios relevantes sin tener que reconstruirlos únicamente desde la implementación.
+
+Los contratos deben usar `@param`, `@returns` y `@throws` cuando correspondan, incluyendo tipos y descripciones. Las funciones asíncronas con resultado documentan un `Promise<T>`. Los callbacks anónimos simples se excluyen; cuando contengan lógica relevante deben convertirse en helpers nombrados y documentados.

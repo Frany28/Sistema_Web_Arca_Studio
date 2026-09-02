@@ -1,3 +1,10 @@
+/**
+ * Interpreta el valor de cookies y descarta los formatos que no sean válidos.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {string} [cookieHeader] - Valor de `cookieHeader` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function parseCookies(cookieHeader = "") {
   return cookieHeader.split(";").reduce((cookies, cookie) => {
     const separatorIndex = cookie.indexOf("=");
@@ -18,6 +25,15 @@ export function parseCookies(cookieHeader = "") {
   }, {});
 }
 
+/**
+ * Serializa la cookie HTTP con los atributos HTTP solicitados.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {string} name - Valor de `name` requerido por esta operación.
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @param {unknown} [options] - Opciones agrupadas necesarias para ejecutar la operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 export function serializeCookie(name, value, options = {}) {
   const segments = [`${name}=${encodeURIComponent(value)}`];
 

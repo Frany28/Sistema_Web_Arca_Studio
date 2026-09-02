@@ -10,6 +10,17 @@ import {
 const MAX_FILES = 10;
 const MAX_TOTAL_BYTES = 200 * 1024 * 1024;
 
+/**
+ * Carga el adjunto de la solicitud de proyecto coordinando la persistencia y el almacenamiento.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.upload - Valor de `options.upload` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<object>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function uploadProjectRequestAttachment({ projectRequestId, upload, user }) {
   const projectRequest = await findProjectRequestForFileUpload(projectRequestId, user);
   if (!projectRequest) {
@@ -54,6 +65,17 @@ export async function uploadProjectRequestAttachment({ projectRequestId, upload,
   return uploadProjectRequestFile({ ...upload, projectRequestId, user });
 }
 
+/**
+ * Elimina el adjunto de la solicitud de proyecto después de comprobar acceso y existencia.
+ * Aplica las reglas de negocio y coordina las dependencias necesarias para la operación.
+ *
+ * @param {object} options - Opciones agrupadas necesarias para ejecutar la operación.
+ * @param {string} options.fileId - Valor de `options.fileId` requerido por esta operación.
+ * @param {string} options.projectRequestId - Valor de `options.projectRequestId` requerido por esta operación.
+ * @param {unknown} options.user - Valor de `options.user` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function deleteProjectRequestAttachment({ fileId, projectRequestId, user }) {
   const deleted = await deleteProjectRequestFile({ fileId, projectRequestId, user });
   if (!deleted) {

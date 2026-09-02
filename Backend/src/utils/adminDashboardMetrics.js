@@ -1,8 +1,22 @@
+/**
+ * Transforma el valor de number a la representación pública esperada.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function toNumber(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/**
+ * Transforma las métricas del panel administrativo a la representación estable utilizada por la aplicación.
+ * Centraliza este comportamiento para que sus consumidores utilicen el mismo criterio.
+ *
+ * @param {unknown} [row] - Fila obtenida desde PostgreSQL.
+ * @returns {object} Resultado producido por la operación.
+ */
 export function mapAdminDashboardMetrics(row = {}) {
   return {
     activeUsers: {

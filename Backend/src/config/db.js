@@ -8,6 +8,14 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required");
 }
 
+/**
+ * Interpreta el valor de boolean y descarta los formatos que no sean válidos.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {unknown} value - Valor de `value` requerido por esta operación.
+ * @param {unknown} fallback - Valor de `fallback` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function parseBoolean(value, fallback) {
   if (value === undefined || value === "") {
     return fallback;
@@ -16,6 +24,13 @@ function parseBoolean(value, fallback) {
   return String(value).trim().toLowerCase() === "true";
 }
 
+/**
+ * Determina si el valor de local base de datos cumple la condición esperada.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} url - Valor de `url` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isLocalDatabase(url) {
   try {
     const { hostname } = new URL(url);
@@ -25,6 +40,12 @@ function isLocalDatabase(url) {
   }
 }
 
+/**
+ * Obtiene el valor de ssl configuración para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function getSslConfig() {
   if (!parseBoolean(process.env.DATABASE_SSL, true)) {
     return false;
@@ -49,6 +70,12 @@ function getSslConfig() {
   return sslConfig;
 }
 
+/**
+ * Determina si el valor de serverless runtime cumple la condición esperada.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {boolean} Resultado producido por la operación.
+ */
 function isServerlessRuntime() {
   return Boolean(
     process.env.VERCEL ||
@@ -57,6 +84,12 @@ function isServerlessRuntime() {
   );
 }
 
+/**
+ * Obtiene el valor de pool max para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getPoolMax() {
   const configured = Number(process.env.DATABASE_POOL_MAX);
   if (Number.isInteger(configured) && configured > 0) {
@@ -72,6 +105,12 @@ function getPoolMax() {
   return isLocalDatabase(databaseUrl) ? 10 : 2;
 }
 
+/**
+ * Obtiene el valor de idle timeout ms para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function getIdleTimeoutMs() {
   const configured = Number(process.env.DATABASE_IDLE_TIMEOUT_MS);
 
@@ -98,6 +137,13 @@ const TRANSIENT_DATABASE_ERRORS = new Set([
   "ETIMEDOUT",
 ]);
 
+/**
+ * Determina si el valor de transient base de datos error cumple la condición esperada.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {Error} error - Error que debe evaluarse o traducirse.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 export function isTransientDatabaseError(error) {
   if (TRANSIENT_DATABASE_ERRORS.has(error?.code)) return true;
   const message = String(error?.message || "").toLowerCase();
@@ -110,6 +156,13 @@ export function isTransientDatabaseError(error) {
   );
 }
 
+/**
+ * Determina si el valor de read only query cumple la condición esperada.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} text - Valor de `text` requerido por esta operación.
+ * @returns {boolean} Resultado producido por la operación.
+ */
 export function isReadOnlyQuery(text) {
   return String(text).trimStart().toLowerCase().startsWith("select");
 }
@@ -125,6 +178,14 @@ export const pool = new Pool({
   query_timeout: Number(process.env.DATABASE_QUERY_TIMEOUT_MS || 12000),
 });
 
+/**
+ * Ejecuta el valor de query y registra la información operativa relevante.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} text - Valor de `text` requerido por esta operación.
+ * @param {unknown} params - Valor de `params` requerido por esta operación.
+ * @returns {unknown} Resultado producido por la operación.
+ */
 function executeQuery(text, params) {
   const startedAt = process.hrtime.bigint();
   return pool.query(text, params).finally(() => {
@@ -142,6 +203,15 @@ function executeQuery(text, params) {
   });
 }
 
+/**
+ * Procesa el valor de query para completar la responsabilidad asignada al módulo.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @param {string} text - Valor de `text` requerido por esta operación.
+ * @param {unknown} params - Valor de `params` requerido por esta operación.
+ * @returns {Promise<unknown>} Resultado producido por la operación.
+ * @throws {Error} Cuando una validación o dependencia impide completar la operación.
+ */
 export async function query(text, params) {
   try {
     return await executeQuery(text, params);
@@ -158,6 +228,12 @@ export async function query(text, params) {
   }
 }
 
+/**
+ * Obtiene las estadísticas del pool de PostgreSQL para que el flujo llamador pueda continuar.
+ * Centraliza esta decisión para mantener consistente la configuración del backend.
+ *
+ * @returns {object} Resultado producido por la operación.
+ */
 export function getPoolStats() {
   return { idle: pool.idleCount, total: pool.totalCount, waiting: pool.waitingCount };
 }
