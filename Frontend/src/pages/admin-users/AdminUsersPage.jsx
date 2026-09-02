@@ -35,11 +35,11 @@ import Loader from "../../components/ui/Loader/Loader.jsx";
 import Modal from "../../components/ui/Modal/Modal.jsx";
 import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
 import SideNavigation from "../../components/ui/SideNavigation/SideNavigation.jsx";
-import Tooltip from "../../components/ui/Tooltip/Tooltip.jsx";
 import { getAvatarPresentation } from "../../utils/avatarPresentation.js";
 import { formatHumanDate } from "../../utils/relativeTime.js";
 import { createUserSideNavigationItems } from "../../utils/sideNavigationItems.js";
 import CreateAdminUserModal from "./CreateAdminUserModal.jsx";
+import EditAdminUserModal from "./EditAdminUserModal.jsx";
 import AdminUserActionsMenu from "./AdminUserActionsMenu.jsx";
 import AdminUserDetailsDrawer from "./AdminUserDetailsDrawer.jsx";
 import AdminUserStatusModal from "./AdminUserStatusModal.jsx";
@@ -129,6 +129,8 @@ function AdminUsersPage({ empty = false }) {
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
   const [detailsUserId, setDetailsUserId] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [loadingEditUserId, setLoadingEditUserId] = useState(null);
 
   const navigationItems = useMemo(
     () => createUserSideNavigationItems([], "admin"),
@@ -287,6 +289,42 @@ function AdminUsersPage({ empty = false }) {
     setIsCreateUserOpen(false);
     setCursorHistory([null]);
     setPageIndex(0);
+    setRequestKey((key) => key + 1);
+  }
+
+  async function openUserEditor(listedUser) {
+    if (loadingEditUserId !== null || isBulkUpdating || updatingUserId !== null) return;
+
+    setLoadingEditUserId(String(listedUser.id));
+    setStatusFeedback(null);
+    try {
+      const response = await api.admin.getUserDetails({ userId: listedUser.id });
+      setEditingUser(response?.user || listedUser);
+    } catch (requestError) {
+      setStatusFeedback({
+        tone: "danger",
+        title: "No se pudo abrir la edición",
+        message: requestError?.message || "No se pudieron cargar los datos del usuario.",
+      });
+    } finally {
+      setLoadingEditUserId(null);
+    }
+  }
+
+  async function updateEditedUser(payload) {
+    const userId = editingUser?.id;
+    if (!userId) return;
+
+    const response = await api.admin.updateUser({ payload, userId });
+    const updatedUser = response?.user;
+    setEditingUser(null);
+    if (updatedUser) {
+      setUsers((current) => current.map((listedUser) => (
+        String(listedUser.id) === String(userId)
+          ? { ...listedUser, ...updatedUser }
+          : listedUser
+      )));
+    }
     setRequestKey((key) => key + 1);
   }
 
@@ -569,9 +607,23 @@ function AdminUsersPage({ empty = false }) {
                                   aria-label={`Ver detalles de ${listedUser.name}`}
                                   onClick={() => setDetailsUserId(listedUser.id)}
                                 />
-                                <Tooltip text="Editar: disponible en una próxima sección" tipPosition="Top center" portal>
-                                  <span><Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<Edit2 size="20" color="currentColor" />} showRightIcon={false} disabled aria-label={`Editar ${listedUser.name}`} /></span>
-                                </Tooltip>
+                                <Button
+                                  theme="Primary"
+                                  type="Ghost"
+                                  size="S"
+                                  showText={false}
+                                  showLeftIcon
+                                  iconLeft={<Edit2 size="20" color="currentColor" />}
+                                  showRightIcon={false}
+                                  disabled={
+                                    isBulkUpdating
+                                    || updatingUserId !== null
+                                    || loadingEditUserId !== null
+                                  }
+                                  tooltip={loadingEditUserId === String(listedUser.id) ? "Cargando usuario..." : "Editar usuario"}
+                                  aria-label={`Editar ${listedUser.name}`}
+                                  onClick={() => openUserEditor(listedUser)}
+                                />
                                 <AdminUserActionsMenu
                                   user={listedUser}
                                   disabled={
@@ -664,6 +716,15 @@ function AdminUsersPage({ empty = false }) {
             onUserUpdated={() => setRequestKey((key) => key + 1)}
           />
           {isCreateUserOpen ? <CreateAdminUserModal open roles={roles} onClose={() => setIsCreateUserOpen(false)} onCreate={createUser} /> : null}
+          {editingUser ? (
+            <EditAdminUserModal
+              open
+              roles={roles}
+              user={editingUser}
+              onClose={() => setEditingUser(null)}
+              onUpdate={updateEditedUser}
+            />
+          ) : null}
           <Modal
             mount="viewport"
             visible={Boolean(createdUser)}

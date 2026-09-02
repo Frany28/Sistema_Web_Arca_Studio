@@ -13,10 +13,12 @@ test("admin users expose the connected creation modal from both new actions", as
   assert.match(page, /api\.admin\.createUser\(payload\)/);
   assert.match(page, /<CreateAdminUserModal/);
   assert.match(modal, /role="dialog"/);
-  assert.match(modal, /Crear usuario/);
+  assert.match(modal, /Enviar código de activación/);
   assert.match(modal, /<header className="relative h-\[62px\][^"]*border-b/);
   assert.match(modal, /text-heading-4 absolute left-\[16px\] top-\[16px\]/);
   assert.doesNotMatch(modal, /Completa la información para crear una cuenta/);
+  assert.match(modal, /<ModalCloseButton/);
+  assert.doesNotMatch(modal, /CloseCircle/);
   assert.match(modal, /<footer className="flex flex-col-reverse gap-\[16px\][^\n]*sm:flex-row sm:items-center">/);
   assert.equal((modal.match(/className="!w-full sm:min-w-0 sm:flex-1"/g) || []).length, 2);
   assert.match(page, /title="Usuario creado correctamente"/);
@@ -72,6 +74,20 @@ test("the user details drawer opens the connected Figma edit modal", async () =>
   assert.match(editModal, /mode="edit"/);
   assert.match(formModal, /Editar usuario/);
   assert.match(formModal, /max-w-\[696px\]/);
-  assert.match(formModal, /editing \? "Siguiente" : "Crear usuario"/);
+  assert.match(formModal, /editing \? "Siguiente" : "Enviar código de activación"/);
   assert.match(http, /updateUser\(\{ payload, userId \}\)[\s\S]*method: "PATCH"/);
+});
+
+test("each table edit action loads the complete user before opening the edit modal", async () => {
+  const source = await readFile(
+    new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.doesNotMatch(source, /Editar: disponible en una próxima sección/);
+  assert.match(source, /onClick=\{\(\) => openUserEditor\(listedUser\)\}/);
+  assert.match(source, /api\.admin\.getUserDetails\(\{ userId: listedUser\.id \}\)/);
+  assert.match(source, /setEditingUser\(response\?\.user \|\| listedUser\)/);
+  assert.match(source, /<EditAdminUserModal[\s\S]*user=\{editingUser\}/);
+  assert.match(source, /api\.admin\.updateUser\(\{ payload, userId \}\)/);
 });

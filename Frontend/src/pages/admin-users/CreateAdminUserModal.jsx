@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { Buildings, CloseCircle, Sms, User } from "iconsax-react";
+import { Buildings, Sms, User } from "iconsax-react";
 
-import Modal from "../../components/ui/Modal/Modal.jsx";
+import Modal, { ModalCloseButton } from "../../components/ui/Modal/Modal.jsx";
 import Input from "../../components/ui/Input/Input.jsx";
 import Label from "../../components/ui/Label/Label.jsx";
 import HintText from "../../components/ui/HintText/HintText.jsx";
@@ -189,7 +189,13 @@ function AdminUserFormModal({ mode = "create", onClose, onSubmit, open, roles = 
       >
         <header className="relative h-[62px] shrink-0 border-b border-[var(--color-neutral-200)]">
           <h2 id={`${mode}-admin-user-title`} className="text-heading-4 absolute left-[16px] top-[16px] m-0 text-[var(--color-text-300)]">{editing ? "Editar usuario" : "Nuevo usuario"}</h2>
-          <Button theme="Primary" type="Ghost" size="S" className="!absolute !right-0 !top-0 !size-9 !p-[8px]" showText={false} showLeftIcon iconLeft={<CloseCircle size="20" color="currentColor" />} showRightIcon={false} disabled={submitting} aria-label={`Cerrar formulario de ${editing ? "edición" : "nuevo usuario"}`} tooltip={false} onClick={onClose} />
+          <div className="absolute right-0 top-0">
+            <ModalCloseButton
+              disabled={submitting}
+              ariaLabel={`Cerrar formulario de ${editing ? "edición" : "nuevo usuario"}`}
+              onClick={onClose}
+            />
+          </div>
         </header>
 
         <form id={`${mode}-admin-user-form`} className="min-h-0 overflow-y-auto" onSubmit={handleSubmit} noValidate>
@@ -219,7 +225,7 @@ function AdminUserFormModal({ mode = "create", onClose, onSubmit, open, roles = 
 
         <footer className="flex flex-col-reverse gap-[16px] border-t border-[var(--color-neutral-200)] p-[16px] sm:flex-row sm:items-center">
           <Button theme="Primary" type="Outline" size="M" showLeftIcon={false} showRightIcon={false} disabled={submitting} className="!w-full sm:min-w-0 sm:flex-1" onClick={onClose}>Cancelar</Button>
-          <Button theme="Primary" type="Solid" size="M" showLeftIcon={false} showRightIcon={false} disabled={submitting || roles.length === 0} className="!w-full sm:min-w-0 sm:flex-1" htmlType="submit" form={`${mode}-admin-user-form`}>{submitting ? (editing ? "Guardando..." : "Creando...") : (editing ? "Siguiente" : "Crear usuario")}</Button>
+          <Button theme="Primary" type="Solid" size="M" showLeftIcon={false} showRightIcon={false} disabled={submitting || roles.length === 0} className="!w-full sm:min-w-0 sm:flex-1" htmlType="submit" form={`${mode}-admin-user-form`}>{submitting ? (editing ? "Guardando..." : "Creando...") : (editing ? "Siguiente" : "Enviar código de activación")}</Button>
         </footer>
       </div>
     </Modal>

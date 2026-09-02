@@ -41,6 +41,28 @@ function CloseIcon({ className }) {
   );
 }
 
+function ModalCloseButton({
+  ariaLabel = "Cerrar modal",
+  className,
+  disabled = false,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      className={clsx(
+        "inline-flex size-9 items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-100)] transition-colors duration-150 hover:bg-[var(--color-neutral-200)]/40 hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)] disabled:pointer-events-none disabled:opacity-50",
+        className,
+      )}
+      disabled={disabled}
+      onClick={onClick}
+      aria-label={ariaLabel}
+    >
+      <CloseIcon className="size-5" />
+    </button>
+  );
+}
+
 function Modal({
   className,
   contentClassName,
@@ -214,14 +236,10 @@ function Modal({
                 onClick={(event) => event.stopPropagation()}
               >
                 {showDialogCloseButton ? (
-                  <button
-                    type="button"
-                    className="absolute right-0 top-0 inline-flex size-9 items-center justify-center rounded-[var(--radius-2)] text-[var(--color-text-100)] transition-colors duration-150 hover:bg-[var(--color-neutral-200)]/40 hover:text-[var(--color-text-300)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-100)]"
+                  <ModalCloseButton
+                    className="absolute right-0 top-0"
                     onClick={onClose}
-                    aria-label="Cerrar modal"
-                  >
-                    <CloseIcon className="size-5" />
-                  </button>
+                  />
                 ) : null}
 
                 <div
@@ -299,4 +317,5 @@ function Modal({
   return modalContent;
 }
 
+export { ModalCloseButton };
 export default Modal;
