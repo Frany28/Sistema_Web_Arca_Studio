@@ -40,13 +40,13 @@ test("admin user row actions expose the connected Figma status menu", async () =
   assert.match(menu, /Suspender/);
   assert.match(menu, /Deshabilitar/);
   assert.match(menu, /Reactivar/);
-  assert.match(menu, /Habilitar/);
+  assert.match(menu, /Activar/);
   assert.match(page, /<AdminUserStatusModal/);
   assert.match(page, /<AlertToast/);
   assert.match(modal, /¿Deseas suspender al usuario\?/);
   assert.match(modal, /¿Deseas deshabilitar al usuario\?/);
   assert.match(modal, /¿Deseas reactivar al usuario\?/);
-  assert.match(modal, /¿Deseas habilitar al usuario\?/);
+  assert.match(modal, /¿Deseas activar al usuario\?/);
   assert.match(modal, /onPrimaryAction=\{onConfirm\}/);
   assert.match(modal, /secondaryActionTheme="Danger"/);
   assert.match(modal, /primaryActionTheme=\{change\.status === "active" \? "Primary" : "Danger"\}/);

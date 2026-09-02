@@ -325,11 +325,11 @@ function AdminUsersPage({ empty = false }) {
             ? "Usuario deshabilitado"
             : listedUser.status === "blocked"
               ? "Usuario reactivado"
-              : "Usuario habilitado",
+              : "Usuario activado",
         message: status === "active"
           ? listedUser.status === "blocked"
             ? `${listedUser.name} recuperó el acceso al sistema.`
-            : `${listedUser.name} fue habilitado y recuperó el acceso al sistema.`
+            : `${listedUser.name} fue activado y recuperó el acceso al sistema.`
           : response?.message || `El estado de ${listedUser.name} fue actualizado.`,
       });
     } catch (requestError) {
@@ -347,7 +347,7 @@ function AdminUsersPage({ empty = false }) {
     const targets = bulkTargetsByStatus[status] || [];
     if (!targets.length || isBulkUpdating || updatingUserId !== null) return;
     setStatusFeedback(null);
-  setPendingStatusChange({ users: targets, status });
+    setPendingStatusChange({ users: targets, status });
   }
 
   async function changeUsersStatus(targets, status) {

@@ -9,9 +9,9 @@ const ACTION_DETAILS = {
     ariaLabel: "Confirmar reactivación del usuario",
   },
   activeFromInactive: {
-    title: "¿Deseas habilitar al usuario?",
+    title: "¿Deseas activar al usuario?",
     description: "La cuenta volverá a estar activa y el usuario recuperará el acceso al sistema.",
-    ariaLabel: "Confirmar habilitación del usuario",
+    ariaLabel: "Confirmar activación del usuario",
   },
   blocked: {
     title: "¿Deseas suspender al usuario?",

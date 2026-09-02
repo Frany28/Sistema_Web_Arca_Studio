@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { LockCircle, MinusCirlce, More, UserTick } from "iconsax-react";
+import { LockCircle, MinusCirlce, More, TickCircle, UserTick } from "iconsax-react";
 
 import Button from "../../components/ui/Button/Button.jsx";
 
@@ -35,7 +35,7 @@ function getStatusActions(status) {
   }
 
   if (status === "inactive") {
-    return [{ icon: LockCircle, label: "Habilitar", status: "active" }];
+    return [{ icon: TickCircle, label: "Activar", status: "active" }];
   }
 
   return [
