@@ -319,9 +319,9 @@ export const adminApi = {
     });
   },
 
-  deleteUserNote({ noteId, userId }) {
-    return apiRequest(`/admin/users/${encodeURIComponent(userId)}/notes/${encodeURIComponent(noteId)}`, {
-      method: "DELETE",
+  archiveUserNote({ noteId, userId }) {
+    return apiRequest(`/admin/users/${encodeURIComponent(userId)}/notes/${encodeURIComponent(noteId)}/archive`, {
+      method: "PATCH",
     });
   },
 

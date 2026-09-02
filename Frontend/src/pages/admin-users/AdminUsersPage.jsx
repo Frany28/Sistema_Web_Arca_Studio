@@ -315,17 +315,32 @@ function AdminUsersPage({ empty = false }) {
     const userId = editingUser?.id;
     if (!userId) return;
 
-    const response = await api.admin.updateUser({ payload, userId });
-    const updatedUser = response?.user;
-    setEditingUser(null);
-    if (updatedUser) {
-      setUsers((current) => current.map((listedUser) => (
-        String(listedUser.id) === String(userId)
-          ? { ...listedUser, ...updatedUser }
-          : listedUser
-      )));
+    setStatusFeedback(null);
+    try {
+      const response = await api.admin.updateUser({ payload, userId });
+      const updatedUser = response?.user;
+      setEditingUser(null);
+      if (updatedUser) {
+        setUsers((current) => current.map((listedUser) => (
+          String(listedUser.id) === String(userId)
+            ? { ...listedUser, ...updatedUser }
+            : listedUser
+        )));
+      }
+      setRequestKey((key) => key + 1);
+      setStatusFeedback({
+        tone: "success",
+        title: "Usuario actualizado correctamente",
+        message: "Los datos del usuario se guardaron correctamente.",
+      });
+    } catch (requestError) {
+      setStatusFeedback({
+        tone: "danger",
+        title: "No se pudo actualizar el usuario",
+        message: requestError?.message || "No se pudieron guardar los cambios del usuario.",
+      });
+      throw requestError;
     }
-    setRequestKey((key) => key + 1);
   }
 
   async function changeUserStatus(listedUser, status) {

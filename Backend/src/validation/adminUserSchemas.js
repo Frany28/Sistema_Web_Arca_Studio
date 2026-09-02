@@ -145,9 +145,11 @@ export const adminUserNoteUpdateSchema = z.object({
   body: z.object({ content: adminUserNoteContent }),
 });
 
-export const adminUserNoteDeleteSchema = z.object({
+export const adminUserNoteArchiveSchema = z.object({
   params: z.object({
     userId: z.coerce.number().int().positive(),
     noteId: z.coerce.number().int().positive(),
   }),
 });
+
+export const adminUserNoteDeleteSchema = adminUserNoteArchiveSchema;

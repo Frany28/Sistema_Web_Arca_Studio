@@ -6,6 +6,7 @@ import {
   adminUserCreateSchema,
   adminUserDetailSchema,
   adminUserListSchema,
+  adminUserNoteArchiveSchema,
   adminUserNoteCreateSchema,
   adminUserNoteDeleteSchema,
   adminUserNoteListSchema,
@@ -205,6 +206,8 @@ test("admin user notes validate private, bounded and paginated content", () => {
   assert.equal(adminUserNoteCreateSchema.safeParse({ params: { userId: "42" }, body: { content: " " } }).success, false);
   assert.equal(adminUserNoteCreateSchema.safeParse({ params: { userId: "42" }, body: { content: "x".repeat(1001) } }).success, false);
   assert.equal(adminUserNoteUpdateSchema.safeParse({ params: { userId: "42", noteId: "7" }, body: { content: "Actualizada" } }).success, true);
+  assert.equal(adminUserNoteArchiveSchema.safeParse({ params: { userId: "42", noteId: "7" } }).success, true);
+  assert.equal(adminUserNoteArchiveSchema.safeParse({ params: { userId: "42", noteId: "0" } }).success, false);
   assert.equal(adminUserNoteDeleteSchema.safeParse({ params: { userId: "42", noteId: "7" } }).success, true);
   assert.equal(adminUserNoteDeleteSchema.safeParse({ params: { userId: "42", noteId: "0" } }).success, false);
   assert.equal(adminUserNoteListSchema.safeParse({ params: { userId: "42" }, query: { limit: "25" } }).success, true);
@@ -221,7 +224,25 @@ test("admin user note queries are scoped to the authenticated administrator", ()
   const repository = readFileSync(new URL("../src/repositories/adminUserRepository.js", import.meta.url), "utf8");
   assert.match(repository, /where admin_user_id = \$1\s+and target_user_id = \$2/);
   assert.match(repository, /where id = \$3 and admin_user_id = \$1 and target_user_id = \$2/);
-  assert.match(repository, /delete from public\.admin_user_notes[\s\S]*where id = \$3 and admin_user_id = \$1 and target_user_id = \$2/);
+  assert.match(repository, /update public\.admin_user_notes\s+set archived_at = now\(\), updated_at = now\(\)[\s\S]*where id = \$3 and admin_user_id = \$1 and target_user_id = \$2/);
+  assert.doesNotMatch(repository, /delete from public\.admin_user_notes/);
+  assert.match(repository, /and archived_at is null/);
   assert.match(repository, /where admin_user_id = \$2 and target_user_id = u\.id/);
   assert.match(repository, /private_note[\s\S]*limit 2/);
+});
+
+test("admin user notes use recoverable archival and keep the legacy endpoint non-destructive", () => {
+  const [schema, migration, routes, controller] = [
+    readFileSync(new URL("../prisma/schema.prisma", import.meta.url), "utf8"),
+    readFileSync(new URL("../prisma/migrations/20260902120000_archive_admin_user_notes/migration.sql", import.meta.url), "utf8"),
+    readFileSync(new URL("../src/routes/admin.js", import.meta.url), "utf8"),
+    readFileSync(new URL("../src/controllers/adminUserController.js", import.meta.url), "utf8"),
+  ];
+
+  assert.match(schema, /model admin_user_notes \{[\s\S]*archived_at\s+DateTime\?/);
+  assert.match(migration, /ADD COLUMN archived_at TIMESTAMPTZ\(6\)/);
+  assert.match(migration, /WHERE archived_at IS NULL/);
+  assert.match(routes, /"\/users\/:userId\/notes\/:noteId\/archive"[\s\S]*archiveAdminUserNoteById/);
+  assert.match(routes, /router\.delete[\s\S]*archiveAdminUserNoteByLegacyDelete/);
+  assert.match(controller, /antiguo DELETE conserva su contrato, pero nunca elimina datos/);
 });

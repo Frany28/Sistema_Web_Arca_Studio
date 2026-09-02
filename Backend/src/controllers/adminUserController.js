@@ -1,7 +1,7 @@
 import {
+  archiveAdminUserNote,
   createAdminUser,
   createAdminUserNote,
-  deleteAdminUserNote,
   getAdminUserDetails,
   getAdminUserNotesPage,
   getAdminUsersPage,
@@ -109,13 +109,26 @@ export async function patchAdminUserNote(req, res, next) {
   } catch (error) { next(error); }
 }
 
-export async function deleteAdminUserNoteById(req, res, next) {
+async function archiveUserNote(req) {
+  await archiveAdminUserNote({
+    actorUserId: req.user.id,
+    noteId: req.params.noteId,
+    userId: req.params.userId,
+  });
+}
+
+export async function archiveAdminUserNoteById(req, res, next) {
   try {
-    await deleteAdminUserNote({
-      actorUserId: req.user.id,
-      noteId: req.params.noteId,
-      userId: req.params.userId,
-    });
+    await archiveUserNote(req);
+    res.set("Cache-Control", "no-store");
+    res.status(200).json({ message: "Nota archivada correctamente." });
+  } catch (error) { next(error); }
+}
+
+// Compatibilidad temporal: el antiguo DELETE conserva su contrato, pero nunca elimina datos.
+export async function archiveAdminUserNoteByLegacyDelete(req, res, next) {
+  try {
+    await archiveUserNote(req);
     res.set("Cache-Control", "no-store");
     res.status(204).end();
   } catch (error) { next(error); }

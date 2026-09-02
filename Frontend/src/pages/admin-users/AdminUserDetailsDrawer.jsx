@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Add, Edit2, Minus, Trash } from "iconsax-react";
+import { Add, Archive, Edit2, Minus } from "iconsax-react";
 
 import { api } from "../../api/http.js";
 import AlertToast from "../../components/ui/AlertToast/AlertToast.jsx";
@@ -30,8 +30,8 @@ function UserNotes({ user }) {
   const [editor, setEditor] = useState("new");
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
-  const [deletingNoteId, setDeletingNoteId] = useState(null);
-  const [pendingDelete, setPendingDelete] = useState(null);
+  const [archivingNoteId, setArchivingNoteId] = useState(null);
+  const [pendingArchive, setPendingArchive] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const visibleNotes = expanded ? allNotes : previewNotes;
 
@@ -88,29 +88,35 @@ function UserNotes({ user }) {
     } finally { setSaving(false); }
   };
 
-  const deleteNote = async () => {
-    if (!pendingDelete || deletingNoteId) return;
-    const noteId = pendingDelete.id;
+  const archiveNote = async () => {
+    if (!pendingArchive || archivingNoteId) return;
+    const noteId = pendingArchive.id;
     setFeedback(null);
-    setDeletingNoteId(noteId);
+    setArchivingNoteId(noteId);
     try {
-      await api.admin.deleteUserNote({ noteId, userId: user.id });
+      await api.admin.archiveUserNote({ noteId, userId: user.id });
       setPreviewNotes((current) => current.filter((note) => note.id !== noteId));
       setAllNotes((current) => current.filter((note) => note.id !== noteId));
       setNotesTotal((current) => Math.max(0, current - 1));
       if (editor === noteId) resetEditor();
-      setPendingDelete(null);
+      setPendingArchive(null);
+      setFeedback({
+        id: Date.now(),
+        theme: "Success",
+        title: "Nota archivada",
+        description: "La nota se archivó correctamente.",
+      });
 
       try {
         const payload = await api.admin.listUserNotes({ limit: 2, userId: user.id });
         setPreviewNotes(payload.notes || []);
       } catch (refreshError) {
-        setFeedback({ id: Date.now(), theme: "Danger", title: "La nota se eliminó, pero no se pudo actualizar la lista", description: refreshError.message });
+        setFeedback({ id: Date.now(), theme: "Danger", title: "La nota se archivó, pero no se pudo actualizar la lista", description: refreshError.message });
       }
     } catch (error) {
-      setFeedback({ id: Date.now(), theme: "Danger", title: "No se pudo eliminar la nota", description: error.message });
+      setFeedback({ id: Date.now(), theme: "Danger", title: "No se pudo archivar la nota", description: error.message });
     } finally {
-      setDeletingNoteId(null);
+      setArchivingNoteId(null);
     }
   };
 
@@ -159,8 +165,8 @@ function UserNotes({ user }) {
                     <time className="text-body-4 min-w-0 truncate text-[var(--color-text-100)]" dateTime={note.updatedAt}>{formatHumanDate(note.updatedAt)}</time>
                   </div>
                   <div className="flex shrink-0 items-center gap-[2px]">
-                    <Button theme="Primary" type="Ghost" size="S" className="!size-7 !p-[5px]" showText={false} showLeftIcon iconLeft={<Edit2 size="13" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" tooltipPosition="Top right" disabled={Boolean(deletingNoteId)} onClick={() => openEditor(note)} />
-                    <Button theme="Primary" type="Ghost" size="S" className="!size-7 !p-[5px] text-[var(--color-danger-100)] hover:!text-[var(--color-danger-100)]" showText={false} showLeftIcon iconLeft={<Trash size="13" color="currentColor" />} showRightIcon={false} aria-label="Eliminar nota" tooltip="Eliminar nota" tooltipPosition="Top right" disabled={Boolean(deletingNoteId)} onClick={() => setPendingDelete(note)} />
+                    <Button theme="Primary" type="Ghost" size="S" className="!size-7 !p-[5px]" showText={false} showLeftIcon iconLeft={<Edit2 size="13" color="currentColor" />} showRightIcon={false} aria-label="Editar nota" tooltip="Editar nota" tooltipPosition="Top right" disabled={Boolean(archivingNoteId)} onClick={() => openEditor(note)} />
+                    <Button theme="Primary" type="Ghost" size="S" className="!size-7 !p-[5px]" showText={false} showLeftIcon iconLeft={<Archive size="13" color="currentColor" />} showRightIcon={false} aria-label="Archivar nota" tooltip="Archivar nota" tooltipPosition="Top right" disabled={Boolean(archivingNoteId)} onClick={() => setPendingArchive(note)} />
                   </div>
                 </article>
               ))}
@@ -172,18 +178,18 @@ function UserNotes({ user }) {
       ) : <p className="text-body-3 m-0 text-[var(--color-text-300)]">Sin anotaciones.</p>}
       <Modal
         mount="viewport"
-        visible={Boolean(pendingDelete)}
-        title="Eliminar nota"
-        description="Esta acción no se puede deshacer."
-        primaryActionLabel={deletingNoteId ? "Eliminando..." : "Eliminar"}
+        visible={Boolean(pendingArchive)}
+        title="Archivar nota"
+        description="La nota dejará de aparecer en la lista, pero se conservará archivada."
+        primaryActionLabel={archivingNoteId ? "Archivando..." : "Archivar"}
         secondaryActionLabel="Conservar"
-        primaryActionTheme="Danger"
-        icon={<Trash size="20" color="currentColor" />}
-        onClose={() => { if (!deletingNoteId) setPendingDelete(null); }}
-        onSecondaryAction={() => { if (!deletingNoteId) setPendingDelete(null); }}
-        onPrimaryAction={deleteNote}
+        primaryActionTheme="Primary"
+        icon={<Archive size="20" color="currentColor" />}
+        onClose={() => { if (!archivingNoteId) setPendingArchive(null); }}
+        onSecondaryAction={() => { if (!archivingNoteId) setPendingArchive(null); }}
+        onPrimaryAction={archiveNote}
       />
-      <AlertToast trigger={feedback?.id} theme={feedback?.theme} title={feedback?.title} description={feedback?.description} onDismiss={() => setFeedback(null)} />
+      <AlertToast trigger={feedback} theme={feedback?.theme} title={feedback?.title} description={feedback?.description} onDismiss={() => setFeedback(null)} />
     </section>
   );
 }
@@ -203,6 +209,7 @@ function UserDetails({ user }) {
 function AdminUserDetailsDrawer({ onUserUpdated, open, onClose, roles = [], userId }) {
   const [details, setDetails] = useState(null);
   const [error, setError] = useState("");
+  const [editFeedback, setEditFeedback] = useState(null);
   const [loading, setLoading] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
   const [editing, setEditing] = useState(false);
@@ -214,10 +221,27 @@ function AdminUserDetailsDrawer({ onUserUpdated, open, onClose, roles = [], user
     return () => controller.abort();
   }, [open, requestKey, userId]);
   const updateUser = async (payload) => {
-    const response = await api.admin.updateUser({ payload, userId });
-    setEditing(false);
-    setRequestKey((key) => key + 1);
-    onUserUpdated?.(response?.user);
+    setEditFeedback(null);
+    try {
+      const response = await api.admin.updateUser({ payload, userId });
+      setEditing(false);
+      setRequestKey((key) => key + 1);
+      onUserUpdated?.(response?.user);
+      setEditFeedback({
+        id: Date.now(),
+        theme: "Success",
+        title: "Usuario actualizado correctamente",
+        description: "Los datos del usuario se guardaron correctamente.",
+      });
+    } catch (requestError) {
+      setEditFeedback({
+        id: Date.now(),
+        theme: "Danger",
+        title: "No se pudo actualizar el usuario",
+        description: requestError?.message || "No se pudieron guardar los cambios del usuario.",
+      });
+      throw requestError;
+    }
   };
   const closeDrawer = () => {
     setEditing(false);
@@ -251,6 +275,14 @@ function AdminUserDetailsDrawer({ onUserUpdated, open, onClose, roles = [], user
         onUpdate={updateUser}
       />
     ) : null}
+    <AlertToast
+      trigger={editFeedback?.id}
+      theme={editFeedback?.theme}
+      title={editFeedback?.title || ""}
+      description={editFeedback?.description || ""}
+      aria-label={editFeedback?.theme === "Danger" ? "Error al actualizar el usuario" : "Usuario actualizado correctamente"}
+      onDismiss={() => setEditFeedback(null)}
+    />
     </>
   );
 }

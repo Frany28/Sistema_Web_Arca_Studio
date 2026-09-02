@@ -18,7 +18,8 @@ import {
   updateRolePermissions,
 } from "../controllers/rolePermissionController.js";
 import {
-  deleteAdminUserNoteById,
+  archiveAdminUserNoteById,
+  archiveAdminUserNoteByLegacyDelete,
   getAdminUsers,
   getAdminUser,
   getAdminUserNotes,
@@ -44,6 +45,7 @@ import {
   adminUserDetailSchema,
   adminUserListSchema,
   adminUserNoteCreateSchema,
+  adminUserNoteArchiveSchema,
   adminUserNoteDeleteSchema,
   adminUserNoteListSchema,
   adminUserNoteUpdateSchema,
@@ -105,11 +107,17 @@ router.patch(
   validate(adminUserNoteUpdateSchema),
   patchAdminUserNote,
 );
+router.patch(
+  "/users/:userId/notes/:noteId/archive",
+  adminUserNoteRateLimit,
+  validate(adminUserNoteArchiveSchema),
+  archiveAdminUserNoteById,
+);
 router.delete(
   "/users/:userId/notes/:noteId",
   adminUserNoteRateLimit,
   validate(adminUserNoteDeleteSchema),
-  deleteAdminUserNoteById,
+  archiveAdminUserNoteByLegacyDelete,
 );
 router.get(
   "/users/:userId/profile-photo",

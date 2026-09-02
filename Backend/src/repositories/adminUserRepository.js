@@ -287,6 +287,7 @@ export async function findAdminUserDetails({ actorUserId, userId }) {
             select id, content, created_at, updated_at
             from public.admin_user_notes
             where admin_user_id = $2 and target_user_id = u.id
+              and archived_at is null
             order by created_at desc, id desc
             limit 2
           ) private_note
@@ -295,6 +296,7 @@ export async function findAdminUserDetails({ actorUserId, userId }) {
           select count(*)::int
           from public.admin_user_notes
           where admin_user_id = $2 and target_user_id = u.id
+            and archived_at is null
         ) as notes_total,
         coalesce((
           select jsonb_agg(
@@ -345,6 +347,7 @@ export async function listAdminUserNotes({ adminUserId, cursor, limit, targetUse
       from public.admin_user_notes
       where admin_user_id = $1
         and target_user_id = $2
+        and archived_at is null
         and ($3::timestamptz is null or (created_at, id) < ($3, $4::bigint))
       order by created_at desc, id desc
       limit $5
@@ -374,6 +377,7 @@ export async function updateAdminUserNoteRecord({ adminUserId, content, noteId, 
       update public.admin_user_notes
       set content = $4, updated_at = now()
       where id = $3 and admin_user_id = $1 and target_user_id = $2
+        and archived_at is null
       returning id, content, created_at, updated_at
     `,
     [adminUserId, targetUserId, noteId, content],
@@ -381,12 +385,14 @@ export async function updateAdminUserNoteRecord({ adminUserId, content, noteId, 
   return result.rows[0] || null;
 }
 
-export async function deleteAdminUserNoteRecord({ adminUserId, noteId, targetUserId }) {
+export async function archiveAdminUserNoteRecord({ adminUserId, noteId, targetUserId }) {
   const result = await query(
     `
-      delete from public.admin_user_notes
+      update public.admin_user_notes
+      set archived_at = now(), updated_at = now()
       where id = $3 and admin_user_id = $1 and target_user_id = $2
-      returning id
+        and archived_at is null
+      returning id, archived_at
     `,
     [adminUserId, targetUserId, noteId],
   );

@@ -145,6 +145,7 @@ test("the user details action opens the Figma drawer with live API data", async 
     readFile(new URL("../src/pages/admin-users/AdminUserDetailsDrawer.jsx", import.meta.url), "utf8"),
     readFile(new URL("../src/api/http.js", import.meta.url), "utf8"),
   ]);
+  const userNotesSource = drawerSource.slice(0, drawerSource.indexOf("function UserDetails"));
 
   assert.match(pageSource, /tooltip="Detalles de usuario"/);
   assert.match(pageSource, /onClick=\{\(\) => setDetailsUserId\(listedUser\.id\)\}/);
@@ -178,13 +179,35 @@ test("the user details action opens the Figma drawer with live API data", async 
   assert.match(drawerSource, /className="!size-7 !p-\[5px\]"/);
   assert.match(drawerSource, /api\.admin\.createUserNote/);
   assert.match(drawerSource, /api\.admin\.updateUserNote/);
-  assert.match(drawerSource, /api\.admin\.deleteUserNote/);
-  assert.match(drawerSource, /aria-label="Eliminar nota"/);
-  assert.match(drawerSource, /title="Eliminar nota"/);
-  assert.doesNotMatch(drawerSource, /theme: "Success"/);
+  assert.match(drawerSource, /api\.admin\.archiveUserNote/);
+  assert.match(drawerSource, /aria-label="Archivar nota"/);
+  assert.match(drawerSource, /title="Archivar nota"/);
+  assert.match(userNotesSource, /theme: "Success"/);
+  assert.match(userNotesSource, /title: "Nota archivada"/);
+  assert.match(userNotesSource, /title: "No se pudo archivar la nota"/);
+  assert.match(userNotesSource, /trigger=\{feedback\}/);
   assert.match(drawerSource, /<AlertToast/);
   assert.doesNotMatch(drawerSource, /readOnly/);
   assert.match(httpSource, /getUserDetails\(\{ signal, userId \}\)/);
   assert.match(httpSource, /listUserNotes\(\{ cursor, limit = 25, signal, userId \}\)/);
-  assert.match(httpSource, /deleteUserNote\(\{ noteId, userId \}\)/);
+  assert.match(httpSource, /archiveUserNote\(\{ noteId, userId \}\)/);
+  assert.match(httpSource, /notes\/\$\{encodeURIComponent\(noteId\)\}\/archive/);
+});
+
+test("editing an admin user reports successful and failed updates", async () => {
+  const [pageSource, drawerSource] = await Promise.all([
+    readFile(new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin-users/AdminUserDetailsDrawer.jsx", import.meta.url), "utf8"),
+  ]);
+
+  for (const source of [pageSource, drawerSource]) {
+    assert.match(source, /Usuario actualizado correctamente/);
+    assert.match(source, /No se pudo actualizar el usuario/);
+    assert.match(source, /No se pudieron guardar los cambios del usuario\./);
+    assert.match(source, /<AlertToast/);
+  }
+  assert.match(pageSource, /async function updateEditedUser[\s\S]*setStatusFeedback\(\{[\s\S]*tone: "success"/);
+  assert.match(pageSource, /catch \(requestError\)[\s\S]*tone: "danger"[\s\S]*throw requestError/);
+  assert.match(drawerSource, /const updateUser = async[\s\S]*setEditFeedback\(\{[\s\S]*theme: "Success"/);
+  assert.match(drawerSource, /theme: "Danger"[\s\S]*throw requestError/);
 });
