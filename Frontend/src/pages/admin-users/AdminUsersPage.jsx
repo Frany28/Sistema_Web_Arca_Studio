@@ -347,7 +347,7 @@ function AdminUsersPage({ empty = false }) {
     const targets = bulkTargetsByStatus[status] || [];
     if (!targets.length || isBulkUpdating || updatingUserId !== null) return;
     setStatusFeedback(null);
-    setPendingStatusChange({ users: targets, selectionCount: selectedCount, status });
+  setPendingStatusChange({ users: targets, status });
   }
 
   async function changeUsersStatus(targets, status) {

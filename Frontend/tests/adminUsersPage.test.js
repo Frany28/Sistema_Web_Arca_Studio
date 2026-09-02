@@ -49,10 +49,10 @@ test("selected admin users expose centered bulk status actions", async () => {
   assert.match(source, /label: "Deshabilitar", status: "inactive"/);
   assert.match(source, /label: "Activar", status: "active"/);
   assert.match(source, /Promise\.allSettled/);
-  assert.match(source, /selectionCount: selectedCount/);
+  assert.match(source, /targets\.length === 0/);
   assert.match(source, /<AlertToast/);
   assert.match(modalSource, /getBulkActionDetails/);
-  assert.match(modalSource, /no cumplen las condiciones para este cambio/);
+  assert.doesNotMatch(modalSource, /no cumplen las condiciones para este cambio/);
   assert.match(modalSource, /<Modal/);
 });
 

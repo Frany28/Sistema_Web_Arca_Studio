@@ -13,10 +13,20 @@ export function getBulkStatusTargets({
   const eligibleStatuses = ELIGIBLE_STATUSES_BY_TARGET[status];
   if (!eligibleStatuses) return [];
 
-  return users.filter((listedUser) => (
+  const selectedUsers = users.filter((listedUser) => (
     selectedUserIds.has(String(listedUser.id))
-    && String(listedUser.id) !== String(actorUserId)
-    && eligibleStatuses.has(listedUser.status)
   ));
-}
 
+  if (
+    selectedUsers.length === 0
+    || selectedUsers.length !== selectedUserIds.size
+    || selectedUsers.some((listedUser) => (
+      String(listedUser.id) === String(actorUserId)
+      || !eligibleStatuses.has(listedUser.status)
+    ))
+  ) {
+    return [];
+  }
+
+  return selectedUsers;
+}

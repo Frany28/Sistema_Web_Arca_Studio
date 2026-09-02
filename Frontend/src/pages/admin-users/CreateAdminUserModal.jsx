@@ -187,13 +187,10 @@ function AdminUserFormModal({ mode = "create", onClose, onSubmit, open, roles = 
         className="flex max-h-[calc(100dvh-32px)] w-full max-w-[696px] flex-col overflow-hidden rounded-[var(--radius-3)] border border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] shadow-[var(--shadow-e2)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-[16px] border-b border-[var(--color-neutral-200)] p-[16px]">
-          <div className="flex min-w-0 flex-col gap-[4px]">
-            <h2 id={`${mode}-admin-user-title`} className="text-heading-6 text-[var(--color-text-300)]">{editing ? "Editar usuario" : "Nuevo usuario"}</h2>
-            {!editing ? <p className="text-body-3 text-[var(--color-text-200)]">Completa la información para crear una cuenta en ARCA Studio.</p> : null}
-          </div>
-          <Button theme="Primary" type="Ghost" size="S" showText={false} showLeftIcon iconLeft={<CloseCircle size="20" color="currentColor" />} showRightIcon={false} disabled={submitting} aria-label={`Cerrar formulario de ${editing ? "edición" : "nuevo usuario"}`} tooltip={false} onClick={onClose} />
-        </div>
+        <header className="relative h-[62px] shrink-0 border-b border-[var(--color-neutral-200)]">
+          <h2 id={`${mode}-admin-user-title`} className="text-heading-4 absolute left-[16px] top-[16px] m-0 text-[var(--color-text-300)]">{editing ? "Editar usuario" : "Nuevo usuario"}</h2>
+          <Button theme="Primary" type="Ghost" size="S" className="!absolute !right-0 !top-0 !size-9 !p-[8px]" showText={false} showLeftIcon iconLeft={<CloseCircle size="20" color="currentColor" />} showRightIcon={false} disabled={submitting} aria-label={`Cerrar formulario de ${editing ? "edición" : "nuevo usuario"}`} tooltip={false} onClick={onClose} />
+        </header>
 
         <form id={`${mode}-admin-user-form`} className="min-h-0 overflow-y-auto" onSubmit={handleSubmit} noValidate>
           <fieldset disabled={submitting} className="flex flex-col p-[16px]">

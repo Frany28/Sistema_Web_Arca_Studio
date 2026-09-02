@@ -9,43 +9,45 @@ const USERS = [
   { id: 3, status: "inactive" },
   { id: 4, status: "active" },
 ];
-const selectedUserIds = new Set(USERS.map(({ id }) => String(id)));
-
-function targetIds(status, actorUserId = 4) {
+function targetIds(status, selectedIds, actorUserId = 4) {
   return getBulkStatusTargets({
     actorUserId,
-    selectedUserIds,
+    selectedUserIds: new Set(selectedIds.map(String)),
     status,
     users: USERS,
   }).map(({ id }) => id);
 }
 
-test("bulk suspension applies only to active users other than the current admin", () => {
-  assert.deepEqual(targetIds("blocked"), [1]);
+test("bulk suspension is enabled only when every selected user is active", () => {
+  assert.deepEqual(targetIds("blocked", [1]), [1]);
+  assert.deepEqual(targetIds("blocked", [1, 2]), []);
 });
 
-test("bulk disabling applies to active and suspended users", () => {
-  assert.deepEqual(targetIds("inactive"), [1, 2]);
+test("bulk disabling accepts a selection made only of active and suspended users", () => {
+  assert.deepEqual(targetIds("inactive", [1, 2]), [1, 2]);
+  assert.deepEqual(targetIds("inactive", [1, 3]), []);
 });
 
-test("bulk activation applies only to suspended and disabled users", () => {
-  assert.deepEqual(targetIds("active"), [2, 3]);
+test("bulk activation accepts a selection made only of suspended and disabled users", () => {
+  assert.deepEqual(targetIds("active", [2, 3]), [2, 3]);
+  assert.deepEqual(targetIds("active", [1, 2]), []);
 });
 
 test("bulk status policy rejects unsupported transitions", () => {
-  assert.deepEqual(targetIds("deleted"), []);
+  assert.deepEqual(targetIds("deleted", [1]), []);
 });
 
-test("a mixed partial selection routes every action to its eligible statuses", () => {
-  const mixedSelection = new Set(["1", "2", "3"]);
-  const targetsFor = (status) => getBulkStatusTargets({
-    actorUserId: 99,
-    selectedUserIds: mixedSelection,
-    status,
-    users: USERS,
-  }).map(({ id }) => id);
+test("a mixed selection does not enable actions for only a hidden subset", () => {
+  assert.deepEqual(targetIds("blocked", [1, 2, 3], 99), []);
+  assert.deepEqual(targetIds("inactive", [1, 2, 3], 99), []);
+  assert.deepEqual(targetIds("active", [1, 2, 3], 99), []);
+});
 
-  assert.deepEqual(targetsFor("blocked"), [1]);
-  assert.deepEqual(targetsFor("inactive"), [1, 2]);
-  assert.deepEqual(targetsFor("active"), [2, 3]);
+test("bulk actions cannot include the current administrator", () => {
+  assert.deepEqual(targetIds("blocked", [1, 4], 4), []);
+  assert.deepEqual(targetIds("inactive", [1, 4], 4), []);
+});
+
+test("bulk actions reject selections that are not present in the loaded users", () => {
+  assert.deepEqual(targetIds("blocked", [1, 999], 4), []);
 });

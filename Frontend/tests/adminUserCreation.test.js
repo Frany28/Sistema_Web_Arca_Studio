@@ -14,6 +14,9 @@ test("admin users expose the connected creation modal from both new actions", as
   assert.match(page, /<CreateAdminUserModal/);
   assert.match(modal, /role="dialog"/);
   assert.match(modal, /Crear usuario/);
+  assert.match(modal, /<header className="relative h-\[62px\][^"]*border-b/);
+  assert.match(modal, /text-heading-4 absolute left-\[16px\] top-\[16px\]/);
+  assert.doesNotMatch(modal, /Completa la información para crear una cuenta/);
   assert.match(modal, /<footer className="flex flex-col-reverse gap-\[16px\][^\n]*sm:flex-row sm:items-center">/);
   assert.equal((modal.match(/className="!w-full sm:min-w-0 sm:flex-1"/g) || []).length, 2);
   assert.match(page, /title="Usuario creado correctamente"/);
