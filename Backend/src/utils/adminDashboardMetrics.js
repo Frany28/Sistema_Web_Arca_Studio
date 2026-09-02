@@ -14,6 +14,7 @@ export function mapAdminDashboardMetrics(row = {}) {
       total: toNumber(row.active_projects_total),
     },
     files: {
+      latestUploadAt: row.files_latest_upload_at || null,
       total: toNumber(row.files_total),
       totalBytes: toNumber(row.files_total_bytes),
     },

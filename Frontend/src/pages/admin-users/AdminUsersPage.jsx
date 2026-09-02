@@ -23,13 +23,13 @@ import { useAuth } from "../../auth/AuthContext.jsx";
 import { getUserDisplay } from "../../auth/userDisplay.js";
 import NavigationBar from "../../components/EnvironmentNavigationBar.jsx";
 import NotificationsDrawer from "../../components/EnvironmentNotificationsDrawer.jsx";
+import AdminKpiMetric from "../../components/AdminKpiMetric.jsx";
 import Avatar from "../../components/ui/Avatar/Avatar.jsx";
 import Badge from "../../components/ui/Badge/Badge.jsx";
 import Button from "../../components/ui/Button/Button.jsx";
 import Checkbox from "../../components/ui/Checkbox/Checkbox.jsx";
 import DropdownMenu from "../../components/ui/DropdownMenu/DropdownMenu.jsx";
 import EmptyState from "../../components/ui/EmptyState/EmptyState.jsx";
-import IconContainer from "../../components/ui/IconContainer/IconContainer.jsx";
 import Input from "../../components/ui/Input/Input.jsx";
 import Loader from "../../components/ui/Loader/Loader.jsx";
 import Modal from "../../components/ui/Modal/Modal.jsx";
@@ -73,20 +73,6 @@ const BULK_FEEDBACK = {
   blocked: { singular: "Usuario suspendido", plural: "Usuarios suspendidos", singularVerb: "suspendió", pluralVerb: "suspendieron" },
   inactive: { singular: "Usuario deshabilitado", plural: "Usuarios deshabilitados", singularVerb: "deshabilitó", pluralVerb: "deshabilitaron" },
 };
-
-function Metric({ icon, iconType, label, value }) {
-  return (
-    <article className="flex w-[235px] min-w-[120px] shrink-0 items-center gap-[12px] pr-[16px]">
-      <IconContainer size="L" type={iconType} icon={icon} />
-      <div className="flex min-w-0 flex-col items-start justify-center gap-[2px]">
-        <h2 className="text-heading-8 m-0 whitespace-nowrap text-[var(--color-text-100)]">{label}</h2>
-        <strong className="text-heading-4 text-[var(--color-text-200)]">
-          {value === null || value === undefined ? "—" : NUMBER_FORMATTER.format(value)}
-        </strong>
-      </div>
-    </article>
-  );
-}
 
 function HeaderLabel({ children, filter = false }) {
   const Icon = filter ? Filter : ArrowSwapVertical;
@@ -511,10 +497,10 @@ function AdminUsersPage({ empty = false }) {
               <Loader preset="adminUserMetrics" label="Cargando métricas de usuarios" />
             ) : (
               <div className="flex w-full flex-wrap content-center items-center gap-y-[16px] border-y border-[var(--color-neutral-200)] py-[24px]">
-                <Metric label="Usuarios totales" value={metrics?.total} iconType="Accent" icon={<Profile2User size="24" color="currentColor" />} />
-                <Metric label="Usuarios activos" value={metrics?.active} iconType="Success" icon={<UserTick size="24" color="currentColor" />} />
-                <Metric label="Usuarios suspendidos" value={metrics?.suspended} iconType="Danger" icon={<UserMinus size="24" color="currentColor" />} />
-                <Metric label="Usuarios Deshabilitados" value={metrics?.disabled} iconType="Disabled" icon={<UserRemove size="24" color="currentColor" />} />
+                <AdminKpiMetric label="Usuarios totales" value={metrics?.total === null || metrics?.total === undefined ? "—" : NUMBER_FORMATTER.format(metrics.total)} iconType="Accent" icon={<Profile2User size="24" color="currentColor" />} />
+                <AdminKpiMetric label="Usuarios activos" value={metrics?.active === null || metrics?.active === undefined ? "—" : NUMBER_FORMATTER.format(metrics.active)} iconType="Success" icon={<UserTick size="24" color="currentColor" />} />
+                <AdminKpiMetric label="Usuarios suspendidos" value={metrics?.suspended === null || metrics?.suspended === undefined ? "—" : NUMBER_FORMATTER.format(metrics.suspended)} iconType="Danger" icon={<UserMinus size="24" color="currentColor" />} />
+                <AdminKpiMetric label="Usuarios Deshabilitados" value={metrics?.disabled === null || metrics?.disabled === undefined ? "—" : NUMBER_FORMATTER.format(metrics.disabled)} iconType="Disabled" icon={<UserRemove size="24" color="currentColor" />} />
               </div>
             )}
 

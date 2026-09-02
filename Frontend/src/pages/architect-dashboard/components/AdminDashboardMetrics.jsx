@@ -10,24 +10,10 @@ import Badge from "../../../components/ui/Badge/Badge.jsx";
 import Button from "../../../components/ui/Button/Button.jsx";
 import IconContainer from "../../../components/ui/IconContainer/IconContainer.jsx";
 import Loader from "../../../components/ui/Loader/Loader.jsx";
+import { formatStorage } from "../../../utils/fileMetrics.js";
 import { formatRelativeTime } from "../../../utils/relativeTime.js";
 
 const numberFormatter = new Intl.NumberFormat("es-VE");
-
-function formatStorage(bytes) {
-  const value = Number(bytes) || 0;
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  let unitIndex = 0;
-  let amount = value;
-
-  while (amount >= 1024 && unitIndex < units.length - 1) {
-    amount /= 1024;
-    unitIndex += 1;
-  }
-
-  const digits = amount >= 10 || unitIndex === 0 ? 0 : 1;
-  return `${amount.toLocaleString("es-VE", { maximumFractionDigits: digits })} ${units[unitIndex]}`;
-}
 
 function MetricItem({ badge, badgeTheme = "Success", className = "", icon, iconType, label, supportingText, value }) {
   return (

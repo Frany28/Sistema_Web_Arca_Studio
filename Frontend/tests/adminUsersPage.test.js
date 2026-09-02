@@ -3,16 +3,16 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("admin user management keeps the shared navigation and users tab active", async () => {
-  const source = await readFile(
-    new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url),
-    "utf8",
-  );
+  const [source, kpiSource] = await Promise.all([
+    readFile(new URL("../src/pages/admin-users/AdminUsersPage.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/AdminKpiMetric.jsx", import.meta.url), "utf8"),
+  ]);
 
   assert.match(source, /components\/EnvironmentNavigationBar\.jsx/);
   assert.match(source, /activeItemId="users"/);
   assert.match(source, /Gestión de usuarios/);
-  assert.match(source, /w-\[235px\]/);
-  assert.match(source, /text-heading-4/);
+  assert.match(kpiSource, /w-\[235px\]/);
+  assert.match(kpiSource, /text-heading-4/);
   assert.match(source, /iconType="Disabled"/);
   assert.match(source, /api\.admin\.listUsers/);
 });

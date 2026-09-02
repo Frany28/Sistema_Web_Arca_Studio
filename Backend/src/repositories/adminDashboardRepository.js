@@ -492,6 +492,12 @@ export async function getAdminDashboardMetrics() {
           and file_version.is_current = true
           and file_version.deleted_at is null
         where file.status <> 'deleted' and file.deleted_at is null) as files_total_bytes,
+      (select max(file_version.created_at)
+        from public.files file
+        inner join public.file_versions file_version
+          on file_version.file_id = file.id
+          and file_version.deleted_at is null
+        where file.status <> 'deleted' and file.deleted_at is null) as files_latest_upload_at,
       (select count(*) from public.project_requests
         where status in ('pending_verification', 'pending_review')
           and deleted_at is null) as requests_total,

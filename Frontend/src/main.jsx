@@ -14,6 +14,9 @@ const ArchitectDashboard = lazy(
 const AdminUsersPage = lazy(
   () => import("./pages/admin-users/AdminUsersPage.jsx"),
 );
+const AdminFilesPage = lazy(
+  () => import("./pages/admin-files/AdminFilesPage.jsx"),
+);
 const CreateAccount = lazy(() => import("./pages/CreateAccount.jsx"));
 const CreatePassword = lazy(() => import("./pages/CreatePassword.jsx"));
 const EmptyArchitectDashboardExample = lazy(
@@ -103,6 +106,7 @@ createRoot(document.getElementById("root")).render(
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              <Route path="/archivos" element={<AdminFilesPage />} />
               <Route path="/usuarios" element={<AdminUsersPage />} />
               <Route
                 path="/usuarios-vacio"
