@@ -110,6 +110,31 @@ test("admin user editing validates the identifier and the shared account fields"
   assert.equal(adminUserUpdateSchema.safeParse({ params: { userId: "0" }, body: result.data.body }).success, false);
 });
 
+test("admin user editing accepts an optional password that follows the shared security policy", () => {
+  const body = {
+    fullName: "Armando Carroz",
+    companyName: "ARCA Studio",
+    email: "armando@arcastudio.com",
+    roleCode: "architect",
+    status: "active",
+  };
+
+  assert.equal(adminUserUpdateSchema.safeParse({ params: { userId: "42" }, body }).success, true);
+  assert.equal(adminUserUpdateSchema.safeParse({ params: { userId: "42" }, body: { ...body, password: "Nueva2026*" } }).success, true);
+  assert.equal(adminUserUpdateSchema.safeParse({ params: { userId: "42" }, body: { ...body, password: "nueva2026*" } }).success, false);
+  assert.equal(adminUserUpdateSchema.safeParse({ params: { userId: "42" }, body: { ...body, password: "NuevaClave*" } }).success, false);
+  assert.equal(adminUserUpdateSchema.safeParse({ params: { userId: "42" }, body: { ...body, password: "Nueva2026" } }).success, false);
+});
+
+test("admin user password changes are hashed and persisted without exposing plaintext", () => {
+  const service = readFileSync(new URL("../src/services/adminUserService.js", import.meta.url), "utf8");
+  const repository = readFileSync(new URL("../src/repositories/adminUserRepository.js", import.meta.url), "utf8");
+
+  assert.match(service, /payload\.password[\s\S]*bcrypt\.hash\(payload\.password, 10\)/);
+  assert.match(repository, /password_hash = coalesce\(\$11, u\.password_hash\)/);
+  assert.doesNotMatch(repository, /password\s*=\s*\$11/);
+});
+
 test("admin user creation persists during staging without requiring activation email", () => {
   const service = readFileSync(new URL("../src/services/adminUserService.js", import.meta.url), "utf8");
   const controller = readFileSync(new URL("../src/controllers/adminUserController.js", import.meta.url), "utf8");

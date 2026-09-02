@@ -185,10 +185,14 @@ export async function updateAdminUser({ actorUserId, payload, userId }) {
 
   let updated;
   try {
+    const passwordHash = payload.password
+      ? await bcrypt.hash(payload.password, 10)
+      : null;
     updated = await updateAdminUserRecord({
       ...payload,
       firstName: payload.fullName.firstName,
       lastName: payload.fullName.lastName,
+      passwordHash,
       userId,
     });
   } catch (error) {

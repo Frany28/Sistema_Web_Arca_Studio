@@ -20,7 +20,7 @@ test("admin users expose the connected creation modal from both new actions", as
   assert.match(modal, /<ModalCloseButton/);
   assert.doesNotMatch(modal, /CloseCircle/);
   assert.match(modal, /<footer className="flex flex-col-reverse gap-\[16px\][^\n]*sm:flex-row sm:items-center">/);
-  assert.equal((modal.match(/className="!h-\[41px\] !w-full sm:min-w-0 sm:flex-1"/g) || []).length, 2);
+  assert.equal((modal.match(/className="!h-\[41px\] !w-full sm:min-w-0 sm:flex-1"/g) || []).length, 4);
   assert.match(page, /title="Usuario creado correctamente"/);
   assert.match(page, /El usuario quedó registrado\. El enlace de activación se enviará cuando se habilite este flujo\./);
   assert.match(page, /icon=\{<ShieldSecurity size="20" color="currentColor" \/>\}/);
@@ -75,6 +75,12 @@ test("the user details drawer opens the connected Figma edit modal", async () =>
   assert.match(formModal, /Editar usuario/);
   assert.match(formModal, /max-w-\[696px\]/);
   assert.match(formModal, /editing \? "Siguiente" : "Enviar código de activación"/);
+  assert.match(formModal, /setEditStep\("password"\)/);
+  assert.match(formModal, /label="Cambiar contraseña"[\s\S]*showPasswordStrength/);
+  assert.match(formModal, /label="Confirmar contraseña"/);
+  assert.match(formModal, />Anterior<\/Button>/);
+  assert.match(formModal, /Confirmar cambios/);
+  assert.match(formModal, /\.\.\.\(password \? \{ password \} : \{\}\)/);
   assert.match(http, /updateUser\(\{ payload, userId \}\)[\s\S]*method: "PATCH"/);
 });
 

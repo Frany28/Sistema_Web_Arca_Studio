@@ -44,6 +44,7 @@ export async function updateAdminUserRecord({
   email,
   firstName,
   lastName,
+  passwordHash,
   phone,
   roleCode,
   secondaryPhone,
@@ -104,13 +105,14 @@ export async function updateAdminUserRecord({
         update public.users u
         set client_id = $2, role_id = $3, email = $4, first_name = $5,
           last_name = $6, phone = $7, secondary_phone = $8,
-          company_name = $9, status = $10::public.user_status, updated_at = now()
+          company_name = $9, status = $10::public.user_status,
+          password_hash = coalesce($11, u.password_hash), updated_at = now()
         where u.id = $1 and u.deleted_at is null
         returning u.id, u.email, u.first_name, u.last_name, u.status,
           (u.profile_photo_url is not null and btrim(u.profile_photo_url) <> '') as has_profile_photo,
           u.last_login_at, u.created_at
       `,
-      [userId, clientId, role.id, email, firstName, lastName, phone, secondaryPhone, companyName, status],
+      [userId, clientId, role.id, email, firstName, lastName, phone, secondaryPhone, companyName, status, passwordHash],
     );
     await client.query("commit");
     return {

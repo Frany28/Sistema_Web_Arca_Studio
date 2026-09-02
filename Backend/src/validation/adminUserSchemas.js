@@ -57,7 +57,7 @@ export const adminUserListSchema = z.object({
   }).passthrough(),
 });
 
-const adminUserMutationBody = z.object({
+const adminUserMutationFields = {
   fullName,
   companyName: z.string().trim().max(150).optional().transform((value) => value || null),
   email: z.string().trim().pipe(z.email("Correo inválido.")).transform((value) => value.toLowerCase()),
@@ -65,9 +65,29 @@ const adminUserMutationBody = z.object({
   phone: optionalPhone,
   secondaryPhone: optionalPhone,
   status: z.enum(["active", "blocked", "inactive"]),
+};
+
+const passwordsMatchPolicy = z.string()
+  .min(8, "La contraseña debe tener al menos 8 caracteres.")
+  .max(72, "La contraseña no puede superar 72 caracteres.")
+  .regex(/[A-Z]/, "La contraseña debe incluir una mayúscula.")
+  .regex(/\d/, "La contraseña debe incluir un número.")
+  .regex(/[^A-Za-z0-9]/, "La contraseña debe incluir un carácter especial.");
+
+const differentPhones = (body) => !body.phone || body.phone !== body.secondaryPhone;
+const differentPhonesIssue = { message: "Los teléfonos deben ser diferentes.", path: ["secondaryPhone"] };
+
+const adminUserMutationBody = z.object(adminUserMutationFields).refine(
+  differentPhones,
+  differentPhonesIssue,
+);
+
+const adminUserUpdateBody = z.object({
+  ...adminUserMutationFields,
+  password: passwordsMatchPolicy.optional(),
 }).refine(
-  (body) => !body.phone || body.phone !== body.secondaryPhone,
-  { message: "Los teléfonos deben ser diferentes.", path: ["secondaryPhone"] },
+  differentPhones,
+  differentPhonesIssue,
 );
 
 export const adminUserCreateSchema = z.object({
@@ -78,7 +98,7 @@ export const adminUserUpdateSchema = z.object({
   params: z.object({
     userId: z.coerce.number().int().positive(),
   }),
-  body: adminUserMutationBody,
+  body: adminUserUpdateBody,
 });
 
 export const adminUserStatusSchema = z.object({
