@@ -27,13 +27,20 @@ const ACTION_DETAILS = {
 
 function getBulkActionDetails(change) {
   const count = change.users.length;
-  const isPlural = count !== 1;
-  const subject = count === 1 ? "a 1 usuario" : `a ${count} usuarios`;
+  if (count === 1) {
+    const [selectedUser] = change.users;
+    const actionKey = change.status === "active"
+      ? `activeFrom${selectedUser.status === "blocked" ? "Blocked" : "Inactive"}`
+      : change.status;
+    return ACTION_DETAILS[actionKey];
+  }
+
+  const subject = `a ${count} usuarios`;
 
   if (change.status === "blocked") {
     return {
       title: `¿Deseas suspender ${subject}?`,
-      description: `${isPlural ? "Perderán" : "Perderá"} temporalmente el acceso al sistema hasta que un administrador ${isPlural ? "los reactive" : "lo reactive"}.`,
+      description: "Perderán temporalmente el acceso al sistema hasta que un administrador los reactive.",
       ariaLabel: "Confirmar suspensión de usuarios seleccionados",
     };
   }
@@ -41,14 +48,14 @@ function getBulkActionDetails(change) {
   if (change.status === "inactive") {
     return {
       title: `¿Deseas deshabilitar ${subject}?`,
-      description: `${isPlural ? "Perderán" : "Perderá"} el acceso y no ${isPlural ? "estarán disponibles" : "estará disponible"} para nuevas asignaciones. Su historial se conservará.`,
+      description: "Perderán el acceso y no estarán disponibles para nuevas asignaciones. Su historial se conservará.",
       ariaLabel: "Confirmar deshabilitación de usuarios seleccionados",
     };
   }
 
   return {
     title: `¿Deseas activar ${subject}?`,
-    description: `${isPlural ? "Recuperarán" : "Recuperará"} el acceso al sistema y ${isPlural ? "podrán" : "podrá"} volver a realizar las acciones permitidas por su rol.`,
+    description: "Recuperarán el acceso al sistema y podrán volver a realizar las acciones permitidas por su rol.",
     ariaLabel: "Confirmar activación de usuarios seleccionados",
   };
 }
@@ -75,7 +82,7 @@ function AdminUserStatusModal({ change, onCancel, onConfirm }) {
       secondaryActionLabel="Cancelar"
       primaryActionLabel="Confirmar"
       secondaryActionTheme="Danger"
-      primaryActionTheme={change.status === "active" ? "Primary" : "Danger"}
+      primaryActionTheme="Danger"
       icon={(
         <Warning2
           size="20"

@@ -52,6 +52,8 @@ test("selected admin users expose centered bulk status actions", async () => {
   assert.match(source, /targets\.length === 0/);
   assert.match(source, /<AlertToast/);
   assert.match(modalSource, /getBulkActionDetails/);
+  assert.doesNotMatch(modalSource, /a 1 usuario/);
+  assert.match(modalSource, /count === 1[\s\S]*return ACTION_DETAILS\[actionKey\]/);
   assert.doesNotMatch(modalSource, /no cumplen las condiciones para este cambio/);
   assert.match(modalSource, /<Modal/);
 });

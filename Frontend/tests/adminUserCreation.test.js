@@ -20,7 +20,7 @@ test("admin users expose the connected creation modal from both new actions", as
   assert.match(modal, /<ModalCloseButton/);
   assert.doesNotMatch(modal, /CloseCircle/);
   assert.match(modal, /<footer className="flex flex-col-reverse gap-\[16px\][^\n]*sm:flex-row sm:items-center">/);
-  assert.equal((modal.match(/className="!w-full sm:min-w-0 sm:flex-1"/g) || []).length, 2);
+  assert.equal((modal.match(/className="!h-\[41px\] !w-full sm:min-w-0 sm:flex-1"/g) || []).length, 2);
   assert.match(page, /title="Usuario creado correctamente"/);
   assert.match(page, /El usuario quedó registrado\. El enlace de activación se enviará cuando se habilite este flujo\./);
   assert.match(page, /icon=\{<ShieldSecurity size="20" color="currentColor" \/>\}/);
@@ -51,7 +51,7 @@ test("admin user row actions expose the connected Figma status menu", async () =
   assert.match(modal, /¿Deseas activar al usuario\?/);
   assert.match(modal, /onPrimaryAction=\{onConfirm\}/);
   assert.match(modal, /secondaryActionTheme="Danger"/);
-  assert.match(modal, /primaryActionTheme=\{change\.status === "active" \? "Primary" : "Danger"\}/);
+  assert.match(modal, /primaryActionTheme="Danger"/);
   assert.match(modal, /text-\[var\(--color-danger-100\)\]/);
   assert.doesNotMatch(modal, /text-\[var\(--color-warning-200\)\]/);
   assert.match(page, /if \(change\) changeUserStatus\(change\.user, change\.status\)/);
