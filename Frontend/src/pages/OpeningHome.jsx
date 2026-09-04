@@ -1,19 +1,29 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
-import { motion as Motion, useReducedMotion } from "motion/react";
+import {
+  motion as Motion,
+  useMotionValue,
+  useReducedMotion,
+} from "motion/react";
 import { useNavigate } from "react-router-dom";
 
 import constructionHeroAsset from "../assets/home/arca-construction-hero.png";
 import homeHeroAsset from "../assets/home/arca-home-hero.png";
 import interiorDesignHeroAsset from "../assets/home/arca-interior-design-hero.png";
+import statementVideoMp4Asset from "../assets/home/arca-statement-bg.mp4";
+import statementVideoWebmAsset from "../assets/home/arca-statement-bg.webm";
+import statementPosterAsset from "../assets/home/arca-statement-poster.webp";
 import ArcaOpeningMark, {
   MOTION_DURATION_SECONDS,
 } from "../components/ui/ArcaOpeningMark/ArcaOpeningMark.jsx";
 import HomeHeader from "../components/ui/HomeHeader/HomeHeader.jsx";
 import HomeScrollPanel from "../components/ui/HomeScrollPanel/HomeScrollPanel.jsx";
+import HomeStatementPanel from "../components/ui/HomeStatementPanel/HomeStatementPanel.jsx";
 import {
+  HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
+  advanceHomeStatementProgress,
   advanceWheelGesture,
   createHomeScrollState,
   createScrollbarHomeScrollState,
@@ -35,6 +45,9 @@ const WHEEL_GESTURE_IDLE_MS = 180;
 const SCROLL_SETTLE_DELAY_MS = 180;
 const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
+const STATEMENT_PANEL_INDEX = 3;
+const STATEMENT_KEYBOARD_DURATION_SECONDS = 0.35;
+const STATEMENT_PHRASE = "Piénsalo y lo hacemos realidad.";
 const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 
 gsap.registerPlugin(ScrollToPlugin);
@@ -64,6 +77,7 @@ function OpeningHome() {
   const [initialScrollReady, setInitialScrollReady] = useState(false);
   const homeScrollerRef = useRef(null);
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
+  const statementProgress = useMotionValue(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +140,10 @@ function OpeningHome() {
     let activeTween;
     let resizeFrame;
     let scrollSettleTimer;
+    let statementFrame;
+    let statementDelta = 0;
+    let statementTween;
+    let statementWheelScrubbing = false;
     let wheelIdleTimer;
     let wheelGestureState = createWheelGestureState();
     let touchGesture = null;
@@ -138,6 +156,61 @@ function OpeningHome() {
       setNavigationState(nextState);
     };
 
+    const commitStatementProgress = (nextProgress) => {
+      const currentState = navigationStateRef.current;
+      statementProgress.set(nextProgress);
+
+      if (currentState.panelIndex !== STATEMENT_PANEL_INDEX) return;
+
+      const nextPhase =
+        nextProgress <= 0
+          ? HOME_SCROLL_PHASES.IMAGE
+          : nextProgress >= 1
+            ? HOME_SCROLL_PHASES.TITLE
+            : HOME_SCROLL_PHASES.EFFECT;
+
+      if (currentState.phase === nextPhase) return;
+
+      commitNavigationState({
+        panelIndex: STATEMENT_PANEL_INDEX,
+        phase: nextPhase,
+        entryDirection:
+          nextPhase === HOME_SCROLL_PHASES.IMAGE
+            ? HOME_SCROLL_DIRECTIONS.DOWN
+            : null,
+      });
+    };
+
+    const queueStatementDelta = (deltaY) => {
+      statementDelta += deltaY;
+      if (statementFrame) return;
+
+      statementFrame = window.requestAnimationFrame(() => {
+        statementFrame = undefined;
+        const pendingDelta = statementDelta;
+        statementDelta = 0;
+
+        if (
+          activeTween ||
+          navigationStateRef.current.panelIndex !== STATEMENT_PANEL_INDEX
+        ) {
+          return;
+        }
+
+        const nextProgress = advanceHomeStatementProgress(
+          statementProgress.get(),
+          pendingDelta,
+          scroller.clientHeight,
+          reduceMotion,
+        );
+
+        commitStatementProgress(nextProgress);
+        if (nextProgress === 0 || nextProgress === 1) {
+          statementWheelScrubbing = false;
+        }
+      });
+    };
+
     const alignToPanel = (nextState) => {
       if (activeTween) return false;
 
@@ -146,6 +219,16 @@ function OpeningHome() {
       const targetPanel = panels[nextState.panelIndex];
       const targetScrollTop = targetPanel?.offsetTop ?? 0;
       const needsAlignment = Math.abs(scroller.scrollTop - targetScrollTop) > 1;
+
+      statementTween?.kill();
+      statementTween = undefined;
+      if (nextState.panelIndex === STATEMENT_PANEL_INDEX) {
+        statementProgress.set(
+          nextState.phase === HOME_SCROLL_PHASES.TITLE ? 1 : 0,
+        );
+      } else if (currentState.panelIndex === STATEMENT_PANEL_INDEX) {
+        statementProgress.set(0);
+      }
 
       commitNavigationState(nextState);
 
@@ -193,8 +276,37 @@ function OpeningHome() {
       return alignToPanel(nextState);
     };
 
+    const animateStatementTo = (targetProgress) => {
+      statementTween?.kill();
+      statementTween = undefined;
+
+      if (reduceMotion) {
+        commitStatementProgress(targetProgress);
+        return;
+      }
+
+      const animatedProgress = { value: statementProgress.get() };
+      commitNavigationState({
+        panelIndex: STATEMENT_PANEL_INDEX,
+        phase: HOME_SCROLL_PHASES.EFFECT,
+        entryDirection: null,
+      });
+      statementTween = gsap.to(animatedProgress, {
+        value: targetProgress,
+        duration: STATEMENT_KEYBOARD_DURATION_SECONDS,
+        ease: "power2.out",
+        overwrite: true,
+        onUpdate: () => statementProgress.set(animatedProgress.value),
+        onComplete: () => {
+          statementTween = undefined;
+          commitStatementProgress(targetProgress);
+        },
+      });
+    };
+
     const resetWheelGesture = () => {
       wheelGestureState = createWheelGestureState();
+      statementWheelScrubbing = false;
     };
 
     const handleWheel = (event) => {
@@ -209,12 +321,51 @@ function OpeningHome() {
         WHEEL_GESTURE_IDLE_MS,
       );
 
+      statementTween?.kill();
+      statementTween = undefined;
+
+      const currentState = navigationStateRef.current;
+      const isStatementReady =
+        currentState.panelIndex === STATEMENT_PANEL_INDEX && !activeTween;
+
+      if (isStatementReady && statementWheelScrubbing) {
+        queueStatementDelta(delta.y);
+        return;
+      }
+
       wheelGestureState = advanceWheelGesture(
         wheelGestureState,
         delta.y,
         WHEEL_GESTURE_THRESHOLD_PX,
         event.timeStamp,
       );
+
+      if (
+        isStatementReady &&
+        wheelGestureState.triggeredDirection !== null
+      ) {
+        const direction = wheelGestureState.triggeredDirection;
+        const currentProgress = statementProgress.get();
+
+        if (
+          currentProgress <= 0 &&
+          direction === HOME_SCROLL_DIRECTIONS.UP
+        ) {
+          moveByDirection(direction);
+          return;
+        }
+
+        if (
+          currentProgress >= 1 &&
+          direction === HOME_SCROLL_DIRECTIONS.DOWN
+        ) {
+          return;
+        }
+
+        statementWheelScrubbing = true;
+        queueStatementDelta(wheelGestureState.accumulator);
+        return;
+      }
 
       if (
         !activeTween &&

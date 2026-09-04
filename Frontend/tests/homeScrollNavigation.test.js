@@ -4,11 +4,14 @@ import test from "node:test";
 import {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
+  advanceHomeStatementProgress,
   advanceWheelGesture,
   createHomeScrollState,
   createScrollbarHomeScrollState,
   createWheelGestureState,
   getKeyboardDirection,
+  getHomeStatementTravelDistance,
+  getHomeStatementVisualState,
   getNearestPanelIndex,
   getNextHomeScrollState,
   getSwipeDirection,
@@ -228,4 +231,43 @@ test("scrollbar alignment selects the closest panel", () => {
   assert.equal(getNearestPanelIndex(620, offsets), 1);
   assert.equal(getNearestPanelIndex(1500, offsets), 2);
   assert.equal(getNearestPanelIndex(900, offsets), 1);
+});
+
+test("statement progress follows scroll deltas and reverses from any point", () => {
+  const downProgress = advanceHomeStatementProgress(0, 100, 1000);
+  const reversedProgress = advanceHomeStatementProgress(
+    downProgress,
+    -50,
+    1000,
+  );
+
+  assert.equal(downProgress, 1 / 3);
+  assert.equal(reversedProgress, 1 / 6);
+  assert.equal(advanceHomeStatementProgress(0.9, 100, 1000), 1);
+  assert.equal(advanceHomeStatementProgress(0.1, -100, 1000), 0);
+});
+
+test("statement travel distance stays fast and responsive", () => {
+  assert.equal(getHomeStatementTravelDistance(400), 200);
+  assert.equal(getHomeStatementTravelDistance(900), 270);
+  assert.equal(getHomeStatementTravelDistance(1400), 320);
+});
+
+test("reduced motion keeps statement endpoints without intermediate zoom", () => {
+  assert.equal(advanceHomeStatementProgress(0.4, 1, 900, true), 1);
+  assert.equal(advanceHomeStatementProgress(0.6, -1, 900, true), 0);
+});
+
+test("statement visual state zooms out and reveals the black surround", () => {
+  assert.deepEqual(getHomeStatementVisualState(0), {
+    progress: 0,
+    maskScale: 12,
+    overlayOpacity: 0,
+  });
+  assert.deepEqual(getHomeStatementVisualState(1), {
+    progress: 1,
+    maskScale: 1,
+    overlayOpacity: 1,
+  });
+  assert.ok(getHomeStatementVisualState(0.5).maskScale < 3);
 });

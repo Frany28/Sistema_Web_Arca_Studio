@@ -1,6 +1,7 @@
 const HOME_SCROLL_PHASES = Object.freeze({
   IMAGE: "image",
   TITLE: "title",
+  EFFECT: "effect",
 });
 
 const HOME_SCROLL_DIRECTIONS = Object.freeze({
@@ -13,6 +14,67 @@ const WHEEL_REARM_MIN_DELAY_MS = 220;
 const WHEEL_DECAY_MAGNITUDE_PX = 6;
 const WHEEL_NEW_IMPULSE_MAGNITUDE_PX = 10;
 const WHEEL_NEW_IMPULSE_RATIO = 1.8;
+const STATEMENT_MIN_TRAVEL_PX = 200;
+const STATEMENT_MAX_TRAVEL_PX = 320;
+const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.3;
+const STATEMENT_INITIAL_MASK_SCALE = 12;
+const STATEMENT_OVERLAY_REVEAL_PROGRESS = 0.15;
+
+function clampHomeStatementProgress(progress) {
+  if (!Number.isFinite(progress)) return 0;
+  return Math.min(Math.max(progress, 0), 1);
+}
+
+function getHomeStatementTravelDistance(viewportHeight) {
+  const safeViewportHeight = Number.isFinite(viewportHeight)
+    ? viewportHeight
+    : 0;
+
+  return Math.min(
+    Math.max(
+      safeViewportHeight * STATEMENT_TRAVEL_VIEWPORT_RATIO,
+      STATEMENT_MIN_TRAVEL_PX,
+    ),
+    STATEMENT_MAX_TRAVEL_PX,
+  );
+}
+
+function advanceHomeStatementProgress(
+  progress,
+  deltaY,
+  viewportHeight,
+  reduceMotion = false,
+) {
+  const currentProgress = clampHomeStatementProgress(progress);
+
+  if (!Number.isFinite(deltaY) || deltaY === 0) {
+    return currentProgress;
+  }
+
+  if (reduceMotion) {
+    return deltaY > 0 ? 1 : 0;
+  }
+
+  return clampHomeStatementProgress(
+    currentProgress + deltaY / getHomeStatementTravelDistance(viewportHeight),
+  );
+}
+
+function getHomeStatementVisualState(progress) {
+  const normalizedProgress = clampHomeStatementProgress(progress);
+  const easedProgress = 1 - (1 - normalizedProgress) ** 3;
+
+  return {
+    progress: normalizedProgress,
+    maskScale:
+      STATEMENT_INITIAL_MASK_SCALE -
+      (STATEMENT_INITIAL_MASK_SCALE - 1) * easedProgress,
+    overlayOpacity: Math.min(
+      normalizedProgress / STATEMENT_OVERLAY_REVEAL_PROGRESS,
+      1,
+    ),
+  };
+}
 
 function createWheelGestureState() {
   return {
@@ -209,13 +271,17 @@ function getNearestPanelIndex(scrollTop, panelOffsets) {
 export {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
+  advanceHomeStatementProgress,
   advanceWheelGesture,
+  clampHomeStatementProgress,
   createHomeScrollState,
   createScrollbarHomeScrollState,
   createWheelGestureState,
   getKeyboardDirection,
   getNearestPanelIndex,
   getNextHomeScrollState,
+  getHomeStatementTravelDistance,
+  getHomeStatementVisualState,
   getSwipeDirection,
   normalizeWheelDelta,
 };
