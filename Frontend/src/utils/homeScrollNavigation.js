@@ -17,7 +17,7 @@ const WHEEL_NEW_IMPULSE_RATIO = 1.8;
 const STATEMENT_MIN_TRAVEL_PX = 200;
 const STATEMENT_MAX_TRAVEL_PX = 320;
 const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.3;
-const STATEMENT_INITIAL_MASK_SCALE = 12;
+const STATEMENT_INITIAL_MASK_SCALE = 24;
 const STATEMENT_OVERLAY_REVEAL_PROGRESS = 0.15;
 
 function clampHomeStatementProgress(progress) {
@@ -62,7 +62,8 @@ function advanceHomeStatementProgress(
 
 function getHomeStatementVisualState(progress) {
   const normalizedProgress = clampHomeStatementProgress(progress);
-  const easedProgress = 1 - (1 - normalizedProgress) ** 3;
+  const easedProgress =
+    normalizedProgress ** 2 * (3 - 2 * normalizedProgress);
 
   return {
     progress: normalizedProgress,

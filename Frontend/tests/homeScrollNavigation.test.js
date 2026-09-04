@@ -285,7 +285,7 @@ test("reduced motion keeps statement endpoints without intermediate zoom", () =>
 test("statement visual state zooms out and reveals the black surround", () => {
   assert.deepEqual(getHomeStatementVisualState(0), {
     progress: 0,
-    maskScale: 12,
+    maskScale: 24,
     overlayOpacity: 0,
   });
   assert.deepEqual(getHomeStatementVisualState(1), {
@@ -293,5 +293,6 @@ test("statement visual state zooms out and reveals the black surround", () => {
     maskScale: 1,
     overlayOpacity: 1,
   });
-  assert.ok(getHomeStatementVisualState(0.5).maskScale < 3);
+  assert.equal(getHomeStatementVisualState(0.5).maskScale, 12.5);
+  assert.ok(getHomeStatementVisualState(0.05).maskScale > 23.8);
 });

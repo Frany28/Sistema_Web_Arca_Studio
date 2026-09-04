@@ -214,6 +214,9 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /<source src=\{mp4Source\}/);
   assert.match(statementPanelSource, /<mask/);
   assert.match(statementPanelSource, /<Motion\.text/);
+  assert.match(statementPanelSource, /useSpring\(progress/);
+  assert.match(statementPanelSource, /stiffness: 180/);
+  assert.match(statementPanelSource, /reduceMotion \? progress : smoothedProgress/);
   assert.match(statementPanelSource, /text-\[clamp\(24px,3\.2vw,46px\)\]/);
   assert.match(statementPanelSource, /aria-hidden=\{!active\}/);
   assert.match(statementPanelSource, /aria-hidden=\{!statementVisible\}/);

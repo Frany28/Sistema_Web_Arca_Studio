@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { motion as Motion, useTransform } from "motion/react";
+import {
+  motion as Motion,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "motion/react";
 
 import { getHomeStatementVisualState } from "../../../utils/homeScrollNavigation.js";
 
@@ -15,14 +20,21 @@ function HomeStatementPanel({
   statementVisible = false,
   webmSource,
 }) {
+  const reduceMotion = useReducedMotion();
   const videoRef = useRef(null);
   const [videoFailed, setVideoFailed] = useState(false);
+  const smoothedProgress = useSpring(progress, {
+    damping: 28,
+    mass: 0.55,
+    stiffness: 180,
+  });
+  const visualProgress = reduceMotion ? progress : smoothedProgress;
   const maskScale = useTransform(
-    progress,
+    visualProgress,
     (value) => getHomeStatementVisualState(value).maskScale,
   );
   const overlayOpacity = useTransform(
-    progress,
+    visualProgress,
     (value) => getHomeStatementVisualState(value).overlayOpacity,
   );
 
