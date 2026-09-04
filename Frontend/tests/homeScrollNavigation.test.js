@@ -137,6 +137,48 @@ test("trackpad direction changes reset an incomplete accumulator", () => {
   assert.equal(gesture.triggeredDirection, null);
 });
 
+test("a new trackpad impulse rearms after the previous inertia decays", () => {
+  let gesture = createWheelGestureState();
+
+  gesture = advanceWheelGesture(gesture, 18, 32, 0);
+  gesture = advanceWheelGesture(gesture, 18, 32, 20);
+  assert.equal(gesture.triggeredDirection, DOWN);
+
+  gesture = advanceWheelGesture(gesture, 12, 32, 70);
+  gesture = advanceWheelGesture(gesture, 7, 32, 120);
+  gesture = advanceWheelGesture(gesture, 3, 32, 190);
+  assert.equal(gesture.triggeredDirection, null);
+
+  gesture = advanceWheelGesture(gesture, 14, 32, 280);
+  assert.equal(gesture.triggeredDirection, null);
+  assert.equal(gesture.consumed, false);
+
+  gesture = advanceWheelGesture(gesture, 20, 32, 300);
+  assert.equal(gesture.triggeredDirection, DOWN);
+});
+
+test("trackpad inertia cannot rearm without decaying first", () => {
+  let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
+
+  gesture = advanceWheelGesture(gesture, 18, 32, 250);
+  gesture = advanceWheelGesture(gesture, 14, 32, 300);
+  gesture = advanceWheelGesture(gesture, 11, 32, 350);
+
+  assert.equal(gesture.triggeredDirection, null);
+  assert.equal(gesture.consumed, true);
+});
+
+test("an intentional opposite trackpad gesture rearms after the lock window", () => {
+  let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
+
+  gesture = advanceWheelGesture(gesture, -14, 32, 240);
+  assert.equal(gesture.consumed, false);
+  assert.equal(gesture.triggeredDirection, null);
+
+  gesture = advanceWheelGesture(gesture, -20, 32, 260);
+  assert.equal(gesture.triggeredDirection, UP);
+});
+
 test("touch gestures require distance and vertical dominance", () => {
   assert.equal(
     getSwipeDirection({ startX: 100, startY: 160, endX: 105, endY: 90 }),

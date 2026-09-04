@@ -9,6 +9,10 @@ const HOME_SCROLL_DIRECTIONS = Object.freeze({
 });
 
 const WHEEL_LINE_HEIGHT_PX = 16;
+const WHEEL_REARM_MIN_DELAY_MS = 220;
+const WHEEL_DECAY_MAGNITUDE_PX = 6;
+const WHEEL_NEW_IMPULSE_MAGNITUDE_PX = 10;
+const WHEEL_NEW_IMPULSE_RATIO = 1.8;
 
 function createWheelGestureState() {
   return {
@@ -16,25 +20,68 @@ function createWheelGestureState() {
     direction: null,
     consumed: false,
     triggeredDirection: null,
+    lastMagnitude: 0,
+    minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
+    lastTriggerTime: Number.NEGATIVE_INFINITY,
   };
 }
 
-function advanceWheelGesture(state, deltaY, threshold = 32) {
-  if (!state || state.consumed || !Number.isFinite(deltaY) || deltaY === 0) {
+function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
+  if (!Number.isFinite(deltaY) || deltaY === 0) {
     return {
       ...(state ?? createWheelGestureState()),
       triggeredDirection: null,
     };
   }
 
+  const currentState = state ?? createWheelGestureState();
   const direction =
     deltaY > 0
       ? HOME_SCROLL_DIRECTIONS.DOWN
       : HOME_SCROLL_DIRECTIONS.UP;
+  const magnitude = Math.abs(deltaY);
+
+  if (currentState.consumed) {
+    const sameDirection = currentState.direction === direction;
+    const minimumMagnitudeAfterTrigger = sameDirection
+      ? Math.min(currentState.minimumMagnitudeAfterTrigger, magnitude)
+      : currentState.minimumMagnitudeAfterTrigger;
+    const enoughTimePassed =
+      eventTime - currentState.lastTriggerTime >= WHEEL_REARM_MIN_DELAY_MS;
+    const directionChanged =
+      !sameDirection && magnitude >= WHEEL_NEW_IMPULSE_MAGNITUDE_PX;
+    const newSameDirectionImpulse =
+      sameDirection &&
+      minimumMagnitudeAfterTrigger <= WHEEL_DECAY_MAGNITUDE_PX &&
+      magnitude >= WHEEL_NEW_IMPULSE_MAGNITUDE_PX &&
+      magnitude >= currentState.lastMagnitude * WHEEL_NEW_IMPULSE_RATIO;
+
+    if (!enoughTimePassed || (!directionChanged && !newSameDirectionImpulse)) {
+      return {
+        ...currentState,
+        triggeredDirection: null,
+        lastMagnitude: magnitude,
+        minimumMagnitudeAfterTrigger,
+      };
+    }
+
+    const consumed = magnitude >= threshold;
+
+    return {
+      accumulator: deltaY,
+      direction,
+      consumed,
+      triggeredDirection: consumed ? direction : null,
+      lastMagnitude: magnitude,
+      minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
+      lastTriggerTime: consumed ? eventTime : currentState.lastTriggerTime,
+    };
+  }
+
   const accumulator =
-    state.direction !== null && state.direction !== direction
+    currentState.direction !== null && currentState.direction !== direction
       ? deltaY
-      : state.accumulator + deltaY;
+      : currentState.accumulator + deltaY;
   const consumed = Math.abs(accumulator) >= threshold;
 
   return {
@@ -42,6 +89,9 @@ function advanceWheelGesture(state, deltaY, threshold = 32) {
     direction,
     consumed,
     triggeredDirection: consumed ? direction : null,
+    lastMagnitude: magnitude,
+    minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
+    lastTriggerTime: consumed ? eventTime : currentState.lastTriggerTime,
   };
 }
 

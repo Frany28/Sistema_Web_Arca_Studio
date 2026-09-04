@@ -195,15 +195,17 @@ function OpeningHome() {
         WHEEL_GESTURE_IDLE_MS,
       );
 
-      if (activeTween) return;
-
       wheelGestureState = advanceWheelGesture(
         wheelGestureState,
         delta.y,
         WHEEL_GESTURE_THRESHOLD_PX,
+        event.timeStamp,
       );
 
-      if (wheelGestureState.triggeredDirection !== null) {
+      if (
+        !activeTween &&
+        wheelGestureState.triggeredDirection !== null
+      ) {
         moveByDirection(wheelGestureState.triggeredDirection);
       }
     };
