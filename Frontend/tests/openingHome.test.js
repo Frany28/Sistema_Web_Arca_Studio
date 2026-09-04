@@ -90,7 +90,26 @@ test("the hero title keeps its responsive masked reveal", () => {
   assert.match(heroTitleSource, /type: "spring"/);
   assert.match(heroTitleSource, /useReducedMotion\(\)/);
   assert.match(heroTitleSource, /aria-hidden=\{!visible\}/);
+  assert.match(heroTitleSource, /onAnimationComplete/);
+  assert.match(heroTitleSource, /onRevealComplete\?\.\(\)/);
   assert.doesNotMatch(heroTitleSource, /visible \|\| reduceMotion/);
+});
+
+test("initial scrolling unlocks only after Arquitectura finishes revealing", () => {
+  assert.match(homeSource, /initialScrollReady/);
+  assert.match(
+    homeSource,
+    /phase !== "complete" \|\| !initialScrollReady \|\| !scroller/,
+  );
+  assert.match(
+    homeSource,
+    /initialScrollReady \? "overflow-y-auto" : "overflow-y-hidden"/,
+  );
+  assert.match(
+    homeSource,
+    /onTitleRevealComplete=\{\(\) => setInitialScrollReady\(true\)\}/,
+  );
+  assert.match(homeSource, /tabIndex=\{initialScrollReady \? 0 : -1\}/);
 });
 
 test("all home inputs use the shared image and title navigation state", () => {
@@ -140,6 +159,6 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollPanelSource, /visible=\{titleVisible\}/);
   assert.doesNotMatch(scrollPanelSource, /useInView|revealOnNextScroll|h-\[200dvh\]/);
   assert.match(homeSource, /overscroll-y-contain/);
-  assert.match(homeSource, /tabIndex=\{phase === "complete" \? 0 : -1\}/);
+  assert.match(homeSource, /tabIndex=\{initialScrollReady \? 0 : -1\}/);
   assert.doesNotMatch(homeSource, /setInterval/);
 });

@@ -61,6 +61,7 @@ function OpeningHome() {
   const [navigationState, setNavigationState] = useState(
     INITIAL_NAVIGATION_STATE,
   );
+  const [initialScrollReady, setInitialScrollReady] = useState(false);
   const homeScrollerRef = useRef(null);
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
 
@@ -93,7 +94,12 @@ function OpeningHome() {
       timers.forEach((timerId) => window.clearTimeout(timerId));
       timers.clear();
       if (!cancelled) {
-        setPhase(reduceMotion ? "complete" : "transitioning");
+        if (reduceMotion) {
+          setInitialScrollReady(true);
+          setPhase("complete");
+        } else {
+          setPhase("transitioning");
+        }
       }
     });
 
@@ -105,8 +111,16 @@ function OpeningHome() {
   }, [reduceMotion]);
 
   useLayoutEffect(() => {
+    if (!initialScrollReady && homeScrollerRef.current) {
+      homeScrollerRef.current.scrollTop = 0;
+    }
+  }, [initialScrollReady, phase]);
+
+  useLayoutEffect(() => {
     const scroller = homeScrollerRef.current;
-    if (phase !== "complete" || !scroller) return undefined;
+    if (phase !== "complete" || !initialScrollReady || !scroller) {
+      return undefined;
+    }
 
     const panels = gsap.utils.toArray("[data-home-panel]", scroller);
     let activeTween;
@@ -294,6 +308,7 @@ function OpeningHome() {
         commitNavigationState(
           createScrollbarHomeScrollState(
             navigationStateRef.current.panelIndex,
+            { settled: false },
           ),
         );
       }
@@ -371,7 +386,7 @@ function OpeningHome() {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("orientationchange", handleResize);
     };
-  }, [phase, reduceMotion]);
+  }, [initialScrollReady, phase, reduceMotion]);
 
   return (
     <div
@@ -404,11 +419,13 @@ function OpeningHome() {
 
         <main
           ref={homeScrollerRef}
-          className="dark relative h-dvh shrink-0 touch-pan-x overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable]"
+          className={`dark relative h-dvh shrink-0 touch-pan-x overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${
+            initialScrollReady ? "overflow-y-auto" : "overflow-y-hidden"
+          }`}
           aria-hidden={phase !== "complete"}
           aria-label="Secciones de inicio de ARCA Studio"
           data-home-scroll-container
-          tabIndex={phase === "complete" ? 0 : -1}
+          tabIndex={initialScrollReady ? 0 : -1}
         >
           <div className="pointer-events-none sticky top-0 z-30 h-0 overflow-visible">
             <HomeHeader
@@ -422,6 +439,7 @@ function OpeningHome() {
             image={homeHeroAsset}
             imageAlt="Instalaciones industriales de ARCA Studio junto al mar"
             title="Arquitectura"
+            onTitleRevealComplete={() => setInitialScrollReady(true)}
             titleVisible={
               phase === "complete" &&
               navigationState.panelIndex === 0 &&

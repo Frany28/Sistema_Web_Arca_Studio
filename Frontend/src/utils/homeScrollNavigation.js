@@ -140,10 +140,10 @@ function getNextHomeScrollState(state, direction, panelCount) {
   });
 }
 
-function createScrollbarHomeScrollState(panelIndex) {
+function createScrollbarHomeScrollState(panelIndex, { settled = true } = {}) {
   return createHomeScrollState({
     panelIndex,
-    phase: HOME_SCROLL_PHASES.IMAGE,
+    phase: settled ? HOME_SCROLL_PHASES.TITLE : HOME_SCROLL_PHASES.IMAGE,
     entryDirection: null,
   });
 }

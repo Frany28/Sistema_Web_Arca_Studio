@@ -80,17 +80,30 @@ test("reversing on a newly entered image changes panel without revealing it", ()
   });
 });
 
-test("a scrollbar-selected image reveals its title on the next gesture", () => {
+test("a settled scrollbar selection reveals its title immediately", () => {
   const state = createScrollbarHomeScrollState(1);
 
-  assert.deepEqual(getNextHomeScrollState(state, DOWN, 3), {
+  assert.deepEqual(state, {
     panelIndex: 1,
     phase: TITLE,
     entryDirection: null,
   });
+  assert.deepEqual(getNextHomeScrollState(state, DOWN, 3), {
+    panelIndex: 2,
+    phase: IMAGE,
+    entryDirection: DOWN,
+  });
   assert.deepEqual(getNextHomeScrollState(state, UP, 3), {
+    panelIndex: 0,
+    phase: IMAGE,
+    entryDirection: UP,
+  });
+});
+
+test("a scrollbar drag hides the title until the selection settles", () => {
+  assert.deepEqual(createScrollbarHomeScrollState(1, { settled: false }), {
     panelIndex: 1,
-    phase: TITLE,
+    phase: IMAGE,
     entryDirection: null,
   });
 });

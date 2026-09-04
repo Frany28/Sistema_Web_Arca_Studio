@@ -5,7 +5,7 @@ const REVEAL_DURATION_SECONDS = 0.9;
 const REVEAL_HEIGHT_COLLAPSED = 73;
 const REVEAL_HEIGHT_EXPANDED = 255;
 
-function HomeHeroTitle({ title, visible }) {
+function HomeHeroTitle({ title, visible, onRevealComplete }) {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -31,6 +31,11 @@ function HomeHeroTitle({ title, visible }) {
                 delay: visible ? REVEAL_DELAY_SECONDS : 0,
               }
         }
+        onAnimationComplete={() => {
+          if (visible) {
+            onRevealComplete?.();
+          }
+        }}
         data-node-id="4451:132680"
         aria-hidden={!visible}
       >

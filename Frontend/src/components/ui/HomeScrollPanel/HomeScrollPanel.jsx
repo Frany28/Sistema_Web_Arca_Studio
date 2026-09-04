@@ -5,6 +5,7 @@ function HomeScrollPanel({
   imageAlt,
   title,
   titleVisible = false,
+  onTitleRevealComplete,
 }) {
   return (
     <section
@@ -21,7 +22,11 @@ function HomeScrollPanel({
         className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/5 to-black/20"
         aria-hidden="true"
       />
-      <HomeHeroTitle title={title} visible={titleVisible} />
+      <HomeHeroTitle
+        title={title}
+        visible={titleVisible}
+        onRevealComplete={onTitleRevealComplete}
+      />
     </section>
   );
 }
