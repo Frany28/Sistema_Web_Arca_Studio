@@ -57,7 +57,7 @@ test("the opening advances automatically as two fixed panels without interaction
   assert.match(homeSource, /h-\[200dvh\]/);
   assert.match(homeSource, /phase === "opening" \? "0%" : "-50%"/);
   assert.match(homeSource, /\[0\.815, 0\.005, 0\.17, 0\.995\]/);
-  assert.doesNotMatch(homeSource, /onClick|onWheel|onScroll|ScrollTrigger/);
+  assert.doesNotMatch(homeSource, /onClick|onWheel|onScroll/);
 });
 
 test("the opening mark preserves the Figma motion timeline and accessibility", () => {
@@ -77,23 +77,33 @@ test("the hero title reproduces the Figma masked reveal after the opening", () =
   assert.match(heroTitleSource, /REVEAL_DURATION_SECONDS = 3\.12408709526062/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_COLLAPSED = 73/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_EXPANDED = 255/);
-  assert.match(heroTitleSource, /top-\[clamp\(220px,31\.2dvh,319\.5px\)\]/);
+  assert.match(heroTitleSource, /top-\[clamp\(160px,41\.6dvh,319\.5px\)\]/);
+  assert.match(heroTitleSource, /top-\[clamp\(28px,7\.33dvh,56\.3px\)\]/);
+  assert.match(heroTitleSource, /w-\[min\(1104px,calc\(100%-32px\)\)\]/);
+  assert.match(heroTitleSource, /leading-\[76px\]/);
   assert.match(heroTitleSource, /type: "spring"/);
   assert.match(heroTitleSource, /useReducedMotion\(\)/);
 });
 
-test("home panels use fluid bidirectional native scrolling", () => {
+test("GSAP pins each image while the following scroll reveals its title", () => {
   assert.match(homeSource, /arca-construction-hero\.png/);
-  assert.match(homeSource, /snap-y snap-mandatory/);
+  assert.match(homeSource, /gsap\.registerPlugin\(ScrollTrigger\)/);
+  assert.match(homeSource, /pin: visual/);
+  assert.match(homeSource, /pinSpacing: false/);
+  assert.match(homeSource, /end: "bottom top"/);
+  assert.match(homeSource, /1 \/ \(steps\.length - 1\)/);
+  assert.match(homeSource, /context\.revert\(\)/);
   assert.match(homeSource, /<HomeScrollPanel/g);
-  assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 3);
-  assert.match(homeSource, /title="Construcción"\s+showTitle=\{false\}/);
+  assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 2);
+  assert.match(homeSource, /title="Construcción"\s+revealOnNextScroll/);
   assert.match(scrollPanelSource, /relative h-dvh/);
-  assert.doesNotMatch(scrollPanelSource, /sticky top-0|snap-always/);
-  assert.match(scrollPanelSource, /useInView\(panelRef, \{ amount: 0\.6 \}\)/);
-  assert.match(scrollPanelSource, /visible=\{enabled && isInView\}/);
-  assert.match(scrollPanelSource, /showTitle = true/);
-  assert.match(homeSource, /scroll-smooth/);
+  assert.match(scrollPanelSource, /relative h-\[200dvh\]/);
+  assert.match(scrollPanelSource, /motion-reduce:sticky motion-reduce:top-0/);
+  assert.match(scrollPanelSource, /useScroll\(\{/);
+  assert.match(scrollPanelSource, /useMotionValueEvent\(scrollYProgress/);
+  assert.match(scrollPanelSource, /progress >= 0\.35/);
+  assert.match(scrollPanelSource, /revealOnNextScroll = false/);
+  assert.match(scrollPanelSource, /data-home-scroll-step/);
   assert.match(homeSource, /overscroll-y-contain/);
   assert.match(homeSource, /tabIndex=\{phase === "complete" \? 0 : -1\}/);
   assert.doesNotMatch(homeSource, /setInterval|scrollTo\(/);

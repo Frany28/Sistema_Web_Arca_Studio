@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +16,8 @@ const REDUCED_MOTION_DURATION_MS = 450;
 const MAX_LOADING_DURATION_MS = 15000;
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
 const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
+
+gsap.registerPlugin(ScrollTrigger);
 
 function preloadImage(source) {
   return new Promise((resolve) => {
@@ -34,6 +38,7 @@ function OpeningHome() {
   const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const [phase, setPhase] = useState("opening");
+  const homeScrollerRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +79,48 @@ function OpeningHome() {
     };
   }, [reduceMotion]);
 
+  useLayoutEffect(() => {
+    const scroller = homeScrollerRef.current;
+    if (phase !== "complete" || reduceMotion || !scroller) return undefined;
+
+    const context = gsap.context(() => {
+      const panels = gsap.utils.toArray("[data-home-panel]", scroller);
+      const steps = gsap.utils.toArray("[data-home-scroll-step]", scroller);
+
+      panels.forEach((panel) => {
+        const visual = panel.querySelector("[data-home-panel-visual]");
+        if (!visual) return;
+
+        ScrollTrigger.create({
+          trigger: panel,
+          scroller,
+          start: "top top",
+          end: "bottom top",
+          pin: visual,
+          pinSpacing: false,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        });
+      });
+
+      ScrollTrigger.create({
+        scroller,
+        start: 0,
+        end: "max",
+        snap: {
+          snapTo: steps.length > 1 ? 1 / (steps.length - 1) : 1,
+          duration: { min: 0.25, max: 0.7 },
+          delay: 0.05,
+          ease: "power2.inOut",
+        },
+      });
+
+      ScrollTrigger.refresh();
+    }, scroller);
+
+    return () => context.revert();
+  }, [phase, reduceMotion]);
+
   return (
     <div
       className="fixed inset-0 overflow-hidden"
@@ -104,9 +151,11 @@ function OpeningHome() {
         </main>
 
         <main
-          className="dark relative h-dvh shrink-0 snap-y snap-mandatory scroll-smooth overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] motion-reduce:scroll-auto motion-reduce:snap-none"
+          ref={homeScrollerRef}
+          className="dark relative h-dvh shrink-0 overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable]"
           aria-hidden={phase !== "complete"}
           aria-label="Secciones de inicio de ARCA Studio"
+          data-home-scroll-container
           tabIndex={phase === "complete" ? 0 : -1}
         >
           <div className="pointer-events-none sticky top-0 z-30 h-0 overflow-visible">
@@ -127,12 +176,7 @@ function OpeningHome() {
             image={constructionHeroAsset}
             imageAlt="Baño construido por ARCA Studio con iluminación integrada"
             title="Construcción"
-            showTitle={false}
-          />
-          <HomeScrollPanel
-            image={constructionHeroAsset}
-            imageAlt="Baño construido por ARCA Studio con iluminación integrada"
-            title="Construcción"
+            revealOnNextScroll
           />
         </main>
       </Motion.div>

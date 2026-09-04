@@ -10,11 +10,11 @@ function HomeHeroTitle({ title, visible }) {
 
   return (
     <div
-      className="pointer-events-none absolute inset-x-0 top-[clamp(220px,31.2dvh,319.5px)] z-[5] h-[385px] overflow-hidden"
+      className="pointer-events-none absolute inset-x-0 top-[clamp(160px,41.6dvh,319.5px)] z-[5] h-[385px] overflow-hidden"
       data-node-id="4473:112127"
     >
       <Motion.div
-        className="absolute left-1/2 top-0 w-[min(1200px,calc(100%-32px))] -translate-x-1/2 overflow-hidden"
+        className="absolute left-1/2 top-[clamp(28px,7.33dvh,56.3px)] w-[min(1200px,calc(100%-32px))] -translate-x-1/2 overflow-hidden"
         initial={false}
         animate={{
           height:
@@ -35,7 +35,7 @@ function HomeHeroTitle({ title, visible }) {
         data-node-id="4451:132680"
       >
         <h1
-          className="absolute left-1/2 top-[89.5px] m-0 w-full -translate-x-1/2 text-center font-[var(--font-sans)] text-[clamp(48px,6.67vw,96px)] font-bold leading-[0.792] tracking-[-2px] text-[var(--color-neutral-100-uniform)]"
+          className="absolute left-1/2 top-[clamp(44px,11.65dvh,89.5px)] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 text-center font-[var(--font-sans)] text-[clamp(48px,6.67vw,96px)] font-bold leading-[76px] tracking-[-2px] text-[var(--color-neutral-100-uniform)]"
           data-node-id="4451:132681"
         >
           {title}
