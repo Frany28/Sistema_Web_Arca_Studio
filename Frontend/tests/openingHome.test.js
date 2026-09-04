@@ -75,12 +75,16 @@ test("the hero title reproduces the Figma masked reveal after the opening", () =
   assert.match(heroTitleSource, /useReducedMotion\(\)/);
 });
 
-test("home panels advance only through native layered scrolling", () => {
+test("home panels use fluid bidirectional native scrolling", () => {
   assert.match(homeSource, /arca-construction-hero\.png/);
   assert.match(homeSource, /snap-y snap-mandatory/);
   assert.match(homeSource, /<HomeScrollPanel/g);
-  assert.match(scrollPanelSource, /sticky top-0 h-dvh/);
+  assert.match(scrollPanelSource, /relative h-dvh/);
+  assert.doesNotMatch(scrollPanelSource, /sticky top-0|snap-always/);
   assert.match(scrollPanelSource, /useInView\(panelRef, \{ amount: 0\.6 \}\)/);
   assert.match(scrollPanelSource, /visible=\{enabled && isInView\}/);
+  assert.match(homeSource, /scroll-smooth/);
+  assert.match(homeSource, /overscroll-y-contain/);
+  assert.match(homeSource, /tabIndex=\{phase === "complete" \? 0 : -1\}/);
   assert.doesNotMatch(homeSource, /setInterval|scrollTo\(/);
 });

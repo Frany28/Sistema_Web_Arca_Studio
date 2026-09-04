@@ -60,8 +60,10 @@ function OpeningHome() {
         </main>
 
         <main
-          className="dark relative h-dvh shrink-0 snap-y snap-mandatory overflow-x-hidden overflow-y-auto bg-[var(--color-neutral-950-uniform)] motion-reduce:snap-none"
+          className="dark relative h-dvh shrink-0 snap-y snap-mandatory scroll-smooth overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] motion-reduce:scroll-auto motion-reduce:snap-none"
           aria-hidden={phase !== "complete"}
+          aria-label="Secciones de inicio de ARCA Studio"
+          tabIndex={phase === "complete" ? 0 : -1}
         >
           <div className="pointer-events-none sticky top-0 z-30 h-0 overflow-visible">
             <HomeHeader

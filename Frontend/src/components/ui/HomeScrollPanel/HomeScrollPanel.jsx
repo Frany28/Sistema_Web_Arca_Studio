@@ -10,7 +10,7 @@ function HomeScrollPanel({ image, imageAlt, title, enabled = true }) {
   return (
     <section
       ref={panelRef}
-      className="sticky top-0 h-dvh w-full snap-start snap-always overflow-hidden bg-[var(--color-neutral-950-uniform)]"
+      className="relative h-dvh w-full shrink-0 snap-start overflow-hidden bg-[var(--color-neutral-950-uniform)]"
       aria-label={title}
     >
       <img
