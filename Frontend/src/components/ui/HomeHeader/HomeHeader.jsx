@@ -2,6 +2,7 @@ import clsx from "clsx";
 
 import MainLogo from "../../../assets/logos/MainLogo.jsx";
 import Button from "../Button/Button.jsx";
+import HorizontalTabMenu from "../HorizontalTabMenu/HorizontalTabMenu.jsx";
 
 const DEFAULT_NAVIGATION_ITEMS = [
   { id: "services", label: "Servicios" },
@@ -42,23 +43,18 @@ function HomeHeader({
             data-node-id="4487:112602"
           />
 
-          <ul
-            className="absolute left-1/2 top-0 hidden h-[52px] -translate-x-1/2 items-start gap-[8px] min-[1024px]:flex"
+          <HorizontalTabMenu
+            className="absolute left-1/2 top-0 hidden -translate-x-1/2 min-[1024px]:flex"
+            items={navigationItems.map((item) => item.label)}
+            activeIndex={-1}
+            interactive
+            presentation="publicNavigation"
+            style="Brand"
+            filled="off"
+            onChange={(index) => onNavigate?.(navigationItems[index].id)}
             aria-label="Secciones de inicio"
             data-node-id="4487:112598"
-          >
-            {navigationItems.map((item) => (
-              <li key={item.id} className="flex h-[52px] items-start py-[8px]">
-                <button
-                  type="button"
-                  className="text-heading-8 flex h-[36px] items-center justify-center whitespace-nowrap rounded-[var(--radius-1)] px-[4px] pb-[8px] text-center text-[var(--color-neutral-100-uniform)] outline-none transition-colors duration-150 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/60 motion-reduce:transition-none"
-                  onClick={() => onNavigate?.(item.id)}
-                >
-                  {item.label}
-                </button>
-              </li>
-            ))}
-          </ul>
+          />
 
           <div
             className="absolute right-0 top-[3px] flex items-center gap-[8px]"

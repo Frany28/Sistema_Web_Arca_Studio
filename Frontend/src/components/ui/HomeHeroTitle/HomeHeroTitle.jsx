@@ -35,7 +35,7 @@ function HomeHeroTitle({ title, visible }) {
         data-node-id="4451:132680"
       >
         <h1
-          className="absolute left-1/2 top-[clamp(44px,11.65dvh,89.5px)] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 text-center font-[var(--font-sans)] text-[clamp(48px,6.67vw,96px)] font-bold leading-[76px] tracking-[-2px] text-[var(--color-neutral-100-uniform)]"
+          className="absolute left-1/2 top-[89.5px] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 text-center font-[var(--font-sans)] text-[clamp(48px,6.67vw,96px)] font-bold leading-[76px] tracking-[-2px] text-[var(--color-neutral-100-uniform)]"
           data-node-id="4451:132681"
         >
           {title}

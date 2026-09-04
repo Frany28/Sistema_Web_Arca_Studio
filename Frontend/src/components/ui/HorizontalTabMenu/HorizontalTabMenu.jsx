@@ -71,6 +71,7 @@ function HorizontalTabMenu({
   style = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.style,
   orientation = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.orientation,
   interactive = HORIZONTAL_TAB_MENU_DEFAULT_PROPS.interactive,
+  presentation = "default",
   onChange,
   ...props
 }) {
@@ -84,6 +85,7 @@ function HorizontalTabMenu({
   const resolvedActiveIndex = isControlled ? activeIndex : internalActiveIndex;
   const resolvedVariant = getVariant(style, filled);
   const isVertical = orientation === "vertical";
+  const isPublicNavigation = presentation === "publicNavigation";
   const hasActiveItem =
     Number.isInteger(resolvedActiveIndex) &&
     resolvedActiveIndex >= 0 &&
@@ -137,7 +139,9 @@ function HorizontalTabMenu({
         isVertical
           ? "flex-col items-center overflow-visible"
           : "items-center overflow-x-auto",
-        resolvedVariant.style === "Brand" && !isVertical && "gap-[8px] pb-[2px]",
+        resolvedVariant.style === "Brand" &&
+          !isVertical &&
+          (isPublicNavigation ? "h-[52px] gap-[8px]" : "gap-[8px] pb-[2px]"),
         resolvedVariant.style === "Brand" && isVertical && "w-full gap-[20px]",
         resolvedVariant.style === "Brand" &&
           resolvedVariant.filled === "on" &&
@@ -178,15 +182,21 @@ function HorizontalTabMenu({
             )}
             className={clsx(
               "inline-flex items-center justify-center text-heading-8 whitespace-nowrap transition-colors duration-150",
+              isPublicNavigation &&
+                "h-[52px] shrink-0 border-b-2 border-transparent bg-transparent px-[4px] pb-[14px] pt-[8px] text-[var(--color-neutral-100-uniform)] hover:border-[var(--color-neutral-100-uniform)] hover:bg-transparent hover:text-[var(--color-neutral-950-uniform)] focus-visible:ring-white/60",
               resolvedVariant.style === "Brand" &&
+                !isPublicNavigation &&
                 "h-[36px] rounded-[var(--radius-2)] px-[12px] py-[8px]",
               resolvedVariant.style === "Brand" &&
+                !isPublicNavigation &&
                 isVertical &&
                 "h-auto w-auto rounded-none px-0 py-0 text-center",
               resolvedVariant.style === "Brand" &&
+                !isPublicNavigation &&
                 resolvedVariant.filled === "on" &&
                 "min-w-0 flex-1",
               resolvedVariant.style === "Brand" &&
+                !isPublicNavigation &&
                 resolvedVariant.filled === "off" &&
                 (isVertical ? "w-auto shrink-0" : "shrink-0"),
               resolvedVariant.style === "Underlined" &&
@@ -203,6 +213,7 @@ function HorizontalTabMenu({
               "outline-none focus-visible:border-0 focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
               isInteractive && "cursor-pointer",
               resolvedVariant.style === "Brand" &&
+                !isPublicNavigation &&
                 (isActive
                   ? clsx(
                       isVertical

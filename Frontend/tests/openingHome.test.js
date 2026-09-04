@@ -81,6 +81,8 @@ test("the hero title reproduces the Figma masked reveal after the opening", () =
   assert.match(heroTitleSource, /REVEAL_HEIGHT_EXPANDED = 255/);
   assert.match(heroTitleSource, /top-\[clamp\(160px,41\.6dvh,319\.5px\)\]/);
   assert.match(heroTitleSource, /top-\[clamp\(28px,7\.33dvh,56\.3px\)\]/);
+  assert.match(heroTitleSource, /top-\[89\.5px\]/);
+  assert.doesNotMatch(heroTitleSource, /top-\[clamp\(44px,11\.65dvh,89\.5px\)\]/);
   assert.match(heroTitleSource, /w-\[min\(1104px,calc\(100%-32px\)\)\]/);
   assert.match(heroTitleSource, /leading-\[76px\]/);
   assert.match(heroTitleSource, /type: "spring"/);
