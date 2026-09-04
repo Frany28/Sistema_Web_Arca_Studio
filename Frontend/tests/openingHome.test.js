@@ -28,20 +28,52 @@ const scrollPanelSource = readFileSync(
   ),
   "utf8",
 );
+const statementPanelSource = readFileSync(
+  new URL(
+    "../src/components/ui/HomeStatementPanel/HomeStatementPanel.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const openingSequenceSource = readFileSync(
+  new URL("../src/hooks/useHomeOpeningSequence.js", import.meta.url),
+  "utf8",
+);
+const scrollControllerSource = readFileSync(
+  new URL("../src/hooks/useHomeScrollController.js", import.meta.url),
+  "utf8",
+);
+const statementControllerSource = readFileSync(
+  new URL(
+    "../src/hooks/homeScroll/createHomeStatementController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const homeContentSource = readFileSync(
+  new URL("../src/pages/openingHome/homeContent.js", import.meta.url),
+  "utf8",
+);
+const homeSectionsSource = readFileSync(
+  new URL(
+    "../src/pages/openingHome/components/HomeSections.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("the root route presents the animated ARCA opening before the home hero", () => {
   assert.match(mainSource, /path="\/" element={<OpeningHome \/>}/);
-  assert.match(homeSource, /MOTION_DURATION_SECONDS \* 1000/);
-  assert.match(homeSource, /Promise\.allSettled/);
-  assert.match(homeSource, /preloadImage\(homeHeroAsset\)/);
-  assert.match(homeSource, /preloadImage\(constructionHeroAsset\)/);
-  assert.match(homeSource, /preloadImage\(interiorDesignHeroAsset\)/);
-  assert.match(homeSource, /document\.fonts\?\.ready/);
-  assert.match(homeSource, /arca-home-hero\.png/);
+  assert.match(openingSequenceSource, /motionDurationSeconds \* 1000/);
+  assert.match(openingSequenceSource, /Promise\.allSettled/);
+  assert.match(openingSequenceSource, /imageSources\.map\(preloadImage\)/);
+  assert.match(openingSequenceSource, /document\.fonts\?\.ready/);
+  assert.match(homeContentSource, /arca-home-hero\.png/);
+  assert.match(homeSource, /HOME_PRELOAD_IMAGES/);
   assert.match(homeSource, /<HomeHeader/);
-  assert.match(homeSource, /title="Arquitectura"/);
-  assert.match(homeSource, /title="Construcci.n"/);
-  assert.match(homeSource, /title="Interiorismo"/);
+  assert.match(homeContentSource, /title: "Arquitectura"/);
+  assert.match(homeContentSource, /title: "Construcci.n"/);
+  assert.match(homeContentSource, /title: "Interiorismo"/);
   assert.match(
     homeSource,
     /<ArcaOpeningMark repeat=\{phase === "opening" \? Infinity : 0\} \/>/,
@@ -99,66 +131,101 @@ test("initial scrolling unlocks only after Arquitectura finishes revealing", () 
   assert.match(homeSource, /initialScrollReady/);
   assert.match(
     homeSource,
-    /phase !== "complete" \|\| !initialScrollReady \|\| !scroller/,
+    /enabled: phase === "complete" && initialScrollReady/,
   );
   assert.match(
     homeSource,
     /initialScrollReady \? "overflow-y-auto" : "overflow-y-hidden"/,
   );
   assert.match(
-    homeSource,
-    /onTitleRevealComplete=\{\(\) => setInitialScrollReady\(true\)\}/,
+    homeSectionsSource,
+    /panelIndex === 0 \? onInitialTitleReveal : undefined/,
   );
+  assert.match(openingSequenceSource, /setInitialScrollReady\(true\)/);
   assert.match(homeSource, /tabIndex=\{initialScrollReady \? 0 : -1\}/);
 });
 
 test("all home inputs use the shared image and title navigation state", () => {
-  assert.match(homeSource, /gsap\.registerPlugin\(ScrollToPlugin\)/);
-  assert.doesNotMatch(homeSource, /ScrollTrigger|pinSpacing|data-home-scroll-step/);
-  assert.match(homeSource, /getNextHomeScrollState/);
-  assert.match(homeSource, /createScrollbarHomeScrollState/);
-  assert.match(homeSource, /navigationState\.panelIndex === 0/);
-  assert.match(homeSource, /navigationState\.panelIndex === 1/);
-  assert.match(homeSource, /navigationState\.panelIndex === 2/);
-  assert.equal(
-    homeSource.match(/navigationState\.phase === HOME_SCROLL_PHASES\.TITLE/g)
-      ?.length,
-    3,
-  );
-  assert.match(homeSource, /SCROLL_STEP_DURATION_SECONDS = 0\.5/);
-  assert.match(homeSource, /if \(reduceMotion\) \{/);
-  assert.match(homeSource, /scroller\.scrollTop = targetScrollTop/);
-  assert.match(homeSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
-  assert.doesNotMatch(homeSource, /dataset\.homeStepHoldMs|setTimeout\(releaseScroll/);
+  assert.match(scrollControllerSource, /gsap\.registerPlugin\(ScrollToPlugin\)/);
+  assert.doesNotMatch(scrollControllerSource, /ScrollTrigger|pinSpacing|data-home-scroll-step/);
+  assert.match(scrollControllerSource, /getNextHomeScrollState/);
+  assert.match(scrollControllerSource, /createScrollbarHomeScrollState/);
+  assert.match(homeSectionsSource, /navigationState\.panelIndex === panelIndex/);
+  assert.match(homeSectionsSource, /navigationState\.phase === HOME_SCROLL_PHASES\.TITLE/);
+  assert.match(scrollControllerSource, /SCROLL_STEP_DURATION_SECONDS = 0\.5/);
+  assert.match(scrollControllerSource, /if \(reduceMotion\) \{/);
+  assert.match(scrollControllerSource, /scroller\.scrollTop = targetScrollTop/);
+  assert.match(scrollControllerSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
+  assert.doesNotMatch(scrollControllerSource, /dataset\.homeStepHoldMs|setTimeout\(releaseScroll/);
 
-  assert.match(homeSource, /scroller\.addEventListener\("wheel", handleWheel/);
-  assert.match(homeSource, /normalizeWheelDelta\(event, scroller\.clientHeight\)/);
-  assert.match(homeSource, /WHEEL_GESTURE_THRESHOLD_PX = 32/);
-  assert.match(homeSource, /WHEEL_GESTURE_IDLE_MS = 180/);
+  assert.match(scrollControllerSource, /scroller\.addEventListener\("wheel", handleWheel/);
+  assert.match(scrollControllerSource, /normalizeWheelDelta\(event, scroller\.clientHeight\)/);
+  assert.match(scrollControllerSource, /WHEEL_GESTURE_THRESHOLD_PX = 32/);
+  assert.match(scrollControllerSource, /WHEEL_GESTURE_IDLE_MS = 180/);
 
-  assert.match(homeSource, /scroller\.addEventListener\("pointerdown"/);
-  assert.match(homeSource, /scroller\.addEventListener\("pointermove"/);
-  assert.match(homeSource, /TOUCH_SWIPE_THRESHOLD_PX = 48/);
-  assert.match(homeSource, /TOUCH_VERTICAL_DOMINANCE = 1\.2/);
+  assert.match(scrollControllerSource, /scroller\.addEventListener\("pointerdown"/);
+  assert.match(scrollControllerSource, /scroller\.addEventListener\("pointermove"/);
+  assert.match(scrollControllerSource, /TOUCH_SWIPE_THRESHOLD_PX = 48/);
+  assert.match(scrollControllerSource, /TOUCH_VERTICAL_DOMINANCE = 1\.2/);
   assert.match(homeSource, /touch-pan-x/);
 
-  assert.match(homeSource, /scroller\.addEventListener\("keydown"/);
-  assert.match(homeSource, /getKeyboardDirection\(event\)/);
-  assert.match(homeSource, /event\.repeat/);
-  assert.match(homeSource, /isInteractiveTarget\(event\.target\)/);
+  assert.match(scrollControllerSource, /scroller\.addEventListener\("keydown"/);
+  assert.match(scrollControllerSource, /getKeyboardDirection\(event\)/);
+  assert.match(scrollControllerSource, /event\.repeat/);
+  assert.match(scrollControllerSource, /isInteractiveTarget\(event\.target\)/);
 
-  assert.match(homeSource, /"onscrollend" in scroller/);
-  assert.match(homeSource, /SCROLL_SETTLE_DELAY_MS = 180/);
-  assert.match(homeSource, /getNearestPanelIndex/);
-  assert.match(homeSource, /window\.addEventListener\("resize", handleResize\)/);
-  assert.match(homeSource, /window\.addEventListener\("orientationchange", handleResize\)/);
+  assert.match(scrollControllerSource, /"onscrollend" in scroller/);
+  assert.match(scrollControllerSource, /SCROLL_SETTLE_DELAY_MS = 180/);
+  assert.match(scrollControllerSource, /getNearestPanelIndex/);
+  assert.match(scrollControllerSource, /window\.addEventListener\("resize", handleResize\)/);
+  assert.match(scrollControllerSource, /window\.addEventListener\("orientationchange", handleResize\)/);
 
-  assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 3);
+  assert.match(homeSectionsSource, /HOME_IMAGE_PANELS\.map/);
+  assert.match(homeSectionsSource, /<HomeScrollPanel/);
   assert.match(scrollPanelSource, /relative h-dvh/);
   assert.match(scrollPanelSource, /titleVisible = false/);
   assert.match(scrollPanelSource, /visible=\{titleVisible\}/);
   assert.doesNotMatch(scrollPanelSource, /useInView|revealOnNextScroll|h-\[200dvh\]/);
   assert.match(homeSource, /overscroll-y-contain/);
   assert.match(homeSource, /tabIndex=\{initialScrollReady \? 0 : -1\}/);
-  assert.doesNotMatch(homeSource, /setInterval/);
+  assert.doesNotMatch(scrollControllerSource, /setInterval/);
+});
+
+test("the final home panel scrubs a responsive video statement", () => {
+  assert.match(scrollControllerSource, /STATEMENT_PANEL_INDEX = 3/);
+  assert.match(homeContentSource, /Pi.nsalo y lo hacemos realidad\./);
+  assert.match(homeContentSource, /arca-statement-bg\.mp4/);
+  assert.match(homeContentSource, /arca-statement-bg\.webm/);
+  assert.match(homeContentSource, /arca-statement-poster\.webp/);
+  assert.match(homeSectionsSource, /<HomeStatementPanel/);
+  assert.match(statementControllerSource, /queueDelta/);
+  assert.match(statementControllerSource, /window\.requestAnimationFrame/);
+  assert.match(statementControllerSource, /advanceHomeStatementProgress/);
+  assert.match(statementControllerSource, /STATEMENT_KEYBOARD_DURATION_SECONDS = 0\.35/);
+  assert.match(scrollControllerSource, /createScrollbarHomeScrollState\(panelIndex\)/);
+
+  assert.match(statementPanelSource, /data-home-statement-panel/);
+  assert.match(statementPanelSource, /autoPlay/);
+  assert.match(statementPanelSource, /muted/);
+  assert.match(statementPanelSource, /loop/);
+  assert.match(statementPanelSource, /playsInline/);
+  assert.match(statementPanelSource, /preload=\{mediaEnabled \? "auto" : "none"\}/);
+  assert.match(statementPanelSource, /<source src=\{webmSource\}/);
+  assert.match(statementPanelSource, /<source src=\{mp4Source\}/);
+  assert.match(statementPanelSource, /<mask/);
+  assert.match(statementPanelSource, /<Motion\.text/);
+  assert.match(statementPanelSource, /text-\[clamp\(24px,3\.2vw,46px\)\]/);
+  assert.match(statementPanelSource, /aria-hidden=\{!active\}/);
+  assert.match(statementPanelSource, /aria-hidden=\{!statementVisible\}/);
+});
+
+test("OpeningHome delegates loading, navigation, content and statement behavior", () => {
+  assert.ok(homeSource.split("\n").length <= 130);
+  assert.match(homeSource, /useHomeOpeningSequence/);
+  assert.match(homeSource, /useHomeScrollController/);
+  assert.match(homeSource, /<HomeSections/);
+  assert.doesNotMatch(
+    homeSource,
+    /addEventListener|requestAnimationFrame|Promise\.allSettled|gsap\./,
+  );
 });

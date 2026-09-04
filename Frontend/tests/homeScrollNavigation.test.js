@@ -103,6 +103,30 @@ test("a settled scrollbar selection reveals its title immediately", () => {
   });
 });
 
+test("the fourth panel is entered as an image before its special effect", () => {
+  const interiorTitle = createHomeScrollState({
+    panelIndex: 2,
+    phase: TITLE,
+  });
+  const statementImage = getNextHomeScrollState(interiorTitle, DOWN, 4);
+
+  assert.deepEqual(statementImage, {
+    panelIndex: 3,
+    phase: IMAGE,
+    entryDirection: DOWN,
+  });
+  assert.deepEqual(getNextHomeScrollState(statementImage, UP, 4), {
+    panelIndex: 2,
+    phase: IMAGE,
+    entryDirection: UP,
+  });
+  assert.deepEqual(createScrollbarHomeScrollState(3), {
+    panelIndex: 3,
+    phase: TITLE,
+    entryDirection: null,
+  });
+});
+
 test("a scrollbar drag hides the title until the selection settles", () => {
   assert.deepEqual(createScrollbarHomeScrollState(1, { settled: false }), {
     panelIndex: 1,

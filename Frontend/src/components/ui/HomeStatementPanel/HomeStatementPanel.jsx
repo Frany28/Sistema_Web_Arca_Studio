@@ -51,7 +51,7 @@ function HomeStatementPanel({
   return (
     <section
       className="relative h-dvh w-full shrink-0 overflow-hidden bg-[var(--color-neutral-950-uniform)]"
-      aria-label={phrase}
+      aria-hidden={!active}
       data-home-panel
       data-home-statement-panel
     >
@@ -86,6 +86,7 @@ function HomeStatementPanel({
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full"
         aria-hidden="true"
+        focusable="false"
       >
         <defs>
           <mask
