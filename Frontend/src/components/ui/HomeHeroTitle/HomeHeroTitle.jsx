@@ -1,7 +1,7 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
 
-const REVEAL_DELAY_SECONDS = 0.4000000059604645;
-const REVEAL_DURATION_SECONDS = 3.12408709526062;
+const REVEAL_DELAY_SECONDS = 0.1;
+const REVEAL_DURATION_SECONDS = 0.9;
 const REVEAL_HEIGHT_COLLAPSED = 73;
 const REVEAL_HEIGHT_EXPANDED = 255;
 

@@ -17,6 +17,7 @@ import HomeScrollPanel from "../components/ui/HomeScrollPanel/HomeScrollPanel.js
 const REDUCED_MOTION_DURATION_MS = 450;
 const MAX_LOADING_DURATION_MS = 15000;
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
+const SCROLL_STEP_DURATION_SECONDS = 0.5;
 const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
 
 gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
@@ -90,7 +91,6 @@ function OpeningHome() {
       const panels = gsap.utils.toArray("[data-home-panel]", scroller);
       const steps = gsap.utils.toArray("[data-home-scroll-step]", scroller);
       let activeTween;
-      let unlockTimer;
       let wheelIdleTimer;
       let wheelGestureReady = true;
       let currentStepIndex = Math.round(
@@ -120,14 +120,12 @@ function OpeningHome() {
       const releaseScroll = () => {
         downwardLocked = false;
         lockedScrollPosition = Number.POSITIVE_INFINITY;
-        unlockTimer = undefined;
       };
 
       const moveToStep = (direction) => {
         if (direction > 0 && downwardLocked) return;
 
         if (direction < 0) {
-          window.clearTimeout(unlockTimer);
           activeTween?.kill();
           releaseScroll();
         }
@@ -144,21 +142,11 @@ function OpeningHome() {
         lockedScrollPosition = nextStepIndex * scroller.clientHeight;
         activeTween = gsap.to(scroller, {
           scrollTo: { y: lockedScrollPosition, autoKill: false },
-          duration: reduceMotion ? 0 : 0.7,
+          duration: reduceMotion ? 0 : SCROLL_STEP_DURATION_SECONDS,
           ease: "power2.inOut",
           overwrite: true,
           onComplete: () => {
             activeTween = undefined;
-            const holdDuration =
-              direction > 0
-                ? Number(steps[nextStepIndex]?.dataset.homeStepHoldMs || 0)
-                : 0;
-
-            if (holdDuration > 0 && !reduceMotion) {
-              unlockTimer = window.setTimeout(releaseScroll, holdDuration);
-              return;
-            }
-
             releaseScroll();
           },
         });
@@ -188,7 +176,6 @@ function OpeningHome() {
       scroller.addEventListener("scroll", enforceTitleHold, { passive: true });
 
       return () => {
-        window.clearTimeout(unlockTimer);
         window.clearTimeout(wheelIdleTimer);
         activeTween?.kill();
         scroller.removeEventListener("wheel", handleWheel);

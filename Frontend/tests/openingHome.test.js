@@ -75,8 +75,8 @@ test("the opening mark preserves the Figma motion timeline and accessibility", (
 
 test("the hero title reproduces the Figma masked reveal after the opening", () => {
   assert.match(heroTitleSource, /\{title\}/);
-  assert.match(heroTitleSource, /REVEAL_DELAY_SECONDS = 0\.4000000059604645/);
-  assert.match(heroTitleSource, /REVEAL_DURATION_SECONDS = 3\.12408709526062/);
+  assert.match(heroTitleSource, /REVEAL_DELAY_SECONDS = 0\.1/);
+  assert.match(heroTitleSource, /REVEAL_DURATION_SECONDS = 0\.9/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_COLLAPSED = 73/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_EXPANDED = 255/);
   assert.match(heroTitleSource, /top-\[clamp\(160px,41\.6dvh,319\.5px\)\]/);
@@ -104,7 +104,8 @@ test("GSAP pins each image while the following scroll reveals its title", () => 
   assert.match(homeSource, /wheelGestureReady = false/);
   assert.match(homeSource, /wheelGestureReady = true/);
   assert.match(homeSource, /direction > 0 && downwardLocked/);
-  assert.match(homeSource, /dataset\.homeStepHoldMs/);
+  assert.match(homeSource, /SCROLL_STEP_DURATION_SECONDS = 0\.5/);
+  assert.doesNotMatch(homeSource, /dataset\.homeStepHoldMs|setTimeout\(releaseScroll/);
   assert.match(homeSource, /context\.revert\(\)/);
   assert.match(homeSource, /<HomeScrollPanel/g);
   assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 3);
@@ -124,7 +125,7 @@ test("GSAP pins each image while the following scroll reveals its title", () => 
   assert.match(scrollPanelSource, /revealOnNextScroll = false/);
   assert.match(scrollPanelSource, /data-home-scroll-step/);
   assert.match(scrollPanelSource, /data-home-title-step/);
-  assert.match(scrollPanelSource, /data-home-step-hold-ms=\{TITLE_STEP_HOLD_MS\}/);
+  assert.doesNotMatch(scrollPanelSource, /TITLE_STEP_HOLD_MS|data-home-step-hold-ms/);
   assert.match(homeSource, /overscroll-y-contain/);
   assert.match(homeSource, /tabIndex=\{phase === "complete" \? 0 : -1\}/);
   assert.doesNotMatch(homeSource, /setInterval|scrollTo\(/);
