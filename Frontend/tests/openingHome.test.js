@@ -35,11 +35,13 @@ test("the root route presents the animated ARCA opening before the home hero", (
   assert.match(homeSource, /Promise\.allSettled/);
   assert.match(homeSource, /preloadImage\(homeHeroAsset\)/);
   assert.match(homeSource, /preloadImage\(constructionHeroAsset\)/);
+  assert.match(homeSource, /preloadImage\(interiorDesignHeroAsset\)/);
   assert.match(homeSource, /document\.fonts\?\.ready/);
   assert.match(homeSource, /arca-home-hero\.png/);
   assert.match(homeSource, /<HomeHeader/);
   assert.match(homeSource, /title="Arquitectura"/);
   assert.match(homeSource, /title="Construcción"/);
+  assert.match(homeSource, /title="Interiorismo"/);
   assert.match(
     homeSource,
     /<ArcaOpeningMark repeat=\{phase === "opening" \? Infinity : 0\} \/>/,
@@ -87,6 +89,7 @@ test("the hero title reproduces the Figma masked reveal after the opening", () =
 
 test("GSAP pins each image while the following scroll reveals its title", () => {
   assert.match(homeSource, /arca-construction-hero\.png/);
+  assert.match(homeSource, /arca-interior-design-hero\.png/);
   assert.match(homeSource, /gsap\.registerPlugin\(ScrollTrigger\)/);
   assert.match(homeSource, /pin: visual/);
   assert.match(homeSource, /pinSpacing: false/);
@@ -94,8 +97,9 @@ test("GSAP pins each image while the following scroll reveals its title", () => 
   assert.match(homeSource, /1 \/ \(steps\.length - 1\)/);
   assert.match(homeSource, /context\.revert\(\)/);
   assert.match(homeSource, /<HomeScrollPanel/g);
-  assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 2);
+  assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 3);
   assert.match(homeSource, /title="Construcción"\s+revealOnNextScroll/);
+  assert.match(homeSource, /title="Interiorismo"\s+revealOnNextScroll/);
   assert.match(scrollPanelSource, /relative h-dvh/);
   assert.match(scrollPanelSource, /relative h-\[200dvh\]/);
   assert.match(scrollPanelSource, /motion-reduce:sticky motion-reduce:top-0/);

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import constructionHeroAsset from "../assets/home/arca-construction-hero.png";
 import homeHeroAsset from "../assets/home/arca-home-hero.png";
+import interiorDesignHeroAsset from "../assets/home/arca-interior-design-hero.png";
 import ArcaOpeningMark, {
   MOTION_DURATION_SECONDS,
 } from "../components/ui/ArcaOpeningMark/ArcaOpeningMark.jsx";
@@ -58,6 +59,7 @@ function OpeningHome() {
     const resourcesReady = Promise.allSettled([
       preloadImage(homeHeroAsset),
       preloadImage(constructionHeroAsset),
+      preloadImage(interiorDesignHeroAsset),
       document.fonts?.ready ?? Promise.resolve(),
     ]);
 
@@ -176,6 +178,12 @@ function OpeningHome() {
             image={constructionHeroAsset}
             imageAlt="Baño construido por ARCA Studio con iluminación integrada"
             title="Construcción"
+            revealOnNextScroll
+          />
+          <HomeScrollPanel
+            image={interiorDesignHeroAsset}
+            imageAlt="Sala interior diseñada por ARCA Studio con iluminación ambiental"
+            title="Interiorismo"
             revealOnNextScroll
           />
         </main>
