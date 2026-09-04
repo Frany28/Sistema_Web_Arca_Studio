@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "motion/react";
 
-import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
+import HomeHeroTitle, {
+  REVEAL_DELAY_SECONDS,
+  REVEAL_DURATION_SECONDS,
+} from "../HomeHeroTitle/HomeHeroTitle.jsx";
+
+const TITLE_STEP_HOLD_MS = Math.ceil(
+  (REVEAL_DELAY_SECONDS + REVEAL_DURATION_SECONDS) * 1000,
+);
 
 function HomeScrollPanel({
   image,
@@ -77,7 +84,9 @@ function HomeScrollPanel({
         <div
           className="h-dvh"
           aria-hidden="true"
+          data-home-step-hold-ms={TITLE_STEP_HOLD_MS}
           data-home-scroll-step
+          data-home-title-step
         />
       </section>
     );

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +19,7 @@ const MAX_LOADING_DURATION_MS = 15000;
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
 const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
 
 function preloadImage(source) {
   return new Promise((resolve) => {
@@ -88,6 +89,15 @@ function OpeningHome() {
     const context = gsap.context(() => {
       const panels = gsap.utils.toArray("[data-home-panel]", scroller);
       const steps = gsap.utils.toArray("[data-home-scroll-step]", scroller);
+      let activeTween;
+      let unlockTimer;
+      let wheelIdleTimer;
+      let wheelGestureReady = true;
+      let currentStepIndex = Math.round(
+        scroller.scrollTop / scroller.clientHeight,
+      );
+      let downwardLocked = false;
+      let lockedScrollPosition = Number.POSITIVE_INFINITY;
 
       panels.forEach((panel) => {
         const visual = panel.querySelector("[data-home-panel-visual]");
@@ -105,19 +115,85 @@ function OpeningHome() {
         });
       });
 
-      ScrollTrigger.create({
-        scroller,
-        start: 0,
-        end: "max",
-        snap: {
-          snapTo: steps.length > 1 ? 1 / (steps.length - 1) : 1,
-          duration: { min: 0.25, max: 0.7 },
-          delay: 0.05,
-          ease: "power2.inOut",
-        },
-      });
-
       ScrollTrigger.refresh();
+
+      const releaseScroll = () => {
+        downwardLocked = false;
+        lockedScrollPosition = Number.POSITIVE_INFINITY;
+        unlockTimer = undefined;
+      };
+
+      const moveToStep = (direction) => {
+        if (direction > 0 && downwardLocked) return;
+
+        if (direction < 0) {
+          window.clearTimeout(unlockTimer);
+          activeTween?.kill();
+          releaseScroll();
+        }
+
+        const nextStepIndex = gsap.utils.clamp(
+          0,
+          steps.length - 1,
+          currentStepIndex + direction,
+        );
+        if (nextStepIndex === currentStepIndex) return;
+
+        currentStepIndex = nextStepIndex;
+        downwardLocked = direction > 0;
+        lockedScrollPosition = nextStepIndex * scroller.clientHeight;
+        activeTween = gsap.to(scroller, {
+          scrollTo: { y: lockedScrollPosition, autoKill: false },
+          duration: reduceMotion ? 0 : 0.7,
+          ease: "power2.inOut",
+          overwrite: true,
+          onComplete: () => {
+            activeTween = undefined;
+            const holdDuration =
+              direction > 0
+                ? Number(steps[nextStepIndex]?.dataset.homeStepHoldMs || 0)
+                : 0;
+
+            if (holdDuration > 0 && !reduceMotion) {
+              unlockTimer = window.setTimeout(releaseScroll, holdDuration);
+              return;
+            }
+
+            releaseScroll();
+          },
+        });
+      };
+
+      const handleWheel = (event) => {
+        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+
+        event.preventDefault();
+        window.clearTimeout(wheelIdleTimer);
+        wheelIdleTimer = window.setTimeout(() => {
+          wheelGestureReady = true;
+        }, 180);
+        if (!wheelGestureReady) return;
+
+        wheelGestureReady = false;
+        moveToStep(event.deltaY > 0 ? 1 : -1);
+      };
+
+      const enforceTitleHold = () => {
+        if (downwardLocked && scroller.scrollTop > lockedScrollPosition) {
+          scroller.scrollTop = lockedScrollPosition;
+        }
+      };
+
+      scroller.addEventListener("wheel", handleWheel, { passive: false });
+      scroller.addEventListener("scroll", enforceTitleHold, { passive: true });
+
+      return () => {
+        window.clearTimeout(unlockTimer);
+        window.clearTimeout(wheelIdleTimer);
+        activeTween?.kill();
+        scroller.removeEventListener("wheel", handleWheel);
+        scroller.removeEventListener("scroll", enforceTitleHold);
+      };
     }, scroller);
 
     return () => context.revert();

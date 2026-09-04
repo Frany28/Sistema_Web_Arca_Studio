@@ -90,11 +90,16 @@ test("the hero title reproduces the Figma masked reveal after the opening", () =
 test("GSAP pins each image while the following scroll reveals its title", () => {
   assert.match(homeSource, /arca-construction-hero\.png/);
   assert.match(homeSource, /arca-interior-design-hero\.png/);
-  assert.match(homeSource, /gsap\.registerPlugin\(ScrollTrigger\)/);
   assert.match(homeSource, /pin: visual/);
   assert.match(homeSource, /pinSpacing: false/);
   assert.match(homeSource, /end: "bottom top"/);
-  assert.match(homeSource, /1 \/ \(steps\.length - 1\)/);
+  assert.match(homeSource, /gsap\.registerPlugin\(ScrollToPlugin, ScrollTrigger\)/);
+  assert.match(homeSource, /scroller\.addEventListener\("wheel", handleWheel/);
+  assert.match(homeSource, /moveToStep\(event\.deltaY > 0 \? 1 : -1\)/);
+  assert.match(homeSource, /wheelGestureReady = false/);
+  assert.match(homeSource, /wheelGestureReady = true/);
+  assert.match(homeSource, /direction > 0 && downwardLocked/);
+  assert.match(homeSource, /dataset\.homeStepHoldMs/);
   assert.match(homeSource, /context\.revert\(\)/);
   assert.match(homeSource, /<HomeScrollPanel/g);
   assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 3);
@@ -112,6 +117,8 @@ test("GSAP pins each image while the following scroll reveals its title", () => 
   );
   assert.match(scrollPanelSource, /revealOnNextScroll = false/);
   assert.match(scrollPanelSource, /data-home-scroll-step/);
+  assert.match(scrollPanelSource, /data-home-title-step/);
+  assert.match(scrollPanelSource, /data-home-step-hold-ms=\{TITLE_STEP_HOLD_MS\}/);
   assert.match(homeSource, /overscroll-y-contain/);
   assert.match(homeSource, /tabIndex=\{phase === "complete" \? 0 : -1\}/);
   assert.doesNotMatch(homeSource, /setInterval|scrollTo\(/);
