@@ -5,8 +5,9 @@ import vectorAsset from "../../../assets/home/arca-loader-vector.svg";
 
 const MOTION_DURATION_SECONDS = 3.679666;
 const VECTOR_OFFSET_Y = -248.974;
-const HIGHLIGHT_OFFSET_X = -159.334;
-const HIGHLIGHT_WIDTH = 35.254;
+const MASK_WIDTH = 159.334;
+const HIGHLIGHT_OFFSET_X = -MASK_WIDTH;
+const HIGHLIGHT_WIDTH = MASK_WIDTH;
 const HIGHLIGHTS = [
   { id: "4569:111858", top: 154.255, arrival: 0.4326 },
   { id: "4569:111866", top: 126.606, arrival: 0.4543 },
