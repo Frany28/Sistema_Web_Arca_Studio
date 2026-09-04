@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion as Motion, useReducedMotion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 
-import Login from "./Login.jsx";
+import homeHeroAsset from "../assets/home/arca-home-hero.png";
 import ArcaOpeningMark, {
   MOTION_DURATION_SECONDS,
 } from "../components/ui/ArcaOpeningMark/ArcaOpeningMark.jsx";
+import HomeHeader from "../components/ui/HomeHeader/HomeHeader.jsx";
+import HomeHeroTitle from "../components/ui/HomeHeroTitle/HomeHeroTitle.jsx";
 
 const REDUCED_MOTION_DURATION_MS = 450;
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
@@ -12,6 +15,7 @@ const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
 
 function OpeningHome() {
   const reduceMotion = useReducedMotion();
+  const navigate = useNavigate();
   const [phase, setPhase] = useState("opening");
 
   useEffect(() => {
@@ -54,12 +58,26 @@ function OpeningHome() {
           <ArcaOpeningMark repeat={0} />
         </main>
 
-        <div
-          className="h-dvh shrink-0 overflow-y-auto"
+        <main
+          className="dark relative h-dvh shrink-0 overflow-hidden bg-[var(--color-neutral-950-uniform)]"
           aria-hidden={phase !== "complete"}
         >
-          <Login />
-        </div>
+          <img
+            src={homeHeroAsset}
+            alt="Instalaciones industriales de ARCA Studio junto al mar"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/5 to-black/20"
+            aria-hidden="true"
+          />
+          <HomeHeroTitle visible={phase === "complete"} />
+          <HomeHeader
+            className="absolute inset-x-0 top-0 z-10"
+            onRegister={() => navigate("/crear-cuenta")}
+            onLogin={() => navigate("/login")}
+          />
+        </main>
       </Motion.div>
     </div>
   );
