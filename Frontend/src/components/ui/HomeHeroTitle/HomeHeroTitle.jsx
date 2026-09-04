@@ -17,10 +17,9 @@ function HomeHeroTitle({ title, visible }) {
         className="absolute left-1/2 top-[clamp(28px,7.33dvh,56.3px)] w-[min(1200px,calc(100%-32px))] -translate-x-1/2 overflow-hidden"
         initial={false}
         animate={{
-          height:
-            visible || reduceMotion
-              ? REVEAL_HEIGHT_EXPANDED
-              : REVEAL_HEIGHT_COLLAPSED,
+          height: visible
+            ? REVEAL_HEIGHT_EXPANDED
+            : REVEAL_HEIGHT_COLLAPSED,
         }}
         transition={
           reduceMotion
@@ -33,6 +32,7 @@ function HomeHeroTitle({ title, visible }) {
               }
         }
         data-node-id="4451:132680"
+        aria-hidden={!visible}
       >
         <h1
           className="absolute left-1/2 top-[89.5px] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 whitespace-nowrap text-center font-[var(--font-sans)] text-[clamp(40px,8vw,96px)] font-bold leading-[clamp(48px,6.33vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] text-[var(--color-neutral-100-uniform)]"

@@ -1,0 +1,176 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  HOME_SCROLL_DIRECTIONS,
+  HOME_SCROLL_PHASES,
+  advanceWheelGesture,
+  createHomeScrollState,
+  createScrollbarHomeScrollState,
+  createWheelGestureState,
+  getKeyboardDirection,
+  getNearestPanelIndex,
+  getNextHomeScrollState,
+  getSwipeDirection,
+  normalizeWheelDelta,
+} from "../src/utils/homeScrollNavigation.js";
+
+const { UP, DOWN } = HOME_SCROLL_DIRECTIONS;
+const { IMAGE, TITLE } = HOME_SCROLL_PHASES;
+
+test("descending navigation alternates the next image and its title", () => {
+  let state = createHomeScrollState();
+
+  assert.deepEqual(state, { panelIndex: 0, phase: TITLE, entryDirection: null });
+
+  state = getNextHomeScrollState(state, DOWN, 3);
+  assert.deepEqual(state, { panelIndex: 1, phase: IMAGE, entryDirection: DOWN });
+
+  state = getNextHomeScrollState(state, DOWN, 3);
+  assert.deepEqual(state, { panelIndex: 1, phase: TITLE, entryDirection: null });
+
+  state = getNextHomeScrollState(state, DOWN, 3);
+  assert.deepEqual(state, { panelIndex: 2, phase: IMAGE, entryDirection: DOWN });
+
+  state = getNextHomeScrollState(state, DOWN, 3);
+  assert.deepEqual(state, { panelIndex: 2, phase: TITLE, entryDirection: null });
+
+  assert.equal(getNextHomeScrollState(state, DOWN, 3), state);
+});
+
+test("ascending navigation uses the same image then title sequence", () => {
+  let state = createHomeScrollState({ panelIndex: 2, phase: TITLE });
+
+  state = getNextHomeScrollState(state, UP, 3);
+  assert.deepEqual(state, { panelIndex: 1, phase: IMAGE, entryDirection: UP });
+
+  state = getNextHomeScrollState(state, UP, 3);
+  assert.deepEqual(state, { panelIndex: 1, phase: TITLE, entryDirection: null });
+
+  state = getNextHomeScrollState(state, UP, 3);
+  assert.deepEqual(state, { panelIndex: 0, phase: IMAGE, entryDirection: UP });
+
+  state = getNextHomeScrollState(state, UP, 3);
+  assert.deepEqual(state, { panelIndex: 0, phase: TITLE, entryDirection: null });
+
+  assert.equal(getNextHomeScrollState(state, UP, 3), state);
+});
+
+test("reversing on a newly entered image changes panel without revealing it", () => {
+  const enteredDown = createHomeScrollState({
+    panelIndex: 1,
+    phase: IMAGE,
+    entryDirection: DOWN,
+  });
+  const enteredUp = createHomeScrollState({
+    panelIndex: 1,
+    phase: IMAGE,
+    entryDirection: UP,
+  });
+
+  assert.deepEqual(getNextHomeScrollState(enteredDown, UP, 3), {
+    panelIndex: 0,
+    phase: IMAGE,
+    entryDirection: UP,
+  });
+  assert.deepEqual(getNextHomeScrollState(enteredUp, DOWN, 3), {
+    panelIndex: 2,
+    phase: IMAGE,
+    entryDirection: DOWN,
+  });
+});
+
+test("a scrollbar-selected image reveals its title on the next gesture", () => {
+  const state = createScrollbarHomeScrollState(1);
+
+  assert.deepEqual(getNextHomeScrollState(state, DOWN, 3), {
+    panelIndex: 1,
+    phase: TITLE,
+    entryDirection: null,
+  });
+  assert.deepEqual(getNextHomeScrollState(state, UP, 3), {
+    panelIndex: 1,
+    phase: TITLE,
+    entryDirection: null,
+  });
+});
+
+test("wheel deltas normalize pixel, line and page units", () => {
+  assert.deepEqual(
+    normalizeWheelDelta({ deltaX: 2, deltaY: -4, deltaMode: 0 }, 800),
+    { x: 2, y: -4 },
+  );
+  assert.deepEqual(
+    normalizeWheelDelta({ deltaX: 1, deltaY: 3, deltaMode: 1 }, 800),
+    { x: 16, y: 48 },
+  );
+  assert.deepEqual(
+    normalizeWheelDelta({ deltaX: 0, deltaY: 1, deltaMode: 2 }, 800),
+    { x: 0, y: 800 },
+  );
+});
+
+test("a trackpad burst triggers one step and consumes its inertia", () => {
+  let gesture = createWheelGestureState();
+
+  gesture = advanceWheelGesture(gesture, 8);
+  assert.equal(gesture.triggeredDirection, null);
+  gesture = advanceWheelGesture(gesture, 10);
+  assert.equal(gesture.triggeredDirection, null);
+  gesture = advanceWheelGesture(gesture, 15);
+  assert.equal(gesture.triggeredDirection, DOWN);
+
+  gesture = advanceWheelGesture(gesture, 80);
+  assert.equal(gesture.triggeredDirection, null);
+  assert.equal(gesture.consumed, true);
+
+  gesture = createWheelGestureState();
+  gesture = advanceWheelGesture(gesture, -40);
+  assert.equal(gesture.triggeredDirection, UP);
+});
+
+test("trackpad direction changes reset an incomplete accumulator", () => {
+  let gesture = advanceWheelGesture(createWheelGestureState(), 20);
+
+  gesture = advanceWheelGesture(gesture, -20);
+  assert.equal(gesture.accumulator, -20);
+  assert.equal(gesture.triggeredDirection, null);
+});
+
+test("touch gestures require distance and vertical dominance", () => {
+  assert.equal(
+    getSwipeDirection({ startX: 100, startY: 160, endX: 105, endY: 90 }),
+    DOWN,
+  );
+  assert.equal(
+    getSwipeDirection({ startX: 100, startY: 90, endX: 95, endY: 160 }),
+    UP,
+  );
+  assert.equal(
+    getSwipeDirection({ startX: 100, startY: 100, endX: 102, endY: 70 }),
+    null,
+  );
+  assert.equal(
+    getSwipeDirection({ startX: 100, startY: 100, endX: 170, endY: 45 }),
+    null,
+  );
+});
+
+test("keyboard controls map to the shared navigation directions", () => {
+  assert.equal(getKeyboardDirection({ key: "ArrowDown" }), DOWN);
+  assert.equal(getKeyboardDirection({ key: "PageDown" }), DOWN);
+  assert.equal(getKeyboardDirection({ key: " " }), DOWN);
+  assert.equal(getKeyboardDirection({ key: "ArrowUp" }), UP);
+  assert.equal(getKeyboardDirection({ key: "PageUp" }), UP);
+  assert.equal(getKeyboardDirection({ key: " ", shiftKey: true }), UP);
+  assert.equal(getKeyboardDirection({ key: "Enter" }), null);
+});
+
+test("scrollbar alignment selects the closest panel", () => {
+  const offsets = [0, 800, 1600];
+
+  assert.equal(getNearestPanelIndex(0, offsets), 0);
+  assert.equal(getNearestPanelIndex(620, offsets), 1);
+  assert.equal(getNearestPanelIndex(1500, offsets), 2);
+  assert.equal(getNearestPanelIndex(900, offsets), 1);
+});

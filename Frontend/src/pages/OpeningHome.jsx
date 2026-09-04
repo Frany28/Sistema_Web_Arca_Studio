@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
@@ -13,14 +12,32 @@ import ArcaOpeningMark, {
 } from "../components/ui/ArcaOpeningMark/ArcaOpeningMark.jsx";
 import HomeHeader from "../components/ui/HomeHeader/HomeHeader.jsx";
 import HomeScrollPanel from "../components/ui/HomeScrollPanel/HomeScrollPanel.jsx";
+import {
+  HOME_SCROLL_PHASES,
+  advanceWheelGesture,
+  createHomeScrollState,
+  createScrollbarHomeScrollState,
+  createWheelGestureState,
+  getKeyboardDirection,
+  getNearestPanelIndex,
+  getNextHomeScrollState,
+  getSwipeDirection,
+  normalizeWheelDelta,
+} from "../utils/homeScrollNavigation.js";
 
 const REDUCED_MOTION_DURATION_MS = 450;
 const MAX_LOADING_DURATION_MS = 15000;
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
 const SCROLL_STEP_DURATION_SECONDS = 0.5;
 const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
+const WHEEL_GESTURE_THRESHOLD_PX = 32;
+const WHEEL_GESTURE_IDLE_MS = 180;
+const SCROLL_SETTLE_DELAY_MS = 180;
+const TOUCH_SWIPE_THRESHOLD_PX = 48;
+const TOUCH_VERTICAL_DOMINANCE = 1.2;
+const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 
-gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
+gsap.registerPlugin(ScrollToPlugin);
 
 function preloadImage(source) {
   return new Promise((resolve) => {
@@ -41,7 +58,11 @@ function OpeningHome() {
   const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const [phase, setPhase] = useState("opening");
+  const [navigationState, setNavigationState] = useState(
+    INITIAL_NAVIGATION_STATE,
+  );
   const homeScrollerRef = useRef(null);
+  const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,105 +106,269 @@ function OpeningHome() {
 
   useLayoutEffect(() => {
     const scroller = homeScrollerRef.current;
-    if (phase !== "complete" || reduceMotion || !scroller) return undefined;
+    if (phase !== "complete" || !scroller) return undefined;
 
-    const context = gsap.context(() => {
-      const panels = gsap.utils.toArray("[data-home-panel]", scroller);
-      const steps = gsap.utils.toArray("[data-home-scroll-step]", scroller);
-      let activeTween;
-      let wheelIdleTimer;
-      let wheelGestureReady = true;
-      let currentStepIndex = Math.round(
-        scroller.scrollTop / scroller.clientHeight,
-      );
-      let downwardLocked = false;
-      let lockedScrollPosition = Number.POSITIVE_INFINITY;
+    const panels = gsap.utils.toArray("[data-home-panel]", scroller);
+    let activeTween;
+    let resizeFrame;
+    let scrollSettleTimer;
+    let wheelIdleTimer;
+    let wheelGestureState = createWheelGestureState();
+    let touchGesture = null;
+    let isProgrammaticScroll = false;
+    let ignoreNextScrollEnd = false;
+    const supportsScrollEnd = "onscrollend" in scroller;
 
-      panels.forEach((panel) => {
-        const visual = panel.querySelector("[data-home-panel-visual]");
-        if (!visual) return;
+    const commitNavigationState = (nextState) => {
+      navigationStateRef.current = nextState;
+      setNavigationState(nextState);
+    };
 
-        ScrollTrigger.create({
-          trigger: panel,
-          scroller,
-          start: "top top",
-          end: "bottom top",
-          pin: visual,
-          pinSpacing: false,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
+    const alignToPanel = (nextState) => {
+      if (activeTween) return false;
+
+      const currentState = navigationStateRef.current;
+      const panelChanged = nextState.panelIndex !== currentState.panelIndex;
+      const targetPanel = panels[nextState.panelIndex];
+      const targetScrollTop = targetPanel?.offsetTop ?? 0;
+      const needsAlignment = Math.abs(scroller.scrollTop - targetScrollTop) > 1;
+
+      commitNavigationState(nextState);
+
+      if (!panelChanged && !needsAlignment) {
+        return true;
+      }
+
+      isProgrammaticScroll = true;
+      ignoreNextScrollEnd = supportsScrollEnd;
+
+      if (reduceMotion) {
+        scroller.scrollTop = targetScrollTop;
+        window.requestAnimationFrame(() => {
+          isProgrammaticScroll = false;
         });
+        return true;
+      }
+
+      activeTween = gsap.to(scroller, {
+        scrollTo: { y: targetScrollTop, autoKill: false },
+        duration: SCROLL_STEP_DURATION_SECONDS,
+        ease: "power2.inOut",
+        overwrite: true,
+        onComplete: () => {
+          activeTween = undefined;
+          isProgrammaticScroll = false;
+        },
       });
 
-      ScrollTrigger.refresh();
+      return true;
+    };
 
-      const releaseScroll = () => {
-        downwardLocked = false;
-        lockedScrollPosition = Number.POSITIVE_INFINITY;
+    const moveByDirection = (direction) => {
+      if (activeTween) return false;
+
+      const currentState = navigationStateRef.current;
+      const nextState = getNextHomeScrollState(
+        currentState,
+        direction,
+        panels.length,
+      );
+
+      if (nextState === currentState) return false;
+
+      return alignToPanel(nextState);
+    };
+
+    const resetWheelGesture = () => {
+      wheelGestureState = createWheelGestureState();
+    };
+
+    const handleWheel = (event) => {
+      const delta = normalizeWheelDelta(event, scroller.clientHeight);
+
+      if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
+
+      event.preventDefault();
+      window.clearTimeout(wheelIdleTimer);
+      wheelIdleTimer = window.setTimeout(
+        resetWheelGesture,
+        WHEEL_GESTURE_IDLE_MS,
+      );
+
+      if (activeTween) return;
+
+      wheelGestureState = advanceWheelGesture(
+        wheelGestureState,
+        delta.y,
+        WHEEL_GESTURE_THRESHOLD_PX,
+      );
+
+      if (wheelGestureState.triggeredDirection !== null) {
+        moveByDirection(wheelGestureState.triggeredDirection);
+      }
+    };
+
+    const handlePointerDown = (event) => {
+      if (event.pointerType !== "touch" || !event.isPrimary) return;
+
+      touchGesture = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        consumed: false,
       };
+    };
 
-      const moveToStep = (direction) => {
-        if (direction > 0 && downwardLocked) return;
+    const handlePointerMove = (event) => {
+      if (
+        !touchGesture ||
+        touchGesture.pointerId !== event.pointerId ||
+        touchGesture.consumed
+      ) {
+        return;
+      }
 
-        if (direction < 0) {
-          activeTween?.kill();
-          releaseScroll();
-        }
+      const direction = getSwipeDirection(
+        {
+          startX: touchGesture.startX,
+          startY: touchGesture.startY,
+          endX: event.clientX,
+          endY: event.clientY,
+        },
+        {
+          threshold: TOUCH_SWIPE_THRESHOLD_PX,
+          verticalDominance: TOUCH_VERTICAL_DOMINANCE,
+        },
+      );
 
-        const nextStepIndex = gsap.utils.clamp(
-          0,
-          steps.length - 1,
-          currentStepIndex + direction,
+      if (direction === null) return;
+
+      event.preventDefault();
+      touchGesture.consumed = true;
+      moveByDirection(direction);
+    };
+
+    const clearTouchGesture = (event) => {
+      if (touchGesture?.pointerId === event.pointerId) {
+        touchGesture = null;
+      }
+    };
+
+    const isInteractiveTarget = (target) =>
+      target instanceof Element &&
+      Boolean(
+        target.closest(
+          'a, button, input, select, textarea, [contenteditable="true"], [role="button"]',
+        ),
+      );
+
+    const handleKeyDown = (event) => {
+      const direction = getKeyboardDirection(event);
+      if (direction === null || isInteractiveTarget(event.target)) return;
+
+      event.preventDefault();
+      if (event.repeat) return;
+
+      moveByDirection(direction);
+    };
+
+    const settleNativeScroll = () => {
+      window.clearTimeout(scrollSettleTimer);
+      if (isProgrammaticScroll || activeTween) return;
+
+      const panelIndex = getNearestPanelIndex(
+        scroller.scrollTop,
+        panels.map((panel) => panel.offsetTop),
+      );
+
+      alignToPanel(createScrollbarHomeScrollState(panelIndex));
+    };
+
+    const handleNativeScroll = () => {
+      if (isProgrammaticScroll) return;
+
+      ignoreNextScrollEnd = false;
+      if (navigationStateRef.current.phase === HOME_SCROLL_PHASES.TITLE) {
+        commitNavigationState(
+          createScrollbarHomeScrollState(
+            navigationStateRef.current.panelIndex,
+          ),
         );
-        if (nextStepIndex === currentStepIndex) return;
+      }
 
-        currentStepIndex = nextStepIndex;
-        downwardLocked = direction > 0;
-        lockedScrollPosition = nextStepIndex * scroller.clientHeight;
-        activeTween = gsap.to(scroller, {
-          scrollTo: { y: lockedScrollPosition, autoKill: false },
-          duration: reduceMotion ? 0 : SCROLL_STEP_DURATION_SECONDS,
-          ease: "power2.inOut",
-          overwrite: true,
-          onComplete: () => {
-            activeTween = undefined;
-            releaseScroll();
-          },
-        });
-      };
+      if (!supportsScrollEnd) {
+        window.clearTimeout(scrollSettleTimer);
+        scrollSettleTimer = window.setTimeout(
+          settleNativeScroll,
+          SCROLL_SETTLE_DELAY_MS,
+        );
+      }
+    };
 
-      const handleWheel = (event) => {
-        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    const handleScrollEnd = () => {
+      if (ignoreNextScrollEnd) {
+        ignoreNextScrollEnd = false;
+        return;
+      }
 
-        event.preventDefault();
-        window.clearTimeout(wheelIdleTimer);
-        wheelIdleTimer = window.setTimeout(() => {
-          wheelGestureReady = true;
-        }, 180);
-        if (!wheelGestureReady) return;
+      settleNativeScroll();
+    };
 
-        wheelGestureReady = false;
-        moveToStep(event.deltaY > 0 ? 1 : -1);
-      };
-
-      const enforceTitleHold = () => {
-        if (downwardLocked && scroller.scrollTop > lockedScrollPosition) {
-          scroller.scrollTop = lockedScrollPosition;
-        }
-      };
-
-      scroller.addEventListener("wheel", handleWheel, { passive: false });
-      scroller.addEventListener("scroll", enforceTitleHold, { passive: true });
-
-      return () => {
-        window.clearTimeout(wheelIdleTimer);
+    const handleResize = () => {
+      window.cancelAnimationFrame(resizeFrame);
+      resizeFrame = window.requestAnimationFrame(() => {
         activeTween?.kill();
-        scroller.removeEventListener("wheel", handleWheel);
-        scroller.removeEventListener("scroll", enforceTitleHold);
-      };
-    }, scroller);
+        activeTween = undefined;
+        isProgrammaticScroll = true;
+        ignoreNextScrollEnd = supportsScrollEnd;
+        const activePanel = panels[navigationStateRef.current.panelIndex];
+        scroller.scrollTop = activePanel?.offsetTop ?? 0;
+        window.requestAnimationFrame(() => {
+          isProgrammaticScroll = false;
+        });
+      });
+    };
 
-    return () => context.revert();
+    isProgrammaticScroll = true;
+    ignoreNextScrollEnd = supportsScrollEnd;
+    scroller.scrollTop =
+      panels[navigationStateRef.current.panelIndex]?.offsetTop ?? 0;
+    resizeFrame = window.requestAnimationFrame(() => {
+      isProgrammaticScroll = false;
+    });
+    scroller.addEventListener("wheel", handleWheel, { passive: false });
+    scroller.addEventListener("pointerdown", handlePointerDown);
+    scroller.addEventListener("pointermove", handlePointerMove, {
+      passive: false,
+    });
+    scroller.addEventListener("pointerup", clearTouchGesture);
+    scroller.addEventListener("pointercancel", clearTouchGesture);
+    scroller.addEventListener("keydown", handleKeyDown);
+    scroller.addEventListener("scroll", handleNativeScroll, { passive: true });
+    if (supportsScrollEnd) {
+      scroller.addEventListener("scrollend", handleScrollEnd);
+    }
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      window.cancelAnimationFrame(resizeFrame);
+      window.clearTimeout(scrollSettleTimer);
+      window.clearTimeout(wheelIdleTimer);
+      activeTween?.kill();
+      scroller.removeEventListener("wheel", handleWheel);
+      scroller.removeEventListener("pointerdown", handlePointerDown);
+      scroller.removeEventListener("pointermove", handlePointerMove);
+      scroller.removeEventListener("pointerup", clearTouchGesture);
+      scroller.removeEventListener("pointercancel", clearTouchGesture);
+      scroller.removeEventListener("keydown", handleKeyDown);
+      scroller.removeEventListener("scroll", handleNativeScroll);
+      if (supportsScrollEnd) {
+        scroller.removeEventListener("scrollend", handleScrollEnd);
+      }
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
   }, [phase, reduceMotion]);
 
   return (
@@ -217,7 +402,7 @@ function OpeningHome() {
 
         <main
           ref={homeScrollerRef}
-          className="dark relative h-dvh shrink-0 overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable]"
+          className="dark relative h-dvh shrink-0 touch-pan-x overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable]"
           aria-hidden={phase !== "complete"}
           aria-label="Secciones de inicio de ARCA Studio"
           data-home-scroll-container
@@ -235,19 +420,31 @@ function OpeningHome() {
             image={homeHeroAsset}
             imageAlt="Instalaciones industriales de ARCA Studio junto al mar"
             title="Arquitectura"
-            enabled={phase === "complete"}
+            titleVisible={
+              phase === "complete" &&
+              navigationState.panelIndex === 0 &&
+              navigationState.phase === HOME_SCROLL_PHASES.TITLE
+            }
           />
           <HomeScrollPanel
             image={constructionHeroAsset}
             imageAlt="Baño construido por ARCA Studio con iluminación integrada"
             title="Construcción"
-            revealOnNextScroll
+            titleVisible={
+              phase === "complete" &&
+              navigationState.panelIndex === 1 &&
+              navigationState.phase === HOME_SCROLL_PHASES.TITLE
+            }
           />
           <HomeScrollPanel
             image={interiorDesignHeroAsset}
             imageAlt="Sala interior diseñada por ARCA Studio con iluminación ambiental"
             title="Interiorismo"
-            revealOnNextScroll
+            titleVisible={
+              phase === "complete" &&
+              navigationState.panelIndex === 2 &&
+              navigationState.phase === HOME_SCROLL_PHASES.TITLE
+            }
           />
         </main>
       </Motion.div>
