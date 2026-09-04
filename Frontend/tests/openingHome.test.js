@@ -99,9 +99,13 @@ test("GSAP pins each image while the following scroll reveals its title", () => 
   assert.match(scrollPanelSource, /relative h-dvh/);
   assert.match(scrollPanelSource, /relative h-\[200dvh\]/);
   assert.match(scrollPanelSource, /motion-reduce:sticky motion-reduce:top-0/);
-  assert.match(scrollPanelSource, /useScroll\(\{/);
-  assert.match(scrollPanelSource, /useMotionValueEvent\(scrollYProgress/);
-  assert.match(scrollPanelSource, /progress >= 0\.35/);
+  assert.match(scrollPanelSource, /closest\("\[data-home-scroll-container\]"\)/);
+  assert.match(scrollPanelSource, /scroller\.addEventListener\("scroll"/);
+  assert.match(scrollPanelSource, /panel\.offsetTop \+ scroller\.clientHeight \* 0\.35/);
+  assert.match(
+    scrollPanelSource,
+    /revealOnNextScroll \? titleStepActive : isInView/,
+  );
   assert.match(scrollPanelSource, /revealOnNextScroll = false/);
   assert.match(scrollPanelSource, /data-home-scroll-step/);
   assert.match(homeSource, /overscroll-y-contain/);

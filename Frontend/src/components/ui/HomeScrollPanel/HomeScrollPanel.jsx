@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { useInView, useMotionValueEvent, useScroll } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { useInView } from "motion/react";
 
 import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
 
@@ -15,24 +15,35 @@ function HomeScrollPanel({
     amount: revealOnNextScroll ? 0.25 : 0.6,
   });
   const [titleStepActive, setTitleStepActive] = useState(false);
-  const { scrollYProgress } = useScroll({
-    target: panelRef,
-    offset: ["start start", "end end"],
-  });
 
-  useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    if (!revealOnNextScroll) return;
+  useEffect(() => {
+    const panel = panelRef.current;
+    const scroller = panel?.closest("[data-home-scroll-container]");
+    if (!revealOnNextScroll || !panel || !scroller) return undefined;
 
-    const nextStepActive = progress >= 0.35;
-    setTitleStepActive((currentStepActive) =>
-      currentStepActive === nextStepActive
-        ? currentStepActive
-        : nextStepActive,
-    );
-  });
+    const updateTitleStep = () => {
+      const revealPosition = panel.offsetTop + scroller.clientHeight * 0.35;
+      const nextStepActive = scroller.scrollTop >= revealPosition;
+
+      setTitleStepActive((currentStepActive) =>
+        currentStepActive === nextStepActive
+          ? currentStepActive
+          : nextStepActive,
+      );
+    };
+
+    updateTitleStep();
+    scroller.addEventListener("scroll", updateTitleStep, { passive: true });
+    window.addEventListener("resize", updateTitleStep);
+
+    return () => {
+      scroller.removeEventListener("scroll", updateTitleStep);
+      window.removeEventListener("resize", updateTitleStep);
+    };
+  }, [revealOnNextScroll]);
 
   const titleVisible =
-    enabled && isInView && (!revealOnNextScroll || titleStepActive);
+    enabled && (revealOnNextScroll ? titleStepActive : isInView);
   const panelVisual = (
     <>
       <img
