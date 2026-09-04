@@ -84,7 +84,10 @@ test("the hero title reproduces the Figma masked reveal after the opening", () =
   assert.match(heroTitleSource, /top-\[89\.5px\]/);
   assert.doesNotMatch(heroTitleSource, /top-\[clamp\(44px,11\.65dvh,89\.5px\)\]/);
   assert.match(heroTitleSource, /w-\[min\(1104px,calc\(100%-32px\)\)\]/);
-  assert.match(heroTitleSource, /leading-\[76px\]/);
+  assert.match(heroTitleSource, /text-\[clamp\(40px,8vw,96px\)\]/);
+  assert.match(heroTitleSource, /leading-\[clamp\(48px,6\.33vw,76px\)\]/);
+  assert.match(heroTitleSource, /tracking-\[clamp\(-2px,-0\.139vw,-1px\)\]/);
+  assert.match(heroTitleSource, /whitespace-nowrap/);
   assert.match(heroTitleSource, /type: "spring"/);
   assert.match(heroTitleSource, /useReducedMotion\(\)/);
 });
@@ -113,9 +116,10 @@ test("GSAP pins each image while the following scroll reveals its title", () => 
   assert.match(scrollPanelSource, /closest\("\[data-home-scroll-container\]"\)/);
   assert.match(scrollPanelSource, /scroller\.addEventListener\("scroll"/);
   assert.match(scrollPanelSource, /panel\.offsetTop \+ scroller\.clientHeight \* 0\.35/);
+  assert.match(scrollPanelSource, /useInView\(panelRef, \{ amount: "some" \}\)/);
   assert.match(
     scrollPanelSource,
-    /revealOnNextScroll \? titleStepActive : isInView/,
+    /isInView &&\s+\(revealOnNextScroll \? titleStepActive : true\)/,
   );
   assert.match(scrollPanelSource, /revealOnNextScroll = false/);
   assert.match(scrollPanelSource, /data-home-scroll-step/);

@@ -13,6 +13,10 @@ const horizontalTabMenuSource = readFileSync(
   ),
   "utf8",
 );
+const globalStylesSource = readFileSync(
+  new URL("../src/styles/global.css", import.meta.url),
+  "utf8",
+);
 
 test("the public home header preserves the Figma structure and labels", () => {
   assert.match(headerSource, /data-node-id="4487:112595"/);
@@ -52,4 +56,8 @@ test("the public navigation hover uses the Figma underline state", () => {
   );
   assert.match(horizontalTabMenuSource, /hover:bg-transparent/);
   assert.doesNotMatch(horizontalTabMenuSource, /hover:bg-white\/10/);
+  assert.match(
+    globalStylesSource,
+    /--color-neutral-950-uniform: var\(--app-neutral-950-uniform\)/,
+  );
 });

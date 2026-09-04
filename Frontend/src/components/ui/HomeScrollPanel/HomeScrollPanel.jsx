@@ -18,9 +18,7 @@ function HomeScrollPanel({
   revealOnNextScroll = false,
 }) {
   const panelRef = useRef(null);
-  const isInView = useInView(panelRef, {
-    amount: revealOnNextScroll ? 0.25 : 0.6,
-  });
+  const isInView = useInView(panelRef, { amount: "some" });
   const [titleStepActive, setTitleStepActive] = useState(false);
 
   useEffect(() => {
@@ -50,7 +48,9 @@ function HomeScrollPanel({
   }, [revealOnNextScroll]);
 
   const titleVisible =
-    enabled && (revealOnNextScroll ? titleStepActive : isInView);
+    enabled &&
+    isInView &&
+    (revealOnNextScroll ? titleStepActive : true);
   const panelVisual = (
     <>
       <img

@@ -114,6 +114,7 @@ input[type="reset"]:disabled,
   /*colores para el fondo y elementos neutrales*/
   --app-neutral-bg: #fafaf8;
   --app-neutral-100-uniform: #ffffff;
+  --app-neutral-950-uniform: #0f0f0f;
   --app-neutral-100: #ffffff;
   --app-neutral-200: #e8e8e8;
   --app-neutral-300: #d2d2d2;
@@ -215,6 +216,7 @@ input[type="reset"]:disabled,
   /*colores para el fondo y elementos neutrales*/
   --app-neutral-bg: #0b0b0c;
   --app-neutral-100-uniform: #ffffff;
+  --app-neutral-950-uniform: #0f0f0f;
   --app-neutral-100: #000000;
   --app-neutral-200: #333333;
   --app-neutral-300: #4a4a4a;
@@ -1065,6 +1067,7 @@ input[type="reset"]:disabled,
   /* NEUTRAL */
   --color-neutral-bg: var(--app-neutral-bg);
   --color-neutral-100-uniform: var(--app-neutral-100-uniform);
+  --color-neutral-950-uniform: var(--app-neutral-950-uniform);
   --color-neutral-10: var(--app-neutral-10);
   --color-neutral-100: var(--app-neutral-100);
   --color-neutral-200: var(--app-neutral-200);
