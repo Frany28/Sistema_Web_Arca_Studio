@@ -116,8 +116,16 @@ test("GSAP pins each image while the following scroll reveals its title", () => 
   assert.match(scrollPanelSource, /motion-reduce:sticky motion-reduce:top-0/);
   assert.match(scrollPanelSource, /closest\("\[data-home-scroll-container\]"\)/);
   assert.match(scrollPanelSource, /scroller\.addEventListener\("scroll"/);
-  assert.match(scrollPanelSource, /panel\.offsetTop \+ scroller\.clientHeight \* 0\.35/);
-  assert.match(scrollPanelSource, /useInView\(panelRef, \{ amount: "some" \}\)/);
+  assert.match(scrollPanelSource, /DOWNWARD_TITLE_REVEAL_RATIO = 0\.35/);
+  assert.match(scrollPanelSource, /UPWARD_TITLE_REVEAL_RATIO = 0\.65/);
+  assert.match(scrollPanelSource, /lastScrollTopRef = useRef\(0\)/);
+  assert.match(scrollPanelSource, /scrollTop < previousScrollTop/);
+  assert.match(scrollPanelSource, /scrollTop <= revealPosition/);
+  assert.match(scrollPanelSource, /scrollTop >= revealPosition/);
+  assert.match(
+    scrollPanelSource,
+    /amount: revealOnNextScroll \? "some" : 0\.6/,
+  );
   assert.match(
     scrollPanelSource,
     /isInView &&\s+\(revealOnNextScroll \? titleStepActive : true\)/,

@@ -3,6 +3,9 @@ import { useInView } from "motion/react";
 
 import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
 
+const DOWNWARD_TITLE_REVEAL_RATIO = 0.35;
+const UPWARD_TITLE_REVEAL_RATIO = 0.65;
+
 function HomeScrollPanel({
   image,
   imageAlt,
@@ -11,7 +14,10 @@ function HomeScrollPanel({
   revealOnNextScroll = false,
 }) {
   const panelRef = useRef(null);
-  const isInView = useInView(panelRef, { amount: "some" });
+  const lastScrollTopRef = useRef(0);
+  const isInView = useInView(panelRef, {
+    amount: revealOnNextScroll ? "some" : 0.6,
+  });
   const [titleStepActive, setTitleStepActive] = useState(false);
 
   useEffect(() => {
@@ -20,8 +26,23 @@ function HomeScrollPanel({
     if (!revealOnNextScroll || !panel || !scroller) return undefined;
 
     const updateTitleStep = () => {
-      const revealPosition = panel.offsetTop + scroller.clientHeight * 0.35;
-      const nextStepActive = scroller.scrollTop >= revealPosition;
+      const scrollTop = scroller.scrollTop;
+      const previousScrollTop = lastScrollTopRef.current;
+      const panelStart = panel.offsetTop;
+      const panelEnd = panelStart + panel.offsetHeight;
+      const isInsidePanel = scrollTop >= panelStart && scrollTop < panelEnd;
+      const isScrollingUp = scrollTop < previousScrollTop;
+      const revealRatio = isScrollingUp
+        ? UPWARD_TITLE_REVEAL_RATIO
+        : DOWNWARD_TITLE_REVEAL_RATIO;
+      const revealPosition = panelStart + scroller.clientHeight * revealRatio;
+      const nextStepActive =
+        isInsidePanel &&
+        (isScrollingUp
+          ? scrollTop <= revealPosition
+          : scrollTop >= revealPosition);
+
+      lastScrollTopRef.current = scrollTop;
 
       setTitleStepActive((currentStepActive) =>
         currentStepActive === nextStepActive
