@@ -5,12 +5,12 @@ const REVEAL_DURATION_SECONDS = 3.12408709526062;
 const REVEAL_HEIGHT_COLLAPSED = 73;
 const REVEAL_HEIGHT_EXPANDED = 255;
 
-function HomeHeroTitle({ visible }) {
+function HomeHeroTitle({ title, visible }) {
   const reduceMotion = useReducedMotion();
 
   return (
     <div
-      className="pointer-events-none absolute inset-x-0 top-[56px] z-[5] h-[385px] overflow-hidden"
+      className="pointer-events-none absolute inset-x-0 top-[clamp(220px,31.2dvh,319.5px)] z-[5] h-[385px] overflow-hidden"
       data-node-id="4473:112127"
     >
       <Motion.div
@@ -38,7 +38,7 @@ function HomeHeroTitle({ visible }) {
           className="absolute left-1/2 top-[89.5px] m-0 w-full -translate-x-1/2 text-center font-[var(--font-sans)] text-[clamp(48px,6.67vw,96px)] font-bold leading-[0.792] tracking-[-2px] text-[var(--color-neutral-100-uniform)]"
           data-node-id="4451:132681"
         >
-          Arquitectura
+          {title}
         </h1>
       </Motion.div>
     </div>

@@ -21,13 +21,21 @@ const heroTitleSource = readFileSync(
   ),
   "utf8",
 );
+const scrollPanelSource = readFileSync(
+  new URL(
+    "../src/components/ui/HomeScrollPanel/HomeScrollPanel.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("the root route presents the animated ARCA opening before the home hero", () => {
   assert.match(mainSource, /path="\/" element={<OpeningHome \/>}/);
   assert.match(homeSource, /MOTION_DURATION_SECONDS \* 1000/);
   assert.match(homeSource, /arca-home-hero\.png/);
   assert.match(homeSource, /<HomeHeader/);
-  assert.match(homeSource, /<HomeHeroTitle visible=\{phase === "complete"\} \/>/);
+  assert.match(homeSource, /title="Arquitectura"/);
+  assert.match(homeSource, /title="Construcción"/);
   assert.match(homeSource, /<ArcaOpeningMark repeat=\{0\} \/>/);
 });
 
@@ -57,11 +65,22 @@ test("the opening mark preserves the Figma motion timeline and accessibility", (
 });
 
 test("the hero title reproduces the Figma masked reveal after the opening", () => {
-  assert.match(heroTitleSource, /Arquitectura/);
+  assert.match(heroTitleSource, /\{title\}/);
   assert.match(heroTitleSource, /REVEAL_DELAY_SECONDS = 0\.4000000059604645/);
   assert.match(heroTitleSource, /REVEAL_DURATION_SECONDS = 3\.12408709526062/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_COLLAPSED = 73/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_EXPANDED = 255/);
+  assert.match(heroTitleSource, /top-\[clamp\(220px,31\.2dvh,319\.5px\)\]/);
   assert.match(heroTitleSource, /type: "spring"/);
   assert.match(heroTitleSource, /useReducedMotion\(\)/);
+});
+
+test("home panels advance only through native layered scrolling", () => {
+  assert.match(homeSource, /arca-construction-hero\.png/);
+  assert.match(homeSource, /snap-y snap-mandatory/);
+  assert.match(homeSource, /<HomeScrollPanel/g);
+  assert.match(scrollPanelSource, /sticky top-0 h-dvh/);
+  assert.match(scrollPanelSource, /useInView\(panelRef, \{ amount: 0\.6 \}\)/);
+  assert.match(scrollPanelSource, /visible=\{enabled && isInView\}/);
+  assert.doesNotMatch(homeSource, /setInterval|scrollTo\(/);
 });

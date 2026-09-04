@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 
+import constructionHeroAsset from "../assets/home/arca-construction-hero.png";
 import homeHeroAsset from "../assets/home/arca-home-hero.png";
 import ArcaOpeningMark, {
   MOTION_DURATION_SECONDS,
 } from "../components/ui/ArcaOpeningMark/ArcaOpeningMark.jsx";
 import HomeHeader from "../components/ui/HomeHeader/HomeHeader.jsx";
-import HomeHeroTitle from "../components/ui/HomeHeroTitle/HomeHeroTitle.jsx";
+import HomeScrollPanel from "../components/ui/HomeScrollPanel/HomeScrollPanel.jsx";
 
 const REDUCED_MOTION_DURATION_MS = 450;
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
@@ -59,23 +60,27 @@ function OpeningHome() {
         </main>
 
         <main
-          className="dark relative h-dvh shrink-0 overflow-hidden bg-[var(--color-neutral-950-uniform)]"
+          className="dark relative h-dvh shrink-0 snap-y snap-mandatory overflow-x-hidden overflow-y-auto bg-[var(--color-neutral-950-uniform)] motion-reduce:snap-none"
           aria-hidden={phase !== "complete"}
         >
-          <img
-            src={homeHeroAsset}
-            alt="Instalaciones industriales de ARCA Studio junto al mar"
-            className="absolute inset-0 h-full w-full object-cover object-center"
+          <div className="pointer-events-none sticky top-0 z-30 h-0 overflow-visible">
+            <HomeHeader
+              className="pointer-events-auto"
+              onRegister={() => navigate("/crear-cuenta")}
+              onLogin={() => navigate("/login")}
+            />
+          </div>
+
+          <HomeScrollPanel
+            image={homeHeroAsset}
+            imageAlt="Instalaciones industriales de ARCA Studio junto al mar"
+            title="Arquitectura"
+            enabled={phase === "complete"}
           />
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/5 to-black/20"
-            aria-hidden="true"
-          />
-          <HomeHeroTitle visible={phase === "complete"} />
-          <HomeHeader
-            className="absolute inset-x-0 top-0 z-10"
-            onRegister={() => navigate("/crear-cuenta")}
-            onLogin={() => navigate("/login")}
+          <HomeScrollPanel
+            image={constructionHeroAsset}
+            imageAlt="Baño construido por ARCA Studio con iluminación integrada"
+            title="Construcción"
           />
         </main>
       </Motion.div>

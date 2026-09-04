@@ -20,7 +20,7 @@ function HomeHeader({
   return (
     <header
       className={clsx(
-        "dark flex h-[64px] w-full justify-center bg-transparent",
+        "dark flex h-[64px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px]",
         className,
       )}
       data-node-id="4487:112595"

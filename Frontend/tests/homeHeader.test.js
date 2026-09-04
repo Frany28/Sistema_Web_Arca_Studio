@@ -22,6 +22,7 @@ test("the public home header preserves the Figma structure and labels", () => {
 test("the public home header is permanently dark and reuses shared UI", () => {
   assert.match(headerSource, /appearance="dark"/);
   assert.match(headerSource, /color-neutral-100-uniform/);
+  assert.match(headerSource, /backdrop-blur-\[15px\]/);
   assert.match(headerSource, /<Button/);
   assert.doesNotMatch(headerSource, /dark:/);
   assert.doesNotMatch(headerSource, /useEffect|MutationObserver/);
