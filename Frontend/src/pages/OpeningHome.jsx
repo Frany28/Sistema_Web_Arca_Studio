@@ -11,8 +11,24 @@ import HomeHeader from "../components/ui/HomeHeader/HomeHeader.jsx";
 import HomeScrollPanel from "../components/ui/HomeScrollPanel/HomeScrollPanel.jsx";
 
 const REDUCED_MOTION_DURATION_MS = 450;
+const MAX_LOADING_DURATION_MS = 15000;
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
 const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
+
+function preloadImage(source) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    const finish = () => resolve();
+
+    image.onload = finish;
+    image.onerror = finish;
+    image.src = source;
+
+    if (image.complete) {
+      finish();
+    }
+  });
+}
 
 function OpeningHome() {
   const reduceMotion = useReducedMotion();
@@ -20,14 +36,42 @@ function OpeningHome() {
   const [phase, setPhase] = useState("opening");
 
   useEffect(() => {
-    const duration = reduceMotion
+    let cancelled = false;
+    const minimumDuration = reduceMotion
       ? REDUCED_MOTION_DURATION_MS
       : MOTION_DURATION_SECONDS * 1000;
-    const timeoutId = window.setTimeout(() => {
-      setPhase(reduceMotion ? "complete" : "transitioning");
-    }, duration);
+    const timers = new Set();
+    const wait = (duration) =>
+      new Promise((resolve) => {
+        const timerId = window.setTimeout(() => {
+          timers.delete(timerId);
+          resolve();
+        }, duration);
+        timers.add(timerId);
+      });
 
-    return () => window.clearTimeout(timeoutId);
+    const resourcesReady = Promise.allSettled([
+      preloadImage(homeHeroAsset),
+      preloadImage(constructionHeroAsset),
+      document.fonts?.ready ?? Promise.resolve(),
+    ]);
+
+    Promise.all([
+      Promise.race([resourcesReady, wait(MAX_LOADING_DURATION_MS)]),
+      wait(minimumDuration),
+    ]).then(() => {
+      timers.forEach((timerId) => window.clearTimeout(timerId));
+      timers.clear();
+      if (!cancelled) {
+        setPhase(reduceMotion ? "complete" : "transitioning");
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      timers.forEach((timerId) => window.clearTimeout(timerId));
+      timers.clear();
+    };
   }, [reduceMotion]);
 
   return (
@@ -56,7 +100,7 @@ function OpeningHome() {
           aria-label="Pantalla de carga de ARCA Studio"
           aria-hidden={phase === "complete"}
         >
-          <ArcaOpeningMark repeat={0} />
+          <ArcaOpeningMark repeat={phase === "opening" ? Infinity : 0} />
         </main>
 
         <main
@@ -78,6 +122,12 @@ function OpeningHome() {
             imageAlt="Instalaciones industriales de ARCA Studio junto al mar"
             title="Arquitectura"
             enabled={phase === "complete"}
+          />
+          <HomeScrollPanel
+            image={constructionHeroAsset}
+            imageAlt="Baño construido por ARCA Studio con iluminación integrada"
+            title="Construcción"
+            showTitle={false}
           />
           <HomeScrollPanel
             image={constructionHeroAsset}

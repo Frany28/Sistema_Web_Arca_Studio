@@ -32,11 +32,18 @@ const scrollPanelSource = readFileSync(
 test("the root route presents the animated ARCA opening before the home hero", () => {
   assert.match(mainSource, /path="\/" element={<OpeningHome \/>}/);
   assert.match(homeSource, /MOTION_DURATION_SECONDS \* 1000/);
+  assert.match(homeSource, /Promise\.allSettled/);
+  assert.match(homeSource, /preloadImage\(homeHeroAsset\)/);
+  assert.match(homeSource, /preloadImage\(constructionHeroAsset\)/);
+  assert.match(homeSource, /document\.fonts\?\.ready/);
   assert.match(homeSource, /arca-home-hero\.png/);
   assert.match(homeSource, /<HomeHeader/);
   assert.match(homeSource, /title="Arquitectura"/);
   assert.match(homeSource, /title="Construcción"/);
-  assert.match(homeSource, /<ArcaOpeningMark repeat=\{0\} \/>/);
+  assert.match(
+    homeSource,
+    /<ArcaOpeningMark repeat=\{phase === "opening" \? Infinity : 0\} \/>/,
+  );
 });
 
 test("login is shown only from its dedicated home action", () => {
@@ -79,10 +86,13 @@ test("home panels use fluid bidirectional native scrolling", () => {
   assert.match(homeSource, /arca-construction-hero\.png/);
   assert.match(homeSource, /snap-y snap-mandatory/);
   assert.match(homeSource, /<HomeScrollPanel/g);
+  assert.equal(homeSource.match(/<HomeScrollPanel/g)?.length, 3);
+  assert.match(homeSource, /title="Construcción"\s+showTitle=\{false\}/);
   assert.match(scrollPanelSource, /relative h-dvh/);
   assert.doesNotMatch(scrollPanelSource, /sticky top-0|snap-always/);
   assert.match(scrollPanelSource, /useInView\(panelRef, \{ amount: 0\.6 \}\)/);
   assert.match(scrollPanelSource, /visible=\{enabled && isInView\}/);
+  assert.match(scrollPanelSource, /showTitle = true/);
   assert.match(homeSource, /scroll-smooth/);
   assert.match(homeSource, /overscroll-y-contain/);
   assert.match(homeSource, /tabIndex=\{phase === "complete" \? 0 : -1\}/);

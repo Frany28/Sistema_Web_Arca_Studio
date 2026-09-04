@@ -3,7 +3,13 @@ import { useInView } from "motion/react";
 
 import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
 
-function HomeScrollPanel({ image, imageAlt, title, enabled = true }) {
+function HomeScrollPanel({
+  image,
+  imageAlt,
+  title,
+  enabled = true,
+  showTitle = true,
+}) {
   const panelRef = useRef(null);
   const isInView = useInView(panelRef, { amount: 0.6 });
 
@@ -22,7 +28,9 @@ function HomeScrollPanel({ image, imageAlt, title, enabled = true }) {
         className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/5 to-black/20"
         aria-hidden="true"
       />
-      <HomeHeroTitle title={title} visible={enabled && isInView} />
+      {showTitle ? (
+        <HomeHeroTitle title={title} visible={enabled && isInView} />
+      ) : null}
     </section>
   );
 }
