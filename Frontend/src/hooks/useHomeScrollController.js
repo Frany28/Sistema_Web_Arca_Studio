@@ -69,7 +69,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let touchGesture = null;
     let isProgrammaticScroll = false;
     let ignoreNextScrollEnd = false;
-    let pendingStatementEntryDelta = 0;
     const supportsScrollEnd = "onscrollend" in scroller;
 
     const commitNavigationState = (nextState) => {
@@ -85,20 +84,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       progress: statementProgress,
       reduceMotion,
     });
-
-    const flushStatementEntryDelta = () => {
-      const delta = pendingStatementEntryDelta;
-      pendingStatementEntryDelta = 0;
-      if (
-        delta <= 0 ||
-        navigationStateRef.current.panelIndex !== STATEMENT_PANEL_INDEX
-      ) {
-        return;
-      }
-
-      statement.startWheelScrubbing();
-      statement.queueDelta(delta);
-    };
 
     const alignToPanel = (nextState) => {
       if (activeTween) return false;
@@ -120,7 +105,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         scroller.scrollTop = targetScrollTop;
         window.requestAnimationFrame(() => {
           isProgrammaticScroll = false;
-          flushStatementEntryDelta();
         });
         return true;
       }
@@ -133,13 +117,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         onComplete: () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
-          flushStatementEntryDelta();
         },
       });
       return true;
     };
 
-    const moveByDirection = (direction, statementEntryDelta = 0) => {
+    const moveByDirection = (direction) => {
       if (activeTween) return false;
       const currentState = navigationStateRef.current;
       const nextState = getNextHomeScrollState(
@@ -147,13 +130,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         direction,
         panels.length,
       );
-      if (
-        nextState !== currentState &&
-        nextState.panelIndex === STATEMENT_PANEL_INDEX &&
-        nextState.entryDirection === HOME_SCROLL_DIRECTIONS.DOWN
-      ) {
-        pendingStatementEntryDelta += Math.max(statementEntryDelta, 0);
-      }
       return nextState === currentState ? false : alignToPanel(nextState);
     };
 
@@ -174,16 +150,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         WHEEL_GESTURE_IDLE_MS,
       );
       statement.stopAnimation();
-      if (wheelTransitionLock) {
-        if (
-          activeTween &&
-          navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX &&
-          delta.y > 0
-        ) {
-          pendingStatementEntryDelta += delta.y;
-        }
-        return;
-      }
+      if (wheelTransitionLock) return;
 
       const currentState = navigationStateRef.current;
       const isStatementReady =
@@ -216,10 +183,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       }
 
       if (!activeTween && wheelGestureState.triggeredDirection !== null) {
-        moveByDirection(
-          wheelGestureState.triggeredDirection,
-          wheelGestureState.accumulator,
-        );
+        moveByDirection(wheelGestureState.triggeredDirection);
       }
     };
 
@@ -309,7 +273,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       event.preventDefault();
       touchGesture.consumed = true;
-      moveByDirection(direction, Math.max(verticalDistance, 0));
+      moveByDirection(direction);
     };
 
     const clearTouchGesture = (event) => {
@@ -420,7 +384,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       window.cancelAnimationFrame(resizeFrame);
       window.clearTimeout(scrollSettleTimer);
       window.clearTimeout(wheelIdleTimer);
-      pendingStatementEntryDelta = 0;
       activeTween?.kill();
       statement.destroy();
       scroller.removeEventListener("wheel", handleWheel);
