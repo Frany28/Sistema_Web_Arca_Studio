@@ -1,26 +1,21 @@
 import { useRef, useState } from "react";
-import { motion as Motion, useReducedMotion } from "motion/react";
+import { motion as Motion } from "motion/react";
 
-const CATEGORY_TRANSITION_DURATION_SECONDS = 0.8;
-const CATEGORY_TRANSITION_EASE = "easeInOut";
-const CATEGORY_LINE_LENGTHS = Object.freeze({
-  residential: 48,
-  commercial: 108,
-});
+import "./ServicesCategoryShowcase.css";
 
 function ServicesCategoryShowcase({ categories }) {
-  const reduceMotion = useReducedMotion();
   const categoryTabRefs = useRef([]);
   const [activeCategoryId, setActiveCategoryId] = useState(
     categories[0]?.id ?? "residential",
   );
-  const transition = {
-    duration: reduceMotion ? 0 : CATEGORY_TRANSITION_DURATION_SECONDS,
-    ease: CATEGORY_TRANSITION_EASE,
-  };
   const activeCategory =
     categories.find((category) => category.id === activeCategoryId) ??
     categories[0];
+  const residentialCategory =
+    categories.find((category) => category.id === "residential") ?? categories[0];
+  const commercialCategory =
+    categories.find((category) => category.id === "commercial") ?? categories[1];
+  const commercialIsActive = activeCategoryId === "commercial";
 
   const handleCategoryKeyDown = (event, currentIndex) => {
     const lastIndex = categories.length - 1;
@@ -44,9 +39,13 @@ function ServicesCategoryShowcase({ categories }) {
   };
 
   return (
-    <section
+    <Motion.section
       className="flex min-h-dvh w-full items-center justify-center bg-[var(--color-neutral-950-uniform)] px-[16px] py-[96px] min-[768px]:px-[48px]"
       aria-label="Tipos de diseño"
+      viewport={{ amount: 0.15, once: true }}
+      onViewportEnter={() => {
+        if (commercialCategory) setActiveCategoryId(commercialCategory.id);
+      }}
     >
       <div className="grid w-full max-w-[1200px] items-center gap-[64px] min-[768px]:grid-cols-[minmax(0,1fr)_272px] min-[1024px]:gap-[120px]">
         <div
@@ -59,15 +58,10 @@ function ServicesCategoryShowcase({ categories }) {
             className="absolute left-0 top-0 h-[108px] w-[4px] overflow-hidden"
             aria-hidden="true"
           >
-            <Motion.span
-              className="absolute left-0 top-0 block h-[4px] origin-top-left rotate-90 bg-[var(--color-accent-300)]"
-              initial={false}
-              animate={{
-                width:
-                  CATEGORY_LINE_LENGTHS[activeCategoryId] ??
-                  CATEGORY_LINE_LENGTHS.residential,
-              }}
-              transition={transition}
+            <span
+              className={`services-category-line absolute left-0 top-0 block h-[4px] origin-top-left rotate-90 bg-[var(--color-accent-300)] ${
+                commercialIsActive ? "services-category-line-enter" : ""
+              }`}
               data-node-id="4571:111485"
             />
           </span>
@@ -81,7 +75,7 @@ function ServicesCategoryShowcase({ categories }) {
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                aria-controls={`service-panel-${category.id}`}
+                aria-controls="services-category-panel"
                 id={`service-tab-${category.id}`}
                 tabIndex={isActive ? 0 : -1}
                 ref={(node) => {
@@ -91,15 +85,20 @@ function ServicesCategoryShowcase({ categories }) {
                 onClick={() => setActiveCategoryId(category.id)}
                 onKeyDown={(event) => handleCategoryKeyDown(event, index)}
               >
-                <Motion.span
-                  className="block"
-                  initial={false}
-                  animate={{
-                    color: isActive
-                      ? "var(--color-accent-300)"
-                      : "var(--color-neutral-100-uniform)",
-                  }}
-                  transition={transition}
+                <span
+                  className={`block ${
+                    category.id === "commercial"
+                      ? `services-category-commercial ${
+                          commercialIsActive
+                            ? "services-category-commercial-enter"
+                            : ""
+                        }`
+                      : `services-category-residential ${
+                          commercialIsActive
+                            ? "services-category-residential-exit"
+                            : ""
+                        }`
+                  }`}
                   data-node-id={
                     category.id === "commercial"
                       ? "4571:111488"
@@ -107,7 +106,7 @@ function ServicesCategoryShowcase({ categories }) {
                   }
                 >
                   {category.label}
-                </Motion.span>
+                </span>
               </button>
             );
           })}
@@ -116,34 +115,32 @@ function ServicesCategoryShowcase({ categories }) {
         <div
           className="relative aspect-[272/452] w-full max-w-[272px] justify-self-center overflow-hidden"
           role="tabpanel"
-          id={`service-panel-${activeCategory.id}`}
+          id="services-category-panel"
           aria-labelledby={`service-tab-${activeCategory.id}`}
         >
-          {categories.map((category, index) => (
-            <Motion.img
-              key={category.id}
-              className="absolute inset-0 size-full object-cover object-bottom"
-              src={category.image}
-              alt={category.imageAlt}
-              initial={false}
-              animate={{ opacity: category.id === activeCategoryId ? 1 : 0 }}
-              transition={transition}
-              aria-hidden={category.id !== activeCategoryId}
-              data-node-id={
-                category.id === "commercial" ? "4571:111500" : undefined
-              }
-              style={{ zIndex: index + 1 }}
+          <img
+            className="absolute inset-0 size-full object-cover object-bottom"
+            src={residentialCategory.image}
+            alt={commercialIsActive ? "" : residentialCategory.imageAlt}
+            aria-hidden={commercialIsActive}
+          />
+          {commercialCategory ? (
+            <img
+              className={`services-category-commercial-image absolute inset-0 size-full object-cover object-bottom ${
+                commercialIsActive
+                  ? "services-category-commercial-image-enter"
+                  : ""
+              }`}
+              src={commercialCategory.image}
+              alt={commercialIsActive ? commercialCategory.imageAlt : ""}
+              aria-hidden={!commercialIsActive}
+              data-node-id="4571:111500"
             />
-          ))}
+          ) : null}
         </div>
       </div>
-    </section>
+    </Motion.section>
   );
 }
 
-export {
-  CATEGORY_LINE_LENGTHS,
-  CATEGORY_TRANSITION_DURATION_SECONDS,
-  CATEGORY_TRANSITION_EASE,
-};
 export default ServicesCategoryShowcase;

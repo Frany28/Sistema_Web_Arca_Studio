@@ -49,6 +49,13 @@ const servicesCategoryShowcaseSource = readFileSync(
   ),
   "utf8",
 );
+const servicesCategoryShowcaseStyles = readFileSync(
+  new URL(
+    "../src/pages/publicSite/services/components/ServicesCategoryShowcase.css",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const servicesPageSource = readFileSync(
   new URL("../src/pages/publicSite/services/ServicesPage.jsx", import.meta.url),
   "utf8",
@@ -295,10 +302,6 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
   assert.match(servicesHeadingSource, /linear-gradient/);
   assert.match(servicesHeadingSource, /bg-clip-text/);
-  assert.match(servicesHeadingSource, /<Motion\.h2/);
-  assert.match(servicesHeadingSource, /SERVICES_FILL_DURATION_SECONDS = 0\.8/);
-  assert.match(servicesHeadingSource, /backgroundPosition/);
-  assert.match(servicesHeadingSource, /repeatType: "mirror"/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(servicesHeadingSource, /initial=\{reduceMotion \? false/);
   assert.match(servicesHeadingSource, /animate=\{\{ opacity: 1, y: 0 \}\}/);
@@ -308,13 +311,6 @@ test("services categories preserve the Figma state transition", () => {
   assert.match(servicesPageSource, /<ServicesCategoryShowcase/);
   assert.match(servicesContentSource, /Diseño residencial/);
   assert.match(servicesContentSource, /Diseño comercial/);
-  assert.match(
-    servicesCategoryShowcaseSource,
-    /CATEGORY_TRANSITION_DURATION_SECONDS = 0\.8/,
-  );
-  assert.match(servicesCategoryShowcaseSource, /CATEGORY_TRANSITION_EASE = "easeInOut"/);
-  assert.match(servicesCategoryShowcaseSource, /residential: 48/);
-  assert.match(servicesCategoryShowcaseSource, /commercial: 108/);
   assert.match(servicesCategoryShowcaseSource, /data-node-id="4571:111485"/);
   assert.match(servicesCategoryShowcaseSource, /"4571:111488"/);
   assert.match(servicesCategoryShowcaseSource, /"4571:111487"/);
@@ -323,7 +319,16 @@ test("services categories preserve the Figma state transition", () => {
   assert.match(servicesCategoryShowcaseSource, /aria-selected=\{isActive\}/);
   assert.match(servicesCategoryShowcaseSource, /event\.key === "ArrowDown"/);
   assert.match(servicesCategoryShowcaseSource, /tabIndex=\{isActive \? 0 : -1\}/);
-  assert.match(servicesCategoryShowcaseSource, /useReducedMotion/);
+  assert.match(servicesCategoryShowcaseSource, /onViewportEnter/);
+  assert.match(servicesCategoryShowcaseSource, /viewport=\{\{ amount: 0\.15, once: true \}\}/);
+  assert.match(servicesCategoryShowcaseStyles, /kf_4571_111488_color_0/);
+  assert.match(servicesCategoryShowcaseStyles, /kf_4571_111485_width_0/);
+  assert.match(servicesCategoryShowcaseStyles, /kf_4571_111487_color_0/);
+  assert.match(servicesCategoryShowcaseStyles, /kf_4571_111500_opacity_0/);
+  assert.match(servicesCategoryShowcaseStyles, /animation: .* 0\.8s linear both/);
+  assert.match(servicesCategoryShowcaseStyles, /width: 48px/);
+  assert.match(servicesCategoryShowcaseStyles, /width: 108px/);
+  assert.match(servicesCategoryShowcaseStyles, /prefers-reduced-motion: reduce/);
 });
 
 test("OpeningHome delegates loading, navigation, content and statement behavior", () => {

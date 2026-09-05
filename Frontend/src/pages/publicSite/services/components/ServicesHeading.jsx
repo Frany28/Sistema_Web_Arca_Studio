@@ -2,8 +2,6 @@ import { motion as Motion, useReducedMotion } from "motion/react";
 
 const SERVICES_REVEAL_DURATION_SECONDS = 0.7;
 const SERVICES_REVEAL_EASE = [0.22, 1, 0.36, 1];
-const SERVICES_FILL_DURATION_SECONDS = 0.8;
-const SERVICES_FILL_EASE = "easeInOut";
 
 function ServicesHeading({ eyebrow, title, description }) {
   const reduceMotion = useReducedMotion();
@@ -30,24 +28,12 @@ function ServicesHeading({ eyebrow, title, description }) {
           {eyebrow}
         </p>
 
-        <Motion.h2
-          className="m-0 bg-[linear-gradient(90deg,var(--color-accent-300)_0%,var(--color-primary-300)_25%,var(--color-accent-300)_50%,var(--color-primary-300)_75%,var(--color-accent-300)_100%)] bg-clip-text [background-size:200%_100%] text-[clamp(38px,4.45vw,64px)] font-bold leading-[clamp(46px,5.28vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] text-transparent opacity-70 will-change-[background-position]"
-          initial={reduceMotion ? false : { backgroundPosition: "100% 50%" }}
-          animate={{
-            backgroundPosition: reduceMotion
-              ? "50% 50%"
-              : ["100% 50%", "0% 50%"],
-          }}
-          transition={{
-            duration: reduceMotion ? 0 : SERVICES_FILL_DURATION_SECONDS,
-            ease: SERVICES_FILL_EASE,
-            repeat: reduceMotion ? 0 : Infinity,
-            repeatType: "mirror",
-          }}
+        <h2
+          className="m-0 bg-[linear-gradient(90deg,var(--color-accent-300)_0%,var(--color-primary-300)_50%,var(--color-accent-300)_100%)] bg-clip-text text-[clamp(38px,4.45vw,64px)] font-bold leading-[clamp(46px,5.28vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] text-transparent opacity-70"
           data-node-id="4505:113282"
         >
           {title}
-        </Motion.h2>
+        </h2>
 
         <p
           className="text-heading-6 m-0 text-[var(--color-neutral-100-uniform)] opacity-60"
@@ -61,8 +47,6 @@ function ServicesHeading({ eyebrow, title, description }) {
 }
 
 export {
-  SERVICES_FILL_DURATION_SECONDS,
-  SERVICES_FILL_EASE,
   SERVICES_REVEAL_DURATION_SECONDS,
   SERVICES_REVEAL_EASE,
 };

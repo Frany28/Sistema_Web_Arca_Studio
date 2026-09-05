@@ -1,0 +1,84 @@
+.services-category-commercial {
+  color: var(--color-neutral-100-uniform, #fff);
+}
+
+.services-category-residential {
+  color: var(--color-accent-300, #ff4431);
+}
+
+.services-category-line {
+  width: 48px;
+}
+
+.services-category-commercial-image {
+  opacity: 0;
+}
+
+.services-category-commercial-enter {
+  animation: kf_4571_111488_color_0 0.8s linear both;
+}
+
+.services-category-line-enter {
+  animation: kf_4571_111485_width_0 0.8s linear both;
+}
+
+.services-category-residential-exit {
+  animation: kf_4571_111487_color_0 0.8s linear both;
+}
+
+.services-category-commercial-image-enter {
+  animation: kf_4571_111500_opacity_0 0.8s linear both;
+}
+
+@keyframes kf_4571_111488_color_0 {
+  0% {
+    animation-timing-function: ease-in-out;
+    color: var(--color-neutral-100-uniform, #fff);
+  }
+
+  100% {
+    color: var(--color-accent-300, #ff4431);
+  }
+}
+
+@keyframes kf_4571_111485_width_0 {
+  0% {
+    animation-timing-function: ease-in-out;
+    width: 48px;
+  }
+
+  100% {
+    width: 108px;
+  }
+}
+
+@keyframes kf_4571_111487_color_0 {
+  0% {
+    animation-timing-function: ease-in-out;
+    color: var(--color-accent-300, #ff4431);
+  }
+
+  100% {
+    color: var(--color-neutral-100-uniform, #fff);
+  }
+}
+
+@keyframes kf_4571_111500_opacity_0 {
+  0% {
+    animation-timing-function: ease-in-out;
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .services-category-commercial-enter,
+  .services-category-line-enter,
+  .services-category-residential-exit,
+  .services-category-commercial-image-enter {
+    animation-duration: 0.01ms;
+  }
+}
