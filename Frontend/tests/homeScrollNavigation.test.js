@@ -295,4 +295,8 @@ test("statement visual state zooms out and reveals the black surround", () => {
   });
   assert.equal(getHomeStatementVisualState(0.5).maskScale, 80.5);
   assert.ok(getHomeStatementVisualState(0.05).maskScale > 158);
+  assert.equal(getHomeStatementVisualState(0.18).overlayOpacity, 0);
+  assert.ok(getHomeStatementVisualState(0.3).overlayOpacity < 0.2);
+  assert.ok(getHomeStatementVisualState(0.5).overlayOpacity > 0.6);
+  assert.equal(getHomeStatementVisualState(0.68).overlayOpacity, 1);
 });

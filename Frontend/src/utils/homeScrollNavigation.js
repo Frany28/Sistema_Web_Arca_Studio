@@ -18,7 +18,8 @@ const STATEMENT_MIN_TRAVEL_PX = 200;
 const STATEMENT_MAX_TRAVEL_PX = 320;
 const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.3;
 const STATEMENT_INITIAL_MASK_SCALE = 160;
-const STATEMENT_OVERLAY_REVEAL_PROGRESS = 0.15;
+const STATEMENT_OVERLAY_FADE_START_PROGRESS = 0.18;
+const STATEMENT_OVERLAY_FADE_END_PROGRESS = 0.68;
 
 function clampHomeStatementProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
@@ -64,16 +65,20 @@ function getHomeStatementVisualState(progress) {
   const normalizedProgress = clampHomeStatementProgress(progress);
   const easedProgress =
     normalizedProgress ** 2 * (3 - 2 * normalizedProgress);
+  const overlayProgress = clampHomeStatementProgress(
+    (normalizedProgress - STATEMENT_OVERLAY_FADE_START_PROGRESS) /
+      (STATEMENT_OVERLAY_FADE_END_PROGRESS -
+        STATEMENT_OVERLAY_FADE_START_PROGRESS),
+  );
+  const easedOverlayProgress =
+    overlayProgress ** 2 * (3 - 2 * overlayProgress);
 
   return {
     progress: normalizedProgress,
     maskScale:
       STATEMENT_INITIAL_MASK_SCALE -
       (STATEMENT_INITIAL_MASK_SCALE - 1) * easedProgress,
-    overlayOpacity: Math.min(
-      normalizedProgress / STATEMENT_OVERLAY_REVEAL_PROGRESS,
-      1,
-    ),
+    overlayOpacity: easedOverlayProgress,
   };
 }
 
