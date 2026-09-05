@@ -34,4 +34,16 @@ const HOME_STATEMENT = Object.freeze({
   webmSource: statementVideoWebmAsset,
 });
 
-export { HOME_IMAGE_PANELS, HOME_PRELOAD_IMAGES, HOME_STATEMENT };
+const HOME_SERVICES_HEADING = Object.freeze({
+  eyebrow: "Servicios",
+  title: "Soluciones adaptadas a cada proyecto.",
+  description:
+    "Diseñamos, planificamos y desarrollamos espacios funcionales, estéticos y técnicamente bien ejecutados, ajustándonos a las necesidades de cada cliente.",
+});
+
+export {
+  HOME_IMAGE_PANELS,
+  HOME_PRELOAD_IMAGES,
+  HOME_SERVICES_HEADING,
+  HOME_STATEMENT,
+};

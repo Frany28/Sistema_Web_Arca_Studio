@@ -1,12 +1,18 @@
 import HomeScrollPanel from "../../../components/ui/HomeScrollPanel/HomeScrollPanel.jsx";
+import HomeServicesHeading from "../../../components/ui/HomeServicesHeading/HomeServicesHeading.jsx";
 import HomeStatementPanel from "../../../components/ui/HomeStatementPanel/HomeStatementPanel.jsx";
 import { HOME_SCROLL_PHASES } from "../../../utils/homeScrollNavigation.js";
-import { HOME_IMAGE_PANELS, HOME_STATEMENT } from "../homeContent.js";
+import {
+  HOME_IMAGE_PANELS,
+  HOME_SERVICES_HEADING,
+  HOME_STATEMENT,
+} from "../homeContent.js";
 
 function HomeSections({
   active,
   navigationState,
   onInitialTitleReveal,
+  servicesPanelIndex,
   statementPanelIndex,
   statementProgress,
 }) {
@@ -41,6 +47,10 @@ function HomeSections({
           navigationState.panelIndex === statementPanelIndex &&
           navigationState.phase === HOME_SCROLL_PHASES.TITLE
         }
+      />
+      <HomeServicesHeading
+        {...HOME_SERVICES_HEADING}
+        visible={active && navigationState.panelIndex === servicesPanelIndex}
       />
     </>
   );

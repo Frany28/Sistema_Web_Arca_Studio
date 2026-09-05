@@ -38,6 +38,7 @@ test("the public home header is permanently dark and reuses shared UI", () => {
   assert.match(headerSource, /<HorizontalTabMenu/);
   assert.match(headerSource, /presentation="publicNavigation"/);
   assert.match(headerSource, /items=\{navigationItems\.map\(\(item\) => item\.label\)\}/);
+  assert.match(headerSource, /activeIndex=\{activeNavigationIndex\}/);
   assert.match(headerSource, /onNavigate\?\.\(navigationItems\[index\]\.id\)/);
   assert.doesNotMatch(headerSource, /<ul|<li/);
   assert.doesNotMatch(headerSource, /dark:/);

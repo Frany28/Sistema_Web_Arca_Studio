@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useMotionValue } from "motion/react";
@@ -27,6 +27,7 @@ const SCROLL_SETTLE_DELAY_MS = 180;
 const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
 const STATEMENT_PANEL_INDEX = 3;
+const SERVICES_PANEL_INDEX = 4;
 const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 
 gsap.registerPlugin(ScrollToPlugin);
@@ -48,7 +49,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   );
   const scrollerRef = useRef(null);
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
+  const navigateToPanelRef = useRef(() => false);
   const statementProgress = useMotionValue(0);
+  const navigateToPanel = useCallback(
+    (panelIndex) => navigateToPanelRef.current(panelIndex),
+    [],
+  );
 
   useLayoutEffect(() => {
     if (!initialScrollReady && scrollerRef.current) {
@@ -126,11 +132,21 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const moveByDirection = (direction) => {
       if (activeTween) return false;
       const currentState = navigationStateRef.current;
-      const nextState = getNextHomeScrollState(
+      let nextState = getNextHomeScrollState(
         currentState,
         direction,
         panels.length,
       );
+      const destinationPanel = panels[nextState?.panelIndex];
+      if (
+        nextState?.panelIndex !== currentState.panelIndex &&
+        destinationPanel?.hasAttribute("data-home-reveal-on-entry")
+      ) {
+        nextState = createHomeScrollState({
+          panelIndex: nextState.panelIndex,
+          phase: HOME_SCROLL_PHASES.TITLE,
+        });
+      }
       return nextState === currentState ? false : alignToPanel(nextState);
     };
 
@@ -138,6 +154,20 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       wheelGestureState = createWheelGestureState();
       statement.resetWheelScrubbing();
       wheelTransitionLock = false;
+    };
+
+    navigateToPanelRef.current = (panelIndex) => {
+      if (!Number.isInteger(panelIndex) || !panels[panelIndex]) return false;
+      activeTween?.kill();
+      activeTween = undefined;
+      isProgrammaticScroll = false;
+      resetWheelGesture();
+      return alignToPanel(
+        createHomeScrollState({
+          panelIndex,
+          phase: HOME_SCROLL_PHASES.TITLE,
+        }),
+      );
     };
 
     const handleWheel = (event) => {
@@ -175,6 +205,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
         if (currentProgress >= 1 && direction === HOME_SCROLL_DIRECTIONS.DOWN) {
+          moveByDirection(direction);
           return;
         }
 
@@ -244,6 +275,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           verticalDistance > TOUCH_SWIPE_THRESHOLD_PX
         ) {
           touchGesture.consumed = true;
+          moveByDirection(HOME_SCROLL_DIRECTIONS.DOWN);
           return;
         }
 
@@ -295,6 +327,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
         if (currentProgress >= 1 && direction === HOME_SCROLL_DIRECTIONS.DOWN) {
+          moveByDirection(direction);
           return;
         }
 
@@ -385,6 +418,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       window.cancelAnimationFrame(resizeFrame);
       window.clearTimeout(scrollSettleTimer);
       window.clearTimeout(wheelIdleTimer);
+      navigateToPanelRef.current = () => false;
       activeTween?.kill();
       statement.destroy();
       scroller.removeEventListener("wheel", handleWheel);
@@ -404,7 +438,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
   return {
     navigationState,
+    navigateToPanel,
     scrollerRef,
+    servicesPanelIndex: SERVICES_PANEL_INDEX,
     statementPanelIndex: STATEMENT_PANEL_INDEX,
     statementProgress,
   };
@@ -413,6 +449,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 export {
   SCROLL_STEP_DURATION_SECONDS,
   SCROLL_SETTLE_DELAY_MS,
+  SERVICES_PANEL_INDEX,
   STATEMENT_PANEL_INDEX,
   TOUCH_SWIPE_THRESHOLD_PX,
   TOUCH_VERTICAL_DOMINANCE,

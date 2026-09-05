@@ -12,12 +12,17 @@ const DEFAULT_NAVIGATION_ITEMS = [
 ];
 
 function HomeHeader({
+  activeNavigationId,
   className,
   navigationItems = DEFAULT_NAVIGATION_ITEMS,
   onNavigate,
   onRegister,
   onLogin,
 }) {
+  const activeNavigationIndex = navigationItems.findIndex(
+    (item) => item.id === activeNavigationId,
+  );
+
   return (
     <header
       className={clsx(
@@ -46,7 +51,7 @@ function HomeHeader({
           <HorizontalTabMenu
             className="absolute left-1/2 top-0 hidden -translate-x-1/2 min-[1024px]:flex"
             items={navigationItems.map((item) => item.label)}
-            activeIndex={-1}
+            activeIndex={activeNavigationIndex}
             interactive
             presentation="publicNavigation"
             style="Brand"

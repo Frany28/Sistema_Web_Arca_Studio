@@ -28,7 +28,9 @@ function OpeningHome() {
   });
   const {
     navigationState,
+    navigateToPanel,
     scrollerRef,
+    servicesPanelIndex,
     statementPanelIndex,
     statementProgress,
   } = useHomeScrollController({
@@ -75,7 +77,17 @@ function OpeningHome() {
         >
           <div className="pointer-events-none sticky top-0 z-30 h-0 overflow-visible">
             <HomeHeader
+              activeNavigationId={
+                navigationState.panelIndex === servicesPanelIndex
+                  ? "services"
+                  : undefined
+              }
               className="pointer-events-auto"
+              onNavigate={(sectionId) => {
+                if (sectionId === "services") {
+                  navigateToPanel(servicesPanelIndex);
+                }
+              }}
               onRegister={() => navigate("/crear-cuenta")}
               onLogin={() => navigate("/login")}
             />
@@ -85,6 +97,7 @@ function OpeningHome() {
             active={homeActive}
             navigationState={navigationState}
             onInitialTitleReveal={completeInitialTitleReveal}
+            servicesPanelIndex={servicesPanelIndex}
             statementPanelIndex={statementPanelIndex}
             statementProgress={statementProgress}
           />
