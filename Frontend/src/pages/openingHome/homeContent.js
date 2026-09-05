@@ -1,4 +1,4 @@
-import constructionHeroAsset from "../../assets/home/arca-construction-hero.png";
+import constructionHeroAsset from "../../assets/home/arca-construction-worker-v2.png";
 import homeHeroAsset from "../../assets/home/arca-home-hero.png";
 import interiorDesignHeroAsset from "../../assets/home/arca-interior-design-hero.png";
 import statementVideoMp4Asset from "../../assets/home/arca-statement-bg.mp4";
