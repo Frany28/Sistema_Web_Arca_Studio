@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   motion as Motion,
   useReducedMotion,
@@ -9,6 +9,8 @@ import {
 import { getHomeStatementVisualState } from "../../../utils/homeScrollNavigation.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
+const STATEMENT_FOCUS_LETTER = "c";
+const STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO = 0.14;
 
 function playMutedVideo(video) {
   video.defaultMuted = true;
@@ -28,6 +30,8 @@ function HomeStatementPanel({
   webmSource,
 }) {
   const reduceMotion = useReducedMotion();
+  const focusGlyphRef = useRef(null);
+  const maskTextRef = useRef(null);
   const videoRef = useRef(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const smoothedProgress = useSpring(progress, {
@@ -44,6 +48,41 @@ function HomeStatementPanel({
     visualProgress,
     (value) => getHomeStatementVisualState(value).overlayOpacity,
   );
+  const focusLetterIndex = phrase
+    .toLocaleLowerCase("es")
+    .indexOf(STATEMENT_FOCUS_LETTER);
+
+  useLayoutEffect(() => {
+    const focusGlyph = focusGlyphRef.current;
+    const maskText = maskTextRef.current;
+    if (!focusGlyph || !maskText) return undefined;
+
+    const updateTransformOrigin = () => {
+      const focusBounds = focusGlyph.getBBox();
+      const textBounds = maskText.getBBox();
+      if (!textBounds.width || !textBounds.height) return;
+
+      const originX =
+        ((focusBounds.x - textBounds.x +
+          focusBounds.width * STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO) /
+          textBounds.width) *
+        100;
+      const originY =
+        ((focusBounds.y - textBounds.y + focusBounds.height / 2) /
+          textBounds.height) *
+        100;
+
+      maskText.style.transformOrigin = `${originX}% ${originY}%`;
+    };
+
+    updateTransformOrigin();
+    document.fonts?.ready.then(updateTransformOrigin).catch(() => undefined);
+
+    const resizeObserver = new ResizeObserver(updateTransformOrigin);
+    resizeObserver.observe(maskText);
+
+    return () => resizeObserver.disconnect();
+  }, [phrase]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -140,6 +179,7 @@ function HomeStatementPanel({
           >
             <rect width="100%" height="100%" fill="white" />
             <Motion.text
+              ref={maskTextRef}
               x="50%"
               y="50%"
               dy="0.35em"
@@ -148,7 +188,17 @@ function HomeStatementPanel({
               className="origin-center [transform-box:fill-box] font-[var(--font-sans)] text-[clamp(24px,3.2vw,46px)] font-bold tracking-[-1px]"
               style={{ scale: maskScale }}
             >
-              {phrase}
+              {focusLetterIndex < 0 ? (
+                phrase
+              ) : (
+                <>
+                  {phrase.slice(0, focusLetterIndex)}
+                  <tspan ref={focusGlyphRef}>
+                    {phrase[focusLetterIndex]}
+                  </tspan>
+                  {phrase.slice(focusLetterIndex + 1)}
+                </>
+              )}
             </Motion.text>
           </mask>
         </defs>
