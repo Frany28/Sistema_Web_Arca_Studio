@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   motion as Motion,
+  useMotionValue,
   useReducedMotion,
   useSpring,
   useTransform,
@@ -9,6 +10,8 @@ import {
 import { getHomeStatementVisualState } from "../../../utils/homeScrollNavigation.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
+const STATEMENT_FOCUS_LETTER = "c";
+const STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO = 0.2;
 
 function playMutedVideo(video) {
   video.defaultMuted = true;
@@ -29,8 +32,11 @@ function HomeStatementPanel({
   webmSource,
 }) {
   const reduceMotion = useReducedMotion();
+  const focusGlyphRef = useRef(null);
+  const maskTextRef = useRef(null);
   const videoRef = useRef(null);
   const [videoFailed, setVideoFailed] = useState(false);
+  const focusOffsetX = useMotionValue(0);
   const smoothedProgress = useSpring(progress, {
     damping: 28,
     mass: 0.55,
@@ -41,6 +47,50 @@ function HomeStatementPanel({
     visualProgress,
     (value) => getHomeStatementVisualState(value).maskScale,
   );
+  const maskTranslateX = useTransform(() => {
+    const { progress: currentProgress } = getHomeStatementVisualState(
+      visualProgress.get(),
+    );
+    return -focusOffsetX.get() * (1 - currentProgress);
+  });
+  const focusLetterIndex = phrase
+    .toLocaleLowerCase("es")
+    .indexOf(STATEMENT_FOCUS_LETTER);
+
+  useLayoutEffect(() => {
+    const focusGlyph = focusGlyphRef.current;
+    const maskText = maskTextRef.current;
+    const maskSvg = maskText?.ownerSVGElement;
+    if (!focusGlyph || !maskText || !maskSvg) return undefined;
+
+    let cancelled = false;
+    const updateFocusGeometry = () => {
+      if (cancelled) return;
+
+      const focusBounds = focusGlyph.getBBox();
+      const textBounds = maskText.getBBox();
+      if (!textBounds.width || !textBounds.height || !maskSvg.clientWidth) return;
+
+      const focusX =
+        focusBounds.x +
+        focusBounds.width * STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO;
+      const focusY = focusBounds.y + focusBounds.height / 2;
+      const originX = ((focusX - textBounds.x) / textBounds.width) * 100;
+      const originY = ((focusY - textBounds.y) / textBounds.height) * 100;
+
+      maskText.style.transformOrigin = `${originX}% ${originY}%`;
+      focusOffsetX.set(focusX - maskSvg.clientWidth / 2);
+    };
+
+    updateFocusGeometry();
+    document.fonts?.ready.then(updateFocusGeometry).catch(() => undefined);
+    window.addEventListener("resize", updateFocusGeometry);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", updateFocusGeometry);
+    };
+  }, [focusOffsetX, phrase]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -127,7 +177,7 @@ function HomeStatementPanel({
 
       <svg
         className={`pointer-events-none absolute inset-0 h-full w-full ${
-          effectStarted ? "block" : "hidden"
+          effectStarted ? "visible" : "invisible"
         }`}
         aria-hidden="true"
         focusable="false"
@@ -143,17 +193,30 @@ function HomeStatementPanel({
             className="[mask-type:luminance]"
           >
             <rect width="100%" height="100%" fill="white" />
-            <Motion.text
-              x="50%"
-              y="50%"
-              dy="0.35em"
-              textAnchor="middle"
-              fill="black"
-              className="origin-center [transform-box:fill-box] font-[var(--font-sans)] text-[clamp(24px,3.2vw,46px)] font-bold tracking-[-1px]"
-              style={{ scale: maskScale }}
-            >
-              {phrase}
-            </Motion.text>
+            <Motion.g style={{ x: maskTranslateX }}>
+              <Motion.text
+                ref={maskTextRef}
+                x="50%"
+                y="50%"
+                dy="0.35em"
+                textAnchor="middle"
+                fill="black"
+                className="origin-center [transform-box:fill-box] font-[var(--font-sans)] text-[clamp(24px,3.2vw,46px)] font-bold tracking-[-1px]"
+                style={{ scale: maskScale }}
+              >
+                {focusLetterIndex < 0 ? (
+                  phrase
+                ) : (
+                  <>
+                    {phrase.slice(0, focusLetterIndex)}
+                    <tspan ref={focusGlyphRef}>
+                      {phrase[focusLetterIndex]}
+                    </tspan>
+                    {phrase.slice(focusLetterIndex + 1)}
+                  </>
+                )}
+              </Motion.text>
+            </Motion.g>
           </mask>
         </defs>
         <rect
