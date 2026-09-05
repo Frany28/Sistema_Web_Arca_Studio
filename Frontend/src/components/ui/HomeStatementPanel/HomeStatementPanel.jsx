@@ -40,10 +40,6 @@ function HomeStatementPanel({
     visualProgress,
     (value) => getHomeStatementVisualState(value).maskScale,
   );
-  const overlayOpacity = useTransform(
-    visualProgress,
-    (value) => getHomeStatementVisualState(value).overlayOpacity,
-  );
 
   useEffect(() => {
     const video = videoRef.current;
@@ -123,6 +119,11 @@ function HomeStatementPanel({
         ) : null}
       </video>
 
+      <div
+        className="pointer-events-none absolute inset-0 bg-[var(--color-neutral-950-uniform)] opacity-20 mix-blend-multiply"
+        aria-hidden="true"
+      />
+
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full"
         aria-hidden="true"
@@ -152,12 +153,11 @@ function HomeStatementPanel({
             </Motion.text>
           </mask>
         </defs>
-        <Motion.rect
+        <rect
           width="100%"
           height="100%"
           fill="var(--color-neutral-950-uniform)"
           mask={`url(#${STATEMENT_MASK_ID})`}
-          style={{ opacity: overlayOpacity }}
         />
       </svg>
 
