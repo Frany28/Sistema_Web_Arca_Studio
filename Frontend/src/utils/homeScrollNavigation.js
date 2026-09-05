@@ -66,9 +66,7 @@ function getHomeStatementVisualState(progress) {
 
   return {
     progress: normalizedProgress,
-    maskScale:
-      STATEMENT_INITIAL_MASK_SCALE -
-      (STATEMENT_INITIAL_MASK_SCALE - 1) * easedProgress,
+    maskScale: STATEMENT_INITIAL_MASK_SCALE ** (1 - easedProgress),
   };
 }
 
