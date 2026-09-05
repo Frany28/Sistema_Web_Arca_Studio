@@ -8,7 +8,6 @@ function HomeSections({
   navigationState,
   onInitialTitleReveal,
   statementPanelIndex,
-  statementPlaybackVersion,
   statementProgress,
 }) {
   return (
@@ -31,7 +30,6 @@ function HomeSections({
         active={active && navigationState.panelIndex === statementPanelIndex}
         mediaEnabled={active}
         {...HOME_STATEMENT}
-        playbackVersion={statementPlaybackVersion}
         progress={statementProgress}
         statementVisible={
           active &&

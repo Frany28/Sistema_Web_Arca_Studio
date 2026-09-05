@@ -30,7 +30,6 @@ function OpeningHome() {
     navigationState,
     scrollerRef,
     statementPanelIndex,
-    statementPlaybackVersion,
     statementProgress,
   } = useHomeScrollController({
     enabled: phase === "complete" && initialScrollReady,
@@ -87,7 +86,6 @@ function OpeningHome() {
             navigationState={navigationState}
             onInitialTitleReveal={completeInitialTitleReveal}
             statementPanelIndex={statementPanelIndex}
-            statementPlaybackVersion={statementPlaybackVersion}
             statementProgress={statementProgress}
           />
         </main>

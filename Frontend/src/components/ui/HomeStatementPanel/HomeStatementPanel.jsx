@@ -21,7 +21,6 @@ function HomeStatementPanel({
   active = false,
   mediaEnabled = false,
   mp4Source,
-  playbackVersion = 0,
   phrase,
   poster,
   progress,
@@ -68,16 +67,26 @@ function HomeStatementPanel({
       return undefined;
     }
 
-    const handleCanPlay = () => playMutedVideo(video);
+    // Scroll progress never seeks or pauses the media. Only a new panel entry
+    // restarts playback; readiness and browser interruptions simply resume it.
+    const handleCanPlay = () => {
+      if (!document.hidden && video.paused) playMutedVideo(video);
+    };
     video.currentTime = 0;
     video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("pause", handleCanPlay);
+    video.addEventListener("ended", handleCanPlay);
+    document.addEventListener("visibilitychange", handleCanPlay);
     playMutedVideo(video);
 
     return () => {
       video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("pause", handleCanPlay);
+      video.removeEventListener("ended", handleCanPlay);
+      document.removeEventListener("visibilitychange", handleCanPlay);
       video.pause();
     };
-  }, [active, mediaEnabled, playbackVersion]);
+  }, [active, mediaEnabled]);
 
   return (
     <section
@@ -108,8 +117,8 @@ function HomeStatementPanel({
       >
         {mediaEnabled ? (
           <>
-            <source src={webmSource} type="video/webm" />
             <source src={mp4Source} type="video/mp4" />
+            <source src={webmSource} type="video/webm" />
           </>
         ) : null}
       </video>
