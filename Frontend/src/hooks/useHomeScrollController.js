@@ -45,6 +45,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const [navigationState, setNavigationState] = useState(
     INITIAL_NAVIGATION_STATE,
   );
+  const [statementPlaybackVersion, setStatementPlaybackVersion] = useState(0);
   const scrollerRef = useRef(null);
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
   const statementProgress = useMotionValue(0);
@@ -64,6 +65,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let resizeFrame;
     let scrollSettleTimer;
     let wheelTransitionLock = false;
+    let statementWheelDirection = null;
     let wheelIdleTimer;
     let wheelGestureState = createWheelGestureState();
     let touchGesture = null;
@@ -74,6 +76,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const commitNavigationState = (nextState) => {
       navigationStateRef.current = nextState;
       setNavigationState(nextState);
+    };
+    const restartStatementPlayback = () => {
+      setStatementPlaybackVersion((version) => version + 1);
     };
     const statement = createHomeStatementController({
       commitNavigationState,
@@ -96,6 +101,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       statement.synchronizeWithNavigation(nextState, currentState);
       commitNavigationState(nextState);
+      if (panelChanged && nextState.panelIndex === STATEMENT_PANEL_INDEX) {
+        restartStatementPlayback();
+      }
       if (panelChanged) wheelTransitionLock = true;
       if (!panelChanged && !needsAlignment) return true;
 
@@ -136,6 +144,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const resetWheelGesture = () => {
       wheelGestureState = createWheelGestureState();
       statement.resetWheelScrubbing();
+      statementWheelDirection = null;
       wheelTransitionLock = false;
     };
 
@@ -156,6 +165,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const isStatementReady =
         currentState.panelIndex === STATEMENT_PANEL_INDEX && !activeTween;
       if (isStatementReady && statement.isWheelScrubbing()) {
+        const direction =
+          delta.y > 0
+            ? HOME_SCROLL_DIRECTIONS.DOWN
+            : HOME_SCROLL_DIRECTIONS.UP;
+        if (direction !== statementWheelDirection) {
+          statementWheelDirection = direction;
+          restartStatementPlayback();
+        }
         statement.queueDelta(delta.y);
         return;
       }
@@ -177,6 +194,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
 
+        statementWheelDirection = direction;
+        restartStatementPlayback();
         statement.startWheelScrubbing();
         statement.queueDelta(wheelGestureState.accumulator);
         return;
@@ -200,6 +219,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         statement: isStatementGesture,
         captured: false,
         consumed: false,
+        playbackDirection: null,
       };
     };
 
@@ -244,6 +264,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         ) {
           touchGesture.consumed = true;
           return;
+        }
+
+        const direction =
+          verticalDistance > 0
+            ? HOME_SCROLL_DIRECTIONS.DOWN
+            : HOME_SCROLL_DIRECTIONS.UP;
+        if (direction !== touchGesture.playbackDirection) {
+          touchGesture.playbackDirection = direction;
+          restartStatementPlayback();
         }
 
         statement.commitProgress(
@@ -297,6 +326,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
 
+        restartStatementPlayback();
         statement.animateTo(direction === HOME_SCROLL_DIRECTIONS.DOWN ? 1 : 0);
         return;
       }
@@ -311,6 +341,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         scroller.scrollTop,
         panels.map((panel) => panel.offsetTop),
       );
+      if (
+        panelIndex === STATEMENT_PANEL_INDEX &&
+        navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX
+      ) {
+        restartStatementPlayback();
+      }
       alignToPanel(createScrollbarHomeScrollState(panelIndex));
     };
 
@@ -405,6 +441,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     navigationState,
     scrollerRef,
     statementPanelIndex: STATEMENT_PANEL_INDEX,
+    statementPlaybackVersion,
     statementProgress,
   };
 }

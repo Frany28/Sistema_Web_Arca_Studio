@@ -21,6 +21,7 @@ function HomeStatementPanel({
   active = false,
   mediaEnabled = false,
   mp4Source,
+  playbackVersion = 0,
   phrase,
   poster,
   progress,
@@ -76,7 +77,7 @@ function HomeStatementPanel({
       video.removeEventListener("canplay", handleCanPlay);
       video.pause();
     };
-  }, [active, mediaEnabled]);
+  }, [active, mediaEnabled, playbackVersion]);
 
   return (
     <section
