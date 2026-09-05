@@ -54,13 +54,29 @@ function HomeStatementPanel({
       return undefined;
     }
 
-    const handleCanPlay = () => playMutedVideo(video);
-    video.addEventListener("canplay", handleCanPlay);
     video.load();
+    return undefined;
+  }, [mediaEnabled]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !mediaEnabled) return undefined;
+
+    if (!active) {
+      video.pause();
+      return undefined;
+    }
+
+    const handleCanPlay = () => playMutedVideo(video);
+    video.currentTime = 0;
+    video.addEventListener("canplay", handleCanPlay);
     playMutedVideo(video);
 
-    return () => video.removeEventListener("canplay", handleCanPlay);
-  }, [mediaEnabled]);
+    return () => {
+      video.removeEventListener("canplay", handleCanPlay);
+      video.pause();
+    };
+  }, [active, mediaEnabled]);
 
   return (
     <section
