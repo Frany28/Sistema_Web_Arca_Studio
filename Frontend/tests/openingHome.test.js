@@ -37,9 +37,17 @@ const statementPanelSource = readFileSync(
 );
 const servicesHeadingSource = readFileSync(
   new URL(
-    "../src/components/ui/HomeServicesHeading/HomeServicesHeading.jsx",
+    "../src/components/ui/ServicesHeading/ServicesHeading.jsx",
     import.meta.url,
   ),
+  "utf8",
+);
+const servicesPageSource = readFileSync(
+  new URL("../src/pages/services/ServicesPage.jsx", import.meta.url),
+  "utf8",
+);
+const servicesContentSource = readFileSync(
+  new URL("../src/pages/services/servicesContent.js", import.meta.url),
   "utf8",
 );
 const openingSequenceSource = readFileSync(
@@ -258,14 +266,15 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /aria-hidden=\{!statementVisible\}/);
 });
 
-test("services navigation opens the responsive Figma heading and its reveal", () => {
-  assert.match(homeContentSource, /Soluciones adaptadas a cada proyecto\./);
-  assert.match(homeSectionsSource, /<HomeServicesHeading/);
+test("services navigation opens its public route and responsive Figma heading", () => {
+  assert.match(mainSource, /path="\/servicios" element=\{<ServicesPage \/>\}/);
+  assert.match(servicesContentSource, /Soluciones adaptadas a cada proyecto\./);
+  assert.match(servicesPageSource, /<ServicesHeading/);
+  assert.match(servicesPageSource, /activeNavigationId="services"/);
   assert.match(homeSource, /onNavigate=\{\(sectionId\) =>/);
-  assert.match(homeSource, /navigateToPanel\(servicesPanelIndex\)/);
-  assert.match(homeSource, /activeNavigationId=/);
-  assert.match(scrollControllerSource, /SERVICES_PANEL_INDEX = 4/);
-  assert.match(scrollControllerSource, /data-home-reveal-on-entry/);
+  assert.match(homeSource, /navigate\("\/servicios"\)/);
+  assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
+  assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113281"/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113282"/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113283"/);
@@ -274,7 +283,8 @@ test("services navigation opens the responsive Figma heading and its reveal", ()
   assert.match(servicesHeadingSource, /linear-gradient/);
   assert.match(servicesHeadingSource, /bg-clip-text/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
-  assert.match(servicesHeadingSource, /opacity: visible \? 1 : 0/);
+  assert.match(servicesHeadingSource, /initial=\{reduceMotion \? false/);
+  assert.match(servicesHeadingSource, /animate=\{\{ opacity: 1, y: 0 \}\}/);
 });
 
 test("OpeningHome delegates loading, navigation, content and statement behavior", () => {

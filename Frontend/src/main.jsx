@@ -45,6 +45,7 @@ const Home = lazy(() => import("./pages/Home.jsx"));
 const InactiveAccount = lazy(() => import("./pages/InactiveAccount.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
 const OpeningHome = lazy(() => import("./pages/OpeningHome.jsx"));
+const ServicesPage = lazy(() => import("./pages/services/ServicesPage.jsx"));
 const NewArchitectProjectPage = lazy(
   () => import("./pages/architect-dashboard/NewArchitectProjectPage.jsx"),
 );
@@ -71,6 +72,7 @@ createRoot(document.getElementById("root")).render(
             <Routes>
             <Route element={<PublicOnlyRoute />}>
               <Route path="/" element={<OpeningHome />} />
+              <Route path="/servicios" element={<ServicesPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/crear-cuenta" element={<CreateAccount />} />
               <Route path="/crear-contrasena" element={<CreatePassword />} />

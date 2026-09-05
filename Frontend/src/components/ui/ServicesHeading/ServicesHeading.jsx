@@ -3,29 +3,22 @@ import { motion as Motion, useReducedMotion } from "motion/react";
 const SERVICES_REVEAL_DURATION_SECONDS = 0.7;
 const SERVICES_REVEAL_EASE = [0.22, 1, 0.36, 1];
 
-function HomeServicesHeading({ eyebrow, title, description, visible = false }) {
+function ServicesHeading({ eyebrow, title, description }) {
   const reduceMotion = useReducedMotion();
 
   return (
     <section
       className="relative flex h-dvh w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] pt-[clamp(112px,18dvh,184px)] min-[768px]:px-[48px]"
       aria-label={eyebrow}
-      data-home-panel
-      data-home-reveal-on-entry
-      data-home-section="services"
     >
       <Motion.div
         className="flex w-full max-w-[786px] flex-col items-center gap-[24px] text-center"
-        initial={false}
-        animate={{
-          opacity: visible ? 1 : 0,
-          y: visible || reduceMotion ? 0 : 28,
-        }}
+        initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{
           duration: reduceMotion ? 0 : SERVICES_REVEAL_DURATION_SECONDS,
           ease: SERVICES_REVEAL_EASE,
         }}
-        aria-hidden={!visible}
         data-node-id="4505:113281"
       >
         <p
@@ -57,4 +50,4 @@ export {
   SERVICES_REVEAL_DURATION_SECONDS,
   SERVICES_REVEAL_EASE,
 };
-export default HomeServicesHeading;
+export default ServicesHeading;
