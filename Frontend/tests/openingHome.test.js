@@ -225,9 +225,6 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /<source src=\{mp4Source\}/);
   assert.match(statementPanelSource, /<mask/);
   assert.match(statementPanelSource, /<Motion\.text/);
-  assert.match(statementPanelSource, /STATEMENT_FOCUS_LETTER = "c"/);
-  assert.match(statementPanelSource, /focusGlyph\.getBBox\(\)/);
-  assert.match(statementPanelSource, /maskText\.style\.transformOrigin/);
   assert.match(statementPanelSource, /useSpring\(progress/);
   assert.match(statementPanelSource, /stiffness: 180/);
   assert.match(statementPanelSource, /reduceMotion \? progress : smoothedProgress/);

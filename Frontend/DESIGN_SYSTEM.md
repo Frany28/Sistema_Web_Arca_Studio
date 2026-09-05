@@ -54,6 +54,43 @@ src/pages               páginas y coordinación de datos
 - La lógica de carga, paginación y transformación compartida debe vivir en hooks o utilidades, no repetirse en cada pantalla.
 - Usar nombres PascalCase para componentes y nombres que expresen su función, no su apariencia temporal.
 
+## Regla obligatoria: orden estructural de carpetas
+
+Todo archivo nuevo o trasladado dentro de `Frontend/src` debe ubicarse según su responsabilidad. No se deben crear carpetas genéricas, duplicar capas existentes ni colocar archivos en la raíz de `src` salvo los puntos de entrada de la aplicación.
+
+```text
+src/
+├── api/          clientes HTTP y funciones de acceso a endpoints
+├── assets/       imágenes, iconos, fuentes y otros recursos estáticos
+├── auth/         políticas y utilidades propias de autenticación y autorización
+├── components/
+│   ├── layout/   piezas compartidas que estructuran la aplicación
+│   └── ui/       componentes visuales reutilizables y agnósticos del negocio
+├── config/       configuración estática y constantes globales
+├── contexts/     contextos y proveedores globales de React
+├── data/         catálogos o datos estáticos compartidos
+├── hooks/        hooks reutilizables entre funcionalidades
+├── layouts/      composiciones de página y shells de navegación
+├── pages/        rutas, pantallas y módulos propios de cada funcionalidad
+├── styles/       tokens, tipografía y estilos globales
+└── utils/        funciones puras y utilidades compartidas
+```
+
+Las siguientes reglas determinan la ubicación y las dependencias:
+
+1. `pages/<funcionalidad>/` agrupa los componentes, hooks, datos y helpers usados exclusivamente por esa funcionalidad. Sus subcarpetas deben expresar una responsabilidad concreta, como `components`, `hooks` o `utils`.
+2. Un elemento se mueve a una carpeta compartida únicamente cuando tiene consumidores reales fuera de su funcionalidad. No se anticipa reutilización creando abstracciones globales sin uso.
+3. Los componentes visuales genéricos pertenecen a `components/ui/<NombreComponente>/`. El componente principal, su configuración, pruebas específicas y archivo `index.js`, cuando corresponda, permanecen juntos.
+4. Los componentes que estructuran varias páginas pertenecen a `components/layout`; las composiciones completas asociadas a rutas pertenecen a `layouts`.
+5. Los hooks compartidos pertenecen a `hooks` y usan el prefijo `use`. Un hook exclusivo de una página permanece dentro de `pages/<funcionalidad>/hooks`.
+6. Las llamadas HTTP se centralizan en `api`; ni componentes, hooks visuales ni utilidades deben construir endpoints duplicados o ejecutar peticiones directas si ya existe un cliente de API aplicable.
+7. `utils` contiene lógica pura y sin renderizado. Una utilidad exclusiva de una funcionalidad permanece dentro del módulo de esa página hasta que exista reutilización real.
+8. Los recursos estáticos se agrupan en `assets` por dominio o funcionalidad. No se almacenan imágenes, SVG, fuentes ni videos dentro de carpetas de componentes o páginas.
+9. `styles` se reserva para reglas globales y tokens. Los estilos locales permanecen junto al componente mediante las convenciones vigentes de Tailwind.
+10. La dirección de dependencias debe ir desde páginas y layouts hacia módulos compartidos. `components/ui`, `utils`, `api` y `config` no pueden importar desde `pages`.
+11. Antes de crear una carpeta nueva se debe comprobar que ninguna carpeta existente representa ya esa responsabilidad. Los nombres deben describir dominio o función; se prohíben nombres ambiguos como `misc`, `common2`, `new`, `temp` o `otros`.
+12. Los archivos preexistentes que todavía no sigan esta estructura pueden migrarse de forma gradual cuando sean modificados, siempre que el traslado no mezcle un cambio funcional con una reorganización amplia ni rompa sus consumidores.
+
 ## Tokens visuales
 
 Usar siempre las variables expuestas en `global.css`. No introducir colores hexadecimales, radios, sombras o separaciones arbitrarias si ya existe un token equivalente.
@@ -355,6 +392,7 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 
 ## Checklist de revisión visual
 
+- [ ] Los archivos nuevos respetan el orden estructural de `src` y la dirección de dependencias.
 - [ ] Se buscaron componentes equivalentes antes de crear uno nuevo.
 - [ ] Se reutilizan tokens de color, tipografía, espacio, radio y sombra.
 - [ ] No hay colores o estilos duplicados sin justificación.
