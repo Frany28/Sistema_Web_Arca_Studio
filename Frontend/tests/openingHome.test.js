@@ -42,6 +42,13 @@ const servicesHeadingSource = readFileSync(
   ),
   "utf8",
 );
+const servicesCategoryShowcaseSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/services/components/ServicesCategoryShowcase.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const servicesPageSource = readFileSync(
   new URL("../src/pages/publicSite/services/ServicesPage.jsx", import.meta.url),
   "utf8",
@@ -291,6 +298,28 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(servicesHeadingSource, /initial=\{reduceMotion \? false/);
   assert.match(servicesHeadingSource, /animate=\{\{ opacity: 1, y: 0 \}\}/);
+});
+
+test("services categories preserve the Figma state transition", () => {
+  assert.match(servicesPageSource, /<ServicesCategoryShowcase/);
+  assert.match(servicesContentSource, /Diseño residencial/);
+  assert.match(servicesContentSource, /Diseño comercial/);
+  assert.match(
+    servicesCategoryShowcaseSource,
+    /CATEGORY_TRANSITION_DURATION_SECONDS = 0\.8/,
+  );
+  assert.match(servicesCategoryShowcaseSource, /CATEGORY_TRANSITION_EASE = "easeInOut"/);
+  assert.match(servicesCategoryShowcaseSource, /residential: 48/);
+  assert.match(servicesCategoryShowcaseSource, /commercial: 108/);
+  assert.match(servicesCategoryShowcaseSource, /data-node-id="4571:111485"/);
+  assert.match(servicesCategoryShowcaseSource, /"4571:111488"/);
+  assert.match(servicesCategoryShowcaseSource, /"4571:111487"/);
+  assert.match(servicesCategoryShowcaseSource, /"4571:111500"/);
+  assert.match(servicesCategoryShowcaseSource, /role="tablist"/);
+  assert.match(servicesCategoryShowcaseSource, /aria-selected=\{isActive\}/);
+  assert.match(servicesCategoryShowcaseSource, /event\.key === "ArrowDown"/);
+  assert.match(servicesCategoryShowcaseSource, /tabIndex=\{isActive \? 0 : -1\}/);
+  assert.match(servicesCategoryShowcaseSource, /useReducedMotion/);
 });
 
 test("OpeningHome delegates loading, navigation, content and statement behavior", () => {
