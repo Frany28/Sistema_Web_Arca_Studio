@@ -209,6 +209,9 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /muted/);
   assert.match(statementPanelSource, /loop/);
   assert.match(statementPanelSource, /playsInline/);
+  assert.match(statementPanelSource, /video\.defaultMuted = true/);
+  assert.match(statementPanelSource, /addEventListener\("canplay"/);
+  assert.match(statementPanelSource, /playMutedVideo\(video\)/);
   assert.match(statementPanelSource, /preload=\{mediaEnabled \? "auto" : "none"\}/);
   assert.match(statementPanelSource, /<source src=\{webmSource\}/);
   assert.match(statementPanelSource, /<source src=\{mp4Source\}/);

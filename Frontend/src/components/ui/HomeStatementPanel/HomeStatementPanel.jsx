@@ -10,6 +10,13 @@ import { getHomeStatementVisualState } from "../../../utils/homeScrollNavigation
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
 
+function playMutedVideo(video) {
+  video.defaultMuted = true;
+  video.muted = true;
+  const playPromise = video.play();
+  playPromise?.catch(() => undefined);
+}
+
 function HomeStatementPanel({
   active = false,
   mediaEnabled = false,
@@ -40,25 +47,20 @@ function HomeStatementPanel({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !mediaEnabled) return;
+    if (!video) return undefined;
 
-    video.load();
-  }, [mediaEnabled]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !mediaEnabled || videoFailed) return undefined;
-
-    if (!active) {
+    if (!mediaEnabled) {
       video.pause();
       return undefined;
     }
 
-    const playPromise = video.play();
-    playPromise?.catch(() => undefined);
+    const handleCanPlay = () => playMutedVideo(video);
+    video.addEventListener("canplay", handleCanPlay);
+    video.load();
+    playMutedVideo(video);
 
-    return () => video.pause();
-  }, [active, mediaEnabled, videoFailed]);
+    return () => video.removeEventListener("canplay", handleCanPlay);
+  }, [mediaEnabled]);
 
   return (
     <section
