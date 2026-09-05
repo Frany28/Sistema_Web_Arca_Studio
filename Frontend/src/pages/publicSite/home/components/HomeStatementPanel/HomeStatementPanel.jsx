@@ -7,7 +7,7 @@ import {
   useTransform,
 } from "motion/react";
 
-import { getHomeStatementVisualState } from "../../../utils/homeScrollNavigation.js";
+import { getHomeStatementVisualState } from "../../utils/homeScrollNavigation.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
 const STATEMENT_FOCUS_LETTER = "c";

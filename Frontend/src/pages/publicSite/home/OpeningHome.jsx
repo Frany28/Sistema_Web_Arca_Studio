@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 import ArcaOpeningMark, {
   MOTION_DURATION_SECONDS,
-} from "../components/ui/ArcaOpeningMark/ArcaOpeningMark.jsx";
-import HomeHeader from "../components/ui/HomeHeader/HomeHeader.jsx";
-import useHomeOpeningSequence from "../hooks/useHomeOpeningSequence.js";
-import useHomeScrollController from "../hooks/useHomeScrollController.js";
-import HomeSections from "./openingHome/components/HomeSections.jsx";
-import { HOME_PRELOAD_IMAGES } from "./openingHome/homeContent.js";
+} from "./components/ArcaOpeningMark/ArcaOpeningMark.jsx";
+import PublicSiteHeader from "../components/PublicSiteHeader/PublicSiteHeader.jsx";
+import HomeSections from "./components/HomeSections.jsx";
+import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
+import useHomeScrollController from "./hooks/useHomeScrollController.js";
+import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
 
 const PANEL_TRANSITION_DURATION_SECONDS = 1.15;
 const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
@@ -74,7 +74,7 @@ function OpeningHome() {
           tabIndex={initialScrollReady ? 0 : -1}
         >
           <div className="pointer-events-none sticky top-0 z-30 h-0 overflow-visible">
-            <HomeHeader
+            <PublicSiteHeader
               className="pointer-events-auto"
               onNavigate={(sectionId) => {
                 if (sectionId === "services") {

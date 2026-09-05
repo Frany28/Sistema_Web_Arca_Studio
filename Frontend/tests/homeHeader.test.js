@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const headerSource = readFileSync(
-  new URL("../src/components/ui/HomeHeader/HomeHeader.jsx", import.meta.url),
+  new URL(
+    "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteHeader.jsx",
+    import.meta.url,
+  ),
   "utf8",
 );
 const horizontalTabMenuSource = readFileSync(
@@ -37,6 +40,7 @@ test("the public home header is permanently dark and reuses shared UI", () => {
   assert.match(headerSource, /<Button/);
   assert.match(headerSource, /<HorizontalTabMenu/);
   assert.match(headerSource, /presentation="publicNavigation"/);
+  assert.match(headerSource, /style="Underlined"/);
   assert.match(headerSource, /items=\{navigationItems\.map\(\(item\) => item\.label\)\}/);
   assert.match(headerSource, /activeIndex=\{activeNavigationIndex\}/);
   assert.match(headerSource, /onNavigate\?\.\(navigationItems\[index\]\.id\)/);
@@ -49,14 +53,19 @@ test("the public navigation hover uses the Figma underline state", () => {
   assert.match(horizontalTabMenuSource, /border-b-2 border-transparent/);
   assert.match(
     horizontalTabMenuSource,
-    /hover:border-\[var\(--color-neutral-100-uniform\)\]/,
+    /hover:border-\[var\(--color-neutral-200\)\]/,
   );
   assert.match(
     horizontalTabMenuSource,
-    /hover:text-\[var\(--color-neutral-950-uniform\)\]/,
+    /hover:text-\[var\(--color-neutral-100-uniform\)\]/,
   );
   assert.match(horizontalTabMenuSource, /hover:bg-transparent/);
-  assert.doesNotMatch(horizontalTabMenuSource, /hover:bg-white\/10/);
+  assert.match(horizontalTabMenuSource, /aria-current=\{isPublicNavigation/);
+  assert.match(
+    horizontalTabMenuSource,
+    /isActive[\s\S]*border-\[var\(--color-neutral-100-uniform\)\]/,
+  );
+  assert.doesNotMatch(horizontalTabMenuSource, /focus-visible:border-0/);
   assert.match(
     globalStylesSource,
     /--color-neutral-950-uniform: var\(--app-neutral-950-uniform\)/,

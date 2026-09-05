@@ -4,74 +4,80 @@ import test from "node:test";
 
 const mainSource = readFileSync(new URL("../src/main.jsx", import.meta.url), "utf8");
 const homeSource = readFileSync(
-  new URL("../src/pages/OpeningHome.jsx", import.meta.url),
+  new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
   "utf8",
 );
 const markSource = readFileSync(
   new URL(
-    "../src/components/ui/ArcaOpeningMark/ArcaOpeningMark.jsx",
+    "../src/pages/publicSite/home/components/ArcaOpeningMark/ArcaOpeningMark.jsx",
     import.meta.url,
   ),
   "utf8",
 );
 const heroTitleSource = readFileSync(
   new URL(
-    "../src/components/ui/HomeHeroTitle/HomeHeroTitle.jsx",
+    "../src/pages/publicSite/home/components/HomeHeroTitle/HomeHeroTitle.jsx",
     import.meta.url,
   ),
   "utf8",
 );
 const scrollPanelSource = readFileSync(
   new URL(
-    "../src/components/ui/HomeScrollPanel/HomeScrollPanel.jsx",
+    "../src/pages/publicSite/home/components/HomeScrollPanel/HomeScrollPanel.jsx",
     import.meta.url,
   ),
   "utf8",
 );
 const statementPanelSource = readFileSync(
   new URL(
-    "../src/components/ui/HomeStatementPanel/HomeStatementPanel.jsx",
+    "../src/pages/publicSite/home/components/HomeStatementPanel/HomeStatementPanel.jsx",
     import.meta.url,
   ),
   "utf8",
 );
 const servicesHeadingSource = readFileSync(
   new URL(
-    "../src/components/ui/ServicesHeading/ServicesHeading.jsx",
+    "../src/pages/publicSite/services/components/ServicesHeading.jsx",
     import.meta.url,
   ),
   "utf8",
 );
 const servicesPageSource = readFileSync(
-  new URL("../src/pages/services/ServicesPage.jsx", import.meta.url),
+  new URL("../src/pages/publicSite/services/ServicesPage.jsx", import.meta.url),
   "utf8",
 );
 const servicesContentSource = readFileSync(
-  new URL("../src/pages/services/servicesContent.js", import.meta.url),
+  new URL("../src/pages/publicSite/services/servicesContent.js", import.meta.url),
   "utf8",
 );
 const openingSequenceSource = readFileSync(
-  new URL("../src/hooks/useHomeOpeningSequence.js", import.meta.url),
+  new URL(
+    "../src/pages/publicSite/home/hooks/useHomeOpeningSequence.js",
+    import.meta.url,
+  ),
   "utf8",
 );
 const scrollControllerSource = readFileSync(
-  new URL("../src/hooks/useHomeScrollController.js", import.meta.url),
+  new URL(
+    "../src/pages/publicSite/home/hooks/useHomeScrollController.js",
+    import.meta.url,
+  ),
   "utf8",
 );
 const statementControllerSource = readFileSync(
   new URL(
-    "../src/hooks/homeScroll/createHomeStatementController.js",
+    "../src/pages/publicSite/home/hooks/homeScroll/createHomeStatementController.js",
     import.meta.url,
   ),
   "utf8",
 );
 const homeContentSource = readFileSync(
-  new URL("../src/pages/openingHome/homeContent.js", import.meta.url),
+  new URL("../src/pages/publicSite/home/homeContent.js", import.meta.url),
   "utf8",
 );
 const homeSectionsSource = readFileSync(
   new URL(
-    "../src/pages/openingHome/components/HomeSections.jsx",
+    "../src/pages/publicSite/home/components/HomeSections.jsx",
     import.meta.url,
   ),
   "utf8",
@@ -86,7 +92,7 @@ test("the root route presents the animated ARCA opening before the home hero", (
   assert.match(homeContentSource, /arca-home-hero\.png/);
   assert.match(homeContentSource, /arca-construction-worker-v2\.png/);
   assert.match(homeSource, /HOME_PRELOAD_IMAGES/);
-  assert.match(homeSource, /<HomeHeader/);
+  assert.match(homeSource, /<PublicSiteHeader/);
   assert.match(homeContentSource, /title: "Arquitectura"/);
   assert.match(homeContentSource, /title: "Construcci.n"/);
   assert.match(homeContentSource, /title: "Interiorismo"/);

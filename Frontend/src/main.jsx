@@ -44,8 +44,12 @@ const Requests = lazy(() => import("./pages/Home.jsx"));
 const Home = lazy(() => import("./pages/Home.jsx"));
 const InactiveAccount = lazy(() => import("./pages/InactiveAccount.jsx"));
 const Login = lazy(() => import("./pages/Login.jsx"));
-const OpeningHome = lazy(() => import("./pages/OpeningHome.jsx"));
-const ServicesPage = lazy(() => import("./pages/services/ServicesPage.jsx"));
+const OpeningHome = lazy(
+  () => import("./pages/publicSite/home/OpeningHome.jsx"),
+);
+const ServicesPage = lazy(
+  () => import("./pages/publicSite/services/ServicesPage.jsx"),
+);
 const NewArchitectProjectPage = lazy(
   () => import("./pages/architect-dashboard/NewArchitectProjectPage.jsx"),
 );

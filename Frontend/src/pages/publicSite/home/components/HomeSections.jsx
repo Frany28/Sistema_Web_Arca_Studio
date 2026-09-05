@@ -1,6 +1,6 @@
-import HomeScrollPanel from "../../../components/ui/HomeScrollPanel/HomeScrollPanel.jsx";
-import HomeStatementPanel from "../../../components/ui/HomeStatementPanel/HomeStatementPanel.jsx";
-import { HOME_SCROLL_PHASES } from "../../../utils/homeScrollNavigation.js";
+import HomeScrollPanel from "./HomeScrollPanel/HomeScrollPanel.jsx";
+import HomeStatementPanel from "./HomeStatementPanel/HomeStatementPanel.jsx";
+import { HOME_SCROLL_PHASES } from "../utils/homeScrollNavigation.js";
 import { HOME_IMAGE_PANELS, HOME_STATEMENT } from "../homeContent.js";
 
 function HomeSections({

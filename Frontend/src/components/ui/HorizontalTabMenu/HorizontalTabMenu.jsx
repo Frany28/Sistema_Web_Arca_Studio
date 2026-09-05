@@ -139,19 +139,23 @@ function HorizontalTabMenu({
         isVertical
           ? "flex-col items-center overflow-visible"
           : "items-center overflow-x-auto",
+        isPublicNavigation && !isVertical && "h-[52px] gap-[8px]",
         resolvedVariant.style === "Brand" &&
           !isVertical &&
-          (isPublicNavigation ? "h-[52px] gap-[8px]" : "gap-[8px] pb-[2px]"),
+          !isPublicNavigation &&
+          "gap-[8px] pb-[2px]",
         resolvedVariant.style === "Brand" && isVertical && "w-full gap-[20px]",
         resolvedVariant.style === "Brand" &&
           resolvedVariant.filled === "on" &&
           (isVertical ? "w-full" : "flex w-full"),
         resolvedVariant.style === "Underlined" &&
+          !isPublicNavigation &&
           (isVertical
             ? "w-full"
             : "gap-[16px] border-b border-[var(--color-neutral-200)]"),
         resolvedVariant.style === "Underlined" &&
           resolvedVariant.filled === "on" &&
+          !isPublicNavigation &&
           (isVertical ? "w-full" : "flex w-full"),
         className,
       )}
@@ -174,6 +178,7 @@ function HorizontalTabMenu({
             type="button"
             role="tab"
             aria-selected={isActive}
+            aria-current={isPublicNavigation && isActive ? "page" : undefined}
             tabIndex={isActive || !hasActiveItem ? 0 : -1}
             data-node-id={getItemNodeId(
               resolvedVariant.style,
@@ -183,7 +188,11 @@ function HorizontalTabMenu({
             className={clsx(
               "inline-flex items-center justify-center text-heading-8 whitespace-nowrap transition-colors duration-150",
               isPublicNavigation &&
-                "h-[52px] shrink-0 border-b-2 border-transparent bg-transparent px-[4px] pb-[14px] pt-[8px] text-[var(--color-neutral-100-uniform)] hover:border-[var(--color-neutral-100-uniform)] hover:bg-transparent hover:text-[var(--color-neutral-950-uniform)] focus-visible:ring-white/60",
+                "h-[52px] shrink-0 bg-transparent px-[4px] pb-[14px] pt-[8px] text-[var(--color-neutral-100-uniform)] focus-visible:border-[var(--color-neutral-100-uniform)] focus-visible:ring-white/60",
+              isPublicNavigation &&
+                (isActive
+                  ? "border-b-2 border-[var(--color-neutral-100-uniform)]"
+                  : "border-b-2 border-transparent hover:border-[var(--color-neutral-200)] hover:bg-transparent hover:text-[var(--color-neutral-100-uniform)]"),
               resolvedVariant.style === "Brand" &&
                 !isPublicNavigation &&
                 "h-[36px] rounded-[var(--radius-2)] px-[12px] py-[8px]",
@@ -200,17 +209,21 @@ function HorizontalTabMenu({
                 resolvedVariant.filled === "off" &&
                 (isVertical ? "w-auto shrink-0" : "shrink-0"),
               resolvedVariant.style === "Underlined" &&
+                !isPublicNavigation &&
                 "h-[32px] border-b-2 px-[4px] pb-[8px]",
               resolvedVariant.style === "Underlined" &&
+                !isPublicNavigation &&
                 isVertical &&
                 "w-full justify-start border-b px-[12px] py-[10px]",
               resolvedVariant.style === "Underlined" &&
+                !isPublicNavigation &&
                 resolvedVariant.filled === "off" &&
                 (isVertical ? "w-full" : "shrink-0"),
               resolvedVariant.style === "Underlined" &&
+                !isPublicNavigation &&
                 resolvedVariant.filled === "on" &&
                 "min-w-0 flex-1",
-              "outline-none focus-visible:border-0 focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
+              "outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-10)]",
               isInteractive && "cursor-pointer",
               resolvedVariant.style === "Brand" &&
                 !isPublicNavigation &&
@@ -228,6 +241,7 @@ function HorizontalTabMenu({
                           : "hover:bg-[var(--color-neutral-10)] hover:text-[var(--color-text-200)]"),
                     )),
               resolvedVariant.style === "Underlined" &&
+                !isPublicNavigation &&
                 (isActive
                   ? "border-[var(--color-text-300)] text-[var(--color-text-300)]"
                   : clsx(

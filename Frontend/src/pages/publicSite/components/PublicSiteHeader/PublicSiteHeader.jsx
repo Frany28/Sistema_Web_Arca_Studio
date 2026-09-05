@@ -1,8 +1,8 @@
 import clsx from "clsx";
 
-import MainLogo from "../../../assets/logos/MainLogo.jsx";
-import Button from "../Button/Button.jsx";
-import HorizontalTabMenu from "../HorizontalTabMenu/HorizontalTabMenu.jsx";
+import MainLogo from "../../../../assets/logos/MainLogo.jsx";
+import Button from "../../../../components/ui/Button/Button.jsx";
+import HorizontalTabMenu from "../../../../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
 
 const DEFAULT_NAVIGATION_ITEMS = [
   { id: "services", label: "Servicios" },
@@ -11,7 +11,7 @@ const DEFAULT_NAVIGATION_ITEMS = [
   { id: "about", label: "Sobre nosotros" },
 ];
 
-function HomeHeader({
+function PublicSiteHeader({
   activeNavigationId,
   className,
   navigationItems = DEFAULT_NAVIGATION_ITEMS,
@@ -54,7 +54,7 @@ function HomeHeader({
             activeIndex={activeNavigationIndex}
             interactive
             presentation="publicNavigation"
-            style="Brand"
+            style="Underlined"
             filled="off"
             onChange={(index) => onNavigate?.(navigationItems[index].id)}
             aria-label="Secciones de inicio"
@@ -100,4 +100,4 @@ function HomeHeader({
 }
 
 export { DEFAULT_NAVIGATION_ITEMS };
-export default HomeHeader;
+export default PublicSiteHeader;

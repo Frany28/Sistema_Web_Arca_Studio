@@ -17,7 +17,7 @@ import {
   getSwipeDirection,
   limitHomeStatementWheelDelta,
   normalizeWheelDelta,
-} from "../src/utils/homeScrollNavigation.js";
+} from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 
 const { UP, DOWN } = HOME_SCROLL_DIRECTIONS;
 const { IMAGE, TITLE } = HOME_SCROLL_PHASES;

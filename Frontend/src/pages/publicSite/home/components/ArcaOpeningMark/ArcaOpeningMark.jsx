@@ -1,7 +1,7 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
 
-import maskAsset from "../../../assets/home/arca-loader-mask.svg";
-import vectorAsset from "../../../assets/home/arca-loader-vector.svg";
+import maskAsset from "../../../../../assets/home/arca-loader-mask.svg";
+import vectorAsset from "../../../../../assets/home/arca-loader-vector.svg";
 
 const MOTION_DURATION_SECONDS = 3.679666;
 const VECTOR_OFFSET_Y = -248.974;

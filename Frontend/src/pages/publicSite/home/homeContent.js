@@ -1,9 +1,9 @@
-import constructionHeroAsset from "../../assets/home/arca-construction-worker-v2.png";
-import homeHeroAsset from "../../assets/home/arca-home-hero.png";
-import interiorDesignHeroAsset from "../../assets/home/arca-interior-design-hero.png";
-import statementVideoMp4Asset from "../../assets/home/arca-statement-bg.mp4";
-import statementVideoWebmAsset from "../../assets/home/arca-statement-bg.webm";
-import statementPosterAsset from "../../assets/home/arca-statement-poster.webp";
+import constructionHeroAsset from "../../../assets/home/arca-construction-worker-v2.png";
+import homeHeroAsset from "../../../assets/home/arca-home-hero.png";
+import interiorDesignHeroAsset from "../../../assets/home/arca-interior-design-hero.png";
+import statementVideoMp4Asset from "../../../assets/home/arca-statement-bg.mp4";
+import statementVideoWebmAsset from "../../../assets/home/arca-statement-bg.webm";
+import statementPosterAsset from "../../../assets/home/arca-statement-poster.webp";
 
 const HOME_IMAGE_PANELS = Object.freeze([
   {
