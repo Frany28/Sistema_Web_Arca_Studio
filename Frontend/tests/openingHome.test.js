@@ -226,6 +226,11 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /<source src=\{mp4Source\}/);
   assert.match(statementPanelSource, /<mask/);
   assert.match(statementPanelSource, /<Motion\.text/);
+  assert.match(statementPanelSource, /effectStarted \? "block" : "hidden"/);
+  assert.match(
+    homeSectionsSource,
+    /navigationState\.phase !== HOME_SCROLL_PHASES\.IMAGE/,
+  );
   assert.match(statementPanelSource, /opacity-20 mix-blend-multiply/);
   assert.doesNotMatch(statementPanelSource, /overlayOpacity/);
   assert.match(statementPanelSource, /useSpring\(progress/);

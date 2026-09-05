@@ -28,6 +28,11 @@ function HomeSections({
       ))}
       <HomeStatementPanel
         active={active && navigationState.panelIndex === statementPanelIndex}
+        effectStarted={
+          active &&
+          navigationState.panelIndex === statementPanelIndex &&
+          navigationState.phase !== HOME_SCROLL_PHASES.IMAGE
+        }
         mediaEnabled={active}
         {...HOME_STATEMENT}
         progress={statementProgress}

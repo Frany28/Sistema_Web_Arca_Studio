@@ -19,6 +19,7 @@ function playMutedVideo(video) {
 
 function HomeStatementPanel({
   active = false,
+  effectStarted = false,
   mediaEnabled = false,
   mp4Source,
   phrase,
@@ -125,7 +126,9 @@ function HomeStatementPanel({
       />
 
       <svg
-        className="pointer-events-none absolute inset-0 h-full w-full"
+        className={`pointer-events-none absolute inset-0 h-full w-full ${
+          effectStarted ? "block" : "hidden"
+        }`}
         aria-hidden="true"
         focusable="false"
       >
