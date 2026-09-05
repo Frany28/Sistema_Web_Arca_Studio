@@ -15,6 +15,7 @@ import {
   getNearestPanelIndex,
   getNextHomeScrollState,
   getSwipeDirection,
+  limitHomeStatementWheelDelta,
   normalizeWheelDelta,
 } from "../src/utils/homeScrollNavigation.js";
 
@@ -148,6 +149,13 @@ test("wheel deltas normalize pixel, line and page units", () => {
     normalizeWheelDelta({ deltaX: 0, deltaY: 1, deltaMode: 2 }, 800),
     { x: 0, y: 800 },
   );
+});
+
+test("statement wheel deltas cap trackpad spikes without changing direction", () => {
+  assert.equal(limitHomeStatementWheelDelta(18), 18);
+  assert.equal(limitHomeStatementWheelDelta(120), 48);
+  assert.equal(limitHomeStatementWheelDelta(-120), -48);
+  assert.equal(limitHomeStatementWheelDelta(Number.NaN), 0);
 });
 
 test("a trackpad burst triggers one step and consumes its inertia", () => {

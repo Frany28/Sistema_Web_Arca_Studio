@@ -16,6 +16,7 @@ import {
   getNearestPanelIndex,
   getNextHomeScrollState,
   getSwipeDirection,
+  limitHomeStatementWheelDelta,
   normalizeWheelDelta,
 } from "../utils/homeScrollNavigation.js";
 
@@ -156,7 +157,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const isStatementReady =
         currentState.panelIndex === STATEMENT_PANEL_INDEX && !activeTween;
       if (isStatementReady && statement.isWheelScrubbing()) {
-        statement.queueDelta(delta.y);
+        statement.queueDelta(limitHomeStatementWheelDelta(delta.y));
         return;
       }
 
@@ -178,7 +179,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         }
 
         statement.startWheelScrubbing();
-        statement.queueDelta(wheelGestureState.accumulator);
+        statement.queueDelta(limitHomeStatementWheelDelta(delta.y));
         return;
       }
 

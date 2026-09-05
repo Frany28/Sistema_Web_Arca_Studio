@@ -18,6 +18,7 @@ const STATEMENT_MIN_TRAVEL_PX = 200;
 const STATEMENT_MAX_TRAVEL_PX = 320;
 const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.3;
 const STATEMENT_INITIAL_MASK_SCALE = 1000;
+const STATEMENT_WHEEL_DELTA_LIMIT_PX = 48;
 
 function clampHomeStatementProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
@@ -57,6 +58,17 @@ function advanceHomeStatementProgress(
   return clampHomeStatementProgress(
     currentProgress + deltaY / getHomeStatementTravelDistance(viewportHeight),
   );
+}
+
+function limitHomeStatementWheelDelta(
+  deltaY,
+  limit = STATEMENT_WHEEL_DELTA_LIMIT_PX,
+) {
+  if (!Number.isFinite(deltaY) || !Number.isFinite(limit) || limit <= 0) {
+    return 0;
+  }
+
+  return Math.min(Math.max(deltaY, -limit), limit);
 }
 
 function getHomeStatementVisualState(progress) {
@@ -279,5 +291,6 @@ export {
   getHomeStatementTravelDistance,
   getHomeStatementVisualState,
   getSwipeDirection,
+  limitHomeStatementWheelDelta,
   normalizeWheelDelta,
 };
