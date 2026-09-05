@@ -103,6 +103,8 @@ test("the opening mark preserves the Figma motion timeline and accessibility", (
   assert.match(markSource, /aria-label="ARCA Studio"/);
   assert.match(markSource, /arca-loader-vector\.svg/);
   assert.match(markSource, /arca-loader-mask\.svg/);
+  assert.match(markSource, /h-\[177\.8px\] w-\[187\.5px\]/);
+  assert.match(markSource, /origin-top-left scale-75/);
 });
 
 test("the hero title keeps its responsive masked reveal", () => {

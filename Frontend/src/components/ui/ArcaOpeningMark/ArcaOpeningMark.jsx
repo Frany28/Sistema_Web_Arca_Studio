@@ -27,11 +27,12 @@ function ArcaOpeningMark({ className = "", repeat = Infinity }) {
 
   return (
     <div
-      className={`relative h-[237.071px] w-[250px] shrink-0 overflow-hidden ${className}`}
+      className={`relative h-[177.8px] w-[187.5px] shrink-0 overflow-hidden ${className}`}
       role="img"
       aria-label="ARCA Studio"
       data-node-id="4569:111846"
     >
+      <div className="relative h-[237.071px] w-[250px] origin-top-left scale-75">
       <Motion.div
         className="absolute left-0 top-[248.974px] h-[237.071px] w-[250px] will-change-transform"
         data-node-id="4569:111850"
@@ -108,6 +109,7 @@ function ArcaOpeningMark({ className = "", repeat = Infinity }) {
           />
         </div>
       ))}
+      </div>
     </div>
   );
 }

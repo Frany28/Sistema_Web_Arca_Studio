@@ -13,7 +13,7 @@ const HOME_IMAGE_PANELS = Object.freeze([
   },
   {
     image: constructionHeroAsset,
-    imageAlt: "Baño construido por ARCA Studio con iluminación integrada",
+    imageAlt: "Trabajador de ARCA Studio preparando una estructura metálica",
     title: "Construcción",
   },
   {
