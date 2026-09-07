@@ -49,9 +49,9 @@ const movingGradientTitleSource = readFileSync(
   ),
   "utf8",
 );
-const figmaShaderFillSource = readFileSync(
+const movingGradientTitleStyles = readFileSync(
   new URL(
-    "../src/pages/publicSite/services/components/FigmaShaderFill.jsx",
+    "../src/pages/publicSite/services/components/MovingGradientTitle.css",
     import.meta.url,
   ),
   "utf8",
@@ -318,15 +318,14 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
   assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);
-  assert.match(movingGradientTitleSource, /intensity: 2\.009999990463257/);
-  assert.match(movingGradientTitleSource, /morphSpeed: 3\.740000009536743/);
-  assert.match(movingGradientTitleSource, /rotationSpeed: 12/);
-  assert.match(movingGradientTitleSource, /maskElementRef=\{textRef\}/);
-  assert.match(figmaShaderFillSource, /shaderCanvas\.getContext\("webgpu"\)/);
-  assert.match(figmaShaderFillSource, /canvas\.getContext\("2d"\)/);
-  assert.match(figmaShaderFillSource, /globalCompositeOperation = "destination-in"/);
-  assert.match(figmaShaderFillSource, /paintTextMask/);
-  assert.match(figmaShaderFillSource, /useReducedMotion/);
+  assert.match(movingGradientTitleSource, /services-moving-gradient-title/);
+  assert.match(movingGradientTitleStyles, /background-clip: text/);
+  assert.match(movingGradientTitleStyles, /-webkit-text-fill-color: transparent/);
+  assert.match(movingGradientTitleStyles, /services-title-gradient-flow 9s linear infinite/);
+  assert.match(movingGradientTitleStyles, /radial-gradient/);
+  assert.match(movingGradientTitleStyles, /#fff 0%/);
+  assert.match(movingGradientTitleStyles, /#ff4431/);
+  assert.match(movingGradientTitleStyles, /prefers-reduced-motion: reduce/);
   assert.doesNotMatch(servicesHeadingSource, /opacity: 0|y: 28/);
 });
 

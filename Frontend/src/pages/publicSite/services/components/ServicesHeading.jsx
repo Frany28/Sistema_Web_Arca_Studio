@@ -18,7 +18,7 @@ function ServicesHeading({ eyebrow, title, description }) {
         </p>
 
         <MovingGradientTitle
-          className="m-0 w-full text-[clamp(38px,4.45vw,64px)] font-bold leading-[clamp(46px,5.28vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] opacity-70"
+          className="m-0 w-full text-[clamp(38px,4.45vw,64px)] font-bold leading-[clamp(46px,5.28vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)]"
           data-node-id="4505:113282"
         >
           {title}

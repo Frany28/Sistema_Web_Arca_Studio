@@ -1,0 +1,60 @@
+.services-moving-gradient-title {
+  color: #ff4431;
+  background-image:
+    radial-gradient(
+      ellipse 32% 150% at 50% 50%,
+      #fff 0%,
+      #ffd0b8 18%,
+      #ff6a43 34%,
+      rgb(255 68 49 / 0%) 66%
+    ),
+    linear-gradient(
+      100deg,
+      #ff4431 0%,
+      #74352f 28%,
+      #ff4431 52%,
+      #a63d32 74%,
+      #ff4431 100%
+    );
+  background-position:
+    -170% 50%,
+    0% 50%;
+  background-size:
+    190% 180%,
+    220% 100%;
+  background-repeat: no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: services-title-gradient-flow 9s linear infinite;
+  will-change: background-position;
+}
+
+@keyframes services-title-gradient-flow {
+  0% {
+    background-position:
+      -170% 50%,
+      0% 50%;
+  }
+
+  50% {
+    background-position:
+      45% 50%,
+      100% 50%;
+  }
+
+  100% {
+    background-position:
+      230% 50%,
+      200% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .services-moving-gradient-title {
+    animation: none;
+    background-position:
+      45% 50%,
+      100% 50%;
+  }
+}
