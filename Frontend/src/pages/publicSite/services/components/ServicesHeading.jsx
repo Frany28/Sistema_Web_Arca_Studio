@@ -25,7 +25,7 @@ function ServicesHeading({ eyebrow, title, description }) {
         </MovingGradientTitle>
 
         <p
-          className="text-heading-6 m-0 text-[var(--color-neutral-100-uniform)] opacity-60"
+          className="text-heading-6 m-0 w-full break-words text-[18px] font-bold leading-[22px] tracking-[-0.5px] text-[var(--color-neutral-100-uniform)] opacity-60"
           data-node-id="4505:113283"
         >
           {description}

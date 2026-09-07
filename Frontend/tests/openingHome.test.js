@@ -314,6 +314,10 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /data-node-id="4505:113281"/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113282"/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113283"/);
+  assert.match(
+    servicesHeadingSource,
+    /w-full break-words text-\[18px\] font-bold leading-\[22px\] tracking-\[-0\.5px\]/,
+  );
   assert.match(servicesHeadingSource, /data-node-id="4505:113286"/);
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
@@ -327,8 +331,8 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(movingGradientTitleStyles, /#fff 0%/);
   assert.match(movingGradientTitleStyles, /#ff4431/);
   assert.match(movingGradientTitleStyles, /#4b2d2b/);
-  assert.match(movingGradientTitleStyles, /70% -180%/);
-  assert.match(movingGradientTitleStyles, /25% 210%/);
+  assert.match(movingGradientTitleStyles, /linear-gradient\(\s*125deg/);
+  assert.match(movingGradientTitleStyles, /240% 240%/);
   assert.match(movingGradientTitleStyles, /prefers-reduced-motion: reduce/);
   assert.doesNotMatch(servicesHeadingSource, /opacity: 0|y: 28/);
 });

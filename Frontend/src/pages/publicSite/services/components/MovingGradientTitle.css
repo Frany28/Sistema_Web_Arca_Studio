@@ -9,28 +9,21 @@
       #ff6a43 34%,
       rgb(255 68 49 / 0%) 66%
     ),
-    radial-gradient(
-      ellipse 52% 90% at 50% 50%,
-      #4b2d2b 0%,
-      #74352f 34%,
-      rgb(75 45 43 / 0%) 72%
-    ),
     linear-gradient(
-      100deg,
+      125deg,
       #ff4431 0%,
-      #63302d 24%,
-      #ff4431 48%,
-      #4b2d2b 72%,
+      #8a3731 20%,
+      #4b2d2b 38%,
+      #ff4431 58%,
+      #63302d 78%,
       #ff4431 100%
     );
   background-position:
     -170% -40%,
-    70% -180%,
-    0% 50%;
+    0% 0%;
   background-size:
     190% 180%,
-    175% 190%,
-    220% 100%;
+    240% 240%;
   background-repeat: no-repeat;
   background-clip: text;
   -webkit-background-clip: text;
@@ -43,36 +36,31 @@
   0% {
     background-position:
       -170% -40%,
-      70% -180%,
-      0% 50%;
+      0% 0%;
   }
 
   25% {
     background-position:
       -35% 105%,
-      15% -20%,
-      50% 50%;
+      35% 20%;
   }
 
   50% {
     background-position:
       45% 25%,
-      75% 85%,
-      100% 50%;
+      75% 65%;
   }
 
   75% {
     background-position:
       145% 115%,
-      25% 210%,
-      150% 50%;
+      45% 100%;
   }
 
   100% {
     background-position:
       230% -40%,
-      70% 320%,
-      200% 50%;
+      100% 100%;
   }
 }
 
@@ -81,7 +69,6 @@
     animation: none;
     background-position:
       45% 25%,
-      75% 85%,
-      100% 50%;
+      75% 65%;
   }
 }
