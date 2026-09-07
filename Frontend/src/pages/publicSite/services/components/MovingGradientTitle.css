@@ -1,5 +1,6 @@
 .services-moving-gradient-title {
   color: #ff4431;
+  background-color: #ff4431;
   background-image:
     radial-gradient(
       ellipse 32% 150% at 50% 50%,

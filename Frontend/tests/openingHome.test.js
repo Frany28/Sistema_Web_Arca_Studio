@@ -320,6 +320,7 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);
   assert.match(movingGradientTitleSource, /services-moving-gradient-title/);
   assert.match(movingGradientTitleStyles, /background-clip: text/);
+  assert.match(movingGradientTitleStyles, /background-color: #ff4431/);
   assert.match(movingGradientTitleStyles, /-webkit-text-fill-color: transparent/);
   assert.match(movingGradientTitleStyles, /services-title-gradient-flow 9s linear infinite/);
   assert.match(movingGradientTitleStyles, /radial-gradient/);
