@@ -49,6 +49,23 @@ test("the public home header is permanently dark and reuses shared UI", () => {
   assert.doesNotMatch(headerSource, /useEffect|MutationObserver/);
 });
 
+test("the public navbar hides while scrolling down and returns while scrolling up", () => {
+  assert.match(headerSource, /gsap\.registerPlugin\(ScrollTrigger\)/);
+  assert.match(headerSource, /HEADER_SCROLL_DURATION_SECONDS = 0\.2/);
+  assert.match(headerSource, /\.from\(header, \{/);
+  assert.match(headerSource, /yPercent: -100/);
+  assert.match(headerSource, /paused: true/);
+  assert.match(headerSource, /\.progress\(1\)/);
+  assert.match(headerSource, /ScrollTrigger\.create\(\{/);
+  assert.match(headerSource, /start: "top top"/);
+  assert.match(headerSource, /end: "max"/);
+  assert.match(headerSource, /self\.direction === -1/);
+  assert.match(headerSource, /showAnimation\.play\(\)/);
+  assert.match(headerSource, /showAnimation\.reverse\(\)/);
+  assert.match(headerSource, /useReducedMotion/);
+  assert.match(headerSource, /context\.revert\(\)/);
+});
+
 test("the public navigation hover uses the Figma underline state", () => {
   assert.match(horizontalTabMenuSource, /border-b-2 border-transparent/);
   assert.match(

@@ -1,8 +1,16 @@
+import { useLayoutEffect, useRef } from "react";
 import clsx from "clsx";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useReducedMotion } from "motion/react";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import Button from "../../../../components/ui/Button/Button.jsx";
 import HorizontalTabMenu from "../../../../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const HEADER_SCROLL_DURATION_SECONDS = 0.2;
 
 const DEFAULT_NAVIGATION_ITEMS = [
   { id: "services", label: "Servicios" },
@@ -19,14 +27,52 @@ function PublicSiteHeader({
   onRegister,
   onLogin,
 }) {
+  const headerRef = useRef(null);
+  const reduceMotion = useReducedMotion();
   const activeNavigationIndex = navigationItems.findIndex(
     (item) => item.id === activeNavigationId,
   );
 
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return undefined;
+
+    if (reduceMotion) {
+      gsap.set(header, { clearProps: "transform" });
+      return undefined;
+    }
+
+    const context = gsap.context(() => {
+      const showAnimation = gsap
+        .from(header, {
+          yPercent: -100,
+          paused: true,
+          duration: HEADER_SCROLL_DURATION_SECONDS,
+          ease: "power1.out",
+        })
+        .progress(1);
+
+      ScrollTrigger.create({
+        start: "top top",
+        end: "max",
+        onUpdate: (self) => {
+          if (self.scroll() <= 0 || self.direction === -1) {
+            showAnimation.play();
+          } else {
+            showAnimation.reverse();
+          }
+        },
+      });
+    }, header);
+
+    return () => context.revert();
+  }, [reduceMotion]);
+
   return (
     <header
+      ref={headerRef}
       className={clsx(
-        "dark flex h-[64px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px]",
+        "main-tool-bar dark flex h-[64px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px] will-change-transform",
         className,
       )}
       data-node-id="4487:112595"
@@ -106,5 +152,5 @@ function PublicSiteHeader({
   );
 }
 
-export { DEFAULT_NAVIGATION_ITEMS };
+export { DEFAULT_NAVIGATION_ITEMS, HEADER_SCROLL_DURATION_SECONDS };
 export default PublicSiteHeader;
