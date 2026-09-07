@@ -9,58 +9,78 @@
       #ff6a43 34%,
       rgb(255 68 49 / 0%) 66%
     ),
+    radial-gradient(
+      ellipse 62% 145% at 50% 50%,
+      rgb(255 174 145 / 92%) 0%,
+      rgb(255 92 65 / 72%) 46%,
+      rgb(255 68 49 / 0%) 100%
+    ),
     linear-gradient(
       125deg,
       #ff4431 0%,
       #8a3731 20%,
-      #4b2d2b 38%,
+      #5e302d 38%,
       #ff4431 58%,
       #63302d 78%,
       #ff4431 100%
     );
   background-position:
-    -170% -40%,
+    -170% -80%,
+    190% -100%,
     0% 0%;
   background-size:
-    190% 180%,
+    190% 210%,
+    210% 230%,
     240% 240%;
   background-repeat: no-repeat;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: services-title-gradient-flow 9s linear infinite;
+  animation: services-title-gradient-flow 15s linear infinite;
   will-change: background-position;
 }
 
 @keyframes services-title-gradient-flow {
   0% {
     background-position:
-      -170% -40%,
+      -170% -80%,
+      190% -100%,
       0% 0%;
   }
 
-  25% {
+  20% {
     background-position:
-      -35% 105%,
-      35% 20%;
+      -25% 115%,
+      75% 35%,
+      70% 25%;
   }
 
-  50% {
+  40% {
     background-position:
-      45% 25%,
-      75% 65%;
+      170% 15%,
+      -35% 125%,
+      100% 80%;
   }
 
-  75% {
+  60% {
     background-position:
-      145% 115%,
+      55% -65%,
+      35% 35%,
       45% 100%;
+  }
+
+  80% {
+    background-position:
+      -45% 120%,
+      165% 115%,
+      10% 45%;
   }
 
   100% {
     background-position:
-      230% -40%,
-      100% 100%;
+      -170% -80%,
+      190% -100%,
+      0% 0%;
   }
 }
 
@@ -68,7 +88,8 @@
   .services-moving-gradient-title {
     animation: none;
     background-position:
-      45% 25%,
-      75% 65%;
+      55% 25%,
+      35% 65%,
+      70% 55%;
   }
 }

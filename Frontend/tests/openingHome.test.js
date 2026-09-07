@@ -326,13 +326,15 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(movingGradientTitleStyles, /background-clip: text/);
   assert.match(movingGradientTitleStyles, /background-color: #ff4431/);
   assert.match(movingGradientTitleStyles, /-webkit-text-fill-color: transparent/);
-  assert.match(movingGradientTitleStyles, /services-title-gradient-flow 9s linear infinite/);
+  assert.match(movingGradientTitleStyles, /services-title-gradient-flow 15s linear infinite/);
   assert.match(movingGradientTitleStyles, /radial-gradient/);
   assert.match(movingGradientTitleStyles, /#fff 0%/);
   assert.match(movingGradientTitleStyles, /#ff4431/);
-  assert.match(movingGradientTitleStyles, /#4b2d2b/);
+  assert.match(movingGradientTitleStyles, /#5e302d/);
   assert.match(movingGradientTitleStyles, /linear-gradient\(\s*125deg/);
   assert.match(movingGradientTitleStyles, /240% 240%/);
+  assert.match(movingGradientTitleStyles, /190% -100%/);
+  assert.match(movingGradientTitleStyles, /-35% 125%/);
   assert.match(movingGradientTitleStyles, /prefers-reduced-motion: reduce/);
   assert.doesNotMatch(servicesHeadingSource, /opacity: 0|y: 28/);
 });
