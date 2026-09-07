@@ -1,9 +1,12 @@
 import { useRef, useState } from "react";
-import { motion as Motion } from "motion/react";
+import { motion as Motion, useReducedMotion } from "motion/react";
 
-import "./ServicesCategoryShowcase.css";
+const CATEGORY_TRANSITION_DURATION_SECONDS = 0.8;
+const CATEGORY_TRANSITION_TIMES = [0, 1];
+const CATEGORY_TRANSITION_EASE = "easeInOut";
 
 function ServicesCategoryShowcase({ categories }) {
+  const reduceMotion = useReducedMotion();
   const categoryTabRefs = useRef([]);
   const [activeCategoryId, setActiveCategoryId] = useState(
     categories[0]?.id ?? "residential",
@@ -16,6 +19,13 @@ function ServicesCategoryShowcase({ categories }) {
   const commercialCategory =
     categories.find((category) => category.id === "commercial") ?? categories[1];
   const commercialIsActive = activeCategoryId === "commercial";
+  const createPropertyTransition = (property) => ({
+    [property]: {
+      duration: reduceMotion ? 0 : CATEGORY_TRANSITION_DURATION_SECONDS,
+      times: CATEGORY_TRANSITION_TIMES,
+      ease: CATEGORY_TRANSITION_EASE,
+    },
+  });
 
   const handleCategoryKeyDown = (event, currentIndex) => {
     const lastIndex = categories.length - 1;
@@ -58,10 +68,11 @@ function ServicesCategoryShowcase({ categories }) {
             className="absolute left-0 top-0 h-[108px] w-[4px] overflow-hidden"
             aria-hidden="true"
           >
-            <span
-              className={`services-category-line absolute left-0 top-0 block h-[4px] origin-top-left rotate-90 bg-[var(--color-accent-300)] ${
-                commercialIsActive ? "services-category-line-enter" : ""
-              }`}
+            <Motion.span
+              className="absolute left-0 top-0 block h-[4px] origin-top-left rotate-90 bg-[var(--color-accent-300)]"
+              initial={false}
+              animate={{ width: commercialIsActive ? 108 : 48 }}
+              transition={createPropertyTransition("width")}
               data-node-id="4571:111485"
             />
           </span>
@@ -85,20 +96,11 @@ function ServicesCategoryShowcase({ categories }) {
                 onClick={() => setActiveCategoryId(category.id)}
                 onKeyDown={(event) => handleCategoryKeyDown(event, index)}
               >
-                <span
-                  className={`block ${
-                    category.id === "commercial"
-                      ? `services-category-commercial ${
-                          commercialIsActive
-                            ? "services-category-commercial-enter"
-                            : ""
-                        }`
-                      : `services-category-residential ${
-                          commercialIsActive
-                            ? "services-category-residential-exit"
-                            : ""
-                        }`
-                  }`}
+                <Motion.span
+                  className="block"
+                  initial={false}
+                  animate={{ color: isActive ? "#FF4431" : "#FFF" }}
+                  transition={createPropertyTransition("color")}
                   data-node-id={
                     category.id === "commercial"
                       ? "4571:111488"
@@ -106,7 +108,7 @@ function ServicesCategoryShowcase({ categories }) {
                   }
                 >
                   {category.label}
-                </span>
+                </Motion.span>
               </button>
             );
           })}
@@ -125,14 +127,13 @@ function ServicesCategoryShowcase({ categories }) {
             aria-hidden={commercialIsActive}
           />
           {commercialCategory ? (
-            <img
-              className={`services-category-commercial-image absolute inset-0 size-full object-cover object-bottom ${
-                commercialIsActive
-                  ? "services-category-commercial-image-enter"
-                  : ""
-              }`}
+            <Motion.img
+              className="absolute inset-0 size-full object-cover object-bottom"
               src={commercialCategory.image}
               alt={commercialIsActive ? commercialCategory.imageAlt : ""}
+              initial={false}
+              animate={{ opacity: commercialIsActive ? 1 : 0 }}
+              transition={createPropertyTransition("opacity")}
               aria-hidden={!commercialIsActive}
               data-node-id="4571:111500"
             />
@@ -143,4 +144,9 @@ function ServicesCategoryShowcase({ categories }) {
   );
 }
 
+export {
+  CATEGORY_TRANSITION_DURATION_SECONDS,
+  CATEGORY_TRANSITION_EASE,
+  CATEGORY_TRANSITION_TIMES,
+};
 export default ServicesCategoryShowcase;
