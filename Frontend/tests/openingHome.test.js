@@ -304,6 +304,11 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
   assert.match(servicesHeadingSource, /linear-gradient/);
   assert.match(servicesHeadingSource, /bg-clip-text/);
+  assert.match(servicesHeadingSource, /<Motion\.h2/);
+  assert.match(servicesHeadingSource, /SERVICES_TITLE_MOTION_DURATION_SECONDS = 0\.8/);
+  assert.match(servicesHeadingSource, /backgroundPosition: reduceMotion/);
+  assert.match(servicesHeadingSource, /\["100% 50%", "0% 50%"\]/);
+  assert.match(servicesHeadingSource, /repeatType: "mirror"/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(servicesHeadingSource, /initial=\{reduceMotion \? false/);
   assert.match(servicesHeadingSource, /animate=\{\{ opacity: 1, y: 0 \}\}/);
