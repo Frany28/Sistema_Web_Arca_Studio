@@ -1,26 +1,13 @@
-import { motion as Motion, useReducedMotion } from "motion/react";
-
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
 
-const SERVICES_REVEAL_DURATION_SECONDS = 0.7;
-const SERVICES_REVEAL_EASE = [0.22, 1, 0.36, 1];
-
 function ServicesHeading({ eyebrow, title, description }) {
-  const reduceMotion = useReducedMotion();
-
   return (
     <section
       className="relative flex h-dvh w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] pt-[clamp(112px,18dvh,184px)] min-[768px]:px-[48px]"
       aria-label={eyebrow}
     >
-      <Motion.div
+      <div
         className="flex w-full max-w-[786px] flex-col items-center gap-[24px] text-center"
-        initial={reduceMotion ? false : { opacity: 0, y: 28 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: reduceMotion ? 0 : SERVICES_REVEAL_DURATION_SECONDS,
-          ease: SERVICES_REVEAL_EASE,
-        }}
         data-node-id="4505:113281"
       >
         <p
@@ -43,13 +30,9 @@ function ServicesHeading({ eyebrow, title, description }) {
         >
           {description}
         </p>
-      </Motion.div>
+      </div>
     </section>
   );
 }
 
-export {
-  SERVICES_REVEAL_DURATION_SECONDS,
-  SERVICES_REVEAL_EASE,
-};
 export default ServicesHeading;

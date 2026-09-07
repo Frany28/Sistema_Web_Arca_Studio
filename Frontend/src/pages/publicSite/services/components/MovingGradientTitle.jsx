@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useRef } from "react";
 import clsx from "clsx";
 
 import FigmaShaderFill from "./FigmaShaderFill.jsx";
@@ -42,44 +42,24 @@ const MOVING_GRADIENT_PARAMS = Object.freeze({
 });
 
 function MovingGradientTitle({ children, className, ...props }) {
-  const maskId = `moving-gradient-title-${useId().replaceAll(":", "")}`;
+  const textRef = useRef(null);
 
   return (
-    <h2 className={clsx("relative", className)} {...props}>
-      <span className="block bg-[linear-gradient(90deg,var(--color-accent-300),var(--color-primary-300),var(--color-accent-300))] bg-clip-text text-transparent">
+    <h2
+      className={clsx("relative", className)}
+      {...props}
+    >
+      <span ref={textRef} className="block text-[#FF4431]">
         {children}
       </span>
-
-      <svg
-        className="pointer-events-none absolute inset-0 size-full overflow-visible"
-        aria-hidden="true"
-      >
-        <defs>
-          <mask id={maskId} maskUnits="userSpaceOnUse">
-            <foreignObject x="0" y="0" width="100%" height="100%">
-              <div className="flex size-full items-center justify-center text-center text-white">
-                {children}
-              </div>
-            </foreignObject>
-          </mask>
-        </defs>
-
-        <foreignObject
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          mask={`url(#${maskId})`}
-          data-node-id="4462:2840"
-        >
-          <FigmaShaderFill
-            className="size-full"
-            params={MOVING_GRADIENT_PARAMS}
-            render={renderMovingGradient}
-            setup={setupMovingGradient}
-          />
-        </foreignObject>
-      </svg>
+      <FigmaShaderFill
+        className="pointer-events-none absolute inset-0"
+        data-node-id="4462:2840"
+        maskElementRef={textRef}
+        params={MOVING_GRADIENT_PARAMS}
+        render={renderMovingGradient}
+        setup={setupMovingGradient}
+      />
     </h2>
   );
 }

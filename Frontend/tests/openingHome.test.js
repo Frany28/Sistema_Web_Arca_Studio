@@ -321,11 +321,13 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(movingGradientTitleSource, /intensity: 2\.009999990463257/);
   assert.match(movingGradientTitleSource, /morphSpeed: 3\.740000009536743/);
   assert.match(movingGradientTitleSource, /rotationSpeed: 12/);
-  assert.match(figmaShaderFillSource, /canvas\.getContext\("webgpu"\)/);
+  assert.match(movingGradientTitleSource, /maskElementRef=\{textRef\}/);
+  assert.match(figmaShaderFillSource, /shaderCanvas\.getContext\("webgpu"\)/);
+  assert.match(figmaShaderFillSource, /canvas\.getContext\("2d"\)/);
+  assert.match(figmaShaderFillSource, /globalCompositeOperation = "destination-in"/);
+  assert.match(figmaShaderFillSource, /paintTextMask/);
   assert.match(figmaShaderFillSource, /useReducedMotion/);
-  assert.match(servicesHeadingSource, /useReducedMotion/);
-  assert.match(servicesHeadingSource, /initial=\{reduceMotion \? false/);
-  assert.match(servicesHeadingSource, /animate=\{\{ opacity: 1, y: 0 \}\}/);
+  assert.doesNotMatch(servicesHeadingSource, /opacity: 0|y: 28/);
 });
 
 test("the public navigation logo returns to home", () => {
