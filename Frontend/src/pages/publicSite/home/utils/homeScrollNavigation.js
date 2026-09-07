@@ -185,12 +185,7 @@ function getNextHomeScrollState(state, direction, panelCount) {
     return state;
   }
 
-  const isImageStep = state.phase === HOME_SCROLL_PHASES.IMAGE;
-  const shouldRevealTitle =
-    isImageStep &&
-    (state.entryDirection === null || state.entryDirection === direction);
-
-  if (shouldRevealTitle) {
+  if (state.phase === HOME_SCROLL_PHASES.IMAGE) {
     return createHomeScrollState({
       panelIndex: state.panelIndex,
       phase: HOME_SCROLL_PHASES.TITLE,
@@ -276,6 +271,32 @@ function getNearestPanelIndex(scrollTop, panelOffsets) {
   0);
 }
 
+function getSequentialScrollbarPanelIndex(
+  currentPanelIndex,
+  requestedPanelIndex,
+  panelCount,
+) {
+  if (
+    !Number.isInteger(currentPanelIndex) ||
+    !Number.isInteger(requestedPanelIndex) ||
+    !Number.isInteger(panelCount) ||
+    panelCount <= 0
+  ) {
+    return 0;
+  }
+
+  const safeCurrentPanelIndex = Math.min(
+    Math.max(currentPanelIndex, 0),
+    panelCount - 1,
+  );
+  const direction = Math.sign(requestedPanelIndex - safeCurrentPanelIndex);
+
+  return Math.min(
+    Math.max(safeCurrentPanelIndex + direction, 0),
+    panelCount - 1,
+  );
+}
+
 export {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
@@ -288,6 +309,7 @@ export {
   getKeyboardDirection,
   getNearestPanelIndex,
   getNextHomeScrollState,
+  getSequentialScrollbarPanelIndex,
   getHomeStatementTravelDistance,
   getHomeStatementVisualState,
   getSwipeDirection,

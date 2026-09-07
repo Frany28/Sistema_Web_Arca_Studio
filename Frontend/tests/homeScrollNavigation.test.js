@@ -14,6 +14,7 @@ import {
   getHomeStatementVisualState,
   getNearestPanelIndex,
   getNextHomeScrollState,
+  getSequentialScrollbarPanelIndex,
   getSwipeDirection,
   limitHomeStatementWheelDelta,
   normalizeWheelDelta,
@@ -60,7 +61,7 @@ test("ascending navigation uses the same image then title sequence", () => {
   assert.equal(getNextHomeScrollState(state, UP, 3), state);
 });
 
-test("reversing on a newly entered image changes panel without revealing it", () => {
+test("a newly entered image must reveal its title before leaving in either direction", () => {
   const enteredDown = createHomeScrollState({
     panelIndex: 1,
     phase: IMAGE,
@@ -73,14 +74,14 @@ test("reversing on a newly entered image changes panel without revealing it", ()
   });
 
   assert.deepEqual(getNextHomeScrollState(enteredDown, UP, 3), {
-    panelIndex: 0,
-    phase: IMAGE,
-    entryDirection: UP,
+    panelIndex: 1,
+    phase: TITLE,
+    entryDirection: null,
   });
   assert.deepEqual(getNextHomeScrollState(enteredUp, DOWN, 3), {
-    panelIndex: 2,
-    phase: IMAGE,
-    entryDirection: DOWN,
+    panelIndex: 1,
+    phase: TITLE,
+    entryDirection: null,
   });
 });
 
@@ -117,9 +118,9 @@ test("the fourth panel is entered as an image before its special effect", () => 
     entryDirection: DOWN,
   });
   assert.deepEqual(getNextHomeScrollState(statementImage, UP, 4), {
-    panelIndex: 2,
-    phase: IMAGE,
-    entryDirection: UP,
+    panelIndex: 3,
+    phase: TITLE,
+    entryDirection: null,
   });
   assert.deepEqual(createScrollbarHomeScrollState(3), {
     panelIndex: 3,
@@ -263,6 +264,13 @@ test("scrollbar alignment selects the closest panel", () => {
   assert.equal(getNearestPanelIndex(620, offsets), 1);
   assert.equal(getNearestPanelIndex(1500, offsets), 2);
   assert.equal(getNearestPanelIndex(900, offsets), 1);
+});
+
+test("scrollbar dragging advances at most one panel so every title is shown", () => {
+  assert.equal(getSequentialScrollbarPanelIndex(0, 3, 4), 1);
+  assert.equal(getSequentialScrollbarPanelIndex(1, 3, 4), 2);
+  assert.equal(getSequentialScrollbarPanelIndex(3, 0, 4), 2);
+  assert.equal(getSequentialScrollbarPanelIndex(2, 2, 4), 2);
 });
 
 test("statement progress follows scroll deltas and reverses from any point", () => {

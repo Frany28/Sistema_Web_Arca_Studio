@@ -60,6 +60,13 @@ const servicesPageSource = readFileSync(
   new URL("../src/pages/publicSite/services/ServicesPage.jsx", import.meta.url),
   "utf8",
 );
+const publicSiteHeaderSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteHeader.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const servicesContentSource = readFileSync(
   new URL("../src/pages/publicSite/services/servicesContent.js", import.meta.url),
   "utf8",
@@ -175,10 +182,9 @@ test("initial scrolling unlocks only after Arquitectura finishes revealing", () 
     homeSource,
     /initialScrollReady \? "overflow-y-auto" : "overflow-y-hidden"/,
   );
-  assert.match(
-    homeSectionsSource,
-    /panelIndex === 0 \? onInitialTitleReveal : undefined/,
-  );
+  assert.match(homeSectionsSource, /onTitleRevealComplete\?\.\(panelIndex\)/);
+  assert.match(homeSectionsSource, /panelIndex === 0/);
+  assert.match(homeSectionsSource, /onInitialTitleReveal\?\.\(\)/);
   assert.match(openingSequenceSource, /setInitialScrollReady\(true\)/);
   assert.match(homeSource, /tabIndex=\{initialScrollReady \? 0 : -1\}/);
 });
@@ -220,6 +226,9 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollControllerSource, /"onscrollend" in scroller/);
   assert.match(scrollControllerSource, /SCROLL_SETTLE_DELAY_MS = 180/);
   assert.match(scrollControllerSource, /getNearestPanelIndex/);
+  assert.match(scrollControllerSource, /getSequentialScrollbarPanelIndex/);
+  assert.match(scrollControllerSource, /titleRevealLockedRef/);
+  assert.match(homeSectionsSource, /onTitleRevealComplete/);
   assert.match(scrollControllerSource, /window\.addEventListener\("resize", handleResize\)/);
   assert.match(scrollControllerSource, /window\.addEventListener\("orientationchange", handleResize\)/);
 
@@ -305,6 +314,14 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(servicesHeadingSource, /initial=\{reduceMotion \? false/);
   assert.match(servicesHeadingSource, /animate=\{\{ opacity: 1, y: 0 \}\}/);
+});
+
+test("the public navigation logo returns to home", () => {
+  assert.match(publicSiteHeaderSource, /aria-label="Ir al inicio"/);
+  assert.match(publicSiteHeaderSource, /onNavigate\?\.\("home"\)/);
+  assert.match(homeSource, /sectionId === "home"/);
+  assert.match(servicesPageSource, /sectionId === "home"/);
+  assert.match(servicesPageSource, /navigate\("\/"\)/);
 });
 
 test("services categories preserve the Figma state transition", () => {

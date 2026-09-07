@@ -18,6 +18,7 @@ function ServicesPage() {
           activeNavigationId="services"
           className="pointer-events-auto"
           onNavigate={(sectionId) => {
+            if (sectionId === "home") navigate("/");
             if (sectionId === "services") navigate("/servicios");
           }}
           onRegister={() => navigate("/crear-cuenta")}

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useMotionValue } from "motion/react";
@@ -15,6 +15,7 @@ import {
   getKeyboardDirection,
   getNearestPanelIndex,
   getNextHomeScrollState,
+  getSequentialScrollbarPanelIndex,
   getSwipeDirection,
   limitHomeStatementWheelDelta,
   normalizeWheelDelta,
@@ -48,7 +49,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   );
   const scrollerRef = useRef(null);
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
+  const titleRevealLockedRef = useRef(false);
   const statementProgress = useMotionValue(0);
+
+  const completeTitleReveal = useCallback(() => {
+    titleRevealLockedRef.current = false;
+  }, []);
 
   useLayoutEffect(() => {
     if (!initialScrollReady && scrollerRef.current) {
@@ -70,6 +76,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let touchGesture = null;
     let isProgrammaticScroll = false;
     let ignoreNextScrollEnd = false;
+    let nativeScrollOriginState = null;
     const supportsScrollEnd = "onscrollend" in scroller;
 
     const commitNavigationState = (nextState) => {
@@ -96,6 +103,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const needsAlignment = Math.abs(scroller.scrollTop - targetScrollTop) > 1;
 
       statement.synchronizeWithNavigation(nextState, currentState);
+      if (
+        nextState.panelIndex < STATEMENT_PANEL_INDEX &&
+        nextState.phase === HOME_SCROLL_PHASES.TITLE &&
+        (currentState.panelIndex !== nextState.panelIndex ||
+          currentState.phase !== HOME_SCROLL_PHASES.TITLE)
+      ) {
+        titleRevealLockedRef.current = true;
+      }
       commitNavigationState(nextState);
       if (panelChanged) wheelTransitionLock = true;
       if (!panelChanged && !needsAlignment) return true;
@@ -124,7 +139,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const moveByDirection = (direction) => {
-      if (activeTween) return false;
+      if (activeTween || titleRevealLockedRef.current) return false;
       const currentState = navigationStateRef.current;
       const nextState = getNextHomeScrollState(
         currentState,
@@ -308,10 +323,22 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const settleNativeScroll = () => {
       window.clearTimeout(scrollSettleTimer);
       if (isProgrammaticScroll || activeTween) return;
-      const panelIndex = getNearestPanelIndex(
+      const requestedPanelIndex = getNearestPanelIndex(
         scroller.scrollTop,
         panels.map((panel) => panel.offsetTop),
       );
+      const originState = nativeScrollOriginState ?? navigationStateRef.current;
+      const panelIndex =
+        titleRevealLockedRef.current ||
+        originState.phase !== HOME_SCROLL_PHASES.TITLE
+          ? originState.panelIndex
+          : getSequentialScrollbarPanelIndex(
+              originState.panelIndex,
+              requestedPanelIndex,
+              panels.length,
+            );
+
+      nativeScrollOriginState = null;
       alignToPanel(createScrollbarHomeScrollState(panelIndex));
     };
 
@@ -319,6 +346,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (isProgrammaticScroll) return;
       ignoreNextScrollEnd = false;
       const currentState = navigationStateRef.current;
+      nativeScrollOriginState ??= currentState;
       if (currentState.panelIndex === STATEMENT_PANEL_INDEX) {
         statement.resetForNativeScroll();
       } else if (currentState.phase === HOME_SCROLL_PHASES.TITLE) {
@@ -386,6 +414,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       window.clearTimeout(scrollSettleTimer);
       window.clearTimeout(wheelIdleTimer);
       activeTween?.kill();
+      titleRevealLockedRef.current = false;
       statement.destroy();
       scroller.removeEventListener("wheel", handleWheel);
       scroller.removeEventListener("pointerdown", handlePointerDown);
@@ -403,6 +432,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    completeTitleReveal,
     navigationState,
     scrollerRef,
     statementPanelIndex: STATEMENT_PANEL_INDEX,

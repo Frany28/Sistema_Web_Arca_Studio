@@ -40,13 +40,20 @@ function PublicSiteHeader({
           className="relative h-[52px] w-full"
           data-node-id="4487:112597"
         >
-          <MainLogo
-            size="32px"
-            appearance="dark"
-            alt="ARCA Studio"
-            className="absolute left-0 top-[3.5px] h-[32px] w-[152px] justify-start"
+          <button
+            type="button"
+            className="absolute left-0 top-[3.5px] flex h-[32px] w-[152px] cursor-pointer items-center justify-start border-0 bg-transparent p-0"
+            aria-label="Ir al inicio"
+            onClick={() => onNavigate?.("home")}
             data-node-id="4487:112602"
-          />
+          >
+            <MainLogo
+              size="32px"
+              appearance="dark"
+              alt="ARCA Studio"
+              className="h-[32px] w-[152px] justify-start"
+            />
+          </button>
 
           <HorizontalTabMenu
             className="absolute left-1/2 top-0 hidden -translate-x-1/2 min-[1024px]:flex"

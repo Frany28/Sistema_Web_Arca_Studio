@@ -7,6 +7,7 @@ function HomeSections({
   active,
   navigationState,
   onInitialTitleReveal,
+  onTitleRevealComplete,
   statementPanelIndex,
   statementProgress,
 }) {
@@ -17,7 +18,10 @@ function HomeSections({
           key={panel.title}
           {...panel}
           onTitleRevealComplete={
-            panelIndex === 0 ? onInitialTitleReveal : undefined
+            () => {
+              onTitleRevealComplete?.(panelIndex);
+              if (panelIndex === 0) onInitialTitleReveal?.();
+            }
           }
           titleVisible={
             active &&

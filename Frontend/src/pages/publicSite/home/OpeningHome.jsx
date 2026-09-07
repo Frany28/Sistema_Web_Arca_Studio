@@ -27,6 +27,7 @@ function OpeningHome() {
     reduceMotion,
   });
   const {
+    completeTitleReveal,
     navigationState,
     scrollerRef,
     statementPanelIndex,
@@ -77,6 +78,10 @@ function OpeningHome() {
             <PublicSiteHeader
               className="pointer-events-auto"
               onNavigate={(sectionId) => {
+                if (sectionId === "home") {
+                  navigate("/");
+                }
+
                 if (sectionId === "services") {
                   navigate("/servicios");
                 }
@@ -90,6 +95,7 @@ function OpeningHome() {
             active={homeActive}
             navigationState={navigationState}
             onInitialTitleReveal={completeInitialTitleReveal}
+            onTitleRevealComplete={completeTitleReveal}
             statementPanelIndex={statementPanelIndex}
             statementProgress={statementProgress}
           />
