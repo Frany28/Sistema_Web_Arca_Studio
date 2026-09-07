@@ -321,16 +321,18 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /data-node-id="4505:113286"/);
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
-  assert.match(servicesHeadingSource, /gsap\.registerPlugin\(SplitText, ScrollTrigger\)/);
+  assert.match(servicesHeadingSource, /gsap\.registerPlugin\(SplitText\)/);
   assert.match(servicesHeadingSource, /data-services-split/);
   assert.match(servicesHeadingSource, /type: "words,lines"/);
   assert.match(servicesHeadingSource, /mask: "lines"/);
   assert.match(servicesHeadingSource, /autoSplit: true/);
   assert.match(servicesHeadingSource, /yPercent: SERVICES_LINE_REVEAL_PERCENT/);
+  assert.match(servicesHeadingSource, /opacity: 0/);
+  assert.match(servicesHeadingSource, /duration: SERVICES_REVEAL_DURATION_SECONDS/);
+  assert.match(servicesHeadingSource, /delay: elementIndex \* SERVICES_ELEMENT_DELAY_SECONDS/);
   assert.match(servicesHeadingSource, /stagger: SERVICES_LINE_STAGGER_SECONDS/);
-  assert.match(servicesHeadingSource, /scrub: true/);
-  assert.match(servicesHeadingSource, /start: "clamp\(top center\)"/);
-  assert.match(servicesHeadingSource, /end: "clamp\(bottom center\)"/);
+  assert.match(servicesHeadingSource, /ease: "power3\.out"/);
+  assert.doesNotMatch(servicesHeadingSource, /ScrollTrigger|scrub: true/);
   assert.match(servicesHeadingSource, /document\.fonts\.ready/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);
@@ -347,7 +349,7 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(movingGradientTitleStyles, /background-position: 100% 50%/);
   assert.doesNotMatch(movingGradientTitleStyles, /radial-gradient|ellipse/);
   assert.match(movingGradientTitleStyles, /prefers-reduced-motion: reduce/);
-  assert.doesNotMatch(servicesHeadingSource, /opacity: 0|y: 28/);
+  assert.doesNotMatch(servicesHeadingSource, /y: 28/);
 });
 
 test("the public navigation logo returns to home", () => {

@@ -1,16 +1,17 @@
 import { useLayoutEffect, useRef } from "react";
 import clsx from "clsx";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { useReducedMotion } from "motion/react";
 
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
 
-gsap.registerPlugin(SplitText, ScrollTrigger);
+gsap.registerPlugin(SplitText);
 
 const SERVICES_LINE_REVEAL_PERCENT = 120;
 const SERVICES_LINE_STAGGER_SECONDS = 0.1;
+const SERVICES_REVEAL_DURATION_SECONDS = 0.8;
+const SERVICES_ELEMENT_DELAY_SECONDS = 0.12;
 
 function ServicesHeading({ eyebrow, title, description }) {
   const containerRef = useRef(null);
@@ -37,7 +38,7 @@ function ServicesHeading({ eyebrow, title, description }) {
         if (disposed) return;
 
         gsap.set(splitElements, { visibility: "visible" });
-        splitElements.forEach((element) => {
+        splitElements.forEach((element, elementIndex) => {
           const split = SplitText.create(element, {
             type: "words,lines",
             mask: "lines",
@@ -46,14 +47,11 @@ function ServicesHeading({ eyebrow, title, description }) {
             onSplit: (instance) =>
               gsap.from(instance.lines, {
                 yPercent: SERVICES_LINE_REVEAL_PERCENT,
+                opacity: 0,
+                duration: SERVICES_REVEAL_DURATION_SECONDS,
+                delay: elementIndex * SERVICES_ELEMENT_DELAY_SECONDS,
                 stagger: SERVICES_LINE_STAGGER_SECONDS,
-                ease: "none",
-                scrollTrigger: {
-                  trigger: container,
-                  scrub: true,
-                  start: "clamp(top center)",
-                  end: "clamp(bottom center)",
-                },
+                ease: "power3.out",
               }),
           });
           splits.push(split);
@@ -117,4 +115,9 @@ function ServicesHeading({ eyebrow, title, description }) {
 
 export default ServicesHeading;
 
-export { SERVICES_LINE_REVEAL_PERCENT, SERVICES_LINE_STAGGER_SECONDS };
+export {
+  SERVICES_ELEMENT_DELAY_SECONDS,
+  SERVICES_LINE_REVEAL_PERCENT,
+  SERVICES_LINE_STAGGER_SECONDS,
+  SERVICES_REVEAL_DURATION_SECONDS,
+};
