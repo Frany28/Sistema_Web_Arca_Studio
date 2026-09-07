@@ -42,6 +42,20 @@ const servicesHeadingSource = readFileSync(
   ),
   "utf8",
 );
+const movingGradientTitleSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/services/components/MovingGradientTitle.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const figmaShaderFillSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/services/components/FigmaShaderFill.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const servicesCategoryShowcaseSource = readFileSync(
   new URL(
     "../src/pages/publicSite/services/components/ServicesCategoryShowcase.jsx",
@@ -302,13 +316,13 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesHeadingSource, /data-node-id="4505:113283"/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113286"/);
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
-  assert.match(servicesHeadingSource, /linear-gradient/);
-  assert.match(servicesHeadingSource, /bg-clip-text/);
-  assert.match(servicesHeadingSource, /<Motion\.h2/);
-  assert.match(servicesHeadingSource, /SERVICES_TITLE_MOTION_DURATION_SECONDS = 0\.8/);
-  assert.match(servicesHeadingSource, /backgroundPosition: reduceMotion/);
-  assert.match(servicesHeadingSource, /\["100% 50%", "0% 50%"\]/);
-  assert.match(servicesHeadingSource, /repeatType: "mirror"/);
+  assert.match(servicesHeadingSource, /<MovingGradientTitle/);
+  assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);
+  assert.match(movingGradientTitleSource, /intensity: 2\.009999990463257/);
+  assert.match(movingGradientTitleSource, /morphSpeed: 3\.740000009536743/);
+  assert.match(movingGradientTitleSource, /rotationSpeed: 12/);
+  assert.match(figmaShaderFillSource, /canvas\.getContext\("webgpu"\)/);
+  assert.match(figmaShaderFillSource, /useReducedMotion/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(servicesHeadingSource, /initial=\{reduceMotion \? false/);
   assert.match(servicesHeadingSource, /animate=\{\{ opacity: 1, y: 0 \}\}/);
