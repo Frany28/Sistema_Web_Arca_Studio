@@ -326,6 +326,9 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(movingGradientTitleStyles, /radial-gradient/);
   assert.match(movingGradientTitleStyles, /#fff 0%/);
   assert.match(movingGradientTitleStyles, /#ff4431/);
+  assert.match(movingGradientTitleStyles, /#4b2d2b/);
+  assert.match(movingGradientTitleStyles, /70% -180%/);
+  assert.match(movingGradientTitleStyles, /25% 210%/);
   assert.match(movingGradientTitleStyles, /prefers-reduced-motion: reduce/);
   assert.doesNotMatch(servicesHeadingSource, /opacity: 0|y: 28/);
 });
