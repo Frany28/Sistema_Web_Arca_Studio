@@ -173,7 +173,12 @@ function createHomeScrollState({
   return { panelIndex, phase, entryDirection };
 }
 
-function getNextHomeScrollState(state, direction, panelCount) {
+function getNextHomeScrollState(
+  state,
+  direction,
+  panelCount,
+  { skipCurrentImageReveal = false } = {},
+) {
   if (
     !state ||
     !Number.isInteger(panelCount) ||
@@ -185,7 +190,7 @@ function getNextHomeScrollState(state, direction, panelCount) {
     return state;
   }
 
-  if (state.phase === HOME_SCROLL_PHASES.IMAGE) {
+  if (state.phase === HOME_SCROLL_PHASES.IMAGE && !skipCurrentImageReveal) {
     return createHomeScrollState({
       panelIndex: state.panelIndex,
       phase: HOME_SCROLL_PHASES.TITLE,

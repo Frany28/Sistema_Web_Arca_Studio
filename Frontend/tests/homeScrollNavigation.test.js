@@ -129,6 +129,25 @@ test("the fourth panel is entered as an image before its special effect", () => 
   });
 });
 
+test("the statement can return to the previous panel after reversing its effect", () => {
+  const statementStart = createHomeScrollState({
+    panelIndex: 3,
+    phase: IMAGE,
+    entryDirection: DOWN,
+  });
+
+  assert.deepEqual(
+    getNextHomeScrollState(statementStart, UP, 4, {
+      skipCurrentImageReveal: true,
+    }),
+    {
+      panelIndex: 2,
+      phase: IMAGE,
+      entryDirection: UP,
+    },
+  );
+});
+
 test("a scrollbar drag hides the title until the selection settles", () => {
   assert.deepEqual(createScrollbarHomeScrollState(1, { settled: false }), {
     panelIndex: 1,

@@ -141,10 +141,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const moveByDirection = (direction) => {
       if (activeTween || titleRevealLockedRef.current) return false;
       const currentState = navigationStateRef.current;
+      const leavesStatementStart =
+        currentState.panelIndex === STATEMENT_PANEL_INDEX &&
+        direction === HOME_SCROLL_DIRECTIONS.UP &&
+        statement.getProgress() <= 0;
       const nextState = getNextHomeScrollState(
         currentState,
         direction,
         panels.length,
+        { skipCurrentImageReveal: leavesStatementStart },
       );
       return nextState === currentState ? false : alignToPanel(nextState);
     };
