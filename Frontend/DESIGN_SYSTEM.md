@@ -340,7 +340,7 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 
 ### Navegación superior persistente
 
-- No se permite abandonar la sección actual mientras tenga pasos de scroll pendientes. La restricción se comprueba para rueda, touch, teclado, scrollbar y accesos del navbar. En Servicios, incluso un gesto ascendente debe revelar primero los contenedores pendientes; el scrollbar no puede omitir la introducción ni dar por completado el efecto del video.
+- La navegación por rueda, touch, teclado y scrollbar no permite abandonar la sección actual mientras tenga pasos de scroll pendientes. Seleccionar un área en el navbar es una excepción: desplaza directamente al destino y puede interrumpir una transición en curso. En Servicios, un gesto ascendente debe revelar primero los contenedores pendientes; el scrollbar no puede omitir la introducción ni dar por completado el efecto del video.
 
 - Servicios revela conjuntamente su encabezado, descripción y selector al entrar mediante scroll, usando el mismo recorte y transición de resorte que las tres primeras secciones. El selector consume internamente los gestos de rueda y touch para cambiar categoría, imagen e indicador, incluso en sus extremos. No utiliza el scroll de Home, pin ni espaciadores para recorrer categorías; fuera del selector se conserva la navegación de la página.
 

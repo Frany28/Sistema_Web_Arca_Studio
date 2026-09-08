@@ -161,11 +161,9 @@ test("the scrollbar cannot skip the intro and video to enter Services", () => {
   app.cleanup();
 });
 
-test("Services cannot be abandoned by navbar, scrollbar or upward input while steps remain", () => {
+test("Services keeps scroll steps mandatory but the navbar can leave immediately", () => {
   const app = setup();
   app.controller.navigateToSection("services");
-  app.flush();
-  app.controller.navigateToSection("home");
   app.flush();
   assert.equal(app.scroller.scrollTop, 3200);
   app.scroller.scrollTop = 2400;
@@ -175,23 +173,27 @@ test("Services cannot be abandoned by navbar, scrollbar or upward input while st
   assert.equal(app.getServicesStep(), 1);
   app.controller.navigateToSection("home");
   app.flush();
-  assert.equal(app.scroller.scrollTop, 3200);
-  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
-  assert.equal(app.getServicesStep(), 2);
-  app.controller.navigateToSection("home");
-  app.flush();
   assert.equal(app.scroller.scrollTop, 0);
   app.cleanup();
 });
 
-test("navbar cannot bypass an image whose title is still pending", () => {
+test("navbar can leave an image whose title is still pending", () => {
   const app = setup();
   app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
   app.flush();
   assert.equal(app.scroller.scrollTop, 800);
   app.controller.navigateToSection("services");
   app.flush();
-  assert.equal(app.scroller.scrollTop, 800);
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.cleanup();
+});
+
+test("a new navbar destination replaces an unfinished section transition", () => {
+  const app = setup();
+  app.controller.navigateToSection("services");
+  app.controller.navigateToSection("home");
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 0);
   app.cleanup();
 });
 

@@ -179,13 +179,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       nativeScrollOriginState = null;
     };
 
-    const navigateSection = (sectionId) => {
+    const navigateSection = (sectionId, { direct = false } = {}) => {
       const currentState = navigationStateRef.current;
       const currentSectionComplete = contentMode
         ? currentServicesStep === 2
         : !titleRevealLockedRef.current && currentState.phase === HOME_SCROLL_PHASES.TITLE &&
           (currentState.panelIndex !== STATEMENT_PANEL_INDEX || statement.getProgress() >= 1);
-      if (activeTween || isProgrammaticScroll || !currentSectionComplete) return;
+      if (!direct && (activeTween || isProgrammaticScroll || !currentSectionComplete)) return;
       const target = sectionId === "home" ? panels[0] :
         [...scroller.querySelectorAll("section[id]")].find((section) => section.id === sectionId);
       if (!target) return;
@@ -223,7 +223,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         },
       });
     };
-    sectionNavigationRef.current = navigateSection;
+    sectionNavigationRef.current = (sectionId) => navigateSection(sectionId, { direct: true });
 
     const advanceServices = () => {
       // Igual que en los paneles de imagen: cualquier dirección completa
