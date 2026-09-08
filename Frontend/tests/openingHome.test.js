@@ -368,7 +368,7 @@ test("the public navigation logo returns to home", () => {
   assert.match(servicesPageSource, /navigate\("\/"\)/);
 });
 
-test("services categories preserve the Figma state transition", () => {
+test("services categories preserve the residential Figma state and accessible transitions", () => {
   assert.match(servicesPageSource, /<ServicesCategoryShowcase/);
   assert.match(servicesContentSource, /Diseño residencial/);
   assert.match(servicesContentSource, /Diseño comercial/);
@@ -378,24 +378,16 @@ test("services categories preserve the Figma state transition", () => {
   assert.match(servicesCategoryShowcaseSource, /max-w-\[514px\]/);
   assert.match(servicesCategoryShowcaseSource, /max-w-\[320px\]/);
   assert.match(servicesCategoryShowcaseSource, /gap-\[56px\]/);
-  assert.match(servicesCategoryShowcaseSource, /data-node-id="4571:111485"/);
-  assert.match(servicesCategoryShowcaseSource, /"4571:111488"/);
-  assert.match(servicesCategoryShowcaseSource, /"4571:111487"/);
-  assert.match(servicesCategoryShowcaseSource, /"4571:111500"/);
+  assert.match(servicesCategoryShowcaseSource, /data-node-id="4613:2167"/);
+  assert.match(servicesCategoryShowcaseSource, /data-node-id="4571:111471"/);
   assert.match(servicesCategoryShowcaseSource, /role="tablist"/);
   assert.match(servicesCategoryShowcaseSource, /aria-selected=\{isActive\}/);
   assert.match(servicesCategoryShowcaseSource, /event\.key === "ArrowDown"/);
   assert.match(servicesCategoryShowcaseSource, /tabIndex=\{isActive \? 0 : -1\}/);
-  assert.match(servicesCategoryShowcaseSource, /onViewportEnter/);
-  assert.match(servicesCategoryShowcaseSource, /viewport=\{\{ amount: 0\.15, once: true \}\}/);
-  assert.match(servicesCategoryShowcaseSource, /motion as Motion, useReducedMotion/);
-  assert.match(servicesCategoryShowcaseSource, /CATEGORY_TRANSITION_DURATION_SECONDS = 0\.8/);
-  assert.match(servicesCategoryShowcaseSource, /CATEGORY_TRANSITION_TIMES = \[0, 1\]/);
-  assert.match(servicesCategoryShowcaseSource, /CATEGORY_TRANSITION_EASE = "easeInOut"/);
-  assert.match(servicesCategoryShowcaseSource, /animate=\{\{ width: commercialIsActive \? 108 : 48 \}\}/);
-  assert.match(servicesCategoryShowcaseSource, /animate=\{\{ color: isActive \? "#FF4431" : "#FFF" \}\}/);
-  assert.match(servicesCategoryShowcaseSource, /animate=\{\{ opacity: commercialIsActive \? 1 : 0 \}\}/);
-  assert.match(servicesCategoryShowcaseSource, /duration: reduceMotion \? 0/);
+  assert.doesNotMatch(servicesCategoryShowcaseSource, /onViewportEnter/);
+  assert.match(servicesCategoryShowcaseSource, /useServicesCategoryScroll/);
+  assert.match(servicesCategoryShowcaseSource, /data-category-indicator/);
+  assert.match(servicesCategoryShowcaseSource, /data-category-slide/);
 });
 
 test("OpeningHome delegates loading, navigation, content and statement behavior", () => {
