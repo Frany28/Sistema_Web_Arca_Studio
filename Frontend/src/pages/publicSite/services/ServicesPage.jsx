@@ -12,7 +12,7 @@ function ServicesPage() {
   const navigate = useNavigate();
 
   return (
-    <main className="dark min-h-dvh bg-[var(--color-neutral-950-uniform)]">
+    <main className="dark flex min-h-dvh flex-col gap-[48px] bg-[var(--color-neutral-950-uniform)]">
       <div className="pointer-events-none fixed inset-x-0 top-0 z-30">
         <PublicSiteHeader
           activeNavigationId="services"

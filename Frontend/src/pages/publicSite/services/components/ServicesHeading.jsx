@@ -68,7 +68,7 @@ function ServicesHeading({ eyebrow, title, description }) {
 
   return (
     <section
-      className="relative flex h-dvh w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] pt-[clamp(112px,18dvh,184px)] min-[768px]:px-[48px]"
+      className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] pt-[120px] min-[768px]:px-[48px]"
       aria-label={eyebrow}
     >
       <div

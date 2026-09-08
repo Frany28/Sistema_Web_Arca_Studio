@@ -50,7 +50,7 @@ function ServicesCategoryShowcase({ categories }) {
 
   return (
     <Motion.section
-      className="flex min-h-dvh w-full items-center justify-center bg-[var(--color-neutral-950-uniform)] px-[16px] py-[48px] min-[768px]:px-[48px]"
+      className="flex w-full items-center justify-center bg-[var(--color-neutral-950-uniform)] px-[16px] py-[48px] min-[768px]:px-[48px]"
       aria-label="Tipos de diseño"
       viewport={{ amount: 0.15, once: true }}
       onViewportEnter={() => {

@@ -307,6 +307,7 @@ test("services navigation opens its public route and responsive Figma heading", 
   assert.match(servicesContentSource, /Soluciones adaptadas a cada proyecto\./);
   assert.match(servicesPageSource, /<ServicesHeading/);
   assert.match(servicesPageSource, /activeNavigationId="services"/);
+  assert.match(servicesPageSource, /flex min-h-dvh flex-col gap-\[48px\]/);
   assert.match(homeSource, /onNavigate=\{\(sectionId\) =>/);
   assert.match(homeSource, /navigate\("\/servicios"\)/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
@@ -320,6 +321,9 @@ test("services navigation opens its public route and responsive Figma heading", 
   );
   assert.match(servicesHeadingSource, /data-node-id="4505:113286"/);
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
+  assert.match(servicesHeadingSource, /pt-\[120px\]/);
+  assert.doesNotMatch(servicesHeadingSource, /h-dvh/);
+  assert.doesNotMatch(servicesCategoryShowcaseSource, /min-h-dvh/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
   assert.match(servicesHeadingSource, /gsap\.registerPlugin\(SplitText\)/);
   assert.match(servicesHeadingSource, /data-services-split/);
