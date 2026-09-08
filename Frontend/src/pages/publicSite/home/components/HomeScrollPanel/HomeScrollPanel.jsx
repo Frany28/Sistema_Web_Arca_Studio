@@ -1,8 +1,13 @@
 import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
 
 function HomeScrollPanel({
+  captionDescriptionNodeId,
+  captionNodeId,
+  captionTitleNodeId,
+  description,
   image,
   imageAlt,
+  projectName,
   title,
   titleVisible = false,
   onTitleRevealComplete,
@@ -23,6 +28,11 @@ function HomeScrollPanel({
         aria-hidden="true"
       />
       <HomeHeroTitle
+        captionDescriptionNodeId={captionDescriptionNodeId}
+        captionNodeId={captionNodeId}
+        captionTitleNodeId={captionTitleNodeId}
+        description={description}
+        projectName={projectName}
         title={title}
         visible={titleVisible}
         onRevealComplete={onTitleRevealComplete}

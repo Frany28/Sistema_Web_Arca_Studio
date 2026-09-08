@@ -121,6 +121,7 @@ test("the root route presents the animated ARCA opening before the home hero", (
   assert.match(homeContentSource, /arca-construction-worker-v2\.png/);
   assert.match(homeSource, /HOME_PRELOAD_IMAGES/);
   assert.match(homeSource, /<PublicSiteHeader/);
+  assert.match(homeSource, /scrollContainerRef=\{scrollerRef\}/);
   assert.match(homeContentSource, /title: "Arquitectura"/);
   assert.match(homeContentSource, /title: "Construcci.n"/);
   assert.match(homeContentSource, /title: "Interiorismo"/);
@@ -177,6 +178,28 @@ test("the hero title keeps its responsive masked reveal", () => {
   assert.match(heroTitleSource, /onAnimationComplete/);
   assert.match(heroTitleSource, /onRevealComplete\?\.\(\)/);
   assert.doesNotMatch(heroTitleSource, /visible \|\| reduceMotion/);
+});
+
+test("the first three home panels reveal their Figma project descriptions", () => {
+  assert.match(homeContentSource, /projectName: "Muelle Zulima"/);
+  assert.match(
+    homeContentSource,
+    /Oficina Taller de Reparaciones Marinas \| Ciudad Ojeda, Venezuela\./,
+  );
+  assert.match(homeContentSource, /projectName: "Quinta Bella Vista"/);
+  assert.match(
+    homeContentSource,
+    /Proyecto residencial \| Maracaibo, Venezuela\./,
+  );
+  assert.match(heroTitleSource, /top-\[165\.5px\]/);
+  assert.match(heroTitleSource, /gap-\[8px\]/);
+  assert.match(heroTitleSource, /px-\[24px\] py-\[24px\]/);
+  assert.match(heroTitleSource, /text-heading-7/);
+  assert.match(heroTitleSource, /text-heading-8/);
+  assert.match(heroTitleSource, /opacity-60/);
+  assert.match(heroTitleSource, /min-\[520px\]:whitespace-nowrap/);
+  assert.match(scrollPanelSource, /projectName=\{projectName\}/);
+  assert.match(scrollPanelSource, /description=\{description\}/);
 });
 
 test("initial scrolling unlocks only after Arquitectura finishes revealing", () => {

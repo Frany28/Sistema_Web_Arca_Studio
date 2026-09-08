@@ -5,7 +5,16 @@ const REVEAL_DURATION_SECONDS = 0.9;
 const REVEAL_HEIGHT_COLLAPSED = 73;
 const REVEAL_HEIGHT_EXPANDED = 255;
 
-function HomeHeroTitle({ title, visible, onRevealComplete }) {
+function HomeHeroTitle({
+  captionDescriptionNodeId,
+  captionNodeId,
+  captionTitleNodeId,
+  description,
+  projectName,
+  title,
+  visible,
+  onRevealComplete,
+}) {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -45,6 +54,24 @@ function HomeHeroTitle({ title, visible, onRevealComplete }) {
         >
           {title}
         </h1>
+
+        <div
+          className="absolute inset-x-0 top-[165.5px] flex flex-col items-center gap-[8px] px-[24px] py-[24px] text-center text-[var(--color-neutral-100-uniform)]"
+          data-node-id={captionNodeId}
+        >
+          <p
+            className="text-heading-7 m-0 max-w-full opacity-60"
+            data-node-id={captionTitleNodeId}
+          >
+            {projectName}
+          </p>
+          <p
+            className="text-heading-8 m-0 max-w-full text-balance opacity-60 min-[520px]:whitespace-nowrap"
+            data-node-id={captionDescriptionNodeId}
+          >
+            {description}
+          </p>
+        </div>
       </Motion.div>
     </div>
   );

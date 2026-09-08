@@ -22,13 +22,14 @@ function PublicSiteHeader({
   onNavigate,
   onRegister,
   onLogin,
+  scrollContainerRef,
 }) {
   const headerRef = useRef(null);
   const activeNavigationIndex = navigationItems.findIndex(
     (item) => item.id === activeNavigationId,
   );
 
-  useScrollDirectionVisibility(headerRef);
+  useScrollDirectionVisibility(headerRef, { scrollContainerRef });
 
   return (
     <header

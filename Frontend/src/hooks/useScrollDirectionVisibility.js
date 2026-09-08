@@ -20,7 +20,7 @@ function getClosestScrollContainer(element) {
   return window;
 }
 
-function useScrollDirectionVisibility(targetRef) {
+function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
   const reduceMotion = useReducedMotion();
 
   useLayoutEffect(() => {
@@ -32,7 +32,8 @@ function useScrollDirectionVisibility(targetRef) {
       return undefined;
     }
 
-    const scrollContainer = getClosestScrollContainer(target);
+    const scrollContainer =
+      scrollContainerRef?.current ?? getClosestScrollContainer(target);
     const context = gsap.context(() => {
       const showAnimation = gsap
         .from(target, {
@@ -58,7 +59,7 @@ function useScrollDirectionVisibility(targetRef) {
     }, target);
 
     return () => context.revert();
-  }, [reduceMotion, targetRef]);
+  }, [reduceMotion, scrollContainerRef, targetRef]);
 }
 
 export {

@@ -54,10 +54,17 @@ test("the public home header is permanently dark and reuses shared UI", () => {
 });
 
 test("the public navbar hides while scrolling down and returns while scrolling up", () => {
-  assert.match(headerSource, /useScrollDirectionVisibility\(headerRef\)/);
+  assert.match(
+    headerSource,
+    /useScrollDirectionVisibility\(headerRef, \{ scrollContainerRef \}\)/,
+  );
   assert.match(scrollDirectionVisibilitySource, /gsap\.registerPlugin\(ScrollTrigger\)/);
   assert.match(scrollDirectionVisibilitySource, /NAVBAR_SCROLL_DURATION_SECONDS = 0\.2/);
   assert.match(scrollDirectionVisibilitySource, /getClosestScrollContainer/);
+  assert.match(
+    scrollDirectionVisibilitySource,
+    /scrollContainerRef\?\.current \?\? getClosestScrollContainer\(target\)/,
+  );
   assert.match(scrollDirectionVisibilitySource, /overflowY/);
   assert.match(scrollDirectionVisibilitySource, /scroller: scrollContainer === window/);
   assert.match(scrollDirectionVisibilitySource, /yPercent: -100/);

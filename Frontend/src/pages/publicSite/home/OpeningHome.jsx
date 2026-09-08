@@ -77,6 +77,7 @@ function OpeningHome() {
           <div className="pointer-events-none sticky top-0 z-30 h-0 overflow-visible">
             <PublicSiteHeader
               className="pointer-events-auto"
+              scrollContainerRef={scrollerRef}
               onNavigate={(sectionId) => {
                 if (sectionId === "home") {
                   navigate("/");
