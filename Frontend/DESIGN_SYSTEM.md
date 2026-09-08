@@ -340,6 +340,8 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 
 ### Navegación superior persistente
 
+- Servicios revela conjuntamente su encabezado, descripción y selector al entrar mediante scroll, usando el mismo recorte y transición de resorte que las tres primeras secciones. La animación se aplica al contenido visual y conserva el contenedor fijado y el scroll independiente de las categorías.
+
 - El navbar comienza a reaparecer con el primer gesto ascendente de rueda, trackpad, pantalla táctil o teclado, incluso si una animación consume el gesto sin cambiar `scrollTop`. Una transición descendente en curso no debe ocultarlo de nuevo mientras la última intención del usuario siga siendo subir. Esta detección pertenece al hook compartido `useScrollDirectionVisibility`.
 
 - El sitio público concentra su contenido en Home. Servicios sigue a la introducción y al video; su acceso del navbar desplaza el contenedor de Home hasta `#services`. La ruta anterior `/servicios` redirige a `/#services`. Los destinos sin contenido permanecen pendientes, sin crear páginas o secciones de relleno. El scroll por fases se limita a la introducción; Servicios permite scroll continuo y conserva su selector de categorías.

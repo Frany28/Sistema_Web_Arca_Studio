@@ -1,8 +1,11 @@
 import { useRef } from "react";
+import { motion as Motion, useReducedMotion } from "motion/react";
+import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
 import "./ServicesCategoryShowcase.css";
 
-function ServicesCategoryShowcase({ categories }) {
+function ServicesCategoryShowcase({ categories, visible = false }) {
+  const reduceMotion = useReducedMotion();
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
@@ -39,8 +42,13 @@ function ServicesCategoryShowcase({ categories }) {
       aria-label="Tipos de diseño"
       data-node-id="4613:2167"
     >
-      <div
+      <Motion.div
         ref={layoutRef}
+        initial={false}
+        animate={{ clipPath: getSectionRevealClip(visible) }}
+        transition={getSectionRevealTransition(visible, reduceMotion)}
+        aria-hidden={!visible}
+        inert={!visible}
         className="services-category-showcase__layout flex w-full max-w-[1200px] items-center justify-center gap-[56px] px-[48px] py-[48px]"
         data-node-id="4613:2165"
       >
@@ -116,7 +124,7 @@ function ServicesCategoryShowcase({ categories }) {
             ))}
           </div>
         </div>
-      </div>
+      </Motion.div>
     </section>
   );
 }

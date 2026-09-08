@@ -1,7 +1,6 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
 
-const REVEAL_DELAY_SECONDS = 0.1;
-const REVEAL_DURATION_SECONDS = 0.9;
+import { getSectionRevealTransition, getSectionRevealClip, REVEAL_DELAY_SECONDS, REVEAL_DURATION_SECONDS } from "../../../utils/sectionReveal.js";
 const REVEAL_HEIGHT_COLLAPSED = 73;
 const REVEAL_HEIGHT_EXPANDED = 255;
 
@@ -16,14 +15,7 @@ function HomeHeroTitle({
   onRevealComplete,
 }) {
   const reduceMotion = useReducedMotion();
-  const revealTransition = reduceMotion
-    ? { duration: 0 }
-    : {
-        type: "spring",
-        duration: REVEAL_DURATION_SECONDS,
-        bounce: 0.12,
-        delay: visible ? REVEAL_DELAY_SECONDS : 0,
-      };
+  const revealTransition = getSectionRevealTransition(visible, reduceMotion);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[5]">
@@ -60,7 +52,7 @@ function HomeHeroTitle({
       <Motion.div
         className="absolute bottom-0 left-1/2 flex w-max max-w-full -translate-x-1/2 flex-col items-center gap-[8px] px-[24px] py-[24px] text-center text-[var(--color-neutral-100-uniform)]"
         initial={false}
-        animate={{ clipPath: visible ? "inset(0 0 0 0)" : "inset(0 0 100% 0)" }}
+        animate={{ clipPath: getSectionRevealClip(visible) }}
         transition={revealTransition}
         data-node-id={captionNodeId}
         aria-hidden={!visible}

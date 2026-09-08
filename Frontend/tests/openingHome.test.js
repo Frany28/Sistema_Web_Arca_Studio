@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+const revealSource = readFileSync(new URL("../src/pages/publicSite/utils/sectionReveal.js", import.meta.url), "utf8");
+
 const mainSource = readFileSync(new URL("../src/main.jsx", import.meta.url), "utf8");
 const homeSource = readFileSync(
   new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
@@ -160,8 +162,8 @@ test("the opening mark preserves the Figma motion timeline and accessibility", (
 
 test("the hero title keeps its responsive masked reveal", () => {
   assert.match(heroTitleSource, /\{title\}/);
-  assert.match(heroTitleSource, /REVEAL_DELAY_SECONDS = 0\.1/);
-  assert.match(heroTitleSource, /REVEAL_DURATION_SECONDS = 0\.9/);
+  assert.match(revealSource, /REVEAL_DELAY_SECONDS = 0\.1/);
+  assert.match(revealSource, /REVEAL_DURATION_SECONDS = 0\.9/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_COLLAPSED = 73/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_EXPANDED = 255/);
   assert.match(heroTitleSource, /top-\[clamp\(160px,41\.6dvh,319\.5px\)\]/);
@@ -172,7 +174,7 @@ test("the hero title keeps its responsive masked reveal", () => {
   assert.match(heroTitleSource, /leading-\[clamp\(48px,6\.33vw,76px\)\]/);
   assert.match(heroTitleSource, /tracking-\[clamp\(-2px,-0\.139vw,-1px\)\]/);
   assert.match(heroTitleSource, /whitespace-nowrap/);
-  assert.match(heroTitleSource, /type: "spring"/);
+  assert.match(revealSource, /type: "spring"/);
   assert.match(heroTitleSource, /useReducedMotion\(\)/);
   assert.match(heroTitleSource, /aria-hidden=\{!visible\}/);
   assert.match(heroTitleSource, /onAnimationComplete/);
@@ -193,10 +195,7 @@ test("the first three home panels reveal their Figma project descriptions", () =
   );
   assert.match(heroTitleSource, /absolute bottom-0 left-1\/2/);
   assert.match(heroTitleSource, /w-max max-w-full -translate-x-1\/2/);
-  assert.match(
-    heroTitleSource,
-    /animate=\{\{ clipPath: visible \? "inset\(0 0 0 0\)" : "inset\(0 0 100% 0\)" \}\}/,
-  );
+  assert.match(heroTitleSource, /getSectionRevealClip\(visible\)/);
   assert.match(heroTitleSource, /gap-\[8px\]/);
   assert.match(heroTitleSource, /px-\[24px\] py-\[24px\]/);
   assert.match(heroTitleSource, /text-heading-7/);
@@ -356,19 +355,11 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.doesNotMatch(servicesHeadingSource, /h-dvh/);
   assert.doesNotMatch(servicesCategoryShowcaseSource, /min-h-dvh/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
-  assert.match(servicesHeadingSource, /gsap\.registerPlugin\(SplitText\)/);
-  assert.match(servicesHeadingSource, /data-services-split/);
-  assert.match(servicesHeadingSource, /type: "words,lines"/);
-  assert.match(servicesHeadingSource, /mask: "lines"/);
-  assert.match(servicesHeadingSource, /autoSplit: true/);
-  assert.match(servicesHeadingSource, /yPercent: SERVICES_LINE_REVEAL_PERCENT/);
-  assert.match(servicesHeadingSource, /opacity: 0/);
-  assert.match(servicesHeadingSource, /duration: SERVICES_REVEAL_DURATION_SECONDS/);
-  assert.match(servicesHeadingSource, /delay: elementIndex \* SERVICES_ELEMENT_DELAY_SECONDS/);
-  assert.match(servicesHeadingSource, /stagger: SERVICES_LINE_STAGGER_SECONDS/);
-  assert.match(servicesHeadingSource, /ease: "power3\.out"/);
-  assert.doesNotMatch(servicesHeadingSource, /ScrollTrigger|scrub: true/);
-  assert.match(servicesHeadingSource, /document\.fonts\.ready/);
+  assert.match(servicesHeadingSource, /getSectionRevealTransition/);
+  assert.match(servicesHeadingSource, /getSectionRevealClip/);
+  assert.match(servicesCategoryShowcaseSource, /getSectionRevealTransition/);
+  assert.match(servicesCategoryShowcaseSource, /inert=\{!visible\}/);
+  assert.match(servicesPageSource, /useInView/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);
   assert.match(movingGradientTitleSource, /services-moving-gradient-title/);
