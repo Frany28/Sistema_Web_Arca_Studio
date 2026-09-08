@@ -70,11 +70,11 @@ test("the public navigation hover uses the Figma underline state", () => {
   assert.match(horizontalTabMenuSource, /border-b-2 border-transparent/);
   assert.match(
     horizontalTabMenuSource,
-    /hover:border-\[var\(--color-neutral-200\)\]/,
+    /hover:border-\[var\(--color-neutral-100-uniform\)\]/,
   );
   assert.match(
     horizontalTabMenuSource,
-    /hover:text-\[var\(--color-neutral-100-uniform\)\]/,
+    /hover:text-\[var\(--color-neutral-950-uniform\)\]/,
   );
   assert.match(horizontalTabMenuSource, /hover:bg-transparent/);
   assert.match(horizontalTabMenuSource, /aria-current=\{isPublicNavigation/);

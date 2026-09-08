@@ -188,11 +188,11 @@ function HorizontalTabMenu({
             className={clsx(
               "inline-flex items-center justify-center text-heading-8 whitespace-nowrap transition-colors duration-150",
               isPublicNavigation &&
-                "h-[52px] shrink-0 bg-transparent px-[4px] pb-[14px] pt-[8px] text-[var(--color-neutral-100-uniform)] focus-visible:border-[var(--color-neutral-100-uniform)] focus-visible:ring-white/60",
+                "h-[52px] shrink-0 bg-transparent px-[4px] pb-[14px] pt-[8px] text-[var(--color-neutral-100-uniform)] hover:text-[var(--color-neutral-950-uniform)] focus-visible:border-[var(--color-neutral-100-uniform)] focus-visible:ring-white/60",
               isPublicNavigation &&
                 (isActive
                   ? "border-b-2 border-[var(--color-neutral-100-uniform)]"
-                  : "border-b-2 border-transparent hover:border-[var(--color-neutral-200)] hover:bg-transparent hover:text-[var(--color-neutral-100-uniform)]"),
+                  : "border-b-2 border-transparent hover:border-[var(--color-neutral-100-uniform)] hover:bg-transparent"),
               resolvedVariant.style === "Brand" &&
                 !isPublicNavigation &&
                 "h-[36px] rounded-[var(--radius-2)] px-[12px] py-[8px]",
