@@ -191,7 +191,12 @@ test("the first three home panels reveal their Figma project descriptions", () =
     homeContentSource,
     /Proyecto residencial \| Maracaibo, Venezuela\./,
   );
-  assert.match(heroTitleSource, /top-\[165\.5px\]/);
+  assert.match(heroTitleSource, /absolute bottom-0 left-1\/2/);
+  assert.match(heroTitleSource, /w-max max-w-full -translate-x-1\/2/);
+  assert.match(
+    heroTitleSource,
+    /animate=\{\{ opacity: captionVisible \? 1 : 0 \}\}/,
+  );
   assert.match(heroTitleSource, /gap-\[8px\]/);
   assert.match(heroTitleSource, /px-\[24px\] py-\[24px\]/);
   assert.match(heroTitleSource, /text-heading-7/);
@@ -200,6 +205,11 @@ test("the first three home panels reveal their Figma project descriptions", () =
   assert.match(heroTitleSource, /min-\[520px\]:whitespace-nowrap/);
   assert.match(scrollPanelSource, /projectName=\{projectName\}/);
   assert.match(scrollPanelSource, /description=\{description\}/);
+  assert.match(scrollPanelSource, /captionVisible=\{active\}/);
+  assert.match(
+    homeSectionsSource,
+    /active=\{active && navigationState\.panelIndex === panelIndex\}/,
+  );
 });
 
 test("initial scrolling unlocks only after Arquitectura finishes revealing", () => {

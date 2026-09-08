@@ -17,6 +17,7 @@ function HomeSections({
         <HomeScrollPanel
           key={panel.title}
           {...panel}
+          active={active && navigationState.panelIndex === panelIndex}
           onTitleRevealComplete={
             () => {
               onTitleRevealComplete?.(panelIndex);

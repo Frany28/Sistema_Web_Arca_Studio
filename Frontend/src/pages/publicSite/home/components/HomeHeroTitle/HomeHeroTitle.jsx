@@ -9,6 +9,7 @@ function HomeHeroTitle({
   captionDescriptionNodeId,
   captionNodeId,
   captionTitleNodeId,
+  captionVisible,
   description,
   projectName,
   title,
@@ -18,60 +19,74 @@ function HomeHeroTitle({
   const reduceMotion = useReducedMotion();
 
   return (
-    <div
-      className="pointer-events-none absolute inset-x-0 top-[clamp(160px,41.6dvh,319.5px)] z-[5] h-[385px] overflow-hidden"
-      data-node-id="4473:112127"
-    >
+    <div className="pointer-events-none absolute inset-0 z-[5]">
+      <div
+        className="absolute inset-x-0 top-[clamp(160px,41.6dvh,319.5px)] h-[385px] overflow-hidden"
+        data-node-id="4473:112127"
+      >
+        <Motion.div
+          className="absolute left-1/2 top-[clamp(28px,7.33dvh,56.3px)] w-[min(1200px,calc(100%-32px))] -translate-x-1/2 overflow-hidden"
+          initial={false}
+          animate={{
+            height: visible
+              ? REVEAL_HEIGHT_EXPANDED
+              : REVEAL_HEIGHT_COLLAPSED,
+          }}
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : {
+                  type: "spring",
+                  duration: REVEAL_DURATION_SECONDS,
+                  bounce: 0.12,
+                  delay: visible ? REVEAL_DELAY_SECONDS : 0,
+                }
+          }
+          onAnimationComplete={() => {
+            if (visible) {
+              onRevealComplete?.();
+            }
+          }}
+          data-node-id="4451:132680"
+          aria-hidden={!visible}
+        >
+          <h1
+            className="absolute left-1/2 top-[89.5px] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 whitespace-nowrap text-center font-[var(--font-sans)] text-[clamp(40px,8vw,96px)] font-bold leading-[clamp(48px,6.33vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] text-[var(--color-neutral-100-uniform)]"
+            data-node-id="4451:132681"
+          >
+            {title}
+          </h1>
+        </Motion.div>
+      </div>
+
       <Motion.div
-        className="absolute left-1/2 top-[clamp(28px,7.33dvh,56.3px)] w-[min(1200px,calc(100%-32px))] -translate-x-1/2 overflow-hidden"
+        className="absolute bottom-0 left-1/2 flex w-max max-w-full -translate-x-1/2 flex-col items-center gap-[8px] px-[24px] py-[24px] text-center text-[var(--color-neutral-100-uniform)]"
         initial={false}
-        animate={{
-          height: visible
-            ? REVEAL_HEIGHT_EXPANDED
-            : REVEAL_HEIGHT_COLLAPSED,
-        }}
+        animate={{ opacity: captionVisible ? 1 : 0 }}
         transition={
           reduceMotion
             ? { duration: 0 }
             : {
-                type: "spring",
                 duration: REVEAL_DURATION_SECONDS,
-                bounce: 0.12,
-                delay: visible ? REVEAL_DELAY_SECONDS : 0,
+                delay: captionVisible ? REVEAL_DELAY_SECONDS : 0,
+                ease: "easeOut",
               }
         }
-        onAnimationComplete={() => {
-          if (visible) {
-            onRevealComplete?.();
-          }
-        }}
-        data-node-id="4451:132680"
-        aria-hidden={!visible}
+        data-node-id={captionNodeId}
+        aria-hidden={!captionVisible}
       >
-        <h1
-          className="absolute left-1/2 top-[89.5px] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 whitespace-nowrap text-center font-[var(--font-sans)] text-[clamp(40px,8vw,96px)] font-bold leading-[clamp(48px,6.33vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] text-[var(--color-neutral-100-uniform)]"
-          data-node-id="4451:132681"
+        <p
+          className="text-heading-7 m-0 max-w-full opacity-60"
+          data-node-id={captionTitleNodeId}
         >
-          {title}
-        </h1>
-
-        <div
-          className="absolute inset-x-0 top-[165.5px] flex flex-col items-center gap-[8px] px-[24px] py-[24px] text-center text-[var(--color-neutral-100-uniform)]"
-          data-node-id={captionNodeId}
+          {projectName}
+        </p>
+        <p
+          className="text-heading-8 m-0 max-w-full text-balance opacity-60 min-[520px]:whitespace-nowrap"
+          data-node-id={captionDescriptionNodeId}
         >
-          <p
-            className="text-heading-7 m-0 max-w-full opacity-60"
-            data-node-id={captionTitleNodeId}
-          >
-            {projectName}
-          </p>
-          <p
-            className="text-heading-8 m-0 max-w-full text-balance opacity-60 min-[520px]:whitespace-nowrap"
-            data-node-id={captionDescriptionNodeId}
-          >
-            {description}
-          </p>
-        </div>
+          {description}
+        </p>
       </Motion.div>
     </div>
   );
