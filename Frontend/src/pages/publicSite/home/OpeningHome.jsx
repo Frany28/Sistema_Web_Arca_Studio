@@ -102,7 +102,7 @@ function OpeningHome() {
             statementPanelIndex={statementPanelIndex}
             statementProgress={statementProgress}
           />
-          {initialScrollReady && <ServicesSection />}
+          {initialScrollReady && <ServicesSection visible={contentScrollActive} />}
         </main>
       </Motion.div>
     </div>

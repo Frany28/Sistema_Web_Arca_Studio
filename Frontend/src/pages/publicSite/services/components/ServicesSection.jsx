@@ -1,5 +1,3 @@
-import { useRef } from "react";
-import { useInView } from "motion/react";
 import ServicesCategoryShowcase from "./ServicesCategoryShowcase.jsx";
 import ServicesHeading from "./ServicesHeading.jsx";
 import {
@@ -7,11 +5,9 @@ import {
   SERVICES_HEADING,
 } from "../servicesContent.js";
 
-function ServicesSection() {
-  const sectionRef = useRef(null);
-  const visible = useInView(sectionRef, { margin: "0px 0px -15% 0px" });
+function ServicesSection({ visible = false }) {
   return (
-    <section ref={sectionRef} id="services" aria-label="Servicios" className="dark flex min-h-dvh flex-col gap-[48px] bg-[var(--color-neutral-950-uniform)]">
+    <section id="services" aria-label="Servicios" className="dark flex min-h-dvh flex-col gap-[48px] bg-[var(--color-neutral-950-uniform)]">
       <ServicesHeading {...SERVICES_HEADING} visible={visible} />
       <ServicesCategoryShowcase categories={SERVICES_CATEGORIES} visible={visible} />
     </section>

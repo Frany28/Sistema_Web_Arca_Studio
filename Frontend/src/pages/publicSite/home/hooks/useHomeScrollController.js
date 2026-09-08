@@ -182,7 +182,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       statement.stopAnimation();
       resetWheelGesture();
       titleRevealLockedRef.current = false;
-      setContentMode(sectionId !== "home");
+      setContentMode(false);
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
       ));
@@ -191,7 +191,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       ignoreNextScrollEnd = supportsScrollEnd;
       if (reduceMotion) {
         scroller.scrollTop = target.offsetTop;
-        window.requestAnimationFrame(() => { isProgrammaticScroll = false; });
+        window.requestAnimationFrame(() => {
+          isProgrammaticScroll = false;
+          setContentMode(sectionId !== "home");
+        });
         return;
       }
       activeTween = gsap.to(scroller, {
@@ -202,12 +205,17 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         onComplete: () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
+          setContentMode(sectionId !== "home");
         },
       });
     };
     sectionNavigationRef.current = navigateSection;
 
     const handleWheel = (event) => {
+      if (activeTween || isProgrammaticScroll) {
+        event.preventDefault();
+        return;
+      }
       if (contentMode) return;
       const delta = normalizeWheelDelta(event, scroller.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
@@ -354,9 +362,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handleKeyDown = (event) => {
-      if (contentMode) return;
       const direction = getKeyboardDirection(event);
       if (direction === null || isInteractiveTarget(event.target)) return;
+      if (activeTween || isProgrammaticScroll) {
+        event.preventDefault();
+        return;
+      }
+      if (contentMode) return;
 
       event.preventDefault();
       if (event.repeat) return;
@@ -405,13 +417,17 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const handleNativeScroll = () => {
       if (isProgrammaticScroll) return;
       const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
+      const servicesTop = [...scroller.querySelectorAll("section[id]")]
+        .find((section) => section.id === "services")?.offsetTop;
+      if (contentMode && servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
+        setContentMode(false);
+        resetWheelGesture();
+        alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
+        return;
+      }
       if (scroller.scrollTop > statementTop + 1) {
         if (!contentMode) {
-          setContentMode(true);
-          titleRevealLockedRef.current = false;
-          statement.stopAnimation();
-          commitNavigationState(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
-          statement.commitProgress(1);
+          navigateSection("services");
         }
         return;
       }

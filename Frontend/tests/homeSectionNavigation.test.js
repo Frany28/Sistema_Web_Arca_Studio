@@ -101,11 +101,35 @@ test("scrolling back from Services restores the statement before the intro seque
   const app = setup();
   app.controller.navigateToSection("services");
   app.flush();
-  app.scroller.scrollTop = 2390;
+  app.scroller.scrollTop = 3190;
   app.handlers.scroll();
   app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
   assert.equal(app.controller.statementProgress.get(), 1);
+  app.cleanup();
+});
+
+test("Services blocks native scrolling until its section transition finishes", () => {
+  const app = setup();
+  app.controller.navigateToSection("services");
+  let prevented = false;
+  app.handlers.wheel({ deltaY: 100, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 3200);
+  prevented = false;
+  app.handlers.wheel({ deltaY: 100, preventDefault() { prevented = true; } });
+  assert.equal(prevented, false);
+  app.cleanup();
+});
+
+test("native scrolling beyond the video animates all the way to Services", () => {
+  const app = setup();
+  app.scroller.scrollTop = 2402;
+  app.handlers.scroll();
+  assert.equal(app.scroller.scrollTop, 2402);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 3200);
   app.cleanup();
 });
 
