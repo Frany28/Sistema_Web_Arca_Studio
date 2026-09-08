@@ -35,6 +35,8 @@ function OpeningHome() {
     navigateToSection,
     contentScrollActive,
     servicesStep,
+    completeServicesStep,
+    completeServiceCategories,
     scrollerRef,
     statementPanelIndex,
     statementProgress,
@@ -103,7 +105,9 @@ function OpeningHome() {
             statementPanelIndex={statementPanelIndex}
             statementProgress={statementProgress}
           />
-          {initialScrollReady && <ServicesSection step={contentScrollActive ? servicesStep : 0} />}
+          {initialScrollReady && <ServicesSection step={contentScrollActive ? servicesStep : 0}
+            onRevealComplete={completeServicesStep} onCategoriesComplete={completeServiceCategories}
+            onExit={navigateToSection} />}
         </main>
       </Motion.div>
     </div>

@@ -1,16 +1,18 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
 import "./ServicesCategoryShowcase.css";
 
-function ServicesCategoryShowcase({ categories, visible = false }) {
+function ServicesCategoryShowcase({ categories, visible = false, onRevealComplete, onCategoriesComplete }) {
   const reduceMotion = useReducedMotion();
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => { if (!visible) setRevealed(false); }, [visible]);
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
   const { activeIndex, selectCategory } = useServicesCategoryScroll(
-    sectionRef, layoutRef, categories, visible,
+    sectionRef, layoutRef, categories, visible && revealed, onCategoriesComplete,
   );
   const activeCategory = categories[activeIndex] ?? categories[0];
 
@@ -47,8 +49,13 @@ function ServicesCategoryShowcase({ categories, visible = false }) {
         initial={false}
         animate={{ clipPath: getSectionRevealClip(visible) }}
         transition={getSectionRevealTransition(visible, reduceMotion)}
+        onAnimationComplete={() => {
+          if (!visible) return;
+          setRevealed(true);
+          onRevealComplete?.(2);
+        }}
         aria-hidden={!visible}
-        inert={!visible}
+        inert={!visible || !revealed}
         className="services-category-showcase__layout flex w-full max-w-[1200px] items-center justify-center gap-[56px] px-[48px] py-[48px]"
         data-node-id="4613:2165"
       >

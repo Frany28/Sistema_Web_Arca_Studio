@@ -2,7 +2,7 @@ import { motion as Motion, useReducedMotion } from "motion/react";
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
 import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 
-function ServicesHeading({ eyebrow, title, description, visible = false }) {
+function ServicesHeading({ eyebrow, title, description, visible = false, onRevealComplete }) {
   const reduceMotion = useReducedMotion();
   return (
     <Motion.section
@@ -12,6 +12,7 @@ function ServicesHeading({ eyebrow, title, description, visible = false }) {
       initial={false}
       animate={{ clipPath: getSectionRevealClip(visible) }}
       transition={getSectionRevealTransition(visible, reduceMotion)}
+      onAnimationComplete={() => { if (visible) onRevealComplete?.(1); }}
     >
       <div
         className="flex w-full max-w-[786px] flex-col items-center gap-[24px] text-center"

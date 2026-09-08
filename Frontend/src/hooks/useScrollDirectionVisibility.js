@@ -47,6 +47,13 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
         .progress(1);
 
       let upwardIntent = false;
+      let focusInside = false;
+      const handleFocusIn = () => { focusInside = true; showAnimation.play(); };
+      const handleFocusOut = (event) => {
+        focusInside = Boolean(target.contains(event.relatedTarget));
+      };
+      target.addEventListener("focusin", handleFocusIn);
+      target.addEventListener("focusout", handleFocusOut);
       let touchPoint = null;
       const reactToDirection = (delta) => {
         if (!delta) return;
@@ -89,6 +96,8 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
         scrollContainer.addEventListener(type, handler, { capture: true, passive: true });
       }
       removeInputListeners = () => {
+        target.removeEventListener("focusin", handleFocusIn);
+        target.removeEventListener("focusout", handleFocusOut);
         for (const [type, handler] of Object.entries(inputListeners)) {
           scrollContainer.removeEventListener(type, handler, true);
         }
@@ -99,7 +108,7 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
         start: 0,
         end: "max",
         onUpdate: (self) => {
-          if (upwardIntent || self.scroll() <= 0 || self.direction === -1) {
+          if (focusInside || upwardIntent || self.scroll() <= 0 || self.direction === -1) {
             showAnimation.play();
           } else {
             showAnimation.reverse();

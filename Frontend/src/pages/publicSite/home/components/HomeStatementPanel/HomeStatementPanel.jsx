@@ -7,18 +7,14 @@ import {
   useTransform,
 } from "motion/react";
 
+import Button from "../../../../../components/ui/Button/Button.jsx";
+import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js";
+
 import { getHomeStatementVisualState } from "../../utils/homeScrollNavigation.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
 const STATEMENT_FOCUS_LETTER = "c";
 const STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO = 0.2;
-
-function playMutedVideo(video) {
-  video.defaultMuted = true;
-  video.muted = true;
-  const playPromise = video.play();
-  playPromise?.catch(() => undefined);
-}
 
 function HomeStatementPanel({
   active = false,
@@ -32,6 +28,8 @@ function HomeStatementPanel({
   webmSource,
 }) {
   const reduceMotion = useReducedMotion();
+  const [playbackPreference, setPlaybackPreference] = useState(null);
+  const videoPlaying = playbackPreference ?? !reduceMotion;
   const focusGlyphRef = useRef(null);
   const maskTextRef = useRef(null);
   const videoRef = useRef(null);
@@ -106,34 +104,14 @@ function HomeStatementPanel({
   }, [mediaEnabled]);
 
   useEffect(() => {
+    if (active && videoRef.current) videoRef.current.currentTime = 0;
+  }, [active]);
+
+  useEffect(() => {
     const video = videoRef.current;
-    if (!video || !mediaEnabled) return undefined;
-
-    if (!active) {
-      video.pause();
-      return undefined;
-    }
-
-    // Scroll progress never seeks or pauses the media. Only a new panel entry
-    // restarts playback; readiness and browser interruptions simply resume it.
-    const handleCanPlay = () => {
-      if (!document.hidden && video.paused) playMutedVideo(video);
-    };
-    video.currentTime = 0;
-    video.addEventListener("canplay", handleCanPlay);
-    video.addEventListener("pause", handleCanPlay);
-    video.addEventListener("ended", handleCanPlay);
-    document.addEventListener("visibilitychange", handleCanPlay);
-    playMutedVideo(video);
-
-    return () => {
-      video.removeEventListener("canplay", handleCanPlay);
-      video.removeEventListener("pause", handleCanPlay);
-      video.removeEventListener("ended", handleCanPlay);
-      document.removeEventListener("visibilitychange", handleCanPlay);
-      video.pause();
-    };
-  }, [active, mediaEnabled]);
+    if (!video) return undefined;
+    return connectStatementPlayback(video, { active, enabled: mediaEnabled, playing: videoPlaying });
+  }, [active, mediaEnabled, videoPlaying]);
 
   return (
     <section
@@ -153,7 +131,7 @@ function HomeStatementPanel({
         className={`absolute inset-0 h-full w-full object-cover object-center ${
           videoFailed ? "hidden" : "block"
         }`}
-        autoPlay
+        autoPlay={active && mediaEnabled && videoPlaying}
         muted
         loop
         playsInline
@@ -169,6 +147,12 @@ function HomeStatementPanel({
           </>
         ) : null}
       </video>
+
+      <div className="absolute bottom-4 right-4 z-10">
+        <Button theme="Primary" type="Outline" size="S" fitContent onClick={() => setPlaybackPreference(!videoPlaying)}>
+          {videoPlaying ? "Pausar video" : "Reproducir video"}
+        </Button>
+      </div>
 
       <div
         className="pointer-events-none absolute inset-0 bg-[var(--color-neutral-950-uniform)] opacity-20 mix-blend-multiply"

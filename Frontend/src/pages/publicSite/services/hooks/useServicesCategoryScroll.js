@@ -2,10 +2,11 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useReducedMotion } from "motion/react";
 import { advanceWheelGesture, createWheelGestureState, normalizeWheelDelta, getSwipeDirection } from "../../home/utils/homeScrollNavigation.js";
+import { visitServiceCategory } from "../utils/servicesProgress.js";
 
 const CATEGORY_CROSSFADE_DURATION = 0.2;
 
-function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true) {
+function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true, onCategoriesComplete) {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndexRef = useRef(0);
@@ -22,6 +23,8 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     let idleTimer;
     let touch;
     let disposed = false;
+    let visited = new Set();
+    onCategoriesComplete?.(false);
     const indicatorHeight = (index) => {
       if (index === 0) return parseFloat(getComputedStyle(tabs[0]).lineHeight) * 1.6;
       const nextTab = tabs[index + 1];
@@ -31,6 +34,9 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       const next = Math.max(0, Math.min(categories.length - 1, index));
       selectedIndexRef.current = next;
       setActiveIndex(next);
+      const progress = visitServiceCategory(visited, next, categories.length);
+      visited = progress.visited;
+      onCategoriesComplete?.(progress.complete);
       const duration = reduceMotion || immediate ? 0 : CATEGORY_CROSSFADE_DURATION;
       slides.forEach((slide, slideIndex) => {
         gsap.to(slide, { autoAlpha: slideIndex === next ? 1 : 0, duration, overwrite: true });
@@ -89,7 +95,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       selectRef.current = null;
       context.revert();
     };
-  }, [categories, enabled, layoutRef, reduceMotion, sectionRef]);
+  }, [categories, enabled, layoutRef, onCategoriesComplete, reduceMotion, sectionRef]);
 
   const selectCategory = (index) => {
     if (index >= 0 && index < categories.length) selectRef.current?.(index);

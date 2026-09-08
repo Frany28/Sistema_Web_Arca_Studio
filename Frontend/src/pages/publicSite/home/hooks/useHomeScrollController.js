@@ -4,6 +4,7 @@ import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useMotionValue } from "motion/react";
 
 import { createHomeStatementController } from "./homeScroll/createHomeStatementController.js";
+import { createServicesProgress, advanceServicesProgress, completeServicesReveal, canLeaveServices } from "../../services/utils/servicesProgress.js";
 import {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
@@ -53,13 +54,20 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const statementProgress = useMotionValue(0);
   const [contentScrollActive, setContentScrollActive] = useState(false);
   const [servicesStep, setServicesStep] = useState(0);
+  const servicesProgressRef = useRef(createServicesProgress());
+  const completeServicesStep = useCallback((step) => {
+    servicesProgressRef.current = completeServicesReveal(servicesProgressRef.current, step);
+  }, []);
+  const completeServiceCategories = useCallback((complete) => {
+    servicesProgressRef.current = { ...servicesProgressRef.current, categoriesComplete: complete };
+  }, []);
   const sectionNavigationRef = useRef(null);
   const navigateToSection = useCallback((sectionId) => {
     sectionNavigationRef.current?.(sectionId);
   }, []);
 
-  const completeTitleReveal = useCallback(() => {
-    titleRevealLockedRef.current = false;
+  const completeTitleReveal = useCallback((panelIndex) => {
+    if (panelIndex === navigationStateRef.current.panelIndex) titleRevealLockedRef.current = false;
   }, []);
 
   useLayoutEffect(() => {
@@ -182,7 +190,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const navigateSection = (sectionId, { direct = false } = {}) => {
       const currentState = navigationStateRef.current;
       const currentSectionComplete = contentMode
-        ? currentServicesStep === 2
+        ? canLeaveServices(servicesProgressRef.current)
         : !titleRevealLockedRef.current && currentState.phase === HOME_SCROLL_PHASES.TITLE &&
           (currentState.panelIndex !== STATEMENT_PANEL_INDEX || statement.getProgress() >= 1);
       if (!direct && (activeTween || isProgrammaticScroll || !currentSectionComplete)) return;
@@ -197,6 +205,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       titleRevealLockedRef.current = false;
       setContentMode(false);
       changeServicesStep(0);
+      servicesProgressRef.current = createServicesProgress();
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
       ));
@@ -228,15 +237,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const advanceServices = () => {
       // Igual que en los paneles de imagen: cualquier dirección completa
       // primero el contenido pendiente antes de permitir abandonar la sección.
-      if (currentServicesStep < 2) changeServicesStep(currentServicesStep + 1);
+      const next = advanceServicesProgress(servicesProgressRef.current);
+      if (next === servicesProgressRef.current) return;
+      servicesProgressRef.current = next;
+      changeServicesStep(next.step);
     };
 
     const handleWheel = (event) => {
+      if (event.ctrlKey) return;
       if (activeTween || isProgrammaticScroll) {
         event.preventDefault();
         return;
       }
-      if (contentMode && currentServicesStep === 2) return;
+      if (contentMode && currentServicesStep === 2 && servicesProgressRef.current.revealed) return;
       const delta = normalizeWheelDelta(event, scroller.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
@@ -396,7 +409,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
       if (contentMode) {
-        if (currentServicesStep === 2) return;
+        if (currentServicesStep === 2 && servicesProgressRef.current.revealed) return;
         event.preventDefault();
         if (!event.repeat) advanceServices(direction);
         return;
@@ -448,7 +461,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const handleNativeScroll = () => {
       if (isProgrammaticScroll) return;
-      if (contentMode && currentServicesStep < 2) {
+      if (contentMode && (currentServicesStep < 2 || !servicesProgressRef.current.revealed)) {
         const services = [...scroller.querySelectorAll("section[id]")]
           .find((section) => section.id === "services");
         if (services) scroller.scrollTop = services.offsetTop;
@@ -458,6 +471,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const servicesTop = [...scroller.querySelectorAll("section[id]")]
         .find((section) => section.id === "services")?.offsetTop;
       if (contentMode && servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
+        if (!canLeaveServices(servicesProgressRef.current)) {
+          scroller.scrollTop = servicesTop;
+          return;
+        }
         setContentMode(false);
         resetWheelGesture();
         alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
@@ -571,6 +588,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    completeServicesStep,
+    completeServiceCategories,
     servicesStep,
     contentScrollActive,
     navigateToSection,
