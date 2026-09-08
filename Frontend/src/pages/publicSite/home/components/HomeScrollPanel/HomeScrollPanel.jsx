@@ -1,7 +1,6 @@
 import HomeHeroTitle from "../HomeHeroTitle/HomeHeroTitle.jsx";
 
 function HomeScrollPanel({
-  active = false,
   captionDescriptionNodeId,
   captionNodeId,
   captionTitleNodeId,
@@ -32,7 +31,6 @@ function HomeScrollPanel({
         captionDescriptionNodeId={captionDescriptionNodeId}
         captionNodeId={captionNodeId}
         captionTitleNodeId={captionTitleNodeId}
-        captionVisible={active}
         description={description}
         projectName={projectName}
         title={title}

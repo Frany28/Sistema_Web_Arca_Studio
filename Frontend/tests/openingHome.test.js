@@ -195,7 +195,7 @@ test("the first three home panels reveal their Figma project descriptions", () =
   assert.match(heroTitleSource, /w-max max-w-full -translate-x-1\/2/);
   assert.match(
     heroTitleSource,
-    /animate=\{\{ opacity: captionVisible \? 1 : 0 \}\}/,
+    /animate=\{\{ clipPath: visible \? "inset\(0 0 0 0\)" : "inset\(0 0 100% 0\)" \}\}/,
   );
   assert.match(heroTitleSource, /gap-\[8px\]/);
   assert.match(heroTitleSource, /px-\[24px\] py-\[24px\]/);
@@ -205,11 +205,9 @@ test("the first three home panels reveal their Figma project descriptions", () =
   assert.match(heroTitleSource, /min-\[520px\]:whitespace-nowrap/);
   assert.match(scrollPanelSource, /projectName=\{projectName\}/);
   assert.match(scrollPanelSource, /description=\{description\}/);
-  assert.match(scrollPanelSource, /captionVisible=\{active\}/);
-  assert.match(
-    homeSectionsSource,
-    /active=\{active && navigationState\.panelIndex === panelIndex\}/,
-  );
+  assert.doesNotMatch(heroTitleSource, /captionVisible/);
+  assert.match(scrollPanelSource, /visible=\{titleVisible\}/);
+  assert.equal(heroTitleSource.match(/transition=\{revealTransition\}/g).length, 2);
 });
 
 test("initial scrolling unlocks only after Arquitectura finishes revealing", () => {

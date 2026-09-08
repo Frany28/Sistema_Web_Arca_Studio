@@ -70,7 +70,7 @@ test("the public navbar hides while scrolling down and returns while scrolling u
   assert.match(scrollDirectionVisibilitySource, /yPercent: -100/);
   assert.match(scrollDirectionVisibilitySource, /paused: true/);
   assert.match(scrollDirectionVisibilitySource, /\.progress\(1\)/);
-  assert.match(scrollDirectionVisibilitySource, /start: "top top"/);
+  assert.match(scrollDirectionVisibilitySource, /start: 0/);
   assert.match(scrollDirectionVisibilitySource, /end: "max"/);
   assert.match(scrollDirectionVisibilitySource, /self\.direction === -1/);
   assert.match(scrollDirectionVisibilitySource, /showAnimation\.play\(\)/);

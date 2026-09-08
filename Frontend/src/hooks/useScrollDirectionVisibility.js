@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useReducedMotion } from "motion/react";
@@ -23,7 +23,8 @@ function getClosestScrollContainer(element) {
 function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
   const reduceMotion = useReducedMotion();
 
-  useLayoutEffect(() => {
+  // Espera a que React asigne también las refs de los contenedores ancestros.
+  useEffect(() => {
     const target = targetRef.current;
     if (!target) return undefined;
 
@@ -46,7 +47,7 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
 
       ScrollTrigger.create({
         scroller: scrollContainer === window ? undefined : scrollContainer,
-        start: "top top",
+        start: 0,
         end: "max",
         onUpdate: (self) => {
           if (self.scroll() <= 0 || self.direction === -1) {

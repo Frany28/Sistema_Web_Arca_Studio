@@ -9,7 +9,6 @@ function HomeHeroTitle({
   captionDescriptionNodeId,
   captionNodeId,
   captionTitleNodeId,
-  captionVisible,
   description,
   projectName,
   title,
@@ -17,6 +16,14 @@ function HomeHeroTitle({
   onRevealComplete,
 }) {
   const reduceMotion = useReducedMotion();
+  const revealTransition = reduceMotion
+    ? { duration: 0 }
+    : {
+        type: "spring",
+        duration: REVEAL_DURATION_SECONDS,
+        bounce: 0.12,
+        delay: visible ? REVEAL_DELAY_SECONDS : 0,
+      };
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[5]">
@@ -32,16 +39,7 @@ function HomeHeroTitle({
               ? REVEAL_HEIGHT_EXPANDED
               : REVEAL_HEIGHT_COLLAPSED,
           }}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : {
-                  type: "spring",
-                  duration: REVEAL_DURATION_SECONDS,
-                  bounce: 0.12,
-                  delay: visible ? REVEAL_DELAY_SECONDS : 0,
-                }
-          }
+          transition={revealTransition}
           onAnimationComplete={() => {
             if (visible) {
               onRevealComplete?.();
@@ -62,18 +60,10 @@ function HomeHeroTitle({
       <Motion.div
         className="absolute bottom-0 left-1/2 flex w-max max-w-full -translate-x-1/2 flex-col items-center gap-[8px] px-[24px] py-[24px] text-center text-[var(--color-neutral-100-uniform)]"
         initial={false}
-        animate={{ opacity: captionVisible ? 1 : 0 }}
-        transition={
-          reduceMotion
-            ? { duration: 0 }
-            : {
-                duration: REVEAL_DURATION_SECONDS,
-                delay: captionVisible ? REVEAL_DELAY_SECONDS : 0,
-                ease: "easeOut",
-              }
-        }
+        animate={{ clipPath: visible ? "inset(0 0 0 0)" : "inset(0 0 100% 0)" }}
+        transition={revealTransition}
         data-node-id={captionNodeId}
-        aria-hidden={!captionVisible}
+        aria-hidden={!visible}
       >
         <p
           className="text-heading-7 m-0 max-w-full opacity-60"
