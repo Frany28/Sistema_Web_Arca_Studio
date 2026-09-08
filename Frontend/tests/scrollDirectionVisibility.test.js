@@ -16,7 +16,12 @@ function createHarness({ reducedMotion = false } = {}) {
     play() { calls.push("show"); },
     reverse() { calls.push("hide"); },
   };
-  const window = { getComputedStyle: () => ({ overflowY: "hidden" }) };
+  const listeners = {};
+  const window = {
+    getComputedStyle: () => ({ overflowY: "hidden" }),
+    addEventListener(type, handler) { listeners[type] = handler; },
+    removeEventListener(type) { delete listeners[type]; },
+  };
   const document = { body: {} };
   const gsap = {
     registerPlugin() {},
@@ -40,7 +45,7 @@ function createHarness({ reducedMotion = false } = {}) {
     (effect) => effect(),
     gsap, ScrollTrigger, () => reducedMotion, window, document,
   );
-  return { calls, effects, hook, triggers, window };
+  return { calls, effects, hook, triggers, window, listeners };
 }
 
 test("navbar waits for the ancestor ref and follows Home's own scroll in both directions", () => {
@@ -50,7 +55,7 @@ test("navbar waits for the ancestor ref and follows Home's own scroll in both di
   assert.equal(harness.triggers.length, 0);
 
   // La ref del ancestro se asigna después de los efectos de layout del hijo.
-  const homeScroller = {};
+  const homeScroller = { addEventListener() {}, removeEventListener() {} };
   scrollContainerRef.current = homeScroller;
   const cleanup = harness.effects[0]();
   const trigger = harness.triggers[0];
@@ -77,4 +82,40 @@ test("reduced motion keeps the navbar visible without a scroll animation", () =>
   harness.effects[0]();
   assert.equal(harness.triggers.length, 0);
   assert.deepEqual(harness.calls, ["reset"]);
+});
+
+test("an upward wheel gesture reveals immediately and overrides an ongoing downward tween", () => {
+  const harness = createHarness();
+  harness.hook({ current: {} });
+  const cleanup = harness.effects[0]();
+  const update = harness.triggers[0].onUpdate;
+  update({ scroll: () => 500, direction: 1 });
+  harness.listeners.wheel({ deltaY: -1, deltaX: 0 });
+  assert.deepEqual(harness.calls, ["hide", "show"]);
+  update({ scroll: () => 550, direction: 1 });
+  assert.equal(harness.calls.at(-1), "show");
+  harness.listeners.wheel({ deltaY: 1, deltaX: 0 });
+  update({ scroll: () => 600, direction: 1 });
+  assert.equal(harness.calls.at(-1), "hide");
+  cleanup();
+  assert.deepEqual(harness.listeners, {});
+});
+
+test("touch and keyboard reveal without waiting for actual scroll", () => {
+  const harness = createHarness();
+  harness.hook({ current: {} });
+  harness.effects[0]();
+  harness.listeners.pointerdown({ pointerType: "touch", isPrimary: true, pointerId: 1, clientX: 10, clientY: 10 });
+  harness.listeners.pointermove({ pointerId: 1, clientX: 10, clientY: 11 });
+  harness.listeners.keydown({ key: "ArrowUp" });
+  assert.deepEqual(harness.calls, ["show", "show"]);
+});
+
+test("horizontal gestures and pinch zoom do not reveal the navbar", () => {
+  const harness = createHarness();
+  harness.hook({ current: {} });
+  harness.effects[0]();
+  harness.listeners.wheel({ deltaX: 30, deltaY: -1 });
+  harness.listeners.wheel({ deltaX: 0, deltaY: -30, ctrlKey: true });
+  assert.deepEqual(harness.calls, []);
 });

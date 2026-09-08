@@ -1,10 +1,11 @@
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { useReducedMotion } from "motion/react";
 
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
+import { getClosestScrollContainer } from "../../../../hooks/useScrollDirectionVisibility.js";
 
 gsap.registerPlugin(SplitText);
 
@@ -16,10 +17,23 @@ const SERVICES_ELEMENT_DELAY_SECONDS = 0.12;
 function ServicesHeading({ eyebrow, title, description }) {
   const containerRef = useRef(null);
   const reduceMotion = useReducedMotion();
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const scroller = getClosestScrollContainer(container);
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setEntered(true);
+      observer.disconnect();
+    }, { root: scroller === window ? null : scroller, threshold: 0.15 });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
-    if (!container) return undefined;
+    if (!container || !entered) return undefined;
 
     const splitElements = gsap.utils.toArray(
       "[data-services-split]",
@@ -64,7 +78,7 @@ function ServicesHeading({ eyebrow, title, description }) {
       splits.forEach((split) => split.revert());
       context.revert();
     };
-  }, [reduceMotion]);
+  }, [entered, reduceMotion]);
 
   return (
     <section

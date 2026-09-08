@@ -1,11 +1,13 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import ArcaOpeningMark, {
   MOTION_DURATION_SECONDS,
 } from "./components/ArcaOpeningMark/ArcaOpeningMark.jsx";
 import PublicSiteHeader from "../components/PublicSiteHeader/PublicSiteHeader.jsx";
 import HomeSections from "./components/HomeSections.jsx";
+import ServicesSection from "../services/components/ServicesSection.jsx";
 import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
 import useHomeScrollController from "./hooks/useHomeScrollController.js";
 import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
@@ -16,6 +18,7 @@ const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
 function OpeningHome() {
   const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
+  const { hash } = useLocation();
   const {
     completeInitialTitleReveal,
     completePanelTransition,
@@ -29,6 +32,8 @@ function OpeningHome() {
   const {
     completeTitleReveal,
     navigationState,
+    navigateToSection,
+    contentScrollActive,
     scrollerRef,
     statementPanelIndex,
     statementProgress,
@@ -38,6 +43,10 @@ function OpeningHome() {
     reduceMotion,
   });
   const homeActive = phase === "complete";
+
+  useEffect(() => {
+    if (initialScrollReady && hash === "#services") navigateToSection("services");
+  }, [hash, initialScrollReady, navigateToSection]);
 
   return (
     <div
@@ -66,7 +75,7 @@ function OpeningHome() {
 
         <main
           ref={scrollerRef}
-          className={`dark relative h-dvh shrink-0 touch-pan-x overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${
+          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${contentScrollActive ? "touch-auto" : "touch-pan-x"} ${
             initialScrollReady ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
           aria-hidden={!homeActive}
@@ -78,15 +87,8 @@ function OpeningHome() {
             <PublicSiteHeader
               className="pointer-events-auto"
               scrollContainerRef={scrollerRef}
-              onNavigate={(sectionId) => {
-                if (sectionId === "home") {
-                  navigate("/");
-                }
-
-                if (sectionId === "services") {
-                  navigate("/servicios");
-                }
-              }}
+              activeNavigationId={contentScrollActive ? "services" : undefined}
+              onNavigate={navigateToSection}
               onRegister={() => navigate("/crear-cuenta")}
               onLogin={() => navigate("/login")}
             />
@@ -100,6 +102,7 @@ function OpeningHome() {
             statementPanelIndex={statementPanelIndex}
             statementProgress={statementProgress}
           />
+          {initialScrollReady && <ServicesSection />}
         </main>
       </Motion.div>
     </div>

@@ -51,6 +51,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
   const titleRevealLockedRef = useRef(false);
   const statementProgress = useMotionValue(0);
+  const [contentScrollActive, setContentScrollActive] = useState(false);
+  const sectionNavigationRef = useRef(null);
+  const navigateToSection = useCallback((sectionId) => {
+    sectionNavigationRef.current?.(sectionId);
+  }, []);
 
   const completeTitleReveal = useCallback(() => {
     titleRevealLockedRef.current = false;
@@ -77,6 +82,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let isProgrammaticScroll = false;
     let ignoreNextScrollEnd = false;
     let nativeScrollOriginState = null;
+    let contentMode = false;
     const supportsScrollEnd = "onscrollend" in scroller;
 
     const commitNavigationState = (nextState) => {
@@ -160,7 +166,49 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       wheelTransitionLock = false;
     };
 
+    const setContentMode = (value) => {
+      contentMode = value;
+      setContentScrollActive(value);
+      window.clearTimeout(scrollSettleTimer);
+      nativeScrollOriginState = null;
+    };
+
+    const navigateSection = (sectionId) => {
+      const target = sectionId === "home" ? panels[0] :
+        [...scroller.querySelectorAll("section[id]")].find((section) => section.id === sectionId);
+      if (!target) return;
+      activeTween?.kill();
+      activeTween = undefined;
+      statement.stopAnimation();
+      resetWheelGesture();
+      titleRevealLockedRef.current = false;
+      setContentMode(sectionId !== "home");
+      commitNavigationState(createScrollbarHomeScrollState(
+        sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
+      ));
+      statement.commitProgress(sectionId === "home" ? 0 : 1);
+      isProgrammaticScroll = true;
+      ignoreNextScrollEnd = supportsScrollEnd;
+      if (reduceMotion) {
+        scroller.scrollTop = target.offsetTop;
+        window.requestAnimationFrame(() => { isProgrammaticScroll = false; });
+        return;
+      }
+      activeTween = gsap.to(scroller, {
+        scrollTo: { y: target.offsetTop, autoKill: false },
+        duration: reduceMotion ? 0 : SCROLL_STEP_DURATION_SECONDS,
+        ease: "power2.inOut",
+        overwrite: true,
+        onComplete: () => {
+          activeTween = undefined;
+          isProgrammaticScroll = false;
+        },
+      });
+    };
+    sectionNavigationRef.current = navigateSection;
+
     const handleWheel = (event) => {
+      if (contentMode) return;
       const delta = normalizeWheelDelta(event, scroller.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
@@ -195,6 +243,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
         if (currentProgress >= 1 && direction === HOME_SCROLL_DIRECTIONS.DOWN) {
+          navigateSection("services");
           return;
         }
 
@@ -209,6 +258,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerDown = (event) => {
+      if (contentMode) return;
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       const isStatementGesture =
         navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX;
@@ -225,6 +275,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerMove = (event) => {
+      if (contentMode) return;
       if (
         !touchGesture ||
         touchGesture.pointerId !== event.pointerId ||
@@ -264,6 +315,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           verticalDistance > TOUCH_SWIPE_THRESHOLD_PX
         ) {
           touchGesture.consumed = true;
+          navigateSection("services");
           return;
         }
 
@@ -302,6 +354,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handleKeyDown = (event) => {
+      if (contentMode) return;
       const direction = getKeyboardDirection(event);
       if (direction === null || isInteractiveTarget(event.target)) return;
 
@@ -315,6 +368,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
         if (currentProgress >= 1 && direction === HOME_SCROLL_DIRECTIONS.DOWN) {
+          navigateSection("services");
           return;
         }
 
@@ -327,6 +381,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const settleNativeScroll = () => {
       window.clearTimeout(scrollSettleTimer);
+      if (contentMode) return;
       if (isProgrammaticScroll || activeTween) return;
       const requestedPanelIndex = getNearestPanelIndex(
         scroller.scrollTop,
@@ -349,6 +404,23 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const handleNativeScroll = () => {
       if (isProgrammaticScroll) return;
+      const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
+      if (scroller.scrollTop > statementTop + 1) {
+        if (!contentMode) {
+          setContentMode(true);
+          titleRevealLockedRef.current = false;
+          statement.stopAnimation();
+          commitNavigationState(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
+          statement.commitProgress(1);
+        }
+        return;
+      }
+      if (contentMode) {
+        setContentMode(false);
+        resetWheelGesture();
+        alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
+        return;
+      }
       ignoreNextScrollEnd = false;
       const currentState = navigationStateRef.current;
       nativeScrollOriginState ??= currentState;
@@ -380,6 +452,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handleResize = () => {
+      if (contentMode) return;
       window.cancelAnimationFrame(resizeFrame);
       resizeFrame = window.requestAnimationFrame(() => {
         activeTween?.kill();
@@ -415,6 +488,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     window.addEventListener("orientationchange", handleResize);
 
     return () => {
+      sectionNavigationRef.current = null;
       window.cancelAnimationFrame(resizeFrame);
       window.clearTimeout(scrollSettleTimer);
       window.clearTimeout(wheelIdleTimer);
@@ -437,6 +511,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    contentScrollActive,
+    navigateToSection,
     completeTitleReveal,
     navigationState,
     scrollerRef,

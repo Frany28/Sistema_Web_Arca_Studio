@@ -35,6 +35,7 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
 
     const scrollContainer =
       scrollContainerRef?.current ?? getClosestScrollContainer(target);
+    let removeInputListeners;
     const context = gsap.context(() => {
       const showAnimation = gsap
         .from(target, {
@@ -45,12 +46,60 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
         })
         .progress(1);
 
+      let upwardIntent = false;
+      let touchPoint = null;
+      const reactToDirection = (delta) => {
+        if (!delta) return;
+        upwardIntent = delta < 0;
+        if (upwardIntent) showAnimation.play();
+      };
+      const handleWheel = (event) => {
+        if (event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+        reactToDirection(event.deltaY);
+      };
+      const handlePointerDown = (event) => {
+        upwardIntent = false;
+        touchPoint = event.pointerType === "touch" && event.isPrimary
+          ? { id: event.pointerId, x: event.clientX, y: event.clientY }
+          : null;
+      };
+      const handlePointerMove = (event) => {
+        if (touchPoint?.id !== event.pointerId) return;
+        const deltaY = touchPoint.y - event.clientY;
+        const deltaX = touchPoint.x - event.clientX;
+        touchPoint = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        if (Math.abs(deltaY) > Math.abs(deltaX)) reactToDirection(deltaY);
+      };
+      const clearPointer = () => { touchPoint = null; };
+      const handleKeyDown = (event) => {
+        if (event.target?.closest?.('input, textarea, select, button, [contenteditable="true"], [role="tab"]')) return;
+        if (["ArrowUp", "PageUp", "Home"].includes(event.key) || (event.key === " " && event.shiftKey)) {
+          reactToDirection(-1);
+        } else if (["ArrowDown", "PageDown", "End", " "].includes(event.key)) {
+          reactToDirection(1);
+        }
+      };
+      const inputListeners = {
+        wheel: handleWheel, pointerdown: handlePointerDown,
+        pointermove: handlePointerMove, pointerup: clearPointer,
+        pointercancel: clearPointer, keydown: handleKeyDown,
+      };
+      // Captura la intención aunque Home consuma el gesto sin mover scrollTop.
+      for (const [type, handler] of Object.entries(inputListeners)) {
+        scrollContainer.addEventListener(type, handler, { capture: true, passive: true });
+      }
+      removeInputListeners = () => {
+        for (const [type, handler] of Object.entries(inputListeners)) {
+          scrollContainer.removeEventListener(type, handler, true);
+        }
+      };
+
       ScrollTrigger.create({
         scroller: scrollContainer === window ? undefined : scrollContainer,
         start: 0,
         end: "max",
         onUpdate: (self) => {
-          if (self.scroll() <= 0 || self.direction === -1) {
+          if (upwardIntent || self.scroll() <= 0 || self.direction === -1) {
             showAnimation.play();
           } else {
             showAnimation.reverse();
@@ -59,7 +108,10 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
       });
     }, target);
 
-    return () => context.revert();
+    return () => {
+      removeInputListeners?.();
+      context.revert();
+    };
   }, [reduceMotion, scrollContainerRef, targetRef]);
 }
 

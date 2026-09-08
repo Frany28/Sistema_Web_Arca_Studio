@@ -1,6 +1,6 @@
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./index.css";
 import { AuthProvider } from "./auth/AuthContext.jsx";
 import { RecentProjectsProvider } from "./auth/RecentProjectsContext.jsx";
@@ -47,9 +47,6 @@ const Login = lazy(() => import("./pages/Login.jsx"));
 const OpeningHome = lazy(
   () => import("./pages/publicSite/home/OpeningHome.jsx"),
 );
-const ServicesPage = lazy(
-  () => import("./pages/publicSite/services/ServicesPage.jsx"),
-);
 const NewArchitectProjectPage = lazy(
   () => import("./pages/architect-dashboard/NewArchitectProjectPage.jsx"),
 );
@@ -76,7 +73,7 @@ createRoot(document.getElementById("root")).render(
             <Routes>
             <Route element={<PublicOnlyRoute />}>
               <Route path="/" element={<OpeningHome />} />
-              <Route path="/servicios" element={<ServicesPage />} />
+              <Route path="/servicios" element={<Navigate to="/#services" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/crear-cuenta" element={<CreateAccount />} />
               <Route path="/crear-contrasena" element={<CreatePassword />} />

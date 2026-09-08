@@ -64,7 +64,7 @@ const servicesCategoryShowcaseSource = readFileSync(
   "utf8",
 );
 const servicesPageSource = readFileSync(
-  new URL("../src/pages/publicSite/services/ServicesPage.jsx", import.meta.url),
+  new URL("../src/pages/publicSite/services/components/ServicesSection.jsx", import.meta.url),
   "utf8",
 );
 const publicSiteHeaderSource = readFileSync(
@@ -333,14 +333,14 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /aria-hidden=\{!statementVisible\}/);
 });
 
-test("services navigation opens its public route and responsive Figma heading", () => {
-  assert.match(mainSource, /path="\/servicios" element=\{<ServicesPage \/>\}/);
+test("services navigation scrolls within Home and preserves its responsive heading", () => {
+  assert.match(mainSource, /path="\/servicios" element=\{<Navigate to="\/#services" replace \/>\}/);
   assert.match(servicesContentSource, /Soluciones adaptadas a cada proyecto\./);
   assert.match(servicesPageSource, /<ServicesHeading/);
-  assert.match(servicesPageSource, /activeNavigationId="services"/);
+  assert.match(servicesPageSource, /id="services"/);
   assert.match(servicesPageSource, /flex min-h-dvh flex-col gap-\[48px\]/);
-  assert.match(homeSource, /onNavigate=\{\(sectionId\) =>/);
-  assert.match(homeSource, /navigate\("\/servicios"\)/);
+  assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
+  assert.match(homeSource, /<ServicesSection \/>/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113281"/);
@@ -394,9 +394,8 @@ test("services navigation opens its public route and responsive Figma heading", 
 test("the public navigation logo returns to home", () => {
   assert.match(publicSiteHeaderSource, /aria-label="Ir al inicio"/);
   assert.match(publicSiteHeaderSource, /onNavigate\?\.\("home"\)/);
-  assert.match(homeSource, /sectionId === "home"/);
-  assert.match(servicesPageSource, /sectionId === "home"/);
-  assert.match(servicesPageSource, /navigate\("\/"\)/);
+  assert.match(scrollControllerSource, /sectionId === "home" \? panels\[0\]/);
+  assert.doesNotMatch(servicesPageSource, /PublicSiteHeader|useNavigate/);
 });
 
 test("services categories preserve the residential Figma state and accessible transitions", () => {
