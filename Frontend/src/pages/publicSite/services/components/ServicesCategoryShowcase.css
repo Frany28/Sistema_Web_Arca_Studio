@@ -39,7 +39,7 @@
   visibility: hidden;
 }
 
-/* Mantener texto e imagen juntos permite recorrer la sección fijada también
+/* Mantener texto e imagen juntos permite recorrer el selector interno también
    en móvil, sin ocultar categorías fuera de la pantalla. */
 @media (width < 1024px) {
   .services-category-showcase__layout {

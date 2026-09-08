@@ -34,6 +34,7 @@ function OpeningHome() {
     navigationState,
     navigateToSection,
     contentScrollActive,
+    servicesStep,
     scrollerRef,
     statementPanelIndex,
     statementProgress,
@@ -75,7 +76,7 @@ function OpeningHome() {
 
         <main
           ref={scrollerRef}
-          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${contentScrollActive ? "touch-auto" : "touch-pan-x"} ${
+          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${contentScrollActive && servicesStep === 2 ? "touch-auto" : "touch-pan-x"} ${
             initialScrollReady ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
           aria-hidden={!homeActive}
@@ -102,7 +103,7 @@ function OpeningHome() {
             statementPanelIndex={statementPanelIndex}
             statementProgress={statementProgress}
           />
-          {initialScrollReady && <ServicesSection visible={contentScrollActive} />}
+          {initialScrollReady && <ServicesSection step={contentScrollActive ? servicesStep : 0} />}
         </main>
       </Motion.div>
     </div>

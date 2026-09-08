@@ -15,6 +15,7 @@ function loadFunction(path, name, dependencies) {
 
 function setup(reduceMotion = false) {
   const effects = [];
+  const states = [];
   const frames = [];
   const tweens = [];
   const handlers = {};
@@ -54,7 +55,11 @@ function setup(reduceMotion = false) {
       ...navigation, gsap, window, ScrollToPlugin: {}, createHomeStatementController,
       Element: class {}, useCallback: (callback) => callback,
       useLayoutEffect: (effect) => effects.push(effect),
-      useRef: (current) => ({ current }), useState: (initial) => [initial, () => {}],
+      useRef: (current) => ({ current }), useState: (initial) => {
+        const index = states.length;
+        states.push(initial);
+        return [initial, (value) => { states[index] = value; }];
+      },
       useMotionValue: (initial) => {
         let value = initial;
         return { get: () => value, set: (next) => { value = next; } };
@@ -69,14 +74,33 @@ function setup(reduceMotion = false) {
     while (frames.length) frames.shift()();
   };
   flush();
-  return { controller, handlers, scroller, flush, cleanup: () => cleanups.forEach((fn) => fn?.()) };
+  return { controller, handlers, scroller, flush, getServicesStep: () => states[2], cleanup: () => cleanups.forEach((fn) => fn?.()) };
 }
+
+test("Services enters empty and reveals its two containers on separate wheel gestures", () => {
+  const app = setup();
+  app.controller.navigateToSection("services");
+  app.flush();
+  assert.equal(app.getServicesStep(), 0);
+  const wheel = (deltaY, timeStamp) => app.handlers.wheel({ deltaY, deltaX: 0, timeStamp, preventDefault() {} });
+  wheel(50, 1000);
+  assert.equal(app.getServicesStep(), 1);
+  wheel(40, 1050);
+  assert.equal(app.getServicesStep(), 1);
+  wheel(1, 1100);
+  wheel(50, 1300);
+  assert.equal(app.getServicesStep(), 2);
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.cleanup();
+});
 
 for (const reducedMotion of [false, true]) {
   test(`Services uses continuous scroll and the logo returns to Home (reduced motion: ${reducedMotion})`, () => {
     const app = setup(reducedMotion);
     app.controller.navigateToSection("services");
     app.flush();
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
     assert.equal(app.scroller.scrollTop, 3200);
     assert.equal(app.controller.statementProgress.get(), 1);
     let prevented = false;
@@ -101,6 +125,8 @@ test("scrolling back from Services restores the statement before the intro seque
   const app = setup();
   app.controller.navigateToSection("services");
   app.flush();
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
   app.scroller.scrollTop = 3190;
   app.handlers.scroll();
   app.flush();
@@ -117,6 +143,8 @@ test("Services blocks native scrolling until its section transition finishes", (
   assert.equal(prevented, true);
   app.flush();
   assert.equal(app.scroller.scrollTop, 3200);
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
   prevented = false;
   app.handlers.wheel({ deltaY: 100, preventDefault() { prevented = true; } });
   assert.equal(prevented, false);
@@ -138,6 +166,8 @@ for (const input of ["wheel", "keyboard", "touch"]) {
     const app = setup();
     app.controller.navigateToSection("services");
     app.flush();
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
     app.scroller.scrollTop = 2400;
     app.handlers.scroll();
     app.flush();

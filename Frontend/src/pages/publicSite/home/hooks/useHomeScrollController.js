@@ -52,6 +52,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const titleRevealLockedRef = useRef(false);
   const statementProgress = useMotionValue(0);
   const [contentScrollActive, setContentScrollActive] = useState(false);
+  const [servicesStep, setServicesStep] = useState(0);
   const sectionNavigationRef = useRef(null);
   const navigateToSection = useCallback((sectionId) => {
     sectionNavigationRef.current?.(sectionId);
@@ -83,6 +84,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let ignoreNextScrollEnd = false;
     let nativeScrollOriginState = null;
     let contentMode = false;
+    let currentServicesStep = 0;
+    const changeServicesStep = (step) => {
+      currentServicesStep = step;
+      setServicesStep(step);
+    };
     const supportsScrollEnd = "onscrollend" in scroller;
 
     const commitNavigationState = (nextState) => {
@@ -180,9 +186,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       activeTween?.kill();
       activeTween = undefined;
       statement.stopAnimation();
-      resetWheelGesture();
+      statement.resetWheelScrubbing();
+      wheelTransitionLock = false;
       titleRevealLockedRef.current = false;
       setContentMode(false);
+      changeServicesStep(0);
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
       ));
@@ -211,12 +219,21 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
     sectionNavigationRef.current = navigateSection;
 
+    const advanceServices = (direction) => {
+      if (direction === HOME_SCROLL_DIRECTIONS.UP && currentServicesStep === 0) {
+        setContentMode(false);
+        alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
+      } else {
+        changeServicesStep(Math.max(0, Math.min(2, currentServicesStep + direction)));
+      }
+    };
+
     const handleWheel = (event) => {
       if (activeTween || isProgrammaticScroll) {
         event.preventDefault();
         return;
       }
-      if (contentMode) return;
+      if (contentMode && currentServicesStep === 2) return;
       const delta = normalizeWheelDelta(event, scroller.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
@@ -243,6 +260,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         WHEEL_GESTURE_THRESHOLD_PX,
         event.timeStamp,
       );
+      if (contentMode) {
+        if (wheelGestureState.triggeredDirection !== null) {
+          advanceServices(wheelGestureState.triggeredDirection);
+        }
+        return;
+      }
       if (isStatementReady && wheelGestureState.triggeredDirection !== null) {
         const direction = wheelGestureState.triggeredDirection;
         const currentProgress = statement.getProgress();
@@ -266,10 +289,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerDown = (event) => {
-      if (contentMode) return;
+      if (contentMode && currentServicesStep === 2) return;
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       const isStatementGesture =
-        navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX;
+        !contentMode && navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX;
 
       touchGesture = {
         pointerId: event.pointerId,
@@ -283,7 +306,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerMove = (event) => {
-      if (contentMode) return;
+      if (contentMode && currentServicesStep === 2) return;
       if (
         !touchGesture ||
         touchGesture.pointerId !== event.pointerId ||
@@ -354,7 +377,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       event.preventDefault();
       touchGesture.consumed = true;
-      moveByDirection(direction);
+      if (contentMode) advanceServices(direction);
+      else moveByDirection(direction);
     };
 
     const clearTouchGesture = (event) => {
@@ -368,7 +392,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         event.preventDefault();
         return;
       }
-      if (contentMode) return;
+      if (contentMode) {
+        if (currentServicesStep === 2) return;
+        event.preventDefault();
+        if (!event.repeat) advanceServices(direction);
+        return;
+      }
 
       event.preventDefault();
       if (event.repeat) return;
@@ -416,6 +445,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const handleNativeScroll = () => {
       if (isProgrammaticScroll) return;
+      if (contentMode && currentServicesStep < 2) {
+        const services = [...scroller.querySelectorAll("section[id]")]
+          .find((section) => section.id === "services");
+        if (services) scroller.scrollTop = services.offsetTop;
+        return;
+      }
       const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
       const servicesTop = [...scroller.querySelectorAll("section[id]")]
         .find((section) => section.id === "services")?.offsetTop;
@@ -527,6 +562,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    servicesStep,
     contentScrollActive,
     navigateToSection,
     completeTitleReveal,

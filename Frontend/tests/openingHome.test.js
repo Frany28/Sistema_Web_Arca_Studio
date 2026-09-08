@@ -337,9 +337,11 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesContentSource, /Soluciones adaptadas a cada proyecto\./);
   assert.match(servicesPageSource, /<ServicesHeading/);
   assert.match(servicesPageSource, /id="services"/);
-  assert.match(servicesPageSource, /flex min-h-dvh flex-col gap-\[48px\]/);
+  assert.match(servicesPageSource, /gap-\[var\(--spacing-gap-8\)\]/);
+  assert.match(servicesPageSource, /pt-\[var\(--spacing-gap-9\)\]/);
+  assert.match(servicesPageSource, /pb-\[var\(--spacing-gap-8\)\]/);
   assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
-  assert.match(homeSource, /<ServicesSection visible=\{contentScrollActive\} \/>/);
+  assert.match(homeSource, /<ServicesSection step=/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113281"/);
@@ -351,7 +353,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   );
   assert.match(servicesHeadingSource, /data-node-id="4505:113286"/);
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
-  assert.match(servicesHeadingSource, /pt-\[120px\]/);
+  assert.match(servicesHeadingSource, /py-\[var\(--spacing-gap-7\)\]/);
   assert.doesNotMatch(servicesHeadingSource, /h-dvh/);
   assert.doesNotMatch(servicesCategoryShowcaseSource, /min-h-dvh/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
@@ -359,7 +361,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesHeadingSource, /getSectionRevealClip/);
   assert.match(servicesCategoryShowcaseSource, /getSectionRevealTransition/);
   assert.match(servicesCategoryShowcaseSource, /inert=\{!visible\}/);
-  assert.match(servicesPageSource, /visible = false/);
+  assert.match(servicesPageSource, /step = 0/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);
   assert.match(movingGradientTitleSource, /services-moving-gradient-title/);

@@ -179,6 +179,7 @@ input[type="reset"]:disabled,
   --app-spacing-gap-6: 34px;
   --app-spacing-gap-7: 48px;
   --app-spacing-gap-8: 56px;
+  --app-spacing-gap-9: 64px;
 
   /*SHADOW*/
   /*sombras para los elementos*/
@@ -283,6 +284,7 @@ input[type="reset"]:disabled,
   --app-spacing-gap-6: 34px;
   --app-spacing-gap-7: 48px;
   --app-spacing-gap-8: 56px;
+  --app-spacing-gap-9: 64px;
 
   /*SHADOW*/
   /*sombras para los elementos*/
@@ -1130,6 +1132,7 @@ input[type="reset"]:disabled,
   --spacing-gap-6: var(--app-spacing-gap-6);
   --spacing-gap-7: var(--app-spacing-gap-7);
   --spacing-gap-8: var(--app-spacing-gap-8);
+  --spacing-gap-9: var(--app-spacing-gap-9);
 
   /*Typography*/
 

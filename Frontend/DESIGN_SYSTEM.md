@@ -340,7 +340,7 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 
 ### Navegación superior persistente
 
-- Servicios revela conjuntamente su encabezado, descripción y selector al entrar mediante scroll, usando el mismo recorte y transición de resorte que las tres primeras secciones. La animación se aplica al contenido visual y conserva el contenedor fijado y el scroll independiente de las categorías.
+- Servicios revela conjuntamente su encabezado, descripción y selector al entrar mediante scroll, usando el mismo recorte y transición de resorte que las tres primeras secciones. El selector consume internamente los gestos de rueda y touch para cambiar categoría, imagen e indicador, incluso en sus extremos. No utiliza el scroll de Home, pin ni espaciadores para recorrer categorías; fuera del selector se conserva la navegación de la página.
 
 - El navbar comienza a reaparecer con el primer gesto ascendente de rueda, trackpad, pantalla táctil o teclado, incluso si una animación consume el gesto sin cambiar `scrollTop`. Una transición descendente en curso no debe ocultarlo de nuevo mientras la última intención del usuario siga siendo subir. Esta detección pertenece al hook compartido `useScrollDirectionVisibility`.
 

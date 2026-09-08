@@ -10,7 +10,7 @@ function ServicesCategoryShowcase({ categories, visible = false }) {
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
   const { activeIndex, selectCategory } = useServicesCategoryScroll(
-    sectionRef, layoutRef, categories,
+    sectionRef, layoutRef, categories, visible,
   );
   const activeCategory = categories[activeIndex] ?? categories[0];
 
@@ -38,7 +38,7 @@ function ServicesCategoryShowcase({ categories, visible = false }) {
   return (
     <section
       ref={sectionRef}
-      className="flex w-full shrink-0 items-center justify-center bg-[var(--color-neutral-950-uniform)]"
+      className="flex w-full shrink-0 touch-pan-x items-center justify-center overscroll-contain bg-[var(--color-neutral-950-uniform)]"
       aria-label="Tipos de diseño"
       data-node-id="4613:2167"
     >

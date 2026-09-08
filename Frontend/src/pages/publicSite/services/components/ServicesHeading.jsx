@@ -6,7 +6,7 @@ function ServicesHeading({ eyebrow, title, description, visible = false }) {
   const reduceMotion = useReducedMotion();
   return (
     <Motion.section
-      className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] pt-[120px] min-[768px]:px-[48px]"
+      className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] py-[var(--spacing-gap-7)] min-[768px]:px-[48px]"
       aria-label={eyebrow}
       aria-hidden={!visible}
       initial={false}

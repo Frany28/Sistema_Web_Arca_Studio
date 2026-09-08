@@ -1,0 +1,72 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
+
+function setup() {
+  const handlers = {};
+  const effects = [];
+  const selected = [];
+  const tabs = [0, 1, 2].map((i) => ({ offsetTop: i * 50, offsetHeight: 30 }));
+  const slides = [{}, {}, {}];
+  const indicator = {};
+  const section = {
+    querySelectorAll: (selector) => selector.includes('role=') ? tabs : slides,
+    querySelector: () => indicator,
+    addEventListener: (type, handler) => { handlers[type] = handler; },
+    removeEventListener: (type) => { delete handlers[type]; },
+  };
+  Object.defineProperty(section, "scrollTop", { set() { assert.fail("El selector no debe desplazar la p?gina"); } });
+  const dependencies = {
+    ...navigation,
+    useLayoutEffect: (effect) => effects.push(effect),
+    useRef: (current) => ({ current }), useState: (value) => [value, (next) => selected.push(next)],
+    useReducedMotion: () => false,
+    gsap: { to() {}, set() {}, killTweensOf() {}, context(fn) { fn(); return { revert() {} }; } },
+    getComputedStyle: () => ({ lineHeight: "30" }),
+    ResizeObserver: class { observe() {} disconnect() {} },
+    document: { fonts: { ready: Promise.resolve() } },
+    setTimeout() {}, clearTimeout() {},
+  };
+  const source = readFileSync(new URL("../src/pages/publicSite/services/hooks/useServicesCategoryScroll.js", import.meta.url), "utf8")
+    .replace(/import[^;]+;s*/g, "")
+    .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
+  const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
+  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}]);
+  const cleanup = effects[0]();
+  return { handlers, selected, cleanup, api };
+}
+
+test("wheel changes categories internally and contains scrolling at both boundaries", () => {
+  const app = setup();
+  const wheel = (deltaY, timeStamp) => {
+    let prevented = false;
+    let stopped = false;
+    app.handlers.wheel({ deltaY, deltaX: 0, timeStamp,
+      preventDefault() { prevented = true; }, stopPropagation() { stopped = true; } });
+    assert.equal(prevented, true);
+    assert.equal(stopped, true);
+  };
+  wheel(-50, 0);
+  assert.equal(app.selected.at(-1), 0);
+  wheel(50, 300);
+  assert.equal(app.selected.at(-1), 1);
+  wheel(50, 320);
+  assert.equal(app.selected.at(-1), 1);
+  app.api.selectCategory(2);
+  wheel(50, 340);
+  assert.equal(app.selected.at(-1), 2);
+  app.cleanup();
+  assert.deepEqual(app.handlers, {});
+});
+
+test("touch changes a category without moving the outer scroll", () => {
+  const app = setup();
+  app.handlers.pointerdown({ pointerType: "touch", isPrimary: true, pointerId: 1, clientX: 50, clientY: 200 });
+  let prevented = false;
+  app.handlers.pointermove({ pointerId: 1, clientX: 50, clientY: 100,
+    preventDefault() { prevented = true; }, stopPropagation() {} });
+  assert.equal(prevented, true);
+  assert.equal(app.selected.at(-1), 1);
+  app.cleanup();
+});
