@@ -50,22 +50,25 @@ function ServicesCategoryShowcase({ categories }) {
 
   return (
     <Motion.section
-      className="flex min-h-dvh w-full items-center justify-center bg-[var(--color-neutral-950-uniform)] px-[16px] py-[96px] min-[768px]:px-[48px]"
+      className="flex min-h-dvh w-full items-center justify-center bg-[var(--color-neutral-950-uniform)] px-[16px] py-[48px] min-[768px]:px-[48px]"
       aria-label="Tipos de diseño"
       viewport={{ amount: 0.15, once: true }}
       onViewportEnter={() => {
         if (commercialCategory) setActiveCategoryId(commercialCategory.id);
       }}
     >
-      <div className="grid w-full max-w-[1200px] items-center gap-[64px] min-[768px]:grid-cols-[minmax(0,1fr)_272px] min-[1024px]:gap-[120px]">
+      <div
+        className="flex w-full max-w-[1200px] flex-col items-center justify-center gap-[56px] min-[1024px]:flex-row"
+        data-node-id="4613:2165"
+      >
         <div
-          className="relative flex min-h-[108px] flex-col justify-between gap-[36px] pl-[32px]"
+          className="relative flex w-full max-w-[514px] flex-col items-start gap-[24px] py-[48px] pl-[16px]"
           role="tablist"
           aria-label="Seleccionar tipo de diseño"
           aria-orientation="vertical"
         >
           <span
-            className="absolute left-0 top-0 h-[108px] w-[4px] overflow-hidden"
+            className="absolute left-0 top-[48px] h-[108px] w-[4px] overflow-hidden"
             aria-hidden="true"
           >
             <Motion.span
@@ -92,7 +95,7 @@ function ServicesCategoryShowcase({ categories }) {
                 ref={(node) => {
                   categoryTabRefs.current[index] = node;
                 }}
-                className="text-heading-4 w-fit cursor-pointer border-0 bg-transparent p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-[var(--color-accent-300)]"
+                className="text-heading-4 w-full cursor-pointer border-0 bg-transparent p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-[var(--color-accent-300)]"
                 onClick={() => setActiveCategoryId(category.id)}
                 onKeyDown={(event) => handleCategoryKeyDown(event, index)}
               >
@@ -115,29 +118,34 @@ function ServicesCategoryShowcase({ categories }) {
         </div>
 
         <div
-          className="relative aspect-[272/452] w-full max-w-[272px] justify-self-center overflow-hidden"
+          className="relative aspect-[16/25] w-full max-w-[320px] shrink-0 rounded-[var(--radius-4)] bg-[var(--color-primary-10)] p-[clamp(16px,6vw,24px)]"
           role="tabpanel"
           id="services-category-panel"
           aria-labelledby={`service-tab-${activeCategory.id}`}
+          data-node-id="4571:111481"
         >
-          <img
-            className="absolute inset-0 size-full object-cover object-bottom"
-            src={residentialCategory.image}
-            alt={commercialIsActive ? "" : residentialCategory.imageAlt}
-            aria-hidden={commercialIsActive}
-          />
-          {commercialCategory ? (
-            <Motion.img
-              className="absolute inset-0 size-full object-cover object-bottom"
-              src={commercialCategory.image}
-              alt={commercialIsActive ? commercialCategory.imageAlt : ""}
-              initial={false}
-              animate={{ opacity: commercialIsActive ? 1 : 0 }}
-              transition={createPropertyTransition("opacity")}
-              aria-hidden={!commercialIsActive}
-              data-node-id="4571:111500"
-            />
-          ) : null}
+          <div className="relative size-full overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-primary-300)]">
+            <div className="absolute left-1/2 top-[47.92%] h-[108.58%] w-[118.79%] -translate-x-1/2 -translate-y-1/2">
+              <img
+                className="absolute left-[-173.55%] top-[-31.12%] h-[162.23%] w-[438.02%] max-w-none"
+                src={residentialCategory.image}
+                alt={commercialIsActive ? "" : residentialCategory.imageAlt}
+                aria-hidden={commercialIsActive}
+              />
+            </div>
+            {commercialCategory ? (
+              <Motion.img
+                className="absolute inset-0 size-full object-cover object-bottom"
+                src={commercialCategory.image}
+                alt={commercialIsActive ? commercialCategory.imageAlt : ""}
+                initial={false}
+                animate={{ opacity: commercialIsActive ? 1 : 0 }}
+                transition={createPropertyTransition("opacity")}
+                aria-hidden={!commercialIsActive}
+                data-node-id="4571:111500"
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </Motion.section>

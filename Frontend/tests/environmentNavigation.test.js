@@ -49,4 +49,7 @@ test("the environment navbar owns its shared visual configuration", async () => 
   assert.match(source, /utilityText=\{formatEnvironmentDate\(\)\}/);
   assert.match(source, /showUtilityMenu=\{Boolean\(props\.onMenuClick\)\}/);
   assert.match(source, /className=\{ENVIRONMENT_NAVBAR_CLASS_NAME\}/);
+  assert.match(source, /useScrollDirectionVisibility\(navbarRef\)/);
+  assert.match(source, /sticky top-0 z-30/);
+  assert.match(source, /data-scroll-direction-navbar/);
 });

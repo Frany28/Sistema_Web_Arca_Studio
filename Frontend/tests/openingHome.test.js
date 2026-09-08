@@ -368,6 +368,12 @@ test("services categories preserve the Figma state transition", () => {
   assert.match(servicesPageSource, /<ServicesCategoryShowcase/);
   assert.match(servicesContentSource, /Diseño residencial/);
   assert.match(servicesContentSource, /Diseño comercial/);
+  assert.match(servicesContentSource, /Diseño institucional/);
+  assert.match(servicesContentSource, /Planificación, ejecución y supervisión de obra/);
+  assert.match(servicesCategoryShowcaseSource, /data-node-id="4613:2165"/);
+  assert.match(servicesCategoryShowcaseSource, /max-w-\[514px\]/);
+  assert.match(servicesCategoryShowcaseSource, /max-w-\[320px\]/);
+  assert.match(servicesCategoryShowcaseSource, /gap-\[56px\]/);
   assert.match(servicesCategoryShowcaseSource, /data-node-id="4571:111485"/);
   assert.match(servicesCategoryShowcaseSource, /"4571:111488"/);
   assert.match(servicesCategoryShowcaseSource, /"4571:111487"/);

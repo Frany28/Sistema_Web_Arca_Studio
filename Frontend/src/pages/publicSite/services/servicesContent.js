@@ -1,4 +1,4 @@
-import residentialDesignImage from "../../../assets/home/arca-interior-design-hero.png";
+import residentialDesignImage from "../../../assets/services/residential-design.jpeg";
 import commercialDesignImage from "../../../assets/services/commercial-design.png";
 
 const SERVICES_HEADING = Object.freeze({
@@ -20,6 +20,26 @@ const SERVICES_CATEGORIES = Object.freeze([
     label: "Diseño comercial",
     image: commercialDesignImage,
     imageAlt: "Proyecto de diseño comercial de ARCA Studio",
+  }),
+  Object.freeze({
+    id: "institutional",
+    label: "Diseño institucional",
+  }),
+  Object.freeze({
+    id: "industrial",
+    label: "Diseño industrial",
+  }),
+  Object.freeze({
+    id: "remodeling",
+    label: "Remodelaciones",
+  }),
+  Object.freeze({
+    id: "interior-design",
+    label: "Interiorismo",
+  }),
+  Object.freeze({
+    id: "construction-management",
+    label: "Planificación, ejecución y supervisión de obra",
   }),
 ]);
 

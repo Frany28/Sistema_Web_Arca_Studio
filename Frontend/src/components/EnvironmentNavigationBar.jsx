@@ -1,3 +1,6 @@
+import { useRef } from "react";
+
+import useScrollDirectionVisibility from "../hooks/useScrollDirectionVisibility.js";
 import NavigationBar from "./ui/NavigationBar/NavigationBar.jsx";
 
 const ENVIRONMENT_NAVBAR_CLASS_NAME =
@@ -14,14 +17,24 @@ function formatEnvironmentDate(date = new Date()) {
 }
 
 function EnvironmentNavigationBar(props) {
+  const navbarRef = useRef(null);
+
+  useScrollDirectionVisibility(navbarRef);
+
   return (
-    <NavigationBar
-      {...props}
-      variant="utility"
-      showUtilityMenu={Boolean(props.onMenuClick)}
-      utilityText={formatEnvironmentDate()}
-      className={ENVIRONMENT_NAVBAR_CLASS_NAME}
-    />
+    <div
+      ref={navbarRef}
+      className="sticky top-0 z-30 w-full shrink-0 bg-[var(--color-neutral-bg)] will-change-transform"
+      data-scroll-direction-navbar
+    >
+      <NavigationBar
+        {...props}
+        variant="utility"
+        showUtilityMenu={Boolean(props.onMenuClick)}
+        utilityText={formatEnvironmentDate()}
+        className={ENVIRONMENT_NAVBAR_CLASS_NAME}
+      />
+    </div>
   );
 }
 

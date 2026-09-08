@@ -20,6 +20,10 @@ const globalStylesSource = readFileSync(
   new URL("../src/styles/global.css", import.meta.url),
   "utf8",
 );
+const scrollDirectionVisibilitySource = readFileSync(
+  new URL("../src/hooks/useScrollDirectionVisibility.js", import.meta.url),
+  "utf8",
+);
 
 test("the public home header preserves the Figma structure and labels", () => {
   assert.match(headerSource, /data-node-id="4487:112595"/);
@@ -50,20 +54,22 @@ test("the public home header is permanently dark and reuses shared UI", () => {
 });
 
 test("the public navbar hides while scrolling down and returns while scrolling up", () => {
-  assert.match(headerSource, /gsap\.registerPlugin\(ScrollTrigger\)/);
-  assert.match(headerSource, /HEADER_SCROLL_DURATION_SECONDS = 0\.2/);
-  assert.match(headerSource, /\.from\(header, \{/);
-  assert.match(headerSource, /yPercent: -100/);
-  assert.match(headerSource, /paused: true/);
-  assert.match(headerSource, /\.progress\(1\)/);
-  assert.match(headerSource, /ScrollTrigger\.create\(\{/);
-  assert.match(headerSource, /start: "top top"/);
-  assert.match(headerSource, /end: "max"/);
-  assert.match(headerSource, /self\.direction === -1/);
-  assert.match(headerSource, /showAnimation\.play\(\)/);
-  assert.match(headerSource, /showAnimation\.reverse\(\)/);
-  assert.match(headerSource, /useReducedMotion/);
-  assert.match(headerSource, /context\.revert\(\)/);
+  assert.match(headerSource, /useScrollDirectionVisibility\(headerRef\)/);
+  assert.match(scrollDirectionVisibilitySource, /gsap\.registerPlugin\(ScrollTrigger\)/);
+  assert.match(scrollDirectionVisibilitySource, /NAVBAR_SCROLL_DURATION_SECONDS = 0\.2/);
+  assert.match(scrollDirectionVisibilitySource, /getClosestScrollContainer/);
+  assert.match(scrollDirectionVisibilitySource, /overflowY/);
+  assert.match(scrollDirectionVisibilitySource, /scroller: scrollContainer === window/);
+  assert.match(scrollDirectionVisibilitySource, /yPercent: -100/);
+  assert.match(scrollDirectionVisibilitySource, /paused: true/);
+  assert.match(scrollDirectionVisibilitySource, /\.progress\(1\)/);
+  assert.match(scrollDirectionVisibilitySource, /start: "top top"/);
+  assert.match(scrollDirectionVisibilitySource, /end: "max"/);
+  assert.match(scrollDirectionVisibilitySource, /self\.direction === -1/);
+  assert.match(scrollDirectionVisibilitySource, /showAnimation\.play\(\)/);
+  assert.match(scrollDirectionVisibilitySource, /showAnimation\.reverse\(\)/);
+  assert.match(scrollDirectionVisibilitySource, /useReducedMotion/);
+  assert.match(scrollDirectionVisibilitySource, /context\.revert\(\)/);
 });
 
 test("the public navigation hover uses the Figma underline state", () => {

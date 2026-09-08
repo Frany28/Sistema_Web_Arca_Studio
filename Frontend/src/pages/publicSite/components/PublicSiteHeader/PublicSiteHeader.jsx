@@ -1,16 +1,12 @@
-import { useLayoutEffect, useRef } from "react";
+import { useRef } from "react";
 import clsx from "clsx";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useReducedMotion } from "motion/react";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import Button from "../../../../components/ui/Button/Button.jsx";
 import HorizontalTabMenu from "../../../../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
-
-gsap.registerPlugin(ScrollTrigger);
-
-const HEADER_SCROLL_DURATION_SECONDS = 0.2;
+import useScrollDirectionVisibility, {
+  NAVBAR_SCROLL_DURATION_SECONDS,
+} from "../../../../hooks/useScrollDirectionVisibility.js";
 
 const DEFAULT_NAVIGATION_ITEMS = [
   { id: "services", label: "Servicios" },
@@ -28,45 +24,11 @@ function PublicSiteHeader({
   onLogin,
 }) {
   const headerRef = useRef(null);
-  const reduceMotion = useReducedMotion();
   const activeNavigationIndex = navigationItems.findIndex(
     (item) => item.id === activeNavigationId,
   );
 
-  useLayoutEffect(() => {
-    const header = headerRef.current;
-    if (!header) return undefined;
-
-    if (reduceMotion) {
-      gsap.set(header, { clearProps: "transform" });
-      return undefined;
-    }
-
-    const context = gsap.context(() => {
-      const showAnimation = gsap
-        .from(header, {
-          yPercent: -100,
-          paused: true,
-          duration: HEADER_SCROLL_DURATION_SECONDS,
-          ease: "power1.out",
-        })
-        .progress(1);
-
-      ScrollTrigger.create({
-        start: "top top",
-        end: "max",
-        onUpdate: (self) => {
-          if (self.scroll() <= 0 || self.direction === -1) {
-            showAnimation.play();
-          } else {
-            showAnimation.reverse();
-          }
-        },
-      });
-    }, header);
-
-    return () => context.revert();
-  }, [reduceMotion]);
+  useScrollDirectionVisibility(headerRef);
 
   return (
     <header
@@ -152,5 +114,8 @@ function PublicSiteHeader({
   );
 }
 
-export { DEFAULT_NAVIGATION_ITEMS, HEADER_SCROLL_DURATION_SECONDS };
+export {
+  DEFAULT_NAVIGATION_ITEMS,
+  NAVBAR_SCROLL_DURATION_SECONDS as HEADER_SCROLL_DURATION_SECONDS,
+};
 export default PublicSiteHeader;
