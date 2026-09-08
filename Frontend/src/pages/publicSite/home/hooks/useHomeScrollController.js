@@ -180,6 +180,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const navigateSection = (sectionId) => {
+      const currentState = navigationStateRef.current;
+      const currentSectionComplete = contentMode
+        ? currentServicesStep === 2
+        : !titleRevealLockedRef.current && currentState.phase === HOME_SCROLL_PHASES.TITLE &&
+          (currentState.panelIndex !== STATEMENT_PANEL_INDEX || statement.getProgress() >= 1);
+      if (activeTween || isProgrammaticScroll || !currentSectionComplete) return;
       const target = sectionId === "home" ? panels[0] :
         [...scroller.querySelectorAll("section[id]")].find((section) => section.id === sectionId);
       if (!target) return;
@@ -219,13 +225,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
     sectionNavigationRef.current = navigateSection;
 
-    const advanceServices = (direction) => {
-      if (direction === HOME_SCROLL_DIRECTIONS.UP && currentServicesStep === 0) {
-        setContentMode(false);
-        alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
-      } else {
-        changeServicesStep(Math.max(0, Math.min(2, currentServicesStep + direction)));
-      }
+    const advanceServices = () => {
+      // Igual que en los paneles de imagen: cualquier dirección completa
+      // primero el contenido pendiente antes de permitir abandonar la sección.
+      if (currentServicesStep < 2) changeServicesStep(currentServicesStep + 1);
     };
 
     const handleWheel = (event) => {
@@ -462,7 +465,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       }
       if (scroller.scrollTop > statementTop + 1) {
         if (!contentMode) {
-          navigateSection("services");
+          const currentState = navigationStateRef.current;
+          if (currentState.panelIndex === STATEMENT_PANEL_INDEX &&
+              currentState.phase === HOME_SCROLL_PHASES.TITLE && statement.getProgress() >= 1) {
+            navigateSection("services");
+          } else {
+            scroller.scrollTop = panels[currentState.panelIndex]?.offsetTop ?? 0;
+          }
         }
         return;
       }

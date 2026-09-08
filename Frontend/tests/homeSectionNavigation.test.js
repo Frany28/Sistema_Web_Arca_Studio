@@ -151,13 +151,47 @@ test("Services blocks native scrolling until its section transition finishes", (
   app.cleanup();
 });
 
-test("native scrolling beyond the video animates all the way to Services", () => {
+test("the scrollbar cannot skip the intro and video to enter Services", () => {
   const app = setup();
   app.scroller.scrollTop = 2402;
   app.handlers.scroll();
-  assert.equal(app.scroller.scrollTop, 2402);
+  assert.equal(app.scroller.scrollTop, 0);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 0);
+  app.cleanup();
+});
+
+test("Services cannot be abandoned by navbar, scrollbar or upward input while steps remain", () => {
+  const app = setup();
+  app.controller.navigateToSection("services");
+  app.flush();
+  app.controller.navigateToSection("home");
   app.flush();
   assert.equal(app.scroller.scrollTop, 3200);
+  app.scroller.scrollTop = 2400;
+  app.handlers.scroll();
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  assert.equal(app.getServicesStep(), 1);
+  app.controller.navigateToSection("home");
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  assert.equal(app.getServicesStep(), 2);
+  app.controller.navigateToSection("home");
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 0);
+  app.cleanup();
+});
+
+test("navbar cannot bypass an image whose title is still pending", () => {
+  const app = setup();
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 800);
+  app.controller.navigateToSection("services");
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 800);
   app.cleanup();
 });
 
