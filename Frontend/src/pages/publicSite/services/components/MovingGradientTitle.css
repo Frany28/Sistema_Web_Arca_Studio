@@ -1,4 +1,5 @@
-.services-moving-gradient-title {
+.services-moving-gradient-title,
+.services-moving-gradient-title .services-heading-line {
   color: #ff4431;
   background-color: #ff4431;
   background-image: linear-gradient(
@@ -24,6 +25,10 @@
   will-change: background-position;
 }
 
+.services-moving-gradient-title .services-heading-line {
+  width: 100%;
+}
+
 @keyframes services-title-gradient-flow {
   0%,
   100% {
@@ -36,7 +41,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .services-moving-gradient-title {
+  .services-moving-gradient-title,
+  .services-moving-gradient-title .services-heading-line {
     animation: none;
     background-position: 50% 50%;
   }
