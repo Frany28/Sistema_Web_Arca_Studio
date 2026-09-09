@@ -33,13 +33,15 @@ test("the public home header preserves the Figma structure and labels", () => {
   assert.match(headerSource, /Proyectos destacados/);
   assert.match(headerSource, /¿Cómo trabajamos\?/);
   assert.match(headerSource, /Sobre nosotros/);
-  assert.match(headerSource, /Registrarse/);
-  assert.match(headerSource, /Iniciar sesión/);
+  assert.doesNotMatch(headerSource, /Registrarse|onRegister|onLogin/);
+  assert.match(headerSource, /Contáctanos/);
+  assert.match(headerSource, /data-node-id="4781:135050"/);
 });
 
 test("the public home header is permanently dark and reuses shared UI", () => {
   assert.match(headerSource, /appearance="dark"/);
-  assert.match(headerSource, /color-neutral-100-uniform/);
+  assert.match(headerSource, /theme="Primary"/);
+  assert.match(headerSource, /type="Solid"/);
   assert.match(headerSource, /backdrop-blur-\[15px\]/);
   assert.match(headerSource, /<Button/);
   assert.match(headerSource, /<HorizontalTabMenu/);

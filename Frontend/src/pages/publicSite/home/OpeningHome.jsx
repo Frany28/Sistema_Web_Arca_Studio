@@ -1,6 +1,6 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import ArcaOpeningMark, {
   MOTION_DURATION_SECONDS,
@@ -17,7 +17,6 @@ const PANEL_TRANSITION_EASE = [0.815, 0.005, 0.17, 0.995];
 
 function OpeningHome() {
   const reduceMotion = useReducedMotion();
-  const navigate = useNavigate();
   const { hash } = useLocation();
   const {
     completeInitialTitleReveal,
@@ -92,8 +91,6 @@ function OpeningHome() {
               scrollContainerRef={scrollerRef}
               activeNavigationId={contentScrollActive ? "services" : undefined}
               onNavigate={navigateToSection}
-              onRegister={() => navigate("/crear-cuenta")}
-              onLogin={() => navigate("/login")}
             />
           </div>
 

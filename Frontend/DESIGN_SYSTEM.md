@@ -340,6 +340,10 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 
 ### Navegación superior persistente
 
+- Los títulos de Arquitectura, Construcción e Interiorismo comparten el anclaje del nodo Figma `4848:6515`: bloque de 385 px centrado verticalmente en cada sección, máscara a 65 px de su borde superior y texto a 89,5 px dentro de la máscara. El revelado amplía la máscara de 57 a 255 px sin desplazar el título. No limitar la posición vertical con un `clamp` en píxeles: debe seguir el centro de la sección al cambiar la altura de ventana.
+
+- El navbar público muestra únicamente «Contáctanos» como acción derecha, según el nodo Figma `4781:135050`. Reutiliza `Button` Primary/Solid/S con ancho al contenido, padding de 8 px, radio de 8 px y tipografía `text-heading-8`; su altura se ajusta al contenido sin borde. Sustituye los accesos a registro e inicio de sesión. El destino de contacto permanece pendiente y se comunica mediante `aria-disabled` hasta conectarlo.
+
 - La navegación por rueda, touch, teclado y scrollbar no permite abandonar la sección actual mientras tenga pasos de scroll pendientes. Seleccionar un área en el navbar es una excepción: desplaza directamente al destino y puede interrumpir una transición en curso. En Servicios, un gesto ascendente debe revelar primero los contenedores pendientes; el scrollbar no puede omitir la introducción ni dar por completado el efecto del video.
 
 - Servicios entra con el fondo vacío, revela el encabezado y descripción con el siguiente gesto y muestra el selector con un tercer gesto. Cada revelado debe terminar antes de aceptar el siguiente paso; el selector permanece inerte hasta completar su entrada. Para salir mediante scroll se deben visitar todas las categorías, no únicamente la última. El navbar sigue permitiendo navegación directa sin completar estos pasos.

@@ -20,8 +20,7 @@ function PublicSiteHeader({
   className,
   navigationItems = DEFAULT_NAVIGATION_ITEMS,
   onNavigate,
-  onRegister,
-  onLogin,
+  onContact,
   scrollContainerRef,
 }) {
   const headerRef = useRef(null);
@@ -83,30 +82,17 @@ function PublicSiteHeader({
           >
             <Button
               theme="Primary"
-              type="Outline"
-              size="S"
-              fitContent
-              showLeftIcon={false}
-              showRightIcon={false}
-              className="!border-[var(--color-neutral-100-uniform)] !bg-transparent !text-[var(--color-neutral-100-uniform)] hover:!border-[var(--color-neutral-100-uniform)] hover:!bg-white/10 hover:!text-[var(--color-neutral-100-uniform)] focus-visible:!border-[var(--color-neutral-100-uniform)] focus-visible:!text-[var(--color-neutral-100-uniform)]"
-              onClick={onRegister}
-              data-node-id="4487:112600"
-            >
-              Registrarse
-            </Button>
-
-            <Button
-              theme="Primary"
               type="Solid"
               size="S"
               fitContent
               showLeftIcon={false}
               showRightIcon={false}
-              className="!border-[var(--color-primary-300)] !bg-[var(--color-primary-300)] !text-[var(--color-neutral-100-uniform)] hover:!border-[var(--color-primary-200)] hover:!bg-[var(--color-primary-200)] hover:!text-[var(--color-neutral-100-uniform)]"
-              onClick={onLogin}
-              data-node-id="4487:112601"
+              className="[&]:h-auto [&]:border-0"
+              onClick={onContact}
+              aria-disabled={!onContact || undefined}
+              data-node-id="4781:135050"
             >
-              Iniciar sesión
+              Contáctanos
             </Button>
           </div>
         </div>

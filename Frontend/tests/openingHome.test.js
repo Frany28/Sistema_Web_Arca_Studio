@@ -133,9 +133,9 @@ test("the root route presents the animated ARCA opening before the home hero", (
   );
 });
 
-test("login is shown only from its dedicated home action", () => {
+test("login keeps its dedicated route without an action in the public home", () => {
   assert.match(mainSource, /path="\/login" element={<Login \/>}/);
-  assert.match(homeSource, /onLogin=\{\(\) => navigate\("\/login"\)\}/);
+  assert.doesNotMatch(homeSource, /onLogin|onRegister/);
   assert.doesNotMatch(homeSource, /<Login \/>/);
 });
 
@@ -164,10 +164,10 @@ test("the hero title keeps its responsive masked reveal", () => {
   assert.match(heroTitleSource, /\{title\}/);
   assert.match(revealSource, /REVEAL_DELAY_SECONDS = 0\.1/);
   assert.match(revealSource, /REVEAL_DURATION_SECONDS = 0\.9/);
-  assert.match(heroTitleSource, /REVEAL_HEIGHT_COLLAPSED = 73/);
+  assert.match(heroTitleSource, /REVEAL_HEIGHT_COLLAPSED = 57/);
   assert.match(heroTitleSource, /REVEAL_HEIGHT_EXPANDED = 255/);
-  assert.match(heroTitleSource, /top-\[clamp\(160px,41\.6dvh,319\.5px\)\]/);
-  assert.match(heroTitleSource, /top-\[clamp\(28px,7\.33dvh,56\.3px\)\]/);
+  assert.match(heroTitleSource, /top-1\/2 h-\[385px\] -translate-y-1\/2/);
+  assert.match(heroTitleSource, /top-\[65px\]/);
   assert.match(heroTitleSource, /top-\[89\.5px\]/);
   assert.match(heroTitleSource, /w-\[min\(1104px,calc\(100%-32px\)\)\]/);
   assert.match(heroTitleSource, /text-\[clamp\(40px,8vw,96px\)\]/);

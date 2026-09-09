@@ -1,7 +1,7 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
 
 import { getSectionRevealTransition, getSectionRevealClip, REVEAL_DELAY_SECONDS, REVEAL_DURATION_SECONDS } from "../../../utils/sectionReveal.js";
-const REVEAL_HEIGHT_COLLAPSED = 73;
+const REVEAL_HEIGHT_COLLAPSED = 57;
 const REVEAL_HEIGHT_EXPANDED = 255;
 
 function HomeHeroTitle({
@@ -20,11 +20,11 @@ function HomeHeroTitle({
   return (
     <div className="pointer-events-none absolute inset-0 z-[5]">
       <div
-        className="absolute inset-x-0 top-[clamp(160px,41.6dvh,319.5px)] h-[385px] overflow-hidden"
-        data-node-id="4473:112127"
+        className="absolute inset-x-0 top-1/2 h-[385px] -translate-y-1/2 overflow-hidden"
+        data-node-id="4848:6515"
       >
         <Motion.div
-          className="absolute left-1/2 top-[clamp(28px,7.33dvh,56.3px)] w-[min(1200px,calc(100%-32px))] -translate-x-1/2 overflow-hidden"
+          className="absolute left-1/2 top-[65px] w-[min(1200px,calc(100%-32px))] -translate-x-1/2 overflow-hidden"
           initial={false}
           animate={{
             height: visible
