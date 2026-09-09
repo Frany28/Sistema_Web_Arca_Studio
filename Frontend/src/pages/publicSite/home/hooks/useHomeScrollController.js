@@ -59,8 +59,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const activeSectionRef = useRef(null);
   const [featuredStep, setFeaturedStep] = useState(0);
   const featuredProgressRef = useRef({ step: 0, revealed: true });
-  const completeFeaturedReveal = useCallback((visible = true) => {
-    if (activeSectionRef.current === "featured-projects" && featuredProgressRef.current.step === (visible ? 1 : 0)) {
+  const completeFeaturedReveal = useCallback((value = 1) => {
+    const completedStep = typeof value === "boolean" ? (value ? 1 : 0) : value;
+    if (activeSectionRef.current === "featured-projects" && featuredProgressRef.current.step === completedStep) {
       featuredProgressRef.current.revealed = true;
     }
   }, []);
@@ -210,6 +211,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       return next ? Math.max(getSection("services")?.offsetTop ?? 0, next.offsetTop - scroller.clientHeight) : Infinity;
     };
     const isFeatured = () => contentMode && activeSectionRef.current === "featured-projects";
+    const featuredTop = () => {
+      const section = getSection("featured-projects");
+      return (featuredProgressRef.current.step === 2 ? section?.querySelector?.("[data-featured-gallery]")?.offsetTop : section?.offsetTop) ?? section?.offsetTop ?? 0;
+    };
     const servicesAtEnd = () => scroller.scrollTop >= servicesEnd() - 1;
     const selectSection = (id) => {
       activeSectionRef.current = id;
@@ -287,19 +292,27 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (isFeatured()) {
         const progress = featuredProgressRef.current;
         if (!progress.revealed) return;
-        if (direction === HOME_SCROLL_DIRECTIONS.UP && progress.step === 0) {
+        if (direction === HOME_SCROLL_DIRECTIONS.UP && (progress.step === 0 || progress.step === 2)) {
           navigateSection("services");
         } else {
-          const step = direction === HOME_SCROLL_DIRECTIONS.UP ? 0 : 1;
+          const step = Math.max(0, Math.min(2, progress.step + direction));
           if (step === progress.step) return;
           featuredProgressRef.current = { step, revealed: false };
           setFeaturedStep(step);
+          const top = featuredTop();
+          if (Math.abs(scroller.scrollTop - top) > 1) {
+            isProgrammaticScroll = true;
+            activeTween = gsap.to(scroller, {
+              scrollTo: { y: top, autoKill: false }, duration: reduceMotion ? 0 : SCROLL_STEP_DURATION_SECONDS,
+              ease: "power2.inOut", onComplete: () => { activeTween = undefined; isProgrammaticScroll = false; },
+            });
+          }
         }
       } else if (contentEnteringUp && currentServicesStep < 2) {
         advanceServices();
       } else if (direction === HOME_SCROLL_DIRECTIONS.UP) {
         if (!servicesProgressRef.current.revealed) return;
-        if (currentServicesStep === 0) {
+        if (currentServicesStep === 0 || currentServicesStep === 2) {
           setContentMode(false);
           selectSection(null);
           resetWheelGesture();
@@ -548,7 +561,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const handleNativeScroll = () => {
       if (isProgrammaticScroll) return;
       if (isFeatured()) {
-        const top = getSection("featured-projects")?.offsetTop ?? 0;
+        const top = featuredTop();
         const returning = scroller.scrollTop < top - 1;
         scroller.scrollTop = top;
         if (returning) advanceContent(HOME_SCROLL_DIRECTIONS.UP);
@@ -626,7 +639,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const handleResize = () => {
       if (contentMode) {
         const section = getSection(activeSectionRef.current);
-        if (section) scroller.scrollTop = isFeatured() || currentServicesStep < 2
+        if (section) scroller.scrollTop = isFeatured() ? featuredTop() : currentServicesStep < 2
           ? section.offsetTop : Math.min(Math.max(scroller.scrollTop, section.offsetTop), servicesEnd());
         return;
       }

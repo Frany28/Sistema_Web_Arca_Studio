@@ -121,7 +121,7 @@ function OpeningHome() {
                 onPreviousSection={retreatFromServices}
               />
               <FeaturedProjectsSection
-                visible={contentScrollActive && activeSectionId === "featured-projects" && featuredStep === 1}
+                step={contentScrollActive && activeSectionId === "featured-projects" ? featuredStep : 0}
                 onRevealComplete={completeFeaturedReveal}
               />
             </>

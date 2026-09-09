@@ -1,8 +1,10 @@
+import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 
-function FeaturedProjectsSection({ visible = false, onRevealComplete }) {
+function FeaturedProjectsSection({ step = 0, onRevealComplete }) {
   const reduceMotion = useReducedMotion();
+  const visible = step >= 1;
 
   return (
     <section
@@ -15,7 +17,7 @@ function FeaturedProjectsSection({ visible = false, onRevealComplete }) {
         initial={false}
         animate={{ clipPath: getSectionRevealClip(visible) }}
         transition={getSectionRevealTransition(visible, reduceMotion)}
-        onAnimationComplete={() => { onRevealComplete?.(visible); }}
+        onAnimationComplete={() => { onRevealComplete?.(visible ? 1 : 0); }}
         className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[48px]"
         data-node-id="4856:5032"
       >
@@ -29,6 +31,7 @@ function FeaturedProjectsSection({ visible = false, onRevealComplete }) {
           Diseño arquitectónico y ejecución integral para una residencia contemporánea ubicada en Maracaibo.
         </p>
       </Motion.div>
+      <FeaturedProjectsGallery visible={step === 2} onRevealComplete={onRevealComplete} />
     </section>
   );
 }

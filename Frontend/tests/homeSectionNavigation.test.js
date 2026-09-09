@@ -107,6 +107,31 @@ for (const reducedMotion of [false, true]) {
   });
 }
 
+test("featured gallery is a separate scroll step and waits for its reveal before reversing", () => {
+  const app = setup();
+  app.featured.querySelector = () => ({ offsetTop: 4800 });
+  app.controller.navigateToSection("featured-projects"); app.flush();
+  const down = () => app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+  const up = () => app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  down(); down();
+  assert.equal(app.getFeaturedStep(), 1);
+  app.controller.completeFeaturedReveal(1);
+  down(); app.flush();
+  assert.equal(app.getFeaturedStep(), 2);
+  assert.equal(app.scroller.scrollTop, 4800);
+  up();
+  assert.equal(app.getFeaturedStep(), 2);
+  app.controller.completeFeaturedReveal(1);
+  up();
+  assert.equal(app.getFeaturedStep(), 2);
+  app.controller.completeFeaturedReveal(2);
+  up(); app.flush();
+  assert.equal(app.getActiveSection(), "services");
+  assert.equal(app.scroller.scrollTop, 3200);
+  assert.equal(app.getServicesStep(), 0);
+  app.cleanup();
+});
+
 test("returning from projects resets services and reveals them again on upward gestures", () => {
   const app = setup();
   app.controller.navigateToSection("services"); app.flush();
@@ -137,25 +162,18 @@ test("returning to the video hides the letters until the next upward gesture", (
   app.cleanup();
 });
 
-test("reversing services waits for each exit animation before going back", () => {
+test("services returns directly after both containers finish revealing", () => {
   const app = setup();
   app.controller.navigateToSection("services"); app.flush();
-  for (const step of [1, 2]) {
-    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
-    app.controller.completeServicesStep(step);
-  }
-  app.controller.retreatFromServices();
-  assert.equal(app.getServicesStep(), 1);
-  app.controller.retreatFromServices();
-  assert.equal(app.getServicesStep(), 1);
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
   app.controller.completeServicesStep(1);
-  app.controller.retreatFromServices();
-  assert.equal(app.getServicesStep(), 0);
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
   app.controller.retreatFromServices(); app.flush();
   assert.equal(app.scroller.scrollTop, 3200);
-  app.controller.completeServicesStep(0);
+  app.controller.completeServicesStep(2);
   app.controller.retreatFromServices(); app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
+  assert.equal(app.controller.statementProgress.get(), 0);
   app.cleanup();
 });
 
@@ -266,23 +284,15 @@ test("rapid keyboard and wheel gestures cannot overlap service reveal animations
   assert.equal(app.clock.pending(), 0);
 });
 
-test("unvisited categories do not block reversing the service containers", () => {
+test("unvisited categories do not block direct upward scrollbar navigation", () => {
   const app = setup();
-  app.controller.navigateToSection("services");
-  app.flush();
+  app.controller.navigateToSection("services"); app.flush();
   for (const step of [1, 2]) {
     app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
     app.controller.completeServicesStep(step);
   }
   app.scroller.scrollTop = 3190;
-  app.handlers.scroll();
-  assert.equal(app.scroller.scrollTop, 3200);
-  app.controller.completeServicesStep(1);
-  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
-  assert.equal(app.getServicesStep(), 0);
-  app.controller.completeServicesStep(0);
-  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
-  app.flush();
+  app.handlers.scroll(); app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
   app.cleanup();
 });
@@ -385,10 +395,6 @@ test("scrolling back from Services restores the statement before the intro seque
   app.controller.completeServiceCategories(true);
   app.scroller.scrollTop = 3190;
   app.handlers.scroll();
-  app.controller.completeServicesStep(1);
-  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
-  app.controller.completeServicesStep(0);
-  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
   app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
   assert.equal(app.controller.statementProgress.get(), 0);
@@ -463,7 +469,7 @@ test("a new navbar destination replaces an unfinished section transition", () =>
 
 for (const input of ["wheel", "keyboard", "touch"]) {
   test(`${input} continues to Services after completing the statement`, () => {
-    const app = setup();
+    const app = setup(true);
     app.controller.navigateToSection("services");
     app.flush();
     app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
@@ -474,6 +480,9 @@ for (const input of ["wheel", "keyboard", "touch"]) {
     app.scroller.scrollTop = 2400;
     app.handlers.scroll();
     app.flush();
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    app.flush();
+    assert.equal(app.controller.statementProgress.get(), 1);
     if (input === "wheel") {
       app.handlers.wheel({ deltaY: 80, timeStamp: 1000, preventDefault() {} });
     } else if (input === "keyboard") {
