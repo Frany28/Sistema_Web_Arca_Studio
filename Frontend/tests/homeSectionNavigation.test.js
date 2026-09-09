@@ -107,6 +107,36 @@ for (const reducedMotion of [false, true]) {
   });
 }
 
+test("returning from projects resets services and reveals them again on upward gestures", () => {
+  const app = setup();
+  app.controller.navigateToSection("services"); app.flush();
+  for (const step of [1, 2]) {
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    app.controller.completeServicesStep(step);
+  }
+  app.controller.navigateToSection("featured-projects"); app.flush();
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} }); app.flush();
+  assert.equal(app.getServicesStep(), 0);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  assert.equal(app.getServicesStep(), 1);
+  app.controller.completeServicesStep(1);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  assert.equal(app.getServicesStep(), 2);
+  app.cleanup();
+});
+
+test("returning to the video hides the letters until the next upward gesture", () => {
+  const app = setup(true);
+  app.controller.navigateToSection("services"); app.flush();
+  app.controller.retreatFromServices(); app.flush();
+  assert.equal(app.scroller.scrollTop, 2400);
+  assert.equal(app.controller.statementProgress.get(), 0);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} }); app.flush();
+  assert.equal(app.scroller.scrollTop, 2400);
+  assert.equal(app.controller.statementProgress.get(), 1);
+  app.cleanup();
+});
+
 test("reversing services waits for each exit animation before going back", () => {
   const app = setup();
   app.controller.navigateToSection("services"); app.flush();
@@ -172,7 +202,7 @@ test("services cannot expose featured projects before all categories are visited
   app.controller.completeFeaturedReveal();
   app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
   app.flush();
-  assert.equal(app.getServicesStep(), 2);
+  assert.equal(app.getServicesStep(), 0);
   app.cleanup();
 });
 
@@ -325,7 +355,7 @@ for (const reducedMotion of [false, true]) {
     app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
     app.controller.completeServicesStep(app.getServicesStep());
     assert.equal(app.scroller.scrollTop, 3200);
-    assert.equal(app.controller.statementProgress.get(), 1);
+    assert.equal(app.controller.statementProgress.get(), 0);
     let prevented = false;
     app.handlers.wheel({ deltaY: 100, preventDefault() { prevented = true; } });
     assert.equal(prevented, false);
@@ -361,7 +391,7 @@ test("scrolling back from Services restores the statement before the intro seque
   app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
   app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
-  assert.equal(app.controller.statementProgress.get(), 1);
+  assert.equal(app.controller.statementProgress.get(), 0);
   app.cleanup();
 });
 

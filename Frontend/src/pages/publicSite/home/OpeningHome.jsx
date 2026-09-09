@@ -113,6 +113,7 @@ function OpeningHome() {
           {initialScrollReady && (
             <>
               <ServicesSection
+                key={activeSectionId === "services" ? "active" : "inactive"}
                 step={servicesStep}
                 onRevealComplete={completeServicesStep}
                 onCategoriesComplete={completeServiceCategories}

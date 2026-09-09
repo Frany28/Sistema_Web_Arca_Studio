@@ -243,7 +243,7 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollControllerSource, /normalizeWheelDelta\(event, scroller\.clientHeight\)/);
   assert.match(scrollControllerSource, /WHEEL_GESTURE_THRESHOLD_PX = 32/);
   assert.match(scrollControllerSource, /WHEEL_GESTURE_IDLE_MS = 180/);
-  assert.match(scrollControllerSource, /limitHomeStatementWheelDelta\(delta\.y\)/);
+  assert.match(scrollControllerSource, /limitHomeStatementWheelDelta\(statementEnteringUp \? Math\.abs\(delta\.y\) : delta\.y\)/);
   assert.doesNotMatch(
     scrollControllerSource,
     /statement\.queueDelta\(wheelGestureState\.accumulator\)/,
@@ -341,7 +341,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesPageSource, /pt-\[var\(--spacing-gap-9\)\]/);
   assert.match(servicesPageSource, /pb-\[var\(--spacing-gap-8\)\]/);
   assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
-  assert.match(homeSource, /<ServicesSection\s+step=/);
+  assert.match(homeSource, /<ServicesSection[\s\S]*?step=/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113281"/);
