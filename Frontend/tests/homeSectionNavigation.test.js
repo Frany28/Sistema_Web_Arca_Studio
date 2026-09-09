@@ -97,12 +97,37 @@ for (const reducedMotion of [false, true]) {
     assert.equal(app.scroller.scrollTop, 4400);
     app.controller.completeFeaturedReveal();
     app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+    assert.equal(app.getFeaturedStep(), 0);
+    app.controller.completeFeaturedReveal(false);
+    app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
     app.flush();
     assert.equal(app.scroller.scrollTop, 3200);
     assert.equal(app.getActiveSection(), "services");
     app.cleanup();
   });
 }
+
+test("reversing services waits for each exit animation before going back", () => {
+  const app = setup();
+  app.controller.navigateToSection("services"); app.flush();
+  for (const step of [1, 2]) {
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    app.controller.completeServicesStep(step);
+  }
+  app.controller.retreatFromServices();
+  assert.equal(app.getServicesStep(), 1);
+  app.controller.retreatFromServices();
+  assert.equal(app.getServicesStep(), 1);
+  app.controller.completeServicesStep(1);
+  app.controller.retreatFromServices();
+  assert.equal(app.getServicesStep(), 0);
+  app.controller.retreatFromServices(); app.flush();
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.controller.completeServicesStep(0);
+  app.controller.retreatFromServices(); app.flush();
+  assert.equal(app.scroller.scrollTop, 2400);
+  app.cleanup();
+});
 
 test("the internal services exit respects completion and moves directly to featured projects", () => {
   const app = setup();
@@ -151,23 +176,20 @@ test("services cannot expose featured projects before all categories are visited
   app.cleanup();
 });
 
-test("featured heading consumes one wheel gesture and blocks scrollbar until reveal completes", () => {
+test("featured heading hides before a new gesture returns to services", () => {
   const app = setup();
-  app.controller.navigateToSection("featured-projects");
-  app.flush();
-  const wheel = () => app.handlers.wheel({ deltaY: -60, deltaX: 0, timeStamp: 0, preventDefault() {} });
-  wheel();
-  assert.equal(app.getFeaturedStep(), 1);
-  app.scroller.scrollTop = 3200;
-  app.handlers.scroll();
-  assert.equal(app.scroller.scrollTop, 4400);
+  app.controller.navigateToSection("featured-projects"); app.flush();
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
   app.controller.completeFeaturedReveal();
-  wheel();
-  app.flush();
+  const up = () => app.handlers.wheel({ deltaY: -60, deltaX: 0, timeStamp: 0, preventDefault() {} });
+  up();
+  assert.equal(app.getFeaturedStep(), 0);
+  app.scroller.scrollTop = 3200; app.handlers.scroll();
   assert.equal(app.scroller.scrollTop, 4400);
-  app.clock.advance(180);
-  wheel();
-  app.flush();
+  app.controller.completeFeaturedReveal(false);
+  up(); app.flush();
+  assert.equal(app.scroller.scrollTop, 4400);
+  app.clock.advance(180); up(); app.flush();
   assert.equal(app.getActiveSection(), "services");
   app.cleanup();
 });
@@ -214,7 +236,7 @@ test("rapid keyboard and wheel gestures cannot overlap service reveal animations
   assert.equal(app.clock.pending(), 0);
 });
 
-test("unvisited categories block scrollbar exit while navbar remains available", () => {
+test("unvisited categories do not block reversing the service containers", () => {
   const app = setup();
   app.controller.navigateToSection("services");
   app.flush();
@@ -225,9 +247,11 @@ test("unvisited categories block scrollbar exit while navbar remains available",
   app.scroller.scrollTop = 3190;
   app.handlers.scroll();
   assert.equal(app.scroller.scrollTop, 3200);
-  app.controller.completeServiceCategories(true);
-  app.scroller.scrollTop = 3190;
-  app.handlers.scroll();
+  app.controller.completeServicesStep(1);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  assert.equal(app.getServicesStep(), 0);
+  app.controller.completeServicesStep(0);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
   app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
   app.cleanup();
@@ -331,6 +355,10 @@ test("scrolling back from Services restores the statement before the intro seque
   app.controller.completeServiceCategories(true);
   app.scroller.scrollTop = 3190;
   app.handlers.scroll();
+  app.controller.completeServicesStep(1);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  app.controller.completeServicesStep(0);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
   app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
   assert.equal(app.controller.statementProgress.get(), 1);
@@ -375,7 +403,7 @@ test("Services keeps scroll steps mandatory but the navbar can leave immediately
   assert.equal(app.scroller.scrollTop, 3200);
   app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
   app.controller.completeServicesStep(app.getServicesStep());
-  assert.equal(app.getServicesStep(), 1);
+  assert.equal(app.getServicesStep(), 0);
   app.controller.navigateToSection("home");
   app.flush();
   assert.equal(app.scroller.scrollTop, 0);

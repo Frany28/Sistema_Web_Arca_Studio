@@ -58,9 +58,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const [activeSectionId, setActiveSectionId] = useState(null);
   const activeSectionRef = useRef(null);
   const [featuredStep, setFeaturedStep] = useState(0);
-  const featuredProgressRef = useRef({ step: 0, revealed: false });
-  const completeFeaturedReveal = useCallback(() => {
-    if (activeSectionRef.current === "featured-projects" && featuredProgressRef.current.step === 1) {
+  const featuredProgressRef = useRef({ step: 0, revealed: true });
+  const completeFeaturedReveal = useCallback((visible = true) => {
+    if (activeSectionRef.current === "featured-projects" && featuredProgressRef.current.step === (visible ? 1 : 0)) {
       featuredProgressRef.current.revealed = true;
     }
   }, []);
@@ -71,6 +71,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const completeServiceCategories = useCallback((complete) => {
     servicesProgressRef.current = { ...servicesProgressRef.current, categoriesComplete: complete };
   }, []);
+  const servicesBackRef = useRef(null);
+  const retreatFromServices = useCallback(() => servicesBackRef.current?.(), []);
   const servicesExitRef = useRef(null);
   const advanceFromServices = useCallback(() => servicesExitRef.current?.(), []);
   const sectionNavigationRef = useRef(null);
@@ -232,7 +234,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         changeServicesStep(0);
         servicesProgressRef.current = createServicesProgress();
       }
-      featuredProgressRef.current = { step: 0, revealed: false };
+      featuredProgressRef.current = { step: 0, revealed: true };
       setFeaturedStep(0);
       selectSection(sectionId === "home" ? null : sectionId);
       commitNavigationState(createScrollbarHomeScrollState(
@@ -276,18 +278,45 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const advanceContent = (direction) => {
+      if (activeTween || isProgrammaticScroll) return;
       if (isFeatured()) {
-        if (featuredProgressRef.current.step === 0) {
-          featuredProgressRef.current = { step: 1, revealed: false };
-          setFeaturedStep(1);
-        } else if (featuredProgressRef.current.revealed && direction === HOME_SCROLL_DIRECTIONS.UP) {
+        const progress = featuredProgressRef.current;
+        if (!progress.revealed) return;
+        if (direction === HOME_SCROLL_DIRECTIONS.UP && progress.step === 0) {
           navigateSection("services", { preserveServices: true });
+        } else {
+          const step = direction === HOME_SCROLL_DIRECTIONS.UP ? 0 : 1;
+          if (step === progress.step) return;
+          featuredProgressRef.current = { step, revealed: false };
+          setFeaturedStep(step);
+        }
+      } else if (direction === HOME_SCROLL_DIRECTIONS.UP) {
+        if (!servicesProgressRef.current.revealed) return;
+        if (currentServicesStep === 0) {
+          setContentMode(false);
+          selectSection(null);
+          resetWheelGesture();
+          alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
+          return;
+        }
+        servicesProgressRef.current = { ...servicesProgressRef.current, step: currentServicesStep - 1, revealed: false };
+        changeServicesStep(currentServicesStep - 1);
+        const top = getSection("services")?.offsetTop ?? 0;
+        if (scroller.scrollTop > top + 1) {
+          isProgrammaticScroll = true;
+          activeTween = gsap.to(scroller, {
+            scrollTo: { y: top, autoKill: false }, duration: reduceMotion ? 0 : SCROLL_STEP_DURATION_SECONDS,
+            ease: "power2.inOut", onComplete: () => { activeTween = undefined; isProgrammaticScroll = false; },
+          });
         }
       } else if (currentServicesStep < 2) {
         advanceServices();
-      } else if (servicesAtEnd() && direction === HOME_SCROLL_DIRECTIONS.DOWN) {
+      } else if (servicesAtEnd()) {
         navigateSection("featured-projects");
       }
+    };
+    servicesBackRef.current = () => {
+      if (contentMode && activeSectionRef.current === "services") advanceContent(HOME_SCROLL_DIRECTIONS.UP);
     };
 
     const handleWheel = (event) => {
@@ -296,7 +325,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         event.preventDefault();
         return;
       }
-      if (contentMode && !isFeatured() && currentServicesStep === 2 && servicesProgressRef.current.revealed && !(servicesAtEnd() && event.deltaY > 0)) return;
+      if (contentMode && !isFeatured() && currentServicesStep === 2 && servicesProgressRef.current.revealed && !(servicesAtEnd() && event.deltaY > 0) && !(event.deltaY < 0 && scroller.scrollTop <= (getSection("services")?.offsetTop ?? 0) + 1)) return;
       const delta = normalizeWheelDelta(event, scroller.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
@@ -456,7 +485,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
       if (contentMode) {
-        if (!isFeatured() && currentServicesStep === 2 && servicesProgressRef.current.revealed && !(servicesAtEnd() && direction === HOME_SCROLL_DIRECTIONS.DOWN)) return;
+        if (!isFeatured() && currentServicesStep === 2 && servicesProgressRef.current.revealed && !(servicesAtEnd() && direction === HOME_SCROLL_DIRECTIONS.DOWN) && !(direction === HOME_SCROLL_DIRECTIONS.UP && scroller.scrollTop <= (getSection("services")?.offsetTop ?? 0) + 1)) return;
         event.preventDefault();
         if (!event.repeat) advanceContent(direction);
         return;
@@ -512,7 +541,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         const top = getSection("featured-projects")?.offsetTop ?? 0;
         const returning = scroller.scrollTop < top - 1;
         scroller.scrollTop = top;
-        if (returning && featuredProgressRef.current.revealed) navigateSection("services", { preserveServices: true });
+        if (returning) advanceContent(HOME_SCROLL_DIRECTIONS.UP);
         return;
       }
       if (contentMode && currentServicesStep === 2 && servicesProgressRef.current.revealed && scroller.scrollTop > servicesEnd() + 1) {
@@ -530,14 +559,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const servicesTop = [...scroller.querySelectorAll("section[id]")]
         .find((section) => section.id === "services")?.offsetTop;
       if (contentMode && servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
-        if (!canLeaveServices(servicesProgressRef.current)) {
-          scroller.scrollTop = servicesTop;
-          return;
-        }
-        setContentMode(false);
-        selectSection(null);
-        resetWheelGesture();
-        alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
+        scroller.scrollTop = servicesTop;
+        advanceContent(HOME_SCROLL_DIRECTIONS.UP);
         return;
       }
       if (scroller.scrollTop > statementTop + 1) {
@@ -632,6 +655,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     window.addEventListener("orientationchange", handleResize);
 
     return () => {
+      servicesBackRef.current = null;
       servicesExitRef.current = null;
       sectionNavigationRef.current = null;
       window.cancelAnimationFrame(resizeFrame);
@@ -656,6 +680,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    retreatFromServices,
     advanceFromServices,
     activeSectionId,
     featuredStep,

@@ -12,7 +12,7 @@ function ServicesHeading({ eyebrow, title, description, visible = false, onRevea
       initial={false}
       animate={{ clipPath: getSectionRevealClip(visible) }}
       transition={getSectionRevealTransition(visible, reduceMotion)}
-      onAnimationComplete={() => { if (visible) onRevealComplete?.(1); }}
+      onAnimationComplete={() => { onRevealComplete?.(visible ? 1 : 0); }}
     >
       <div
         className="flex w-full max-w-[786px] flex-col items-center gap-[24px] text-center"

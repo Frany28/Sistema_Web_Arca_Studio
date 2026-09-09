@@ -6,7 +6,7 @@ import { visitServiceCategory } from "../utils/servicesProgress.js";
 
 const CATEGORY_CROSSFADE_DURATION = 0.2;
 
-function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true, onCategoriesComplete, onNextSection) {
+function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true, onCategoriesComplete, onNextSection, onPreviousSection) {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndexRef = useRef(0);
@@ -47,6 +47,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     const context = gsap.context(() => select(selectedIndexRef.current, true), section);
     selectRef.current = select;
     const advance = (direction) => {
+      if (direction < 0 && selectedIndexRef.current === 0) { onPreviousSection?.(); return; }
       if (direction > 0 && selectedIndexRef.current === categories.length - 1 && visited.size === categories.length) {
         onNextSection?.();
         return;
@@ -103,7 +104,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       selectRef.current = null;
       context.revert();
     };
-  }, [categories, enabled, layoutRef, onCategoriesComplete, onNextSection, reduceMotion, sectionRef]);
+  }, [categories, enabled, layoutRef, onCategoriesComplete, onNextSection, onPreviousSection, reduceMotion, sectionRef]);
 
   const selectCategory = (index) => {
     if (index >= 0 && index < categories.length) selectRef.current?.(index);

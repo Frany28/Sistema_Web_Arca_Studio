@@ -5,11 +5,11 @@ import {
   SERVICES_HEADING,
 } from "../servicesContent.js";
 
-function ServicesSection({ step = 0, onRevealComplete, onCategoriesComplete, onNextSection }) {
+function ServicesSection({ step = 0, onRevealComplete, onCategoriesComplete, onNextSection, onPreviousSection }) {
   return (
     <section id="services" aria-label="Servicios" className="dark flex min-h-dvh flex-col gap-[var(--spacing-gap-8)] bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)] pb-[var(--spacing-gap-8)]">
       <ServicesHeading {...SERVICES_HEADING} visible={step >= 1} onRevealComplete={onRevealComplete} />
-      <ServicesCategoryShowcase key={step >= 2 ? "visible" : "hidden"} categories={SERVICES_CATEGORIES} visible={step >= 2} onRevealComplete={onRevealComplete} onCategoriesComplete={onCategoriesComplete} onNextSection={onNextSection} />
+      <ServicesCategoryShowcase categories={SERVICES_CATEGORIES} visible={step >= 2} onRevealComplete={onRevealComplete} onCategoriesComplete={onCategoriesComplete} onNextSection={onNextSection} onPreviousSection={onPreviousSection} />
     </section>
   );
 }

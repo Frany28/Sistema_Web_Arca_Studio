@@ -9,6 +9,7 @@ function setup(reducedMotion = false) {
   const clock = createFakeClock();
   const completion = [];
   const exits = [];
+  const returns = [];
   const durations = [];
   const handlers = {};
   const effects = [];
@@ -38,10 +39,19 @@ function setup(reducedMotion = false) {
     .replace(/import[^;]+;\s*/g, "")
     .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
   const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
-  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), () => exits.push(true));
+  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), () => exits.push(true), () => returns.push(true));
   const cleanup = effects[0]();
-  return { handlers, selected, cleanup, api, clock, completion, durations, exits };
+  return { handlers, selected, cleanup, api, clock, completion, durations, exits, returns };
 }
+
+test("scrolling up at the first service releases the selector without completing categories", () => {
+  const app = setup();
+  const up = () => app.handlers.wheel({ deltaY: -60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
+  up(); up();
+  assert.equal(app.returns.length, 1);
+  assert.equal(app.completion.at(-1), false);
+  app.cleanup();
+});
 
 test("the next wheel gesture after the last visited service requests the next section", () => {
   const app = setup();

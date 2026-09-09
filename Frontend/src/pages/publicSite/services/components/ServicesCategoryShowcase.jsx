@@ -4,14 +4,14 @@ import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/se
 import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
 import "./ServicesCategoryShowcase.css";
 
-function ServicesCategoryShowcase({ categories, visible = false, onRevealComplete, onCategoriesComplete, onNextSection }) {
+function ServicesCategoryShowcase({ categories, visible = false, onRevealComplete, onCategoriesComplete, onNextSection, onPreviousSection }) {
   const reduceMotion = useReducedMotion();
   const [revealed, setRevealed] = useState(false);
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
   const { activeIndex, selectCategory } = useServicesCategoryScroll(
-    sectionRef, layoutRef, categories, visible && revealed, onCategoriesComplete, onNextSection,
+    sectionRef, layoutRef, categories, visible && revealed, onCategoriesComplete, onNextSection, onPreviousSection,
   );
   const activeCategory = categories[activeIndex] ?? categories[0];
 
@@ -49,7 +49,10 @@ function ServicesCategoryShowcase({ categories, visible = false, onRevealComplet
         animate={{ clipPath: getSectionRevealClip(visible) }}
         transition={getSectionRevealTransition(visible, reduceMotion)}
         onAnimationComplete={() => {
-          if (!visible) return;
+          if (!visible) {
+            if (revealed) { setRevealed(false); onRevealComplete?.(1); }
+            return;
+          }
           setRevealed(true);
           onRevealComplete?.(2);
         }}

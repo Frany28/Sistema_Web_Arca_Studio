@@ -15,7 +15,7 @@ function FeaturedProjectsSection({ visible = false, onRevealComplete }) {
         initial={false}
         animate={{ clipPath: getSectionRevealClip(visible) }}
         transition={getSectionRevealTransition(visible, reduceMotion)}
-        onAnimationComplete={() => { if (visible) onRevealComplete?.(); }}
+        onAnimationComplete={() => { onRevealComplete?.(visible); }}
         className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[48px]"
         data-node-id="4856:5032"
       >
