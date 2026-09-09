@@ -98,7 +98,7 @@ function OpeningHome() {
           </div>
 
           <HomeSections
-            active={homeActive}
+            active={homeActive && !contentScrollActive}
             navigationState={navigationState}
             onInitialTitleReveal={completeInitialTitleReveal}
             onTitleRevealComplete={completeTitleReveal}
@@ -107,7 +107,7 @@ function OpeningHome() {
           />
           {initialScrollReady && <ServicesSection step={contentScrollActive ? servicesStep : 0}
             onRevealComplete={completeServicesStep} onCategoriesComplete={completeServiceCategories}
-            onExit={navigateToSection} />}
+            />}
         </main>
       </Motion.div>
     </div>

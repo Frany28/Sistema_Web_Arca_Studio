@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { visitServiceCategory } from "../src/pages/publicSite/services/utils/servicesProgress.js";
+import { createFakeClock } from "./helpers/fakeClock.js";
 import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 
-function setup() {
+function setup(reducedMotion = false) {
+  const clock = createFakeClock();
+  const completion = [];
+  const durations = [];
   const handlers = {};
   const effects = [];
   const selected = [];
@@ -18,24 +23,63 @@ function setup() {
   };
   Object.defineProperty(section, "scrollTop", { set() { assert.fail("El selector no debe desplazar la p?gina"); } });
   const dependencies = {
-    ...navigation,
+    ...navigation, visitServiceCategory,
     useLayoutEffect: (effect) => effects.push(effect),
     useRef: (current) => ({ current }), useState: (value) => [value, (next) => selected.push(next)],
-    useReducedMotion: () => false,
-    gsap: { to() {}, set() {}, killTweensOf() {}, context(fn) { fn(); return { revert() {} }; } },
+    useReducedMotion: () => reducedMotion,
+    gsap: { to(target, options) { durations.push(options.duration); }, set() {}, killTweensOf() {}, context(fn) { fn(); return { revert() {} }; } },
     getComputedStyle: () => ({ lineHeight: "30" }),
     ResizeObserver: class { observe() {} disconnect() {} },
     document: { fonts: { ready: Promise.resolve() } },
-    setTimeout() {}, clearTimeout() {},
+    setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout,
   };
   const source = readFileSync(new URL("../src/pages/publicSite/services/hooks/useServicesCategoryScroll.js", import.meta.url), "utf8")
-    .replace(/import[^;]+;s*/g, "")
+    .replace(/import[^;]+;\s*/g, "")
     .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
   const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
-  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}]);
+  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value));
   const cleanup = effects[0]();
-  return { handlers, selected, cleanup, api };
+  return { handlers, selected, cleanup, api, clock, completion, durations };
 }
+
+test("internal wheel consumes inertia, rearms after idle and cleans its timer", () => {
+  const app = setup();
+  const wheel = () => app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
+  wheel(); wheel();
+  assert.equal(app.selected.at(-1), 1);
+  app.clock.advance(180);
+  wheel();
+  assert.equal(app.selected.at(-1), 2);
+  assert.equal(app.completion.at(-1), true);
+  app.cleanup();
+  assert.equal(app.clock.pending(), 0);
+});
+
+test("manual tab selection must visit every category before signaling completion", () => {
+  const app = setup();
+  app.api.selectCategory(2);
+  assert.equal(app.completion.at(-1), false);
+  app.api.selectCategory(1);
+  assert.equal(app.completion.at(-1), true);
+  app.cleanup();
+});
+
+test("reduced motion still allows category selection with zero animation duration", () => {
+  const app = setup(true);
+  app.api.selectCategory(1);
+  assert.equal(app.selected.at(-1), 1);
+  assert.ok(app.durations.every((duration) => duration === 0));
+  app.cleanup();
+});
+
+test("internal selector ignores Ctrl-wheel zoom and horizontal gestures", () => {
+  const app = setup();
+  const fail = () => assert.fail("Native gesture was intercepted");
+  app.handlers.wheel({ deltaX: 0, deltaY: -50, ctrlKey: true, preventDefault: fail });
+  app.handlers.wheel({ deltaX: 100, deltaY: 1, preventDefault: fail });
+  assert.equal(app.selected.at(-1), 0);
+  app.cleanup();
+});
 
 test("wheel changes categories internally and contains scrolling at both boundaries", () => {
   const app = setup();

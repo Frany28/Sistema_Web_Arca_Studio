@@ -7,7 +7,6 @@ import {
   useTransform,
 } from "motion/react";
 
-import Button from "../../../../../components/ui/Button/Button.jsx";
 import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js";
 
 import { getHomeStatementVisualState } from "../../utils/homeScrollNavigation.js";
@@ -28,8 +27,7 @@ function HomeStatementPanel({
   webmSource,
 }) {
   const reduceMotion = useReducedMotion();
-  const [playbackPreference, setPlaybackPreference] = useState(null);
-  const videoPlaying = playbackPreference ?? !reduceMotion;
+  const videoPlaying = !reduceMotion;
   const focusGlyphRef = useRef(null);
   const maskTextRef = useRef(null);
   const videoRef = useRef(null);
@@ -147,12 +145,6 @@ function HomeStatementPanel({
           </>
         ) : null}
       </video>
-
-      <div className="absolute bottom-4 right-4 z-10">
-        <Button theme="Primary" type="Outline" size="S" fitContent onClick={() => setPlaybackPreference(!videoPlaying)}>
-          {videoPlaying ? "Pausar video" : "Reproducir video"}
-        </Button>
-      </div>
 
       <div
         className="pointer-events-none absolute inset-0 bg-[var(--color-neutral-950-uniform)] opacity-20 mix-blend-multiply"

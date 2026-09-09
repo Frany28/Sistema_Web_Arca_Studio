@@ -53,6 +53,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const titleRevealLockedRef = useRef(false);
   const statementProgress = useMotionValue(0);
   const [contentScrollActive, setContentScrollActive] = useState(false);
+  const contentModeRef = useRef(false);
   const [servicesStep, setServicesStep] = useState(0);
   const servicesProgressRef = useRef(createServicesProgress());
   const completeServicesStep = useCallback((step) => {
@@ -91,8 +92,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let isProgrammaticScroll = false;
     let ignoreNextScrollEnd = false;
     let nativeScrollOriginState = null;
-    let contentMode = false;
-    let currentServicesStep = 0;
+    let contentMode = contentModeRef.current;
+    let currentServicesStep = servicesProgressRef.current.step;
     const changeServicesStep = (step) => {
       currentServicesStep = step;
       setServicesStep(step);
@@ -182,6 +183,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const setContentMode = (value) => {
       contentMode = value;
+      contentModeRef.current = value;
       setContentScrollActive(value);
       window.clearTimeout(scrollSettleTimer);
       nativeScrollOriginState = null;
@@ -546,8 +548,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     isProgrammaticScroll = true;
     ignoreNextScrollEnd = supportsScrollEnd;
-    scroller.scrollTop =
-      panels[navigationStateRef.current.panelIndex]?.offsetTop ?? 0;
+    if (!contentMode) {
+      scroller.scrollTop = panels[navigationStateRef.current.panelIndex]?.offsetTop ?? 0;
+    }
     resizeFrame = window.requestAnimationFrame(() => {
       isProgrammaticScroll = false;
     });

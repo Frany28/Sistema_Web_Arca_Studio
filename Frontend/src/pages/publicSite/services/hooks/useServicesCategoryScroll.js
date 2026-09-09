@@ -11,6 +11,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndexRef = useRef(0);
   const selectRef = useRef(null);
+  const visitedRef = useRef(new Set());
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -23,8 +24,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     let idleTimer;
     let touch;
     let disposed = false;
-    let visited = new Set();
-    onCategoriesComplete?.(false);
+    let visited = visitedRef.current;
     const indicatorHeight = (index) => {
       if (index === 0) return parseFloat(getComputedStyle(tabs[0]).lineHeight) * 1.6;
       const nextTab = tabs[index + 1];
@@ -36,6 +36,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       setActiveIndex(next);
       const progress = visitServiceCategory(visited, next, categories.length);
       visited = progress.visited;
+      visitedRef.current = visited;
       onCategoriesComplete?.(progress.complete);
       const duration = reduceMotion || immediate ? 0 : CATEGORY_CROSSFADE_DURATION;
       slides.forEach((slide, slideIndex) => {
@@ -49,7 +50,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       if (event.ctrlKey) return;
       const delta = normalizeWheelDelta(event, layout.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
-      // El gesto pertenece al selector, incluso en su primera y ?ltima categor?a.
+      // El gesto pertenece al selector, incluso en su primera y última categoría.
       event.preventDefault();
       event.stopPropagation();
       clearTimeout(idleTimer);

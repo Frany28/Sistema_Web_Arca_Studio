@@ -299,12 +299,12 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /muted/);
   assert.match(statementPanelSource, /loop/);
   assert.match(statementPanelSource, /playsInline/);
-  assert.match(statementPanelSource, /video\.defaultMuted = true/);
-  assert.match(statementPanelSource, /addEventListener\("canplay"/);
-  assert.match(statementPanelSource, /playMutedVideo\(video\)/);
-  assert.match(statementPanelSource, /if \(!active\) \{/);
-  assert.match(statementPanelSource, /video\.currentTime = 0/);
-  assert.match(statementPanelSource, /\[active, mediaEnabled\]/);
+  assert.match(statementPanelSource, /connectStatementPlayback/);
+
+
+
+  assert.match(statementPanelSource, /videoRef\.current\.currentTime = 0/);
+  assert.match(statementPanelSource, /\[active, mediaEnabled, videoPlaying\]/);
   assert.doesNotMatch(scrollControllerSource, /restartStatementPlayback/);
   assert.doesNotMatch(homeSectionsSource, /playbackVersion/);
   assert.match(statementPanelSource, /preload=\{mediaEnabled \? "auto" : "none"\}/);
@@ -360,7 +360,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesHeadingSource, /getSectionRevealTransition/);
   assert.match(servicesHeadingSource, /getSectionRevealClip/);
   assert.match(servicesCategoryShowcaseSource, /getSectionRevealTransition/);
-  assert.match(servicesCategoryShowcaseSource, /inert=\{!visible\}/);
+  assert.match(servicesCategoryShowcaseSource, /inert=\{!visible \|\| !revealed\}/);
   assert.match(servicesPageSource, /step = 0/);
   assert.match(servicesHeadingSource, /useReducedMotion/);
   assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
@@ -7,7 +7,6 @@ import "./ServicesCategoryShowcase.css";
 function ServicesCategoryShowcase({ categories, visible = false, onRevealComplete, onCategoriesComplete }) {
   const reduceMotion = useReducedMotion();
   const [revealed, setRevealed] = useState(false);
-  useEffect(() => { if (!visible) setRevealed(false); }, [visible]);
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
@@ -46,7 +45,7 @@ function ServicesCategoryShowcase({ categories, visible = false, onRevealComplet
     >
       <Motion.div
         ref={layoutRef}
-        initial={false}
+        initial={{ clipPath: getSectionRevealClip(false) }}
         animate={{ clipPath: getSectionRevealClip(visible) }}
         transition={getSectionRevealTransition(visible, reduceMotion)}
         onAnimationComplete={() => {
