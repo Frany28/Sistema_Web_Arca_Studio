@@ -71,6 +71,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const completeServiceCategories = useCallback((complete) => {
     servicesProgressRef.current = { ...servicesProgressRef.current, categoriesComplete: complete };
   }, []);
+  const servicesExitRef = useRef(null);
+  const advanceFromServices = useCallback(() => servicesExitRef.current?.(), []);
   const sectionNavigationRef = useRef(null);
   const navigateToSection = useCallback((sectionId) => {
     sectionNavigationRef.current?.(sectionId);
@@ -258,6 +260,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           setContentMode(sectionId !== "home");
         },
       });
+    };
+    servicesExitRef.current = () => {
+      if (contentMode && activeSectionRef.current === "services") navigateSection("featured-projects");
     };
     sectionNavigationRef.current = (sectionId) => navigateSection(sectionId, { direct: true });
 
@@ -627,6 +632,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     window.addEventListener("orientationchange", handleResize);
 
     return () => {
+      servicesExitRef.current = null;
       sectionNavigationRef.current = null;
       window.cancelAnimationFrame(resizeFrame);
       window.clearTimeout(scrollSettleTimer);
@@ -650,6 +656,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    advanceFromServices,
     activeSectionId,
     featuredStep,
     completeFeaturedReveal,

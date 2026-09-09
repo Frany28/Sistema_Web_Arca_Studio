@@ -8,6 +8,7 @@ import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNaviga
 function setup(reducedMotion = false) {
   const clock = createFakeClock();
   const completion = [];
+  const exits = [];
   const durations = [];
   const handlers = {};
   const effects = [];
@@ -37,10 +38,33 @@ function setup(reducedMotion = false) {
     .replace(/import[^;]+;\s*/g, "")
     .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
   const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
-  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value));
+  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), () => exits.push(true));
   const cleanup = effects[0]();
-  return { handlers, selected, cleanup, api, clock, completion, durations };
+  return { handlers, selected, cleanup, api, clock, completion, durations, exits };
 }
+
+test("the next wheel gesture after the last visited service requests the next section", () => {
+  const app = setup();
+  const wheel = () => app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
+  wheel();
+  app.clock.advance(180);
+  wheel();
+  wheel();
+  assert.equal(app.exits.length, 0);
+  app.clock.advance(180);
+  wheel();
+  wheel();
+  assert.equal(app.exits.length, 1);
+  app.cleanup();
+});
+
+test("jumping straight to the last service does not allow exit with unvisited categories", () => {
+  const app = setup();
+  app.api.selectCategory(2);
+  app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
+  assert.equal(app.exits.length, 0);
+  app.cleanup();
+});
 
 test("internal wheel consumes inertia, rearms after idle and cleans its timer", () => {
   const app = setup();

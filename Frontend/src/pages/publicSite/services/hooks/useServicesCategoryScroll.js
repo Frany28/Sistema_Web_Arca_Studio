@@ -6,7 +6,7 @@ import { visitServiceCategory } from "../utils/servicesProgress.js";
 
 const CATEGORY_CROSSFADE_DURATION = 0.2;
 
-function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true, onCategoriesComplete) {
+function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true, onCategoriesComplete, onNextSection) {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndexRef = useRef(0);
@@ -46,17 +46,24 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     };
     const context = gsap.context(() => select(selectedIndexRef.current, true), section);
     selectRef.current = select;
+    const advance = (direction) => {
+      if (direction > 0 && selectedIndexRef.current === categories.length - 1 && visited.size === categories.length) {
+        onNextSection?.();
+        return;
+      }
+      select(selectedIndexRef.current + direction);
+    };
     const wheel = (event) => {
       if (event.ctrlKey) return;
       const delta = normalizeWheelDelta(event, layout.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
-      // El gesto pertenece al selector, incluso en su primera y última categoría.
+      // El selector consume el gesto y delega la salida al controlador de Home.
       event.preventDefault();
       event.stopPropagation();
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => { gesture = createWheelGestureState(); }, 180);
       gesture = advanceWheelGesture(gesture, delta.y, 32, event.timeStamp);
-      if (gesture.triggeredDirection !== null) select(selectedIndexRef.current + gesture.triggeredDirection);
+      if (gesture.triggeredDirection !== null) advance(gesture.triggeredDirection);
     };
     const pointerDown = (event) => {
       if (event.pointerType !== "touch" || !event.isPrimary) return;
@@ -68,7 +75,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       if (direction === null) return;
       event.preventDefault();
       event.stopPropagation();
-      select(selectedIndexRef.current + direction);
+      advance(direction);
       touch = null;
     };
     const clearTouch = () => { touch = null; };
@@ -96,7 +103,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       selectRef.current = null;
       context.revert();
     };
-  }, [categories, enabled, layoutRef, onCategoriesComplete, reduceMotion, sectionRef]);
+  }, [categories, enabled, layoutRef, onCategoriesComplete, onNextSection, reduceMotion, sectionRef]);
 
   const selectCategory = (index) => {
     if (index >= 0 && index < categories.length) selectRef.current?.(index);

@@ -4,14 +4,14 @@ import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/se
 import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
 import "./ServicesCategoryShowcase.css";
 
-function ServicesCategoryShowcase({ categories, visible = false, onRevealComplete, onCategoriesComplete }) {
+function ServicesCategoryShowcase({ categories, visible = false, onRevealComplete, onCategoriesComplete, onNextSection }) {
   const reduceMotion = useReducedMotion();
   const [revealed, setRevealed] = useState(false);
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
   const { activeIndex, selectCategory } = useServicesCategoryScroll(
-    sectionRef, layoutRef, categories, visible && revealed, onCategoriesComplete,
+    sectionRef, layoutRef, categories, visible && revealed, onCategoriesComplete, onNextSection,
   );
   const activeCategory = categories[activeIndex] ?? categories[0];
 

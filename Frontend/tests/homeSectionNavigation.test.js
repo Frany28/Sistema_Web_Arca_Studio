@@ -104,6 +104,26 @@ for (const reducedMotion of [false, true]) {
   });
 }
 
+test("the internal services exit respects completion and moves directly to featured projects", () => {
+  const app = setup();
+  app.controller.navigateToSection("services");
+  app.flush();
+  app.controller.advanceFromServices();
+  app.flush();
+  assert.equal(app.getActiveSection(), "services");
+  for (const step of [1, 2]) {
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    app.controller.completeServicesStep(step);
+  }
+  app.controller.completeServiceCategories(true);
+  app.controller.advanceFromServices();
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 4400);
+  assert.equal(app.getActiveSection(), "featured-projects");
+  assert.equal(app.getFeaturedStep(), 0);
+  app.cleanup();
+});
+
 test("services cannot expose featured projects before all categories are visited", () => {
   const app = setup();
   app.controller.navigateToSection("services");

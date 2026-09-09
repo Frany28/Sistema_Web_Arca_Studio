@@ -40,6 +40,7 @@ function OpeningHome() {
     servicesStep,
     completeServicesStep,
     completeServiceCategories,
+    advanceFromServices,
     scrollerRef,
     statementPanelIndex,
     statementProgress,
@@ -114,6 +115,7 @@ function OpeningHome() {
                 step={servicesStep}
                 onRevealComplete={completeServicesStep}
                 onCategoriesComplete={completeServiceCategories}
+                onNextSection={advanceFromServices}
               />
               <FeaturedProjectsSection
                 visible={contentScrollActive && activeSectionId === "featured-projects" && featuredStep === 1}
