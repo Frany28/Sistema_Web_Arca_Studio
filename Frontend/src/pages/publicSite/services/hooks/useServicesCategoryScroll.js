@@ -24,6 +24,8 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     let idleTimer;
     let touch;
     let disposed = false;
+    let selectionVersion = 0;
+    let selectionComplete = false;
     let visited = visitedRef.current;
     const indicatorHeight = (index) => {
       if (index === 0) return parseFloat(getComputedStyle(tabs[0]).lineHeight) * 1.6;
@@ -34,13 +36,23 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       const next = Math.max(0, Math.min(categories.length - 1, index));
       selectedIndexRef.current = next;
       setActiveIndex(next);
-      const progress = visitServiceCategory(visited, next, categories.length);
-      visited = progress.visited;
-      visitedRef.current = visited;
-      onCategoriesComplete?.(progress.complete);
+      const version = ++selectionVersion;
+      selectionComplete = false;
+      onCategoriesComplete?.(false);
+      const finishSelection = () => {
+        if (disposed || version !== selectionVersion) return;
+        const progress = visitServiceCategory(visited, next, categories.length);
+        visited = progress.visited;
+        visitedRef.current = visited;
+        selectionComplete = true;
+        onCategoriesComplete?.(progress.complete);
+      };
       const duration = reduceMotion || immediate ? 0 : CATEGORY_CROSSFADE_DURATION;
       slides.forEach((slide, slideIndex) => {
-        gsap.to(slide, { autoAlpha: slideIndex === next ? 1 : 0, duration, overwrite: true });
+        gsap.to(slide, {
+          autoAlpha: slideIndex === next ? 1 : 0, duration, overwrite: true,
+          onComplete: slideIndex === next ? finishSelection : undefined,
+        });
       });
       gsap.to(indicator, { height: indicatorHeight(next), duration, overwrite: true });
     };
@@ -48,7 +60,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     selectRef.current = select;
     const advance = (direction) => {
       if (direction < 0 && selectedIndexRef.current === 0) { onPreviousSection?.(); return; }
-      if (direction > 0 && selectedIndexRef.current === categories.length - 1 && visited.size === categories.length) {
+      if (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && visited.size === categories.length) {
         onNextSection?.();
         return;
       }

@@ -5,7 +5,8 @@ import { visitServiceCategory } from "../src/pages/publicSite/services/utils/ser
 import { createFakeClock } from "./helpers/fakeClock.js";
 import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 
-function setup(reducedMotion = false) {
+function setup(reducedMotion = false, deferAnimations = false) {
+  const animations = [];
   const clock = createFakeClock();
   const completion = [];
   const exits = [];
@@ -29,7 +30,11 @@ function setup(reducedMotion = false) {
     useLayoutEffect: (effect) => effects.push(effect),
     useRef: (current) => ({ current }), useState: (value) => [value, (next) => selected.push(next)],
     useReducedMotion: () => reducedMotion,
-    gsap: { to(target, options) { durations.push(options.duration); }, set() {}, killTweensOf() {}, context(fn) { fn(); return { revert() {} }; } },
+    gsap: { to(target, options) {
+      durations.push(options.duration);
+      if (deferAnimations && options.duration > 0) animations.push(() => options.onComplete?.());
+      else options.onComplete?.();
+    }, set() {}, killTweensOf() {}, context(fn) { fn(); return { revert() {} }; } },
     getComputedStyle: () => ({ lineHeight: "30" }),
     ResizeObserver: class { observe() {} disconnect() {} },
     document: { fonts: { ready: Promise.resolve() } },
@@ -41,8 +46,22 @@ function setup(reducedMotion = false) {
   const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
   const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), () => exits.push(true), () => returns.push(true));
   const cleanup = effects[0]();
-  return { handlers, selected, cleanup, api, clock, completion, durations, exits, returns };
+  return { handlers, selected, cleanup, api, clock, completion, durations, exits, returns,
+    finishAnimations: () => { while (animations.length) animations.shift()(); } };
 }
+
+test("skipping a service before its transition ends cannot unlock downward navigation", () => {
+  const app = setup(false, true);
+  app.api.selectCategory(1);
+  app.api.selectCategory(2);
+  app.finishAnimations();
+  assert.equal(app.completion.at(-1), false);
+  app.api.selectCategory(1);
+  assert.equal(app.completion.at(-1), false);
+  app.finishAnimations();
+  assert.equal(app.completion.at(-1), true);
+  app.cleanup();
+});
 
 test("scrolling up at the first service releases the selector without completing categories", () => {
   const app = setup();
