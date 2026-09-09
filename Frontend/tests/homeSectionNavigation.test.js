@@ -24,9 +24,10 @@ function setup(reduceMotion = false) {
   const handlers = {};
   const panels = [0, 800, 1600, 2400].map((offsetTop) => ({ offsetTop }));
   const services = { id: "services", offsetTop: 3200 };
+  const featured = { id: "featured-projects", offsetTop: 4400 };
   const scroller = {
     scrollTop: 0, clientHeight: 800,
-    querySelectorAll: () => [services],
+    querySelectorAll: () => [services, featured],
     addEventListener: (type, handler) => { handlers[type] = handler; },
     removeEventListener: (type) => { delete handlers[type]; },
   };
@@ -77,8 +78,95 @@ function setup(reduceMotion = false) {
     while (frames.length) frames.shift()();
   };
   flush();
-  return { controller, handlers, scroller, flush, clock, getServicesStep: () => states[2], cleanup: () => cleanups.forEach((fn) => fn?.()) };
+  return { controller, handlers, scroller, featured, flush, clock, getActiveSection: () => states[3], getFeaturedStep: () => states[4], getServicesStep: () => states[2], cleanup: () => cleanups.forEach((fn) => fn?.()) };
 }
+
+for (const reducedMotion of [false, true]) {
+  test(`navbar jumps to featured projects and tracks its active item (reduced motion: ${reducedMotion})`, () => {
+    const app = setup(reducedMotion);
+    app.controller.navigateToSection("services");
+    app.controller.navigateToSection("featured-projects");
+    app.flush();
+    assert.equal(app.scroller.scrollTop, 4400);
+    assert.equal(app.getActiveSection(), "featured-projects");
+    assert.equal(app.getFeaturedStep(), 0);
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    assert.equal(app.getFeaturedStep(), 1);
+    app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+    app.flush();
+    assert.equal(app.scroller.scrollTop, 4400);
+    app.controller.completeFeaturedReveal();
+    app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+    app.flush();
+    assert.equal(app.scroller.scrollTop, 3200);
+    assert.equal(app.getActiveSection(), "services");
+    app.cleanup();
+  });
+}
+
+test("services cannot expose featured projects before all categories are visited", () => {
+  const app = setup();
+  app.controller.navigateToSection("services");
+  app.flush();
+  for (const step of [1, 2]) {
+    app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+    app.controller.completeServicesStep(step);
+  }
+  app.scroller.scrollTop = 4300;
+  app.handlers.scroll();
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 3600);
+  assert.equal(app.getActiveSection(), "services");
+  app.controller.completeServiceCategories(true);
+  app.handlers.keydown({ key: "PageDown", preventDefault() {} });
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 4400);
+  assert.equal(app.getActiveSection(), "featured-projects");
+  assert.equal(app.getFeaturedStep(), 0);
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  app.controller.completeFeaturedReveal();
+  app.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  app.flush();
+  assert.equal(app.getServicesStep(), 2);
+  app.cleanup();
+});
+
+test("featured heading consumes one wheel gesture and blocks scrollbar until reveal completes", () => {
+  const app = setup();
+  app.controller.navigateToSection("featured-projects");
+  app.flush();
+  const wheel = () => app.handlers.wheel({ deltaY: -60, deltaX: 0, timeStamp: 0, preventDefault() {} });
+  wheel();
+  assert.equal(app.getFeaturedStep(), 1);
+  app.scroller.scrollTop = 3200;
+  app.handlers.scroll();
+  assert.equal(app.scroller.scrollTop, 4400);
+  app.controller.completeFeaturedReveal();
+  wheel();
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 4400);
+  app.clock.advance(180);
+  wheel();
+  app.flush();
+  assert.equal(app.getActiveSection(), "services");
+  app.cleanup();
+});
+
+test("navbar can interrupt the featured reveal and resize keeps the new section aligned", () => {
+  const app = setup();
+  app.controller.navigateToSection("featured-projects");
+  app.flush();
+  app.featured.offsetTop = 4700;
+  app.handlers.resize();
+  assert.equal(app.scroller.scrollTop, 4700);
+  app.handlers.keydown({ key: "ArrowDown", preventDefault() {} });
+  app.controller.navigateToSection("home");
+  app.controller.completeFeaturedReveal();
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 0);
+  assert.equal(app.getActiveSection(), null);
+  app.cleanup();
+});
 
 test("rapid keyboard and wheel gestures cannot overlap service reveal animations", () => {
   const app = setup();

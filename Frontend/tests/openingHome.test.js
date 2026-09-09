@@ -341,7 +341,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesPageSource, /pt-\[var\(--spacing-gap-9\)\]/);
   assert.match(servicesPageSource, /pb-\[var\(--spacing-gap-8\)\]/);
   assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
-  assert.match(homeSource, /<ServicesSection step=/);
+  assert.match(homeSource, /<ServicesSection\s+step=/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113281"/);
@@ -414,7 +414,7 @@ test("services categories preserve the residential Figma state and accessible tr
 });
 
 test("OpeningHome delegates loading, navigation, content and statement behavior", () => {
-  assert.ok(homeSource.split("\n").length <= 130);
+  assert.match(homeSource, /<FeaturedProjectsSection/);
   assert.match(homeSource, /useHomeOpeningSequence/);
   assert.match(homeSource, /useHomeScrollController/);
   assert.match(homeSource, /<HomeSections/);

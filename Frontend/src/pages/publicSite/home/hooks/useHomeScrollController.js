@@ -55,6 +55,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const [contentScrollActive, setContentScrollActive] = useState(false);
   const contentModeRef = useRef(false);
   const [servicesStep, setServicesStep] = useState(0);
+  const [activeSectionId, setActiveSectionId] = useState(null);
+  const activeSectionRef = useRef(null);
+  const [featuredStep, setFeaturedStep] = useState(0);
+  const featuredProgressRef = useRef({ step: 0, revealed: false });
+  const completeFeaturedReveal = useCallback(() => {
+    if (activeSectionRef.current === "featured-projects" && featuredProgressRef.current.step === 1) {
+      featuredProgressRef.current.revealed = true;
+    }
+  }, []);
   const servicesProgressRef = useRef(createServicesProgress());
   const completeServicesStep = useCallback((step) => {
     servicesProgressRef.current = completeServicesReveal(servicesProgressRef.current, step);
@@ -189,10 +198,21 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       nativeScrollOriginState = null;
     };
 
-    const navigateSection = (sectionId, { direct = false } = {}) => {
+    const getSection = (id) => [...scroller.querySelectorAll("section[id]")].find((section) => section.id === id);
+    const servicesEnd = () => {
+      const next = getSection("featured-projects");
+      return next ? Math.max(getSection("services")?.offsetTop ?? 0, next.offsetTop - scroller.clientHeight) : Infinity;
+    };
+    const isFeatured = () => contentMode && activeSectionRef.current === "featured-projects";
+    const servicesAtEnd = () => scroller.scrollTop >= servicesEnd() - 1;
+    const selectSection = (id) => {
+      activeSectionRef.current = id;
+      setActiveSectionId(id);
+    };
+    const navigateSection = (sectionId, { direct = false, preserveServices = false } = {}) => {
       const currentState = navigationStateRef.current;
       const currentSectionComplete = contentMode
-        ? canLeaveServices(servicesProgressRef.current)
+        ? (isFeatured() ? featuredProgressRef.current.revealed : canLeaveServices(servicesProgressRef.current))
         : !titleRevealLockedRef.current && currentState.phase === HOME_SCROLL_PHASES.TITLE &&
           (currentState.panelIndex !== STATEMENT_PANEL_INDEX || statement.getProgress() >= 1);
       if (!direct && (activeTween || isProgrammaticScroll || !currentSectionComplete)) return;
@@ -206,8 +226,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       wheelTransitionLock = false;
       titleRevealLockedRef.current = false;
       setContentMode(false);
-      changeServicesStep(0);
-      servicesProgressRef.current = createServicesProgress();
+      if (sectionId === "home" || (sectionId === "services" && !preserveServices)) {
+        changeServicesStep(0);
+        servicesProgressRef.current = createServicesProgress();
+      }
+      featuredProgressRef.current = { step: 0, revealed: false };
+      setFeaturedStep(0);
+      selectSection(sectionId === "home" ? null : sectionId);
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
       ));
@@ -245,13 +270,28 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       changeServicesStep(next.step);
     };
 
+    const advanceContent = (direction) => {
+      if (isFeatured()) {
+        if (featuredProgressRef.current.step === 0) {
+          featuredProgressRef.current = { step: 1, revealed: false };
+          setFeaturedStep(1);
+        } else if (featuredProgressRef.current.revealed && direction === HOME_SCROLL_DIRECTIONS.UP) {
+          navigateSection("services", { preserveServices: true });
+        }
+      } else if (currentServicesStep < 2) {
+        advanceServices();
+      } else if (servicesAtEnd() && direction === HOME_SCROLL_DIRECTIONS.DOWN) {
+        navigateSection("featured-projects");
+      }
+    };
+
     const handleWheel = (event) => {
       if (event.ctrlKey) return;
       if (activeTween || isProgrammaticScroll) {
         event.preventDefault();
         return;
       }
-      if (contentMode && currentServicesStep === 2 && servicesProgressRef.current.revealed) return;
+      if (contentMode && !isFeatured() && currentServicesStep === 2 && servicesProgressRef.current.revealed && !(servicesAtEnd() && event.deltaY > 0)) return;
       const delta = normalizeWheelDelta(event, scroller.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
@@ -266,7 +306,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       const currentState = navigationStateRef.current;
       const isStatementReady =
-        currentState.panelIndex === STATEMENT_PANEL_INDEX && !activeTween;
+        !contentMode && currentState.panelIndex === STATEMENT_PANEL_INDEX && !activeTween;
       if (isStatementReady && statement.isWheelScrubbing()) {
         statement.queueDelta(limitHomeStatementWheelDelta(delta.y));
         return;
@@ -280,7 +320,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       );
       if (contentMode) {
         if (wheelGestureState.triggeredDirection !== null) {
-          advanceServices(wheelGestureState.triggeredDirection);
+          advanceContent(wheelGestureState.triggeredDirection);
         }
         return;
       }
@@ -307,7 +347,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerDown = (event) => {
-      if (contentMode && currentServicesStep === 2) return;
+      if (contentMode && !isFeatured() && currentServicesStep === 2) return;
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       const isStatementGesture =
         !contentMode && navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX;
@@ -324,7 +364,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerMove = (event) => {
-      if (contentMode && currentServicesStep === 2) return;
+      if (contentMode && !isFeatured() && currentServicesStep === 2) return;
       if (
         !touchGesture ||
         touchGesture.pointerId !== event.pointerId ||
@@ -395,7 +435,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       event.preventDefault();
       touchGesture.consumed = true;
-      if (contentMode) advanceServices(direction);
+      if (contentMode) advanceContent(direction);
       else moveByDirection(direction);
     };
 
@@ -411,9 +451,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
       if (contentMode) {
-        if (currentServicesStep === 2 && servicesProgressRef.current.revealed) return;
+        if (!isFeatured() && currentServicesStep === 2 && servicesProgressRef.current.revealed && !(servicesAtEnd() && direction === HOME_SCROLL_DIRECTIONS.DOWN)) return;
         event.preventDefault();
-        if (!event.repeat) advanceServices(direction);
+        if (!event.repeat) advanceContent(direction);
         return;
       }
 
@@ -463,6 +503,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const handleNativeScroll = () => {
       if (isProgrammaticScroll) return;
+      if (isFeatured()) {
+        const top = getSection("featured-projects")?.offsetTop ?? 0;
+        const returning = scroller.scrollTop < top - 1;
+        scroller.scrollTop = top;
+        if (returning && featuredProgressRef.current.revealed) navigateSection("services", { preserveServices: true });
+        return;
+      }
+      if (contentMode && currentServicesStep === 2 && servicesProgressRef.current.revealed && scroller.scrollTop > servicesEnd() + 1) {
+        scroller.scrollTop = servicesEnd();
+        if (canLeaveServices(servicesProgressRef.current)) navigateSection("featured-projects");
+        return;
+      }
       if (contentMode && (currentServicesStep < 2 || !servicesProgressRef.current.revealed)) {
         const services = [...scroller.querySelectorAll("section[id]")]
           .find((section) => section.id === "services");
@@ -478,6 +530,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
         setContentMode(false);
+        selectSection(null);
         resetWheelGesture();
         alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
         return;
@@ -496,6 +549,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       }
       if (contentMode) {
         setContentMode(false);
+        selectSection(null);
         resetWheelGesture();
         alignToPanel(createScrollbarHomeScrollState(STATEMENT_PANEL_INDEX));
         return;
@@ -531,7 +585,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handleResize = () => {
-      if (contentMode) return;
+      if (contentMode) {
+        const section = getSection(activeSectionRef.current);
+        if (section) scroller.scrollTop = isFeatured() || currentServicesStep < 2
+          ? section.offsetTop : Math.min(Math.max(scroller.scrollTop, section.offsetTop), servicesEnd());
+        return;
+      }
       window.cancelAnimationFrame(resizeFrame);
       resizeFrame = window.requestAnimationFrame(() => {
         activeTween?.kill();
@@ -591,6 +650,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    activeSectionId,
+    featuredStep,
+    completeFeaturedReveal,
     completeServicesStep,
     completeServiceCategories,
     servicesStep,

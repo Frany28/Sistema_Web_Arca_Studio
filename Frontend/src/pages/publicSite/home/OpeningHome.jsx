@@ -8,6 +8,7 @@ import ArcaOpeningMark, {
 import PublicSiteHeader from "../components/PublicSiteHeader/PublicSiteHeader.jsx";
 import HomeSections from "./components/HomeSections.jsx";
 import ServicesSection from "../services/components/ServicesSection.jsx";
+import FeaturedProjectsSection from "../featuredProjects/components/FeaturedProjectsSection.jsx";
 import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
 import useHomeScrollController from "./hooks/useHomeScrollController.js";
 import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
@@ -33,6 +34,9 @@ function OpeningHome() {
     navigationState,
     navigateToSection,
     contentScrollActive,
+    activeSectionId,
+    featuredStep,
+    completeFeaturedReveal,
     servicesStep,
     completeServicesStep,
     completeServiceCategories,
@@ -47,7 +51,9 @@ function OpeningHome() {
   const homeActive = phase === "complete";
 
   useEffect(() => {
-    if (initialScrollReady && hash === "#services") navigateToSection("services");
+    if (initialScrollReady && ["#services", "#featured-projects"].includes(hash)) {
+      navigateToSection(hash.slice(1));
+    }
   }, [hash, initialScrollReady, navigateToSection]);
 
   return (
@@ -77,7 +83,7 @@ function OpeningHome() {
 
         <main
           ref={scrollerRef}
-          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${contentScrollActive && servicesStep === 2 ? "touch-auto" : "touch-pan-x"} ${
+          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${contentScrollActive && activeSectionId === "services" && servicesStep === 2 ? "touch-auto" : "touch-pan-x"} ${
             initialScrollReady ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
           aria-hidden={!homeActive}
@@ -89,7 +95,7 @@ function OpeningHome() {
             <PublicSiteHeader
               className="pointer-events-auto"
               scrollContainerRef={scrollerRef}
-              activeNavigationId={contentScrollActive ? "services" : undefined}
+              activeNavigationId={activeSectionId ?? undefined}
               onNavigate={navigateToSection}
             />
           </div>
@@ -102,9 +108,19 @@ function OpeningHome() {
             statementPanelIndex={statementPanelIndex}
             statementProgress={statementProgress}
           />
-          {initialScrollReady && <ServicesSection step={contentScrollActive ? servicesStep : 0}
-            onRevealComplete={completeServicesStep} onCategoriesComplete={completeServiceCategories}
-            />}
+          {initialScrollReady && (
+            <>
+              <ServicesSection
+                step={servicesStep}
+                onRevealComplete={completeServicesStep}
+                onCategoriesComplete={completeServiceCategories}
+              />
+              <FeaturedProjectsSection
+                visible={contentScrollActive && activeSectionId === "featured-projects" && featuredStep === 1}
+                onRevealComplete={completeFeaturedReveal}
+              />
+            </>
+          )}
         </main>
       </Motion.div>
     </div>
