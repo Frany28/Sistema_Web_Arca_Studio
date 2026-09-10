@@ -48,9 +48,10 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
 
       let upwardIntent = false;
       let focusInside = false;
-      const handleFocusIn = () => { focusInside = true; showAnimation.play(); };
+      let pointerFocus = false;
+      const handleFocusIn = () => { focusInside = !pointerFocus; showAnimation.play(); };
       const handleFocusOut = (event) => {
-        focusInside = Boolean(target.contains(event.relatedTarget));
+        focusInside = !pointerFocus && Boolean(target.contains(event.relatedTarget));
       };
       target.addEventListener("focusin", handleFocusIn);
       target.addEventListener("focusout", handleFocusOut);
@@ -58,13 +59,16 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
       const reactToDirection = (delta) => {
         if (!delta) return;
         upwardIntent = delta < 0;
-        if (upwardIntent) showAnimation.play();
+        if (upwardIntent || focusInside) showAnimation.play();
+        else showAnimation.reverse();
       };
       const handleWheel = (event) => {
         if (event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
         reactToDirection(event.deltaY);
       };
       const handlePointerDown = (event) => {
+        pointerFocus = true;
+        focusInside = false;
         upwardIntent = false;
         touchPoint = event.pointerType === "touch" && event.isPrimary
           ? { id: event.pointerId, x: event.clientX, y: event.clientY }
@@ -79,6 +83,8 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
       };
       const clearPointer = () => { touchPoint = null; };
       const handleKeyDown = (event) => {
+        pointerFocus = false;
+        if (target.contains(event.target)) focusInside = true;
         if (event.target?.closest?.('input, textarea, select, button, [contenteditable="true"], [role="tab"]')) return;
         if (["ArrowUp", "PageUp", "Home"].includes(event.key) || (event.key === " " && event.shiftKey)) {
           reactToDirection(-1);
@@ -91,11 +97,26 @@ function useScrollDirectionVisibility(targetRef, { scrollContainerRef } = {}) {
         pointermove: handlePointerMove, pointerup: clearPointer,
         pointercancel: clearPointer, keydown: handleKeyDown,
       };
+      const readScrollTop = () => scrollContainer === window
+        ? (window.scrollY ?? 0) : (scrollContainer.scrollTop ?? 0);
+      let previousScrollTop = readScrollTop();
+      const handleNativeScroll = () => {
+        const currentScrollTop = readScrollTop();
+        const delta = currentScrollTop - previousScrollTop;
+        previousScrollTop = currentScrollTop;
+        if (!delta) return;
+        if (focusInside || upwardIntent || currentScrollTop <= 0 || delta < 0) showAnimation.play();
+        else showAnimation.reverse();
+      };
+      // Las secciones montadas después de la introducción pueden ampliar el
+      // rango de scroll más allá del máximo calculado inicialmente por GSAP.
+      scrollContainer.addEventListener("scroll", handleNativeScroll, { passive: true });
       // Captura la intención aunque Home consuma el gesto sin mover scrollTop.
       for (const [type, handler] of Object.entries(inputListeners)) {
         scrollContainer.addEventListener(type, handler, { capture: true, passive: true });
       }
       removeInputListeners = () => {
+        scrollContainer.removeEventListener("scroll", handleNativeScroll);
         target.removeEventListener("focusin", handleFocusIn);
         target.removeEventListener("focusout", handleFocusOut);
         for (const [type, handler] of Object.entries(inputListeners)) {

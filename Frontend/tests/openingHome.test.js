@@ -359,7 +359,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
   assert.match(servicesHeadingSource, /getSectionRevealTransition/);
   assert.match(servicesHeadingSource, /getSectionRevealClip/);
-  assert.match(servicesHeadingSource, /whileInView/);
+  assert.match(servicesHeadingSource, /useInView\(sectionRef/);
   assert.doesNotMatch(servicesCategoryShowcaseSource, /getSectionRevealTransition/);
   assert.doesNotMatch(servicesCategoryShowcaseSource, /inert=\{!visible \|\| !revealed\}/);
   assert.doesNotMatch(servicesPageSource, /step = 0/);

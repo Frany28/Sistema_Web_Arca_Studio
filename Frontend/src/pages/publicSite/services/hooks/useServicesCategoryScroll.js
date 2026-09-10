@@ -26,6 +26,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     let disposed = false;
     let selectionVersion = 0;
     let selectionComplete = false;
+    let releasedDirection = null;
     let visited = visitedRef.current;
     const indicatorHeight = (index) => {
       if (index === 0) return parseFloat(getComputedStyle(tabs[0]).lineHeight) * 1.6;
@@ -64,18 +65,29 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
         onNextSection?.();
         return;
       }
-      select(selectedIndexRef.current + direction);
+      const missingIndex = categories.findIndex((_, index) => !visited.has(index));
+      const finishUnvisited = direction > 0 && selectedIndexRef.current === categories.length - 1 && !onNextSection && missingIndex >= 0;
+      select(finishUnvisited ? missingIndex : selectedIndexRef.current + direction);
     };
+    const canReleaseNativeScroll = (direction) =>
+      (direction < 0 && selectedIndexRef.current === 0 && !onPreviousSection) ||
+      (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && visited.size === categories.length && !onNextSection);
     const wheel = (event) => {
       if (event.ctrlKey) return;
       const delta = normalizeWheelDelta(event, layout.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
-      // El selector consume el gesto y delega la salida al controlador de Home.
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => { gesture = createWheelGestureState(); releasedDirection = null; }, 180);
+      gesture = advanceWheelGesture(gesture, delta.y, 32, event.timeStamp);
+      const direction = Math.sign(delta.y);
+      if (canReleaseNativeScroll(direction) && (releasedDirection === direction || gesture.triggeredDirection === direction)) {
+        releasedDirection = direction;
+        return;
+      }
+      releasedDirection = null;
+      // Mantener la posición mientras el gesto recorre categorías e indicador.
       event.preventDefault();
       event.stopPropagation();
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => { gesture = createWheelGestureState(); }, 180);
-      gesture = advanceWheelGesture(gesture, delta.y, 32, event.timeStamp);
       if (gesture.triggeredDirection !== null) advance(gesture.triggeredDirection);
     };
     const pointerDown = (event) => {
@@ -88,7 +100,11 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       if (direction === null) return;
       event.preventDefault();
       event.stopPropagation();
-      advance(direction);
+      if (canReleaseNativeScroll(direction)) {
+        section.closest('[data-home-scroll-container]')?.scrollBy({ top: touch.startY - event.clientY });
+      } else {
+        advance(direction);
+      }
       touch = null;
     };
     const clearTouch = () => { touch = null; };

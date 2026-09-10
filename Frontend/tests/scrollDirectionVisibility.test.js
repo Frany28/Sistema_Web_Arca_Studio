@@ -122,6 +122,41 @@ test("horizontal gestures and pinch zoom do not reveal the navbar", () => {
   assert.deepEqual(harness.calls, []);
 });
 
+test("consumed category gestures hide and show the navbar without moving scrollTop", () => {
+  const harness = createHarness();
+  harness.hook({ current: harness.target });
+  harness.effects[0]();
+  harness.listeners.wheel({ deltaX: 0, deltaY: 60 });
+  assert.equal(harness.calls.at(-1), "hide");
+  harness.listeners.wheel({ deltaX: 0, deltaY: -60 });
+  assert.equal(harness.calls.at(-1), "show");
+});
+
+test("native scrolling still animates beyond the initially measured GSAP range", () => {
+  const harness = createHarness();
+  harness.hook({ current: harness.target });
+  const cleanup = harness.effects[0]();
+  harness.window.scrollY = 5000;
+  harness.listeners.scroll();
+  assert.equal(harness.calls.at(-1), "hide");
+  harness.window.scrollY = 4900;
+  harness.listeners.scroll();
+  assert.equal(harness.calls.at(-1), "show");
+  cleanup();
+  assert.deepEqual(harness.listeners, {});
+});
+
+test("clicking a navbar destination does not pin the navbar visible during later scrolling", () => {
+  const harness = createHarness();
+  harness.hook({ current: harness.target });
+  harness.effects[0]();
+  harness.listeners.pointerdown({ pointerType: "mouse" });
+  harness.targetListeners.focusin();
+  harness.targetListeners.focusout({ relatedTarget: harness.target });
+  harness.listeners.wheel({ deltaX: 0, deltaY: 60 });
+  assert.equal(harness.calls.at(-1), "hide");
+});
+
 test("keyboard focus reveals the navbar and prevents it from hiding until focus leaves", () => {
   const harness = createHarness();
   harness.hook({ current: harness.target });

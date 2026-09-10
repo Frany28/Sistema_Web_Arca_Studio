@@ -5,7 +5,7 @@ import { visitServiceCategory } from "../src/pages/publicSite/services/utils/ser
 import { createFakeClock } from "./helpers/fakeClock.js";
 import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 
-function setup(reducedMotion = false, deferAnimations = false, captureScroll = true) {
+function setup(reducedMotion = false, deferAnimations = false, captureScroll = true, nativeExit = false) {
   const animations = [];
   const clock = createFakeClock();
   const completion = [];
@@ -44,11 +44,37 @@ function setup(reducedMotion = false, deferAnimations = false, captureScroll = t
     .replace(/import[^;]+;\s*/g, "")
     .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
   const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
-  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), () => exits.push(true), () => returns.push(true), captureScroll);
+  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), nativeExit ? undefined : () => exits.push(true), nativeExit ? undefined : () => returns.push(true), captureScroll);
   const cleanup = effects[0]();
   return { handlers, selected, cleanup, api, clock, completion, durations, exits, returns,
     finishAnimations: () => { while (animations.length) animations.shift()(); } };
 }
+
+test("native exit waits for a fresh gesture after the last category, then releases the page", () => {
+  const app = setup(false, false, true, true);
+  const wheel = () => {
+    let prevented = false;
+    app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() { prevented = true; }, stopPropagation() {} });
+    return prevented;
+  };
+  assert.equal(wheel(), true);
+  app.clock.advance(180);
+  assert.equal(wheel(), true);
+  assert.equal(app.selected.at(-1), 2);
+  assert.equal(wheel(), true);
+  app.clock.advance(180);
+  assert.equal(wheel(), false);
+  assert.equal(wheel(), false);
+  app.cleanup();
+});
+
+test("a manual jump to the last category can still complete the missing categories by wheel", () => {
+  const app = setup(false, false, true, true);
+  app.api.selectCategory(2);
+  app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
+  assert.equal(app.selected.at(-1), 1);
+  app.cleanup();
+});
 
 test("continuous mode leaves wheel and touch native while category selection still works", () => {
   const app = setup(false, false, false);

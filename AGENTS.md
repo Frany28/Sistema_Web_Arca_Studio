@@ -210,6 +210,8 @@ Consultar `Sistema_Web_Arca_Studio/Backend/ARCHITECTURE.md` antes de crear módu
 
 # 8. Arquitectura y diseño obligatorios del frontend
 
+* Ninguna animación existente puede eliminarse o desactivarse sin una instrucción explícita del usuario para esa animación. Cambiar spacing, layout, scroll o componentes no autoriza a suprimir animaciones relacionadas. Una petición sobre un efecto concreto se limita a ese efecto; deben conservarse los demás, incluida la navegación animada, los revelados y los recorridos internos. Se mantiene el soporte de accesibilidad existente para movimiento reducido.
+
 * Consultar `Sistema_Web_Arca_Studio/Frontend/DESIGN_SYSTEM.md` antes de crear o modificar páginas, componentes visuales o estilos.
 * Reutilizar `Frontend/src/components/ui` y extender sus variantes antes de crear componentes equivalentes.
 * Usar los tokens de `Frontend/src/styles/global.css` y las clases de `Frontend/src/styles/typography.css`.

@@ -1,19 +1,22 @@
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
-import { motion as Motion, useReducedMotion } from "motion/react";
+import { useRef } from "react";
+import { motion as Motion, useInView, useReducedMotion } from "motion/react";
 import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 
 function ServicesHeading({ eyebrow, title, description }) {
   const reduceMotion = useReducedMotion();
+  const sectionRef = useRef(null);
+  const visible = useInView(sectionRef, { amount: 0.2 });
   return (
-    <Motion.section
+    <section
+      ref={sectionRef}
       className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] py-[var(--spacing-gap-7)] min-[768px]:px-[48px]"
       aria-label={eyebrow}
-      initial={{ clipPath: getSectionRevealClip(Boolean(reduceMotion)) }}
-      whileInView={{ clipPath: getSectionRevealClip(true) }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={getSectionRevealTransition(true, reduceMotion)}
     >
-      <div
+      <Motion.div
+        initial={{ clipPath: getSectionRevealClip(Boolean(reduceMotion)) }}
+        animate={{ clipPath: getSectionRevealClip(Boolean(reduceMotion) || visible) }}
+        transition={getSectionRevealTransition(visible, reduceMotion)}
         className="flex w-full max-w-[786px] flex-col items-center gap-[24px] text-center"
         data-node-id="4505:113281"
       >
@@ -37,8 +40,8 @@ function ServicesHeading({ eyebrow, title, description }) {
         >
           {description}
         </p>
-      </div>
-    </Motion.section>
+      </Motion.div>
+    </section>
   );
 }
 
