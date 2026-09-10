@@ -92,13 +92,13 @@ for (const reducedMotion of [false, true]) {
     for (const key of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'End', 'Home']) app.handlers.keydown({ key, preventDefault: blocked });
     app.handlers.pointerdown({ pointerType: 'touch', isPrimary: true, pointerId: 1, clientX: 100, clientY: 300 });
     app.handlers.pointermove({ pointerId: 1, clientX: 100, clientY: 100, preventDefault: blocked });
-    for (const top of [3500, 4000, 4450, 4700, 4200, 3400, 2800]) {
+    for (const top of [3500, 4000, 4450, 4700, 4200, 3400, 3300]) {
       app.scroller.scrollTop = top; app.handlers.scroll(); app.flush();
       assert.equal(app.scroller.scrollTop, top);
       assert.equal(app.getActiveSection(), top + 64 >= 4400 ? 'featured-projects' : 'services');
     }
     app.handlers.resize(); app.flush();
-    assert.equal(app.scroller.scrollTop, 2800);
+    assert.equal(app.scroller.scrollTop, 3300);
     app.controller.navigateToSection('home'); app.flush();
     assert.equal(app.scroller.scrollTop, 0);
     assert.equal(app.getActiveSection(), null);
@@ -143,12 +143,12 @@ test('direct navigation updates the section and reveals an already visible galle
   app.cleanup();
 });
 
-test('returning to the video restores its introduction controls at the video boundary', () => {
+test('returning to the video restores its introduction controls at the services boundary', () => {
   const app = setup(true);
   app.controller.navigateToSection('services'); app.flush();
-  app.scroller.scrollTop = 2700; app.handlers.scroll(); app.flush();
-  assert.equal(app.scroller.scrollTop, 2700);
-  app.scroller.scrollTop = 2390; app.handlers.scroll(); app.flush();
+  app.scroller.scrollTop = 3210; app.handlers.scroll(); app.flush();
+  assert.equal(app.scroller.scrollTop, 3210);
+  app.scroller.scrollTop = 3190; app.handlers.scroll(); app.flush();
   assert.equal(app.scroller.scrollTop, 2400);
   assert.equal(app.controller.statementProgress.get(), 0);
   app.handlers.keydown({ key: 'ArrowUp', preventDefault() {} }); app.flush();
@@ -156,7 +156,23 @@ test('returning to the video restores its introduction controls at the video bou
   app.cleanup();
 });
 
-test('only an unfinished explicit navbar jump temporarily consumes wheel input', () => {
+test('crossing above services animates to the video and consumes input until completion', () => {
+  const app = setup();
+  app.controller.navigateToSection('services'); app.flush();
+  app.scroller.scrollTop = 3190;
+  app.handlers.scroll();
+  assert.equal(app.scroller.scrollTop, 3190);
+  let prevented = false;
+  app.handlers.wheel({ deltaY: -60, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 2400);
+  assert.equal(app.getActiveSection(), null);
+  assert.equal(app.controller.statementProgress.get(), 0);
+  app.cleanup();
+});
+
+test('an unfinished explicit navbar jump temporarily consumes wheel input', () => {
   const app = setup();
   app.controller.navigateToSection('services');
   let prevented = false;

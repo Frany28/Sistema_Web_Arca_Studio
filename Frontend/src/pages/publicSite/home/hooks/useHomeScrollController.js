@@ -236,8 +236,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     sectionNavigationRef.current = (sectionId) => navigateSection(sectionId, { direct: true });
 
     const synchronizeContentScroll = () => {
-      const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
-      if (scroller.scrollTop <= statementTop + 1) {
+      const servicesTop = getSection("services")?.offsetTop;
+      // Al cruzar el inicio de Servicios hacia arriba, recuperar la transición
+      // completa al video antes de permitir nuevamente sus gestos internos.
+      if (servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
         setContentMode(false);
         selectSection(null);
         resetWheelGesture();
@@ -510,9 +512,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (contentMode) {
         // Los paneles introductorios cambian de altura con el viewport. Un resize
         // no debe interpretarse como un gesto de regreso al video.
-        const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
-        if (scroller.scrollTop <= statementTop + 1) {
-          scroller.scrollTop = getSection("services")?.offsetTop ?? scroller.scrollTop;
+        const servicesTop = getSection("services")?.offsetTop;
+        if (servicesTop !== undefined && scroller.scrollTop < servicesTop) {
+          scroller.scrollTop = servicesTop;
         }
         synchronizeContentScroll();
         return;
