@@ -3,7 +3,7 @@ import MovingGradientTitle from "./MovingGradientTitle.jsx";
 function ServicesHeading({ eyebrow, title, description }) {
   return (
     <section
-      className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] py-[var(--spacing-gap-7)] min-[768px]:px-[48px]"
+      className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] py-[var(--spacing-gap-8)] min-[768px]:px-[var(--spacing-gap-8)]"
       aria-label={eyebrow}
     >
       <div

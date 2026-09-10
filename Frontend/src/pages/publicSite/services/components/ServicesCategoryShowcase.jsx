@@ -41,7 +41,7 @@ function ServicesCategoryShowcase({ categories }) {
     >
       <div
         ref={layoutRef}
-        className="services-category-showcase__layout flex w-full max-w-[1200px] items-center justify-center gap-[56px] px-[48px] py-[48px]"
+        className="services-category-showcase__layout flex w-full max-w-[1200px] items-center justify-center gap-[var(--spacing-gap-8)] px-[var(--spacing-gap-8)] py-[var(--spacing-gap-8)]"
         data-node-id="4613:2165"
       >
         <div

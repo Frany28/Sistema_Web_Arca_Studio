@@ -353,7 +353,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   );
   assert.match(servicesHeadingSource, /data-node-id="4505:113286"/);
   assert.match(servicesHeadingSource, /max-w-\[786px\]/);
-  assert.match(servicesHeadingSource, /py-\[var\(--spacing-gap-7\)\]/);
+  assert.match(servicesHeadingSource, /py-\[var\(--spacing-gap-8\)\]/);
   assert.doesNotMatch(servicesHeadingSource, /h-dvh/);
   assert.doesNotMatch(servicesCategoryShowcaseSource, /min-h-dvh/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
@@ -400,7 +400,7 @@ test("services categories preserve the residential Figma state and accessible tr
   assert.match(servicesCategoryShowcaseSource, /data-node-id="4613:2165"/);
   assert.match(servicesCategoryShowcaseSource, /max-w-\[514px\]/);
   assert.match(servicesCategoryShowcaseSource, /max-w-\[320px\]/);
-  assert.match(servicesCategoryShowcaseSource, /gap-\[56px\]/);
+  assert.match(servicesCategoryShowcaseSource, /gap-\[var\(--spacing-gap-8\)\]/);
   assert.match(servicesCategoryShowcaseSource, /data-node-id="4613:2167"/);
   assert.match(servicesCategoryShowcaseSource, /data-node-id="4571:111471"/);
   assert.match(servicesCategoryShowcaseSource, /role="tablist"/);

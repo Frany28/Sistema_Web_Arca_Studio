@@ -9,7 +9,7 @@ function FeaturedProjectsSection({ step = 1, onRevealComplete }) {
       className="dark min-h-dvh bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
     >
       <div
-        className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[48px]"
+        className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
         data-node-id="4856:5032"
       >
         <p className="text-heading-4 m-0 w-full" data-node-id="4856:5033">
