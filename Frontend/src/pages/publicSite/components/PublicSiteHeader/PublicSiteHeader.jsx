@@ -1,5 +1,7 @@
 import { useRef } from "react";
 import clsx from "clsx";
+import useHeaderBackground from "./useHeaderBackground.js";
+import "./PublicSiteHeader.css";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import Button from "../../../../components/ui/Button/Button.jsx";
@@ -24,6 +26,7 @@ function PublicSiteHeader({
   scrollContainerRef,
 }) {
   const headerRef = useRef(null);
+  const backgroundAppearance = useHeaderBackground(headerRef, scrollContainerRef);
   const activeNavigationIndex = navigationItems.findIndex(
     (item) => item.id === activeNavigationId,
   );
@@ -34,10 +37,11 @@ function PublicSiteHeader({
     <header
       ref={headerRef}
       className={clsx(
-        "main-tool-bar dark flex h-[64px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px] will-change-transform",
+        "main-tool-bar public-site-header dark flex h-[64px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px] will-change-transform",
         className,
       )}
       data-node-id="4487:112595"
+      data-background={backgroundAppearance}
     >
       <nav
         className="h-full w-full max-w-[1200px] px-[16px] pt-[12px] min-[768px]:px-[48px]"
@@ -57,7 +61,7 @@ function PublicSiteHeader({
           >
             <MainLogo
               size="32px"
-              appearance="dark"
+              appearance={backgroundAppearance}
               alt="ARCA Studio"
               className="h-[32px] w-[152px] justify-start"
             />

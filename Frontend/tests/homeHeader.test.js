@@ -38,8 +38,9 @@ test("the public home header preserves the Figma structure and labels", () => {
   assert.match(headerSource, /data-node-id="4781:135050"/);
 });
 
-test("the public home header is permanently dark and reuses shared UI", () => {
-  assert.match(headerSource, /appearance="dark"/);
+test("the public home header adapts its appearance and reuses shared UI", () => {
+  assert.match(headerSource, /appearance=\{backgroundAppearance\}/);
+  assert.match(headerSource, /useHeaderBackground\(headerRef, scrollContainerRef\)/);
   assert.match(headerSource, /theme="Primary"/);
   assert.match(headerSource, /type="Solid"/);
   assert.match(headerSource, /backdrop-blur-\[15px\]/);

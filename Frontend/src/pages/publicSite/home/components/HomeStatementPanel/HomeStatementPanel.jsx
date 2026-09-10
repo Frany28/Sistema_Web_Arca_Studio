@@ -117,6 +117,7 @@ function HomeStatementPanel({
       aria-hidden={!active}
       data-home-panel
       data-home-statement-panel
+      data-navbar-background="dark"
     >
       <img
         src={poster}

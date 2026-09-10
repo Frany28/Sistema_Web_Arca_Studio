@@ -1,0 +1,32 @@
+.public-site-header {
+  --public-navigation-color: var(--color-neutral-100-uniform);
+  --public-navigation-hover-color: var(--color-text-200);
+}
+
+.public-site-header[data-background="light"] {
+  --public-navigation-color: var(--color-primary-300);
+  --public-navigation-hover-color: var(--color-primary-400);
+}
+
+.public-site-header [role="tab"],
+.public-site-header [aria-label="Ir al inicio"] {
+  color: var(--public-navigation-color);
+}
+
+.public-site-header [role="tab"]:hover,
+.public-site-header [role="tab"]:focus-visible,
+.public-site-header [role="tab"][aria-selected="true"] {
+  color: var(--public-navigation-color);
+  border-color: var(--public-navigation-color);
+}
+
+/* El seleccionado conserva su color base incluso cuando el puntero sigue encima. */
+.public-site-header [role="tab"]:hover:not([aria-selected="true"]) {
+  color: var(--public-navigation-hover-color);
+}
+
+.public-site-header [role="tab"]:focus-visible,
+.public-site-header [aria-label="Ir al inicio"]:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

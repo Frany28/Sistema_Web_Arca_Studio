@@ -25,6 +25,7 @@ function HomeScrollPanel({
       />
       <div
         className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/5 to-black/20"
+        data-navbar-scrim="0.4,0.05,0.2"
         aria-hidden="true"
       />
       <HomeHeroTitle
