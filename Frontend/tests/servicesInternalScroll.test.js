@@ -5,7 +5,7 @@ import { visitServiceCategory } from "../src/pages/publicSite/services/utils/ser
 import { createFakeClock } from "./helpers/fakeClock.js";
 import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 
-function setup(reducedMotion = false, deferAnimations = false) {
+function setup(reducedMotion = false, deferAnimations = false, captureScroll = true) {
   const animations = [];
   const clock = createFakeClock();
   const completion = [];
@@ -44,11 +44,22 @@ function setup(reducedMotion = false, deferAnimations = false) {
     .replace(/import[^;]+;\s*/g, "")
     .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
   const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
-  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), () => exits.push(true), () => returns.push(true));
+  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), () => exits.push(true), () => returns.push(true), captureScroll);
   const cleanup = effects[0]();
   return { handlers, selected, cleanup, api, clock, completion, durations, exits, returns,
     finishAnimations: () => { while (animations.length) animations.shift()(); } };
 }
+
+test("continuous mode leaves wheel and touch native while category selection still works", () => {
+  const app = setup(false, false, false);
+  assert.equal(app.handlers.wheel, undefined);
+  assert.equal(app.handlers.pointerdown, undefined);
+  assert.equal(app.handlers.pointermove, undefined);
+  app.api.selectCategory(2);
+  assert.equal(app.selected.at(-1), 2);
+  assert.equal(app.exits.length, 0);
+  app.cleanup();
+});
 
 test("skipping a service before its transition ends cannot unlock downward navigation", () => {
   const app = setup(false, true);

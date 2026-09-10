@@ -1,10 +1,6 @@
 import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
-import { motion as Motion, useReducedMotion } from "motion/react";
-import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 
-function FeaturedProjectsSection({ step = 0, onRevealComplete }) {
-  const reduceMotion = useReducedMotion();
-  const visible = step >= 1;
+function FeaturedProjectsSection({ step = 1, onRevealComplete }) {
 
   return (
     <section
@@ -12,12 +8,7 @@ function FeaturedProjectsSection({ step = 0, onRevealComplete }) {
       aria-label="Proyectos destacados"
       className="dark min-h-dvh bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
     >
-      <Motion.div
-        aria-hidden={!visible}
-        initial={false}
-        animate={{ clipPath: getSectionRevealClip(visible) }}
-        transition={getSectionRevealTransition(visible, reduceMotion)}
-        onAnimationComplete={() => { onRevealComplete?.(visible ? 1 : 0); }}
+      <div
         className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[48px]"
         data-node-id="4856:5032"
       >
@@ -30,7 +21,7 @@ function FeaturedProjectsSection({ step = 0, onRevealComplete }) {
         <p className="text-heading-6 m-0 w-full max-w-[520px] opacity-60" data-node-id="4856:5035">
           Diseño arquitectónico y ejecución integral para una residencia contemporánea ubicada en Maracaibo.
         </p>
-      </Motion.div>
+      </div>
       <FeaturedProjectsGallery visible={step === 2} onRevealComplete={onRevealComplete} />
     </section>
   );

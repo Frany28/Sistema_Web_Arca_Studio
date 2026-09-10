@@ -341,7 +341,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesPageSource, /pt-\[var\(--spacing-gap-9\)\]/);
   assert.match(servicesPageSource, /pb-\[var\(--spacing-gap-8\)\]/);
   assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
-  assert.match(homeSource, /<ServicesSection[\s\S]*?step=/);
+  assert.match(homeSource, /<ServicesSection \/>/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4505:113281"/);
@@ -357,12 +357,12 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.doesNotMatch(servicesHeadingSource, /h-dvh/);
   assert.doesNotMatch(servicesCategoryShowcaseSource, /min-h-dvh/);
   assert.match(servicesHeadingSource, /<MovingGradientTitle/);
-  assert.match(servicesHeadingSource, /getSectionRevealTransition/);
-  assert.match(servicesHeadingSource, /getSectionRevealClip/);
-  assert.match(servicesCategoryShowcaseSource, /getSectionRevealTransition/);
-  assert.match(servicesCategoryShowcaseSource, /inert=\{!visible \|\| !revealed\}/);
-  assert.match(servicesPageSource, /step = 0/);
-  assert.match(servicesHeadingSource, /useReducedMotion/);
+  assert.doesNotMatch(servicesHeadingSource, /getSectionRevealTransition/);
+  assert.doesNotMatch(servicesHeadingSource, /getSectionRevealClip/);
+  assert.doesNotMatch(servicesCategoryShowcaseSource, /getSectionRevealTransition/);
+  assert.doesNotMatch(servicesCategoryShowcaseSource, /inert=\{!visible \|\| !revealed\}/);
+  assert.doesNotMatch(servicesPageSource, /step = 0/);
+  assert.doesNotMatch(servicesHeadingSource, /useReducedMotion/);
   assert.match(movingGradientTitleSource, /data-node-id="4462:2840"/);
   assert.match(movingGradientTitleSource, /services-moving-gradient-title/);
   assert.match(movingGradientTitleStyles, /background-clip: text/);

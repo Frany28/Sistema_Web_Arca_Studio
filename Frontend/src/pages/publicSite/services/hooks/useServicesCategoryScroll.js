@@ -6,7 +6,7 @@ import { visitServiceCategory } from "../utils/servicesProgress.js";
 
 const CATEGORY_CROSSFADE_DURATION = 0.2;
 
-function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true, onCategoriesComplete, onNextSection, onPreviousSection) {
+function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = true, onCategoriesComplete, onNextSection, onPreviousSection, captureScroll = true) {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndexRef = useRef(0);
@@ -98,11 +98,13 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     const observer = new ResizeObserver(resize);
     observer.observe(layout);
     document.fonts.ready.then(resize);
-    section.addEventListener("wheel", wheel, { passive: false });
-    section.addEventListener("pointerdown", pointerDown);
-    section.addEventListener("pointermove", pointerMove, { passive: false });
-    section.addEventListener("pointerup", clearTouch);
-    section.addEventListener("pointercancel", clearTouch);
+    if (captureScroll) {
+      section.addEventListener("wheel", wheel, { passive: false });
+      section.addEventListener("pointerdown", pointerDown);
+      section.addEventListener("pointermove", pointerMove, { passive: false });
+      section.addEventListener("pointerup", clearTouch);
+      section.addEventListener("pointercancel", clearTouch);
+    }
     return () => {
       disposed = true;
       clearTimeout(idleTimer);
@@ -116,7 +118,7 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       selectRef.current = null;
       context.revert();
     };
-  }, [categories, enabled, layoutRef, onCategoriesComplete, onNextSection, onPreviousSection, reduceMotion, sectionRef]);
+  }, [captureScroll, categories, enabled, layoutRef, onCategoriesComplete, onNextSection, onPreviousSection, reduceMotion, sectionRef]);
 
   const selectCategory = (index) => {
     if (index >= 0 && index < categories.length) selectRef.current?.(index);

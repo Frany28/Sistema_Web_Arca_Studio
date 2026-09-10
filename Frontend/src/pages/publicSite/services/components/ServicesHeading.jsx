@@ -1,18 +1,10 @@
-import { motion as Motion, useReducedMotion } from "motion/react";
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
-import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 
-function ServicesHeading({ eyebrow, title, description, visible = false, onRevealComplete }) {
-  const reduceMotion = useReducedMotion();
+function ServicesHeading({ eyebrow, title, description }) {
   return (
-    <Motion.section
+    <section
       className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] py-[var(--spacing-gap-7)] min-[768px]:px-[48px]"
       aria-label={eyebrow}
-      aria-hidden={!visible}
-      initial={false}
-      animate={{ clipPath: getSectionRevealClip(visible) }}
-      transition={getSectionRevealTransition(visible, reduceMotion)}
-      onAnimationComplete={() => { onRevealComplete?.(visible ? 1 : 0); }}
     >
       <div
         className="flex w-full max-w-[786px] flex-col items-center gap-[24px] text-center"
@@ -39,7 +31,7 @@ function ServicesHeading({ eyebrow, title, description, visible = false, onRevea
           {description}
         </p>
       </div>
-    </Motion.section>
+    </section>
   );
 }
 

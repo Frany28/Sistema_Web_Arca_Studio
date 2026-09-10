@@ -1,17 +1,13 @@
-import { useRef, useState } from "react";
-import { motion as Motion, useReducedMotion } from "motion/react";
-import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
+import { useRef } from "react";
 import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
 import "./ServicesCategoryShowcase.css";
 
-function ServicesCategoryShowcase({ categories, visible = false, onRevealComplete, onCategoriesComplete, onNextSection, onPreviousSection }) {
-  const reduceMotion = useReducedMotion();
-  const [revealed, setRevealed] = useState(false);
+function ServicesCategoryShowcase({ categories }) {
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
   const { activeIndex, selectCategory } = useServicesCategoryScroll(
-    sectionRef, layoutRef, categories, visible && revealed, onCategoriesComplete, onNextSection, onPreviousSection,
+    sectionRef, layoutRef, categories, true, undefined, undefined, undefined, false,
   );
   const activeCategory = categories[activeIndex] ?? categories[0];
 
@@ -39,25 +35,12 @@ function ServicesCategoryShowcase({ categories, visible = false, onRevealComplet
   return (
     <section
       ref={sectionRef}
-      className="flex w-full shrink-0 touch-pan-x items-center justify-center overscroll-contain bg-[var(--color-neutral-950-uniform)]"
+      className="flex w-full shrink-0 touch-auto items-center justify-center bg-[var(--color-neutral-950-uniform)]"
       aria-label="Tipos de diseño"
       data-node-id="4613:2167"
     >
-      <Motion.div
+      <div
         ref={layoutRef}
-        initial={{ clipPath: getSectionRevealClip(false) }}
-        animate={{ clipPath: getSectionRevealClip(visible) }}
-        transition={getSectionRevealTransition(visible, reduceMotion)}
-        onAnimationComplete={() => {
-          if (!visible) {
-            if (revealed) { setRevealed(false); onRevealComplete?.(1); }
-            return;
-          }
-          setRevealed(true);
-          onRevealComplete?.(2);
-        }}
-        aria-hidden={!visible}
-        inert={!visible || !revealed}
         className="services-category-showcase__layout flex w-full max-w-[1200px] items-center justify-center gap-[56px] px-[48px] py-[48px]"
         data-node-id="4613:2165"
       >
@@ -133,7 +116,7 @@ function ServicesCategoryShowcase({ categories, visible = false, onRevealComplet
             ))}
           </div>
         </div>
-      </Motion.div>
+      </div>
     </section>
   );
 }
