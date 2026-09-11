@@ -65,19 +65,25 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
         onNextSection?.();
         return;
       }
-      const missingIndex = categories.findIndex((_, index) => !visited.has(index));
-      const finishUnvisited = direction > 0 && selectedIndexRef.current === categories.length - 1 && !onNextSection && missingIndex >= 0;
-      select(finishUnvisited ? missingIndex : selectedIndexRef.current + direction);
+      select(selectedIndexRef.current + direction);
     };
     const canReleaseNativeScroll = (direction) =>
       (direction < 0 && selectedIndexRef.current === 0 && !onPreviousSection) ||
-      (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && visited.size === categories.length && !onNextSection);
+      (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && !onNextSection);
     const wheel = (event) => {
       if (event.ctrlKey) return;
+      const bounds = layout.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right ||
+          event.clientY < bounds.top || event.clientY > bounds.bottom) return;
       const delta = normalizeWheelDelta(event, layout.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => { gesture = createWheelGestureState(); releasedDirection = null; }, 180);
+      // Una rueda sostenida también avanza; la inercia pequeña no salta opciones.
+      if (selectionComplete && gesture.consumed && Math.abs(delta.y) >= 10 &&
+          event.timeStamp - gesture.lastTriggerTime >= 250) {
+        gesture = createWheelGestureState();
+      }
       gesture = advanceWheelGesture(gesture, delta.y, 32, event.timeStamp);
       const direction = Math.sign(delta.y);
       if (canReleaseNativeScroll(direction) && (releasedDirection === direction || gesture.triggeredDirection === direction)) {
@@ -115,21 +121,21 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
     observer.observe(layout);
     document.fonts.ready.then(resize);
     if (captureScroll) {
-      section.addEventListener("wheel", wheel, { passive: false });
-      section.addEventListener("pointerdown", pointerDown);
-      section.addEventListener("pointermove", pointerMove, { passive: false });
-      section.addEventListener("pointerup", clearTouch);
-      section.addEventListener("pointercancel", clearTouch);
+      layout.addEventListener("wheel", wheel, { passive: false });
+      layout.addEventListener("pointerdown", pointerDown);
+      layout.addEventListener("pointermove", pointerMove, { passive: false });
+      layout.addEventListener("pointerup", clearTouch);
+      layout.addEventListener("pointercancel", clearTouch);
     }
     return () => {
       disposed = true;
       clearTimeout(idleTimer);
       observer.disconnect();
-      section.removeEventListener("wheel", wheel);
-      section.removeEventListener("pointerdown", pointerDown);
-      section.removeEventListener("pointermove", pointerMove);
-      section.removeEventListener("pointerup", clearTouch);
-      section.removeEventListener("pointercancel", clearTouch);
+      layout.removeEventListener("wheel", wheel);
+      layout.removeEventListener("pointerdown", pointerDown);
+      layout.removeEventListener("pointermove", pointerMove);
+      layout.removeEventListener("pointerup", clearTouch);
+      layout.removeEventListener("pointercancel", clearTouch);
       gsap.killTweensOf([...slides, indicator]);
       selectRef.current = null;
       context.revert();

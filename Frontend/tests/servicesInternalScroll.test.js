@@ -44,7 +44,14 @@ function setup(reducedMotion = false, deferAnimations = false, captureScroll = t
     .replace(/import[^;]+;\s*/g, "")
     .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
   const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
-  const api = hook({ current: section }, { current: { clientHeight: 600 } }, [{}, {}, {}], true, (value) => completion.push(value), nativeExit ? undefined : () => exits.push(true), nativeExit ? undefined : () => returns.push(true), captureScroll);
+  const layout = {
+    clientHeight: 600,
+    getBoundingClientRect: () => ({ left: 100, right: 900, top: 100, bottom: 700 }),
+    addEventListener: section.addEventListener,
+    removeEventListener: section.removeEventListener,
+  };
+  section.addEventListener = () => assert.fail("No capturar el margen exterior del selector");
+  const api = hook({ current: section }, { current: layout }, [{}, {}, {}], true, (value) => completion.push(value), nativeExit ? undefined : () => exits.push(true), nativeExit ? undefined : () => returns.push(true), captureScroll);
   const cleanup = effects[0]();
   return { handlers, selected, cleanup, api, clock, completion, durations, exits, returns,
     finishAnimations: () => { while (animations.length) animations.shift()(); } };
@@ -68,11 +75,39 @@ test("native exit waits for a fresh gesture after the last category, then releas
   app.cleanup();
 });
 
-test("a manual jump to the last category can still complete the missing categories by wheel", () => {
+test("a manual jump to the last category releases downward scrolling", () => {
   const app = setup(false, false, true, true);
   app.api.selectCategory(2);
-  app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
+  app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() { assert.fail("La última opción debe permitir bajar"); }, stopPropagation() {} });
+  assert.equal(app.selected.at(-1), 2);
+  app.cleanup();
+});
+
+test("sustained wheel input advances options and releases the page at the end", () => {
+  const app = setup(false, false, true, true);
+  const wheel = (timeStamp) => {
+    let prevented = false;
+    app.handlers.wheel({ deltaY: 60, deltaX: 0, clientX: 500, clientY: 400, timeStamp,
+      preventDefault() { prevented = true; }, stopPropagation() {} });
+    return prevented;
+  };
+  assert.equal(wheel(0), true);
   assert.equal(app.selected.at(-1), 1);
+  assert.equal(wheel(100), true);
+  assert.equal(app.selected.at(-1), 1);
+  assert.equal(wheel(260), true);
+  assert.equal(app.selected.at(-1), 2);
+  assert.equal(wheel(520), false);
+  app.cleanup();
+});
+
+test("wheel outside the layout never captures scrolling or changes the selected option", () => {
+  const app = setup(false, false, true, true);
+  for (const [clientX, clientY] of [[50, 400], [950, 400], [500, 50], [500, 750]]) {
+    app.handlers.wheel({ deltaY: 60, deltaX: 0, clientX, clientY, timeStamp: 0,
+      preventDefault() { assert.fail("Scroll fuera del contenedor"); }, stopPropagation() {} });
+  }
+  assert.equal(app.selected.at(-1), 0);
   app.cleanup();
 });
 

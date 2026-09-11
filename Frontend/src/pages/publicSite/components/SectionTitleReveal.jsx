@@ -9,14 +9,16 @@ export default function SectionTitleReveal({ children, ...props }) {
   const visible = Boolean(reduceMotion) || inView;
 
   return (
-    <Motion.div
-      {...props}
-      ref={ref}
-      initial={false}
-      animate={{ clipPath: getSectionRevealClip(visible) }}
-      transition={getSectionRevealTransition(visible, reduceMotion)}
-    >
-      {children}
-    </Motion.div>
+    <div {...props} ref={ref}>
+      {/* El observador necesita una superficie que la máscara no recorte. */}
+      <Motion.div
+        className="flex w-full flex-col items-center gap-[inherit]"
+        initial={false}
+        animate={{ clipPath: getSectionRevealClip(visible) }}
+        transition={getSectionRevealTransition(visible, reduceMotion)}
+      >
+        {children}
+      </Motion.div>
+    </div>
   );
 }

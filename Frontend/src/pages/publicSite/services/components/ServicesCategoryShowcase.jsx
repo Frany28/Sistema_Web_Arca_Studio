@@ -35,13 +35,13 @@ function ServicesCategoryShowcase({ categories }) {
   return (
     <section
       ref={sectionRef}
-      className="flex w-full shrink-0 touch-pan-x items-center justify-center bg-[var(--color-neutral-950-uniform)]"
+      className="flex w-full shrink-0 items-center justify-center bg-[var(--color-neutral-950-uniform)]"
       aria-label="Tipos de diseño"
       data-node-id="4613:2167"
     >
       <div
         ref={layoutRef}
-        className="services-category-showcase__layout flex w-full max-w-[1200px] items-center justify-center gap-[var(--spacing-gap-8)] px-[var(--spacing-gap-8)] py-[var(--spacing-gap-8)]"
+        className="services-category-showcase__layout flex w-full max-w-[1200px] touch-pan-x items-center justify-center gap-[var(--spacing-gap-8)] px-[var(--spacing-gap-8)] py-[var(--spacing-gap-8)]"
         data-node-id="4613:2165"
       >
         <div
