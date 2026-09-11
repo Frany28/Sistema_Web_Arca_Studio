@@ -60,14 +60,14 @@ function getInactiveCardAnimation(column, row, activeImage, isActive) {
   };
 }
 
-function FeaturedProjectsImageContent({ alt, src }) {
+function FeaturedProjectsImageContent({ alt, expanded = false, src }) {
   return (
     <>
       <ProjectImage
         src={src}
         alt={alt}
         className="h-full w-full"
-        imageClassName="object-cover"
+        imageClassName={expanded ? "object-contain" : "object-cover"}
       />
       <MainLogo
         size="20px"
@@ -148,7 +148,7 @@ function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
           aria-label={`Vista ampliada: ${image.alt}`}
           onClick={onClose}
         >
-          <FeaturedProjectsImageContent {...image} />
+          <FeaturedProjectsImageContent {...image} expanded />
           <div
             className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/20"
             aria-hidden="true"
