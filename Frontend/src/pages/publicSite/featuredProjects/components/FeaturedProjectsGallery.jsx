@@ -1,12 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
+  AnimatePresence,
+  LayoutGroup,
   motion as Motion,
-  useMotionValue,
   useReducedMotion,
-  useSpring,
-  useTransform,
 } from "motion/react";
+
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
+import { ModalCloseButton } from "../../../../components/ui/Modal/Modal.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
 import mirror from "../../../../assets/featuredProjects/quinta-bella-vista-1.webp";
 import bedroom from "../../../../assets/featuredProjects/quinta-bella-vista-2.webp";
@@ -14,108 +16,246 @@ import seating from "../../../../assets/featuredProjects/quinta-bella-vista-3.we
 import living from "../../../../assets/featuredProjects/quinta-bella-vista-4.webp";
 import bathroom from "../../../../assets/featuredProjects/quinta-bella-vista-5.webp";
 import lighting from "../../../../assets/featuredProjects/quinta-bella-vista-6.webp";
-import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
+import {
+  getSectionRevealClip,
+  getSectionRevealTransition,
+} from "../../utils/sectionReveal.js";
 
 const COLUMNS = [
-  [{ src: mirror, alt: "Espejos decorativos de Quinta Bella Vista" }, { src: bedroom, alt: "Dormitorio de Quinta Bella Vista", branded: true }],
-  [{ src: seating, alt: "Área de estar de Quinta Bella Vista" }, { src: lighting, alt: "Iluminación y bloques de vidrio de Quinta Bella Vista" }],
-  [{ src: living, alt: "Sala de Quinta Bella Vista" }, { src: bathroom, alt: "Baño de Quinta Bella Vista", branded: true }],
+  [
+    { src: mirror, alt: "Espejos decorativos de Quinta Bella Vista" },
+    { src: bedroom, alt: "Dormitorio de Quinta Bella Vista" },
+  ],
+  [
+    { src: seating, alt: "Área de estar de Quinta Bella Vista" },
+    { src: lighting, alt: "Iluminación y bloques de vidrio de Quinta Bella Vista" },
+  ],
+  [
+    { src: living, alt: "Sala de Quinta Bella Vista" },
+    { src: bathroom, alt: "Baño de Quinta Bella Vista" },
+  ],
 ];
 
-const PARALLAX_OFFSETS = [
-  [28, -28],
-  [-16, 16],
-  [36, -36],
-];
+const SHARED_LAYOUT_TRANSITION = {
+  type: "spring",
+  damping: 28,
+  stiffness: 280,
+  mass: 0.8,
+};
 
-function getGalleryScrollProgress(gallery, scroller) {
-  const start = gallery.offsetTop - scroller.clientHeight;
-  const end = gallery.offsetTop + gallery.offsetHeight;
-  const progress = (scroller.scrollTop - start) / Math.max(end - start, 1);
-
-  return Math.min(1, Math.max(0, progress));
+function getCardTransition(reduceMotion) {
+  return reduceMotion ? { duration: 0 } : SHARED_LAYOUT_TRANSITION;
 }
 
-function FeaturedProjectsGallery({ visible, onRevealComplete }) {
-  const galleryRef = useRef(null);
-  const reduceMotion = useReducedMotion();
-  const scrollProgress = useMotionValue(0);
-  const smoothScrollProgress = useSpring(scrollProgress, {
-    damping: 28,
-    stiffness: 180,
-  });
-  const leftColumnOffset = useTransform(smoothScrollProgress, [0, 1], PARALLAX_OFFSETS[0]);
-  const middleColumnOffset = useTransform(smoothScrollProgress, [0, 1], PARALLAX_OFFSETS[1]);
-  const rightColumnOffset = useTransform(smoothScrollProgress, [0, 1], PARALLAX_OFFSETS[2]);
-  const columnOffsets = [leftColumnOffset, middleColumnOffset, rightColumnOffset];
+function getInactiveCardAnimation(column, row, activeImage) {
+  if (!activeImage) {
+    return { opacity: 1, scale: 1, x: 0, y: 0 };
+  }
 
-  useEffect(() => {
-    const gallery = galleryRef.current;
-    const scroller = gallery?.closest("[data-home-scroll-container]");
+  return {
+    opacity: 0.28,
+    scale: 0.93,
+    x: column === 0 ? -14 : column === 2 ? 14 : 0,
+    y: row === 0 ? -12 : 12,
+  };
+}
 
-    if (!gallery || !scroller || reduceMotion) {
-      scrollProgress.set(0);
-      return undefined;
-    }
+function FeaturedProjectsImageContent({ alt, src }) {
+  return (
+    <>
+      <ProjectImage
+        src={src}
+        alt={alt}
+        className="h-full w-full"
+        imageClassName="object-cover"
+      />
+      <MainLogo
+        size="20px"
+        appearance="dark"
+        alt=""
+        className="pointer-events-none absolute left-[16px] top-[16px]"
+      />
+    </>
+  );
+}
 
-    let frameId = null;
-    const updateProgress = () => {
-      frameId = null;
-      scrollProgress.set(getGalleryScrollProgress(gallery, scroller));
-    };
-    const requestProgressUpdate = () => {
-      if (frameId !== null) return;
-      frameId = window.requestAnimationFrame(updateProgress);
-    };
-    const resizeObserver = new ResizeObserver(requestProgressUpdate);
-
-    resizeObserver.observe(gallery);
-    resizeObserver.observe(scroller);
-    scroller.addEventListener("scroll", requestProgressUpdate, { passive: true });
-    window.addEventListener("resize", requestProgressUpdate);
-    requestProgressUpdate();
-
-    return () => {
-      if (frameId !== null) window.cancelAnimationFrame(frameId);
-      resizeObserver.disconnect();
-      scroller.removeEventListener("scroll", requestProgressUpdate);
-      window.removeEventListener("resize", requestProgressUpdate);
-    };
-  }, [reduceMotion, scrollProgress]);
+function FeaturedProjectsGalleryCard({
+  activeImage,
+  column,
+  image,
+  onOpen,
+  reduceMotion,
+  row,
+  triggerRef,
+  visible,
+}) {
+  const isActive = activeImage?.id === image.id;
 
   return (
     <Motion.div
-      ref={galleryRef}
-      data-featured-gallery
-      data-node-id="4686:3913"
-      aria-label="Galería de Quinta Bella Vista"
-      aria-hidden={!visible}
-      initial={false}
-      animate={{ clipPath: getSectionRevealClip(visible) }}
-      transition={getSectionRevealTransition(visible, reduceMotion)}
-      onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-      className="relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden bg-[var(--color-primary-500-uniform)] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
+      animate={getInactiveCardAnimation(column, row, activeImage)}
+      transition={getCardTransition(reduceMotion)}
+      className="min-h-0 will-change-transform"
     >
-      {COLUMNS.map((cards, column) => (
-        <Motion.div
-          key={column}
-          className={`grid min-h-0 min-w-0 gap-[24px] will-change-transform max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
-          style={{ y: reduceMotion ? 0 : columnOffsets[column] }}
+      {isActive ? (
+        <div className="size-full" aria-hidden="true" />
+      ) : (
+        <button
+          ref={triggerRef}
+          type="button"
+          disabled={!visible}
+          onClick={() => onOpen(image)}
+          className="group relative size-full overflow-hidden rounded-[var(--radius-2)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-primary-500-uniform)] disabled:cursor-not-allowed"
+          aria-label={`Ampliar imagen: ${image.alt}`}
         >
-          {cards.map(({ src, alt }) => (
-            <div key={src} className="group relative min-h-0 overflow-hidden rounded-[var(--radius-2)]">
-              <ProjectImage
-                src={src}
-                alt={alt}
-                className="h-full w-full"
-                imageClassName="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-              />
-              <MainLogo size="20px" appearance="dark" alt="" className="pointer-events-none absolute left-[16px] top-[16px]" />
+          <Motion.div
+            layoutId={`featured-project-image-${image.id}`}
+            transition={getCardTransition(reduceMotion)}
+            className="relative size-full overflow-hidden rounded-[var(--radius-2)]"
+          >
+            <FeaturedProjectsImageContent {...image} />
+          </Motion.div>
+          <span className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10 motion-reduce:transition-none" />
+        </button>
+      )}
+    </Motion.div>
+  );
+}
+
+function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <>
+      <Motion.div
+        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-[8px]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={getCardTransition(reduceMotion)}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none fixed inset-0 z-[51] flex items-center justify-center p-[16px] max-[767px]:p-[12px]">
+        <Motion.div
+          layoutId={`featured-project-image-${image.id}`}
+          transition={getCardTransition(reduceMotion)}
+          className="pointer-events-auto relative h-[min(78dvh,800px)] w-[min(88vw,1200px)] overflow-hidden rounded-[var(--radius-2)] bg-[var(--color-neutral-10)] shadow-[var(--shadow-e3)] max-[767px]:h-[min(72dvh,640px)] max-[767px]:w-full"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Vista ampliada: ${image.alt}`}
+          onClick={onClose}
+        >
+          <FeaturedProjectsImageContent {...image} />
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/20"
+            aria-hidden="true"
+          />
+          <ModalCloseButton
+            ariaLabel="Cerrar imagen ampliada"
+            className="absolute right-[12px] top-[12px] bg-[rgba(0,0,0,0.35)] text-[var(--color-neutral-100-uniform)] hover:bg-[rgba(0,0,0,0.55)] hover:text-[var(--color-neutral-100-uniform)] focus-visible:ring-offset-black"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClose();
+            }}
+          />
+        </Motion.div>
+      </div>
+    </>,
+    document.body,
+  );
+}
+
+function FeaturedProjectsGallery({ visible, onRevealComplete }) {
+  const [activeImage, setActiveImage] = useState(null);
+  const triggerRefs = useRef(new Map());
+  const lastActiveImageRef = useRef(null);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!activeImage) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setActiveImage(null);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeImage]);
+
+  const handleOpen = (image) => {
+    lastActiveImageRef.current = image.id;
+    setActiveImage(image);
+  };
+
+  const handleClose = () => setActiveImage(null);
+
+  return (
+    <LayoutGroup id="featured-projects-gallery">
+      <Motion.div
+        data-featured-gallery
+        data-node-id="4686:3913"
+        aria-label="Galería de Quinta Bella Vista"
+        aria-hidden={!visible}
+        initial={false}
+        animate={{ clipPath: getSectionRevealClip(visible) }}
+        transition={getSectionRevealTransition(visible, reduceMotion)}
+        onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
+        className="relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden bg-[var(--color-primary-500-uniform)] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
+      >
+        <div className="contents" inert={activeImage ? "" : undefined}>
+          {COLUMNS.map((cards, column) => (
+            <div
+              key={column}
+              className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[128fr_552fr]" : "grid-rows-[384fr_296fr]"}`}
+            >
+              {cards.map((image, row) => {
+                const imageWithId = {
+                  ...image,
+                  id: `${column}-${row}`,
+                };
+
+                return (
+                  <FeaturedProjectsGalleryCard
+                    key={imageWithId.id}
+                    activeImage={activeImage}
+                    column={column}
+                    image={imageWithId}
+                    onOpen={handleOpen}
+                    reduceMotion={reduceMotion}
+                    row={row}
+                    triggerRef={(element) => {
+                      if (element) triggerRefs.current.set(imageWithId.id, element);
+                    }}
+                    visible={visible}
+                  />
+                );
+              })}
             </div>
           ))}
-        </Motion.div>
-      ))}
-    </Motion.div>
+        </div>
+      </Motion.div>
+
+      <AnimatePresence
+        initial={false}
+        onExitComplete={() => {
+          triggerRefs.current.get(lastActiveImageRef.current)?.focus();
+        }}
+      >
+        {activeImage ? (
+          <FeaturedProjectsActiveImage
+            key={activeImage.id}
+            image={activeImage}
+            onClose={handleClose}
+            reduceMotion={reduceMotion}
+          />
+        ) : null}
+      </AnimatePresence>
+    </LayoutGroup>
   );
 }
 
