@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   AnimatePresence,
   LayoutGroup,
@@ -8,7 +7,6 @@ import {
 } from "motion/react";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
-import { ModalCloseButton } from "../../../../components/ui/Modal/Modal.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
 import mirror from "../../../../assets/featuredProjects/quinta-bella-vista-1.webp";
 import bedroom from "../../../../assets/featuredProjects/quinta-bella-vista-2.webp";
@@ -47,27 +45,14 @@ function getCardTransition(reduceMotion) {
   return reduceMotion ? { duration: 0 } : SHARED_LAYOUT_TRANSITION;
 }
 
-function getInactiveCardAnimation(column, row, activeImage, isActive) {
-  if (!activeImage || isActive) {
-    return { opacity: 1, scale: 1, x: 0, y: 0 };
-  }
-
-  return {
-    opacity: 0.28,
-    scale: 0.93,
-    x: column === 0 ? -14 : column === 2 ? 14 : 0,
-    y: row === 0 ? -12 : 12,
-  };
-}
-
-function FeaturedProjectsImageContent({ alt, expanded = false, src }) {
+function FeaturedProjectsImageContent({ alt, src }) {
   return (
     <>
       <ProjectImage
         src={src}
         alt={alt}
         className="h-full w-full"
-        imageClassName={expanded ? "object-contain" : "object-cover"}
+        imageClassName="object-cover"
       />
       <MainLogo
         size="20px"
@@ -81,90 +66,51 @@ function FeaturedProjectsImageContent({ alt, expanded = false, src }) {
 
 function FeaturedProjectsGalleryCard({
   activeImage,
-  column,
   image,
   onOpen,
-  reduceMotion,
-  row,
   triggerRef,
   visible,
 }) {
   const isActive = activeImage?.id === image.id;
 
+  if (isActive) {
+    return <div className="size-full" aria-hidden="true" />;
+  }
+
   return (
-    <Motion.div
-      animate={getInactiveCardAnimation(column, row, activeImage, isActive)}
-      transition={getCardTransition(reduceMotion)}
-      className="min-h-0 will-change-transform"
+    <button
+      ref={triggerRef}
+      type="button"
+      disabled={!visible}
+      onClick={() => onOpen(image)}
+      className="group relative size-full overflow-hidden rounded-[var(--radius-2)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-primary-500-uniform)] disabled:cursor-not-allowed"
+      aria-label={`Ampliar imagen: ${image.alt}`}
     >
-      {isActive ? (
-        <div className="size-full" aria-hidden="true" />
-      ) : (
-        <button
-          ref={triggerRef}
-          type="button"
-          disabled={!visible}
-          onClick={() => onOpen(image)}
-          className="group relative size-full overflow-hidden rounded-[var(--radius-2)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-primary-500-uniform)] disabled:cursor-not-allowed"
-          aria-label={`Ampliar imagen: ${image.alt}`}
-        >
-          <Motion.div
-            layoutId={`featured-project-image-${image.id}`}
-            transition={getCardTransition(reduceMotion)}
-            className="relative size-full overflow-hidden rounded-[var(--radius-2)]"
-          >
-            <FeaturedProjectsImageContent {...image} />
-          </Motion.div>
-          <span className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10 motion-reduce:transition-none" />
-        </button>
-      )}
-    </Motion.div>
+      <Motion.div
+        layoutId={`featured-project-image-${image.id}`}
+        transition={getCardTransition(reduceMotion)}
+        className="relative size-full overflow-hidden rounded-[var(--radius-2)]"
+      >
+        <FeaturedProjectsImageContent {...image} />
+      </Motion.div>
+      <span className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10 motion-reduce:transition-none" />
+    </button>
   );
 }
 
 function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  return createPortal(
-    <>
-      <Motion.div
-        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-[8px]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={getCardTransition(reduceMotion)}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div className="pointer-events-none fixed inset-0 z-[51] flex items-center justify-center p-[16px] max-[767px]:p-[12px]">
-        <Motion.div
-          layoutId={`featured-project-image-${image.id}`}
-          transition={getCardTransition(reduceMotion)}
-          className="pointer-events-auto relative h-[min(78dvh,800px)] w-[min(88vw,1200px)] overflow-hidden rounded-[var(--radius-2)] bg-[var(--color-neutral-10)] shadow-[var(--shadow-e3)] max-[767px]:h-[min(72dvh,640px)] max-[767px]:w-full"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Vista ampliada: ${image.alt}`}
-          onClick={onClose}
-        >
-          <FeaturedProjectsImageContent {...image} expanded />
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/20"
-            aria-hidden="true"
-          />
-          <ModalCloseButton
-            ariaLabel="Cerrar imagen ampliada"
-            className="absolute right-[12px] top-[12px] bg-[rgba(0,0,0,0.35)] text-[var(--color-neutral-100-uniform)] hover:bg-[rgba(0,0,0,0.55)] hover:text-[var(--color-neutral-100-uniform)] focus-visible:ring-offset-black"
-            onClick={(event) => {
-              event.stopPropagation();
-              onClose();
-            }}
-          />
-        </Motion.div>
-      </div>
-    </>,
-    document.body,
+  return (
+    <Motion.div
+      layoutId={`featured-project-image-${image.id}`}
+      transition={getCardTransition(reduceMotion)}
+      className="absolute inset-0 z-20 overflow-hidden bg-[var(--color-neutral-10)]"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Vista ampliada: ${image.alt}`}
+      onClick={onClose}
+    >
+      <FeaturedProjectsImageContent {...image} />
+    </Motion.div>
   );
 }
 
@@ -223,11 +169,8 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
                   <FeaturedProjectsGalleryCard
                     key={imageWithId.id}
                     activeImage={activeImage}
-                    column={column}
                     image={imageWithId}
                     onOpen={handleOpen}
-                    reduceMotion={reduceMotion}
-                    row={row}
                     triggerRef={(element) => {
                       if (element) triggerRefs.current.set(imageWithId.id, element);
                     }}
@@ -238,23 +181,23 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
             </div>
           ))}
         </div>
-      </Motion.div>
 
-      <AnimatePresence
-        initial={false}
-        onExitComplete={() => {
-          triggerRefs.current.get(lastActiveImageRef.current)?.focus();
-        }}
-      >
-        {activeImage ? (
-          <FeaturedProjectsActiveImage
-            key={activeImage.id}
-            image={activeImage}
-            onClose={handleClose}
-            reduceMotion={reduceMotion}
-          />
-        ) : null}
-      </AnimatePresence>
+        <AnimatePresence
+          initial={false}
+          onExitComplete={() => {
+            triggerRefs.current.get(lastActiveImageRef.current)?.focus();
+          }}
+        >
+          {activeImage ? (
+            <FeaturedProjectsActiveImage
+              key={activeImage.id}
+              image={activeImage}
+              onClose={handleClose}
+              reduceMotion={reduceMotion}
+            />
+          ) : null}
+        </AnimatePresence>
+      </Motion.div>
     </LayoutGroup>
   );
 }
