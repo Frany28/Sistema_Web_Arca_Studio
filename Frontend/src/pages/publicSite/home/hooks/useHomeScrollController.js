@@ -56,6 +56,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const [activeSectionId, setActiveSectionId] = useState(null);
   const activeSectionRef = useRef(null);
   const [featuredStep, setFeaturedStep] = useState(1);
+  const [revealedSectionId, setRevealedSectionId] = useState(null);
+  const sectionTitleLockedRef = useRef(false);
+  const revealedSectionRef = useRef(null);
+  const completeSectionTitleReveal = useCallback((sectionId) => {
+    if (sectionId === activeSectionRef.current) sectionTitleLockedRef.current = false;
+  }, []);
   const sectionNavigationRef = useRef(null);
   const navigateToSection = useCallback((sectionId) => {
     sectionNavigationRef.current?.(sectionId);
@@ -184,6 +190,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (activeSectionRef.current === id) return;
       activeSectionRef.current = id;
       setActiveSectionId(id);
+      revealedSectionRef.current = null;
+      setRevealedSectionId(null);
+      sectionTitleLockedRef.current = false;
+      // El gesto de llegada no puede revelar también el encabezado.
+      wheelTransitionLock = true;
+      window.clearTimeout(wheelIdleTimer);
+      wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
     };
     const navigateSection = (sectionId, { direct = false } = {}) => {
       const currentState = navigationStateRef.current;
@@ -253,15 +266,40 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (gallery && scroller.scrollTop + scroller.clientHeight > gallery.offsetTop) setFeaturedStep(2);
     };
 
+    const revealSectionTitle = () => {
+      const id = activeSectionRef.current;
+      if (!id || sectionTitleLockedRef.current || revealedSectionRef.current === id) return;
+      revealedSectionRef.current = id;
+      sectionTitleLockedRef.current = true;
+      setRevealedSectionId(id);
+    };
+
     const handleWheel = (event) => {
       if (event.ctrlKey) return;
       if (activeTween || isProgrammaticScroll) {
         event.preventDefault();
+        event.stopPropagation?.();
+        wheelTransitionLock = true;
+        window.clearTimeout(wheelIdleTimer);
+        wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
         return;
       }
-      if (contentMode) return;
       const delta = normalizeWheelDelta(event, scroller.clientHeight);
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
+
+      if (contentMode) {
+        if (reduceMotion) return;
+        if (revealedSectionRef.current === activeSectionRef.current &&
+            !sectionTitleLockedRef.current && !wheelGestureState.consumed && !wheelTransitionLock) return;
+        event.preventDefault();
+        event.stopPropagation?.();
+        window.clearTimeout(wheelIdleTimer);
+        wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
+        if (wheelTransitionLock || sectionTitleLockedRef.current) return;
+        wheelGestureState = advanceWheelGesture(wheelGestureState, delta.y, WHEEL_GESTURE_THRESHOLD_PX, event.timeStamp);
+        if (wheelGestureState.triggeredDirection !== null) revealSectionTitle();
+        return;
+      }
 
       event.preventDefault();
       window.clearTimeout(wheelIdleTimer);
@@ -310,7 +348,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerDown = (event) => {
-      if (contentMode) return;
+      touchGesture = null;
+      if (contentMode && (reduceMotion || revealedSectionRef.current === activeSectionRef.current)) return;
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       const isStatementGesture =
         !contentMode && navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX;
@@ -327,7 +366,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerMove = (event) => {
-      if (contentMode) return;
       if (
         !touchGesture ||
         touchGesture.pointerId !== event.pointerId ||
@@ -398,6 +436,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       event.preventDefault();
       touchGesture.consumed = true;
+      if (contentMode) {
+        event.stopPropagation?.();
+        revealSectionTitle();
+        return;
+      }
       moveByDirection(direction);
     };
 
@@ -412,7 +455,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         event.preventDefault();
         return;
       }
-      if (contentMode) return;
+      if (contentMode) {
+        if (reduceMotion || (revealedSectionRef.current === activeSectionRef.current && !sectionTitleLockedRef.current)) return;
+        event.preventDefault();
+        event.stopPropagation?.();
+        if (!event.repeat) revealSectionTitle();
+        return;
+      }
 
       event.preventDefault();
       if (event.repeat) return;
@@ -541,10 +590,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     resizeFrame = window.requestAnimationFrame(() => {
       isProgrammaticScroll = false;
     });
-    scroller.addEventListener("wheel", handleWheel, { passive: false });
-    scroller.addEventListener("pointerdown", handlePointerDown);
+    scroller.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    scroller.addEventListener("pointerdown", handlePointerDown, true);
     scroller.addEventListener("pointermove", handlePointerMove, {
       passive: false,
+      capture: true,
     });
     scroller.addEventListener("pointerup", clearTouchGesture);
     scroller.addEventListener("pointercancel", clearTouchGesture);
@@ -562,9 +612,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       activeTween?.kill();
       titleRevealLockedRef.current = false;
       statement.destroy();
-      scroller.removeEventListener("wheel", handleWheel);
-      scroller.removeEventListener("pointerdown", handlePointerDown);
-      scroller.removeEventListener("pointermove", handlePointerMove);
+      scroller.removeEventListener("wheel", handleWheel, true);
+      scroller.removeEventListener("pointerdown", handlePointerDown, true);
+      scroller.removeEventListener("pointermove", handlePointerMove, true);
       scroller.removeEventListener("pointerup", clearTouchGesture);
       scroller.removeEventListener("pointercancel", clearTouchGesture);
       scroller.removeEventListener("keydown", handleKeyDown);
@@ -579,6 +629,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
   return {
     activeSectionId,
+    revealedSectionId,
+    completeSectionTitleReveal,
     featuredStep,
     contentScrollActive,
     navigateToSection,

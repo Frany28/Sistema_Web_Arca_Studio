@@ -41,6 +41,12 @@ test("the unclipped heading detects viewport reentry while its content animates"
     assert.deepEqual(content.children, ["Heading"]);
   }
   inView = false;
+  for (const requestedVisible of [false, true]) {
+    inView = true;
+    const content = render({ children: "Heading", visible: requestedVisible }).children.find((child) => child?.type === "animated-content");
+    assert.equal(content.props.animate.clipPath, getSectionRevealClip(requestedVisible));
+  }
+  inView = false;
   reduceMotion = true;
   const content = render({ children: "Heading" }).children.find((child) => child?.type === "animated-content");
   assert.equal(content.props.animate.clipPath, getSectionRevealClip(true));
@@ -59,7 +65,7 @@ test("section headings share the hero reveal and replay on viewport reentry", ()
   }
   assert.match(shared, /useInView\(ref, \{ amount: 0\.2 \}\)/);
   assert.doesNotMatch(shared, /once: true/);
-  assert.match(shared, /Boolean\(reduceMotion\) \|\| inView/);
+  assert.match(shared, /Boolean\(reduceMotion\) \|\| \(requestedVisible \?\? inView\)/);
 });
 
 test("the shared mask opens and closes with the same spring, with no reduced-motion delay", () => {

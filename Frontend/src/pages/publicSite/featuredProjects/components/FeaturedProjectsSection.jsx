@@ -1,7 +1,7 @@
 import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 
-function FeaturedProjectsSection({ step = 1, onRevealComplete }) {
+function FeaturedProjectsSection({ step = 1, onRevealComplete, titleVisible, onTitleRevealComplete }) {
   return (
     <section
       id="featured-projects"
@@ -9,6 +9,8 @@ function FeaturedProjectsSection({ step = 1, onRevealComplete }) {
       className="dark min-h-dvh bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
     >
       <SectionTitleReveal
+        visible={titleVisible}
+        onRevealComplete={() => onTitleRevealComplete?.("featured-projects")}
         className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
         data-node-id="4856:5032"
       >

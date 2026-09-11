@@ -1,13 +1,15 @@
 import MovingGradientTitle from "./MovingGradientTitle.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 
-function ServicesHeading({ eyebrow, title, description }) {
+function ServicesHeading({ eyebrow, title, description, visible, onRevealComplete }) {
   return (
     <section
       className="relative flex w-full shrink-0 justify-center overflow-hidden bg-[var(--color-neutral-950-uniform)] px-[16px] py-[var(--spacing-gap-7)] min-[768px]:px-[48px]"
       aria-label={eyebrow}
     >
       <SectionTitleReveal
+        visible={visible}
+        onRevealComplete={onRevealComplete}
         className="flex w-full max-w-[786px] flex-col items-center gap-[24px] text-center"
         data-node-id="4848:8081"
       >

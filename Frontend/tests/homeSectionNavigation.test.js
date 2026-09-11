@@ -78,15 +78,77 @@ function setup(reduceMotion = false) {
     while (frames.length) frames.shift()();
   };
   flush();
-  return { controller, handlers, scroller, panels, services, featured, flush, clock, getActiveSection: () => states[2], getFeaturedStep: () => states[3], cleanup: () => cleanups.forEach((fn) => fn?.()) };
+  const revealTitle = () => {
+    clock.advance(180);
+    handlers.keydown({ key: 'ArrowDown', preventDefault() {} });
+    controller.completeSectionTitleReveal(states[2]);
+    clock.advance(180);
+  };
+  return { controller, handlers, scroller, panels, services, featured, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], cleanup: () => cleanups.forEach((fn) => fn?.()) };
 }
 
+
+test('arrival and its inertia stay hidden; a second gesture reveals text without scrolling', () => {
+  const app = setup();
+  const wheel = () => {
+    let prevented = false;
+    app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() { prevented = true; } });
+    return prevented;
+  };
+  app.controller.navigateToSection('services');
+  assert.equal(wheel(), true);
+  app.flush();
+  assert.equal(app.getRevealedSection(), null);
+  assert.equal(wheel(), true);
+  assert.equal(app.getRevealedSection(), null);
+  app.clock.advance(180);
+  assert.equal(wheel(), true);
+  assert.equal(app.getRevealedSection(), 'services');
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.clock.advance(180);
+  assert.equal(wheel(), true, 'Wait for the reveal animation');
+  app.controller.completeSectionTitleReveal('featured-projects');
+  assert.equal(wheel(), true, 'Ignore completion from another heading');
+  app.controller.completeSectionTitleReveal('services');
+  app.clock.advance(180);
+  assert.equal(wheel(), false);
+  app.scroller.scrollTop = 4400;
+  app.handlers.scroll();
+  assert.equal(app.getRevealedSection(), null);
+  assert.equal(wheel(), true);
+  assert.equal(app.getRevealedSection(), null);
+  app.clock.advance(180);
+  assert.equal(wheel(), true);
+  assert.equal(app.getRevealedSection(), 'featured-projects');
+  assert.equal(app.scroller.scrollTop, 4400);
+  app.cleanup();
+  assert.equal(app.clock.pending(), 0);
+});
+
+test('keyboard and touch reveal the heading as a separate step on every entry', () => {
+  const app = setup();
+  app.controller.navigateToSection('services'); app.flush();
+  let prevented = false;
+  app.handlers.keydown({ key: 'ArrowDown', preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(app.getRevealedSection(), 'services');
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.controller.navigateToSection('featured-projects'); app.flush();
+  app.controller.navigateToSection('services'); app.flush();
+  assert.equal(app.getRevealedSection(), null);
+  app.handlers.pointerdown({ pointerType: 'touch', isPrimary: true, pointerId: 1, clientX: 100, clientY: 300 });
+  app.handlers.pointermove({ pointerId: 1, clientX: 100, clientY: 200, preventDefault() {} });
+  assert.equal(app.getRevealedSection(), 'services');
+  assert.equal(app.scroller.scrollTop, 3200);
+  app.cleanup();
+});
 
 for (const reducedMotion of [false, true]) {
   test('continuous content preserves native input and navigation: ' + reducedMotion, () => {
     const app = setup(reducedMotion);
     app.controller.navigateToSection('services'); app.flush();
     assert.equal(app.scroller.scrollTop, 3200);
+    app.revealTitle();
     const blocked = () => assert.fail('Native scrolling was blocked');
     for (const deltaMode of [0, 1, 2]) app.handlers.wheel({ deltaMode, deltaY: 60, deltaX: 0, preventDefault: blocked });
     for (const key of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'End', 'Home']) app.handlers.keydown({ key, preventDefault: blocked });
@@ -110,8 +172,10 @@ for (const reducedMotion of [false, true]) {
 test('viewport growth cannot return continuous content to the video', () => {
   const app = setup();
   app.controller.navigateToSection('services'); app.flush();
+  app.revealTitle();
   app.panels[3].offsetTop = 3600;
   app.services.offsetTop = 4800;
+  app.featured.offsetTop = 6000;
   app.handlers.resize(); app.flush();
   assert.equal(app.scroller.scrollTop, 4800);
   app.handlers.wheel({ deltaY: 60, preventDefault() { assert.fail('Native scroll blocked after resize'); } });
@@ -180,6 +244,7 @@ test('an unfinished explicit navbar jump temporarily consumes wheel input', () =
   assert.equal(prevented, true);
   app.handlers.wheel({ ctrlKey: true, preventDefault() { assert.fail('Zoom blocked'); } });
   app.flush();
+  app.revealTitle();
   app.handlers.wheel({ deltaY: 60, preventDefault() { assert.fail('Scroll blocked'); } });
   app.controller.navigateToSection('featured-projects');
   app.controller.navigateToSection('home'); app.flush();
