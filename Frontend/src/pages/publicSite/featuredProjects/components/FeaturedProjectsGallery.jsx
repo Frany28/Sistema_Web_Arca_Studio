@@ -47,8 +47,8 @@ function getCardTransition(reduceMotion) {
   return reduceMotion ? { duration: 0 } : SHARED_LAYOUT_TRANSITION;
 }
 
-function getInactiveCardAnimation(column, row, activeImage) {
-  if (!activeImage) {
+function getInactiveCardAnimation(column, row, activeImage, isActive) {
+  if (!activeImage || isActive) {
     return { opacity: 1, scale: 1, x: 0, y: 0 };
   }
 
@@ -93,7 +93,7 @@ function FeaturedProjectsGalleryCard({
 
   return (
     <Motion.div
-      animate={getInactiveCardAnimation(column, row, activeImage)}
+      animate={getInactiveCardAnimation(column, row, activeImage, isActive)}
       transition={getCardTransition(reduceMotion)}
       className="min-h-0 will-change-transform"
     >
