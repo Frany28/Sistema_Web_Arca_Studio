@@ -1,4 +1,5 @@
 import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
+import FeaturedProjectsProjectPanel from "./FeaturedProjectsProjectPanel.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 
 function FeaturedProjectsSection({ step = 1, onRevealComplete, titleVisible, onTitleRevealComplete }) {
@@ -25,6 +26,7 @@ function FeaturedProjectsSection({ step = 1, onRevealComplete, titleVisible, onT
         </p>
       </SectionTitleReveal>
       <FeaturedProjectsGallery visible={step === 2} onRevealComplete={onRevealComplete} />
+      <FeaturedProjectsProjectPanel />
     </section>
   );
 }

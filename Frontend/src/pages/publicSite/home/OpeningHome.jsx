@@ -111,7 +111,7 @@ function OpeningHome() {
               <ServicesSection titleVisible={revealedSectionId === "services"} onTitleRevealComplete={completeSectionTitleReveal} />
               <FeaturedProjectsSection
                 step={featuredStep}
-                titleVisible={revealedSectionId === "featured-projects"}
+                titleVisible={revealedSectionId === "featured-projects" || featuredStep >= 2}
                 onTitleRevealComplete={completeSectionTitleReveal}
               />
             </>

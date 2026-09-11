@@ -1,4 +1,11 @@
-import { motion as Motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef } from "react";
+import {
+  motion as Motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "motion/react";
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
 import mirror from "../../../../assets/featuredProjects/quinta-bella-vista-1.webp";
@@ -15,10 +22,70 @@ const COLUMNS = [
   [{ src: living, alt: "Sala de Quinta Bella Vista" }, { src: bathroom, alt: "Baño de Quinta Bella Vista", branded: true }],
 ];
 
+const PARALLAX_OFFSETS = [
+  [28, -28],
+  [-16, 16],
+  [36, -36],
+];
+
+function getGalleryScrollProgress(gallery, scroller) {
+  const start = gallery.offsetTop - scroller.clientHeight;
+  const end = gallery.offsetTop + gallery.offsetHeight;
+  const progress = (scroller.scrollTop - start) / Math.max(end - start, 1);
+
+  return Math.min(1, Math.max(0, progress));
+}
+
 function FeaturedProjectsGallery({ visible, onRevealComplete }) {
+  const galleryRef = useRef(null);
   const reduceMotion = useReducedMotion();
+  const scrollProgress = useMotionValue(0);
+  const smoothScrollProgress = useSpring(scrollProgress, {
+    damping: 28,
+    stiffness: 180,
+  });
+  const leftColumnOffset = useTransform(smoothScrollProgress, [0, 1], PARALLAX_OFFSETS[0]);
+  const middleColumnOffset = useTransform(smoothScrollProgress, [0, 1], PARALLAX_OFFSETS[1]);
+  const rightColumnOffset = useTransform(smoothScrollProgress, [0, 1], PARALLAX_OFFSETS[2]);
+  const columnOffsets = [leftColumnOffset, middleColumnOffset, rightColumnOffset];
+
+  useEffect(() => {
+    const gallery = galleryRef.current;
+    const scroller = gallery?.closest("[data-home-scroll-container]");
+
+    if (!gallery || !scroller || reduceMotion) {
+      scrollProgress.set(0);
+      return undefined;
+    }
+
+    let frameId = null;
+    const updateProgress = () => {
+      frameId = null;
+      scrollProgress.set(getGalleryScrollProgress(gallery, scroller));
+    };
+    const requestProgressUpdate = () => {
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(updateProgress);
+    };
+    const resizeObserver = new ResizeObserver(requestProgressUpdate);
+
+    resizeObserver.observe(gallery);
+    resizeObserver.observe(scroller);
+    scroller.addEventListener("scroll", requestProgressUpdate, { passive: true });
+    window.addEventListener("resize", requestProgressUpdate);
+    requestProgressUpdate();
+
+    return () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      scroller.removeEventListener("scroll", requestProgressUpdate);
+      window.removeEventListener("resize", requestProgressUpdate);
+    };
+  }, [reduceMotion, scrollProgress]);
+
   return (
     <Motion.div
+      ref={galleryRef}
       data-featured-gallery
       data-node-id="4686:3913"
       aria-label="Galería de Quinta Bella Vista"
@@ -27,10 +94,14 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
       animate={{ clipPath: getSectionRevealClip(visible) }}
       transition={getSectionRevealTransition(visible, reduceMotion)}
       onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-      className="relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] bg-[var(--color-primary-500-uniform)] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
+      className="relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden bg-[var(--color-primary-500-uniform)] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
     >
       {COLUMNS.map((cards, column) => (
-        <div key={column} className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}>
+        <Motion.div
+          key={column}
+          className={`grid min-h-0 min-w-0 gap-[24px] will-change-transform max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
+          style={{ y: reduceMotion ? 0 : columnOffsets[column] }}
+        >
           {cards.map(({ src, alt }) => (
             <div key={src} className="group relative min-h-0 overflow-hidden rounded-[var(--radius-2)]">
               <ProjectImage
@@ -42,7 +113,7 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
               <MainLogo size="20px" appearance="dark" alt="" className="pointer-events-none absolute left-[16px] top-[16px]" />
             </div>
           ))}
-        </div>
+        </Motion.div>
       ))}
     </Motion.div>
   );
