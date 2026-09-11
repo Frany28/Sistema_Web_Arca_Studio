@@ -217,6 +217,17 @@ Cuando se añadan animaciones, respetar `prefers-reduced-motion`, como ya hace e
 
 ### Imágenes de proyectos
 
+#### Optimización obligatoria de medios del home
+
+- Toda imagen o video nuevo o reemplazado en el home debe convertirse y optimizarse antes de utilizarse. La regla incluye la introducción, servicios, proyectos destacados, fondos, galerías y posters.
+- Convertir imágenes raster a WebP y ajustar la compresión para reducir su peso conservando la calidad visual. Mantener proporciones y transparencia; dimensionar según el tamaño de presentación y la densidad de pantalla necesaria. Conservar los SVG como vectores optimizados.
+- Recodificar los videos para web con resolución, tasa de bits y compresión ajustadas a su presentación. Utilizar WebM y un MP4 compatible de respaldo cuando corresponda; preparar el MP4 para reproducción progresiva (`faststart`). Generar posters optimizados en WebP.
+- Cambiar la extensión del archivo no constituye conversión. Un recurso ya convertido debe comprobarse y optimizarse si sigue siendo pesado; evitar recomprimir sucesivamente archivos con pérdida y utilizar el original como fuente cuando esté disponible.
+- Actualizar imports, URLs, precargas y fuentes de reproductores para servir únicamente las versiones optimizadas. Los originales de edición no deben formar parte de las descargas del home.
+- Registrar el tamaño antes y después y comprobar decodificación, calidad visual y, para videos, reproducción en los navegadores compatibles. Conservar duración, proporciones, audio funcional, accesibilidad, diseño responsive y todas las animaciones existentes.
+
+#### Presentación de imágenes de proyectos
+
 - Toda portada o miniatura de proyecto debe usar el componente compartido `ProjectImage`.
 - Mientras una imagen carga, si no tiene URL o si la descarga falla, debe conservar el mismo espacio y mostrar el placeholder neutral con el icono de imagen centrado.
 - No sustituir una imagen ausente por una portada de demostración. El contenido real reemplaza el placeholder únicamente después de cargar correctamente.

@@ -1,12 +1,12 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
-import mirror from "../../../../assets/featuredProjects/quinta-bella-vista-1.jpg";
-import bedroom from "../../../../assets/featuredProjects/quinta-bella-vista-2.png";
-import seating from "../../../../assets/featuredProjects/quinta-bella-vista-3.jpg";
-import living from "../../../../assets/featuredProjects/quinta-bella-vista-4.jpg";
-import bathroom from "../../../../assets/featuredProjects/quinta-bella-vista-5.png";
-import lighting from "../../../../assets/featuredProjects/quinta-bella-vista-6.jpg";
+import mirror from "../../../../assets/featuredProjects/quinta-bella-vista-1.webp";
+import bedroom from "../../../../assets/featuredProjects/quinta-bella-vista-2.webp";
+import seating from "../../../../assets/featuredProjects/quinta-bella-vista-3.webp";
+import living from "../../../../assets/featuredProjects/quinta-bella-vista-4.webp";
+import bathroom from "../../../../assets/featuredProjects/quinta-bella-vista-5.webp";
+import lighting from "../../../../assets/featuredProjects/quinta-bella-vista-6.webp";
 import { getSectionRevealClip, getSectionRevealTransition } from "../../utils/sectionReveal.js";
 
 const COLUMNS = [

@@ -1,10 +1,10 @@
-import residentialDesignImage from "../../../assets/services/residential-design.jpeg";
-import commercialDesignImage from "../../../assets/services/commercial-design.png";
-import institutionalDesignImage from "../../../assets/services/institutional-design.png";
-import industrialDesignImage from "../../../assets/services/industrial-design.png";
-import remodelingDesignImage from "../../../assets/services/remodeling-design.png";
-import interiorDesignImage from "../../../assets/services/interior-design.png";
-import constructionManagementImage from "../../../assets/services/construction-management.png";
+import residentialDesignImage from "../../../assets/services/residential-design.webp";
+import commercialDesignImage from "../../../assets/services/commercial-design.webp";
+import institutionalDesignImage from "../../../assets/services/institutional-design.webp";
+import industrialDesignImage from "../../../assets/services/industrial-design.webp";
+import remodelingDesignImage from "../../../assets/services/remodeling-design.webp";
+import interiorDesignImage from "../../../assets/services/interior-design.webp";
+import constructionManagementImage from "../../../assets/services/construction-management.webp";
 
 const SERVICES_HEADING = Object.freeze({
   eyebrow: "Servicios",

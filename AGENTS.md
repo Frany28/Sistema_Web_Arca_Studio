@@ -210,6 +210,8 @@ Consultar `Sistema_Web_Arca_Studio/Backend/ARCHITECTURE.md` antes de crear módu
 
 # 8. Arquitectura y diseño obligatorios del frontend
 
+* Desde ahora, toda imagen o video que se incorpore o reemplace en el home, incluidas sus secciones de servicios y proyectos destacados, debe convertirse y optimizarse antes de integrarse. Las imágenes raster deben entregarse en WebP; los videos deben recodificarse y comprimirse para web, con WebM y MP4 de respaldo cuando corresponda. Los SVG existentes se conservan como vectores optimizados. Las referencias, precargas y posters deben apuntar a los recursos optimizados. Medir el peso antes y después, verificar la reproducción o decodificación y conservar calidad visual, proporciones, accesibilidad y animaciones. Consultar los criterios de medios del home en `Frontend/DESIGN_SYSTEM.md`.
+
 * Ninguna animación existente puede eliminarse o desactivarse sin una instrucción explícita del usuario para esa animación. Cambiar spacing, layout, scroll o componentes no autoriza a suprimir animaciones relacionadas. Una petición sobre un efecto concreto se limita a ese efecto; deben conservarse los demás, incluida la navegación animada, los revelados y los recorridos internos. Se mantiene el soporte de accesibilidad existente para movimiento reducido.
 
 * Consultar `Sistema_Web_Arca_Studio/Frontend/DESIGN_SYSTEM.md` antes de crear o modificar páginas, componentes visuales o estilos.

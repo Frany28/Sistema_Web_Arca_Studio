@@ -119,8 +119,8 @@ test("the root route presents the animated ARCA opening before the home hero", (
   assert.match(openingSequenceSource, /Promise\.allSettled/);
   assert.match(openingSequenceSource, /imageSources\.map\(preloadImage\)/);
   assert.match(openingSequenceSource, /document\.fonts\?\.ready/);
-  assert.match(homeContentSource, /arca-home-hero\.png/);
-  assert.match(homeContentSource, /arca-construction-worker-v2\.png/);
+  assert.match(homeContentSource, /arca-home-hero\.webp/);
+  assert.match(homeContentSource, /arca-construction-worker-v2\.webp/);
   assert.match(homeSource, /HOME_PRELOAD_IMAGES/);
   assert.match(homeSource, /<PublicSiteHeader/);
   assert.match(homeSource, /scrollContainerRef=\{scrollerRef\}/);
