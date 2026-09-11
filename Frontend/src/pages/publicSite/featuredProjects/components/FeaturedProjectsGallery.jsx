@@ -31,10 +31,15 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
     >
       {COLUMNS.map((cards, column) => (
         <div key={column} className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}>
-          {cards.map(({ src, alt, branded }) => (
-            <div key={src} className="relative min-h-0 overflow-hidden rounded-[var(--radius-2)]">
-              <ProjectImage src={src} alt={alt} className="h-full w-full" imageClassName="object-cover" />
-              {!branded && <MainLogo size="20px" appearance="dark" alt="" className="pointer-events-none absolute left-[16px] top-[16px]" />}
+          {cards.map(({ src, alt }) => (
+            <div key={src} className="group relative min-h-0 overflow-hidden rounded-[var(--radius-2)]">
+              <ProjectImage
+                src={src}
+                alt={alt}
+                className="h-full w-full"
+                imageClassName="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+              />
+              <MainLogo size="20px" appearance="dark" alt="" className="pointer-events-none absolute left-[16px] top-[16px]" />
             </div>
           ))}
         </div>
