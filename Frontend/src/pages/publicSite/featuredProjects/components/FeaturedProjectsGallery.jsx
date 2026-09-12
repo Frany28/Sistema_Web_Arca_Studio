@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import {
   AnimatePresence,
@@ -109,25 +110,25 @@ function FeaturedProjectsGalleryCard({
 }
 
 function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
-  return (
+  const activeImage = (
     <Motion.div
       layoutId={`featured-project-image-${image.id}`}
       transition={getCardTransition(reduceMotion)}
-      className="absolute inset-0 z-20 overflow-hidden bg-[var(--color-neutral-10)]"
+      className="fixed inset-0 z-[60] overflow-hidden bg-[var(--color-neutral-10)]"
       role="dialog"
       aria-modal="true"
       aria-label={`Vista ampliada: ${image.alt}`}
       onClick={onClose}
     >
-      <div className="pointer-events-none absolute inset-[-48px] overflow-hidden" aria-hidden="true">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <img
           src={image.src}
           alt=""
-          className="size-full scale-110 object-cover opacity-55 blur-3xl"
+          className="size-full scale-105 object-cover opacity-40 blur-[var(--effect-blur-b1)]"
         />
-        <span className="absolute inset-0 bg-black/45" />
+        <span className="absolute inset-0 bg-[rgba(42,41,41,0.10)] backdrop-blur-[var(--effect-blur-b1)]" />
       </div>
-      <div className="relative flex size-full items-center justify-center">
+      <div className="relative flex size-full items-center justify-center p-[24px] max-[640px]:p-[8px]">
         <div
           className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"
           style={{ aspectRatio: image.width / image.height }}
@@ -137,6 +138,10 @@ function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
       </div>
     </Motion.div>
   );
+
+  return typeof document === "undefined"
+    ? activeImage
+    : createPortal(activeImage, document.body);
 }
 
 function FeaturedProjectsGallery({ visible, onRevealComplete }) {

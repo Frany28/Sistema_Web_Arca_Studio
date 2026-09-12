@@ -22,7 +22,9 @@ test("the featured-project gallery expands every masonry image from its original
   assert.match(gallerySource, /reduceMotion=\{reduceMotion\}/);
   assert.match(gallerySource, /function FeaturedProjectsGalleryCard\(\{[\s\S]*reduceMotion,/);
   assert.match(gallerySource, /<FeaturedProjectsImageContent \{\.\.\.image\} fit="contain" \/>/);
-  assert.match(gallerySource, /blur-3xl/);
+  assert.match(gallerySource, /blur-\[var\(--effect-blur-b1\)\]/);
+  assert.match(gallerySource, /createPortal\(activeImage, document\.body\)/);
+  assert.match(gallerySource, /className="fixed inset-0 z-\[60\]/);
   assert.match(gallerySource, /style=\{\{ aspectRatio: image\.width \/ image\.height \}\}/);
   assert.match(gallerySource, /damping: 34/);
   assert.match(gallerySource, /stiffness: 180/);
