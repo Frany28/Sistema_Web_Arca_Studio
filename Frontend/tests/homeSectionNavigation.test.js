@@ -88,7 +88,7 @@ function setup(reduceMotion = false) {
 }
 
 
-test('arrival and its inertia stay hidden; a second gesture reveals text without scrolling', () => {
+test('services heading reveals on arrival before native content scrolling resumes', () => {
   const app = setup();
   const wheel = () => {
     let prevented = false;
@@ -98,14 +98,8 @@ test('arrival and its inertia stay hidden; a second gesture reveals text without
   app.controller.navigateToSection('services');
   assert.equal(wheel(), true);
   app.flush();
-  assert.equal(app.getRevealedSection(), null);
-  assert.equal(wheel(), true);
-  assert.equal(app.getRevealedSection(), null);
-  app.clock.advance(180);
-  assert.equal(wheel(), true);
   assert.equal(app.getRevealedSection(), 'services');
   assert.equal(app.scroller.scrollTop, 3200);
-  app.clock.advance(180);
   assert.equal(wheel(), true, 'Wait for the reveal animation');
   app.controller.completeSectionTitleReveal('featured-projects');
   assert.equal(wheel(), true, 'Ignore completion from another heading');
@@ -125,7 +119,7 @@ test('arrival and its inertia stay hidden; a second gesture reveals text without
   assert.equal(app.clock.pending(), 0);
 });
 
-test('keyboard and touch reveal the heading as a separate step on every entry', () => {
+test('services heading reveals immediately on every section entry', () => {
   const app = setup();
   app.controller.navigateToSection('services'); app.flush();
   let prevented = false;
@@ -135,9 +129,6 @@ test('keyboard and touch reveal the heading as a separate step on every entry', 
   assert.equal(app.scroller.scrollTop, 3200);
   app.controller.navigateToSection('featured-projects'); app.flush();
   app.controller.navigateToSection('services'); app.flush();
-  assert.equal(app.getRevealedSection(), null);
-  app.handlers.pointerdown({ pointerType: 'touch', isPrimary: true, pointerId: 1, clientX: 100, clientY: 300 });
-  app.handlers.pointermove({ pointerId: 1, clientX: 100, clientY: 200, preventDefault() {} });
   assert.equal(app.getRevealedSection(), 'services');
   assert.equal(app.scroller.scrollTop, 3200);
   app.cleanup();

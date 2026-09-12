@@ -341,7 +341,9 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesPageSource, /pt-\[var\(--spacing-gap-9\)\]/);
   assert.match(servicesPageSource, /pb-\[var\(--spacing-gap-8\)\]/);
   assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
-  assert.match(homeSource, /<ServicesSection \/>/);
+  assert.match(homeSource, /<ServicesSection titleVisible=\{revealedSectionId === "services"\}/);
+  assert.match(scrollControllerSource, /const revealOnEntry = id === "services"/);
+  assert.match(scrollControllerSource, /setRevealedSectionId\(revealOnEntry \? id : null\)/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4848:8081"/);

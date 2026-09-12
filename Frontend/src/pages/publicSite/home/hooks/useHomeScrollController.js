@@ -190,9 +190,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (activeSectionRef.current === id) return;
       activeSectionRef.current = id;
       setActiveSectionId(id);
-      revealedSectionRef.current = null;
-      setRevealedSectionId(null);
-      sectionTitleLockedRef.current = false;
+      const revealOnEntry = id === "services";
+      revealedSectionRef.current = revealOnEntry ? id : null;
+      setRevealedSectionId(revealOnEntry ? id : null);
+      sectionTitleLockedRef.current = revealOnEntry;
       // El gesto de llegada no puede revelar también el encabezado.
       wheelTransitionLock = true;
       window.clearTimeout(wheelIdleTimer);
