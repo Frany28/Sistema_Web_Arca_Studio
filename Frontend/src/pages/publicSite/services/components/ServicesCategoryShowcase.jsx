@@ -40,12 +40,15 @@ function ServicesCategoryShowcase({ categories }) {
       data-node-id="4613:2167"
     >
       <div
-        ref={layoutRef}
-        className="services-category-showcase__layout flex w-full max-w-[1200px] touch-pan-x items-center justify-center gap-[var(--spacing-gap-8)] px-[var(--spacing-gap-8)] py-[var(--spacing-gap-8)]"
+        className="services-category-showcase__layout flex w-full max-w-[1200px] items-center justify-center px-[var(--spacing-gap-8)] py-[var(--spacing-gap-8)]"
         data-node-id="4613:2165"
       >
         <div
-          className="services-category-showcase__list relative flex min-w-0 max-w-[514px] flex-1 flex-col items-start gap-[24px] py-[48px] pl-[16px]"
+          ref={layoutRef}
+          className="services-category-showcase__content flex w-full max-w-[882px] touch-pan-x items-center justify-center gap-[var(--spacing-gap-8)]"
+        >
+          <div
+            className="services-category-showcase__list relative flex min-w-0 max-w-[514px] flex-1 flex-col items-start gap-[24px] py-[48px] pl-[16px]"
           role="tablist"
           aria-label="Seleccionar tipo de diseño"
           aria-orientation="vertical"
@@ -76,10 +79,10 @@ function ServicesCategoryShowcase({ categories }) {
               </button>
             );
           })}
-        </div>
+          </div>
 
-        <div
-          className="services-category-showcase__frame relative aspect-[16/25] w-[320px] max-w-[320px] shrink-0 rounded-[var(--radius-4)] p-[24px]"
+          <div
+            className="services-category-showcase__frame relative aspect-[16/25] w-[320px] max-w-[320px] shrink-0 rounded-[var(--radius-4)] p-[24px]"
           role="tabpanel"
           id="services-category-panel"
           aria-labelledby={`service-tab-${activeCategory.id}`}
@@ -114,6 +117,7 @@ function ServicesCategoryShowcase({ categories }) {
                 )}
               </div>
             ))}
+          </div>
           </div>
         </div>
       </div>

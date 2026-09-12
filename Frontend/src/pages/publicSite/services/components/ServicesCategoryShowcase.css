@@ -43,8 +43,11 @@
    en móvil, sin ocultar categorías fuera de la pantalla. */
 @media (width < 1024px) {
   .services-category-showcase__layout {
-    gap: 24px;
     padding: 24px;
+  }
+
+  .services-category-showcase__content {
+    gap: 24px;
   }
 
   .services-category-showcase__frame {
@@ -64,8 +67,11 @@
 
 @media (width < 768px) {
   .services-category-showcase__layout {
-    gap: 16px;
     padding: 24px 16px;
+  }
+
+  .services-category-showcase__content {
+    gap: 16px;
   }
 
   .services-category-showcase__tab {

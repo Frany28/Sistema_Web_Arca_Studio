@@ -34,6 +34,15 @@ const COLUMNS = [
   ],
 ];
 
+const IMAGE_DIMENSIONS = new Map([
+  [mirror, { width: 2731, height: 4096 }],
+  [bedroom, { width: 2528, height: 1684 }],
+  [seating, { width: 4096, height: 2731 }],
+  [living, { width: 4096, height: 2731 }],
+  [bathroom, { width: 4096, height: 2731 }],
+  [lighting, { width: 4096, height: 2731 }],
+]);
+
 const SHARED_LAYOUT_TRANSITION = {
   type: "spring",
   damping: 34,
@@ -110,7 +119,22 @@ function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
       aria-label={`Vista ampliada: ${image.alt}`}
       onClick={onClose}
     >
-      <FeaturedProjectsImageContent {...image} fit="contain" />
+      <div className="pointer-events-none absolute inset-[-48px] overflow-hidden" aria-hidden="true">
+        <img
+          src={image.src}
+          alt=""
+          className="size-full scale-110 object-cover opacity-55 blur-3xl"
+        />
+        <span className="absolute inset-0 bg-black/45" />
+      </div>
+      <div className="relative flex size-full items-center justify-center">
+        <div
+          className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"
+          style={{ aspectRatio: image.width / image.height }}
+        >
+          <FeaturedProjectsImageContent {...image} fit="contain" />
+        </div>
+      </div>
     </Motion.div>
   );
 }
@@ -163,6 +187,7 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
               {cards.map((image, row) => {
                 const imageWithId = {
                   ...image,
+                  ...IMAGE_DIMENSIONS.get(image.src),
                   id: `${column}-${row}`,
                 };
 
