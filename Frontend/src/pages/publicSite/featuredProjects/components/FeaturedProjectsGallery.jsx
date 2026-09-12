@@ -78,6 +78,7 @@ function FeaturedProjectsGalleryCard({
   activeImage,
   image,
   onOpen,
+  projectId,
   reduceMotion,
   triggerRef,
   visible,
@@ -98,7 +99,7 @@ function FeaturedProjectsGalleryCard({
       aria-label={`Ampliar imagen: ${image.alt}`}
     >
       <Motion.div
-        layoutId={`featured-project-image-${image.id}`}
+        layoutId={`featured-project-image-${projectId}-${image.id}`}
         transition={getCardTransition(reduceMotion)}
         className="relative size-full overflow-hidden rounded-[var(--radius-2)]"
       >
@@ -109,10 +110,10 @@ function FeaturedProjectsGalleryCard({
   );
 }
 
-function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
+function FeaturedProjectsActiveImage({ image, onClose, projectId, reduceMotion }) {
   const activeImage = (
     <Motion.div
-      layoutId={`featured-project-image-${image.id}`}
+      layoutId={`featured-project-image-${projectId}-${image.id}`}
       transition={getCardTransition(reduceMotion)}
       className="fixed inset-0 z-[60] overflow-hidden bg-[var(--color-neutral-10)]"
       role="dialog"
@@ -144,7 +145,14 @@ function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
     : createPortal(activeImage, document.body);
 }
 
-function FeaturedProjectsGallery({ visible, onRevealComplete }) {
+function FeaturedProjectsGallery({
+  backgroundClassName = "bg-[var(--color-primary-500-uniform)]",
+  columns = COLUMNS,
+  galleryLabel = "Galería de Quinta Bella Vista",
+  onRevealComplete,
+  projectId = "quinta-bella-vista",
+  visible = true,
+}) {
   const [activeImage, setActiveImage] = useState(null);
   const triggerRefs = useRef(new Map());
   const lastActiveImageRef = useRef(null);
@@ -171,20 +179,20 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
   const handleClose = () => setActiveImage(null);
 
   return (
-    <LayoutGroup id="featured-projects-gallery">
+    <LayoutGroup id={`featured-projects-gallery-${projectId}`}>
       <Motion.div
         data-featured-gallery
         data-node-id="4686:3913"
-        aria-label="Galería de Quinta Bella Vista"
+        aria-label={galleryLabel}
         aria-hidden={!visible}
         initial={false}
         animate={{ clipPath: getSectionRevealClip(visible) }}
         transition={getSectionRevealTransition(visible, reduceMotion)}
         onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-        className="relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden bg-[var(--color-primary-500-uniform)] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
+        className={`relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px] ${backgroundClassName}`}
       >
         <div className="contents" inert={activeImage ? "" : undefined}>
-          {COLUMNS.map((cards, column) => (
+          {columns.map((cards, column) => (
             <div
               key={column}
               className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
@@ -202,6 +210,7 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
                     activeImage={activeImage}
                     image={imageWithId}
                     onOpen={handleOpen}
+                    projectId={projectId}
                     reduceMotion={reduceMotion}
                     triggerRef={(element) => {
                       if (element) triggerRefs.current.set(imageWithId.id, element);
@@ -225,6 +234,7 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
               key={activeImage.id}
               image={activeImage}
               onClose={handleClose}
+              projectId={projectId}
               reduceMotion={reduceMotion}
             />
           ) : null}

@@ -12,10 +12,12 @@ const gallerySource = readFileSync(
 
 test("the featured-project gallery expands every masonry image from its original position", () => {
   assert.match(gallerySource, /const \[activeImage, setActiveImage\] = useState\(null\)/);
-  assert.match(gallerySource, /<LayoutGroup id="featured-projects-gallery">/);
-  assert.match(gallerySource, /layoutId=\{`featured-project-image-\$\{image\.id\}`\}/);
+  assert.match(gallerySource, /<LayoutGroup id=\{`featured-projects-gallery-\$\{projectId\}`\}>/);
+  assert.match(gallerySource, /layoutId=\{`featured-project-image-\$\{projectId\}-\$\{image\.id\}`\}/);
   assert.match(gallerySource, /<FeaturedProjectsImageContent \{\.\.\.image\} \/>/);
-  assert.match(gallerySource, /COLUMNS\.map\(\(cards, column\)/);
+  assert.match(gallerySource, /columns\.map\(\(cards, column\)/);
+  assert.match(gallerySource, /columns = COLUMNS/);
+  assert.match(gallerySource, /galleryLabel = "Galería de Quinta Bella Vista"/);
   assert.match(gallerySource, /cards\.map\(\(image, row\)/);
   assert.match(gallerySource, /grid-rows-\[568fr_336fr\]/);
   assert.match(gallerySource, /grid-rows-\[335fr_569fr\]/);

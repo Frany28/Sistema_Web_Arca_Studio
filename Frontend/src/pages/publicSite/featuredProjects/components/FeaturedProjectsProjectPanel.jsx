@@ -1,55 +1,61 @@
-import { useRef } from "react";
-import { motion as Motion, useInView, useReducedMotion } from "motion/react";
+import muelleZulima1 from "../../../../assets/featuredProjects/muelle-zulima-1.webp";
+import muelleZulima2 from "../../../../assets/featuredProjects/muelle-zulima-2.webp";
+import muelleZulima3 from "../../../../assets/featuredProjects/muelle-zulima-3.webp";
+import muelleZulima4 from "../../../../assets/featuredProjects/muelle-zulima-4.webp";
+import muelleZulima5 from "../../../../assets/featuredProjects/muelle-zulima-5.webp";
+import muelleZulima6 from "../../../../assets/featuredProjects/muelle-zulima-6.webp";
+import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
+import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 
-import projectImage from "../../../../assets/home/arca-home-hero.webp";
-import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
-import HomeHeroTitle from "../../home/components/HomeHeroTitle/HomeHeroTitle.jsx";
-import {
-  getSectionRevealClip,
-  getSectionRevealTransition,
-} from "../../utils/sectionReveal.js";
+const MUELLE_ZULIMA_COLUMNS = [
+  [
+    { src: muelleZulima1, alt: "Sala de reuniones de Muelle Zulima", width: 1920, height: 1080 },
+    { src: muelleZulima2, alt: "Mobiliario de oficina de Muelle Zulima", width: 1920, height: 1080 },
+  ],
+  [
+    { src: muelleZulima3, alt: "Estaciones de trabajo de Muelle Zulima", width: 1920, height: 1080 },
+    { src: muelleZulima6, alt: "Área de trabajo de Muelle Zulima", width: 1920, height: 1080 },
+  ],
+  [
+    { src: muelleZulima4, alt: "Oficina privada de Muelle Zulima", width: 1920, height: 1080 },
+    { src: muelleZulima5, alt: "Espacios operativos de Muelle Zulima", width: 1920, height: 1080 },
+  ],
+];
 
 /**
- * Presenta el siguiente proyecto destacado como una pantalla independiente
- * dentro de la secuencia, reutilizando el mismo revelado de las pantallas iniciales.
+ * Presenta el segundo proyecto destacado en el flujo continuo de la página.
+ * Reutiliza el revelado de títulos y la galería interactiva existentes.
  */
 function FeaturedProjectsProjectPanel() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { amount: 0.2 });
-  const reduceMotion = useReducedMotion();
-  const visible = Boolean(reduceMotion) || inView;
-
   return (
-    <Motion.div
-      ref={ref}
+    <section
       data-featured-next-project
-      data-node-id="4856:5037"
+      data-node-id="4686:114353"
+      data-navbar-background="light"
       aria-label="Proyecto destacado Muelle Zulima"
-      initial={false}
-      animate={{ clipPath: getSectionRevealClip(visible) }}
-      transition={getSectionRevealTransition(visible, reduceMotion)}
-      className="relative h-dvh min-h-[480px] w-full overflow-hidden bg-[var(--color-neutral-950-uniform)]"
+      className="relative flex flex-col gap-[var(--spacing-gap-7)] bg-[var(--color-neutral-100-uniform)] pt-[var(--spacing-gap-8)] text-[var(--color-primary-300)]"
     >
-      <ProjectImage
-        src={projectImage}
-        alt="Oficina Taller de Reparaciones Marinas Muelle Zulima en Ciudad Ojeda"
-        className="absolute inset-0 size-full"
-        imageClassName="size-full object-cover object-center"
+      <SectionTitleReveal
+        className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center min-[768px]:px-[var(--spacing-gap-7)]"
+        data-node-id="4856:5037"
+      >
+        <p className="text-heading-4 m-0 w-full" data-node-id="4856:5038">
+          Proyectos Destacados
+        </p>
+        <h2 className="text-heading-1 m-0 w-full max-[767px]:text-[38px] max-[767px]:leading-[46px]" data-node-id="4856:5039">
+          Muelle Zulima
+        </h2>
+        <p className="text-heading-6 m-0 w-full max-w-[555px] opacity-60" data-node-id="4856:5040">
+          Diseño arquitectónico y ejecución de proyecto industrial para una oficina taller de reparaciones marinas ubicada en Ciudad Ojeda.
+        </p>
+      </SectionTitleReveal>
+      <FeaturedProjectsGallery
+        backgroundClassName="bg-[var(--color-neutral-100-uniform)]"
+        columns={MUELLE_ZULIMA_COLUMNS}
+        galleryLabel="Galería de Muelle Zulima"
+        projectId="muelle-zulima"
       />
-      <div
-        className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/5 to-black/20"
-        aria-hidden="true"
-      />
-      <HomeHeroTitle
-        captionDescriptionNodeId="4856:5040"
-        captionNodeId="4856:5039"
-        captionTitleNodeId="4856:5041"
-        description="Oficina Taller de Reparaciones Marinas | Ciudad Ojeda, Venezuela."
-        projectName="Arquitectura"
-        title="Muelle Zulima"
-        visible={visible}
-      />
-    </Motion.div>
+    </section>
   );
 }
 
