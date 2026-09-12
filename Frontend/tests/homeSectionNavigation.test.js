@@ -187,6 +187,42 @@ test('gallery reveals on entering the viewport without snapping or hiding again'
   app.cleanup();
 });
 
+test('an early gallery reveal cannot leave featured-project scrolling locked', () => {
+  const app = setup();
+  app.featured.querySelector = () => ({ offsetTop: 5000 });
+  app.controller.navigateToSection('services'); app.flush();
+  app.revealTitle();
+
+  app.scroller.scrollTop = 4210; app.handlers.scroll();
+  assert.equal(app.getFeaturedStep(), 2);
+  assert.equal(app.getActiveSection(), 'services');
+
+  app.scroller.scrollTop = 4400; app.handlers.scroll();
+  assert.equal(app.getActiveSection(), 'featured-projects');
+  assert.equal(app.getRevealedSection(), null);
+  app.clock.advance(180);
+
+  let prevented = false;
+  app.handlers.wheel({
+    deltaY: 60,
+    deltaX: 0,
+    timeStamp: 400,
+    preventDefault() { prevented = true; },
+  });
+  assert.equal(prevented, true);
+  assert.equal(app.getRevealedSection(), 'featured-projects');
+
+  app.controller.completeSectionTitleReveal('featured-projects');
+  app.clock.advance(180);
+  app.handlers.wheel({
+    deltaY: 60,
+    deltaX: 0,
+    timeStamp: 800,
+    preventDefault() { assert.fail('Featured-project scroll stayed locked'); },
+  });
+  app.cleanup();
+});
+
 test('direct navigation updates the section and reveals an already visible gallery', () => {
   const app = setup();
   app.featured.querySelector = () => ({ offsetTop: 4800 });

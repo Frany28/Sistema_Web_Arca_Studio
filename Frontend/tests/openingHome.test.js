@@ -417,6 +417,8 @@ test("services categories preserve the residential Figma state and accessible tr
 
 test("OpeningHome delegates loading, navigation, content and statement behavior", () => {
   assert.match(homeSource, /<FeaturedProjectsSection/);
+  assert.match(homeSource, /titleVisible=\{revealedSectionId === "featured-projects"\}/);
+  assert.doesNotMatch(homeSource, /titleVisible=\{[^}]*featuredStep >= 2/);
   assert.match(homeSource, /useHomeOpeningSequence/);
   assert.match(homeSource, /useHomeScrollController/);
   assert.match(homeSource, /<HomeSections/);
