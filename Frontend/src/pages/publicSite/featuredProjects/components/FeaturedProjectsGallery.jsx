@@ -158,7 +158,7 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
           {COLUMNS.map((cards, column) => (
             <div
               key={column}
-              className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[128fr_552fr]" : "grid-rows-[384fr_296fr]"}`}
+              className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
             >
               {cards.map((image, row) => {
                 const imageWithId = {
