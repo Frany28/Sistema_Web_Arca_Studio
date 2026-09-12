@@ -68,6 +68,7 @@ function FeaturedProjectsGalleryCard({
   activeImage,
   image,
   onOpen,
+  reduceMotion,
   triggerRef,
   visible,
 }) {
@@ -171,6 +172,7 @@ function FeaturedProjectsGallery({ visible, onRevealComplete }) {
                     activeImage={activeImage}
                     image={imageWithId}
                     onOpen={handleOpen}
+                    reduceMotion={reduceMotion}
                     triggerRef={(element) => {
                       if (element) triggerRefs.current.set(imageWithId.id, element);
                     }}
