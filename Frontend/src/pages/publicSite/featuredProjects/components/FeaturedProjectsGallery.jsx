@@ -36,23 +36,23 @@ const COLUMNS = [
 
 const SHARED_LAYOUT_TRANSITION = {
   type: "spring",
-  damping: 28,
-  stiffness: 280,
-  mass: 0.8,
+  damping: 34,
+  stiffness: 180,
+  mass: 1,
 };
 
 function getCardTransition(reduceMotion) {
   return reduceMotion ? { duration: 0 } : SHARED_LAYOUT_TRANSITION;
 }
 
-function FeaturedProjectsImageContent({ alt, src }) {
+function FeaturedProjectsImageContent({ alt, fit = "cover", src }) {
   return (
     <>
       <ProjectImage
         src={src}
         alt={alt}
-        className="h-full w-full"
-        imageClassName="object-cover"
+        fit={fit}
+        className="flex h-full w-full items-center justify-center"
       />
       <MainLogo
         size="20px"
@@ -110,7 +110,7 @@ function FeaturedProjectsActiveImage({ image, onClose, reduceMotion }) {
       aria-label={`Vista ampliada: ${image.alt}`}
       onClick={onClose}
     >
-      <FeaturedProjectsImageContent {...image} />
+      <FeaturedProjectsImageContent {...image} fit="contain" />
     </Motion.div>
   );
 }

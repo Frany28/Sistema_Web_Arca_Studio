@@ -19,6 +19,9 @@ test("the featured-project gallery expands every masonry image from its original
   assert.match(gallerySource, /cards\.map\(\(image, row\)/);
   assert.match(gallerySource, /reduceMotion=\{reduceMotion\}/);
   assert.match(gallerySource, /function FeaturedProjectsGalleryCard\(\{[\s\S]*reduceMotion,/);
+  assert.match(gallerySource, /<FeaturedProjectsImageContent \{\.\.\.image\} fit="contain" \/>/);
+  assert.match(gallerySource, /damping: 34/);
+  assert.match(gallerySource, /stiffness: 180/);
   assert.match(gallerySource, /onClick=\{onClose\}/);
   assert.match(gallerySource, /event\.key === "Escape"/);
   assert.match(gallerySource, /onExitComplete/);
