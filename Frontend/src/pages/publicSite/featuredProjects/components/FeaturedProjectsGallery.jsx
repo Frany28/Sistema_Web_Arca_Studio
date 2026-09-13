@@ -94,6 +94,7 @@ function FeaturedProjectsGalleryCard({
     >
       <Motion.div
         layoutId={`featured-project-image-${projectId}-${image.id}`}
+        layoutCrossfade={false}
         transition={getCardTransition(reduceMotion)}
         className="relative size-full overflow-hidden rounded-[var(--radius-2)]"
       >
@@ -115,18 +116,12 @@ function FeaturedProjectsActiveImage({
 }) {
   const isClosing = Boolean(closingTarget);
   const activeImage = (
-    <Motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: isClosing ? 0 : 1 }}
-      transition={getCardTransition(reduceMotion)}
+    <div
       className="fixed inset-0 z-[60] overflow-hidden"
       role="dialog"
       aria-modal="true"
       aria-label={`Vista ampliada: ${image.alt}`}
       onClick={onClose}
-      onAnimationComplete={() => {
-        if (isClosing) onCloseComplete();
-      }}
     >
       <div
         className="pointer-events-none absolute inset-0 bg-[rgba(42,41,41,0.10)]"
@@ -141,11 +136,15 @@ function FeaturedProjectsActiveImage({
           ref={mediaRef}
           animate={closingTarget ?? { x: 0, y: 0 }}
           transition={getCardTransition(reduceMotion)}
+          onAnimationComplete={() => {
+            if (isClosing) onCloseComplete();
+          }}
           className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"
           style={{ aspectRatio: image.width / image.height }}
         >
           <Motion.div
             layoutId={`featured-project-image-${projectId}-${image.id}`}
+            layoutCrossfade={false}
             transition={getCardTransition(reduceMotion)}
             className="size-full"
           >
@@ -153,7 +152,7 @@ function FeaturedProjectsActiveImage({
           </Motion.div>
         </Motion.div>
       </div>
-    </Motion.div>
+    </div>
   );
 
   return typeof document === "undefined"
