@@ -265,7 +265,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const featured = getSection("featured-projects");
       selectSection(featured && scroller.scrollTop + 64 >= featured.offsetTop ? "featured-projects" : "services");
       const gallery = featured?.querySelector?.("[data-featured-gallery]");
-      if (gallery && scroller.scrollTop + scroller.clientHeight > gallery.offsetTop) setFeaturedStep(2);
+      // offsetTop cambia segÃºn el offsetParent y no representa necesariamente el
+      // borde visible del scroller. La galerÃ­a se revela al entrar de verdad en pantalla.
+      if (gallery && gallery.getBoundingClientRect().top < scroller.getBoundingClientRect().bottom) {
+        setFeaturedStep((currentStep) => (currentStep === 2 ? currentStep : 2));
+      }
     };
 
     const revealSectionTitle = () => {

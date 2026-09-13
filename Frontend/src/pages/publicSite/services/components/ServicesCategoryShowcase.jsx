@@ -75,7 +75,9 @@ function ServicesCategoryShowcase({ categories }) {
                 onClick={() => selectCategory(index)}
                 onKeyDown={(event) => handleCategoryKeyDown(event, index)}
               >
-                {category.label}
+                <span data-service-category-scroll-trigger>
+                  {category.label}
+                </span>
               </button>
             );
           })}

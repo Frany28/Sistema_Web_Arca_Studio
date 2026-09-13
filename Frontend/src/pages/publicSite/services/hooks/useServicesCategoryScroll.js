@@ -72,6 +72,10 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && !onNextSection);
     const wheel = (event) => {
       if (event.ctrlKey) return;
+      // El selector solo responde a la rueda cuando el puntero estÃ¡ sobre el
+      // texto de una categorÃ­a; el resto del layout conserva scroll nativo.
+      if (!(event.target instanceof Element) ||
+          !event.target.closest("[data-service-category-scroll-trigger]")) return;
       const bounds = layout.getBoundingClientRect();
       if (event.clientX < bounds.left || event.clientX > bounds.right ||
           event.clientY < bounds.top || event.clientY > bounds.bottom) return;
