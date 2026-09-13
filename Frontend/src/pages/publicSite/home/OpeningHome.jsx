@@ -108,7 +108,10 @@ function OpeningHome() {
           />
           {initialScrollReady && (
             <>
-              <ServicesSection onTitleRevealComplete={completeSectionTitleReveal} />
+              <ServicesSection
+                onNextSection={() => navigateToSection("featured-projects")}
+                onTitleRevealComplete={completeSectionTitleReveal}
+              />
               <FeaturedProjectsSection
                 step={featuredStep}
                 onTitleRevealComplete={completeSectionTitleReveal}
