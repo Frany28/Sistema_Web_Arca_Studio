@@ -36,7 +36,7 @@ function FeaturedProjectsProjectPanel({ active = false }) {
       aria-label="Proyecto destacado Muelle Zulima"
       aria-hidden={!active}
       inert={active ? undefined : ""}
-      className="absolute inset-0 flex min-h-0 flex-col overflow-hidden bg-[var(--color-neutral-100-uniform)] text-[var(--color-primary-300)]"
+      className="relative col-start-1 row-start-1 flex min-h-0 flex-col gap-[var(--spacing-gap-7)] bg-[var(--color-neutral-100-uniform)] pt-[var(--spacing-gap-8)] text-[var(--color-primary-300)]"
     >
       <SectionTitleReveal
         enabled={active}
@@ -56,7 +56,6 @@ function FeaturedProjectsProjectPanel({ active = false }) {
       <FeaturedProjectsGallery
         backgroundClassName="bg-[var(--color-neutral-100-uniform)]"
         columns={MUELLE_ZULIMA_COLUMNS}
-        containerClassName="min-h-0 flex-1"
         galleryLabel="Galería de Muelle Zulima"
       />
     </article>

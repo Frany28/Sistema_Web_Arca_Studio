@@ -186,7 +186,7 @@ function FeaturedProjectsActiveImage({
 function FeaturedProjectsGallery({
   backgroundClassName = "bg-[var(--color-primary-500-uniform)]",
   columns = COLUMNS,
-  containerClassName = "h-dvh min-h-[480px]",
+  containerClassName = "h-dvh min-h-[480px] shrink-0",
   galleryLabel = "Galería de Quinta Bella Vista",
   onRevealComplete,
   visible = true,

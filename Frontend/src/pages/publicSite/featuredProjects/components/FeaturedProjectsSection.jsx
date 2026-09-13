@@ -13,14 +13,14 @@ function FeaturedProjectsSection({ step = 1, onRevealComplete, onTitleRevealComp
       ref={stageRef}
       id="featured-projects"
       aria-label="Proyectos destacados"
-      className="dark relative h-dvh min-h-[480px] overflow-hidden bg-[var(--color-neutral-950-uniform)]"
+      className="dark relative grid overflow-hidden bg-[var(--color-neutral-950-uniform)]"
     >
       <article
         data-featured-project-panel
         aria-label="Proyecto destacado Quinta Bella Vista"
         aria-hidden={activeProjectIndex !== 0}
         inert={activeProjectIndex === 0 ? undefined : ""}
-        className="absolute inset-0 flex min-h-0 flex-col overflow-hidden bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
+        className="relative col-start-1 row-start-1 flex min-h-0 flex-col bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
       >
         <SectionTitleReveal
           enabled={activeProjectIndex === 0}
@@ -39,7 +39,6 @@ function FeaturedProjectsSection({ step = 1, onRevealComplete, onTitleRevealComp
           </p>
         </SectionTitleReveal>
         <FeaturedProjectsGallery
-          containerClassName="min-h-0 flex-1"
           visible={step === 2}
           onRevealComplete={onRevealComplete}
         />
