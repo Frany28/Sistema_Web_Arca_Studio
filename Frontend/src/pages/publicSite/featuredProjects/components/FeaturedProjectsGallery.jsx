@@ -1,11 +1,6 @@
 import { createPortal } from "react-dom";
-import { useEffect, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  LayoutGroup,
-  motion as Motion,
-  useReducedMotion,
-} from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { LayoutGroup, motion as Motion, useReducedMotion } from "motion/react";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
@@ -86,7 +81,7 @@ function FeaturedProjectsGalleryCard({
   const isActive = activeImage?.id === image.id;
 
   if (isActive) {
-    return <div className="size-full" aria-hidden="true" />;
+    return <div ref={triggerRef} className="size-full" aria-hidden="true" />;
   }
 
   return (
@@ -110,18 +105,29 @@ function FeaturedProjectsGalleryCard({
   );
 }
 
-function FeaturedProjectsActiveImage({ image, onClose, projectId, reduceMotion }) {
+function FeaturedProjectsActiveImage({
+  closingTarget,
+  image,
+  mediaRef,
+  onClose,
+  onCloseComplete,
+  projectId,
+  reduceMotion,
+}) {
+  const isClosing = Boolean(closingTarget);
   const activeImage = (
     <Motion.div
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      animate={{ opacity: isClosing ? 0 : 1 }}
       transition={getCardTransition(reduceMotion)}
       className="fixed inset-0 z-[60] overflow-hidden"
       role="dialog"
       aria-modal="true"
       aria-label={`Vista ampliada: ${image.alt}`}
       onClick={onClose}
+      onAnimationComplete={() => {
+        if (isClosing) onCloseComplete();
+      }}
     >
       <div
         className="pointer-events-none absolute inset-0 bg-[rgba(42,41,41,0.10)]"
@@ -133,12 +139,19 @@ function FeaturedProjectsActiveImage({ image, onClose, projectId, reduceMotion }
       />
       <div className="relative flex size-full items-center justify-center p-[24px] max-[640px]:p-[8px]">
         <Motion.div
-          layoutId={`featured-project-image-${projectId}-${image.id}`}
+          ref={mediaRef}
+          animate={closingTarget ?? { x: 0, y: 0, scaleX: 1, scaleY: 1 }}
           transition={getCardTransition(reduceMotion)}
           className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"
           style={{ aspectRatio: image.width / image.height }}
         >
-          <FeaturedProjectsImageContent {...image} fit="contain" />
+          <Motion.div
+            layoutId={`featured-project-image-${projectId}-${image.id}`}
+            transition={getCardTransition(reduceMotion)}
+            className="size-full"
+          >
+            <FeaturedProjectsImageContent {...image} fit="contain" />
+          </Motion.div>
         </Motion.div>
       </div>
     </Motion.div>
@@ -158,29 +171,57 @@ function FeaturedProjectsGallery({
   visible = true,
 }) {
   const [activeImage, setActiveImage] = useState(null);
+  const [closingTarget, setClosingTarget] = useState(null);
   const triggerRefs = useRef(new Map());
   const lastActiveImageRef = useRef(null);
+  const activeMediaRef = useRef(null);
   const reduceMotion = useReducedMotion();
+
+  const completeClose = useCallback(() => {
+    const closedImageId = activeImage?.id;
+    setActiveImage(null);
+    setClosingTarget(null);
+    window.requestAnimationFrame(() => {
+      triggerRefs.current.get(closedImageId)?.focus();
+    });
+  }, [activeImage?.id]);
+
+  const handleClose = useCallback(() => {
+    if (!activeImage || closingTarget) return;
+
+    const sourceRect = triggerRefs.current.get(activeImage.id)?.getBoundingClientRect();
+    const mediaRect = activeMediaRef.current?.getBoundingClientRect();
+    if (!sourceRect || !mediaRect || !mediaRect.width || !mediaRect.height) {
+      completeClose();
+      return;
+    }
+
+    setClosingTarget({
+      x: sourceRect.left + (sourceRect.width / 2) - (mediaRect.left + (mediaRect.width / 2)),
+      y: sourceRect.top + (sourceRect.height / 2) - (mediaRect.top + (mediaRect.height / 2)),
+      scaleX: sourceRect.width / mediaRect.width,
+      scaleY: sourceRect.height / mediaRect.height,
+    });
+  }, [activeImage, closingTarget, completeClose]);
 
   useEffect(() => {
     if (!activeImage) return undefined;
 
     function handleKeyDown(event) {
       if (event.key === "Escape") {
-        setActiveImage(null);
+        handleClose();
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeImage]);
+  }, [activeImage, handleClose]);
 
   const handleOpen = (image) => {
     lastActiveImageRef.current = image.id;
+    setClosingTarget(null);
     setActiveImage(image);
   };
-
-  const handleClose = () => setActiveImage(null);
 
   return (
     <LayoutGroup id={`featured-projects-gallery-${projectId}`}>
@@ -227,22 +268,17 @@ function FeaturedProjectsGallery({
           ))}
         </div>
 
-        <AnimatePresence
-          initial={false}
-          onExitComplete={() => {
-            triggerRefs.current.get(lastActiveImageRef.current)?.focus();
-          }}
-        >
-          {activeImage ? (
-            <FeaturedProjectsActiveImage
-              key={activeImage.id}
-              image={activeImage}
-              onClose={handleClose}
-              projectId={projectId}
-              reduceMotion={reduceMotion}
-            />
-          ) : null}
-        </AnimatePresence>
+        {activeImage ? (
+          <FeaturedProjectsActiveImage
+            closingTarget={closingTarget}
+            image={activeImage}
+            mediaRef={activeMediaRef}
+            onClose={handleClose}
+            onCloseComplete={completeClose}
+            projectId={projectId}
+            reduceMotion={reduceMotion}
+          />
+        ) : null}
       </Motion.div>
     </LayoutGroup>
   );
