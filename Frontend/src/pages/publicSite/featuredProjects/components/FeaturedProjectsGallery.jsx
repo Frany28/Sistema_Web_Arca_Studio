@@ -113,7 +113,6 @@ function FeaturedProjectsGalleryCard({
 function FeaturedProjectsActiveImage({ image, onClose, projectId, reduceMotion }) {
   const activeImage = (
     <Motion.div
-      layoutId={`featured-project-image-${projectId}-${image.id}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -133,12 +132,14 @@ function FeaturedProjectsActiveImage({ image, onClose, projectId, reduceMotion }
         }}
       />
       <div className="relative flex size-full items-center justify-center p-[24px] max-[640px]:p-[8px]">
-        <div
+        <Motion.div
+          layoutId={`featured-project-image-${projectId}-${image.id}`}
+          transition={getCardTransition(reduceMotion)}
           className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"
           style={{ aspectRatio: image.width / image.height }}
         >
           <FeaturedProjectsImageContent {...image} fit="contain" />
-        </div>
+        </Motion.div>
       </div>
     </Motion.div>
   );
