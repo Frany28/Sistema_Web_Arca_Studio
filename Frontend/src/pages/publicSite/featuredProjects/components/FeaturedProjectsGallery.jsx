@@ -114,6 +114,9 @@ function FeaturedProjectsActiveImage({ image, onClose, projectId, reduceMotion }
   const activeImage = (
     <Motion.div
       layoutId={`featured-project-image-${projectId}-${image.id}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={getCardTransition(reduceMotion)}
       className="fixed inset-0 z-[60] overflow-hidden"
       role="dialog"
