@@ -108,10 +108,9 @@ function OpeningHome() {
           />
           {initialScrollReady && (
             <>
-              <ServicesSection titleVisible={revealedSectionId === "services"} onTitleRevealComplete={completeSectionTitleReveal} />
+              <ServicesSection onTitleRevealComplete={completeSectionTitleReveal} />
               <FeaturedProjectsSection
                 step={featuredStep}
-                titleVisible={revealedSectionId === "featured-projects"}
                 onTitleRevealComplete={completeSectionTitleReveal}
               />
             </>
