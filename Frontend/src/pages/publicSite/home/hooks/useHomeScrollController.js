@@ -190,10 +190,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (activeSectionRef.current === id) return;
       activeSectionRef.current = id;
       setActiveSectionId(id);
-      const revealOnEntry = id === "services";
-      revealedSectionRef.current = revealOnEntry ? id : null;
-      setRevealedSectionId(revealOnEntry ? id : null);
-      sectionTitleLockedRef.current = revealOnEntry;
+      // Habilitar el título de la sección que se acaba de alcanzar. El componente
+      // espera su entrada real al viewport antes de iniciar el revelado.
+      revealedSectionRef.current = id;
+      setRevealedSectionId(id);
+      sectionTitleLockedRef.current = Boolean(id);
       // El gesto de llegada no puede revelar también el encabezado.
       wheelTransitionLock = true;
       window.clearTimeout(wheelIdleTimer);

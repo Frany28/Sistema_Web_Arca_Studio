@@ -115,20 +115,20 @@ function FeaturedProjectsActiveImage({ image, onClose, projectId, reduceMotion }
     <Motion.div
       layoutId={`featured-project-image-${projectId}-${image.id}`}
       transition={getCardTransition(reduceMotion)}
-      className="fixed inset-0 z-[60] overflow-hidden bg-[var(--color-neutral-10)]"
+      className="fixed inset-0 z-[60] overflow-hidden"
       role="dialog"
       aria-modal="true"
       aria-label={`Vista ampliada: ${image.alt}`}
       onClick={onClose}
     >
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <img
-          src={image.src}
-          alt=""
-          className="size-full scale-105 object-cover opacity-40 blur-[var(--effect-blur-b1)]"
-        />
-        <span className="absolute inset-0 bg-[rgba(42,41,41,0.10)] backdrop-blur-[var(--effect-blur-b1)]" />
-      </div>
+      <div
+        className="pointer-events-none absolute inset-0 bg-[rgba(42,41,41,0.10)]"
+        aria-hidden="true"
+        style={{
+          backdropFilter: "var(--effect-blur-b1)",
+          WebkitBackdropFilter: "var(--effect-blur-b1)",
+        }}
+      />
       <div className="relative flex size-full items-center justify-center p-[24px] max-[640px]:p-[8px]">
         <div
           className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"

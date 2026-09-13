@@ -6,7 +6,12 @@ export default function SectionTitleReveal({ children, visible: requestedVisible
   const ref = useRef(null);
   const inView = useInView(ref, { amount: 0.2 });
   const reduceMotion = useReducedMotion();
-  const visible = Boolean(reduceMotion) || (requestedVisible ?? inView);
+  // La sección puede habilitar el revelado antes de terminar el scroll programático.
+  // Esperar también a que el título entre al viewport evita que la animación finalice
+  // fuera de pantalla y conserva el replay al volver a la sección.
+  const visible = Boolean(reduceMotion) || (
+    inView && (requestedVisible ?? true)
+  );
 
   return (
     <div {...props} ref={ref}>
