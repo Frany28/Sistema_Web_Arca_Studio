@@ -41,9 +41,8 @@ const IMAGE_DIMENSIONS = new Map([
 
 const SHARED_LAYOUT_TRANSITION = {
   type: "spring",
-  damping: 34,
-  stiffness: 180,
-  mass: 1,
+  duration: 1.25,
+  bounce: 0,
 };
 
 function getCardTransition(reduceMotion) {
@@ -140,7 +139,7 @@ function FeaturedProjectsActiveImage({
       <div className="relative flex size-full items-center justify-center p-[24px] max-[640px]:p-[8px]">
         <Motion.div
           ref={mediaRef}
-          animate={closingTarget ?? { x: 0, y: 0, scaleX: 1, scaleY: 1 }}
+          animate={closingTarget ?? { x: 0, y: 0 }}
           transition={getCardTransition(reduceMotion)}
           className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"
           style={{ aspectRatio: image.width / image.height }}
@@ -196,11 +195,13 @@ function FeaturedProjectsGallery({
       return;
     }
 
+    // Se anima el contenedor, no la imagen por separado. ProjectImage con `contain`
+    // conserva la proporción real del recurso aunque la tarjeta cambie de tamaño.
     setClosingTarget({
       x: sourceRect.left + (sourceRect.width / 2) - (mediaRect.left + (mediaRect.width / 2)),
       y: sourceRect.top + (sourceRect.height / 2) - (mediaRect.top + (mediaRect.height / 2)),
-      scaleX: sourceRect.width / mediaRect.width,
-      scaleY: sourceRect.height / mediaRect.height,
+      width: sourceRect.width,
+      height: sourceRect.height,
     });
   }, [activeImage, closingTarget, completeClose]);
 
