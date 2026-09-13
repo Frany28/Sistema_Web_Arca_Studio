@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LayoutGroup, motion as Motion, useReducedMotion } from "motion/react";
+import { motion as Motion, useReducedMotion } from "motion/react";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
@@ -45,8 +45,45 @@ const SHARED_LAYOUT_TRANSITION = {
   bounce: 0,
 };
 
+const VIEWER_PADDING_PX = 24;
+const VIEWER_MOBILE_PADDING_PX = 8;
+const VIEWER_MOBILE_BREAKPOINT_PX = 640;
+
 function getCardTransition(reduceMotion) {
   return reduceMotion ? { duration: 0 } : SHARED_LAYOUT_TRANSITION;
+}
+
+function getExpandedImageRect(image) {
+  const padding = window.innerWidth <= VIEWER_MOBILE_BREAKPOINT_PX
+    ? VIEWER_MOBILE_PADDING_PX
+    : VIEWER_PADDING_PX;
+  const availableWidth = Math.max(1, window.innerWidth - (padding * 2));
+  const availableHeight = Math.max(1, window.innerHeight - (padding * 2));
+  const naturalWidth = image.width || availableWidth;
+  const naturalHeight = image.height || availableHeight;
+  const scale = Math.min(
+    1,
+    availableWidth / naturalWidth,
+    availableHeight / naturalHeight,
+  );
+  const width = naturalWidth * scale;
+  const height = naturalHeight * scale;
+
+  return {
+    left: (window.innerWidth - width) / 2,
+    top: (window.innerHeight - height) / 2,
+    width,
+    height,
+  };
+}
+
+function getRectAnimation(rect) {
+  return {
+    x: rect.left,
+    y: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
 }
 
 function FeaturedProjectsImageContent({ alt, fit = "cover", src }) {
@@ -72,8 +109,6 @@ function FeaturedProjectsGalleryCard({
   activeImage,
   image,
   onOpen,
-  projectId,
-  reduceMotion,
   triggerRef,
   visible,
 }) {
@@ -92,29 +127,25 @@ function FeaturedProjectsGalleryCard({
       className="group relative size-full overflow-hidden rounded-[var(--radius-2)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-primary-500-uniform)] disabled:cursor-not-allowed"
       aria-label={`Ampliar imagen: ${image.alt}`}
     >
-      <Motion.div
-        layoutId={`featured-project-image-${projectId}-${image.id}`}
-        layoutCrossfade={false}
-        transition={getCardTransition(reduceMotion)}
-        className="relative size-full overflow-hidden rounded-[var(--radius-2)]"
-      >
+      <div className="relative size-full overflow-hidden rounded-[var(--radius-2)]">
         <FeaturedProjectsImageContent {...image} />
-      </Motion.div>
+      </div>
       <span className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10 motion-reduce:transition-none" />
     </button>
   );
 }
 
 function FeaturedProjectsActiveImage({
-  closingTarget,
+  expandedRect,
   image,
-  mediaRef,
+  isClosing,
   onClose,
   onCloseComplete,
-  projectId,
   reduceMotion,
+  sourceRect,
 }) {
-  const isClosing = Boolean(closingTarget);
+  const expandedAnimation = getRectAnimation(expandedRect);
+  const sourceAnimation = getRectAnimation(sourceRect);
   const activeImage = (
     <div
       className="fixed inset-0 z-[60] overflow-hidden"
@@ -131,27 +162,17 @@ function FeaturedProjectsActiveImage({
           WebkitBackdropFilter: "var(--effect-blur-b1)",
         }}
       />
-      <div className="relative flex size-full items-center justify-center p-[24px] max-[640px]:p-[8px]">
-        <Motion.div
-          ref={mediaRef}
-          animate={closingTarget ?? { x: 0, y: 0 }}
-          transition={getCardTransition(reduceMotion)}
-          onAnimationComplete={() => {
-            if (isClosing) onCloseComplete();
-          }}
-          className="relative h-full max-w-full shrink-0 overflow-hidden rounded-[var(--radius-2)]"
-          style={{ aspectRatio: image.width / image.height }}
-        >
-          <Motion.div
-            layoutId={`featured-project-image-${projectId}-${image.id}`}
-            layoutCrossfade={false}
-            transition={getCardTransition(reduceMotion)}
-            className="size-full"
-          >
-            <FeaturedProjectsImageContent {...image} fit="contain" />
-          </Motion.div>
-        </Motion.div>
-      </div>
+      <Motion.div
+        initial={reduceMotion ? expandedAnimation : sourceAnimation}
+        animate={isClosing ? sourceAnimation : expandedAnimation}
+        transition={getCardTransition(reduceMotion)}
+        onAnimationComplete={() => {
+          if (isClosing) onCloseComplete();
+        }}
+        className="fixed left-0 top-0 z-10 overflow-hidden rounded-[var(--radius-2)]"
+      >
+        <FeaturedProjectsImageContent {...image} />
+      </Motion.div>
     </div>
   );
 
@@ -165,44 +186,35 @@ function FeaturedProjectsGallery({
   columns = COLUMNS,
   galleryLabel = "Galería de Quinta Bella Vista",
   onRevealComplete,
-  projectId = "quinta-bella-vista",
   visible = true,
 }) {
   const [activeImage, setActiveImage] = useState(null);
-  const [closingTarget, setClosingTarget] = useState(null);
+  const [sourceRect, setSourceRect] = useState(null);
+  const [expandedRect, setExpandedRect] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
   const triggerRefs = useRef(new Map());
-  const lastActiveImageRef = useRef(null);
-  const activeMediaRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
   const completeClose = useCallback(() => {
     const closedImageId = activeImage?.id;
     setActiveImage(null);
-    setClosingTarget(null);
+    setSourceRect(null);
+    setExpandedRect(null);
+    setIsClosing(false);
     window.requestAnimationFrame(() => {
       triggerRefs.current.get(closedImageId)?.focus();
     });
   }, [activeImage?.id]);
 
   const handleClose = useCallback(() => {
-    if (!activeImage || closingTarget) return;
-
-    const sourceRect = triggerRefs.current.get(activeImage.id)?.getBoundingClientRect();
-    const mediaRect = activeMediaRef.current?.getBoundingClientRect();
-    if (!sourceRect || !mediaRect || !mediaRect.width || !mediaRect.height) {
+    if (!activeImage || isClosing) return;
+    if (reduceMotion) {
       completeClose();
       return;
     }
 
-    // Se anima el contenedor, no la imagen por separado. ProjectImage con `contain`
-    // conserva la proporción real del recurso aunque la tarjeta cambie de tamaño.
-    setClosingTarget({
-      x: sourceRect.left + (sourceRect.width / 2) - (mediaRect.left + (mediaRect.width / 2)),
-      y: sourceRect.top + (sourceRect.height / 2) - (mediaRect.top + (mediaRect.height / 2)),
-      width: sourceRect.width,
-      height: sourceRect.height,
-    });
-  }, [activeImage, closingTarget, completeClose]);
+    setIsClosing(true);
+  }, [activeImage, completeClose, isClosing, reduceMotion]);
 
   useEffect(() => {
     if (!activeImage) return undefined;
@@ -218,69 +230,74 @@ function FeaturedProjectsGallery({
   }, [activeImage, handleClose]);
 
   const handleOpen = (image) => {
-    lastActiveImageRef.current = image.id;
-    setClosingTarget(null);
+    const cardRect = triggerRefs.current.get(image.id)?.getBoundingClientRect();
+    if (!cardRect) return;
+
+    setSourceRect({
+      left: cardRect.left,
+      top: cardRect.top,
+      width: cardRect.width,
+      height: cardRect.height,
+    });
+    setExpandedRect(getExpandedImageRect(image));
+    setIsClosing(false);
     setActiveImage(image);
   };
 
   return (
-    <LayoutGroup id={`featured-projects-gallery-${projectId}`}>
-      <Motion.div
-        data-featured-gallery
-        data-node-id="4686:3913"
-        aria-label={galleryLabel}
-        aria-hidden={!visible}
-        initial={false}
-        animate={{ clipPath: getSectionRevealClip(visible) }}
-        transition={getSectionRevealTransition(visible, reduceMotion)}
-        onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-        className={`relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px] ${backgroundClassName}`}
-      >
-        <div className="contents" inert={activeImage ? "" : undefined}>
-          {columns.map((cards, column) => (
-            <div
-              key={column}
-              className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
-            >
-              {cards.map((image, row) => {
-                const imageWithId = {
-                  ...image,
-                  ...IMAGE_DIMENSIONS.get(image.src),
-                  id: `${column}-${row}`,
-                };
+    <Motion.div
+      data-featured-gallery
+      data-node-id="4686:3913"
+      aria-label={galleryLabel}
+      aria-hidden={!visible}
+      initial={false}
+      animate={{ clipPath: getSectionRevealClip(visible) }}
+      transition={getSectionRevealTransition(visible, reduceMotion)}
+      onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
+      className={`relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px] ${backgroundClassName}`}
+    >
+      <div className="contents" inert={activeImage ? "" : undefined}>
+        {columns.map((cards, column) => (
+          <div
+            key={column}
+            className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
+          >
+            {cards.map((image, row) => {
+              const imageWithId = {
+                ...image,
+                ...IMAGE_DIMENSIONS.get(image.src),
+                id: `${column}-${row}`,
+              };
 
-                return (
-                  <FeaturedProjectsGalleryCard
-                    key={imageWithId.id}
-                    activeImage={activeImage}
-                    image={imageWithId}
-                    onOpen={handleOpen}
-                    projectId={projectId}
-                    reduceMotion={reduceMotion}
-                    triggerRef={(element) => {
-                      if (element) triggerRefs.current.set(imageWithId.id, element);
-                    }}
-                    visible={visible}
-                  />
-                );
-              })}
-            </div>
-          ))}
-        </div>
+              return (
+                <FeaturedProjectsGalleryCard
+                  key={imageWithId.id}
+                  activeImage={activeImage}
+                  image={imageWithId}
+                  onOpen={handleOpen}
+                  triggerRef={(element) => {
+                    if (element) triggerRefs.current.set(imageWithId.id, element);
+                  }}
+                  visible={visible}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
 
-        {activeImage ? (
-          <FeaturedProjectsActiveImage
-            closingTarget={closingTarget}
-            image={activeImage}
-            mediaRef={activeMediaRef}
-            onClose={handleClose}
-            onCloseComplete={completeClose}
-            projectId={projectId}
-            reduceMotion={reduceMotion}
-          />
-        ) : null}
-      </Motion.div>
-    </LayoutGroup>
+      {activeImage && sourceRect && expandedRect ? (
+        <FeaturedProjectsActiveImage
+          expandedRect={expandedRect}
+          image={activeImage}
+          isClosing={isClosing}
+          onClose={handleClose}
+          onCloseComplete={completeClose}
+          reduceMotion={reduceMotion}
+          sourceRect={sourceRect}
+        />
+      ) : null}
+    </Motion.div>
   );
 }
 
