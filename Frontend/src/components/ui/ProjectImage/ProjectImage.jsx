@@ -7,7 +7,16 @@ import Loader from "../Loader/Loader.jsx";
 const IMAGE_STATUS = { ERROR: "error", LOADED: "loaded", LOADING: "loading" };
 
 /** Shared loading and error state for every project cover and thumbnail. */
-function ProjectImage({ alt = "", className, fit = "cover", imageClassName, onStatusChange, src }) {
+function ProjectImage({
+  alt = "",
+  className,
+  fit = "cover",
+  imageClassName,
+  onStatusChange,
+  revealOnLoad = true,
+  showLoader = true,
+  src,
+}) {
   const [imageState, setImageState] = useState({
     src,
     status: src ? IMAGE_STATUS.LOADING : IMAGE_STATUS.ERROR,
@@ -27,7 +36,7 @@ function ProjectImage({ alt = "", className, fit = "cover", imageClassName, onSt
       )}
       data-image-status={status}
     >
-      {status === IMAGE_STATUS.LOADING ? (
+      {status === IMAGE_STATUS.LOADING && showLoader ? (
         <Loader
           preset="media"
           label={`Cargando ${alt || "imagen"}`}
@@ -55,7 +64,7 @@ function ProjectImage({ alt = "", className, fit = "cover", imageClassName, onSt
               ? "h-auto w-auto max-h-full max-w-full object-contain"
               : "size-full object-cover",
             "transition-opacity duration-200",
-            status === IMAGE_STATUS.LOADED
+            status === IMAGE_STATUS.LOADED || !revealOnLoad
               ? "content-reveal-media opacity-100"
               : "opacity-0",
             imageClassName,

@@ -93,6 +93,8 @@ function FeaturedProjectsImageContent({ alt, fit = "cover", src }) {
         src={src}
         alt={alt}
         fit={fit}
+        revealOnLoad={false}
+        showLoader={false}
         className="flex h-full w-full items-center justify-center"
       />
       <MainLogo
