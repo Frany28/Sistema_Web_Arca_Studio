@@ -1,31 +1,50 @@
+import { useRef } from "react";
 import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
 import FeaturedProjectsProjectPanel from "./FeaturedProjectsProjectPanel.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
+import useFeaturedProjectsPanelLoop from "../hooks/useFeaturedProjectsPanelLoop.js";
 
 function FeaturedProjectsSection({ step = 1, onRevealComplete, onTitleRevealComplete }) {
+  const stageRef = useRef(null);
+  const activeProjectIndex = useFeaturedProjectsPanelLoop(stageRef, step === 2);
+
   return (
     <section
+      ref={stageRef}
       id="featured-projects"
       aria-label="Proyectos destacados"
-      className="dark min-h-dvh bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
+      className="dark relative h-dvh min-h-[480px] overflow-hidden bg-[var(--color-neutral-950-uniform)]"
     >
-      <SectionTitleReveal
-        onRevealComplete={() => onTitleRevealComplete?.("featured-projects")}
-        className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
-        data-node-id="4856:5032"
+      <article
+        data-featured-project-panel
+        aria-label="Proyecto destacado Quinta Bella Vista"
+        aria-hidden={activeProjectIndex !== 0}
+        inert={activeProjectIndex === 0 ? undefined : ""}
+        className="absolute inset-0 flex min-h-0 flex-col overflow-hidden bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
       >
-        <p className="text-heading-4 m-0 w-full" data-node-id="4856:5033">
-          Proyectos Destacados
-        </p>
-        <h2 className="text-heading-1 m-0 w-full max-[767px]:text-[38px] max-[767px]:leading-[46px]" data-node-id="4856:5034">
-          Quinta Bella Vista
-        </h2>
-        <p className="text-heading-6 m-0 w-full max-w-[520px] opacity-60" data-node-id="4856:5035">
-          Diseño arquitectónico y ejecución integral para una residencia contemporánea ubicada en Maracaibo.
-        </p>
-      </SectionTitleReveal>
-      <FeaturedProjectsGallery visible={step === 2} onRevealComplete={onRevealComplete} />
-      <FeaturedProjectsProjectPanel />
+        <SectionTitleReveal
+          enabled={activeProjectIndex === 0}
+          onRevealComplete={() => onTitleRevealComplete?.("featured-projects")}
+          className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
+          data-node-id="4856:5032"
+        >
+          <p className="text-heading-4 m-0 w-full" data-node-id="4856:5033">
+            Proyectos Destacados
+          </p>
+          <h2 className="text-heading-1 m-0 w-full max-[767px]:text-[38px] max-[767px]:leading-[46px]" data-node-id="4856:5034">
+            Quinta Bella Vista
+          </h2>
+          <p className="text-heading-6 m-0 w-full max-w-[520px] opacity-60" data-node-id="4856:5035">
+            Diseño arquitectónico y ejecución integral para una residencia contemporánea ubicada en Maracaibo.
+          </p>
+        </SectionTitleReveal>
+        <FeaturedProjectsGallery
+          containerClassName="min-h-0 flex-1"
+          visible={step === 2}
+          onRevealComplete={onRevealComplete}
+        />
+      </article>
+      <FeaturedProjectsProjectPanel active={activeProjectIndex === 1} />
     </section>
   );
 }

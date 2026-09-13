@@ -184,6 +184,7 @@ function FeaturedProjectsActiveImage({
 function FeaturedProjectsGallery({
   backgroundClassName = "bg-[var(--color-primary-500-uniform)]",
   columns = COLUMNS,
+  containerClassName = "h-dvh min-h-[480px]",
   galleryLabel = "Galería de Quinta Bella Vista",
   onRevealComplete,
   visible = true,
@@ -254,7 +255,7 @@ function FeaturedProjectsGallery({
       animate={{ clipPath: getSectionRevealClip(visible) }}
       transition={getSectionRevealTransition(visible, reduceMotion)}
       onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-      className={`relative grid h-dvh min-h-[480px] grid-cols-3 gap-[24px] overflow-hidden px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px] ${backgroundClassName}`}
+      className={`relative grid ${containerClassName} grid-cols-3 gap-[24px] overflow-hidden px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px] ${backgroundClassName}`}
     >
       <div className="contents" inert={activeImage ? "" : undefined}>
         {columns.map((cards, column) => (

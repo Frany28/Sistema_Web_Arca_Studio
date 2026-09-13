@@ -23,20 +23,24 @@ const MUELLE_ZULIMA_COLUMNS = [
 ];
 
 /**
- * Presenta el segundo proyecto destacado en el flujo continuo de la página.
+ * Presenta el segundo proyecto destacado dentro del ciclo de paneles.
  * Reutiliza el revelado de títulos y la galería interactiva existentes.
  */
-function FeaturedProjectsProjectPanel() {
+function FeaturedProjectsProjectPanel({ active = false }) {
   return (
-    <section
+    <article
       data-featured-next-project
+      data-featured-project-panel
       data-node-id="4686:114353"
       data-navbar-background="light"
       aria-label="Proyecto destacado Muelle Zulima"
-      className="relative flex flex-col gap-[var(--spacing-gap-7)] bg-[var(--color-neutral-100-uniform)] pt-[var(--spacing-gap-8)] text-[var(--color-primary-300)]"
+      aria-hidden={!active}
+      inert={active ? undefined : ""}
+      className="absolute inset-0 flex min-h-0 flex-col overflow-hidden bg-[var(--color-neutral-100-uniform)] text-[var(--color-primary-300)]"
     >
       <SectionTitleReveal
-        className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center min-[768px]:px-[var(--spacing-gap-7)]"
+        enabled={active}
+        className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center min-[768px]:px-[var(--spacing-gap-7)]"
         data-node-id="4856:5037"
       >
         <p className="text-heading-4 m-0 w-full" data-node-id="4856:5038">
@@ -52,10 +56,10 @@ function FeaturedProjectsProjectPanel() {
       <FeaturedProjectsGallery
         backgroundClassName="bg-[var(--color-neutral-100-uniform)]"
         columns={MUELLE_ZULIMA_COLUMNS}
+        containerClassName="min-h-0 flex-1"
         galleryLabel="Galería de Muelle Zulima"
-        projectId="muelle-zulima"
       />
-    </section>
+    </article>
   );
 }
 
