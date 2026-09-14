@@ -18,6 +18,12 @@ function setup(reducedMotion = false, deferAnimations = false, captureScroll = t
   const tabs = [0, 1, 2].map((i) => ({ offsetTop: i * 50, offsetHeight: 30 }));
   const slides = [{}, {}, {}];
   const indicator = {};
+  const trigger = new (class FakeElement {
+    closest(selector) {
+      return selector === "[data-service-category-scroll-trigger]" ? this : null;
+    }
+  })();
+  const Element = trigger.constructor;
   const section = {
     querySelectorAll: (selector) => selector.includes('role=') ? tabs : slides,
     querySelector: () => indicator,
@@ -27,6 +33,7 @@ function setup(reducedMotion = false, deferAnimations = false, captureScroll = t
   Object.defineProperty(section, "scrollTop", { set() { assert.fail("El selector no debe desplazar la p?gina"); } });
   const dependencies = {
     ...navigation, visitServiceCategory,
+    Element,
     useLayoutEffect: (effect) => effects.push(effect),
     useRef: (current) => ({ current }), useState: (value) => [value, (next) => selected.push(next)],
     useReducedMotion: () => reducedMotion,
@@ -47,8 +54,13 @@ function setup(reducedMotion = false, deferAnimations = false, captureScroll = t
   const layout = {
     clientHeight: 600,
     getBoundingClientRect: () => ({ left: 100, right: 900, top: 100, bottom: 700 }),
-    addEventListener: section.addEventListener,
-    removeEventListener: section.removeEventListener,
+    addEventListener: (type, handler) => {
+      handlers[type] = (event) => handler({
+        ...event,
+        target: event.target ?? trigger,
+      });
+    },
+    removeEventListener: (type) => { delete handlers[type]; },
   };
   section.addEventListener = () => assert.fail("No capturar el margen exterior del selector");
   const api = hook({ current: section }, { current: layout }, [{}, {}, {}], true, (value) => completion.push(value), nativeExit ? undefined : () => exits.push(true), nativeExit ? undefined : () => returns.push(true), captureScroll);

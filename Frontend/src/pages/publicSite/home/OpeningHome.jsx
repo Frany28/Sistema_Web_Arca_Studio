@@ -30,6 +30,7 @@ function OpeningHome() {
     reduceMotion,
   });
   const {
+    activeFeaturedProjectIndex,
     completeTitleReveal,
     navigationState,
     navigateToSection,
@@ -114,6 +115,7 @@ function OpeningHome() {
               />
               <FeaturedProjectsSection
                 active={activeSectionId === "featured-projects"}
+                activeProjectIndex={activeFeaturedProjectIndex}
                 step={featuredStep}
                 onTitleRevealComplete={completeSectionTitleReveal}
               />

@@ -26,12 +26,23 @@ function setup(reduceMotion = false) {
   const panels = [0, 800, 1600, 2400].map((offsetTop) => ({ offsetTop }));
   const services = { id: "services", offsetTop: 3200 };
   const featured = { id: "featured-projects", offsetTop: 4400 };
+  const featuredProjectHeight = 1400;
   const scroller = {
     scrollTop: 0, clientHeight: 800,
+    getBoundingClientRect: () => ({ top: 0, bottom: 800, height: 800 }),
     querySelectorAll: () => [services, featured],
     addEventListener: (type, handler) => { handlers[type] = handler; },
     removeEventListener: (type) => { delete handlers[type]; },
   };
+  const featuredProjects = [0, 1, 2].map((index) => ({
+    offsetHeight: featuredProjectHeight,
+    getBoundingClientRect() {
+      const top = featured.offsetTop + (index * featuredProjectHeight) - scroller.scrollTop;
+      return { top, bottom: top + featuredProjectHeight, height: featuredProjectHeight };
+    },
+  }));
+  featured.querySelectorAll = () => featuredProjects;
+  featured.querySelector = () => null;
   const window = {
     requestAnimationFrame: (callback) => { frames.push(callback); return frames.length; },
     cancelAnimationFrame() {}, clearTimeout: clock.clearTimeout, setTimeout: clock.setTimeout,
@@ -64,7 +75,9 @@ function setup(reduceMotion = false) {
       useRef: (current) => ({ current }), useState: (initial) => {
         const index = states.length;
         states.push(initial);
-        return [initial, (value) => { states[index] = value; }];
+        return [initial, (value) => {
+          states[index] = typeof value === "function" ? value(states[index]) : value;
+        }];
       },
       useMotionValue: (initial) => {
         let value = initial;
@@ -86,7 +99,7 @@ function setup(reduceMotion = false) {
     controller.completeSectionTitleReveal(states[2]);
     clock.advance(180);
   };
-  return { controller, handlers, scroller, panels, services, featured, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], cleanup: () => cleanups.forEach((fn) => fn?.()) };
+  return { controller, handlers, scroller, panels, services, featured, featuredProjects, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], getActiveFeaturedProject: () => states[5], cleanup: () => cleanups.forEach((fn) => fn?.()) };
 }
 
 
@@ -110,9 +123,9 @@ test('services heading reveals on arrival before native content scrolling resume
   assert.equal(wheel(), false);
   app.scroller.scrollTop = 4400;
   app.handlers.scroll();
-  assert.equal(app.getRevealedSection(), null);
+  assert.equal(app.getRevealedSection(), 'featured-projects');
   assert.equal(wheel(), true);
-  assert.equal(app.getRevealedSection(), null);
+  assert.equal(app.getRevealedSection(), 'featured-projects');
   app.clock.advance(180);
   assert.equal(wheel(), true);
   assert.equal(app.getRevealedSection(), 'featured-projects');
@@ -177,7 +190,9 @@ test('viewport growth cannot return continuous content to the video', () => {
 
 test('gallery reveals on entering the viewport without snapping or hiding again', () => {
   const app = setup();
-  app.featured.querySelector = () => ({ offsetTop: 5000 });
+  app.featured.querySelector = () => ({
+    getBoundingClientRect: () => ({ top: 5000 - app.scroller.scrollTop }),
+  });
   app.controller.navigateToSection('services'); app.flush();
   assert.equal(app.getFeaturedStep(), 1);
   app.scroller.scrollTop = 4210; app.handlers.scroll();
@@ -191,7 +206,9 @@ test('gallery reveals on entering the viewport without snapping or hiding again'
 
 test('an early gallery reveal cannot leave featured-project scrolling locked', () => {
   const app = setup();
-  app.featured.querySelector = () => ({ offsetTop: 5000 });
+  app.featured.querySelector = () => ({
+    getBoundingClientRect: () => ({ top: 5000 - app.scroller.scrollTop }),
+  });
   app.controller.navigateToSection('services'); app.flush();
   app.revealTitle();
 
@@ -201,7 +218,7 @@ test('an early gallery reveal cannot leave featured-project scrolling locked', (
 
   app.scroller.scrollTop = 4400; app.handlers.scroll();
   assert.equal(app.getActiveSection(), 'featured-projects');
-  assert.equal(app.getRevealedSection(), null);
+  assert.equal(app.getRevealedSection(), 'featured-projects');
   app.clock.advance(180);
 
   let prevented = false;
@@ -227,7 +244,9 @@ test('an early gallery reveal cannot leave featured-project scrolling locked', (
 
 test('direct navigation updates the section and reveals an already visible gallery', () => {
   const app = setup();
-  app.featured.querySelector = () => ({ offsetTop: 4800 });
+  app.featured.querySelector = () => ({
+    getBoundingClientRect: () => ({ top: 4800 - app.scroller.scrollTop }),
+  });
   app.controller.navigateToSection('services');
   app.controller.navigateToSection('featured-projects'); app.flush();
   assert.equal(app.scroller.scrollTop, 4400);
@@ -301,5 +320,69 @@ test("the scrollbar cannot skip the intro and video to enter Services", () => {
   assert.equal(app.scroller.scrollTop, 0);
   app.flush();
   assert.equal(app.scroller.scrollTop, 0);
+  app.cleanup();
+});
+
+test("Home exclusively coordinates the sequential featured-project traversal", () => {
+  const app = setup();
+  const wheel = (deltaY, timeStamp) => {
+    let prevented = false;
+    app.handlers.wheel({
+      deltaX: 0,
+      deltaY,
+      timeStamp,
+      preventDefault() { prevented = true; },
+      stopPropagation() {},
+    });
+    return prevented;
+  };
+
+  app.controller.navigateToSection("featured-projects");
+  app.flush();
+  app.controller.completeSectionTitleReveal("featured-projects");
+  app.clock.advance(180);
+
+  app.scroller.scrollTop = 4900;
+  app.handlers.scroll();
+  assert.equal(
+    app.getActiveFeaturedProject(),
+    0,
+    "The current project remains active before its lower edge",
+  );
+  assert.equal(wheel(60, 200), false, "Native scroll remains available before the boundary");
+  app.scroller.scrollTop = 4950;
+  app.handlers.scroll();
+  assert.equal(wheel(60, 300), true, "A gesture crossing the boundary starts the shared transition");
+  assert.equal(app.getActiveFeaturedProject(), 0, "The incoming project stays inactive during the tween");
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 5800);
+  assert.equal(app.getActiveFeaturedProject(), 1);
+
+  app.clock.advance(180);
+  app.scroller.scrollTop = 6400;
+  app.handlers.scroll();
+  assert.equal(wheel(60, 600), true);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 7200);
+  assert.equal(app.getActiveFeaturedProject(), 2);
+
+  app.clock.advance(180);
+  app.scroller.scrollTop = 7800;
+  app.handlers.scroll();
+  assert.equal(wheel(60, 1000), false, "The final project releases downward scrolling");
+  app.scroller.scrollTop = 8700;
+  app.handlers.scroll();
+  assert.equal(
+    app.getActiveFeaturedProject(),
+    2,
+    "Leaving the final panel must not reactivate Quinta Bella Vista",
+  );
+
+  app.scroller.scrollTop = 7200;
+  app.handlers.scroll();
+  assert.equal(wheel(-60, 1200), true);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 6400);
+  assert.equal(app.getActiveFeaturedProject(), 1);
   app.cleanup();
 });

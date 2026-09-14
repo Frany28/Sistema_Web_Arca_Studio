@@ -1,27 +1,20 @@
-import { useRef } from "react";
 import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
 import FeaturedProjectsProjectPanel, {
   APTO_JC_PROJECT,
 } from "./FeaturedProjectsProjectPanel.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
-import useFeaturedProjectsPanelLoop from "../hooks/useFeaturedProjectsPanelLoop.js";
 
 function FeaturedProjectsSection({
   active = false,
+  activeProjectIndex = 0,
   step = 1,
   onRevealComplete,
   onTitleRevealComplete,
 }) {
-  const stageRef = useRef(null);
-  const activeProjectIndex = useFeaturedProjectsPanelLoop(
-    stageRef,
-    active && step === 2,
-  );
   const firstProjectActive = active && activeProjectIndex === 0;
 
   return (
     <section
-      ref={stageRef}
       id="featured-projects"
       aria-label="Proyectos destacados"
       className="dark relative flex flex-col overflow-hidden bg-[var(--color-neutral-950-uniform)]"

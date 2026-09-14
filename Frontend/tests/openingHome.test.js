@@ -349,9 +349,12 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(servicesPageSource, /pt-\[var\(--spacing-gap-9\)\]/);
   assert.match(servicesPageSource, /pb-\[var\(--spacing-gap-8\)\]/);
   assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
-  assert.match(homeSource, /<ServicesSection titleVisible=\{revealedSectionId === "services"\}/);
-  assert.match(scrollControllerSource, /const revealOnEntry = id === "services"/);
-  assert.match(scrollControllerSource, /setRevealedSectionId\(revealOnEntry \? id : null\)/);
+  assert.match(
+    homeSource,
+    /<ServicesSection[\s\S]*onTitleRevealComplete=\{completeSectionTitleReveal\}/,
+  );
+  assert.match(scrollControllerSource, /const selectSection = \(id\) =>/);
+  assert.match(scrollControllerSource, /setRevealedSectionId\(id\)/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4848:8081"/);
@@ -425,8 +428,12 @@ test("services categories preserve the residential Figma state and accessible tr
 
 test("OpeningHome delegates loading, navigation, content and statement behavior", () => {
   assert.match(homeSource, /<FeaturedProjectsSection/);
-  assert.match(homeSource, /titleVisible=\{revealedSectionId === "featured-projects"\}/);
-  assert.doesNotMatch(homeSource, /titleVisible=\{[^}]*featuredStep >= 2/);
+  assert.match(homeSource, /active=\{activeSectionId === "featured-projects"\}/);
+  assert.match(homeSource, /activeProjectIndex=\{activeFeaturedProjectIndex\}/);
+  assert.match(
+    homeSource,
+    /onTitleRevealComplete=\{completeSectionTitleReveal\}/,
+  );
   assert.match(homeSource, /useHomeOpeningSequence/);
   assert.match(homeSource, /useHomeScrollController/);
   assert.match(homeSource, /<HomeSections/);

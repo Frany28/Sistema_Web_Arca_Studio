@@ -32,6 +32,8 @@ const SCROLL_SETTLE_DELAY_MS = 180;
 const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
 const STATEMENT_PANEL_INDEX = 3;
+const FEATURED_PROJECT_SELECTOR = "[data-featured-project-panel]";
+const FEATURED_PROJECT_EDGE_TOLERANCE_PX = 2;
 const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 
 gsap.registerPlugin(ScrollToPlugin);
@@ -61,6 +63,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const activeSectionRef = useRef(null);
   const [featuredStep, setFeaturedStep] = useState(1);
   const [revealedSectionId, setRevealedSectionId] = useState(null);
+  const [activeFeaturedProjectIndex, setActiveFeaturedProjectIndex] = useState(0);
+  const activeFeaturedProjectIndexRef = useRef(0);
   const sectionTitleLockedRef = useRef(false);
   const revealedSectionRef = useRef(null);
   const completeSectionTitleReveal = useCallback((sectionId) => {
@@ -190,7 +194,92 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const getSection = (id) => [...scroller.querySelectorAll("section[id]")].find((section) => section.id === id);
+    const commitFeaturedProjectIndex = (index) => {
+      if (activeFeaturedProjectIndexRef.current === index) return;
+      activeFeaturedProjectIndexRef.current = index;
+      setActiveFeaturedProjectIndex(index);
+    };
+    const getFeaturedProjectPanels = (section = getSection("featured-projects")) =>
+      section ? [...section.querySelectorAll(FEATURED_PROJECT_SELECTOR)] : [];
+    const getElementScrollTop = (element) => {
+      const viewportRect = scroller.getBoundingClientRect();
+      return scroller.scrollTop + element.getBoundingClientRect().top - viewportRect.top;
+    };
+    const getFeaturedProjectTransition = (direction, travelDistance = 0) => {
+      if (activeSectionRef.current !== "featured-projects" || !direction) return null;
+      const projectPanels = getFeaturedProjectPanels();
+      const currentIndex = activeFeaturedProjectIndexRef.current;
+      const nextIndex = currentIndex + direction;
+      if (nextIndex < 0 || nextIndex >= projectPanels.length) return null;
+
+      const viewportRect = scroller.getBoundingClientRect();
+      const currentRect = projectPanels[currentIndex].getBoundingClientRect();
+      const projectedDistance = Math.max(0, direction * travelDistance);
+      const reachedEdge = direction > 0
+        ? currentRect.bottom <= viewportRect.bottom +
+          FEATURED_PROJECT_EDGE_TOLERANCE_PX + projectedDistance
+        : currentRect.top >= viewportRect.top -
+          FEATURED_PROJECT_EDGE_TOLERANCE_PX - projectedDistance;
+      if (!reachedEdge) return null;
+
+      const nextPanel = projectPanels[nextIndex];
+      const nextPanelTop = getElementScrollTop(nextPanel);
+      return {
+        index: nextIndex,
+        scrollTop: direction > 0
+          ? nextPanelTop
+          : nextPanelTop + Math.max(0, nextPanel.offsetHeight - scroller.clientHeight),
+      };
+    };
+    const synchronizeFeaturedProject = (section = getSection("featured-projects")) => {
+      const projectPanels = getFeaturedProjectPanels(section);
+      if (!projectPanels.length) return;
+      const viewportRect = scroller.getBoundingClientRect();
+      let visibleIndex = activeFeaturedProjectIndexRef.current;
+      let hasVisiblePanel = false;
+
+      projectPanels.forEach((panel, index) => {
+        const rect = panel.getBoundingClientRect();
+        if (
+          rect.top <= viewportRect.top + FEATURED_PROJECT_EDGE_TOLERANCE_PX &&
+          rect.bottom > viewportRect.top + FEATURED_PROJECT_EDGE_TOLERANCE_PX
+        ) {
+          visibleIndex = index;
+          hasVisiblePanel = true;
+        }
+      });
+      if (hasVisiblePanel) commitFeaturedProjectIndex(visibleIndex);
+    };
+    const transitionFeaturedProject = (direction, travelDistance = 0) => {
+      if (activeTween || isProgrammaticScroll) return false;
+      const transition = getFeaturedProjectTransition(direction, travelDistance);
+      if (!transition) return false;
+
+      isProgrammaticScroll = true;
+      ignoreNextScrollEnd = supportsScrollEnd;
+      const completeTransition = () => {
+        activeTween = undefined;
+        isProgrammaticScroll = false;
+        commitFeaturedProjectIndex(transition.index);
+        synchronizeContentScroll();
+      };
+      if (reduceMotion) {
+        scroller.scrollTop = transition.scrollTop;
+        window.requestAnimationFrame(completeTransition);
+        return true;
+      }
+
+      activeTween = gsap.to(scroller, {
+        scrollTo: { y: transition.scrollTop, autoKill: false },
+        duration: SCROLL_STEP_DURATION_SECONDS,
+        ease: SECTION_NAVIGATION_EASE,
+        overwrite: true,
+        onComplete: completeTransition,
+      });
+      return true;
+    };
     const selectSection = (id) => {
+      if (id !== "featured-projects") commitFeaturedProjectIndex(0);
       if (activeSectionRef.current === id) return;
       activeSectionRef.current = id;
       setActiveSectionId(id);
@@ -222,6 +311,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       titleRevealLockedRef.current = false;
       setContentMode(false);
 
+      if (sectionId === "featured-projects") commitFeaturedProjectIndex(0);
       selectSection(sectionId === "home" ? null : sectionId);
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
@@ -267,7 +357,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
       const featured = getSection("featured-projects");
-      selectSection(featured && scroller.scrollTop + 64 >= featured.offsetTop ? "featured-projects" : "services");
+      const featuredIsActive = Boolean(
+        featured && scroller.scrollTop + 64 >= featured.offsetTop,
+      );
+      selectSection(featuredIsActive ? "featured-projects" : "services");
+      if (featuredIsActive) synchronizeFeaturedProject(featured);
       const gallery = featured?.querySelector?.("[data-featured-gallery]");
       // offsetTop cambia segÃºn el offsetParent y no representa necesariamente el
       // borde visible del scroller. La galerÃ­a se revela al entrar de verdad en pantalla.
@@ -299,8 +393,37 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       if (contentMode) {
         if (reduceMotion) return;
-        if (revealedSectionRef.current === activeSectionRef.current &&
-            !sectionTitleLockedRef.current && !wheelGestureState.consumed && !wheelTransitionLock) return;
+        const contentReady =
+          revealedSectionRef.current === activeSectionRef.current &&
+          !sectionTitleLockedRef.current &&
+          !wheelTransitionLock;
+        if (contentReady) {
+          const direction = Math.sign(delta.y);
+          if (!getFeaturedProjectTransition(direction, delta.y)) {
+            wheelGestureState = createWheelGestureState();
+            return;
+          }
+
+          event.preventDefault();
+          window.clearTimeout(wheelIdleTimer);
+          wheelIdleTimer = window.setTimeout(
+            resetWheelGesture,
+            WHEEL_GESTURE_IDLE_MS,
+          );
+          wheelGestureState = advanceWheelGesture(
+            wheelGestureState,
+            delta.y,
+            WHEEL_GESTURE_THRESHOLD_PX,
+            event.timeStamp,
+          );
+          if (wheelGestureState.triggeredDirection !== null) {
+            transitionFeaturedProject(
+              wheelGestureState.triggeredDirection,
+              delta.y,
+            );
+          }
+          return;
+        }
         event.preventDefault();
         event.stopPropagation?.();
         window.clearTimeout(wheelIdleTimer);
@@ -359,6 +482,22 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const handlePointerDown = (event) => {
       touchGesture = null;
+      const featuredProjectReady =
+        contentMode &&
+        activeSectionRef.current === "featured-projects" &&
+        revealedSectionRef.current === "featured-projects" &&
+        !sectionTitleLockedRef.current &&
+        !reduceMotion;
+      if (featuredProjectReady && event.pointerType === "touch" && event.isPrimary) {
+        touchGesture = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          featuredProject: true,
+          consumed: false,
+        };
+        return;
+      }
       if (contentMode && (reduceMotion || revealedSectionRef.current === activeSectionRef.current)) return;
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       const isStatementGesture =
@@ -386,6 +525,30 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       const horizontalDistance = event.clientX - touchGesture.startX;
       const verticalDistance = touchGesture.startY - event.clientY;
+      if (touchGesture.featuredProject) {
+        const direction = getSwipeDirection(
+          {
+            startX: touchGesture.startX,
+            startY: touchGesture.startY,
+            endX: event.clientX,
+            endY: event.clientY,
+          },
+          {
+            threshold: TOUCH_SWIPE_THRESHOLD_PX,
+            verticalDominance: TOUCH_VERTICAL_DOMINANCE,
+          },
+        );
+        if (direction === null) return;
+        if (!getFeaturedProjectTransition(direction, verticalDistance)) {
+          touchGesture = null;
+          return;
+        }
+
+        event.preventDefault();
+        touchGesture.consumed = true;
+        transitionFeaturedProject(direction, verticalDistance);
+        return;
+      }
       if (touchGesture.statement && !activeTween) {
         const absoluteVerticalDistance = Math.abs(verticalDistance);
         const isVerticalGesture =
@@ -466,7 +629,26 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
       if (contentMode) {
-        if (reduceMotion || (revealedSectionRef.current === activeSectionRef.current && !sectionTitleLockedRef.current)) return;
+        const contentReady =
+          revealedSectionRef.current === activeSectionRef.current &&
+          !sectionTitleLockedRef.current;
+        if (contentReady) {
+          const keyboardTravelDistance =
+            event.key === "PageDown" || event.key === "PageUp" || event.key === " "
+              ? direction * scroller.clientHeight
+              : direction * 40;
+          if (
+            activeSectionRef.current === "featured-projects" &&
+            getFeaturedProjectTransition(direction, keyboardTravelDistance)
+          ) {
+            event.preventDefault();
+            if (!event.repeat) {
+              transitionFeaturedProject(direction, keyboardTravelDistance);
+            }
+          }
+          return;
+        }
+        if (reduceMotion) return;
         event.preventDefault();
         event.stopPropagation?.();
         if (!event.repeat) revealSectionTitle();
@@ -638,6 +820,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [enabled, reduceMotion, statementProgress]);
 
   return {
+    activeFeaturedProjectIndex,
     activeSectionId,
     revealedSectionId,
     completeSectionTitleReveal,
