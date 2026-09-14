@@ -67,38 +67,89 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       }
       select(selectedIndexRef.current + direction);
     };
-    const canReleaseNativeScroll = (direction) =>
-      (direction < 0 && selectedIndexRef.current === 0 && !onPreviousSection) ||
-      (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && !onNextSection);
-    const wheel = (event) => {
+        const canReleaseNativeScroll = (direction) =>
+          (direction < 0 && selectedIndexRef.current === 0 && !onPreviousSection) ||
+          (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && !onNextSection);
+      const wheel = (event) => {
       if (event.ctrlKey) return;
-      // El selector solo responde a la rueda cuando el puntero estÃ¡ sobre el
-      // texto de una categorÃ­a; el resto del layout conserva scroll nativo.
-      if (!(event.target instanceof Element) ||
-          !event.target.closest("[data-service-category-scroll-trigger]")) return;
+
+      if (
+        !(event.target instanceof Element) ||
+        !event.target.closest("[data-service-category-scroll-trigger]")
+      ) {
+        return;
+      }
+
       const bounds = layout.getBoundingClientRect();
-      if (event.clientX < bounds.left || event.clientX > bounds.right ||
-          event.clientY < bounds.top || event.clientY > bounds.bottom) return;
-      const delta = normalizeWheelDelta(event, layout.clientHeight);
+
+      if (
+        event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom
+      ) {
+        return;
+      }
+
+      const delta = normalizeWheelDelta(
+        event,
+        layout.clientHeight,
+      );
+
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
+
+      // IMPORTANTE:
+      // hacia arriba dejamos el scroll completamente libre
+      if (delta.y < 0) {
+        gesture = createWheelGestureState();
+        releasedDirection = null;
+        return;
+      }
+
       clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => { gesture = createWheelGestureState(); releasedDirection = null; }, 180);
-      // Una rueda sostenida también avanza; la inercia pequeña no salta opciones.
-      if (selectionComplete && gesture.consumed && Math.abs(delta.y) >= 10 &&
-          event.timeStamp - gesture.lastTriggerTime >= 250) {
+
+      idleTimer = setTimeout(() => {
+        gesture = createWheelGestureState();
+        releasedDirection = null;
+      }, 180);
+
+      if (
+        selectionComplete &&
+        gesture.consumed &&
+        Math.abs(delta.y) >= 10 &&
+        event.timeStamp - gesture.lastTriggerTime >= 250
+      ) {
         gesture = createWheelGestureState();
       }
-      gesture = advanceWheelGesture(gesture, delta.y, 32, event.timeStamp);
+
+      gesture = advanceWheelGesture(
+        gesture,
+        delta.y,
+        32,
+        event.timeStamp,
+      );
+
       const direction = Math.sign(delta.y);
-      if (canReleaseNativeScroll(direction) && (releasedDirection === direction || gesture.triggeredDirection === direction)) {
+
+      if (
+        canReleaseNativeScroll(direction) &&
+        (
+          releasedDirection === direction ||
+          gesture.triggeredDirection === direction
+        )
+      ) {
         releasedDirection = direction;
         return;
       }
+
       releasedDirection = null;
-      // Mantener la posición mientras el gesto recorre categorías e indicador.
+
       event.preventDefault();
       event.stopPropagation();
-      if (gesture.triggeredDirection !== null) advance(gesture.triggeredDirection);
+
+      if (gesture.triggeredDirection !== null) {
+        advance(gesture.triggeredDirection);
+      }
     };
     const pointerDown = (event) => {
       if (event.pointerType !== "touch" || !event.isPrimary) return;
