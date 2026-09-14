@@ -4,6 +4,7 @@ import test from "node:test";
 import * as servicesProgress from "../src/pages/publicSite/services/utils/servicesProgress.js";
 import { createFakeClock } from "./helpers/fakeClock.js";
 import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
+import * as sectionNavigationMotion from "../src/pages/publicSite/utils/sectionNavigationMotion.js";
 
 function loadFunction(path, name, dependencies) {
   const source = readFileSync(new URL(path, import.meta.url), "utf8")
@@ -56,7 +57,8 @@ function setup(reduceMotion = false) {
   const createController = loadFunction(
     "../src/pages/publicSite/home/hooks/useHomeScrollController.js",
     "useHomeScrollController", {
-      ...navigation, ...servicesProgress, gsap, window, ScrollToPlugin: {}, createHomeStatementController,
+      ...navigation, ...servicesProgress, ...sectionNavigationMotion,
+      gsap, window, ScrollToPlugin: {}, createHomeStatementController,
       Element: class {}, useCallback: (callback) => callback,
       useLayoutEffect: (effect) => effects.push(effect),
       useRef: (current) => ({ current }), useState: (initial) => {

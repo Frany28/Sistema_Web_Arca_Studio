@@ -1,6 +1,10 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useReducedMotion } from "motion/react";
+import {
+  SECTION_NAVIGATION_DURATION_SECONDS,
+  SECTION_NAVIGATION_EASE,
+} from "../../utils/sectionNavigationMotion.js";
 
 const WHEEL_GESTURE_THRESHOLD_PX = 32;
 const WHEEL_GESTURE_IDLE_MS = 180;
@@ -75,7 +79,13 @@ function alignIncomingProject(context, direction) {
 function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [previousEnabled, setPreviousEnabled] = useState(enabled);
   const activeIndexRef = useRef(0);
+
+  if (previousEnabled !== enabled) {
+    setPreviousEnabled(enabled);
+    setActiveIndex(0);
+  }
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
@@ -107,6 +117,16 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
         });
       });
     };
+
+    if (!enabled) {
+      activeIndexRef.current = 0;
+      applyInitialState();
+
+      return () => {
+        gsap.killTweensOf(panels);
+        gsap.set(panels, { clearProps: "all" });
+      };
+    }
 
     const transitionTo = (direction, scrollContext) => {
       if (!enabled || activeTween || !direction) return;
@@ -153,7 +173,10 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       }
 
       activeTween = gsap.timeline({
-        defaults: { duration: 1.25, ease: "power2.inOut" },
+        defaults: {
+          duration: SECTION_NAVIGATION_DURATION_SECONDS,
+          ease: SECTION_NAVIGATION_EASE,
+        },
         onComplete: completeTransition,
       });
       activeTween.to(currentPanel, { autoAlpha: 0, y: outgoingEndY }, 0);
@@ -247,7 +270,7 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
     };
   }, [enabled, reduceMotion, stageRef]);
 
-  return activeIndex;
+  return enabled ? activeIndex : 0;
 }
 
 export default useFeaturedProjectsPanelLoop;

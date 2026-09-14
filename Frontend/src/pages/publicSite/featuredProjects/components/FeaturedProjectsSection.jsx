@@ -4,9 +4,17 @@ import FeaturedProjectsProjectPanel from "./FeaturedProjectsProjectPanel.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 import useFeaturedProjectsPanelLoop from "../hooks/useFeaturedProjectsPanelLoop.js";
 
-function FeaturedProjectsSection({ step = 1, onRevealComplete, onTitleRevealComplete }) {
+function FeaturedProjectsSection({
+  active = false,
+  step = 1,
+  onRevealComplete,
+  onTitleRevealComplete,
+}) {
   const stageRef = useRef(null);
-  const activeProjectIndex = useFeaturedProjectsPanelLoop(stageRef, step === 2);
+  const activeProjectIndex = useFeaturedProjectsPanelLoop(
+    stageRef,
+    active && step === 2,
+  );
 
   return (
     <section
@@ -43,7 +51,9 @@ function FeaturedProjectsSection({ step = 1, onRevealComplete, onTitleRevealComp
           onRevealComplete={onRevealComplete}
         />
       </article>
-      <FeaturedProjectsProjectPanel active={activeProjectIndex === 1} />
+      <FeaturedProjectsProjectPanel
+        active={active && activeProjectIndex === 1}
+      />
     </section>
   );
 }

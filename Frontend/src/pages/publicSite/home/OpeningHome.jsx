@@ -113,6 +113,7 @@ function OpeningHome() {
                 onTitleRevealComplete={completeSectionTitleReveal}
               />
               <FeaturedProjectsSection
+                active={activeSectionId === "featured-projects"}
                 step={featuredStep}
                 onTitleRevealComplete={completeSectionTitleReveal}
               />

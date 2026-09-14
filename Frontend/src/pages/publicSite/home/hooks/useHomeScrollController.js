@@ -5,6 +5,10 @@ import { useMotionValue } from "motion/react";
 
 import { createHomeStatementController } from "./homeScroll/createHomeStatementController.js";
 import {
+  SECTION_NAVIGATION_DURATION_SECONDS,
+  SECTION_NAVIGATION_EASE,
+} from "../../utils/sectionNavigationMotion.js";
+import {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
   advanceHomeStatementProgress,
@@ -21,7 +25,7 @@ import {
   normalizeWheelDelta,
 } from "../utils/homeScrollNavigation.js";
 
-const SCROLL_STEP_DURATION_SECONDS = 0.5;
+const SCROLL_STEP_DURATION_SECONDS = SECTION_NAVIGATION_DURATION_SECONDS;
 const WHEEL_GESTURE_THRESHOLD_PX = 32;
 const WHEEL_GESTURE_IDLE_MS = 180;
 const SCROLL_SETTLE_DELAY_MS = 180;
@@ -145,7 +149,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       activeTween = gsap.to(scroller, {
         scrollTo: { y: targetScrollTop, autoKill: false },
         duration: SCROLL_STEP_DURATION_SECONDS,
-        ease: "power2.inOut",
+        ease: SECTION_NAVIGATION_EASE,
         overwrite: true,
         onComplete: () => {
           activeTween = undefined;
@@ -238,7 +242,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       activeTween = gsap.to(scroller, {
         scrollTo: { y: target.offsetTop, autoKill: false },
         duration: reduceMotion ? 0 : SCROLL_STEP_DURATION_SECONDS,
-        ease: "power2.inOut",
+        ease: SECTION_NAVIGATION_EASE,
         overwrite: true,
         onComplete: () => {
           activeTween = undefined;

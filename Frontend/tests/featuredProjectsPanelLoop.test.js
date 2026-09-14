@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { createFakeClock } from "./helpers/fakeClock.js";
+import {
+  SECTION_NAVIGATION_DURATION_SECONDS,
+  SECTION_NAVIGATION_EASE,
+} from "../src/pages/publicSite/utils/sectionNavigationMotion.js";
 
 function loadHook(dependencies) {
   const source = readFileSync(
@@ -65,6 +69,7 @@ function setup(reduceMotion = false) {
     timeline(options) {
       const timeline = {
         kill() {},
+        options,
         to() {
           return timeline;
         },
@@ -84,6 +89,8 @@ function setup(reduceMotion = false) {
     },
   };
   const renderPanelLoop = loadHook({
+    SECTION_NAVIGATION_DURATION_SECONDS,
+    SECTION_NAVIGATION_EASE,
     gsap,
     window,
     useLayoutEffect: (effect) => effects.push(effect),
@@ -137,6 +144,11 @@ test("one inertial wheel gesture changes the featured project only once", () => 
   assert.equal(firstEvent.wasConsumed(), true);
   assert.equal(app.getActiveIndex(), 1);
   assert.equal(app.timelines.length, 1);
+  assert.equal(
+    app.timelines[0].options.defaults.duration,
+    SECTION_NAVIGATION_DURATION_SECONDS,
+  );
+  assert.equal(app.timelines[0].options.defaults.ease, SECTION_NAVIGATION_EASE);
 
   const eventDuringTransition = createWheelEvent();
   app.handlers.wheel(eventDuringTransition);
@@ -168,6 +180,37 @@ test("reduced motion also consumes only one transition per wheel gesture", () =>
   app.handlers.wheel(createWheelEvent(-60));
   assert.equal(app.getActiveIndex(), 0);
   app.cleanup();
+});
+
+test("leaving featured projects resets the cycle before re-entry", () => {
+  const sectionSource = readFileSync(
+    new URL(
+      "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsSection.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const openingHomeSource = readFileSync(
+    new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
+    "utf8",
+  );
+  const hookSource = readFileSync(
+    new URL(
+      "../src/pages/publicSite/featuredProjects/hooks/useFeaturedProjectsPanelLoop.js",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(
+    openingHomeSource,
+    /active=\{activeSectionId === "featured-projects"\}/,
+  );
+  assert.match(sectionSource, /active && step === 2/);
+  assert.match(
+    hookSource,
+    /if \(!enabled\) \{[\s\S]*activeIndexRef\.current = 0/,
+  );
 });
 
 test("the active project must be fully traversed before changing panels", () => {

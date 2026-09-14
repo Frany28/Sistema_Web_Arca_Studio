@@ -3,6 +3,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const revealSource = readFileSync(new URL("../src/pages/publicSite/utils/sectionReveal.js", import.meta.url), "utf8");
+const navigationMotionSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/utils/sectionNavigationMotion.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 const mainSource = readFileSync(new URL("../src/main.jsx", import.meta.url), "utf8");
 const homeSource = readFileSync(
@@ -233,7 +240,8 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollControllerSource, /createScrollbarHomeScrollState/);
   assert.match(homeSectionsSource, /navigationState\.panelIndex === panelIndex/);
   assert.match(homeSectionsSource, /navigationState\.phase === HOME_SCROLL_PHASES\.TITLE/);
-  assert.match(scrollControllerSource, /SCROLL_STEP_DURATION_SECONDS = 0\.5/);
+  assert.match(navigationMotionSource, /SECTION_NAVIGATION_DURATION_SECONDS = 0\.5/);
+  assert.match(scrollControllerSource, /SECTION_NAVIGATION_DURATION_SECONDS/);
   assert.match(scrollControllerSource, /if \(reduceMotion\) \{/);
   assert.match(scrollControllerSource, /scroller\.scrollTop = targetScrollTop/);
   assert.match(scrollControllerSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
