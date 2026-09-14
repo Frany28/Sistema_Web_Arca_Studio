@@ -192,7 +192,7 @@ function FeaturedProjectsActiveImage({
 function FeaturedProjectsGallery({
   backgroundClassName = "bg-[var(--color-primary-500-uniform)]",
   columns = COLUMNS,
-  containerClassName = "h-dvh min-h-[480px] shrink-0",
+  containerClassName = "h-[1024px] shrink-0",
   galleryLabel = "Galería de Quinta Bella Vista",
   onRevealComplete,
   visible = true,
@@ -254,7 +254,7 @@ function FeaturedProjectsGallery({
   };
 
   return (
-    <Motion.div
+        <Motion.div
       data-featured-gallery
       data-node-id="4686:3913"
       aria-label={galleryLabel}
@@ -263,9 +263,12 @@ function FeaturedProjectsGallery({
       animate={{ clipPath: getSectionRevealClip(visible) }}
       transition={getSectionRevealTransition(visible, reduceMotion)}
       onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
-      className={`relative grid ${containerClassName} grid-cols-3 gap-[24px] overflow-hidden px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px] ${backgroundClassName}`}
+      className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
     >
-      <div className="contents" inert={activeImage ? "" : undefined}>
+      <div
+        className="mx-auto grid h-full w-full max-w-[1440px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
+        inert={activeImage ? "" : undefined}
+      >
         {columns.map((cards, column) => (
           <div
             key={column}
