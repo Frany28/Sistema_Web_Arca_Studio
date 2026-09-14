@@ -40,6 +40,7 @@ function FeaturedProjectsProjectPanel({ active = false }) {
     >
       <SectionTitleReveal
         enabled={active}
+        visible={active}
         className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center min-[768px]:px-[var(--spacing-gap-7)]"
         data-node-id="4856:5037"
       >

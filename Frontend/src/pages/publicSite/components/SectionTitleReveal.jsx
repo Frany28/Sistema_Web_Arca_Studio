@@ -2,13 +2,21 @@ import { useRef } from "react";
 import { motion as Motion, useInView, useReducedMotion } from "motion/react";
 import { getSectionRevealClip, getSectionRevealTransition } from "../utils/sectionReveal.js";
 
-export default function SectionTitleReveal({ children, enabled = true, onRevealComplete, ...props }) {
+export default function SectionTitleReveal({
+  children,
+  enabled = true,
+  visible: requestedVisible,
+  onRevealComplete,
+  ...props
+}) {
   const ref = useRef(null);
   const inView = useInView(ref, { amount: 0.2 });
   const reduceMotion = useReducedMotion();
-  // La entrada real del encabezado es la fuente de verdad. El controlador de scroll
-  // regula los gestos, pero no puede dejar oculto un título que ya está en pantalla.
-  const visible = enabled && (Boolean(reduceMotion) || inView);
+  // Los paneles animados pueden solicitar el revelado antes de cruzar el umbral del
+  // observador. El resto de las secciones conserva la entrada real al viewport.
+  const visible = enabled && (
+    Boolean(reduceMotion) || (requestedVisible ?? inView)
+  );
 
   return (
     <div {...props} ref={ref}>

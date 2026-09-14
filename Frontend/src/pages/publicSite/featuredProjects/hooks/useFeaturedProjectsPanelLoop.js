@@ -26,6 +26,7 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
 
     let activeTween;
     let wheelDelta = 0;
+    let wheelGestureLocked = false;
     let wheelIdleTimer;
     let touchGesture;
 
@@ -84,21 +85,25 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
 
     const resetWheelGesture = () => {
       wheelDelta = 0;
+      wheelGestureLocked = false;
     };
 
     const handleWheel = (event) => {
-      if (!enabled || event.ctrlKey || activeTween) return;
+      if (!enabled || event.ctrlKey) return;
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
 
       event.preventDefault();
       event.stopPropagation();
-      wheelDelta += event.deltaY;
       window.clearTimeout(wheelIdleTimer);
       wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
+      if (activeTween || wheelGestureLocked) return;
+
+      wheelDelta += event.deltaY;
       if (Math.abs(wheelDelta) < WHEEL_GESTURE_THRESHOLD_PX) return;
 
       const direction = Math.sign(wheelDelta);
-      resetWheelGesture();
+      wheelDelta = 0;
+      wheelGestureLocked = true;
       transitionTo(direction);
     };
 
