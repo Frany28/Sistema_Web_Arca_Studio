@@ -31,12 +31,12 @@ const COLUMNS = [
 ];
 
 const IMAGE_DIMENSIONS = new Map([
-  [mirror, { width: 448.3334, height: 568 }],
-  [bedroom, { width: 448.3334, height: 335 }],
-  [seating, { width: 448.3334, height: 335 }],
-  [lighting, { width: 448.3334, height: 568 }],
-  [living, { width: 448.3334, height: 568 }],
-  [bathroom, { width: 448.3334, height: 335 }],
+  [mirror, { width: 2731, height: 4096 }],
+  [bedroom, { width: 2528, height: 1684 }],
+  [seating, { width: 4096, height: 2731 }],
+  [living, { width: 4096, height: 2731 }],
+  [bathroom, { width: 4096, height: 2731 }],
+  [lighting, { width: 4096, height: 2731 }],
 ]);
 
 const SHARED_LAYOUT_TRANSITION = {

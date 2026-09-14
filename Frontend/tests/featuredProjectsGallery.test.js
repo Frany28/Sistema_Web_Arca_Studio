@@ -12,8 +12,15 @@ const gallerySource = readFileSync(
 
 test("the featured-project gallery expands every masonry image from its original position", () => {
   assert.match(gallerySource, /const \[activeImage, setActiveImage\] = useState\(null\)/);
-  assert.match(gallerySource, /<LayoutGroup id=\{`featured-projects-gallery-\$\{projectId\}`\}>/);
-  assert.match(gallerySource, /layoutId=\{`featured-project-image-\$\{projectId\}-\$\{image\.id\}`\}/);
+  assert.match(gallerySource, /const \[sourceRect, setSourceRect\] = useState\(null\)/);
+  assert.match(gallerySource, /const \[expandedRect, setExpandedRect\] = useState\(null\)/);
+  assert.match(gallerySource, /const \[isClosing, setIsClosing\] = useState\(false\)/);
+  assert.match(gallerySource, /function getExpandedImageRect\(image\)/);
+  assert.match(gallerySource, /availableWidth \/ naturalWidth/);
+  assert.match(gallerySource, /availableHeight \/ naturalHeight/);
+  assert.match(gallerySource, /function getRectAnimation\(rect\)/);
+  assert.match(gallerySource, /triggerRefs\.current\.get\(image\.id\)\?\.getBoundingClientRect\(\)/);
+  assert.match(gallerySource, /setExpandedRect\(getExpandedImageRect\(image\)\)/);
   assert.match(gallerySource, /<FeaturedProjectsImageContent \{\.\.\.image\} \/>/);
   assert.match(gallerySource, /columns\.map\(\(cards, column\)/);
   assert.match(gallerySource, /columns = COLUMNS/);
@@ -22,17 +29,17 @@ test("the featured-project gallery expands every masonry image from its original
   assert.match(gallerySource, /grid-rows-\[568fr_336fr\]/);
   assert.match(gallerySource, /grid-rows-\[335fr_569fr\]/);
   assert.match(gallerySource, /reduceMotion=\{reduceMotion\}/);
-  assert.match(gallerySource, /function FeaturedProjectsGalleryCard\(\{[\s\S]*reduceMotion,/);
-  assert.match(gallerySource, /<FeaturedProjectsImageContent \{\.\.\.image\} fit="contain" \/>/);
-  assert.match(gallerySource, /blur-\[var\(--effect-blur-b1\)\]/);
+  assert.match(gallerySource, /initial=\{reduceMotion \? expandedAnimation : sourceAnimation\}/);
+  assert.match(gallerySource, /animate=\{isClosing \? sourceAnimation : expandedAnimation\}/);
+  assert.match(gallerySource, /duration: 1\.25/);
+  assert.match(gallerySource, /bounce: 0/);
+  assert.match(gallerySource, /backdropFilter: "var\(--effect-blur-b1\)"/);
   assert.match(gallerySource, /createPortal\(activeImage, document\.body\)/);
   assert.match(gallerySource, /className="fixed inset-0 z-\[60\]/);
-  assert.match(gallerySource, /style=\{\{ aspectRatio: image\.width \/ image\.height \}\}/);
-  assert.match(gallerySource, /damping: 34/);
-  assert.match(gallerySource, /stiffness: 180/);
   assert.match(gallerySource, /onClick=\{onClose\}/);
   assert.match(gallerySource, /event\.key === "Escape"/);
-  assert.match(gallerySource, /onExitComplete/);
+  assert.match(gallerySource, /if \(isClosing\) onCloseComplete\(\)/);
+  assert.doesNotMatch(gallerySource, /LayoutGroup|layoutId/);
   assert.doesNotMatch(gallerySource, /addEventListener\("scroll"/);
   assert.doesNotMatch(gallerySource, /useMotionValue|useSpring|useTransform/);
 });
