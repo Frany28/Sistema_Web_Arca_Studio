@@ -33,7 +33,6 @@ const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
 const STATEMENT_PANEL_INDEX = 3;
 const FEATURED_PROJECT_SELECTOR = "[data-featured-project-panel]";
-const FEATURED_PROJECT_EDGE_TOLERANCE_PX = 2;
 const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 
 gsap.registerPlugin(ScrollToPlugin);
@@ -97,11 +96,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let wheelTransitionLock = false;
     let wheelIdleTimer;
     let wheelGestureState = createWheelGestureState();
+   let featuredBoundaryPending = null;
     let touchGesture = null;
     let isProgrammaticScroll = false;
     let ignoreNextScrollEnd = false;
     let nativeScrollOriginState = null;
     let contentMode = contentModeRef.current;
+    let featuredBoundaryDirection = null;
+    let lastContentScrollTop = scroller.scrollTop;
     const supportsScrollEnd = "onscrollend" in scroller;
 
     const commitNavigationState = (nextState) => {
@@ -180,9 +182,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const resetWheelGesture = () => {
-      wheelGestureState = createWheelGestureState();
-      statement.resetWheelScrubbing();
-      wheelTransitionLock = false;
+    wheelGestureState = createWheelGestureState();
+    featuredBoundaryPending = null;
+    statement.resetWheelScrubbing();
+    wheelTransitionLock = false;
     };
 
     const setContentMode = (value) => {
@@ -201,83 +204,219 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
     const getFeaturedProjectPanels = (section = getSection("featured-projects")) =>
       section ? [...section.querySelectorAll(FEATURED_PROJECT_SELECTOR)] : [];
-    const getElementScrollTop = (element) => {
-      const viewportRect = scroller.getBoundingClientRect();
-      return scroller.scrollTop + element.getBoundingClientRect().top - viewportRect.top;
-    };
-    const getFeaturedProjectTransition = (direction, travelDistance = 0) => {
-      if (activeSectionRef.current !== "featured-projects" || !direction) return null;
-      const projectPanels = getFeaturedProjectPanels();
-      const currentIndex = activeFeaturedProjectIndexRef.current;
-      const nextIndex = currentIndex + direction;
-      if (nextIndex < 0 || nextIndex >= projectPanels.length) return null;
-
-      const viewportRect = scroller.getBoundingClientRect();
-      const currentRect = projectPanels[currentIndex].getBoundingClientRect();
-      const projectedDistance = Math.max(0, direction * travelDistance);
-      const reachedEdge = direction > 0
-        ? currentRect.bottom <= viewportRect.bottom +
-          FEATURED_PROJECT_EDGE_TOLERANCE_PX + projectedDistance
-        : currentRect.top >= viewportRect.top -
-          FEATURED_PROJECT_EDGE_TOLERANCE_PX - projectedDistance;
-      if (!reachedEdge) return null;
-
-      const nextPanel = projectPanels[nextIndex];
-      const nextPanelTop = getElementScrollTop(nextPanel);
+  
+    const getFeaturedProjectScrollContext = (index, projectPanels) => {
+      const panel = projectPanels[index];
+      if (!panel) return null;
+      const panelStart = getElementScrollTop(panel);
       return {
-        index: nextIndex,
-        scrollTop: direction > 0
-          ? nextPanelTop
-          : nextPanelTop + Math.max(0, nextPanel.offsetHeight - scroller.clientHeight),
+        panelEnd: panelStart + Math.max(0, panel.offsetHeight - scroller.clientHeight),
+        panelStart,
       };
     };
-    const synchronizeFeaturedProject = (section = getSection("featured-projects")) => {
-      const projectPanels = getFeaturedProjectPanels(section);
-      if (!projectPanels.length) return;
-      const viewportRect = scroller.getBoundingClientRect();
-      let visibleIndex = activeFeaturedProjectIndexRef.current;
-      let hasVisiblePanel = false;
+    const getElementScrollTop = (element) => {
+  const viewportRect = scroller.getBoundingClientRect();
 
-      projectPanels.forEach((panel, index) => {
-        const rect = panel.getBoundingClientRect();
-        if (
-          rect.top <= viewportRect.top + FEATURED_PROJECT_EDGE_TOLERANCE_PX &&
-          rect.bottom > viewportRect.top + FEATURED_PROJECT_EDGE_TOLERANCE_PX
-        ) {
-          visibleIndex = index;
-          hasVisiblePanel = true;
-        }
-      });
-      if (hasVisiblePanel) commitFeaturedProjectIndex(visibleIndex);
-    };
-    const transitionFeaturedProject = (direction, travelDistance = 0) => {
-      if (activeTween || isProgrammaticScroll) return false;
-      const transition = getFeaturedProjectTransition(direction, travelDistance);
-      if (!transition) return false;
+  return (
+    scroller.scrollTop +
+    element.getBoundingClientRect().top -
+    viewportRect.top
+  );
+};
 
-      isProgrammaticScroll = true;
-      ignoreNextScrollEnd = supportsScrollEnd;
-      const completeTransition = () => {
-        activeTween = undefined;
-        isProgrammaticScroll = false;
-        commitFeaturedProjectIndex(transition.index);
-        synchronizeContentScroll();
-      };
-      if (reduceMotion) {
-        scroller.scrollTop = transition.scrollTop;
-        window.requestAnimationFrame(completeTransition);
-        return true;
-      }
+const getFeaturedProjectBounds = (panel) => {
+  const start = getElementScrollTop(panel);
 
-      activeTween = gsap.to(scroller, {
-        scrollTo: { y: transition.scrollTop, autoKill: false },
-        duration: SCROLL_STEP_DURATION_SECONDS,
-        ease: SECTION_NAVIGATION_EASE,
-        overwrite: true,
-        onComplete: completeTransition,
-      });
-      return true;
-    };
+  return {
+    start,
+    end: start + panel.offsetHeight,
+  };
+};
+
+const getFeaturedProjectTransition = (
+  direction,
+  travelDistance = 0,
+) => {
+  if (
+    activeSectionRef.current !== "featured-projects" ||
+    !direction
+  ) {
+    return null;
+  }
+
+  const projectPanels = getFeaturedProjectPanels();
+  const currentIndex = activeFeaturedProjectIndexRef.current;
+  const nextIndex = currentIndex + direction;
+
+  // En el primero/último proyecto se libera el scroll normalmente.
+  if (nextIndex < 0 || nextIndex >= projectPanels.length) {
+    return null;
+  }
+
+  const currentPanel = projectPanels[currentIndex];
+  const nextPanel = projectPanels[nextIndex];
+
+  if (!currentPanel || !nextPanel) {
+    return null;
+  }
+
+  const currentBounds = getFeaturedProjectBounds(currentPanel);
+  const nextBounds = getFeaturedProjectBounds(nextPanel);
+
+  const viewportHeight = scroller.clientHeight;
+  const currentScrollTop = scroller.scrollTop;
+
+  // Límite físico máximo que puede recorrer el proyecto actual
+  // sin empezar a mostrar el siguiente.
+  const boundaryScrollTop =
+    direction > 0
+      ? Math.max(
+          currentBounds.start,
+          currentBounds.end - viewportHeight,
+        )
+      : currentBounds.start;
+
+  const projectedScrollTop =
+    currentScrollTop + travelDistance;
+
+  const reachedBoundary =
+    direction > 0
+      ? projectedScrollTop >=
+        boundaryScrollTop - FEATURED_PROJECT_EDGE_TOLERANCE_PX
+      : projectedScrollTop <=
+        boundaryScrollTop + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+
+  if (!reachedBoundary) {
+    return null;
+  }
+
+  // Al bajar entramos alineando el inicio del siguiente proyecto.
+  // Al subir entramos mostrando el final del proyecto anterior.
+  const targetScrollTop =
+    direction > 0
+      ? nextBounds.start
+      : Math.max(
+          nextBounds.start,
+          nextBounds.end - viewportHeight,
+        );
+
+  return {
+    direction,
+    index: nextIndex,
+    boundaryScrollTop,
+    scrollTop: targetScrollTop,
+  };
+};
+
+const synchronizeFeaturedProject = (
+  section = getSection("featured-projects"),
+) => {
+  if (
+    activeTween ||
+    isProgrammaticScroll ||
+    featuredBoundaryPending
+  ) {
+    return;
+  }
+
+  const projectPanels = getFeaturedProjectPanels(section);
+
+  if (!projectPanels.length) {
+    return;
+  }
+
+  const currentScrollTop = scroller.scrollTop;
+  const viewportHeight = scroller.clientHeight;
+
+  let visibleIndex = activeFeaturedProjectIndexRef.current;
+
+  for (let index = 0; index < projectPanels.length; index += 1) {
+    const panel = projectPanels[index];
+    const bounds = getFeaturedProjectBounds(panel);
+
+    const panelEndScrollTop = Math.max(
+      bounds.start,
+      bounds.end - viewportHeight,
+    );
+
+    if (
+      currentScrollTop >=
+        bounds.start - FEATURED_PROJECT_EDGE_TOLERANCE_PX &&
+      currentScrollTop <=
+        panelEndScrollTop + FEATURED_PROJECT_EDGE_TOLERANCE_PX
+    ) {
+      visibleIndex = index;
+      break;
+    }
+
+    // Si el usuario mueve directamente la scrollbar y entra
+    // físicamente en el siguiente proyecto, sincronizar inmediatamente
+    // para evitar un article visible pero todavía inert.
+    if (
+      index < projectPanels.length - 1 &&
+      currentScrollTop > panelEndScrollTop
+    ) {
+      visibleIndex = index + 1;
+    }
+  }
+
+  commitFeaturedProjectIndex(visibleIndex);
+};
+
+const transitionFeaturedProject = (
+  directionOrTransition,
+  travelDistance = 0,
+) => {
+  if (activeTween || isProgrammaticScroll) {
+    return false;
+  }
+
+  const transition =
+    typeof directionOrTransition === "object"
+      ? directionOrTransition
+      : getFeaturedProjectTransition(
+          directionOrTransition,
+          travelDistance,
+        );
+
+  if (!transition) {
+    return false;
+  }
+
+  featuredBoundaryPending = null;
+  isProgrammaticScroll = true;
+  ignoreNextScrollEnd = supportsScrollEnd;
+
+  const completeTransition = () => {
+    activeTween = undefined;
+    isProgrammaticScroll = false;
+    featuredBoundaryPending = null;
+
+    wheelGestureState = createWheelGestureState();
+
+    commitFeaturedProjectIndex(transition.index);
+    synchronizeContentScroll();
+  };
+
+  if (reduceMotion) {
+    scroller.scrollTop = transition.scrollTop;
+    window.requestAnimationFrame(completeTransition);
+    return true;
+  }
+
+  activeTween = gsap.to(scroller, {
+    scrollTo: {
+      y: transition.scrollTop,
+      autoKill: false,
+    },
+    duration: SCROLL_STEP_DURATION_SECONDS,
+    ease: SECTION_NAVIGATION_EASE,
+    overwrite: true,
+    onComplete: completeTransition,
+  });
+
+  return true;
+};
     const selectSection = (id) => {
       if (id !== "featured-projects") commitFeaturedProjectIndex(0);
       if (activeSectionRef.current === id) return;
@@ -345,6 +484,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     sectionNavigationRef.current = (sectionId) => navigateSection(sectionId, { direct: true });
 
     const synchronizeContentScroll = () => {
+      const scrollDirection = Math.sign(scroller.scrollTop - lastContentScrollTop);
+      lastContentScrollTop = scroller.scrollTop;
       const servicesTop = getSection("services")?.offsetTop;
       // Al cruzar el inicio de Servicios hacia arriba, recuperar la transición
       // completa al video antes de permitir nuevamente sus gestos internos.
@@ -361,7 +502,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         featured && scroller.scrollTop + 64 >= featured.offsetTop,
       );
       selectSection(featuredIsActive ? "featured-projects" : "services");
-      if (featuredIsActive) synchronizeFeaturedProject(featured);
+      if (featuredIsActive) synchronizeFeaturedProject(featured, scrollDirection);
       const gallery = featured?.querySelector?.("[data-featured-gallery]");
       // offsetTop cambia segÃºn el offsetParent y no representa necesariamente el
       // borde visible del scroller. La galerÃ­a se revela al entrar de verdad en pantalla.
@@ -392,47 +533,119 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
       if (contentMode) {
-        if (reduceMotion) return;
-        const contentReady =
-          revealedSectionRef.current === activeSectionRef.current &&
-          !sectionTitleLockedRef.current &&
-          !wheelTransitionLock;
-        if (contentReady) {
-          const direction = Math.sign(delta.y);
-          if (!getFeaturedProjectTransition(direction, delta.y)) {
-            wheelGestureState = createWheelGestureState();
-            return;
-          }
+  if (reduceMotion) return;
 
-          event.preventDefault();
-          window.clearTimeout(wheelIdleTimer);
-          wheelIdleTimer = window.setTimeout(
-            resetWheelGesture,
-            WHEEL_GESTURE_IDLE_MS,
-          );
-          wheelGestureState = advanceWheelGesture(
-            wheelGestureState,
-            delta.y,
-            WHEEL_GESTURE_THRESHOLD_PX,
-            event.timeStamp,
-          );
-          if (wheelGestureState.triggeredDirection !== null) {
-            transitionFeaturedProject(
-              wheelGestureState.triggeredDirection,
-              delta.y,
-            );
-          }
-          return;
-        }
+  const contentReady =
+    revealedSectionRef.current === activeSectionRef.current &&
+    !sectionTitleLockedRef.current &&
+    !wheelTransitionLock;
+
+  if (contentReady) {
+    const direction = Math.sign(delta.y);
+
+    const isFeaturedProjects =
+      activeSectionRef.current === "featured-projects";
+
+    if (isFeaturedProjects) {
+      const transition = getFeaturedProjectTransition(
+        direction,
+        delta.y,
+      );
+
+      if (transition) {
+        // Desde este momento Home es dueño absoluto del gesto.
+        // El navegador no puede entrar nativamente al siguiente article.
         event.preventDefault();
         event.stopPropagation?.();
+
+        featuredBoundaryPending = {
+          direction,
+          index: activeFeaturedProjectIndexRef.current,
+          boundaryScrollTop: transition.boundaryScrollTop,
+        };
+
+        // Mantener físicamente el viewport en el borde del proyecto
+        // mientras se acumula el gesto necesario para cambiar.
+        if (
+          Math.abs(
+            scroller.scrollTop -
+              transition.boundaryScrollTop,
+          ) > FEATURED_PROJECT_EDGE_TOLERANCE_PX
+        ) {
+          scroller.scrollTop = transition.boundaryScrollTop;
+        }
+
         window.clearTimeout(wheelIdleTimer);
-        wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
-        if (wheelTransitionLock || sectionTitleLockedRef.current) return;
-        wheelGestureState = advanceWheelGesture(wheelGestureState, delta.y, WHEEL_GESTURE_THRESHOLD_PX, event.timeStamp);
-        if (wheelGestureState.triggeredDirection !== null) revealSectionTitle();
+
+        wheelIdleTimer = window.setTimeout(
+          resetWheelGesture,
+          WHEEL_GESTURE_IDLE_MS,
+        );
+
+        wheelGestureState = advanceWheelGesture(
+          wheelGestureState,
+          delta.y,
+          WHEEL_GESTURE_THRESHOLD_PX,
+          event.timeStamp,
+        );
+
+        if (
+          wheelGestureState.triggeredDirection !== null &&
+          wheelGestureState.triggeredDirection === direction
+        ) {
+          transitionFeaturedProject(transition);
+        }
+
         return;
       }
+
+      // Si había una frontera pendiente pero el usuario invirtió
+      // la dirección, liberar el bloqueo y permitir scroll nativo.
+      if (
+        featuredBoundaryPending &&
+        featuredBoundaryPending.direction !== direction
+      ) {
+        featuredBoundaryPending = null;
+        wheelGestureState = createWheelGestureState();
+      }
+
+      // Dentro del panel el scroll continúa siendo completamente nativo.
+      return;
+    }
+
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation?.();
+
+  window.clearTimeout(wheelIdleTimer);
+
+  wheelIdleTimer = window.setTimeout(
+    resetWheelGesture,
+    WHEEL_GESTURE_IDLE_MS,
+  );
+
+  if (
+    wheelTransitionLock ||
+    sectionTitleLockedRef.current
+  ) {
+    return;
+  }
+
+  wheelGestureState = advanceWheelGesture(
+    wheelGestureState,
+    delta.y,
+    WHEEL_GESTURE_THRESHOLD_PX,
+    event.timeStamp,
+  );
+
+  if (wheelGestureState.triggeredDirection !== null) {
+    revealSectionTitle();
+  }
+
+  return;
+}
 
       event.preventDefault();
       window.clearTimeout(wheelIdleTimer);

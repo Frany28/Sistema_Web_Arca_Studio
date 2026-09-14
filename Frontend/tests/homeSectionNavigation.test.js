@@ -99,7 +99,7 @@ function setup(reduceMotion = false) {
     controller.completeSectionTitleReveal(states[2]);
     clock.advance(180);
   };
-  return { controller, handlers, scroller, panels, services, featured, featuredProjects, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], getActiveFeaturedProject: () => states[5], cleanup: () => cleanups.forEach((fn) => fn?.()) };
+  return { controller, handlers, scroller, panels, services, featured, featuredProjects, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], getActiveFeaturedProject: () => states[5], getPendingTweenCount: () => tweens.length, cleanup: () => cleanups.forEach((fn) => fn?.()) };
 }
 
 
@@ -325,64 +325,78 @@ test("the scrollbar cannot skip the intro and video to enter Services", () => {
 
 test("Home exclusively coordinates the sequential featured-project traversal", () => {
   const app = setup();
-  const wheel = (deltaY, timeStamp) => {
+  let timeStamp = 0;
+  const wheel = (deltaY) => {
     let prevented = false;
     app.handlers.wheel({
       deltaX: 0,
       deltaY,
-      timeStamp,
+      timeStamp: timeStamp += 16,
       preventDefault() { prevented = true; },
       stopPropagation() {},
     });
+    if (!prevented) {
+      app.scroller.scrollTop += deltaY;
+      app.handlers.scroll();
+    }
     return prevented;
   };
+  const repeatWheel = (deltaY, count) =>
+    Array.from({ length: count }, () => wheel(deltaY));
 
   app.controller.navigateToSection("featured-projects");
   app.flush();
   app.controller.completeSectionTitleReveal("featured-projects");
   app.clock.advance(180);
 
-  app.scroller.scrollTop = 4900;
+  app.scroller.scrollTop = 4880;
   app.handlers.scroll();
-  assert.equal(
-    app.getActiveFeaturedProject(),
-    0,
-    "The current project remains active before its lower edge",
-  );
-  assert.equal(wheel(60, 200), false, "Native scroll remains available before the boundary");
-  app.scroller.scrollTop = 4950;
-  app.handlers.scroll();
-  assert.equal(wheel(60, 300), true, "A gesture crossing the boundary starts the shared transition");
+  const quintaTrackpadEvents = repeatWheel(8, 18);
+  assert.equal(quintaTrackpadEvents.slice(0, 14).every((value) => !value), true);
+  assert.equal(quintaTrackpadEvents.slice(14).every(Boolean), true);
+  assert.equal(app.scroller.scrollTop, 4992, "The viewport stays inside Quinta while the boundary gesture accumulates");
+  assert.equal(app.getPendingTweenCount(), 1, "Only one transition is queued");
   assert.equal(app.getActiveFeaturedProject(), 0, "The incoming project stays inactive during the tween");
   app.flush();
   assert.equal(app.scroller.scrollTop, 5800);
   assert.equal(app.getActiveFeaturedProject(), 1);
 
   app.clock.advance(180);
-  app.scroller.scrollTop = 6400;
+  app.scroller.scrollTop = 6320;
   app.handlers.scroll();
-  assert.equal(wheel(60, 600), true);
+  const muelleTrackpadEvents = repeatWheel(8, 14);
+  assert.equal(muelleTrackpadEvents.slice(0, 10).every((value) => !value), true);
+  assert.equal(muelleTrackpadEvents.slice(10).every(Boolean), true);
+  assert.equal(app.getPendingTweenCount(), 1);
+  assert.equal(app.getActiveFeaturedProject(), 1);
   app.flush();
   assert.equal(app.scroller.scrollTop, 7200);
   assert.equal(app.getActiveFeaturedProject(), 2);
 
   app.clock.advance(180);
-  app.scroller.scrollTop = 7800;
-  app.handlers.scroll();
-  assert.equal(wheel(60, 1000), false, "The final project releases downward scrolling");
-  app.scroller.scrollTop = 8700;
-  app.handlers.scroll();
-  assert.equal(
-    app.getActiveFeaturedProject(),
-    2,
-    "Leaving the final panel must not reactivate Quinta Bella Vista",
-  );
-
-  app.scroller.scrollTop = 7200;
-  app.handlers.scroll();
-  assert.equal(wheel(-60, 1200), true);
+  assert.equal(repeatWheel(-8, 4).every(Boolean), true);
+  assert.equal(app.getPendingTweenCount(), 1);
   app.flush();
   assert.equal(app.scroller.scrollTop, 6400);
   assert.equal(app.getActiveFeaturedProject(), 1);
+
+  app.clock.advance(180);
+  app.scroller.scrollTop = 5800;
+  app.handlers.scroll();
+  assert.equal(repeatWheel(-8, 4).every(Boolean), true);
+  assert.equal(app.getPendingTweenCount(), 1);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 5000);
+  assert.equal(app.getActiveFeaturedProject(), 0);
+
+  app.clock.advance(180);
+  app.scroller.scrollTop = 4400;
+  app.handlers.scroll();
+  assert.equal(wheel(-8), false, "The first project releases scrolling towards Services");
+
+  app.scroller.scrollTop = 7800;
+  app.handlers.scroll();
+  assert.equal(wheel(8), false, "The final project releases downward scrolling");
+  assert.equal(app.getActiveFeaturedProject(), 2);
   app.cleanup();
 });
