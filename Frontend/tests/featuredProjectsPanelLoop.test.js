@@ -213,6 +213,19 @@ test("leaving featured projects resets the cycle before re-entry", () => {
   );
 });
 
+test("Apto. JC is registered as the third featured-project panel", () => {
+  const sectionSource = readFileSync(
+    new URL(
+      "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsSection.jsx",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(sectionSource, /APTO_JC_PROJECT/);
+  assert.match(sectionSource, /activeProjectIndex === 2/);
+});
+
 test("the active project must be fully traversed before changing panels", () => {
   const app = setup();
   app.scroller.scrollTop = app.sectionTop + 200;

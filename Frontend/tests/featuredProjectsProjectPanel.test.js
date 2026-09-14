@@ -10,14 +10,17 @@ const panelSource = readFileSync(
   "utf8",
 );
 
-test("Muelle Zulima uses the continuous featured-project flow and shared gallery", () => {
+test("Muelle Zulima and Apto. JC use the shared featured-project flow", () => {
   assert.match(panelSource, /data-featured-next-project/);
   assert.match(panelSource, /data-navbar-background="light"/);
   assert.match(panelSource, /<SectionTitleReveal/);
   assert.match(panelSource, /visible=\{active\}/);
   assert.match(panelSource, /Muelle Zulima/);
+  assert.match(panelSource, /Apto\. JC/);
   assert.match(panelSource, /<FeaturedProjectsGallery/);
   assert.match(panelSource, /backgroundClassName="bg-\[var\(--color-neutral-100-uniform\)\]"/);
-  assert.match(panelSource, /columns=\{MUELLE_ZULIMA_COLUMNS\}/);
+  assert.match(panelSource, /columns=\{project\.columns\}/);
   assert.match(panelSource, /muelle-zulima-6\.webp/);
+  assert.match(panelSource, /apto-jc-6\.webp/);
+  assert.match(panelSource, /export \{ APTO_JC_PROJECT \}/);
 });

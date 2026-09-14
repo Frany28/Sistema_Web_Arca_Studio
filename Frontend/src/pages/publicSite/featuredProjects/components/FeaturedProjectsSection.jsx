@@ -1,6 +1,8 @@
 import { useRef } from "react";
 import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
-import FeaturedProjectsProjectPanel from "./FeaturedProjectsProjectPanel.jsx";
+import FeaturedProjectsProjectPanel, {
+  APTO_JC_PROJECT,
+} from "./FeaturedProjectsProjectPanel.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 import useFeaturedProjectsPanelLoop from "../hooks/useFeaturedProjectsPanelLoop.js";
 
@@ -53,6 +55,10 @@ function FeaturedProjectsSection({
       </article>
       <FeaturedProjectsProjectPanel
         active={active && activeProjectIndex === 1}
+      />
+      <FeaturedProjectsProjectPanel
+        active={active && activeProjectIndex === 2}
+        project={APTO_JC_PROJECT}
       />
     </section>
   );

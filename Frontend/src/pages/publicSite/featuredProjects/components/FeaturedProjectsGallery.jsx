@@ -86,13 +86,19 @@ function getRectAnimation(rect) {
   };
 }
 
-function FeaturedProjectsImageContent({ alt, fit = "cover", src }) {
+function FeaturedProjectsImageContent({
+  alt,
+  fit = "cover",
+  imageClassName,
+  src,
+}) {
   return (
     <>
       <ProjectImage
         src={src}
         alt={alt}
         fit={fit}
+        imageClassName={imageClassName}
         revealOnLoad={false}
         showLoader={false}
         className="flex h-full w-full items-center justify-center"

@@ -4,6 +4,12 @@ import muelleZulima3 from "../../../../assets/featuredProjects/muelle-zulima-3.w
 import muelleZulima4 from "../../../../assets/featuredProjects/muelle-zulima-4.webp";
 import muelleZulima5 from "../../../../assets/featuredProjects/muelle-zulima-5.webp";
 import muelleZulima6 from "../../../../assets/featuredProjects/muelle-zulima-6.webp";
+import aptoJc1 from "../../../../assets/featuredProjects/apto-jc-1.webp";
+import aptoJc2 from "../../../../assets/featuredProjects/apto-jc-2.webp";
+import aptoJc3 from "../../../../assets/featuredProjects/apto-jc-3.webp";
+import aptoJc4 from "../../../../assets/featuredProjects/apto-jc-4.webp";
+import aptoJc5 from "../../../../assets/featuredProjects/apto-jc-5.webp";
+import aptoJc6 from "../../../../assets/featuredProjects/apto-jc-6.webp";
 import FeaturedProjectsGallery from "./FeaturedProjectsGallery.jsx";
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 
@@ -22,18 +28,59 @@ const MUELLE_ZULIMA_COLUMNS = [
   ],
 ];
 
+const APTO_JC_COLUMNS = [
+  [
+    { src: aptoJc1, alt: "Baño remodelado del apartamento JC", width: 576, height: 1024, imageClassName: "object-bottom" },
+    { src: aptoJc2, alt: "Detalle arquitectónico del apartamento JC", width: 1920, height: 1080 },
+  ],
+  [
+    { src: aptoJc3, alt: "Baño principal del apartamento JC", width: 1024, height: 576, imageClassName: "object-bottom" },
+    { src: aptoJc6, alt: "Acabados del baño del apartamento JC", width: 1024, height: 576 },
+  ],
+  [
+    { src: aptoJc4, alt: "Espacio interior del apartamento JC", width: 576, height: 1024, imageClassName: "object-bottom" },
+    { src: aptoJc5, alt: "Baño contemporáneo del apartamento JC", width: 1024, height: 576 },
+  ],
+];
+
+const MUELLE_ZULIMA_PROJECT = {
+  columns: MUELLE_ZULIMA_COLUMNS,
+  description: "Diseño arquitectónico y ejecución de proyecto industrial para una oficina taller de reparaciones marinas ubicada en Ciudad Ojeda.",
+  descriptionClassName: "max-w-[555px]",
+  galleryLabel: "Galería de Muelle Zulima",
+  headingClassName: "py-[var(--spacing-gap-7)]",
+  id: "muelle-zulima",
+  nodeId: "4686:114353",
+  title: "Muelle Zulima",
+};
+
+const APTO_JC_PROJECT = {
+  columns: APTO_JC_COLUMNS,
+  description: "Diseño arquitectónico y ejecución de remodelación para los baños de una sofisticada residencia ubicada en Maracaibo.",
+  descriptionClassName: "max-w-[560px]",
+  galleryLabel: "Galería de Apto. JC",
+  headingClassName: "py-[var(--spacing-gap-8)]",
+  id: "apto-jc",
+  nodeId: "4686:113503",
+  title: "Apto. JC",
+};
+
 /**
- * Presenta el segundo proyecto destacado dentro del ciclo de paneles.
- * Reutiliza el revelado de títulos y la galería interactiva existentes.
+ * Presenta un proyecto destacado dentro del ciclo vertical de la página.
+ * Reutiliza el encabezado revelado y la galería compartida con sus datos
+ * específicos para preservar la misma interacción entre todos los proyectos.
  */
-function FeaturedProjectsProjectPanel({ active = false }) {
+function FeaturedProjectsProjectPanel({
+  active = false,
+  project = MUELLE_ZULIMA_PROJECT,
+}) {
   return (
     <article
-      data-featured-next-project
+      data-featured-next-project={project.id}
       data-featured-project-panel
-      data-node-id="4686:114353"
+      data-node-id={project.nodeId}
       data-navbar-background="light"
-      aria-label="Proyecto destacado Muelle Zulima"
+      aria-label={`Proyecto destacado ${project.title}`}
       aria-hidden={!active}
       inert={active ? undefined : ""}
       className="relative col-start-1 row-start-1 flex min-h-0 flex-col gap-[var(--spacing-gap-7)] bg-[var(--color-neutral-100-uniform)] pt-[var(--spacing-gap-8)] text-[var(--color-primary-300)]"
@@ -41,26 +88,27 @@ function FeaturedProjectsProjectPanel({ active = false }) {
       <SectionTitleReveal
         enabled={active}
         visible={active}
-        className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-7)] text-center min-[768px]:px-[var(--spacing-gap-7)]"
-        data-node-id="4856:5037"
+        className={`mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] ${project.headingClassName} text-center min-[768px]:px-[var(--spacing-gap-7)]`}
+        data-node-id={project.nodeId}
       >
-        <p className="text-heading-4 m-0 w-full" data-node-id="4856:5038">
+        <p className="text-heading-4 m-0 w-full">
           Proyectos Destacados
         </p>
-        <h2 className="text-heading-1 m-0 w-full max-[767px]:text-[38px] max-[767px]:leading-[46px]" data-node-id="4856:5039">
-          Muelle Zulima
+        <h2 className="text-heading-1 m-0 w-full max-[767px]:text-[38px] max-[767px]:leading-[46px]">
+          {project.title}
         </h2>
-        <p className="text-heading-6 m-0 w-full max-w-[555px] opacity-60" data-node-id="4856:5040">
-          Diseño arquitectónico y ejecución de proyecto industrial para una oficina taller de reparaciones marinas ubicada en Ciudad Ojeda.
+        <p className={`text-heading-6 m-0 w-full ${project.descriptionClassName} opacity-60`}>
+          {project.description}
         </p>
       </SectionTitleReveal>
       <FeaturedProjectsGallery
         backgroundClassName="bg-[var(--color-neutral-100-uniform)]"
-        columns={MUELLE_ZULIMA_COLUMNS}
-        galleryLabel="Galería de Muelle Zulima"
+        columns={project.columns}
+        galleryLabel={project.galleryLabel}
       />
     </article>
   );
 }
 
+export { APTO_JC_PROJECT };
 export default FeaturedProjectsProjectPanel;
