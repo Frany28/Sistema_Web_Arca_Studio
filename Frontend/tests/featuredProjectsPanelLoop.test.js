@@ -28,7 +28,22 @@ function setup(reduceMotion = false) {
   const states = [];
   const timelines = [];
   const panels = [{}, {}];
+  const sectionTop = 1000;
+  const sectionHeight = 1400;
+  const viewportHeight = 800;
+  const scroller = {
+    clientHeight: viewportHeight,
+    scrollTop: sectionTop + sectionHeight - viewportHeight,
+    getBoundingClientRect() {
+      return { top: 0, bottom: viewportHeight, height: viewportHeight };
+    },
+  };
   const stage = {
+    closest: () => scroller,
+    getBoundingClientRect() {
+      const top = sectionTop - scroller.scrollTop;
+      return { top, bottom: top + sectionHeight, height: sectionHeight };
+    },
     addEventListener(type, handler) {
       handlers[type] = handler;
     },
@@ -38,6 +53,8 @@ function setup(reduceMotion = false) {
   };
   const window = {
     clearTimeout: clock.clearTimeout,
+    innerHeight: viewportHeight,
+    scrollY: 0,
     setTimeout: clock.setTimeout,
   };
   const gsap = {
@@ -89,6 +106,8 @@ function setup(reduceMotion = false) {
     clock,
     getActiveIndex: () => states[0],
     handlers,
+    scroller,
+    sectionTop,
     timelines,
   };
 }
@@ -129,6 +148,7 @@ test("one inertial wheel gesture changes the featured project only once", () => 
   assert.equal(app.timelines.length, 1);
 
   app.clock.advance(180);
+  app.scroller.scrollTop = app.sectionTop + 600;
   app.handlers.wheel(createWheelEvent());
 
   assert.equal(app.getActiveIndex(), 0);
@@ -147,5 +167,31 @@ test("reduced motion also consumes only one transition per wheel gesture", () =>
   app.clock.advance(180);
   app.handlers.wheel(createWheelEvent(-60));
   assert.equal(app.getActiveIndex(), 0);
+  app.cleanup();
+});
+
+test("the active project must be fully traversed before changing panels", () => {
+  const app = setup();
+  app.scroller.scrollTop = app.sectionTop + 200;
+
+  const middleEvent = createWheelEvent();
+  app.handlers.wheel(middleEvent);
+  assert.equal(middleEvent.wasConsumed(), false);
+  assert.equal(app.getActiveIndex(), 0);
+  assert.equal(app.timelines.length, 0);
+
+  app.scroller.scrollTop = app.sectionTop + 600;
+  const boundaryEvent = createWheelEvent();
+  app.handlers.wheel(boundaryEvent);
+  assert.equal(boundaryEvent.wasConsumed(), true);
+  assert.equal(app.getActiveIndex(), 1);
+  app.timelines[0].complete();
+  assert.equal(app.scroller.scrollTop, app.sectionTop);
+
+  app.clock.advance(180);
+  const newProjectEvent = createWheelEvent();
+  app.handlers.wheel(newProjectEvent);
+  assert.equal(newProjectEvent.wasConsumed(), false);
+  assert.equal(app.getActiveIndex(), 1);
   app.cleanup();
 });

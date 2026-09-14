@@ -6,6 +6,66 @@ const WHEEL_GESTURE_THRESHOLD_PX = 32;
 const WHEEL_GESTURE_IDLE_MS = 180;
 const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
+const SECTION_EDGE_TOLERANCE_PX = 2;
+
+/**
+ * Obtiene la geometría de la sección respecto al contenedor desplazable.
+ * Permite decidir si el proyecto activo ya se recorrió por completo antes
+ * de iniciar el cambio de panel.
+ */
+function getSectionScrollContext(stage) {
+  const scrollContainer = stage.closest?.("[data-home-scroll-container]");
+  const stageRect = stage.getBoundingClientRect();
+  const viewportRect = scrollContainer?.getBoundingClientRect?.() ?? {
+    top: 0,
+    bottom: window.innerHeight,
+    height: window.innerHeight,
+  };
+  const viewportHeight = scrollContainer?.clientHeight ?? viewportRect.height;
+  const scrollTop = scrollContainer?.scrollTop ?? window.scrollY ?? 0;
+  const sectionTop = scrollTop + stageRect.top - viewportRect.top;
+
+  return {
+    maxSectionScroll: Math.max(0, stageRect.height - viewportHeight),
+    scrollContainer,
+    sectionTop,
+    stageRect,
+    viewportHeight,
+    viewportRect,
+  };
+}
+
+/**
+ * Comprueba que el gesto intenta salir por un borde ya visible de la sección.
+ * El desplazamiento nativo sigue disponible mientras quede contenido del
+ * proyecto activo por mostrar.
+ */
+function isAtSectionEdge(context, direction) {
+  if (direction > 0) {
+    return context.stageRect.bottom <=
+      context.viewportRect.bottom + SECTION_EDGE_TOLERANCE_PX;
+  }
+
+  return context.stageRect.top >=
+    context.viewportRect.top - SECTION_EDGE_TOLERANCE_PX;
+}
+
+/**
+ * Alinea el contenedor con el inicio o el final del proyecto entrante.
+ * El ajuste se realiza junto con la limpieza de transforms para conservar
+ * continuidad visual al completar la animación.
+ */
+function alignIncomingProject(context, direction) {
+  const targetScrollTop = context.sectionTop +
+    (direction > 0 ? 0 : context.maxSectionScroll);
+
+  if (context.scrollContainer) {
+    context.scrollContainer.scrollTop = targetScrollTop;
+    return;
+  }
+
+  window.scrollTo?.({ top: targetScrollTop, behavior: "auto" });
+}
 
 /**
  * Convierte los proyectos destacados en un ciclo de paneles verticales.
@@ -41,46 +101,63 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       panels.forEach((panel, index) => {
         gsap.set(panel, {
           autoAlpha: index === activeIndexRef.current ? 1 : 0,
-          yPercent: index === activeIndexRef.current ? 0 : 100,
+          y: 0,
+          yPercent: 0,
           zIndex: index === activeIndexRef.current ? 2 : 1,
         });
       });
     };
 
-    const transitionTo = (direction) => {
+    const transitionTo = (direction, scrollContext) => {
       if (!enabled || activeTween || !direction) return;
 
       const currentIndex = activeIndexRef.current;
       const nextIndex = gsap.utils.wrap(0, panels.length, currentIndex + direction);
       const currentPanel = panels[currentIndex];
       const nextPanel = panels[nextIndex];
-      const incomingOffset = direction > 0 ? 100 : -100;
-      const outgoingOffset = direction > 0 ? -100 : 100;
+      const incomingEndY = direction > 0 ? scrollContext.maxSectionScroll :
+        -scrollContext.maxSectionScroll;
+      const incomingStartY = incomingEndY +
+        (direction * scrollContext.viewportHeight);
+      const outgoingEndY = direction * -scrollContext.viewportHeight;
 
-      gsap.set(nextPanel, { autoAlpha: 1, yPercent: incomingOffset, zIndex: 3 });
-      gsap.set(currentPanel, { zIndex: 2 });
+      const completeTransition = () => {
+        alignIncomingProject(scrollContext, direction);
+        gsap.set(currentPanel, {
+          autoAlpha: 0,
+          y: 0,
+          yPercent: 0,
+          zIndex: 1,
+        });
+        gsap.set(nextPanel, {
+          autoAlpha: 1,
+          y: 0,
+          yPercent: 0,
+          zIndex: 2,
+        });
+        activeTween = undefined;
+      };
+
+      gsap.set(nextPanel, {
+        autoAlpha: 1,
+        y: incomingStartY,
+        yPercent: 0,
+        zIndex: 3,
+      });
+      gsap.set(currentPanel, { y: 0, yPercent: 0, zIndex: 2 });
       setActivePanel(nextIndex);
 
       if (reduceMotion) {
-        gsap.set(currentPanel, { autoAlpha: 0, yPercent: -incomingOffset, zIndex: 1 });
-        gsap.set(nextPanel, { autoAlpha: 1, yPercent: 0, zIndex: 2 });
+        completeTransition();
         return;
       }
 
       activeTween = gsap.timeline({
         defaults: { duration: 1.25, ease: "power2.inOut" },
-        onComplete: () => {
-          gsap.set(currentPanel, {
-            autoAlpha: 0,
-            yPercent: -incomingOffset,
-            zIndex: 1,
-          });
-          gsap.set(nextPanel, { autoAlpha: 1, yPercent: 0, zIndex: 2 });
-          activeTween = undefined;
-        },
+        onComplete: completeTransition,
       });
-      activeTween.to(currentPanel, { autoAlpha: 0, yPercent: outgoingOffset }, 0);
-      activeTween.to(nextPanel, { autoAlpha: 1, yPercent: 0 }, 0);
+      activeTween.to(currentPanel, { autoAlpha: 0, y: outgoingEndY }, 0);
+      activeTween.to(nextPanel, { autoAlpha: 1, y: incomingEndY }, 0);
     };
 
     const resetWheelGesture = () => {
@@ -91,6 +168,16 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
     const handleWheel = (event) => {
       if (!enabled || event.ctrlKey) return;
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+
+      if (!activeTween) {
+        const direction = Math.sign(event.deltaY);
+        const scrollContext = getSectionScrollContext(stage);
+        if (!isAtSectionEdge(scrollContext, direction)) {
+          resetWheelGesture();
+          window.clearTimeout(wheelIdleTimer);
+          return;
+        }
+      }
 
       event.preventDefault();
       event.stopPropagation();
@@ -104,7 +191,7 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       const direction = Math.sign(wheelDelta);
       wheelDelta = 0;
       wheelGestureLocked = true;
-      transitionTo(direction);
+      transitionTo(direction, getSectionScrollContext(stage));
     };
 
     const handlePointerDown = (event) => {
@@ -126,9 +213,13 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
         Math.abs(verticalDistance) < Math.abs(horizontalDistance) * TOUCH_VERTICAL_DOMINANCE
       ) return;
 
+      const direction = Math.sign(verticalDistance);
+      const scrollContext = getSectionScrollContext(stage);
+      if (!isAtSectionEdge(scrollContext, direction)) return;
+
       event.preventDefault();
       event.stopPropagation();
-      transitionTo(Math.sign(verticalDistance));
+      transitionTo(direction, scrollContext);
       touchGesture = null;
     };
 
