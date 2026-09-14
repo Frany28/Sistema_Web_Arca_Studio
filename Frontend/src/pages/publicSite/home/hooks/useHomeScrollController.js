@@ -416,37 +416,52 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           revealedSectionRef.current === activeSectionRef.current &&
           !sectionTitleLockedRef.current &&
           !wheelTransitionLock;
-        if (contentReady) {
-          const direction = Math.sign(delta.y);
-                const transition = getFeaturedProjectTransition(
-        direction,
-        delta.y,
-      );
+       if (contentReady) {
+  const direction = Math.sign(delta.y);
 
-      if (!transition) {
-        return;
-      }
+  // Si el usuario invierte la dirección, empezar un gesto limpio.
+  // Evita que un scroll anterior "consumido" bloquee la transición inversa.
+  if (
+    wheelGestureState.direction !== null &&
+    wheelGestureState.direction !== direction
+  ) {
+    wheelGestureState = createWheelGestureState();
+  }
 
-          event.preventDefault();
-          window.clearTimeout(wheelIdleTimer);
-          wheelIdleTimer = window.setTimeout(
-            resetWheelGesture,
-            WHEEL_GESTURE_IDLE_MS,
-          );
-          wheelGestureState = advanceWheelGesture(
-            wheelGestureState,
-            delta.y,
-            WHEEL_GESTURE_THRESHOLD_PX,
-            event.timeStamp,
-          );
-          if (wheelGestureState.triggeredDirection !== null) {
-            transitionFeaturedProject(
-              wheelGestureState.triggeredDirection,
-              delta.y,
-            );
-          }
-          return;
-        }
+  const transition = getFeaturedProjectTransition(
+    direction,
+    delta.y,
+  );
+
+  if (!transition) {
+    return;
+  }
+
+  event.preventDefault();
+
+  window.clearTimeout(wheelIdleTimer);
+
+  wheelIdleTimer = window.setTimeout(
+    resetWheelGesture,
+    WHEEL_GESTURE_IDLE_MS,
+  );
+
+  wheelGestureState = advanceWheelGesture(
+    wheelGestureState,
+    delta.y,
+    WHEEL_GESTURE_THRESHOLD_PX,
+    event.timeStamp,
+  );
+
+  if (wheelGestureState.triggeredDirection !== null) {
+    transitionFeaturedProject(
+      wheelGestureState.triggeredDirection,
+      delta.y,
+    );
+  }
+
+  return;
+       }
         event.preventDefault();
         event.stopPropagation?.();
         window.clearTimeout(wheelIdleTimer);
