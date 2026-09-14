@@ -31,8 +31,8 @@ const COLUMNS = [
 ];
 
 const IMAGE_DIMENSIONS = new Map([
-  [mirror, { width: 2731, height: 4096 }],
-  [bedroom, { width: 2528, height: 1684 }],
+  [mirror, { width: 448, height: 568 }],
+  [bedroom, { width: 2528, height: 335 }],
   [seating, { width: 4096, height: 2731 }],
   [living, { width: 4096, height: 2731 }],
   [bathroom, { width: 4096, height: 2731 }],

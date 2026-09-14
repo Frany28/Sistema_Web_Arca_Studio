@@ -31,22 +31,28 @@ function setup(reduceMotion = false) {
   const handlers = {};
   const states = [];
   const timelines = [];
-  const panels = [{}, {}, {}];
   const sectionTop = 1000;
-  const sectionHeight = 1400;
+  const panelHeight = 1400;
   const viewportHeight = 800;
   const scroller = {
     clientHeight: viewportHeight,
-    scrollTop: sectionTop + sectionHeight - viewportHeight,
+    scrollTop: sectionTop + panelHeight - viewportHeight,
     getBoundingClientRect() {
       return { top: 0, bottom: viewportHeight, height: viewportHeight };
     },
   };
+  const panels = Array.from({ length: 3 }, (_, index) => ({
+    getBoundingClientRect() {
+      const top = sectionTop + (index * panelHeight) - scroller.scrollTop;
+      return { top, bottom: top + panelHeight, height: panelHeight };
+    },
+  }));
   const stage = {
     closest: () => scroller,
     getBoundingClientRect() {
       const top = sectionTop - scroller.scrollTop;
-      return { top, bottom: top + sectionHeight, height: sectionHeight };
+      const height = panelHeight * panels.length;
+      return { top, bottom: top + height, height };
     },
     addEventListener(type, handler) {
       handlers[type] = handler;
@@ -70,10 +76,17 @@ function setup(reduceMotion = false) {
       const timeline = {
         kill() {},
         options,
-        to() {
+        target: null,
+        values: null,
+        to(target, values) {
+          timeline.target = target;
+          timeline.values = values;
           return timeline;
         },
         complete() {
+          if (timeline.target && timeline.values) {
+            Object.assign(timeline.target, timeline.values);
+          }
           options.onComplete?.();
         },
       };
@@ -107,6 +120,9 @@ function setup(reduceMotion = false) {
     clock,
     getActiveIndex: () => states[0],
     handlers,
+    getPanelEndScrollTop: (index) =>
+      sectionTop + ((index + 1) * panelHeight) - viewportHeight,
+    getPanelStartScrollTop: (index) => sectionTop + (index * panelHeight),
     scroller,
     sectionTop,
     timelines,
@@ -154,7 +170,7 @@ test("one inertial wheel gesture changes the featured project only once", () => 
   assert.equal(app.timelines.length, 1);
 
   app.clock.advance(180);
-  app.scroller.scrollTop = app.sectionTop + 600;
+  app.scroller.scrollTop = app.getPanelEndScrollTop(1);
   app.handlers.wheel(createWheelEvent());
 
   assert.equal(app.getActiveIndex(), 2);
@@ -171,7 +187,7 @@ test("reduced motion also consumes only one transition per wheel gesture", () =>
   assert.equal(app.getActiveIndex(), 1);
 
   app.clock.advance(180);
-  app.scroller.scrollTop = app.sectionTop;
+  app.scroller.scrollTop = app.getPanelStartScrollTop(1);
   app.handlers.wheel(createWheelEvent(-60));
   assert.equal(app.getActiveIndex(), 0);
   app.cleanup();
@@ -219,6 +235,8 @@ test("Apto. JC is registered as the third featured-project panel", () => {
 
   assert.match(sectionSource, /APTO_JC_PROJECT/);
   assert.match(sectionSource, /activeProjectIndex === 2/);
+  assert.match(sectionSource, /dark relative flex flex-col overflow-hidden/);
+  assert.doesNotMatch(sectionSource, /relative grid overflow-hidden/);
 });
 
 test("the active project must be fully traversed before changing panels", () => {
@@ -231,13 +249,13 @@ test("the active project must be fully traversed before changing panels", () => 
   assert.equal(app.getActiveIndex(), 0);
   assert.equal(app.timelines.length, 0);
 
-  app.scroller.scrollTop = app.sectionTop + 600;
+  app.scroller.scrollTop = app.getPanelEndScrollTop(0);
   const boundaryEvent = createWheelEvent();
   app.handlers.wheel(boundaryEvent);
   assert.equal(boundaryEvent.wasConsumed(), true);
   assert.equal(app.getActiveIndex(), 1);
   app.timelines[0].complete();
-  assert.equal(app.scroller.scrollTop, app.sectionTop);
+  assert.equal(app.scroller.scrollTop, app.getPanelStartScrollTop(1));
 
   app.clock.advance(180);
   const newProjectEvent = createWheelEvent();
@@ -257,15 +275,15 @@ test("the first and last project release the scroll to adjacent sections", () =>
   assert.equal(app.getActiveIndex(), 0);
   assert.equal(app.timelines.length, 0);
 
-  app.scroller.scrollTop = app.sectionTop + 600;
+  app.scroller.scrollTop = app.getPanelEndScrollTop(0);
   app.handlers.wheel(createWheelEvent());
   app.timelines[0].complete();
   app.clock.advance(180);
-  app.scroller.scrollTop = app.sectionTop + 600;
+  app.scroller.scrollTop = app.getPanelEndScrollTop(1);
   app.handlers.wheel(createWheelEvent());
   app.timelines[1].complete();
   app.clock.advance(180);
-  app.scroller.scrollTop = app.sectionTop + 600;
+  app.scroller.scrollTop = app.getPanelEndScrollTop(2);
 
   const leaveLastProject = createWheelEvent();
   app.handlers.wheel(leaveLastProject);
@@ -273,4 +291,18 @@ test("the first and last project release the scroll to adjacent sections", () =>
   assert.equal(app.getActiveIndex(), 2);
   assert.equal(app.timelines.length, 2);
   app.cleanup();
+});
+
+test("project traversal uses real sequential positions instead of wrapping", () => {
+  const hookSource = readFileSync(
+    new URL(
+      "../src/pages/publicSite/featuredProjects/hooks/useFeaturedProjectsPanelLoop.js",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(hookSource, /nextIndex = activeIndexRef\.current \+ direction/);
+  assert.match(hookSource, /activeTween\.to\(scrollContainer, \{ scrollTop: targetScrollTop \}/);
+  assert.doesNotMatch(hookSource, /gsap\.utils\.wrap/);
 });

@@ -24,14 +24,14 @@ function FeaturedProjectsSection({
       ref={stageRef}
       id="featured-projects"
       aria-label="Proyectos destacados"
-      className="dark relative grid overflow-hidden bg-[var(--color-neutral-950-uniform)]"
+      className="dark relative flex flex-col overflow-hidden bg-[var(--color-neutral-950-uniform)]"
     >
       <article
         data-featured-project-panel
         aria-label="Proyecto destacado Quinta Bella Vista"
         aria-hidden={!firstProjectActive}
         inert={firstProjectActive ? undefined : ""}
-        className="relative col-start-1 row-start-1 flex min-h-0 flex-col bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
+        className="relative flex min-h-0 flex-col bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
       >
         <SectionTitleReveal
           enabled={firstProjectActive}

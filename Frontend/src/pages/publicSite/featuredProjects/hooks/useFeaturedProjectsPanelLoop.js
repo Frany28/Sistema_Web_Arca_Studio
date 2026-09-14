@@ -10,16 +10,16 @@ const WHEEL_GESTURE_THRESHOLD_PX = 32;
 const WHEEL_GESTURE_IDLE_MS = 180;
 const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
-const SECTION_EDGE_TOLERANCE_PX = 2;
+const PANEL_EDGE_TOLERANCE_PX = 2;
 
 /**
- * Obtiene la geometría de la sección respecto al contenedor desplazable.
- * Permite decidir si el proyecto activo ya se recorrió por completo antes
- * de iniciar el cambio de panel.
+ * Obtiene la geometría de un proyecto respecto al contenedor desplazable.
+ * Mantiene cada panel en su posición real para que el recorrido vertical no
+ * recicle contenido ni altere el orden visible de los proyectos.
  */
-function getSectionScrollContext(stage) {
+function getPanelScrollContext(stage, panel) {
   const scrollContainer = stage.closest?.("[data-home-scroll-container]");
-  const stageRect = stage.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
   const viewportRect = scrollContainer?.getBoundingClientRect?.() ?? {
     top: 0,
     bottom: window.innerHeight,
@@ -27,54 +27,50 @@ function getSectionScrollContext(stage) {
   };
   const viewportHeight = scrollContainer?.clientHeight ?? viewportRect.height;
   const scrollTop = scrollContainer?.scrollTop ?? window.scrollY ?? 0;
-  const sectionTop = scrollTop + stageRect.top - viewportRect.top;
 
   return {
-    maxSectionScroll: Math.max(0, stageRect.height - viewportHeight),
+    panelRect,
+    panelTop: scrollTop + panelRect.top - viewportRect.top,
     scrollContainer,
-    sectionTop,
-    stageRect,
     viewportHeight,
     viewportRect,
   };
 }
 
 /**
- * Comprueba que el gesto intenta salir por un borde ya visible de la sección.
- * El desplazamiento nativo sigue disponible mientras quede contenido del
- * proyecto activo por mostrar.
+ * Comprueba si el proyecto activo alcanzó el borde correspondiente.
+ * Mientras quede contenido visible, el gesto permanece bajo control nativo
+ * para permitir recorrer íntegramente el encabezado y la galería.
  */
-function isAtSectionEdge(context, direction) {
+function isAtPanelEdge(context, direction) {
   if (direction > 0) {
-    return context.stageRect.bottom <=
-      context.viewportRect.bottom + SECTION_EDGE_TOLERANCE_PX;
+    return context.panelRect.bottom <=
+      context.viewportRect.bottom + PANEL_EDGE_TOLERANCE_PX;
   }
 
-  return context.stageRect.top >=
-    context.viewportRect.top - SECTION_EDGE_TOLERANCE_PX;
+  return context.panelRect.top >=
+    context.viewportRect.top - PANEL_EDGE_TOLERANCE_PX;
 }
 
 /**
- * Alinea el contenedor con el inicio o el final del proyecto entrante.
- * El ajuste se realiza junto con la limpieza de transforms para conservar
- * continuidad visual al completar la animación.
+ * Calcula la posición de llegada del proyecto adyacente.
+ * Al bajar muestra su inicio y al subir recupera su final, preservando la
+ * continuidad natural del recorrido en ambas direcciones.
  */
-function alignIncomingProject(context, direction) {
-  const targetScrollTop = context.sectionTop +
-    (direction > 0 ? 0 : context.maxSectionScroll);
+function getIncomingScrollTop(context, nextPanel, direction) {
+  const nextRect = nextPanel.getBoundingClientRect();
+  const nextPanelTop = context.scrollContainer.scrollTop + nextRect.top -
+    context.viewportRect.top;
 
-  if (context.scrollContainer) {
-    context.scrollContainer.scrollTop = targetScrollTop;
-    return;
-  }
-
-  window.scrollTo?.({ top: targetScrollTop, behavior: "auto" });
+  return direction > 0
+    ? nextPanelTop
+    : nextPanelTop + Math.max(0, nextRect.height - context.viewportHeight);
 }
 
 /**
  * Coordina los proyectos destacados como una secuencia vertical ordenada.
- * Cada gesto completo cambia al proyecto adyacente únicamente cuando existe;
- * los extremos conservan el scroll nativo para conectar con las secciones.
+ * Anima únicamente el salto entre proyectos con el movimiento compartido del
+ * home y libera los extremos para navegar hacia las secciones adyacentes.
  */
 function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
   const reduceMotion = useReducedMotion();
@@ -82,8 +78,6 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
   const [previousEnabled, setPreviousEnabled] = useState(enabled);
   const activeIndexRef = useRef(0);
 
-  // La reentrada comienza siempre desde Quinta. React aplica este ajuste antes
-  // de pintar el panel habilitado, evitando reutilizar el índice anterior.
   if (previousEnabled !== enabled) {
     setPreviousEnabled(enabled);
     setActiveIndex(0);
@@ -96,6 +90,14 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
     const panels = gsap.utils.toArray("[data-featured-project-panel]", stage);
     if (panels.length < 2) return undefined;
 
+    if (!enabled) {
+      activeIndexRef.current = 0;
+      return undefined;
+    }
+
+    const scrollContainer = stage.closest?.("[data-home-scroll-container]");
+    if (!scrollContainer) return undefined;
+
     let activeTween;
     let wheelDelta = 0;
     let wheelGestureLocked = false;
@@ -103,74 +105,30 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
     let touchGesture;
 
     const setActivePanel = (index) => {
+      if (activeIndexRef.current === index) return;
       activeIndexRef.current = index;
       setActiveIndex(index);
-      return index;
     };
 
-    const applyInitialState = () => {
-      panels.forEach((panel, index) => {
-        gsap.set(panel, {
-          autoAlpha: index === activeIndexRef.current ? 1 : 0,
-          y: 0,
-          yPercent: 0,
-          zIndex: index === activeIndexRef.current ? 2 : 1,
-        });
-      });
+    const canTransition = (direction) => {
+      const nextIndex = activeIndexRef.current + direction;
+      return nextIndex >= 0 && nextIndex < panels.length;
     };
-
-    if (!enabled) {
-      activeIndexRef.current = 0;
-      applyInitialState();
-
-      return () => {
-        gsap.killTweensOf(panels);
-        gsap.set(panels, { clearProps: "all" });
-      };
-    }
 
     const transitionTo = (direction, scrollContext) => {
-      if (!enabled || activeTween || !direction) return;
+      if (activeTween || !direction || !canTransition(direction)) return;
 
-      const currentIndex = activeIndexRef.current;
-      const nextIndex = currentIndex + direction;
-      if (nextIndex < 0 || nextIndex >= panels.length) return;
-      const currentPanel = panels[currentIndex];
+      const nextIndex = activeIndexRef.current + direction;
       const nextPanel = panels[nextIndex];
-      const incomingEndY = direction > 0 ? scrollContext.maxSectionScroll :
-        -scrollContext.maxSectionScroll;
-      const incomingStartY = incomingEndY +
-        (direction * scrollContext.viewportHeight);
-      const outgoingEndY = direction * -scrollContext.viewportHeight;
+      const targetScrollTop = getIncomingScrollTop(
+        scrollContext,
+        nextPanel,
+        direction,
+      );
 
-      const completeTransition = () => {
-        alignIncomingProject(scrollContext, direction);
-        gsap.set(currentPanel, {
-          autoAlpha: 0,
-          y: 0,
-          yPercent: 0,
-          zIndex: 1,
-        });
-        gsap.set(nextPanel, {
-          autoAlpha: 1,
-          y: 0,
-          yPercent: 0,
-          zIndex: 2,
-        });
-        activeTween = undefined;
-      };
-
-      gsap.set(nextPanel, {
-        autoAlpha: 1,
-        y: incomingStartY,
-        yPercent: 0,
-        zIndex: 3,
-      });
-      gsap.set(currentPanel, { y: 0, yPercent: 0, zIndex: 2 });
       setActivePanel(nextIndex);
-
       if (reduceMotion) {
-        completeTransition();
+        scrollContainer.scrollTop = targetScrollTop;
         return;
       }
 
@@ -179,15 +137,12 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
           duration: SECTION_NAVIGATION_DURATION_SECONDS,
           ease: SECTION_NAVIGATION_EASE,
         },
-        onComplete: completeTransition,
+        onComplete: () => {
+          scrollContainer.scrollTop = targetScrollTop;
+          activeTween = undefined;
+        },
       });
-      activeTween.to(currentPanel, { autoAlpha: 0, y: outgoingEndY }, 0);
-      activeTween.to(nextPanel, { autoAlpha: 1, y: incomingEndY }, 0);
-    };
-
-    const canTransition = (direction) => {
-      const nextIndex = activeIndexRef.current + direction;
-      return nextIndex >= 0 && nextIndex < panels.length;
+      activeTween.to(scrollContainer, { scrollTop: targetScrollTop }, 0);
     };
 
     const resetWheelGesture = () => {
@@ -196,44 +151,39 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
     };
 
     const handleWheel = (event) => {
-      if (!enabled || event.ctrlKey) return;
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      if (event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
 
-      if (!activeTween) {
-        const direction = Math.sign(event.deltaY);
-        const scrollContext = getSectionScrollContext(stage);
-        if (!isAtSectionEdge(scrollContext, direction)) {
-          resetWheelGesture();
-          window.clearTimeout(wheelIdleTimer);
-          return;
-        }
-        // En los extremos de la colección el gesto vuelve al scroll nativo.
-        // Así se puede regresar a Servicios desde Quinta o abandonar el último
-        // proyecto sin que el carrusel se reinicie de forma inesperada.
-        if (!canTransition(direction)) {
-          resetWheelGesture();
-          window.clearTimeout(wheelIdleTimer);
-          return;
-        }
+      if (activeTween) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      const direction = Math.sign(event.deltaY);
+      const currentPanel = panels[activeIndexRef.current];
+      const scrollContext = getPanelScrollContext(stage, currentPanel);
+      if (!isAtPanelEdge(scrollContext, direction) || !canTransition(direction)) {
+        resetWheelGesture();
+        window.clearTimeout(wheelIdleTimer);
+        return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       window.clearTimeout(wheelIdleTimer);
       wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
-      if (activeTween || wheelGestureLocked) return;
+      if (wheelGestureLocked) return;
 
       wheelDelta += event.deltaY;
       if (Math.abs(wheelDelta) < WHEEL_GESTURE_THRESHOLD_PX) return;
 
-      const direction = Math.sign(wheelDelta);
       wheelDelta = 0;
       wheelGestureLocked = true;
-      transitionTo(direction, getSectionScrollContext(stage));
+      transitionTo(direction, scrollContext);
     };
 
     const handlePointerDown = (event) => {
-      if (!enabled || event.pointerType !== "touch" || !event.isPrimary) return;
+      if (event.pointerType !== "touch" || !event.isPrimary) return;
       touchGesture = {
         pointerId: event.pointerId,
         startX: event.clientX,
@@ -252,9 +202,9 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       ) return;
 
       const direction = Math.sign(verticalDistance);
-      const scrollContext = getSectionScrollContext(stage);
-      if (!isAtSectionEdge(scrollContext, direction)) return;
-      if (!canTransition(direction)) return;
+      const currentPanel = panels[activeIndexRef.current];
+      const scrollContext = getPanelScrollContext(stage, currentPanel);
+      if (!isAtPanelEdge(scrollContext, direction) || !canTransition(direction)) return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -266,7 +216,6 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       if (touchGesture?.pointerId === event.pointerId) touchGesture = null;
     };
 
-    applyInitialState();
     stage.addEventListener("wheel", handleWheel, { passive: false });
     stage.addEventListener("pointerdown", handlePointerDown);
     stage.addEventListener("pointermove", handlePointerMove, { passive: false });
@@ -281,8 +230,7 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       stage.removeEventListener("pointermove", handlePointerMove);
       stage.removeEventListener("pointerup", clearTouchGesture);
       stage.removeEventListener("pointercancel", clearTouchGesture);
-      gsap.killTweensOf(panels);
-      gsap.set(panels, { clearProps: "all" });
+      gsap.killTweensOf(scrollContainer);
     };
   }, [enabled, reduceMotion, stageRef]);
 
