@@ -251,33 +251,48 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (hasVisiblePanel) commitFeaturedProjectIndex(visibleIndex);
     };
     const transitionFeaturedProject = (direction, travelDistance = 0) => {
-      if (activeTween || isProgrammaticScroll) return false;
-      const transition = getFeaturedProjectTransition(direction, travelDistance);
-      if (!transition) return false;
+  if (activeTween || isProgrammaticScroll) return false;
 
-      isProgrammaticScroll = true;
-      ignoreNextScrollEnd = supportsScrollEnd;
-      const completeTransition = () => {
-        activeTween = undefined;
-        isProgrammaticScroll = false;
-        commitFeaturedProjectIndex(transition.index);
-        synchronizeContentScroll();
-      };
-      if (reduceMotion) {
-        scroller.scrollTop = transition.scrollTop;
-        window.requestAnimationFrame(completeTransition);
-        return true;
-      }
+  const transition = getFeaturedProjectTransition(
+    direction,
+    travelDistance,
+  );
 
-      activeTween = gsap.to(scroller, {
-        scrollTo: { y: transition.scrollTop, autoKill: false },
-        duration: SCROLL_STEP_DURATION_SECONDS,
-        ease: SECTION_NAVIGATION_EASE,
-        overwrite: true,
-        onComplete: completeTransition,
-      });
-      return true;
-    };
+  if (!transition) return false;
+
+  isProgrammaticScroll = true;
+  ignoreNextScrollEnd = supportsScrollEnd;
+
+  // Activar el proyecto que está entrando ANTES de comenzar el tween.
+  // Así su reveal ocurre mientras entra al viewport y no después.
+  commitFeaturedProjectIndex(transition.index);
+
+  const completeTransition = () => {
+    activeTween = undefined;
+    isProgrammaticScroll = false;
+    wheelGestureState = createWheelGestureState();
+    synchronizeContentScroll();
+  };
+
+  if (reduceMotion) {
+    scroller.scrollTop = transition.scrollTop;
+    window.requestAnimationFrame(completeTransition);
+    return true;
+  }
+
+  activeTween = gsap.to(scroller, {
+    scrollTo: {
+      y: transition.scrollTop,
+      autoKill: false,
+    },
+    duration: SCROLL_STEP_DURATION_SECONDS,
+    ease: SECTION_NAVIGATION_EASE,
+    overwrite: true,
+    onComplete: completeTransition,
+  });
+
+  return true;
+};
     const selectSection = (id) => {
       if (id !== "featured-projects") commitFeaturedProjectIndex(0);
       if (activeSectionRef.current === id) return;
@@ -399,10 +414,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           !wheelTransitionLock;
         if (contentReady) {
           const direction = Math.sign(delta.y);
-          if (!getFeaturedProjectTransition(direction, delta.y)) {
-            wheelGestureState = createWheelGestureState();
-            return;
-          }
+                const transition = getFeaturedProjectTransition(
+        direction,
+        delta.y,
+      );
+
+      if (!transition) {
+        return;
+      }
 
           event.preventDefault();
           window.clearTimeout(wheelIdleTimer);
