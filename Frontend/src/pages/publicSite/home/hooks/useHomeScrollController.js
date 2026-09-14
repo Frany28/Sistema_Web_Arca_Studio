@@ -268,11 +268,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   commitFeaturedProjectIndex(transition.index);
 
   const completeTransition = () => {
-    activeTween = undefined;
-    isProgrammaticScroll = false;
-    wheelGestureState = createWheelGestureState();
-    synchronizeContentScroll();
-  };
+  activeTween = undefined;
+  isProgrammaticScroll = false;
+
+  window.clearTimeout(wheelIdleTimer);
+  wheelGestureState = createWheelGestureState();
+  wheelTransitionLock = false;
+
+  synchronizeContentScroll();
+};
 
   if (reduceMotion) {
     scroller.scrollTop = transition.scrollTop;
