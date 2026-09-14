@@ -31,7 +31,7 @@ function setup(reduceMotion = false) {
   const handlers = {};
   const states = [];
   const timelines = [];
-  const panels = [{}, {}];
+  const panels = [{}, {}, {}];
   const sectionTop = 1000;
   const sectionHeight = 1400;
   const viewportHeight = 800;
@@ -80,13 +80,7 @@ function setup(reduceMotion = false) {
       timelines.push(timeline);
       return timeline;
     },
-    utils: {
-      toArray: () => panels,
-      wrap(minimum, maximum, value) {
-        return ((value - minimum) % (maximum - minimum) + (maximum - minimum))
-          % (maximum - minimum) + minimum;
-      },
-    },
+    utils: { toArray: () => panels },
   };
   const renderPanelLoop = loadHook({
     SECTION_NAVIGATION_DURATION_SECONDS,
@@ -163,7 +157,7 @@ test("one inertial wheel gesture changes the featured project only once", () => 
   app.scroller.scrollTop = app.sectionTop + 600;
   app.handlers.wheel(createWheelEvent());
 
-  assert.equal(app.getActiveIndex(), 0);
+  assert.equal(app.getActiveIndex(), 2);
   assert.equal(app.timelines.length, 2);
   app.cleanup();
   assert.equal(app.clock.pending(), 0);
@@ -177,12 +171,13 @@ test("reduced motion also consumes only one transition per wheel gesture", () =>
   assert.equal(app.getActiveIndex(), 1);
 
   app.clock.advance(180);
+  app.scroller.scrollTop = app.sectionTop;
   app.handlers.wheel(createWheelEvent(-60));
   assert.equal(app.getActiveIndex(), 0);
   app.cleanup();
 });
 
-test("leaving featured projects resets the cycle before re-entry", () => {
+test("leaving featured projects resets the traversal before re-entry", () => {
   const sectionSource = readFileSync(
     new URL(
       "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsSection.jsx",
@@ -249,5 +244,33 @@ test("the active project must be fully traversed before changing panels", () => 
   app.handlers.wheel(newProjectEvent);
   assert.equal(newProjectEvent.wasConsumed(), false);
   assert.equal(app.getActiveIndex(), 1);
+  app.cleanup();
+});
+
+test("the first and last project release the scroll to adjacent sections", () => {
+  const app = setup();
+  app.scroller.scrollTop = app.sectionTop;
+
+  const leaveTowardsServices = createWheelEvent(-60);
+  app.handlers.wheel(leaveTowardsServices);
+  assert.equal(leaveTowardsServices.wasConsumed(), false);
+  assert.equal(app.getActiveIndex(), 0);
+  assert.equal(app.timelines.length, 0);
+
+  app.scroller.scrollTop = app.sectionTop + 600;
+  app.handlers.wheel(createWheelEvent());
+  app.timelines[0].complete();
+  app.clock.advance(180);
+  app.scroller.scrollTop = app.sectionTop + 600;
+  app.handlers.wheel(createWheelEvent());
+  app.timelines[1].complete();
+  app.clock.advance(180);
+  app.scroller.scrollTop = app.sectionTop + 600;
+
+  const leaveLastProject = createWheelEvent();
+  app.handlers.wheel(leaveLastProject);
+  assert.equal(leaveLastProject.wasConsumed(), false);
+  assert.equal(app.getActiveIndex(), 2);
+  assert.equal(app.timelines.length, 2);
   app.cleanup();
 });

@@ -72,9 +72,9 @@ function alignIncomingProject(context, direction) {
 }
 
 /**
- * Convierte los proyectos destacados en un ciclo de paneles verticales.
- * Cada gesto completo saca el proyecto activo del viewport e introduce el
- * siguiente por el borde contrario, reproduciendo un loop continuo.
+ * Coordina los proyectos destacados como una secuencia vertical ordenada.
+ * Cada gesto completo cambia al proyecto adyacente únicamente cuando existe;
+ * los extremos conservan el scroll nativo para conectar con las secciones.
  */
 function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
   const reduceMotion = useReducedMotion();
@@ -82,6 +82,8 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
   const [previousEnabled, setPreviousEnabled] = useState(enabled);
   const activeIndexRef = useRef(0);
 
+  // La reentrada comienza siempre desde Quinta. React aplica este ajuste antes
+  // de pintar el panel habilitado, evitando reutilizar el índice anterior.
   if (previousEnabled !== enabled) {
     setPreviousEnabled(enabled);
     setActiveIndex(0);
@@ -101,10 +103,9 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
     let touchGesture;
 
     const setActivePanel = (index) => {
-      const normalizedIndex = gsap.utils.wrap(0, panels.length, index);
-      activeIndexRef.current = normalizedIndex;
-      setActiveIndex(normalizedIndex);
-      return normalizedIndex;
+      activeIndexRef.current = index;
+      setActiveIndex(index);
+      return index;
     };
 
     const applyInitialState = () => {
@@ -132,7 +133,8 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       if (!enabled || activeTween || !direction) return;
 
       const currentIndex = activeIndexRef.current;
-      const nextIndex = gsap.utils.wrap(0, panels.length, currentIndex + direction);
+      const nextIndex = currentIndex + direction;
+      if (nextIndex < 0 || nextIndex >= panels.length) return;
       const currentPanel = panels[currentIndex];
       const nextPanel = panels[nextIndex];
       const incomingEndY = direction > 0 ? scrollContext.maxSectionScroll :
@@ -183,6 +185,11 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       activeTween.to(nextPanel, { autoAlpha: 1, y: incomingEndY }, 0);
     };
 
+    const canTransition = (direction) => {
+      const nextIndex = activeIndexRef.current + direction;
+      return nextIndex >= 0 && nextIndex < panels.length;
+    };
+
     const resetWheelGesture = () => {
       wheelDelta = 0;
       wheelGestureLocked = false;
@@ -196,6 +203,14 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
         const direction = Math.sign(event.deltaY);
         const scrollContext = getSectionScrollContext(stage);
         if (!isAtSectionEdge(scrollContext, direction)) {
+          resetWheelGesture();
+          window.clearTimeout(wheelIdleTimer);
+          return;
+        }
+        // En los extremos de la colección el gesto vuelve al scroll nativo.
+        // Así se puede regresar a Servicios desde Quinta o abandonar el último
+        // proyecto sin que el carrusel se reinicie de forma inesperada.
+        if (!canTransition(direction)) {
           resetWheelGesture();
           window.clearTimeout(wheelIdleTimer);
           return;
@@ -239,6 +254,7 @@ function useFeaturedProjectsPanelLoop(stageRef, enabled = true) {
       const direction = Math.sign(verticalDistance);
       const scrollContext = getSectionScrollContext(stage);
       if (!isAtSectionEdge(scrollContext, direction)) return;
+      if (!canTransition(direction)) return;
 
       event.preventDefault();
       event.stopPropagation();

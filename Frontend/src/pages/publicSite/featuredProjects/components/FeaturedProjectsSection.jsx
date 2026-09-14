@@ -17,6 +17,7 @@ function FeaturedProjectsSection({
     stageRef,
     active && step === 2,
   );
+  const firstProjectActive = active && activeProjectIndex === 0;
 
   return (
     <section
@@ -28,12 +29,12 @@ function FeaturedProjectsSection({
       <article
         data-featured-project-panel
         aria-label="Proyecto destacado Quinta Bella Vista"
-        aria-hidden={activeProjectIndex !== 0}
-        inert={activeProjectIndex === 0 ? undefined : ""}
+        aria-hidden={!firstProjectActive}
+        inert={firstProjectActive ? undefined : ""}
         className="relative col-start-1 row-start-1 flex min-h-0 flex-col bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
       >
         <SectionTitleReveal
-          enabled={activeProjectIndex === 0}
+          enabled={firstProjectActive}
           onRevealComplete={() => onTitleRevealComplete?.("featured-projects")}
           className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
           data-node-id="4856:5032"
