@@ -266,7 +266,7 @@ function FeaturedProjectsGallery({
       className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
     >
       <div
-        className="mx-auto grid h-full w-full max-w-[1440px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
+        className="mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
         inert={activeImage ? "" : undefined}
       >
         {columns.map((cards, column) => (
