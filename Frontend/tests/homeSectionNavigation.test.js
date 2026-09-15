@@ -26,11 +26,12 @@ function setup(reduceMotion = false) {
   const panels = [0, 800, 1600, 2400].map((offsetTop) => ({ offsetTop }));
   const services = { id: "services", offsetTop: 3200 };
   const featured = { id: "featured-projects", offsetTop: 4400 };
+  const processSection = { id: "process", offsetTop: 8600 };
   const featuredProjectHeight = 1400;
   const scroller = {
     scrollTop: 0, clientHeight: 800,
     getBoundingClientRect: () => ({ top: 0, bottom: 800, height: 800 }),
-    querySelectorAll: () => [services, featured],
+    querySelectorAll: () => [services, featured, processSection],
     addEventListener: (type, handler) => { handlers[type] = handler; },
     removeEventListener: (type) => { delete handlers[type]; },
   };
@@ -99,7 +100,7 @@ function setup(reduceMotion = false) {
     controller.completeSectionTitleReveal(states[2]);
     clock.advance(180);
   };
-  return { controller, handlers, scroller, panels, services, featured, featuredProjects, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], getActiveFeaturedProject: () => states[5], getPendingTweenCount: () => tweens.length, cleanup: () => cleanups.forEach((fn) => fn?.()) };
+  return { controller, handlers, scroller, panels, services, featured, processSection, featuredProjects, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], getActiveFeaturedProject: () => states[5], getPendingTweenCount: () => tweens.length, cleanup: () => cleanups.forEach((fn) => fn?.()) };
 }
 
 
@@ -252,6 +253,35 @@ test('direct navigation updates the section and reveals an already visible galle
   assert.equal(app.scroller.scrollTop, 4400);
   assert.equal(app.getActiveSection(), 'featured-projects');
   assert.equal(app.getFeaturedStep(), 2);
+  app.cleanup();
+});
+
+test('process navigation uses the shared section transition and title reveal lock', () => {
+  const app = setup();
+  app.controller.navigateToSection('process');
+  app.flush();
+
+  assert.equal(app.scroller.scrollTop, app.processSection.offsetTop);
+  assert.equal(app.getActiveSection(), 'process');
+  assert.equal(app.getRevealedSection(), 'process');
+
+  let prevented = false;
+  app.handlers.wheel({
+    deltaX: 0,
+    deltaY: 60,
+    timeStamp: 200,
+    preventDefault() { prevented = true; },
+  });
+  assert.equal(prevented, true, 'Wait for the process title reveal');
+
+  app.controller.completeSectionTitleReveal('process');
+  app.clock.advance(180);
+  app.handlers.wheel({
+    deltaX: 0,
+    deltaY: 60,
+    timeStamp: 400,
+    preventDefault() { assert.fail('Process scrolling stayed locked'); },
+  });
   app.cleanup();
 });
 

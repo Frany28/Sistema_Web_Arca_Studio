@@ -13,7 +13,7 @@ import useScrollDirectionVisibility, {
 const DEFAULT_NAVIGATION_ITEMS = [
   { id: "services", label: "Servicios" },
   { id: "featured-projects", label: "Proyectos destacados" },
-  { id: "process", label: "¿Cómo trabajamos?" },
+  { id: "process", label: "Nuestros Procesos" },
   { id: "about", label: "Sobre nosotros" },
 ];
 

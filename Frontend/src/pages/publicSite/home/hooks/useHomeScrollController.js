@@ -334,7 +334,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return true;
       };
     const selectSection = (id) => {
-      if (id !== "featured-projects") commitFeaturedProjectIndex(0);
+      if (!id || id === "services") commitFeaturedProjectIndex(0);
       if (activeSectionRef.current === id) return;
       activeSectionRef.current = id;
       setActiveSectionId(id);
@@ -366,7 +366,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       titleRevealLockedRef.current = false;
       setContentMode(false);
 
-      if (sectionId === "featured-projects") commitFeaturedProjectIndex(0);
+      if (sectionId === "featured-projects" || sectionId === "services" || sectionId === "home") {
+        commitFeaturedProjectIndex(0);
+      }
       selectSection(sectionId === "home" ? null : sectionId);
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
@@ -412,10 +414,16 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
       const featured = getSection("featured-projects");
-      const featuredIsActive = Boolean(
-        featured && scroller.scrollTop + 64 >= featured.offsetTop,
+      const contentSections = [...scroller.querySelectorAll("section[id]")];
+      const activeContentSection = contentSections.reduce(
+        (currentSection, section) =>
+          scroller.scrollTop + 64 >= section.offsetTop
+            ? section
+            : currentSection,
+        contentSections[0],
       );
-      selectSection(featuredIsActive ? "featured-projects" : "services");
+      const featuredIsActive = activeContentSection?.id === "featured-projects";
+      selectSection(activeContentSection?.id ?? "services");
       if (featuredIsActive) synchronizeFeaturedProject(featured);
       const gallery = featured?.querySelector?.("[data-featured-gallery]");
       // offsetTop cambia segÃºn el offsetParent y no representa necesariamente el

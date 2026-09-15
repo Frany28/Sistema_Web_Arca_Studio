@@ -9,6 +9,7 @@ import PublicSiteHeader from "../components/PublicSiteHeader/PublicSiteHeader.js
 import HomeSections from "./components/HomeSections.jsx";
 import ServicesSection from "../services/components/ServicesSection.jsx";
 import FeaturedProjectsSection from "../featuredProjects/components/FeaturedProjectsSection.jsx";
+import ProcessesSection from "../processes/components/ProcessesSection.jsx";
 import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
 import useHomeScrollController from "./hooks/useHomeScrollController.js";
 import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
@@ -50,7 +51,10 @@ function OpeningHome() {
   const homeActive = phase === "complete";
 
   useEffect(() => {
-    if (initialScrollReady && ["#services", "#featured-projects"].includes(hash)) {
+    if (
+      initialScrollReady &&
+      ["#services", "#featured-projects", "#process"].includes(hash)
+    ) {
       navigateToSection(hash.slice(1));
     }
   }, [hash, initialScrollReady, navigateToSection]);
@@ -118,6 +122,10 @@ function OpeningHome() {
                 active={activeSectionId === "featured-projects"}
                 activeProjectIndex={activeFeaturedProjectIndex}
                 step={featuredStep}
+                onTitleRevealComplete={completeSectionTitleReveal}
+              />
+              <ProcessesSection
+                active={activeSectionId === "process"}
                 onTitleRevealComplete={completeSectionTitleReveal}
               />
             </>

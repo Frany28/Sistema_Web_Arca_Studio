@@ -31,7 +31,7 @@ test("the public home header preserves the Figma structure and labels", () => {
   assert.match(headerSource, /max-w-\[1200px\]/);
   assert.match(headerSource, /Servicios/);
   assert.match(headerSource, /Proyectos destacados/);
-  assert.match(headerSource, /¿Cómo trabajamos\?/);
+  assert.match(headerSource, /Nuestros Procesos/);
   assert.match(headerSource, /Sobre nosotros/);
   assert.doesNotMatch(headerSource, /Registrarse|onRegister|onLogin/);
   assert.match(headerSource, /Contáctanos/);
