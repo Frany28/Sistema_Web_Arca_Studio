@@ -231,80 +231,108 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           : nextPanelTop + Math.max(0, nextPanel.offsetHeight - scroller.clientHeight),
       };
     };
-    const synchronizeFeaturedProject = (section = getSection("featured-projects")) => {
-      const projectPanels = getFeaturedProjectPanels(section);
-      if (!projectPanels.length) return;
-      const viewportRect = scroller.getBoundingClientRect();
-      let visibleIndex = activeFeaturedProjectIndexRef.current;
-      let hasVisiblePanel = false;
+    const synchronizeFeaturedProject = (
+    section = getSection("featured-projects"),
+  ) => {
+    const projectPanels = getFeaturedProjectPanels(section);
+    if (!projectPanels.length) return;
 
-      projectPanels.forEach((panel, index) => {
-        const rect = panel.getBoundingClientRect();
-        if (
-          rect.top <= viewportRect.top + FEATURED_PROJECT_EDGE_TOLERANCE_PX &&
-          rect.bottom > viewportRect.top + FEATURED_PROJECT_EDGE_TOLERANCE_PX
-        ) {
-          visibleIndex = index;
-          hasVisiblePanel = true;
-        }
-      });
-      if (hasVisiblePanel) commitFeaturedProjectIndex(visibleIndex);
-    };
-    const transitionFeaturedProject = (direction, travelDistance = 0) => {
-      if (activeTween || isProgrammaticScroll) return false;
+    // Durante una transición controlada, el índice lo administra
+    // transitionFeaturedProject. No competir con GSAP.
+    if (activeTween || isProgrammaticScroll) return;
 
-      const transition = getFeaturedProjectTransition(
-        direction,
-        travelDistance,
+    const scrollTop = scroller.scrollTop;
+    const viewportHeight = scroller.clientHeight;
+
+    let closestIndex = activeFeaturedProjectIndexRef.current;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    projectPanels.forEach((panel, index) => {
+      const panelTop = getElementScrollTop(panel);
+      const panelBottom = panelTop + panel.offsetHeight;
+
+      const panelStart = panelTop;
+      const panelEnd = Math.max(
+        panelStart,
+        panelBottom - viewportHeight,
       );
 
-      if (!transition) return false;
+      // Solo considerar que estamos realmente dentro del recorrido
+      // propio de este panel.
+      if (
+        scrollTop >= panelStart - FEATURED_PROJECT_EDGE_TOLERANCE_PX &&
+        scrollTop <= panelEnd + FEATURED_PROJECT_EDGE_TOLERANCE_PX
+      ) {
+        const distance = Math.abs(scrollTop - panelStart);
 
-      isProgrammaticScroll = true;
-      ignoreNextScrollEnd = supportsScrollEnd;
-
-      // Al subir, activar primero el proyecto que va a entrar.
-      // Así Quinta aparece desde el momento en que comienza a entrar al viewport.
-      if (direction < 0) {
-        commitFeaturedProjectIndex(transition.index);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = index;
+        }
       }
+    });
 
-      const completeTransition = () => {
-        activeTween = undefined;
-        isProgrammaticScroll = false;
+    // No cambiar de proyecto simplemente porque otro panel
+    // empezó a asomarse en pantalla.
+    if (closestDistance !== Number.POSITIVE_INFINITY) {
+      commitFeaturedProjectIndex(closestIndex);
+    }
+     };
+      const transitionFeaturedProject = (direction, travelDistance = 0) => {
+        if (activeTween || isProgrammaticScroll) return false;
 
-        window.clearTimeout(wheelIdleTimer);
-        wheelGestureState = createWheelGestureState();
-        wheelTransitionLock = false;
+        const transition = getFeaturedProjectTransition(
+          direction,
+          travelDistance,
+        );
 
-        // Al bajar, mantener el proyecto anterior activo durante toda
-        // su salida y cambiar al siguiente solo al finalizar.
-        if (direction > 0) {
+        if (!transition) return false;
+
+        isProgrammaticScroll = true;
+        ignoreNextScrollEnd = supportsScrollEnd;
+
+        // Al subir, activar primero el proyecto que va a entrar.
+        // Así Quinta aparece desde el momento en que comienza a entrar al viewport.
+        if (direction < 0) {
           commitFeaturedProjectIndex(transition.index);
         }
 
-        synchronizeContentScroll();
-      };
+        const completeTransition = () => {
+          activeTween = undefined;
+          isProgrammaticScroll = false;
 
-      if (reduceMotion) {
-        scroller.scrollTop = transition.scrollTop;
-        window.requestAnimationFrame(completeTransition);
+          window.clearTimeout(wheelIdleTimer);
+          wheelGestureState = createWheelGestureState();
+          wheelTransitionLock = false;
+
+          // Al bajar, mantener el proyecto anterior activo durante toda
+          // su salida y cambiar al siguiente solo al finalizar.
+          if (direction > 0) {
+            commitFeaturedProjectIndex(transition.index);
+          }
+
+          synchronizeContentScroll();
+        };
+
+        if (reduceMotion) {
+          scroller.scrollTop = transition.scrollTop;
+          window.requestAnimationFrame(completeTransition);
+          return true;
+        }
+
+        activeTween = gsap.to(scroller, {
+          scrollTo: {
+            y: transition.scrollTop,
+            autoKill: false,
+          },
+          duration: SCROLL_STEP_DURATION_SECONDS,
+          ease: SECTION_NAVIGATION_EASE,
+          overwrite: true,
+          onComplete: completeTransition,
+        });
+
         return true;
-      }
-
-      activeTween = gsap.to(scroller, {
-        scrollTo: {
-          y: transition.scrollTop,
-          autoKill: false,
-        },
-        duration: SCROLL_STEP_DURATION_SECONDS,
-        ease: SECTION_NAVIGATION_EASE,
-        overwrite: true,
-        onComplete: completeTransition,
-      });
-
-      return true;
-    };
+      };
     const selectSection = (id) => {
       if (id !== "featured-projects") commitFeaturedProjectIndex(0);
       if (activeSectionRef.current === id) return;
@@ -424,16 +452,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           revealedSectionRef.current === activeSectionRef.current &&
           !sectionTitleLockedRef.current &&
           !wheelTransitionLock;
-       if (contentReady) {
+      if (contentReady) {
   const direction = Math.sign(delta.y);
 
-  // Si el usuario invierte la dirección, empezar un gesto limpio.
-  // Evita que un scroll anterior "consumido" bloquee la transición inversa.
-  if (
-    wheelGestureState.direction !== null &&
-    wheelGestureState.direction !== direction
-  ) {
-    wheelGestureState = createWheelGestureState();
+  if (!direction) return;
+
+  // Fuera de Proyectos destacados dejamos el scroll nativo.
+  if (activeSectionRef.current !== "featured-projects") {
+    return;
   }
 
   const transition = getFeaturedProjectTransition(
@@ -441,35 +467,26 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     delta.y,
   );
 
+  // Todavía estamos dentro del contenido del proyecto.
+  // El navegador puede desplazarlo normalmente.
   if (!transition) {
+    wheelGestureState = createWheelGestureState();
     return;
   }
 
+  // Hemos alcanzado el límite entre proyectos.
+  // Desde este punto NO permitimos que el scroll nativo cruce
+  // al siguiente panel.
   event.preventDefault();
+  event.stopPropagation?.();
 
   window.clearTimeout(wheelIdleTimer);
+  wheelGestureState = createWheelGestureState();
 
-  wheelIdleTimer = window.setTimeout(
-    resetWheelGesture,
-    WHEEL_GESTURE_IDLE_MS,
-  );
-
-  wheelGestureState = advanceWheelGesture(
-    wheelGestureState,
-    delta.y,
-    WHEEL_GESTURE_THRESHOLD_PX,
-    event.timeStamp,
-  );
-
-  if (wheelGestureState.triggeredDirection !== null) {
-    transitionFeaturedProject(
-      wheelGestureState.triggeredDirection,
-      delta.y,
-    );
-  }
+  transitionFeaturedProject(direction, delta.y);
 
   return;
-       }
+      }
         event.preventDefault();
         event.stopPropagation?.();
         window.clearTimeout(wheelIdleTimer);
