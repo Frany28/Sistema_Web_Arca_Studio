@@ -251,49 +251,60 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (hasVisiblePanel) commitFeaturedProjectIndex(visibleIndex);
     };
     const transitionFeaturedProject = (direction, travelDistance = 0) => {
-  if (activeTween || isProgrammaticScroll) return false;
+      if (activeTween || isProgrammaticScroll) return false;
 
-  const transition = getFeaturedProjectTransition(
-    direction,
-    travelDistance,
-  );
+      const transition = getFeaturedProjectTransition(
+        direction,
+        travelDistance,
+      );
 
-  if (!transition) return false;
+      if (!transition) return false;
 
-  isProgrammaticScroll = true;
-  ignoreNextScrollEnd = supportsScrollEnd;
+      isProgrammaticScroll = true;
+      ignoreNextScrollEnd = supportsScrollEnd;
 
-  const completeTransition = () => {
-    activeTween = undefined;
-    isProgrammaticScroll = false;
+      // Al subir, activar primero el proyecto que va a entrar.
+      // Así Quinta aparece desde el momento en que comienza a entrar al viewport.
+      if (direction < 0) {
+        commitFeaturedProjectIndex(transition.index);
+      }
 
-    window.clearTimeout(wheelIdleTimer);
-    wheelGestureState = createWheelGestureState();
-    wheelTransitionLock = false;
+      const completeTransition = () => {
+        activeTween = undefined;
+        isProgrammaticScroll = false;
 
-    commitFeaturedProjectIndex(transition.index);
-    synchronizeContentScroll();
-  };
+        window.clearTimeout(wheelIdleTimer);
+        wheelGestureState = createWheelGestureState();
+        wheelTransitionLock = false;
 
-  if (reduceMotion) {
-    scroller.scrollTop = transition.scrollTop;
-    window.requestAnimationFrame(completeTransition);
-    return true;
-  }
+        // Al bajar, mantener el proyecto anterior activo durante toda
+        // su salida y cambiar al siguiente solo al finalizar.
+        if (direction > 0) {
+          commitFeaturedProjectIndex(transition.index);
+        }
 
-  activeTween = gsap.to(scroller, {
-    scrollTo: {
-      y: transition.scrollTop,
-      autoKill: false,
-    },
-    duration: SCROLL_STEP_DURATION_SECONDS,
-    ease: SECTION_NAVIGATION_EASE,
-    overwrite: true,
-    onComplete: completeTransition,
-  });
+        synchronizeContentScroll();
+      };
 
-  return true;
-};
+      if (reduceMotion) {
+        scroller.scrollTop = transition.scrollTop;
+        window.requestAnimationFrame(completeTransition);
+        return true;
+      }
+
+      activeTween = gsap.to(scroller, {
+        scrollTo: {
+          y: transition.scrollTop,
+          autoKill: false,
+        },
+        duration: SCROLL_STEP_DURATION_SECONDS,
+        ease: SECTION_NAVIGATION_EASE,
+        overwrite: true,
+        onComplete: completeTransition,
+      });
+
+      return true;
+    };
     const selectSection = (id) => {
       if (id !== "featured-projects") commitFeaturedProjectIndex(0);
       if (activeSectionRef.current === id) return;

@@ -28,6 +28,7 @@ function FeaturedProjectsSection({
       >
         <SectionTitleReveal
           enabled={firstProjectActive}
+          visible={firstProjectActive}
           onRevealComplete={() => onTitleRevealComplete?.("featured-projects")}
           className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
           data-node-id="4856:5032"
