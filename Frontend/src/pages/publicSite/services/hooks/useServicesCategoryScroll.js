@@ -70,91 +70,102 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
         const canReleaseNativeScroll = (direction) =>
           (direction < 0 && selectedIndexRef.current === 0 && !onPreviousSection) ||
           (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && !onNextSection);
-  const wheel = (event) => {
-  if (event.ctrlKey) return;
+    const wheel = (event) => {
+      if (event.ctrlKey) return;
 
-  if (
-    !(event.target instanceof Element) ||
-    !event.target.closest(
-      "[data-service-category-scroll-trigger]"
-    )
-  ) {
-    return;
-  }
+      if (
+        !(event.target instanceof Element) ||
+        !event.target.closest("[data-service-category-scroll-trigger]")
+      ) {
+        return;
+      }
 
-  const bounds = layout.getBoundingClientRect();
+      const bounds = layout.getBoundingClientRect();
 
-  if (
-    event.clientX < bounds.left ||
-    event.clientX > bounds.right ||
-    event.clientY < bounds.top ||
-    event.clientY > bounds.bottom
-  ) {
-    return;
-  }
+      if (
+        event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom
+      ) {
+        return;
+      }
 
-  const delta = normalizeWheelDelta(
-    event,
-    layout.clientHeight,
-  );
+      const delta = normalizeWheelDelta(
+        event,
+        layout.clientHeight,
+      );
 
-  if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
+      if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
-  clearTimeout(idleTimer);
+      const direction = Math.sign(delta.y);
 
-  idleTimer = setTimeout(() => {
-    gesture = createWheelGestureState();
-    releasedDirection = null;
-  }, 180);
+      if (!direction) return;
 
-  if (
-    selectionComplete &&
-    gesture.consumed &&
-    Math.abs(delta.y) >= 10 &&
-    event.timeStamp - gesture.lastTriggerTime >= 250
-  ) {
-    gesture = createWheelGestureState();
-  }
+      const currentIndex = selectedIndexRef.current;
+      const lastIndex = categories.length - 1;
 
-  const direction = Math.sign(delta.y);
+      // Estamos en el PRIMER servicio y seguimos subiendo:
+      // Servicios ya no debe capturar la rueda.
+      if (direction < 0 && currentIndex === 0) {
+        gesture = createWheelGestureState();
+        releasedDirection = null;
+        return;
+      }
 
-  // Si cambiamos de dirección, comenzar un gesto nuevo.
-  if (
-    gesture.direction !== null &&
-    gesture.direction !== direction
-  ) {
-    gesture = createWheelGestureState();
-  }
+      // Estamos en el ÚLTIMO servicio y seguimos bajando:
+      // cuando ya terminó su selección, liberar la rueda hacia Home.
+      if (
+        direction > 0 &&
+        currentIndex === lastIndex &&
+        selectionComplete &&
+        visited.size === categories.length
+      ) {
+        gesture = createWheelGestureState();
+        releasedDirection = null;
+        onNextSection?.();
+        return;
+      }
 
-  gesture = advanceWheelGesture(
-    gesture,
-    delta.y,
-    32,
-    event.timeStamp,
-  );
+      // Mientras estamos entre categorías, Servicios controla el wheel.
+      event.preventDefault();
+      event.stopPropagation();
 
-  // En los extremos dejamos salir el scroll de Servicios.
-  if (
-    canReleaseNativeScroll(direction) &&
-    (
-      releasedDirection === direction ||
-      gesture.triggeredDirection === direction
-    )
-  ) {
-    releasedDirection = direction;
-    gesture = createWheelGestureState();
-    return;
-  }
+      clearTimeout(idleTimer);
 
-  releasedDirection = null;
+      idleTimer = setTimeout(() => {
+        gesture = createWheelGestureState();
+      }, 180);
 
-  event.preventDefault();
-  event.stopPropagation();
+      // Cambiar de dirección = gesto nuevo.
+      if (
+        gesture.direction !== null &&
+        gesture.direction !== direction
+      ) {
+        gesture = createWheelGestureState();
+      }
 
-  if (gesture.triggeredDirection !== null) {
-    advance(gesture.triggeredDirection);
-  }
-};
+      // Permitir un nuevo paso después de que terminó
+      // la transición anterior.
+      if (
+        selectionComplete &&
+        gesture.consumed &&
+        event.timeStamp - gesture.lastTriggerTime >= 250
+      ) {
+        gesture = createWheelGestureState();
+      }
+
+      gesture = advanceWheelGesture(
+        gesture,
+        delta.y,
+        32,
+        event.timeStamp,
+      );
+
+      if (gesture.triggeredDirection !== null) {
+        advance(gesture.triggeredDirection);
+      }
+    };
     const pointerDown = (event) => {
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       touch = { id: event.pointerId, startX: event.clientX, startY: event.clientY };
