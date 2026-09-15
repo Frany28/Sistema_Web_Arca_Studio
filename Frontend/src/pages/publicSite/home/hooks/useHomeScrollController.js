@@ -263,20 +263,17 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   isProgrammaticScroll = true;
   ignoreNextScrollEnd = supportsScrollEnd;
 
-  // Activar el proyecto que está entrando ANTES de comenzar el tween.
-  // Así su reveal ocurre mientras entra al viewport y no después.
-  commitFeaturedProjectIndex(transition.index);
-
   const completeTransition = () => {
-  activeTween = undefined;
-  isProgrammaticScroll = false;
+    activeTween = undefined;
+    isProgrammaticScroll = false;
 
-  window.clearTimeout(wheelIdleTimer);
-  wheelGestureState = createWheelGestureState();
-  wheelTransitionLock = false;
+    window.clearTimeout(wheelIdleTimer);
+    wheelGestureState = createWheelGestureState();
+    wheelTransitionLock = false;
 
-  synchronizeContentScroll();
-};
+    commitFeaturedProjectIndex(transition.index);
+    synchronizeContentScroll();
+  };
 
   if (reduceMotion) {
     scroller.scrollTop = transition.scrollTop;
