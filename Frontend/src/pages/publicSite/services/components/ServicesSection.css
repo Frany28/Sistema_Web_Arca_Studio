@@ -1,7 +1,7 @@
 /* Reservar siempre el espacio del navbar; compactar solo el contenido inferior.
    Las alturas muy pequeñas conservan scroll natural, sin recortar los textos. */
 .services-section {
-  --services-content-gap: clamp(var(--spacing-gap-4), calc((100dvh - 700px) / 10), var(--spacing-gap-8));
+  --services-content-gap: clamp(var(--spacing-gap-5), calc((100dvh - 700px) / 10), var(--spacing-gap-8));
   gap: var(--services-content-gap);
   padding-bottom: var(--services-content-gap);
 }
@@ -24,11 +24,22 @@
 }
 
 .services-section .services-category-showcase__frame {
-  width: clamp(128px, calc((100dvh - 400px) * 0.64), 320px);
+  width: clamp(
+    128px,
+    calc((100dvh - 400px - var(--spacing-gap-5)) * 0.64),
+    calc(320px - var(--spacing-gap-4))
+  );
 }
 
 @media (width < 1024px) {
   .services-section .services-category-showcase__frame {
-    width: clamp(128px, min(31.25vw, calc((100dvh - 400px) * 0.64)), 320px);
+    width: clamp(
+      128px,
+      min(
+        calc(31.25vw - var(--spacing-gap-2)),
+        calc((100dvh - 400px - var(--spacing-gap-5)) * 0.64)
+      ),
+      calc(320px - var(--spacing-gap-4))
+    );
   }
 }
