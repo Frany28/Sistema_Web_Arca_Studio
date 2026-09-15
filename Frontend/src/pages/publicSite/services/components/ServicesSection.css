@@ -24,22 +24,11 @@
 }
 
 .services-section .services-category-showcase__frame {
-  width: clamp(
-    128px,
-    calc((100dvh - 400px - var(--spacing-gap-5)) * 0.64),
-    calc(320px - var(--spacing-gap-4))
-  );
+  width: clamp(128px, calc((100dvh - 400px) * 0.56), 280px);
 }
 
 @media (width < 1024px) {
   .services-section .services-category-showcase__frame {
-    width: clamp(
-      128px,
-      min(
-        calc(31.25vw - var(--spacing-gap-2)),
-        calc((100dvh - 400px - var(--spacing-gap-5)) * 0.64)
-      ),
-      calc(320px - var(--spacing-gap-4))
-    );
+    width: clamp(128px, min(31.25vw, calc((100dvh - 400px) * 0.56)), 280px);
   }
 }
