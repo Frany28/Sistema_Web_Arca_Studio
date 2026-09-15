@@ -70,87 +70,91 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
         const canReleaseNativeScroll = (direction) =>
           (direction < 0 && selectedIndexRef.current === 0 && !onPreviousSection) ||
           (direction > 0 && selectionComplete && selectedIndexRef.current === categories.length - 1 && !onNextSection);
-      const wheel = (event) => {
-      if (event.ctrlKey) return;
+  const wheel = (event) => {
+  if (event.ctrlKey) return;
 
-      if (
-        !(event.target instanceof Element) ||
-        !event.target.closest("[data-service-category-scroll-trigger]")
-      ) {
-        return;
-      }
+  if (
+    !(event.target instanceof Element) ||
+    !event.target.closest(
+      "[data-service-category-scroll-trigger]"
+    )
+  ) {
+    return;
+  }
 
-      const bounds = layout.getBoundingClientRect();
+  const bounds = layout.getBoundingClientRect();
 
-      if (
-        event.clientX < bounds.left ||
-        event.clientX > bounds.right ||
-        event.clientY < bounds.top ||
-        event.clientY > bounds.bottom
-      ) {
-        return;
-      }
+  if (
+    event.clientX < bounds.left ||
+    event.clientX > bounds.right ||
+    event.clientY < bounds.top ||
+    event.clientY > bounds.bottom
+  ) {
+    return;
+  }
 
-      const delta = normalizeWheelDelta(
-        event,
-        layout.clientHeight,
-      );
+  const delta = normalizeWheelDelta(
+    event,
+    layout.clientHeight,
+  );
 
-      if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
+  if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
-      // IMPORTANTE:
-      // hacia arriba dejamos el scroll completamente libre
-      if (delta.y < 0) {
-        gesture = createWheelGestureState();
-        releasedDirection = null;
-        return;
-      }
+  clearTimeout(idleTimer);
 
-      clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    gesture = createWheelGestureState();
+    releasedDirection = null;
+  }, 180);
 
-      idleTimer = setTimeout(() => {
-        gesture = createWheelGestureState();
-        releasedDirection = null;
-      }, 180);
+  if (
+    selectionComplete &&
+    gesture.consumed &&
+    Math.abs(delta.y) >= 10 &&
+    event.timeStamp - gesture.lastTriggerTime >= 250
+  ) {
+    gesture = createWheelGestureState();
+  }
 
-      if (
-        selectionComplete &&
-        gesture.consumed &&
-        Math.abs(delta.y) >= 10 &&
-        event.timeStamp - gesture.lastTriggerTime >= 250
-      ) {
-        gesture = createWheelGestureState();
-      }
+  const direction = Math.sign(delta.y);
 
-      gesture = advanceWheelGesture(
-        gesture,
-        delta.y,
-        32,
-        event.timeStamp,
-      );
+  // Si cambiamos de dirección, comenzar un gesto nuevo.
+  if (
+    gesture.direction !== null &&
+    gesture.direction !== direction
+  ) {
+    gesture = createWheelGestureState();
+  }
 
-      const direction = Math.sign(delta.y);
+  gesture = advanceWheelGesture(
+    gesture,
+    delta.y,
+    32,
+    event.timeStamp,
+  );
 
-      if (
-        canReleaseNativeScroll(direction) &&
-        (
-          releasedDirection === direction ||
-          gesture.triggeredDirection === direction
-        )
-      ) {
-        releasedDirection = direction;
-        return;
-      }
+  // En los extremos dejamos salir el scroll de Servicios.
+  if (
+    canReleaseNativeScroll(direction) &&
+    (
+      releasedDirection === direction ||
+      gesture.triggeredDirection === direction
+    )
+  ) {
+    releasedDirection = direction;
+    gesture = createWheelGestureState();
+    return;
+  }
 
-      releasedDirection = null;
+  releasedDirection = null;
 
-      event.preventDefault();
-      event.stopPropagation();
+  event.preventDefault();
+  event.stopPropagation();
 
-      if (gesture.triggeredDirection !== null) {
-        advance(gesture.triggeredDirection);
-      }
-    };
+  if (gesture.triggeredDirection !== null) {
+    advance(gesture.triggeredDirection);
+  }
+};
     const pointerDown = (event) => {
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       touch = { id: event.pointerId, startX: event.clientX, startY: event.clientY };
