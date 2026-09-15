@@ -1,26 +1,18 @@
 import { useEffect } from "react";
 
-import Modal, {
-  ModalCloseButton,
-} from "../../../../components/ui/Modal/Modal.jsx";
+import Modal from "../../../../components/ui/Modal/Modal.jsx";
 
 function ProcessesVideoModal({ onClose, video, visible }) {
   useEffect(() => {
     if (!visible) return undefined;
 
     const originalOverflow = document.body.style.overflow;
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") onClose?.();
-    };
-
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.body.style.overflow = originalOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose, visible]);
+  }, [visible]);
 
   return (
     <Modal
@@ -33,37 +25,27 @@ function ProcessesVideoModal({ onClose, video, visible }) {
       onClose={onClose}
       className="z-[60]"
       dialogShellClassName="!pb-0"
-      contentClassName="!p-[16px] max-[640px]:!p-[8px]"
+      contentClassName="!p-0"
     >
       {video ? (
-        <section
-          className="relative flex h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-[1200px] items-center justify-center overflow-hidden rounded-[var(--radius-3)] bg-[var(--color-neutral-950-uniform)] max-[640px]:h-[calc(100dvh-16px)] max-[640px]:w-[calc(100vw-16px)]"
-          role="dialog"
-          aria-modal="true"
-          aria-label={video.title}
+        <div
+          className="flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] items-center justify-center"
           onClick={(event) => event.stopPropagation()}
         >
-          <h2 className="sr-only">{video.title}</h2>
           <video
             key={video.id}
-            className="size-full object-contain"
+            className="block h-auto max-h-[calc(100dvh-32px)] w-auto max-w-[calc(100vw-32px)] cursor-pointer rounded-[var(--radius-3)] object-contain"
             poster={video.poster}
             autoPlay
-            controls
             loop
             playsInline
             aria-label={video.description}
+            onClick={onClose}
           >
             <source src={video.webm} type="video/webm" />
             <source src={video.mp4} type="video/mp4" />
           </video>
-
-          <ModalCloseButton
-            ariaLabel="Cerrar video"
-            onClick={onClose}
-            className="absolute right-[16px] top-[16px] z-10 bg-[var(--color-primary-300)] text-[var(--color-neutral-100-uniform)] shadow-[var(--shadow-e2)] hover:bg-[var(--color-primary-400)] hover:text-[var(--color-neutral-100-uniform)] max-[640px]:right-[8px] max-[640px]:top-[8px]"
-          />
-        </section>
+        </div>
       ) : null}
     </Modal>
   );
