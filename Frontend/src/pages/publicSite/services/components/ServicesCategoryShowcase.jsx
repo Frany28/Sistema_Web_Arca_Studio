@@ -2,17 +2,22 @@ import { useRef } from "react";
 import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
 import "./ServicesCategoryShowcase.css";
 
-function ServicesCategoryShowcase({ categories, onNextSection }) {
+function ServicesCategoryShowcase({
+  categories,
+  onNextSection,
+  onPreviousSection,
+}) {
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
   const categoryTabRefs = useRef([]);
   const { activeIndex, selectCategory } = useServicesCategoryScroll(
-    sectionRef,
-    layoutRef,
-    categories,
-    true,
-    undefined,
-    onNextSection,
+  sectionRef,
+  layoutRef,
+  categories,
+  true,
+  undefined,
+  onNextSection,
+  onPreviousSection,
   );
   const activeCategory = categories[activeIndex] ?? categories[0];
 

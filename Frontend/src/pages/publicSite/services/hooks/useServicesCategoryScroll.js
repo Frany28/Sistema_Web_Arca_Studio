@@ -108,10 +108,15 @@ function useServicesCategoryScroll(sectionRef, layoutRef, categories, enabled = 
       // Estamos en el PRIMER servicio y seguimos subiendo:
       // Servicios ya no debe capturar la rueda.
       if (direction < 0 && currentIndex === 0) {
-        gesture = createWheelGestureState();
-        releasedDirection = null;
-        return;
-      }
+      event.preventDefault();
+      event.stopPropagation();
+
+      gesture = createWheelGestureState();
+      releasedDirection = null;
+
+      onPreviousSection?.();
+      return;
+    }
 
       // Estamos en el ÚLTIMO servicio y seguimos bajando:
       // cuando ya terminó su selección, liberar la rueda hacia Home.

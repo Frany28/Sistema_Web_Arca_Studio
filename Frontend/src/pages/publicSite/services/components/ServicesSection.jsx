@@ -6,14 +6,19 @@ import {
   SERVICES_HEADING,
 } from "../servicesContent.js";
 
-function ServicesSection({ onNextSection, onTitleRevealComplete }) {
+function ServicesSection({
+  onNextSection,
+  onPreviousSection,
+  onTitleRevealComplete,
+}) {
   return (
     <section id="services" aria-label="Servicios" className="services-section dark flex min-h-dvh flex-col gap-[var(--spacing-gap-8)] bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)] pb-[var(--spacing-gap-8)]">
       <ServicesHeading {...SERVICES_HEADING} onRevealComplete={() => onTitleRevealComplete?.("services")} />
       <ServicesCategoryShowcase
-        categories={SERVICES_CATEGORIES}
-        onNextSection={onNextSection}
-      />
+      categories={SERVICES_CATEGORIES}
+      onNextSection={onNextSection}
+      onPreviousSection={onPreviousSection}
+    />
     </section>
   );
 }
