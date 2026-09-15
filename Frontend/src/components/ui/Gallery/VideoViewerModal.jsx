@@ -14,6 +14,7 @@ import { GeneralCommentsDrawer } from "./Model3DViewerModal.jsx";
 import { useImageComments } from "./useImageComments.js";
 import { useVideoThumbnail } from "./useVideoThumbnail.js";
 import { useProjectReadOnly } from "../../../contexts/ProjectReadOnlyContext.jsx";
+import useBodyScrollLock from "../../../hooks/useBodyScrollLock.js";
 
 const MODAL_TRANSITION_MS = 320;
 const MODAL_EASING = "ease-in-out";
@@ -436,36 +437,49 @@ export default function VideoViewerModal({
     projectId,
   });
 
+  useBodyScrollLock(visible);
+
   useEffect(() => {
     window.clearTimeout(closeTimeoutRef.current);
     window.cancelAnimationFrame(frameRef.current);
+    let cancelled = false;
 
     if (visible && item) {
-      setDisplayItem(item);
-      setCurrentTime(0);
-      setDuration(0);
-      setIsActive(false);
-      setIsMuted(false);
-      setIsPlaying(false);
-      setFocusedCommentId(null);
-      setPendingSelection(null);
-      setIsVideoLoading(Boolean(item.video));
-      setShouldRender(true);
-      frameRef.current = window.requestAnimationFrame(() => {
+      queueMicrotask(() => {
+        if (cancelled) return;
+
+        setDisplayItem(item);
+        setCurrentTime(0);
+        setDuration(0);
+        setIsActive(false);
+        setIsMuted(false);
+        setIsPlaying(false);
+        setFocusedCommentId(null);
+        setPendingSelection(null);
+        setIsVideoLoading(Boolean(item.video));
+        setShouldRender(true);
         frameRef.current = window.requestAnimationFrame(() => {
-          setIsActive(true);
+          frameRef.current = window.requestAnimationFrame(() => {
+            setIsActive(true);
+          });
         });
       });
 
-      return undefined;
+      return () => {
+        cancelled = true;
+        window.cancelAnimationFrame(frameRef.current);
+      };
     }
 
-    setIsActive(false);
+    queueMicrotask(() => {
+      if (!cancelled) setIsActive(false);
+    });
     closeTimeoutRef.current = window.setTimeout(() => {
       setShouldRender(false);
     }, MODAL_TRANSITION_MS);
 
     return () => {
+      cancelled = true;
       window.clearTimeout(closeTimeoutRef.current);
       window.cancelAnimationFrame(frameRef.current);
     };
@@ -613,6 +627,7 @@ export default function VideoViewerModal({
     <div
       className={clsx(
         "fixed inset-0 z-[60] overflow-hidden bg-[rgba(0,0,0,0.42)] backdrop-blur-[10px] transition-opacity",
+        visible ? "pointer-events-auto" : "pointer-events-none",
         isActive ? "opacity-100" : "opacity-0",
       )}
       style={transitionStyle}
@@ -635,7 +650,7 @@ export default function VideoViewerModal({
           className={clsx(
             "group/video",
             "relative min-w-0 flex-1 overflow-hidden",
-            "rounded-[var(--radius-3)] bg-[var(--color-neutral-200)]",
+            "rounded-[var(--radius-3)] bg-[var(--color-neutral-950-uniform)]",
             "h-[calc(100dvh-32px)]",
             "max-[920px]:h-[62dvh] max-[920px]:min-h-[360px] max-[920px]:flex-none",
             "max-[520px]:h-[58dvh] max-[520px]:min-h-[300px]",
@@ -647,7 +662,7 @@ export default function VideoViewerModal({
               ref={videoRef}
               src={displayItem.video}
               poster={generatedPoster || undefined}
-              className="absolute inset-0 h-full w-full cursor-pointer object-cover"
+              className="absolute inset-0 h-full w-full cursor-pointer object-contain"
               muted={isMuted}
               playsInline
               preload="metadata"
@@ -682,7 +697,7 @@ export default function VideoViewerModal({
             <img
               src={generatedPoster || displayItem.image}
               alt={displayItem.label ?? displayItem.title}
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-contain"
             />
           )}
 

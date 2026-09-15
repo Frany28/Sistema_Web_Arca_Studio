@@ -6,6 +6,7 @@ import Button from "../Button/Button.jsx";
 import Modal from "../Modal/Modal.jsx";
 import ScrollBar from "../ScrollBar/ScrollBar.jsx";
 import VideoThumbnail from "./VideoThumbnail.jsx";
+import useBodyScrollLock from "../../../hooks/useBodyScrollLock.js";
 
 function CloseIcon({ className }) {
   return (
@@ -136,6 +137,8 @@ export default function GalleryVideosModal({
     height: 392,
   });
 
+  useBodyScrollLock(visible);
+
   const syncScrollState = useCallback(() => {
     const element = viewportRef.current;
 
@@ -175,12 +178,9 @@ export default function GalleryVideosModal({
   useEffect(() => {
     if (!visible) return undefined;
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     const frameId = window.requestAnimationFrame(syncScrollState);
 
     return () => {
-      document.body.style.overflow = originalOverflow;
       window.cancelAnimationFrame(frameId);
     };
   }, [visible, items, syncScrollState]);
