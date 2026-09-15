@@ -12,7 +12,16 @@ function ProcessesVideoGrid({ active, inert, onVideoOpen, videos }) {
           type="button"
           className="group relative aspect-[23/27] min-w-0 cursor-pointer overflow-hidden rounded-[var(--radius-2)] border-0 bg-[var(--color-neutral-200)] p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-neutral-950-uniform)]"
           aria-label={`Abrir video: ${video.title}`}
-          onClick={() => onVideoOpen(video)}
+          onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+
+            onVideoOpen(video, {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+            });
+          }}
         >
           {active ? (
             <video

@@ -1,10 +1,79 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
-import Modal from "../../../../components/ui/Modal/Modal.jsx";
+const TRANSITION_MS = 420;
+const TRANSITION_EASING = "cubic-bezier(0.815, 0.005, 0.17, 0.995)";
 
-function ProcessesVideoModal({ onClose, video, visible }) {
+function ProcessesVideoModal({ onClose, origin, video, visible }) {
+  const videoRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
+
+  const [shouldRender, setShouldRender] = useState(visible);
+  const [targetRect, setTargetRect] = useState(null);
+  const [active, setActive] = useState(false);
+
   useEffect(() => {
-    if (!visible) return undefined;
+    if (visible) {
+      setShouldRender(true);
+      return undefined;
+    }
+
+    return undefined;
+  }, [visible]);
+
+  useLayoutEffect(() => {
+    if (!shouldRender || !video || !origin) return undefined;
+
+    const calculateTarget = () => {
+      const element = videoRef.current;
+      if (!element) return;
+
+      const videoWidth = element.videoWidth || 9;
+      const videoHeight = element.videoHeight || 16;
+      const ratio = videoWidth / videoHeight;
+
+      const maxWidth = window.innerWidth - 32;
+      const maxHeight = window.innerHeight - 32;
+
+      let width = maxWidth;
+      let height = width / ratio;
+
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = height * ratio;
+      }
+
+      setTargetRect({
+        width,
+        height,
+        left: (window.innerWidth - width) / 2,
+        top: (window.innerHeight - height) / 2,
+      });
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setActive(true);
+        });
+      });
+    };
+
+    const element = videoRef.current;
+
+    if (element?.readyState >= 1) {
+      calculateTarget();
+    } else {
+      element?.addEventListener("loadedmetadata", calculateTarget, {
+        once: true,
+      });
+    }
+
+    return () => {
+      element?.removeEventListener("loadedmetadata", calculateTarget);
+    };
+  }, [origin, shouldRender, video]);
+
+  useEffect(() => {
+    if (!shouldRender) return undefined;
 
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -12,42 +81,77 @@ function ProcessesVideoModal({ onClose, video, visible }) {
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [visible]);
+  }, [shouldRender]);
 
-  return (
-    <Modal
-      visible={visible}
-      mount="viewport"
-      alignment="Centered"
-      overlayVariant="blurred"
-      transitionPreset="fade-scale"
-      showDialog
-      onClose={onClose}
-      className="z-[60]"
-      dialogShellClassName="!pb-0"
-      contentClassName="!p-0"
-    >
-      {video ? (
-        <div
-          className="flex max-h-[calc(100dvh-32px)] max-w-[calc(100vw-32px)] items-center justify-center"
-          onClick={(event) => event.stopPropagation()}
+  useEffect(
+    () => () => {
+      window.clearTimeout(closeTimeoutRef.current);
+    },
+    [],
+  );
+
+  const handleClose = () => {
+    if (!active) return;
+
+    setActive(false);
+
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setShouldRender(false);
+      onClose?.();
+    }, TRANSITION_MS);
+  };
+
+  if (!shouldRender || !video || !origin) {
+    return null;
+  }
+
+  const currentRect =
+    active && targetRect
+      ? targetRect
+      : origin;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[60] overflow-hidden">
+      <div
+        className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity ${
+          active ? "opacity-100" : "opacity-0"
+        }`}
+        style={{
+          transitionDuration: `${TRANSITION_MS}ms`,
+          transitionTimingFunction: TRANSITION_EASING,
+        }}
+      />
+
+      <div
+        className="fixed overflow-hidden rounded-[var(--radius-3)]"
+        style={{
+          top: currentRect.top,
+          left: currentRect.left,
+          width: currentRect.width,
+          height: currentRect.height,
+          transitionProperty: "top, left, width, height",
+          transitionDuration: `${TRANSITION_MS}ms`,
+          transitionTimingFunction: TRANSITION_EASING,
+        }}
+      >
+        <video
+          ref={videoRef}
+          key={video.id}
+          className="size-full cursor-pointer object-cover"
+          poster={video.poster}
+          autoPlay
+          loop
+          muted
+          playsInline
+          aria-label={video.description}
+          onClick={handleClose}
         >
-          <video
-            key={video.id}
-            className="block h-auto max-h-[calc(100dvh-32px)] w-auto max-w-[calc(100vw-32px)] cursor-pointer rounded-[var(--radius-3)] object-contain"
-            poster={video.poster}
-            autoPlay
-            loop
-            playsInline
-            aria-label={video.description}
-            onClick={onClose}
-          >
-            <source src={video.webm} type="video/webm" />
-            <source src={video.mp4} type="video/mp4" />
-          </video>
-        </div>
-      ) : null}
-    </Modal>
+          <source src={video.webm} type="video/webm" />
+          <source src={video.mp4} type="video/mp4" />
+        </video>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

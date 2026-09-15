@@ -7,14 +7,16 @@ import ProcessesVideoModal from "./ProcessesVideoModal.jsx";
 
 function ProcessesSection({ active = false, onTitleRevealComplete }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [videoOrigin, setVideoOrigin] = useState(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const triggerRef = useRef(null);
 
-  const handleVideoOpen = useCallback((video) => {
-    triggerRef.current = document.activeElement;
-    setSelectedVideo(video);
-    setViewerOpen(true);
-  }, []);
+  const handleVideoOpen = useCallback((video, origin) => {
+  triggerRef.current = document.activeElement;
+  setSelectedVideo(video);
+  setVideoOrigin(origin);
+  setViewerOpen(true);
+}, []);
 
   const handleVideoClose = useCallback(() => {
     setViewerOpen(false);
@@ -62,6 +64,7 @@ function ProcessesSection({ active = false, onTitleRevealComplete }) {
       <ProcessesVideoModal
         visible={viewerOpen}
         video={selectedVideo}
+        origin={videoOrigin}
         onClose={handleVideoClose}
       />
     </section>
