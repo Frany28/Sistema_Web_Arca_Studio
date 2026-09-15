@@ -626,27 +626,15 @@ export default function VideoViewerModal({
   return createPortal(
     <div
       className={clsx(
-        "fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-[rgba(0,0,0,0.42)] backdrop-blur-[10px] transition-opacity",
+        "fixed inset-0 z-[60] overflow-hidden bg-[rgba(0,0,0,0.42)] backdrop-blur-[10px] transition-opacity",
         visible ? "pointer-events-auto" : "pointer-events-none",
         isActive ? "opacity-100" : "opacity-0",
       )}
       style={transitionStyle}
-      onClick={onClose}
     >
       <section
         className={clsx(
-          "flex w-[min(956px,calc(100vw-32px))] flex-col items-start overflow-hidden",
-          "h-[min(769px,calc(100dvh-32px))]",
-          "gap-[var(--spacing-spacing-gap-5,16px)]",
-          "p-[var(--spacing-spacing-gap-6,20px)]",
-          "rounded-[var(--radius-radius-3,var(--radius-3,12px))]",
-          "bg-[var(--Color-neutral-100,var(--color-neutral-100,#fff))] dark:bg-[var(--color-neutral-100)]",
-          "transition-[opacity,transform] transform-gpu will-change-transform will-change-opacity",
-          "min-[921px]:flex-row",
-          "max-[920px]:overflow-y-auto",
-          "max-[768px]:h-[calc(100dvh-24px)] max-[768px]:w-[calc(100vw-24px)]",
-          "max-[640px]:gap-[12px] max-[640px]:p-[12px]",
-          "max-[520px]:h-[calc(100dvh-16px)] max-[520px]:w-[calc(100vw-16px)]",
+          "flex h-dvh w-dvw gap-[16px] p-[16px] transition-[opacity,transform] transform-gpu will-change-transform will-change-opacity max-[920px]:flex-col max-[920px]:overflow-y-auto",
           isActive
             ? "translate-y-0 scale-100 opacity-100"
             : "translate-y-[12px] scale-[0.985] opacity-0",
@@ -655,14 +643,15 @@ export default function VideoViewerModal({
         role="dialog"
         aria-modal="true"
         aria-label={displayItem.title}
-        onClick={(event) => event.stopPropagation()}
+        onClick={onClose}
       >
         <div
           ref={stageRef}
           className={clsx(
             "group/video",
-            "relative min-h-0 min-w-0 flex-1 overflow-hidden",
+            "relative min-w-0 flex-1 overflow-hidden",
             "rounded-[var(--radius-3)] bg-[var(--color-neutral-950-uniform)]",
+            "h-[calc(100dvh-32px)]",
             "max-[920px]:h-[62dvh] max-[920px]:min-h-[360px] max-[920px]:flex-none",
             "max-[520px]:h-[58dvh] max-[520px]:min-h-[300px]",
           )}
