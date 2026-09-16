@@ -220,7 +220,7 @@ function FeaturedProjectsGallery({
 
       flipTimelineRef.current = Flip.to(finalState, {
         duration: 1,
-        ease: reduceMotion ? "none" : "sine.inOut",
+        ease: reduceMotion ? "none" : "expoScale(1, 5)",
         paused: true,
         simple: true,
       });

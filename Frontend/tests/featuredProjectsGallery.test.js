@@ -45,7 +45,7 @@ test("the bento scrubs through a reversible GSAP Flip layout", () => {
   assert.match(gallerySource, /expansionProgress\.on\("change"/);
   assert.match(gallerySource, /Flip\.getState\(/);
   assert.match(gallerySource, /Flip\.to\(finalState/);
-  assert.match(gallerySource, /ease: reduceMotion \? "none" : "sine\.inOut"/);
+  assert.match(gallerySource, /ease: reduceMotion \? "none" : "expoScale\(1, 5\)"/);
   assert.match(gallerySource, /flipTimelineRef\.current\?\.progress\(progress, false\)/);
   assert.match(gallerySource, /const stageRect = stage\.getBoundingClientRect\(\)/);
   assert.match(gallerySource, /\{stage\}/);
