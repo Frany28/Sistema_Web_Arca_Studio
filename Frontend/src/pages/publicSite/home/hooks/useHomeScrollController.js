@@ -395,14 +395,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         }
 
         activeTween = gsap.to(scroller, {
-        scrollTo: {
-          y: targetScrollTop,
-          autoKill: false,
-        },
-        duration: SCROLL_STEP_DURATION_SECONDS,
-        ease: SECTION_NAVIGATION_EASE,
-        overwrite: true,
-        onComplete: completeTransition,
+          scrollTo: {
+            y: targetScrollTop,
+            autoKill: false,
+          },
+          duration: SCROLL_STEP_DURATION_SECONDS,
+          ease: SECTION_NAVIGATION_EASE,
+          overwrite: true,
+          onComplete: completeTransition,
         });
 
         return true;
