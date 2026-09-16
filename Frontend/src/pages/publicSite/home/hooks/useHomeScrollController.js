@@ -353,12 +353,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         commitFeaturedProjectIndex(transition.index);
 
         if (isFeaturedImageProject(transition.index)) {
-          window.requestAnimationFrame(() => {
-            setFeaturedExpansionProgress(
-              transition.index,
-              1,
-            );
-          });
+          setFeaturedExpansionProgress(transition.index, 1);
         }
       }
 
@@ -411,6 +406,16 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
             const target = getSection(targetSectionId);
             if (!target) return false;
 
+            const entersQuintaFromServices =
+              activeSectionRef.current === "services" &&
+              targetSectionId === "featured-projects" &&
+              featuredProjectIndex === 0 &&
+              targetAlignment === "start";
+
+            if (entersQuintaFromServices) {
+              setFeaturedExpansionProgress(0, 0);
+            }
+
             isProgrammaticScroll = true;
             ignoreNextScrollEnd = supportsScrollEnd;
 
@@ -423,12 +428,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
                 targetAlignment === "end" &&
                 isFeaturedImageProject(featuredProjectIndex)
               ) {
-                window.requestAnimationFrame(() => {
-                  setFeaturedExpansionProgress(
-                    featuredProjectIndex,
-                    1,
-                  );
-                });
+                setFeaturedExpansionProgress(featuredProjectIndex, 1);
               }
             }
             

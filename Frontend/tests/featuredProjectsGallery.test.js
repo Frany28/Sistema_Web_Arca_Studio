@@ -56,6 +56,27 @@ test("the bento scrubs through a reversible GSAP Flip layout", () => {
   assert.doesNotMatch(gallerySource, /interpolate\(/);
 });
 
+test("the stage hands off only after matching the source Bento geometry", () => {
+  assert.match(
+    gallerySource,
+    /mx-auto grid h-full w-full max-w-\[1441px\][\s\S]*px-\[24px\] py-\[48px\]/,
+  );
+  assert.match(gallerySource, /padding: 0/);
+  assert.match(gallerySource, /if \(progress <= 0\) clearFlipTimeline\(\)/);
+  assert.match(
+    gallerySource,
+    /hideOriginalCards\(\);\s*stage\.style\.visibility = "visible"/,
+  );
+});
+
+test("a completed Flip is retained at fullscreen until reverse progress begins", () => {
+  assert.match(
+    gallerySource,
+    /previousProgress >= 1 && progress < 1/,
+  );
+  assert.doesNotMatch(gallerySource, /createPortal/);
+});
+
 test("the expanded layout is a single larger Bento grid, not scattered cards", () => {
   assert.match(gallerySource, /data-featured-gallery-stage-grid/);
   assert.match(gallerySource, /gridTemplateColumns: `repeat\(3, \$\{viewportWidth\}px\)`/);

@@ -598,6 +598,25 @@ test("returning to an image project restores fullscreen before contraction", () 
   app.cleanup();
 });
 
+test("Services enters Quinta with the Bento reset, never a retained fullscreen", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  placeAtContentBoundary(app, "services", 3600);
+
+  // Un valor residual de una salida previa no puede alterar la entrada normal.
+  app.controller.featuredProjectExpansionProgress[0].set(1);
+
+  for (const deltaY of [8, 8, 8, 8]) wheel(deltaY);
+
+  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  assert.equal(app.getPendingTweenCount(), 1);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 4400);
+  assert.equal(app.getActiveFeaturedProject(), 0);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  app.cleanup();
+});
+
 test("reduced motion bypasses scrub without trapping navigation", () => {
   const app = setup(true);
   const wheel = createWheelDriver(app);

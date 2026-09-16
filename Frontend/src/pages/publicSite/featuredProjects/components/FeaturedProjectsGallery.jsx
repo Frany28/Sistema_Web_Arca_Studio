@@ -195,6 +195,7 @@ function FeaturedProjectsGallery({
       gsap.set(stageGrid, {
         height: viewportHeight * 1.5 + gap,
         left: -(viewportWidth + gap) - stageRect.left,
+        padding: 0,
         top: -(viewportHeight * 0.5 + gap) - stageRect.top,
         width: viewportWidth * 3 + gap * 2,
         gridTemplateColumns: `repeat(3, ${viewportWidth}px)`,
@@ -235,6 +236,7 @@ function FeaturedProjectsGallery({
 
     if (!stage || !active || progress <= 0) {
       if (stage) stage.style.visibility = "hidden";
+      if (progress <= 0) clearFlipTimeline();
       showOriginalCards();
       renderedProgressRef.current = progress;
       return;
@@ -251,11 +253,17 @@ function FeaturedProjectsGallery({
       return;
     }
 
-    stage.style.visibility = "visible";
     hideOriginalCards();
+    stage.style.visibility = "visible";
     flipTimelineRef.current?.progress(progress, false);
     renderedProgressRef.current = progress;
-  }, [active, createFlipTimeline, hideOriginalCards, showOriginalCards]);
+  }, [
+    active,
+    clearFlipTimeline,
+    createFlipTimeline,
+    hideOriginalCards,
+    showOriginalCards,
+  ]);
 
   useLayoutEffect(() => {
     renderExpansion(expansionProgress?.get?.() ?? 0);
@@ -315,7 +323,7 @@ function FeaturedProjectsGallery({
       <div
         ref={stageGridRef}
         data-featured-gallery-stage-grid
-        className="absolute grid grid-cols-3 gap-[24px] max-[767px]:gap-[8px]"
+        className="absolute mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]"
       >
         {columns.map((cards, column) => (
           <div
