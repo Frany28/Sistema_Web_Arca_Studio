@@ -582,6 +582,51 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         end: panelTop + Math.max(0, panelHeight - scroller.clientHeight),
       };
     };
+    const getFeaturedExpansionAnchor = (
+      currentIndex,
+      projectPanels = getFeaturedProjectPanels(),
+    ) => {
+      const currentPanel = projectPanels[currentIndex];
+      const bounds = getPanelScrollBounds(currentPanel);
+      if (!bounds) return null;
+
+      const nextPanel = projectPanels[currentIndex + 1];
+      if (!nextPanel) return bounds.end;
+
+      const viewportRect = scroller.getBoundingClientRect();
+      const nextPanelTop = getElementScrollTop(nextPanel);
+      const nextPanelEntryScrollTop =
+        nextPanelTop - (viewportRect.bottom - viewportRect.top);
+
+      return Math.max(
+        bounds.start,
+        Math.min(bounds.end, nextPanelEntryScrollTop),
+      );
+    };
+    const logFeaturedExpansionGeometry = (
+      phase,
+      currentIndex,
+      progress,
+      bounds,
+      expansionAnchor,
+      projectPanels,
+    ) => {
+      if (!window.__ARCA_DEBUG_FEATURED_EXPANSION__) return;
+
+      const currentPanel = projectPanels[currentIndex];
+      const nextPanel = projectPanels[currentIndex + 1];
+      console.debug("[featured-expansion]", {
+        bounds,
+        currentIndex,
+        currentPanelRect: currentPanel?.getBoundingClientRect(),
+        expansionAnchor,
+        nextPanelRect: nextPanel?.getBoundingClientRect(),
+        phase,
+        progress,
+        scrollTop: scroller.scrollTop,
+        viewportRect: scroller.getBoundingClientRect(),
+      });
+    };
     const pinFeaturedExpansion = () => {
       if (activeSectionRef.current !== "featured-projects") return false;
 
@@ -598,14 +643,17 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return false;
       }
 
-      const bounds = getPanelScrollBounds(projectPanels[currentIndex]);
-      if (!bounds) return false;
+      const expansionAnchor = getFeaturedExpansionAnchor(
+        currentIndex,
+        projectPanels,
+      );
+      if (expansionAnchor === null) return false;
 
       if (
-        Math.abs(scroller.scrollTop - bounds.end) >
+        Math.abs(scroller.scrollTop - expansionAnchor) >
         FEATURED_PROJECT_EDGE_TOLERANCE_PX
       ) {
-        scroller.scrollTop = bounds.end;
+        scroller.scrollTop = expansionAnchor;
       }
 
       return true;
@@ -676,7 +724,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const currentIndex = activeFeaturedProjectIndexRef.current;
       const currentPanel = projectPanels[currentIndex];
       const bounds = getPanelScrollBounds(currentPanel);
-      if (!bounds || !isFeaturedImageProject(currentIndex, projectPanels)) {
+      const expansionAnchor = getFeaturedExpansionAnchor(
+        currentIndex,
+        projectPanels,
+      );
+      if (
+        !bounds ||
+        expansionAnchor === null ||
+        !isFeaturedImageProject(currentIndex, projectPanels)
+      ) {
         return false;
       }
 
@@ -699,7 +755,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         (direction < 0 && targetProgress > progress);
       if (reversingPendingExpansion) targetProgress = progress;
 
-      const distanceToEnd = Math.max(0, bounds.end - scroller.scrollTop);
+      const distanceToEnd = Math.max(0, expansionAnchor - scroller.scrollTop);
       const magnitude = Math.abs(deltaY);
       const reachesEnd =
         distanceToEnd <= magnitude + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
@@ -710,15 +766,23 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         direction < 0 &&
         progress > 0 &&
         (isScrubbing ||
-          scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX);
+          scroller.scrollTop >= expansionAnchor - FEATURED_PROJECT_EDGE_TOLERANCE_PX);
 
       if (!expands && !contracts) return false;
 
+      logFeaturedExpansionGeometry(
+        "wheel-before-pin",
+        currentIndex,
+        progress,
+        bounds,
+        expansionAnchor,
+        projectPanels,
+      );
       event.preventDefault();
       event.stopPropagation?.();
 
-      if (Math.abs(scroller.scrollTop - bounds.end) > 0.01) {
-        scroller.scrollTop = bounds.end;
+      if (Math.abs(scroller.scrollTop - expansionAnchor) > 0.01) {
+        scroller.scrollTop = expansionAnchor;
         synchronizeContentScroll();
       }
 
@@ -743,6 +807,27 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         } else {
           setFeaturedExpansionProgress(currentIndex, nextProgress);
         }
+      }
+
+      logFeaturedExpansionGeometry(
+        "wheel-after-progress",
+        currentIndex,
+        getFeaturedExpansionProgress(currentIndex),
+        bounds,
+        expansionAnchor,
+        projectPanels,
+      );
+      if (window.__ARCA_DEBUG_FEATURED_EXPANSION__) {
+        window.requestAnimationFrame(() => {
+          logFeaturedExpansionGeometry(
+            "next-animation-frame",
+            currentIndex,
+            getFeaturedExpansionProgress(currentIndex),
+            bounds,
+            expansionAnchor,
+            projectPanels,
+          );
+        });
       }
 
       return true;
