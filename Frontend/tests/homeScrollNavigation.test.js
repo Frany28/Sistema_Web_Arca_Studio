@@ -333,15 +333,15 @@ test("statement visual state zooms out through the solid black surround", () => 
 });
 
 test("featured image expansion follows wheel distance and reverses exactly", () => {
-  assert.equal(getFeaturedExpansionTravelDistance(800), 640);
+  assert.equal(getFeaturedExpansionTravelDistance(800), 800);
   assert.equal(getFeaturedExpansionTravelDistance(300), 420);
-  assert.equal(getFeaturedExpansionTravelDistance(1400), 760);
+  assert.equal(getFeaturedExpansionTravelDistance(1400), 1400);
 
   const partial = advanceFeaturedExpansionProgress(0, 160, 800);
-  assert.equal(partial, 0.25);
+  assert.equal(partial, 0.2);
   assert.equal(
     advanceFeaturedExpansionProgress(partial, -80, 800),
-    0.125,
+    0.1,
   );
   assert.equal(
     advanceFeaturedExpansionProgress(partial, 1000, 800),

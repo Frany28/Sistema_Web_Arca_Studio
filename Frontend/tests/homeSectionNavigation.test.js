@@ -446,7 +446,7 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   assert.equal(app.getPendingTweenCount(), 0, "Reaching the edge does not bypass the intent threshold");
 
   assert.equal(wheel(64), true);
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.1);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.08);
   assert.equal(app.getActiveFeaturedProject(), 0);
   assert.equal(app.getPendingTweenCount(), 0);
 
@@ -459,10 +459,10 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   );
 
   assert.equal(wheel(-32), true);
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.05);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.04);
   assert.equal(app.scroller.scrollTop, 5000);
 
-  assert.equal(wheel(608), true);
+  assert.equal(wheel(768), true);
   assert.equal(app.getFeaturedExpansionProgress(0), 1);
   assert.equal(app.getActiveFeaturedProject(), 0, "Fullscreen does not change the active project");
   assert.equal(app.getPendingTweenCount(), 0, "Fullscreen must render before panel navigation");
@@ -483,7 +483,7 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   assert.equal(largeWheelApp.getPendingTweenCount(), 0);
   assert.equal(
     largeWheelApp.getFeaturedExpansionProgress(0),
-    60 / 640,
+    60 / 800,
     "Only the distance beyond the edge contributes to the scrub",
   );
   largeWheelApp.cleanup();
@@ -586,11 +586,11 @@ test("returning to an image project restores fullscreen before contraction", () 
   assert.equal(app.getFeaturedExpansionProgress(0), 1);
 
   assert.equal(wheel(-320), true);
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.5);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.6);
   assert.equal(app.getPendingTweenCount(), 0);
   assert.equal(wheel(160), true);
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.75);
-  assert.equal(wheel(-480), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.8);
+  assert.equal(wheel(-640), true);
   assert.equal(app.getFeaturedExpansionProgress(0), 0);
   assert.equal(wheel(-8), false, "Native upward scroll resumes after the card is restored");
   assert.equal(app.scroller.scrollTop, 4992);
@@ -635,14 +635,14 @@ test("touch and keyboard drive the same image expansion progress", () => {
     preventDefault() { prevented = true; },
   });
   assert.equal(prevented, true);
-  assert.equal(touchApp.getFeaturedExpansionProgress(0), 0.25);
+  assert.equal(touchApp.getFeaturedExpansionProgress(0), 0.2);
   touchApp.handlers.pointermove({
     pointerId: 7,
     clientX: 200,
     clientY: 320,
     preventDefault() {},
   });
-  assert.equal(touchApp.getFeaturedExpansionProgress(0), 0.125);
+  assert.equal(touchApp.getFeaturedExpansionProgress(0), 0.1);
   touchApp.cleanup();
 
   const keyboardApp = setup();
@@ -651,6 +651,6 @@ test("touch and keyboard drive the same image expansion progress", () => {
   assert.equal(keyboardApp.getFeaturedExpansionProgress(0), 1);
   assert.equal(keyboardApp.getPendingTweenCount(), 0);
   keyboardApp.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
-  assert.equal(keyboardApp.getFeaturedExpansionProgress(0), 0.9375);
+  assert.equal(keyboardApp.getFeaturedExpansionProgress(0), 0.95);
   keyboardApp.cleanup();
 });

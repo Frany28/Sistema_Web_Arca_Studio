@@ -20,8 +20,7 @@ const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.3;
 const STATEMENT_INITIAL_MASK_SCALE = 1000;
 const STATEMENT_WHEEL_DELTA_LIMIT_PX = 48;
 const FEATURED_EXPANSION_MIN_TRAVEL_PX = 420;
-const FEATURED_EXPANSION_MAX_TRAVEL_PX = 760;
-const FEATURED_EXPANSION_VIEWPORT_RATIO = 0.8;
+const FEATURED_EXPANSION_VIEWPORT_RATIO = 1;
 
 function clampHomeStatementProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
@@ -84,12 +83,9 @@ function getFeaturedExpansionTravelDistance(viewportHeight) {
     ? viewportHeight
     : 0;
 
-  return Math.min(
-    Math.max(
-      safeViewportHeight * FEATURED_EXPANSION_VIEWPORT_RATIO,
-      FEATURED_EXPANSION_MIN_TRAVEL_PX,
-    ),
-    FEATURED_EXPANSION_MAX_TRAVEL_PX,
+  return Math.max(
+    safeViewportHeight * FEATURED_EXPANSION_VIEWPORT_RATIO,
+    FEATURED_EXPANSION_MIN_TRAVEL_PX,
   );
 }
 
