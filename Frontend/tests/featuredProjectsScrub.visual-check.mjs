@@ -134,8 +134,11 @@ const readGallery = `(() => {
   const primary = panel.querySelector('[data-featured-gallery-primary]');
   const overlay = document.querySelector('[data-featured-gallery-overlay]');
   const secondary = panel.querySelector('[data-featured-image-gallery] > div > div > div:not([data-featured-gallery-primary])');
+  const stageSecondary = document.querySelector('[data-featured-gallery-stage-card]:not([data-featured-gallery-overlay])');
   const primaryRect = primary.getBoundingClientRect();
   const overlayRect = overlay.getBoundingClientRect();
+  const secondaryRect = secondary.getBoundingClientRect();
+  const stageSecondaryRect = stageSecondary.getBoundingClientRect();
   return {
     activeProject: [...document.querySelectorAll('[data-featured-project-panel]')]
       .findIndex((item) => item.getAttribute('aria-hidden') === 'false'),
@@ -154,7 +157,10 @@ const readGallery = `(() => {
       width: primaryRect.width,
     },
     scrollTop: scroller.scrollTop,
-    secondaryOpacity: Number.parseFloat(getComputedStyle(secondary).opacity),
+    secondaryDistance: Math.hypot(
+      stageSecondaryRect.left - secondaryRect.left,
+      stageSecondaryRect.top - secondaryRect.top,
+    ),
     viewport: { height: innerHeight, width: innerWidth },
   };
 })()`;
@@ -194,7 +200,7 @@ try {
     expanded.overlay.width <= expanded.primary.width ||
     expanded.overlay.width >= expanded.viewport.width ||
     expanded.activeProject !== 0 ||
-    expanded.secondaryOpacity >= 1
+    expanded.secondaryDistance <= 10
   ) {
     throw new Error(`Estado intermedio inválido: ${JSON.stringify(expanded)}`);
   }

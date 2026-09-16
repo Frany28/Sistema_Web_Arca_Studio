@@ -441,6 +441,10 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 - [ ] Los cambios reutilizables están en `src/components/ui`, no copiados en páginas.
 - [ ] `pnpm build` finaliza correctamente.
 
+### Movimiento de Proyectos destacados
+
+- La expansión de cada galería bento utiliza una timeline pausada de GSAP Flip, inspirada en el demo oficial `Scrubbed Bento Gallery`. Las cards secundarias salen físicamente del viewport y la card central ocupa progresivamente `100vw × 100dvh`, sin overlay de oscurecimiento ni fade como movimiento principal. La timeline se conduce exclusivamente con el progreso compartido de wheel, trackpad, touch o teclado; no crea un `ScrollTrigger` ni un pin adicional. La apertura y el cierre recorren el mismo estado FLIP en sentidos opuestos, y la geometría se reconstruye con `gsap.context().revert()` al cambiar el viewport.
+
 ## Criterio de entrega
 
 Una pantalla no está terminada solo porque coincide visualmente con una maqueta. También debe ser reutilizable, responsive, accesible, compatible con ambos temas y representar correctamente todos sus estados de datos.

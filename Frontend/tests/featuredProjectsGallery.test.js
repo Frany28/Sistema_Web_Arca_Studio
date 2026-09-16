@@ -36,28 +36,33 @@ test("image galleries keep their bento layout but are no longer interactive view
   assert.doesNotMatch(gallerySource, /role="dialog"|aria-modal/);
 });
 
-test("the central image scrubs from its measured card to the viewport", () => {
+test("the bento scrubs through a reversible GSAP Flip layout", () => {
+  assert.match(gallerySource, /import \{ Flip \} from "gsap\/Flip"/);
+  assert.match(gallerySource, /gsap\.registerPlugin\(ExpoScaleEase, Flip\)/);
   assert.match(gallerySource, /getBoundingClientRect\(\)/);
   assert.match(gallerySource, /window\.innerWidth/);
   assert.match(gallerySource, /window\.innerHeight/);
   assert.match(gallerySource, /expansionProgress\.on\("change"/);
-  assert.match(gallerySource, /interpolate\(primaryRect\.left, 0, progress\)/);
-  assert.match(gallerySource, /interpolate\(primaryRect\.top, 0, progress\)/);
-  assert.match(gallerySource, /interpolate\(primaryRect\.width, viewportWidth, progress\)/);
-  assert.match(gallerySource, /interpolate\(primaryRect\.height, viewportHeight, progress\)/);
-  assert.match(gallerySource, /interpolate\(borderRadius, 0, progress\)/);
-  assert.match(gallerySource, /createPortal\(overlay, document\.body\)/);
+  assert.match(gallerySource, /Flip\.getState\(/);
+  assert.match(gallerySource, /Flip\.to\(finalState/);
+  assert.match(gallerySource, /ease: "expoScale\(1, 5\)"/);
+  assert.match(gallerySource, /flipTimelineRef\.current\?\.progress\(progress, false\)/);
+  assert.match(gallerySource, /createPortal\(stage, document\.body\)/);
   assert.match(gallerySource, /object-fit|fit = "cover"/);
   assert.match(gallerySource, /ResizeObserver/);
   assert.match(gallerySource, /orientationchange/);
+  assert.doesNotMatch(gallerySource, /ScrollTrigger/);
+  assert.doesNotMatch(gallerySource, /interpolate\(/);
 });
 
-test("secondary images leave progressively while the fullscreen layer stays non-interactive", () => {
-  assert.match(gallerySource, /SECONDARY_EXIT_PROGRESS/);
-  assert.match(gallerySource, /card\.style\.opacity/);
-  assert.match(gallerySource, /translate3d/);
-  assert.match(gallerySource, /pointer-events-none fixed z-\[55\]/);
+test("secondary images move beyond the viewport while the Flip stage stays non-interactive", () => {
+  assert.match(gallerySource, /getSecondaryFinalPosition/);
+  assert.match(gallerySource, /left: -rect\.width - gutter/);
+  assert.match(gallerySource, /left: viewportWidth \+ gutter/);
+  assert.match(gallerySource, /top: -rect\.height - gutter/);
+  assert.match(gallerySource, /pointer-events-none fixed inset-0 z-\[55\]/);
   assert.match(gallerySource, /aria-hidden="true"/);
+  assert.doesNotMatch(gallerySource, /card\.style\.opacity/);
 });
 
 test("process videos retain their click and modal behavior", () => {

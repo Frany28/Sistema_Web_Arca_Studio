@@ -1,6 +1,9 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { motion as Motion, useReducedMotion } from "motion/react";
+import { gsap } from "gsap";
+import { ExpoScaleEase } from "gsap/EasePack";
+import { Flip } from "gsap/Flip";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
@@ -31,20 +34,36 @@ const COLUMNS = [
 ];
 
 const PRIMARY_CARD_ID = "1-1";
-const SECONDARY_EXIT_PROGRESS = 0.68;
+
+gsap.registerPlugin(ExpoScaleEase, Flip);
 
 function clampProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
   return Math.min(Math.max(progress, 0), 1);
 }
 
-function interpolate(start, end, progress) {
-  return start + (end - start) * progress;
-}
+function getSecondaryFinalPosition(cardId, rect, viewportWidth, viewportHeight) {
+  const [column, row] = cardId.split("-").map(Number);
+  const gutter = Math.max(24, Math.min(viewportWidth, viewportHeight) * 0.04);
 
-function smoothStep(progress) {
-  const value = clampProgress(progress);
-  return value * value * (3 - (2 * value));
+  if (column === 0) {
+    return {
+      left: -rect.width - gutter,
+      top: row === 0 ? -rect.height - gutter : viewportHeight + gutter,
+    };
+  }
+
+  if (column === 2) {
+    return {
+      left: viewportWidth + gutter,
+      top: row === 0 ? -rect.height - gutter : viewportHeight + gutter,
+    };
+  }
+
+  return {
+    left: (viewportWidth - rect.width) / 2,
+    top: -rect.height - gutter,
+  };
 }
 
 function FeaturedProjectsImageContent({
@@ -97,18 +116,25 @@ function FeaturedProjectsGallery({
   visible = true,
 }) {
   const cardRefs = useRef(new Map());
-  const geometryRef = useRef(null);
-  const overlayRef = useRef(null);
+  const stageCardRefs = useRef(new Map());
+  const stageRef = useRef(null);
+  const flipContextRef = useRef(null);
+  const flipTimelineRef = useRef(null);
   const renderedProgressRef = useRef(0);
+  const resizeFrameRef = useRef(null);
   const reduceMotion = useReducedMotion();
-  const primaryImage = columns[1]?.[1] ?? columns.flat()[0];
 
   const setCardRef = useCallback((cardId, element) => {
     if (element) cardRefs.current.set(cardId, element);
     else cardRefs.current.delete(cardId);
   }, []);
 
-  const resetCards = useCallback(() => {
+  const setStageCardRef = useCallback((cardId, element) => {
+    if (element) stageCardRefs.current.set(cardId, element);
+    else stageCardRefs.current.delete(cardId);
+  }, []);
+
+  const showOriginalCards = useCallback(() => {
     cardRefs.current.forEach((card) => {
       card.style.removeProperty("opacity");
       card.style.removeProperty("transform");
@@ -117,109 +143,145 @@ function FeaturedProjectsGallery({
     });
   }, []);
 
-  const measureGeometry = useCallback(() => {
-    const primaryCard = cardRefs.current.get(PRIMARY_CARD_ID);
-    if (!primaryCard) return null;
+  const hideOriginalCards = useCallback(() => {
+    cardRefs.current.forEach((card) => {
+      card.style.visibility = "hidden";
+    });
+  }, []);
 
-    const primaryRect = primaryCard.getBoundingClientRect();
+  const clearFlipTimeline = useCallback(() => {
+    flipContextRef.current?.revert();
+    flipContextRef.current = null;
+    flipTimelineRef.current = null;
+  }, []);
+
+  const createFlipTimeline = useCallback((progress) => {
+    const stage = stageRef.current;
+    const entries = [...stageCardRefs.current.entries()]
+      .map(([cardId, stageCard]) => ({
+        cardId,
+        sourceCard: cardRefs.current.get(cardId),
+        stageCard,
+      }))
+      .filter(({ sourceCard }) => sourceCard);
+
+    if (!stage || entries.length === 0) return false;
+
+    clearFlipTimeline();
+
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const secondaryCards = [];
-
-    cardRefs.current.forEach((card, cardId) => {
-      if (cardId === PRIMARY_CARD_ID) return;
-      const rect = card.getBoundingClientRect();
-      secondaryCards.push({
-        card,
-        centerX: rect.left + (rect.width / 2),
-        centerY: rect.top + (rect.height / 2),
-      });
+    const initialLayouts = entries.map((entry) => {
+      const rect = entry.sourceCard.getBoundingClientRect();
+      return {
+        ...entry,
+        borderRadius: Number.parseFloat(
+          window.getComputedStyle(entry.sourceCard).borderTopLeftRadius,
+        ) || 0,
+        rect,
+      };
     });
 
-    geometryRef.current = {
-      borderRadius: Number.parseFloat(
-        window.getComputedStyle(primaryCard).borderTopLeftRadius,
-      ) || 0,
-      primaryRect: {
-        height: primaryRect.height,
-        left: primaryRect.left,
-        top: primaryRect.top,
-        width: primaryRect.width,
-      },
-      secondaryCards,
-      viewportHeight,
-      viewportWidth,
-    };
+    flipContextRef.current = gsap.context(() => {
+      initialLayouts.forEach(({ cardId, rect, stageCard }) => {
+        const finalPosition = cardId === PRIMARY_CARD_ID
+          ? { left: 0, top: 0 }
+          : getSecondaryFinalPosition(
+            cardId,
+            rect,
+            viewportWidth,
+            viewportHeight,
+          );
 
-    return geometryRef.current;
-  }, []);
+        gsap.set(stageCard, {
+          borderRadius: 0,
+          height: cardId === PRIMARY_CARD_ID ? viewportHeight : rect.height,
+          left: finalPosition.left,
+          top: finalPosition.top,
+          width: cardId === PRIMARY_CARD_ID ? viewportWidth : rect.width,
+          zIndex: cardId === PRIMARY_CARD_ID ? 2 : 1,
+        });
+      });
+
+      const finalState = Flip.getState(
+        initialLayouts.map(({ stageCard }) => stageCard),
+        { props: "borderRadius" },
+      );
+
+      initialLayouts.forEach(({ borderRadius, rect, stageCard }) => {
+        gsap.set(stageCard, {
+          borderRadius,
+          height: rect.height,
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+        });
+      });
+
+      flipTimelineRef.current = Flip.to(finalState, {
+        absolute: true,
+        duration: 1,
+        ease: "expoScale(1, 5)",
+        paused: true,
+        simple: true,
+      });
+    }, stage);
+
+    flipTimelineRef.current?.progress(clampProgress(progress), false);
+    return Boolean(flipTimelineRef.current);
+  }, [clearFlipTimeline]);
 
   const renderExpansion = useCallback((rawProgress) => {
     const progress = clampProgress(rawProgress);
-    const overlay = overlayRef.current;
-    const primaryCard = cardRefs.current.get(PRIMARY_CARD_ID);
-    renderedProgressRef.current = progress;
+    const previousProgress = renderedProgressRef.current;
+    const stage = stageRef.current;
 
-    if (!overlay || !primaryCard || !active || progress <= 0) {
-      if (overlay) overlay.style.visibility = "hidden";
-      resetCards();
+    if (!stage || !active || progress <= 0) {
+      if (stage) stage.style.visibility = "hidden";
+      showOriginalCards();
+      renderedProgressRef.current = progress;
       return;
     }
 
-    const geometry = geometryRef.current ?? measureGeometry();
-    if (!geometry) return;
+    const needsFreshLayout = !flipTimelineRef.current
+      || previousProgress <= 0
+      || (previousProgress >= 1 && progress < 1);
 
-    const {
-      borderRadius,
-      primaryRect,
-      secondaryCards,
-      viewportHeight,
-      viewportWidth,
-    } = geometry;
-    const secondaryProgress = smoothStep(
-      Math.min(progress / SECONDARY_EXIT_PROGRESS, 1),
-    );
+    if (needsFreshLayout && !createFlipTimeline(progress)) {
+      stage.style.visibility = "hidden";
+      showOriginalCards();
+      renderedProgressRef.current = progress;
+      return;
+    }
 
-    primaryCard.style.visibility = "hidden";
-    secondaryCards.forEach(({ card, centerX, centerY }) => {
-      const offsetX = (centerX - (viewportWidth / 2)) * 0.12 * secondaryProgress;
-      const offsetY = (centerY - (viewportHeight / 2)) * 0.12 * secondaryProgress;
-      card.style.opacity = String(1 - secondaryProgress);
-      card.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${1 - (secondaryProgress * 0.04)})`;
-      card.style.willChange = "transform, opacity";
-    });
-
-    overlay.style.visibility = "visible";
-    overlay.style.left = `${interpolate(primaryRect.left, 0, progress)}px`;
-    overlay.style.top = `${interpolate(primaryRect.top, 0, progress)}px`;
-    overlay.style.width = `${interpolate(primaryRect.width, viewportWidth, progress)}px`;
-    overlay.style.height = `${interpolate(primaryRect.height, viewportHeight, progress)}px`;
-    overlay.style.borderRadius = `${interpolate(borderRadius, 0, progress)}px`;
-    overlay.style.willChange = "top, left, width, height, border-radius";
-  }, [active, measureGeometry, resetCards]);
+    stage.style.visibility = "visible";
+    hideOriginalCards();
+    flipTimelineRef.current?.progress(progress, false);
+    renderedProgressRef.current = progress;
+  }, [active, createFlipTimeline, hideOriginalCards, showOriginalCards]);
 
   useLayoutEffect(() => {
-    geometryRef.current = null;
     renderExpansion(expansionProgress?.get() ?? 0);
-  }, [active, expansionProgress, renderExpansion]);
+  }, [active, columns, expansionProgress, renderExpansion]);
 
   useEffect(() => {
     if (!expansionProgress?.on) return undefined;
     return expansionProgress.on("change", (progress) => {
-      if (
-        renderedProgressRef.current <= 0 ||
-        (renderedProgressRef.current >= 1 && progress < 1)
-      ) {
-        geometryRef.current = null;
-      }
       renderExpansion(progress);
     });
   }, [expansionProgress, renderExpansion]);
 
   useEffect(() => {
     const handleResize = () => {
-      geometryRef.current = null;
-      renderExpansion(expansionProgress?.get() ?? 0);
+      if (resizeFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizeFrameRef.current);
+      }
+      resizeFrameRef.current = window.requestAnimationFrame(() => {
+        resizeFrameRef.current = null;
+        const progress = clampProgress(expansionProgress?.get() ?? 0);
+        if (active && progress > 0) createFlipTimeline(progress);
+        renderExpansion(progress);
+      });
     };
     const primaryCard = cardRefs.current.get(PRIMARY_CARD_ID);
     const resizeObserver = typeof ResizeObserver === "undefined"
@@ -231,23 +293,44 @@ function FeaturedProjectsGallery({
     window.addEventListener("orientationchange", handleResize);
 
     return () => {
+      if (resizeFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizeFrameRef.current);
+        resizeFrameRef.current = null;
+      }
       resizeObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("orientationchange", handleResize);
     };
-  }, [expansionProgress, renderExpansion]);
+  }, [active, createFlipTimeline, expansionProgress, renderExpansion]);
 
-  useEffect(() => () => resetCards(), [resetCards]);
+  useEffect(() => () => {
+    clearFlipTimeline();
+    showOriginalCards();
+  }, [clearFlipTimeline, showOriginalCards]);
 
-  const overlay = primaryImage ? (
+  const stage = columns.length > 0 ? (
     <div
-      ref={overlayRef}
+      ref={stageRef}
       aria-hidden="true"
-      data-featured-gallery-overlay
-      className="pointer-events-none fixed z-[55] overflow-hidden"
+      data-featured-gallery-stage
+      className="pointer-events-none fixed inset-0 z-[55] overflow-hidden"
       style={{ visibility: "hidden" }}
     >
-      <FeaturedProjectsImageContent {...primaryImage} />
+      {columns.flatMap((cards, column) => cards.map((image, row) => {
+        const cardId = `${column}-${row}`;
+        const primary = cardId === PRIMARY_CARD_ID;
+        return (
+          <div
+            key={cardId}
+            ref={(element) => setStageCardRef(cardId, element)}
+            data-featured-gallery-overlay={primary ? "" : undefined}
+            data-featured-gallery-stage-card=""
+            className="absolute overflow-hidden rounded-[var(--radius-2)]"
+          >
+            <FeaturedProjectsImageContent {...image} />
+          </div>
+        );
+      }))}
     </div>
   ) : null;
 
@@ -289,9 +372,9 @@ function FeaturedProjectsGallery({
         </div>
       </Motion.div>
 
-      {overlay && typeof document !== "undefined"
-        ? createPortal(overlay, document.body)
-        : overlay}
+      {stage && typeof document !== "undefined"
+        ? createPortal(stage, document.body)
+        : stage}
     </>
   );
 }
