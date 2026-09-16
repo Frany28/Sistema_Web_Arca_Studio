@@ -519,6 +519,41 @@ test("the wheel event that completes Quinta fullscreen cannot start the next pro
   app.cleanup();
 });
 
+test("every expandable featured project pins until its own fullscreen is rendered", () => {
+  const imageProjectCases = [
+    { anchor: 5000, index: 0 },
+    { anchor: 6400, index: 1 },
+  ];
+
+  for (const { anchor, index } of imageProjectCases) {
+    const app = setup();
+    const wheel = createWheelDriver(app);
+    placeAtContentBoundary(app, "featured-projects", anchor);
+    app.controller.featuredProjectExpansionProgress[index].set(0.75);
+
+    assert.equal(app.getActiveFeaturedProject(), index);
+    assert.equal(wheel(64), true);
+    app.flush();
+    assert.equal(app.scroller.scrollTop, anchor);
+    assert.equal(app.getActiveFeaturedProject(), index);
+    assert.equal(app.getFeaturedExpansionProgress(index), 0.83);
+
+    app.controller.featuredProjectExpansionProgress[index].set(0.95);
+    assert.equal(wheel(64), true);
+    assert.equal(app.getActiveFeaturedProject(), index);
+    assert.equal(app.scroller.scrollTop, anchor);
+    assert.equal(app.getPendingTweenCount(), 1, "No panel transition starts before rendered fullscreen");
+    app.flush();
+    assert.equal(app.getFeaturedExpansionProgress(index), 1);
+    assert.equal(app.getActiveFeaturedProject(), index);
+    assert.equal(app.scroller.scrollTop, anchor);
+
+    assert.equal(wheel(64), true);
+    assert.equal(app.getPendingTweenCount(), 1, "A new wheel event starts the next panel transition");
+    app.cleanup();
+  }
+});
+
 test("wheel input smooths the rendered expansion progress without delaying reversal", () => {
   const app = setup();
   const wheel = createWheelDriver(app);
