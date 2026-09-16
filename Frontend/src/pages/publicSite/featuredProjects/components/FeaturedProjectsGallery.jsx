@@ -207,20 +207,25 @@ function FeaturedProjectsGallery({
         if (!rect) return;
 
         if (cardId === PRIMARY_CARD_ID) {
-          gsap.set(card, {
-            position: "fixed",
-            left: 0,
-            top: 0,
-            width: viewportWidth,
-            height: viewportHeight,
-            margin: 0,
-            borderRadius: 0,
-            opacity: 1,
-            zIndex: 56,
-          });
+        const galleryRect = gallery.getBoundingClientRect();
 
-          return;
-        }
+        gsap.set(card, {
+          position: "absolute",
+
+          left: -galleryRect.left,
+          top: -galleryRect.top,
+
+          width: viewportWidth,
+          height: viewportHeight,
+
+          margin: 0,
+          borderRadius: 0,
+          opacity: 1,
+          zIndex: 56,
+        });
+
+        return;
+      }
 
         const cardCenterX =
           rect.left + rect.width / 2;
@@ -347,7 +352,7 @@ function FeaturedProjectsGallery({
     destroyTimeline,
     expansionProgress,
   ]);
-  
+
   const renderProgress = useCallback(
     (rawProgress) => {
       if (!active) return;
