@@ -128,6 +128,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let wheelTransitionLock = false;
     let wheelIdleTimer;
     let wheelGestureState = createWheelGestureState();
+    let featuredExpansionCompletionLock = null;
     let touchGesture = null;
     let isProgrammaticScroll = false;
     let ignoreNextScrollEnd = false;
@@ -262,6 +263,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       featuredProjectPreparationOffsets[index]?.set(offset);
     };
     const resetFeaturedExpansionProgress = () => {
+      featuredExpansionCompletionLock = null;
       featuredProjectExpansionProgress.forEach((progress) => progress.set(0));
     };
     const getElementScrollTop = (element) => {
@@ -358,9 +360,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           travelDistance,
         );
 
-        if (!transition) return false;
+      if (!transition) return false;
 
-        isProgrammaticScroll = true;
+      featuredExpansionCompletionLock = null;
+      isProgrammaticScroll = true;
         ignoreNextScrollEnd = supportsScrollEnd;
 
         // Al subir, activar primero el proyecto que va a entrar.
@@ -532,9 +535,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const projectPanels = getFeaturedProjectPanels();
       const currentIndex = activeFeaturedProjectIndexRef.current;
       const progress = getFeaturedExpansionProgress(currentIndex);
+      const preservesCompletedFullscreen =
+        featuredExpansionCompletionLock === currentIndex;
       if (
-        progress <= 0 ||
-        progress >= 1 ||
+        (!preservesCompletedFullscreen &&
+          (progress <= 0 || progress >= 1)) ||
         !isFeaturedImageProject(currentIndex, projectPanels)
       ) {
         return false;
@@ -618,6 +623,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       }
 
       const progress = getFeaturedExpansionProgress(currentIndex);
+      if (featuredExpansionCompletionLock === currentIndex) {
+        featuredExpansionCompletionLock = null;
+        if (direction > 0 && progress >= 1) return false;
+      }
+
       const distanceToEnd = Math.max(0, bounds.end - scroller.scrollTop);
       const magnitude = Math.abs(deltaY);
       const reachesEnd =
@@ -652,14 +662,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       wheelTransitionLock = false;
 
       if (scrubDelta !== 0) {
+        const nextProgress = advanceFeaturedExpansionProgress(
+          progress,
+          scrubDelta,
+          scroller.clientHeight,
+        );
         setFeaturedExpansionProgress(
           currentIndex,
-          advanceFeaturedExpansionProgress(
-            progress,
-            scrubDelta,
-            scroller.clientHeight,
-          ),
+          nextProgress,
         );
+        if (expands && progress < 1 && nextProgress >= 1) {
+          featuredExpansionCompletionLock = currentIndex;
+        }
       }
 
       return true;

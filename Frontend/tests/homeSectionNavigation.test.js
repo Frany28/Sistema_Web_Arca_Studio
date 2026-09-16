@@ -489,6 +489,27 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   largeWheelApp.cleanup();
 });
 
+test("the wheel event that completes Quinta fullscreen cannot start the next project", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  placeAtContentBoundary(app, "featured-projects", 5000);
+  app.controller.featuredProjectExpansionProgress[0].set(0.95);
+
+  assert.equal(wheel(64), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 1);
+  assert.equal(app.getActiveFeaturedProject(), 0);
+  assert.equal(app.getPendingTweenCount(), 0);
+  assert.equal(app.scroller.scrollTop, 5000);
+
+  app.scroller.scrollTop = 5064;
+  app.handlers.scroll();
+  assert.equal(app.scroller.scrollTop, 5000, "Fullscreen completion remains pinned");
+
+  assert.equal(wheel(64), true);
+  assert.equal(app.getPendingTweenCount(), 1, "A new wheel event may enter Muelle Zulima");
+  app.cleanup();
+});
+
 test("every content boundary uses one shared transition for wheel and trackpad input", () => {
   const boundaries = [
     { name: "Quinta / project 2", section: "featured-projects", edge: 5000, next: 5800, previous: 5000, projectIndex: 0 },
