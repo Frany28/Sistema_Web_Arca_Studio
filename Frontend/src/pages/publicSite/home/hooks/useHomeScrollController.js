@@ -307,22 +307,96 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
           // Al bajar, mantener el proyecto anterior activo durante toda
           // su salida y cambiar al siguiente solo al finalizar.
-          if (direction > 0) {
-            commitFeaturedProjectIndex(transition.index);
-          }
+              if (direction > 0) {
+                commitFeaturedProjectIndex(transition.index);
+              }
+
+              synchronizeContentScroll();
+            };
+
+            if (reduceMotion) {
+              scroller.scrollTop = transition.scrollTop;
+              window.requestAnimationFrame(completeTransition);
+              return true;
+            }
+
+            activeTween = gsap.to(scroller, {
+              scrollTo: {
+              y: targetScrollTop,
+              autoKill: false,
+            },
+              duration: SCROLL_STEP_DURATION_SECONDS,
+              ease: SECTION_NAVIGATION_EASE,
+              overwrite: true,
+              onComplete: completeTransition,
+            });
+
+            return true;
+          };
+
+          const transitionBetweenContentSections = (
+            targetSectionId,
+            { featuredProjectIndex = null } = {},
+          ) => {
+            if (activeTween || isProgrammaticScroll) return false;
+
+            const target = getSection(targetSectionId);
+            if (!target) return false;
+
+            isProgrammaticScroll = true;
+            ignoreNextScrollEnd = supportsScrollEnd;
+
+            // Al regresar desde Procesos, activamos el último proyecto
+            // antes de comenzar la entrada.
+            if (featuredProjectIndex !== null) {
+              commitFeaturedProjectIndex(featuredProjectIndex);
+            }
+            
+            let targetScrollTop = target.offsetTop;
+
+    if (
+      targetSectionId === "featured-projects" &&
+      featuredProjectIndex !== null
+    ) {
+      const projectPanels = getFeaturedProjectPanels(target);
+
+      const targetPanel =
+        projectPanels[featuredProjectIndex];
+
+      if (targetPanel) {
+        const panelTop = getElementScrollTop(targetPanel);
+
+        targetScrollTop =
+          panelTop +
+          Math.max(
+            0,
+            targetPanel.offsetHeight - scroller.clientHeight,
+          );
+      }
+    }
+
+        const completeTransition = () => {
+          activeTween = undefined;
+          isProgrammaticScroll = false;
+
+          selectSection(targetSectionId);
+
+          window.clearTimeout(wheelIdleTimer);
+          wheelGestureState = createWheelGestureState();
+          wheelTransitionLock = false;
 
           synchronizeContentScroll();
         };
 
         if (reduceMotion) {
-          scroller.scrollTop = transition.scrollTop;
+          scroller.scrollTop = targetScrollTop;
           window.requestAnimationFrame(completeTransition);
           return true;
         }
 
         activeTween = gsap.to(scroller, {
           scrollTo: {
-            y: transition.scrollTop,
+            y: target.offsetTop,
             autoKill: false,
           },
           duration: SCROLL_STEP_DURATION_SECONDS,
@@ -460,36 +534,124 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           revealedSectionRef.current === activeSectionRef.current &&
           !sectionTitleLockedRef.current &&
           !wheelTransitionLock;
-      if (contentReady) {
-  const direction = Math.sign(delta.y);
+    if (contentReady) {
+      const direction = Math.sign(delta.y);
 
-  if (!direction) return;
+      if (!direction) return;
 
-  // Fuera de Proyectos destacados dejamos el scroll nativo.
-  if (activeSectionRef.current !== "featured-projects") {
-    return;
-  }
+      /*
+      * PROCESOS → PROYECTOS DESTACADOS
+      *
+      * Si estamos al principio de Procesos y subimos,
+      * regresar suavemente al último proyecto.
+      */
+      if (
+        activeSectionRef.current === "process" &&
+        direction < 0
+      ) {
+        const processSection = getSection("process");
+        const processTop = processSection?.getBoundingClientRect().top;
+        const viewportTop = scroller.getBoundingClientRect().top;
+
+        if (
+          processSection &&
+          processTop >=
+            viewportTop - FEATURED_PROJECT_EDGE_TOLERANCE_PX
+        ) {
+          const projectPanels = getFeaturedProjectPanels();
+          const lastProjectIndex = projectPanels.length - 1;
+
+          if (lastProjectIndex >= 0) {
+            event.preventDefault();
+            event.stopPropagation?.();
+
+            window.clearTimeout(wheelIdleTimer);
+            wheelGestureState = createWheelGestureState();
+
+            transitionBetweenContentSections(
+              "featured-projects",
+              {
+                featuredProjectIndex: lastProjectIndex,
+              },
+            );
+
+            return;
+          }
+        }
+
+        return;
+      }
+
+      // El resto de secciones mantiene scroll nativo.
+      if (activeSectionRef.current !== "featured-projects") {
+        return;
+      }
+
+      const projectPanels = getFeaturedProjectPanels();
+      const currentIndex =
+        activeFeaturedProjectIndexRef.current;
 
       const transition = getFeaturedProjectTransition(
         direction,
         delta.y,
       );
 
-      if (!transition) {
+      /*
+      * PROYECTO → PROYECTO
+      */
+      if (transition) {
+        event.preventDefault();
+        event.stopPropagation?.();
+
+        window.clearTimeout(wheelIdleTimer);
         wheelGestureState = createWheelGestureState();
+
+        transitionFeaturedProject(direction, delta.y);
+
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation?.();
+      /*
+      * ÚLTIMO PROYECTO → PROCESOS
+      */
+      const isLastProject =
+        currentIndex === projectPanels.length - 1;
 
-      window.clearTimeout(wheelIdleTimer);
-      wheelGestureState = createWheelGestureState();
+      if (direction > 0 && isLastProject) {
+        const currentPanel = projectPanels[currentIndex];
 
-      transitionFeaturedProject(direction, delta.y);
+        if (!currentPanel) return;
 
-      return;
+        const viewportRect =
+          scroller.getBoundingClientRect();
+
+        const currentRect =
+          currentPanel.getBoundingClientRect();
+
+        const reachedBottom =
+          currentRect.bottom <=
+          viewportRect.bottom +
+            FEATURED_PROJECT_EDGE_TOLERANCE_PX +
+            Math.max(0, delta.y);
+
+        if (reachedBottom) {
+          event.preventDefault();
+          event.stopPropagation?.();
+
+          window.clearTimeout(wheelIdleTimer);
+          wheelGestureState = createWheelGestureState();
+
+          transitionBetweenContentSections("process");
+
+          return;
+        }
       }
+
+      // Todavía hay contenido dentro del proyecto:
+      // permitir scroll normal.
+      wheelGestureState = createWheelGestureState();
+      return;
+    }
         event.preventDefault();
         event.stopPropagation?.();
         window.clearTimeout(wheelIdleTimer);
