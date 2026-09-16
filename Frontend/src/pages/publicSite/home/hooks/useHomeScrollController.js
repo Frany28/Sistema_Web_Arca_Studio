@@ -470,42 +470,25 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     return;
   }
 
-    const transition = getFeaturedProjectTransition(
-      direction,
-      delta.y,
-    );
+      const transition = getFeaturedProjectTransition(
+        direction,
+        delta.y,
+      );
 
-    if (!transition) {
-      const projectPanels = getFeaturedProjectPanels();
-      const currentIndex = activeFeaturedProjectIndexRef.current;
-      const isLastProject =
-        currentIndex === projectPanels.length - 1;
-
-      if (direction > 0 && isLastProject) {
-        event.preventDefault();
-        event.stopPropagation?.();
-
-        window.clearTimeout(wheelIdleTimer);
+      if (!transition) {
         wheelGestureState = createWheelGestureState();
-
-        navigateSection("process");
-
         return;
       }
 
+      event.preventDefault();
+      event.stopPropagation?.();
+
+      window.clearTimeout(wheelIdleTimer);
       wheelGestureState = createWheelGestureState();
+
+      transitionFeaturedProject(direction, delta.y);
+
       return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation?.();
-
-    window.clearTimeout(wheelIdleTimer);
-    wheelGestureState = createWheelGestureState();
-
-    transitionFeaturedProject(direction, delta.y);
-
-    return;
       }
         event.preventDefault();
         event.stopPropagation?.();

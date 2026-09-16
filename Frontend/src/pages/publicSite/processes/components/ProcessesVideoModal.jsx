@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-const TRANSITION_MS = 420;
-const TRANSITION_EASING = "cubic-bezier(0.815, 0.005, 0.17, 0.995)";
+const TRANSITION_MS = 320;
+const TRANSITION_EASING = "ease-in-out";
 
 function ProcessesVideoModal({ onClose, origin, video, visible }) {
   const videoRef = useRef(null);
