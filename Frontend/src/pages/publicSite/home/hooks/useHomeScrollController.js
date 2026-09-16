@@ -521,19 +521,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       return true;
     };
     const getContentWheelBoundary = (direction) => {
-      if (activeSectionRef.current === "services" && direction > 0) {
-        const bounds = getPanelScrollBounds(getSection("services"));
-        if (!bounds) return null;
-
-        return {
-          scrollTop: bounds.end,
-          transition: () => transitionBetweenContentSections(
-            "featured-projects",
-            { featuredProjectIndex: 0 },
-          ),
-        };
-      }
-
       if (activeSectionRef.current === "process" && direction < 0) {
         const bounds = getPanelScrollBounds(getSection("process"));
         const projectPanels = getFeaturedProjectPanels();

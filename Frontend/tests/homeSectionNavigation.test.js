@@ -491,7 +491,6 @@ test("content hands native scroll to a reversible scrub before navigation", () =
 
 test("every content boundary uses one shared transition for wheel and trackpad input", () => {
   const boundaries = [
-    { name: "Services / Quinta", section: "services", edge: 3600, next: 4400, previous: 3600, projectIndex: null },
     { name: "Quinta / project 2", section: "featured-projects", edge: 5000, next: 5800, previous: 5000, projectIndex: 0 },
     { name: "project 2 / project 3", section: "featured-projects", edge: 6400, next: 7200, previous: 6400, projectIndex: 1 },
     { name: "project 3 / Process", section: "featured-projects", edge: 7800, next: 8600, previous: 7800, projectIndex: 2 },
@@ -598,22 +597,14 @@ test("returning to an image project restores fullscreen before contraction", () 
   app.cleanup();
 });
 
-test("Services enters Quinta with the Bento reset, never a retained fullscreen", () => {
+test("Services continues with native scroll into Quinta", () => {
   const app = setup();
   const wheel = createWheelDriver(app);
   placeAtContentBoundary(app, "services", 3600);
 
-  // Un valor residual de una salida previa no puede alterar la entrada normal.
-  app.controller.featuredProjectExpansionProgress[0].set(1);
-
-  for (const deltaY of [8, 8, 8, 8]) wheel(deltaY);
-
-  assert.equal(app.getFeaturedExpansionProgress(0), 0);
-  assert.equal(app.getPendingTweenCount(), 1);
-  app.flush();
-  assert.equal(app.scroller.scrollTop, 4400);
-  assert.equal(app.getActiveFeaturedProject(), 0);
-  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  assert.equal(wheel(8), false);
+  assert.equal(app.scroller.scrollTop, 3608);
+  assert.equal(app.getPendingTweenCount(), 0);
   app.cleanup();
 });
 
