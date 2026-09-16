@@ -46,6 +46,7 @@ function FeaturedProjectsSection({
         <FeaturedProjectsGallery
           active={firstProjectActive}
           expansionProgress={expansionProgress[0]}
+          sectionReveal={false}
           visible={step === 2}
           onRevealComplete={onRevealComplete}
         />

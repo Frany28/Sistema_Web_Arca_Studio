@@ -98,6 +98,7 @@ function FeaturedProjectsGallery({
   expansionProgress,
   galleryLabel = "Galería de Quinta Bella Vista",
   onRevealComplete,
+  sectionReveal = true,
   visible = true,
 }) {
   const cardRefs = useRef(new Map());
@@ -360,8 +361,11 @@ function FeaturedProjectsGallery({
         aria-label={galleryLabel}
         aria-hidden={!visible}
         initial={false}
-        animate={{ clipPath: getSectionRevealClip(visible) }}
-        transition={getSectionRevealTransition(visible, reduceMotion)}
+        animate={sectionReveal ? { clipPath: getSectionRevealClip(visible) } : undefined}
+        transition={sectionReveal
+          ? getSectionRevealTransition(visible, reduceMotion)
+          : undefined}
+        style={sectionReveal ? undefined : { clipPath: "inset(0 0 0 0)" }}
         onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
         className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
       >

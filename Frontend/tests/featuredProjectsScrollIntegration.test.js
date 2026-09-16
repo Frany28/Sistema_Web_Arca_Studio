@@ -20,6 +20,20 @@ const sectionSource = readFileSync(
   ),
   "utf8",
 );
+const gallerySource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsGallery.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const projectPanelSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/featuredProjects/components/FeaturedProjectsProjectPanel.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const removedPanelLoopPath = new URL(
   "../src/pages/publicSite/featuredProjects/hooks/useFeaturedProjectsPanelLoop.js",
   import.meta.url,
@@ -71,4 +85,18 @@ test("featured projects remain in their required visual order", () => {
   assert.ok(quintaIndex >= 0);
   assert.ok(muelleIndex > quintaIndex);
   assert.ok(aptoIndex > muelleIndex);
+});
+
+test("only the Services-to-Quinta gallery bypasses the section reveal", () => {
+  assert.match(sectionSource, /sectionReveal=\{false\}/);
+  assert.match(
+    gallerySource,
+    /animate=\{sectionReveal \? \{ clipPath: getSectionRevealClip\(visible\) \} : undefined\}/,
+  );
+  assert.match(
+    gallerySource,
+    /style=\{sectionReveal \? undefined : \{ clipPath: "inset\(0 0 0 0\)" \}\}/,
+  );
+  assert.doesNotMatch(projectPanelSource, /sectionReveal=\{false\}/);
+  assert.match(homeControllerSource, /transitionFeaturedProject/);
 });
