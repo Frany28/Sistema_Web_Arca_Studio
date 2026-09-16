@@ -7,7 +7,7 @@ import {
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { gsap } from "gsap";
 import { ExpoScaleEase } from "gsap/EasePack";
-import { Flip } from "gsap/Flip";
+
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
@@ -44,7 +44,7 @@ const COLUMNS = [
 
 const PRIMARY_CARD_ID = "1-1";
 
-gsap.registerPlugin(Flip, ExpoScaleEase);
+gsap.registerPlugin(ExpoScaleEase);
 
 function clampProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
@@ -137,216 +137,185 @@ function FeaturedProjectsGallery({
   }, []);
 
     const buildTimeline = useCallback(() => {
-    const gallery = galleryRef.current;
-    const grid = gridRef.current;
-    const cards = [...cardRefs.current.values()];
-    const primary = cardRefs.current.get(PRIMARY_CARD_ID);
+  const gallery = galleryRef.current;
+  const cards = [...cardRefs.current.values()];
+  const primary = cardRefs.current.get(PRIMARY_CARD_ID);
 
-    if (
-      !active ||
-      !gallery ||
-      !grid ||
-      !primary ||
-      cards.length === 0
-    ) {
-      return false;
-    }
+  if (
+    !active ||
+    !gallery ||
+    !primary ||
+    cards.length === 0
+  ) {
+    return false;
+  }
 
-    const currentProgress = clampProgress(
-      expansionProgress?.get?.() ?? 0,
+  const currentProgress = clampProgress(
+    expansionProgress?.get?.() ?? 0,
+  );
+
+  destroyTimeline();
+
+  contextRef.current = gsap.context(() => {
+    /*
+     * Limpiamos cualquier transformación anterior antes
+     * de medir la geometría Bento real.
+     */
+    cards.forEach((card) => {
+      gsap.set(card, {
+        clearProps:
+          "transform,transformOrigin,opacity,zIndex",
+      });
+    });
+
+    const primaryRect = primary.getBoundingClientRect();
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    /*
+     * Escala necesaria para que la imagen principal
+     * cubra exactamente todo el viewport.
+     */
+    const scaleX =
+      viewportWidth / primaryRect.width;
+
+    const scaleY =
+      viewportHeight / primaryRect.height;
+
+    /*
+     * Centro actual de la imagen principal.
+     */
+    const primaryCenterX =
+      primaryRect.left + primaryRect.width / 2;
+
+    const primaryCenterY =
+      primaryRect.top + primaryRect.height / 2;
+
+    /*
+     * Centro final: centro del viewport.
+     */
+    const viewportCenterX = viewportWidth / 2;
+    const viewportCenterY = viewportHeight / 2;
+
+    const translateX =
+      viewportCenterX - primaryCenterX;
+
+    const translateY =
+      viewportCenterY - primaryCenterY;
+
+    const timeline = gsap.timeline({
+      paused: true,
+      defaults: {
+        duration: 1,
+        ease: "none",
+      },
+    });
+
+    /*
+     * --------------------------------------------------
+     * IMAGEN PRINCIPAL
+     * --------------------------------------------------
+     *
+     * No cambiamos position.
+     * No usamos fixed.
+     * No usamos absolute.
+     *
+     * Sigue perteneciendo al proyecto.
+     */
+    timeline.to(
+      primary,
+      {
+        x: translateX,
+        y: translateY,
+
+        scaleX,
+        scaleY,
+
+        transformOrigin: "center center",
+
+        borderRadius: 0,
+
+        zIndex: 50,
+
+        ease: "none",
+      },
+      0,
     );
 
-    destroyTimeline();
+    /*
+     * --------------------------------------------------
+     * IMÁGENES SECUNDARIAS
+     * --------------------------------------------------
+     *
+     * Salen hacia el borde correspondiente.
+     */
+    cards.forEach((card) => {
+      if (card === primary) return;
 
-    contextRef.current = gsap.context(() => {
-      /*
-       * Guardamos las propiedades inline actuales para poder
-       * devolver físicamente el DOM a su estado original.
-       */
-      const savedGridCss = grid.style.cssText;
+      const rect = card.getBoundingClientRect();
 
-      const savedCardCss = new Map(
-        cards.map((card) => [
-          card,
-          card.style.cssText,
-        ]),
-      );
+      const centerX =
+        rect.left + rect.width / 2;
 
-      /*
-       * ---------------------------------------------------------
-       * ESTADO FINAL
-       * ---------------------------------------------------------
-       *
-       * Construimos temporalmente cómo debe verse la galería
-       * cuando expansionProgress === 1.
-       */
+      const centerY =
+        rect.top + rect.height / 2;
 
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
+      const dx =
+        centerX - viewportCenterX;
 
-      /*
-       * Primero obtenemos las posiciones originales.
-       * Es importante medir ANTES de modificar el layout.
-       */
-      const originalRects = new Map(
-        cards.map((card) => [
-          card,
-          card.getBoundingClientRect(),
-        ]),
-      );
+      const dy =
+        centerY - viewportCenterY;
+
+      let x = 0;
+      let y = 0;
 
       /*
-       * La tarjeta principal terminará ocupando todo el viewport.
-       *
-       * Las secundarias salen físicamente hacia los bordes.
+       * Priorizar el eje donde la card está más alejada
+       * del centro.
        */
-      cards.forEach((card) => {
-        const cardId = card.dataset.cardId;
-        const rect = originalRects.get(card);
-
-        if (!rect) return;
-
-        if (cardId === PRIMARY_CARD_ID) {
-        gsap.set(card, {
-          position: "fixed",
-          left: 0,
-          top: 0,
-          width: viewportWidth,
-          height: viewportHeight,
-          margin: 0,
-          borderRadius: 0,
-          opacity: 1,
-          zIndex: 56,
-        });
-
-        return;
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        x =
+          dx < 0
+            ? -(rect.right + rect.width)
+            : viewportWidth -
+              rect.left +
+              rect.width;
+      } else {
+        y =
+          dy < 0
+            ? -(rect.bottom + rect.height)
+            : viewportHeight -
+              rect.top +
+              rect.height;
       }
 
-        const cardCenterX =
-          rect.left + rect.width / 2;
-
-        const cardCenterY =
-          rect.top + rect.height / 2;
-
-        const viewportCenterX =
-          viewportWidth / 2;
-
-        const viewportCenterY =
-          viewportHeight / 2;
-
-        let x = 0;
-        let y = 0;
-
-        /*
-         * Sacamos cada tarjeta siguiendo su posición
-         * natural dentro del Bento.
-         */
-        if (cardCenterX < viewportCenterX) {
-          x = -(rect.right + rect.width);
-        } else if (cardCenterX > viewportCenterX) {
-          x =
-            viewportWidth -
-            rect.left +
-            rect.width;
-        }
-
-        if (cardCenterY < viewportCenterY) {
-          y = -(rect.bottom + rect.height);
-        } else {
-          y =
-            viewportHeight -
-            rect.top +
-            rect.height;
-        }
-
-        gsap.set(card, {
+      timeline.to(
+        card,
+        {
           x,
           y,
           opacity: 0,
-          borderRadius: 0,
-          zIndex: 1,
-        });
-      });
+          ease: "none",
+        },
+        0,
+      );
+    });
 
-      /*
-       * Guardamos ese estado FINAL.
-       */
-      const finalState = Flip.getState(cards, {
-        props: "borderRadius,opacity",
-      });
+    timelineRef.current = timeline;
 
-      /*
-       * ---------------------------------------------------------
-       * RESTAURAR ESTADO ORIGINAL
-       * ---------------------------------------------------------
-       *
-       * NO usamos Flip.setState().
-       *
-       * Restauramos exactamente los estilos inline que existían
-       * antes de construir el estado final.
-       */
-      grid.style.cssText = savedGridCss;
+    /*
+     * Restaurar el progreso actual.
+     */
+    timeline.progress(currentProgress, false);
+  }, gallery);
 
-      cards.forEach((card) => {
-        card.style.cssText =
-          savedCardCss.get(card) ?? "";
-      });
-
-      /*
-       * Forzar cálculo de layout antes de crear Flip.
-       */
-      void grid.offsetWidth;
-
-      /*
-       * ---------------------------------------------------------
-       * FLIP SCRUBBED
-       * ---------------------------------------------------------
-       *
-       * El DOM está nuevamente en Bento,
-       * pero finalState contiene fullscreen.
-       *
-       * Flip interpola:
-       *
-       * Bento ---------------> Fullscreen
-       *   0                       1
-       */
-      const flip = Flip.to(finalState, {
-        absolute: true,
-        duration: 1,
-        paused: true,
-
-        /*
-         * Este ease es importante para acercarnos al movimiento
-         * orgánico del ejemplo de GreenSock.
-         */
-        ease: "expoScale(1, 5)",
-
-        simple: false,
-        nested: true,
-        prune: true,
-
-        /*
-         * No permitir que otro tween anterior compita.
-         */
-        overwrite: true,
-      });
-
-      timelineRef.current = flip;
-
-      /*
-       * Recuperar inmediatamente el progreso actual.
-       *
-       * Esto evita saltos cuando se reconstruye por resize.
-       */
-      flip.progress(currentProgress, false);
-    }, gallery);
-
-    return Boolean(timelineRef.current);
-  }, [
-    active,
-    destroyTimeline,
-    expansionProgress,
-  ]);
+  return Boolean(timelineRef.current);
+}, [
+  active,
+  destroyTimeline,
+  expansionProgress,
+]);
 
   const renderProgress = useCallback(
     (rawProgress) => {
@@ -454,7 +423,7 @@ function FeaturedProjectsGallery({
       onAnimationComplete={() =>
         onRevealComplete?.(visible ? 2 : 1)
       }
-      className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
+      className={`relative ${containerClassName} overflow-visible ${backgroundClassName}`}
     >
       <div
         ref={gridRef}
