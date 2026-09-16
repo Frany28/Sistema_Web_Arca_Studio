@@ -27,12 +27,14 @@ function setup(reduceMotion = false) {
   const services = {
     id: "services",
     offsetTop: 3200,
+    offsetHeight: 1200,
     dataset: { contentTitleScope: "services" },
   };
   const featured = { id: "featured-projects", offsetTop: 4400 };
   const processSection = {
     id: "process",
     offsetTop: 8600,
+    offsetHeight: 1600,
     dataset: { contentTitleScope: "process" },
   };
   const featuredProjectHeight = 1400;
@@ -225,7 +227,9 @@ for (const reducedMotion of [false, true]) {
     app.controller.navigateToSection('services'); app.flush();
     assert.equal(app.scroller.scrollTop, 3200);
     const blocked = () => assert.fail('Native scrolling was blocked');
-    for (const deltaMode of [0, 1, 2]) app.handlers.wheel({ deltaMode, deltaY: 60, deltaX: 0, preventDefault: blocked });
+    for (const [deltaMode, deltaY] of [[0, 60], [1, 1], [2, 0.1]]) {
+      app.handlers.wheel({ deltaMode, deltaY, deltaX: 0, preventDefault: blocked });
+    }
     for (const key of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'End', 'Home']) app.handlers.keydown({ key, preventDefault: blocked });
     app.handlers.pointerdown({ pointerType: 'touch', isPrimary: true, pointerId: 1, clientX: 100, clientY: 300 });
     app.handlers.pointermove({ pointerId: 1, clientX: 100, clientY: 100, preventDefault: blocked });
@@ -394,10 +398,10 @@ test("the scrollbar cannot skip the intro and video to enter Services", () => {
   app.cleanup();
 });
 
-test("Home exclusively coordinates the sequential featured-project traversal", () => {
-  const app = setup();
+function createWheelDriver(app) {
   let timeStamp = 0;
-  const wheel = (deltaY) => {
+
+  return (deltaY) => {
     let prevented = false;
     app.handlers.wheel({
       deltaX: 0,
@@ -412,65 +416,124 @@ test("Home exclusively coordinates the sequential featured-project traversal", (
     }
     return prevented;
   };
-  const repeatWheel = (deltaY, count) =>
-    Array.from({ length: count }, () => wheel(deltaY));
+}
 
-  app.controller.navigateToSection("featured-projects");
+function placeAtContentBoundary(app, sectionId, scrollTop) {
+  app.controller.navigateToSection(sectionId);
   app.flush();
-
-  app.scroller.scrollTop = 4880;
+  app.scroller.scrollTop = scrollTop;
   app.handlers.scroll();
-  const quintaTrackpadEvents = repeatWheel(8, 18);
-  assert.equal(quintaTrackpadEvents.slice(0, 14).every((value) => !value), true);
-  assert.equal(quintaTrackpadEvents.slice(14).every(Boolean), true);
-  assert.equal(app.scroller.scrollTop, 4992, "The viewport stays inside Quinta while the boundary gesture accumulates");
-  assert.equal(app.getPendingTweenCount(), 1, "Only one transition is queued");
-  assert.equal(app.getActiveFeaturedProject(), 0, "The incoming project stays inactive during the tween");
-  app.flush();
-  assert.equal(app.scroller.scrollTop, 5800);
-  assert.equal(app.getActiveFeaturedProject(), 1);
+}
 
-  app.clock.advance(180);
-  app.scroller.scrollTop = 6320;
+test("content keeps native scrolling until the controlled boundary", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  placeAtContentBoundary(app, "featured-projects", 4880);
+
+  assert.equal(wheel(8), false, "Scroll remains native inside Quinta");
+  assert.equal(app.scroller.scrollTop, 4888);
+  assert.equal(app.getPendingTweenCount(), 0);
+
+  app.scroller.scrollTop = 4992;
   app.handlers.scroll();
-  const muelleTrackpadEvents = repeatWheel(8, 14);
-  assert.equal(muelleTrackpadEvents.slice(0, 9).every((value) => !value), true);
-  assert.equal(muelleTrackpadEvents.slice(9).every(Boolean), true);
-  assert.equal(app.getPendingTweenCount(), 1);
-  assert.equal(app.getActiveFeaturedProject(), 1);
-  app.flush();
-  assert.equal(app.scroller.scrollTop, 7200);
-  assert.equal(app.getActiveFeaturedProject(), 2);
+  assert.equal(wheel(8), true, "The event that reaches the edge is consumed");
+  assert.equal(app.scroller.scrollTop, 5000, "The handoff aligns to the exact edge");
+  assert.equal(app.getPendingTweenCount(), 0, "Reaching the edge does not bypass the intent threshold");
 
+  for (const deltaY of [8, 8, 8]) {
+    assert.equal(wheel(deltaY), true);
+    assert.equal(app.scroller.scrollTop, 5000, "Micro-deltas cannot move the viewport between panels");
+    assert.equal(app.getPendingTweenCount(), 0);
+  }
+  assert.equal(wheel(8), true);
+  assert.equal(app.getPendingTweenCount(), 1);
+  app.cleanup();
+
+  const largeWheelApp = setup();
+  const largeWheel = createWheelDriver(largeWheelApp);
+  placeAtContentBoundary(largeWheelApp, "featured-projects", 4960);
+  assert.equal(largeWheel(100), true);
+  assert.equal(largeWheelApp.scroller.scrollTop, 5000);
+  assert.equal(
+    largeWheelApp.getPendingTweenCount(),
+    1,
+    "Only the distance beyond the edge contributes to a large wheel gesture",
+  );
+  largeWheelApp.cleanup();
+});
+
+test("every content boundary uses one shared transition for wheel and trackpad input", () => {
+  const boundaries = [
+    { name: "Services / Quinta", section: "services", edge: 3600, next: 4400, previous: 3600 },
+    { name: "Quinta / project 2", section: "featured-projects", edge: 5000, next: 5800, previous: 5000 },
+    { name: "project 2 / project 3", section: "featured-projects", edge: 6400, next: 7200, previous: 6400 },
+    { name: "project 3 / Process", section: "featured-projects", edge: 7800, next: 8600, previous: 7800 },
+  ];
+  const inputProfiles = [
+    { name: "large wheel", deltas: [100] },
+    { name: "micro wheel", deltas: [8, 8, 8, 8] },
+    { name: "soft trackpad", deltas: [2, 3, 5, 7, 10, 8] },
+  ];
+
+  for (const boundary of boundaries) {
+    for (const profile of inputProfiles) {
+      const app = setup();
+      const wheel = createWheelDriver(app);
+      const label = `${boundary.name} with ${profile.name}`;
+      placeAtContentBoundary(app, boundary.section, boundary.edge);
+
+      for (const deltaY of profile.deltas.slice(0, -1)) {
+        assert.equal(wheel(deltaY), true, `${label} owns the boundary gesture`);
+        assert.equal(app.scroller.scrollTop, boundary.edge, `${label} stays aligned`);
+        assert.equal(app.getPendingTweenCount(), 0, `${label} waits for enough intent`);
+      }
+      assert.equal(wheel(profile.deltas.at(-1)), true);
+      assert.equal(app.getPendingTweenCount(), 1, `${label} queues exactly one transition`);
+
+      for (const residualDelta of [40, 20, 8]) {
+        assert.equal(wheel(residualDelta), true, `${label} consumes residual wheel events`);
+        assert.equal(app.getPendingTweenCount(), 1, `${label} never queues a second tween`);
+      }
+
+      app.flush();
+      assert.equal(app.scroller.scrollTop, boundary.next, `${label} reaches the shared destination`);
+
+      for (const deltaY of profile.deltas.slice(0, -1)) {
+        assert.equal(wheel(-deltaY), true, `${label} can reverse immediately after onComplete`);
+        assert.equal(app.scroller.scrollTop, boundary.next);
+        assert.equal(app.getPendingTweenCount(), 0);
+      }
+      assert.equal(wheel(-profile.deltas.at(-1)), true);
+      assert.equal(app.getPendingTweenCount(), 1, `${label} releases every transition lock`);
+      app.flush();
+      assert.equal(app.scroller.scrollTop, boundary.previous, `${label} returns through the same effect`);
+      app.cleanup();
+      assert.equal(app.clock.pending(), 0);
+    }
+  }
+});
+
+test("boundary intent resets after idle or a native direction reversal", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  placeAtContentBoundary(app, "featured-projects", 5000);
+
+  assert.equal(wheel(20), true);
   app.clock.advance(180);
-  assert.equal(repeatWheel(-8, 4).every(Boolean), true);
+  assert.equal(wheel(20), true);
+  assert.equal(app.getPendingTweenCount(), 0, "Idle time starts a fresh gesture");
+  assert.equal(wheel(12), true);
   assert.equal(app.getPendingTweenCount(), 1);
   app.flush();
-  assert.equal(app.scroller.scrollTop, 6400);
-  assert.equal(app.getActiveFeaturedProject(), 1);
 
-  app.clock.advance(180);
+  assert.equal(wheel(-20), true);
+  assert.equal(wheel(8), false, "Changing direction into the panel returns to native scroll");
+  assert.equal(app.scroller.scrollTop, 5808);
   app.scroller.scrollTop = 5800;
   app.handlers.scroll();
-  assert.equal(repeatWheel(-8, 4).every(Boolean), true);
+  assert.equal(wheel(-12), true);
+  assert.equal(app.getPendingTweenCount(), 0, "Old downward intent was discarded");
+  assert.equal(wheel(-20), true);
   assert.equal(app.getPendingTweenCount(), 1);
-  app.flush();
-  assert.equal(app.scroller.scrollTop, 5000);
-  assert.equal(app.getActiveFeaturedProject(), 0);
-
-  app.clock.advance(180);
-  app.scroller.scrollTop = 4400;
-  app.handlers.scroll();
-  assert.equal(wheel(-8), false, "The first project releases scrolling towards Services");
-
-  app.scroller.scrollTop = 7800;
-  app.handlers.scroll();
-  assert.equal(wheel(8), true, "The final project starts the shared transition to Processes");
-  assert.equal(app.getActiveFeaturedProject(), 2);
-  assert.equal(app.getPendingTweenCount(), 1);
-  app.flush();
-  assert.equal(app.scroller.scrollTop, 8600);
-  assert.equal(app.getActiveSection(), "process");
-  assert.equal(wheel(8), false, "Process scrolling is available as soon as the transition completes");
   app.cleanup();
 });
