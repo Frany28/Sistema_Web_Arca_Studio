@@ -48,6 +48,20 @@ let commandId = 0;
 
 socket.onmessage = ({ data }) => {
   const message = JSON.parse(data);
+  if (message.method === "Fetch.requestPaused") {
+    void send("Fetch.fulfillRequest", {
+      requestId: message.params.requestId,
+      responseCode: 401,
+      responseHeaders: [
+        { name: "Content-Type", value: "application/json" },
+      ],
+      body: Buffer.from(JSON.stringify({
+        code: "UNAUTHENTICATED",
+        message: "Sesión no iniciada",
+      })).toString("base64"),
+    });
+    return;
+  }
   if (!message.id || !pending.has(message.id)) return;
   const { resolve, reject } = pending.get(message.id);
   pending.delete(message.id);
@@ -150,8 +164,11 @@ const results = {};
 try {
   await send("Runtime.enable");
   await send("Page.enable");
+  await send("Fetch.enable", {
+    patterns: [{ urlPattern: "*auth/me*", requestStage: "Request" }],
+  });
   await send("Emulation.setEmulatedMedia", {
-    features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
   });
   await send("Page.reload");
   await waitFor(
@@ -159,10 +176,7 @@ try {
       document.querySelector('[data-home-scroll-container]').scrollTop > 0`,
     "El Home no navegó a Proyectos destacados.",
   );
-  await send("Emulation.setEmulatedMedia", {
-    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
-  });
-  await delay(200);
+  await delay(1300);
   await evaluate(moveToPanelEnd(0));
 
   const initial = await evaluate(readGallery);
