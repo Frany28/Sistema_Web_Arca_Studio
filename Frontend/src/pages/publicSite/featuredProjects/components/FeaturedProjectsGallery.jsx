@@ -1,24 +1,18 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { gsap } from "gsap";
 import { ExpoScaleEase } from "gsap/EasePack";
-
+import { Flip } from "gsap/Flip";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import ProjectImage from "../../../../components/ui/ProjectImage/ProjectImage.jsx";
-
 import mirror from "../../../../assets/featuredProjects/quinta-bella-vista-1.webp";
 import bedroom from "../../../../assets/featuredProjects/quinta-bella-vista-2.webp";
 import seating from "../../../../assets/featuredProjects/quinta-bella-vista-3.webp";
 import living from "../../../../assets/featuredProjects/quinta-bella-vista-4.webp";
 import bathroom from "../../../../assets/featuredProjects/quinta-bella-vista-5.webp";
 import lighting from "../../../../assets/featuredProjects/quinta-bella-vista-6.webp";
-
 import {
   getSectionRevealClip,
   getSectionRevealTransition,
@@ -31,10 +25,7 @@ const COLUMNS = [
   ],
   [
     { src: seating, alt: "Área de estar de Quinta Bella Vista" },
-    {
-      src: lighting,
-      alt: "Iluminación y bloques de vidrio de Quinta Bella Vista",
-    },
+    { src: lighting, alt: "Iluminación y bloques de vidrio de Quinta Bella Vista" },
   ],
   [
     { src: living, alt: "Sala de Quinta Bella Vista" },
@@ -44,11 +35,35 @@ const COLUMNS = [
 
 const PRIMARY_CARD_ID = "1-1";
 
-gsap.registerPlugin(ExpoScaleEase);
+gsap.registerPlugin(ExpoScaleEase, Flip);
 
 function clampProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
   return Math.min(Math.max(progress, 0), 1);
+}
+
+function getSecondaryFinalPosition(cardId, rect, viewportWidth, viewportHeight) {
+  const [column, row] = cardId.split("-").map(Number);
+  const gutter = Math.max(24, Math.min(viewportWidth, viewportHeight) * 0.04);
+
+  if (column === 0) {
+    return {
+      left: -rect.width - gutter,
+      top: row === 0 ? -rect.height - gutter : viewportHeight + gutter,
+    };
+  }
+
+  if (column === 2) {
+    return {
+      left: viewportWidth + gutter,
+      top: row === 0 ? -rect.height - gutter : viewportHeight + gutter,
+    };
+  }
+
+  return {
+    left: (viewportWidth - rect.width) / 2,
+    top: -rect.height - gutter,
+  };
 }
 
 function FeaturedProjectsImageContent({
@@ -68,7 +83,6 @@ function FeaturedProjectsImageContent({
         showLoader={false}
         className="flex h-full w-full items-center justify-center"
       />
-
       <MainLogo
         size="20px"
         appearance="dark"
@@ -79,12 +93,7 @@ function FeaturedProjectsImageContent({
   );
 }
 
-function FeaturedProjectsGalleryCard({
-  cardId,
-  image,
-  primary,
-  setCardRef,
-}) {
+function FeaturedProjectsGalleryCard({ cardId, image, primary, setCardRef }) {
   return (
     <div
       ref={(element) => setCardRef(cardId, element)}
@@ -108,374 +117,269 @@ function FeaturedProjectsGallery({
   onRevealComplete,
   visible = true,
 }) {
-  const galleryRef = useRef(null);
-  const gridRef = useRef(null);
-
   const cardRefs = useRef(new Map());
-
-  const timelineRef = useRef(null);
-  const contextRef = useRef(null);
-
+  const stageCardRefs = useRef(new Map());
+  const stageRef = useRef(null);
+  const flipContextRef = useRef(null);
+  const flipTimelineRef = useRef(null);
+  const renderedProgressRef = useRef(0);
   const resizeFrameRef = useRef(null);
-
   const reduceMotion = useReducedMotion();
 
   const setCardRef = useCallback((cardId, element) => {
-    if (element) {
-      cardRefs.current.set(cardId, element);
-    } else {
-      cardRefs.current.delete(cardId);
-    }
+    if (element) cardRefs.current.set(cardId, element);
+    else cardRefs.current.delete(cardId);
   }, []);
 
-  const destroyTimeline = useCallback(() => {
-    timelineRef.current?.kill();
-    timelineRef.current = null;
-
-    contextRef.current?.revert();
-    contextRef.current = null;
+  const setStageCardRef = useCallback((cardId, element) => {
+    if (element) stageCardRefs.current.set(cardId, element);
+    else stageCardRefs.current.delete(cardId);
   }, []);
 
-    const buildTimeline = useCallback(() => {
-  const gallery = galleryRef.current;
-  const cards = [...cardRefs.current.values()];
-  const primary = cardRefs.current.get(PRIMARY_CARD_ID);
-
-  if (
-    !active ||
-    !gallery ||
-    !primary ||
-    cards.length === 0
-  ) {
-    return false;
-  }
-
-  const currentProgress = clampProgress(
-    expansionProgress?.get?.() ?? 0,
-  );
-
-  destroyTimeline();
-
-  contextRef.current = gsap.context(() => {
-    /*
-     * Limpiamos cualquier transformación anterior antes
-     * de medir la geometría Bento real.
-     */
-    cards.forEach((card) => {
-      gsap.set(card, {
-        clearProps:
-          "transform,transformOrigin,opacity,zIndex",
-      });
+  const showOriginalCards = useCallback(() => {
+    cardRefs.current.forEach((card) => {
+      card.style.removeProperty("visibility");
     });
+  }, []);
 
-    const primaryRect = primary.getBoundingClientRect();
+  const hideOriginalCards = useCallback(() => {
+    cardRefs.current.forEach((card) => {
+      card.style.visibility = "hidden";
+    });
+  }, []);
+
+  const clearFlipTimeline = useCallback(() => {
+    flipContextRef.current?.revert();
+    flipContextRef.current = null;
+    flipTimelineRef.current = null;
+    stageCardRefs.current.forEach((card) => {
+      gsap.set(card, { clearProps: "all" });
+    });
+  }, []);
+
+  const createFlipTimeline = useCallback((rawProgress) => {
+    const stage = stageRef.current;
+    const entries = [...stageCardRefs.current.entries()]
+      .map(([cardId, stageCard]) => ({
+        cardId,
+        sourceCard: cardRefs.current.get(cardId),
+        stageCard,
+      }))
+      .filter(({ sourceCard }) => sourceCard);
+
+    if (
+      !stage ||
+      entries.length === 0 ||
+      entries.length !== stageCardRefs.current.size
+    ) return false;
+
+    clearFlipTimeline();
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-
-    /*
-     * Escala necesaria para que la imagen principal
-     * cubra exactamente todo el viewport.
-     */
-    const scaleX =
-      viewportWidth / primaryRect.width;
-
-    const scaleY =
-      viewportHeight / primaryRect.height;
-
-    /*
-     * Centro actual de la imagen principal.
-     */
-    const primaryCenterX =
-      primaryRect.left + primaryRect.width / 2;
-
-    const primaryCenterY =
-      primaryRect.top + primaryRect.height / 2;
-
-    /*
-     * Centro final: centro del viewport.
-     */
-    const viewportCenterX = viewportWidth / 2;
-    const viewportCenterY = viewportHeight / 2;
-
-    const translateX =
-      viewportCenterX - primaryCenterX;
-
-    const translateY =
-      viewportCenterY - primaryCenterY;
-
-    const timeline = gsap.timeline({
-      paused: true,
-      defaults: {
-        duration: 1,
-        ease: "none",
-      },
+    const initialLayouts = entries.map((entry) => {
+      const rect = entry.sourceCard.getBoundingClientRect();
+      return {
+        ...entry,
+        borderRadius: Number.parseFloat(
+          window.getComputedStyle(entry.sourceCard).borderTopLeftRadius,
+        ) || 0,
+        rect,
+      };
     });
 
-    /*
-     * --------------------------------------------------
-     * IMAGEN PRINCIPAL
-     * --------------------------------------------------
-     *
-     * No cambiamos position.
-     * No usamos fixed.
-     * No usamos absolute.
-     *
-     * Sigue perteneciendo al proyecto.
-     */
-    timeline.to(
-      primary,
-      {
-        x: translateX,
-        y: translateY,
+    flipContextRef.current = gsap.context(() => {
+      initialLayouts.forEach(({ cardId, rect, stageCard }) => {
+        const position = cardId === PRIMARY_CARD_ID
+          ? { left: 0, top: 0 }
+          : getSecondaryFinalPosition(
+            cardId,
+            rect,
+            viewportWidth,
+            viewportHeight,
+          );
 
-        scaleX,
-        scaleY,
+        gsap.set(stageCard, {
+          borderRadius: 0,
+          height: cardId === PRIMARY_CARD_ID ? viewportHeight : rect.height,
+          left: position.left,
+          top: position.top,
+          width: cardId === PRIMARY_CARD_ID ? viewportWidth : rect.width,
+          zIndex: cardId === PRIMARY_CARD_ID ? 2 : 1,
+        });
+      });
 
-        transformOrigin: "center center",
-
-        borderRadius: 0,
-
-        zIndex: 50,
-
-        ease: "none",
-      },
-      0,
-    );
-
-    /*
-     * --------------------------------------------------
-     * IMÁGENES SECUNDARIAS
-     * --------------------------------------------------
-     *
-     * Salen hacia el borde correspondiente.
-     */
-    cards.forEach((card) => {
-      if (card === primary) return;
-
-      const rect = card.getBoundingClientRect();
-
-      const centerX =
-        rect.left + rect.width / 2;
-
-      const centerY =
-        rect.top + rect.height / 2;
-
-      const dx =
-        centerX - viewportCenterX;
-
-      const dy =
-        centerY - viewportCenterY;
-
-      let x = 0;
-      let y = 0;
-
-      /*
-       * Priorizar el eje donde la card está más alejada
-       * del centro.
-       */
-      if (Math.abs(dx) >= Math.abs(dy)) {
-        x =
-          dx < 0
-            ? -(rect.right + rect.width)
-            : viewportWidth -
-              rect.left +
-              rect.width;
-      } else {
-        y =
-          dy < 0
-            ? -(rect.bottom + rect.height)
-            : viewportHeight -
-              rect.top +
-              rect.height;
-      }
-
-      timeline.to(
-        card,
-        {
-          x,
-          y,
-          opacity: 0,
-          ease: "none",
-        },
-        0,
+      const finalState = Flip.getState(
+        initialLayouts.map(({ stageCard }) => stageCard),
+        { props: "borderRadius" },
       );
-    });
 
-    timelineRef.current = timeline;
+      initialLayouts.forEach(({ borderRadius, rect, stageCard }) => {
+        gsap.set(stageCard, {
+          borderRadius,
+          height: rect.height,
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+        });
+      });
 
-    /*
-     * Restaurar el progreso actual.
-     */
-    timeline.progress(currentProgress, false);
-  }, gallery);
+      flipTimelineRef.current = Flip.to(finalState, {
+        duration: 1,
+        ease: "expoScale(1, 5)",
+        paused: true,
+        simple: true,
+      });
+    }, stage);
 
-  return Boolean(timelineRef.current);
-}, [
-  active,
-  destroyTimeline,
-  expansionProgress,
-]);
+    flipTimelineRef.current?.progress(clampProgress(rawProgress), false);
+    return Boolean(flipTimelineRef.current);
+  }, [clearFlipTimeline]);
 
-  const renderProgress = useCallback(
-    (rawProgress) => {
-      if (!active) return;
+  const renderExpansion = useCallback((rawProgress) => {
+    const progress = clampProgress(rawProgress);
+    const previousProgress = renderedProgressRef.current;
+    const stage = stageRef.current;
 
-      const progress = clampProgress(rawProgress);
-
-      if (!timelineRef.current) {
-        buildTimeline();
-      }
-
-      timelineRef.current?.progress(progress, false);
-    },
-    [active, buildTimeline],
-  );
-
-  useLayoutEffect(() => {
-    if (!active) {
-      destroyTimeline();
-      return undefined;
+    if (!stage || !active || progress <= 0) {
+      if (stage) stage.style.visibility = "hidden";
+      showOriginalCards();
+      renderedProgressRef.current = progress;
+      return;
     }
 
-    buildTimeline();
+    const needsFreshLayout = !flipTimelineRef.current
+      || previousProgress <= 0
+      || (previousProgress >= 1 && progress < 1);
 
-    return undefined;
-  }, [
-    active,
-    columns,
-    buildTimeline,
-    destroyTimeline,
-  ]);
+    if (needsFreshLayout && !createFlipTimeline(progress)) {
+      stage.style.visibility = "hidden";
+      showOriginalCards();
+      renderedProgressRef.current = progress;
+      return;
+    }
+
+    stage.style.visibility = "visible";
+    hideOriginalCards();
+    flipTimelineRef.current?.progress(progress, false);
+    renderedProgressRef.current = progress;
+  }, [active, createFlipTimeline, hideOriginalCards, showOriginalCards]);
+
+  useLayoutEffect(() => {
+    renderExpansion(expansionProgress?.get?.() ?? 0);
+  }, [active, columns, expansionProgress, renderExpansion]);
 
   useEffect(() => {
     if (!expansionProgress?.on) return undefined;
-
-    return expansionProgress.on("change", (progress) => {
-      renderProgress(progress);
-    });
-  }, [
-    expansionProgress,
-    renderProgress,
-  ]);
+    return expansionProgress.on("change", renderExpansion);
+  }, [expansionProgress, renderExpansion]);
 
   useEffect(() => {
     const handleResize = () => {
       if (resizeFrameRef.current !== null) {
-        cancelAnimationFrame(resizeFrameRef.current);
+        window.cancelAnimationFrame(resizeFrameRef.current);
       }
 
-      resizeFrameRef.current = requestAnimationFrame(() => {
+      resizeFrameRef.current = window.requestAnimationFrame(() => {
         resizeFrameRef.current = null;
-
-        const progress = clampProgress(
-          expansionProgress?.get?.() ?? 0,
-        );
-
-        buildTimeline();
-
-        timelineRef.current?.progress(progress, false);
+        const progress = clampProgress(expansionProgress?.get?.() ?? 0);
+        if (active && progress > 0) createFlipTimeline(progress);
+        renderExpansion(progress);
       });
     };
+    const primaryCard = cardRefs.current.get(PRIMARY_CARD_ID);
+    const resizeObserver = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(handleResize);
 
+    if (primaryCard) resizeObserver?.observe(primaryCard);
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleResize);
 
     return () => {
       if (resizeFrameRef.current !== null) {
-        cancelAnimationFrame(resizeFrameRef.current);
+        window.cancelAnimationFrame(resizeFrameRef.current);
+        resizeFrameRef.current = null;
       }
-
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener(
-        "orientationchange",
-        handleResize,
-      );
+      window.removeEventListener("orientationchange", handleResize);
     };
-  }, [
-    buildTimeline,
-    expansionProgress,
-  ]);
+  }, [active, createFlipTimeline, expansionProgress, renderExpansion]);
 
-  useEffect(() => {
-    return () => {
-      destroyTimeline();
-    };
-  }, [destroyTimeline]);
+  useEffect(() => () => {
+    clearFlipTimeline();
+    showOriginalCards();
+  }, [clearFlipTimeline, showOriginalCards]);
+
+  const stage = columns.length > 0 ? (
+    <div
+      ref={stageRef}
+      aria-hidden="true"
+      data-featured-gallery-stage
+      className="pointer-events-none fixed inset-0 z-[55] overflow-hidden"
+      style={{ visibility: "hidden" }}
+    >
+      {columns.flatMap((cards, column) => cards.map((image, row) => {
+        const cardId = `${column}-${row}`;
+        const primary = cardId === PRIMARY_CARD_ID;
+        return (
+          <div
+            key={cardId}
+            ref={(element) => setStageCardRef(cardId, element)}
+            data-featured-gallery-overlay={primary ? "" : undefined}
+            data-featured-gallery-stage-card
+            className="absolute overflow-hidden rounded-[var(--radius-2)]"
+          >
+            <FeaturedProjectsImageContent {...image} />
+          </div>
+        );
+      }))}
+    </div>
+  ) : null;
 
   return (
-    <Motion.div
-      ref={galleryRef}
-      data-featured-gallery
-      data-featured-image-gallery
-      data-node-id="4686:3913"
-      role="group"
-      aria-label={galleryLabel}
-      aria-hidden={!visible}
-      initial={false}
-      animate={{
-        clipPath: getSectionRevealClip(visible),
-      }}
-      transition={getSectionRevealTransition(
-        visible,
-        reduceMotion,
-      )}
-      onAnimationComplete={() =>
-        onRevealComplete?.(visible ? 2 : 1)
-      }
-      className={`relative ${containerClassName} overflow-visible ${backgroundClassName}`}
-    >
-      <div
-        ref={gridRef}
-        className="
-          mx-auto
-          grid
-          h-full
-          w-full
-          max-w-[1441px]
-          grid-cols-3
-          gap-[24px]
-          px-[24px]
-          py-[48px]
-          max-[767px]:gap-[8px]
-          max-[767px]:px-[16px]
-        "
+    <>
+      <Motion.div
+        data-featured-gallery
+        data-featured-image-gallery
+        data-node-id="4686:3913"
+        role="group"
+        aria-label={galleryLabel}
+        aria-hidden={!visible}
+        initial={false}
+        animate={{ clipPath: getSectionRevealClip(visible) }}
+        transition={getSectionRevealTransition(visible, reduceMotion)}
+        onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
+        className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
       >
-        {columns.map((cards, column) => (
-          <div
-            key={column}
-            className={`
-              grid
-              min-h-0
-              min-w-0
-              gap-[24px]
-              max-[767px]:gap-[8px]
-              ${
-                column === 1
-                  ? "grid-rows-[335fr_569fr]"
-                  : "grid-rows-[568fr_336fr]"
-              }
-            `}
-          >
-            {cards.map((image, row) => {
-              const cardId = `${column}-${row}`;
+        <div className="mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]">
+          {columns.map((cards, column) => (
+            <div
+              key={column}
+              className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
+            >
+              {cards.map((image, row) => {
+                const cardId = `${column}-${row}`;
+                return (
+                  <FeaturedProjectsGalleryCard
+                    key={cardId}
+                    cardId={cardId}
+                    image={image}
+                    primary={cardId === PRIMARY_CARD_ID}
+                    setCardRef={setCardRef}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </Motion.div>
 
-              return (
-                <FeaturedProjectsGalleryCard
-                  key={cardId}
-                  cardId={cardId}
-                  image={image}
-                  primary={
-                    cardId === PRIMARY_CARD_ID
-                  }
-                  setCardRef={setCardRef}
-                />
-              );
-            })}
-          </div>
-        ))}
-      </div>
-    </Motion.div>
+      {stage && typeof document !== "undefined"
+        ? createPortal(stage, document.body)
+        : stage}
+    </>
   );
 }
 

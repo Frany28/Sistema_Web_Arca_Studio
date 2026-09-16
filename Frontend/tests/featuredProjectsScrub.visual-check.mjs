@@ -108,10 +108,11 @@ async function waitFor(expression, message) {
 }
 
 async function wheel(deltaY) {
+  const point = await evaluate(`({ x: innerWidth / 2, y: innerHeight / 2 })`);
   await send("Input.dispatchMouseEvent", {
     type: "mouseWheel",
-    x: 720,
-    y: 450,
+    x: point.x,
+    y: point.y,
     deltaX: 0,
     deltaY,
   });
@@ -235,6 +236,18 @@ try {
     `document.querySelectorAll('[data-featured-project-panel]')[0].getAttribute('aria-hidden') === 'false'`,
     "No se restauró el proyecto anterior al subir.",
   );
+  await waitFor(
+    `(() => {
+      const scroller = document.querySelector('[data-home-scroll-container]');
+      const panel = document.querySelectorAll('[data-featured-project-panel]')[0];
+      const viewport = scroller.getBoundingClientRect();
+      const rect = panel.getBoundingClientRect();
+      const panelTop = scroller.scrollTop + rect.top - viewport.top;
+      const panelEnd = panelTop + panel.offsetHeight - scroller.clientHeight;
+      return Math.abs(scroller.scrollTop - panelEnd) <= 1;
+    })()`,
+    "La transición de regreso no terminó en el borde de la galería.",
+  );
   await wheel(-760);
   await waitFor(
     `getComputedStyle(document.querySelector('[data-featured-gallery-overlay]')).visibility === 'hidden'`,
@@ -251,10 +264,22 @@ try {
     deviceScaleFactor: 1,
     mobile: true,
   });
+  await waitFor(
+    `innerWidth === 390 && innerHeight === 844`,
+    "El viewport móvil no terminó de aplicarse.",
+  );
+  await delay(200);
   await evaluate(moveToPanelEnd(0));
+  await delay(100);
   await wheel(1000);
+  await waitFor(
+    `getComputedStyle(document.querySelector('[data-featured-gallery-overlay]')).visibility === 'visible'`,
+    "La expansión móvil no comenzó.",
+  );
   const mobile = await evaluate(readGallery);
   if (
+    Math.abs(mobile.overlay.left) > fullscreenTolerance ||
+    Math.abs(mobile.overlay.top) > fullscreenTolerance ||
     Math.abs(mobile.overlay.width - 390) > fullscreenTolerance ||
     Math.abs(mobile.overlay.height - 844) > fullscreenTolerance
   ) {
