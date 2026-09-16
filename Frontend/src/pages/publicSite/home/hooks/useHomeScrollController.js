@@ -341,11 +341,17 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         // Al subir, activar primero el proyecto que va a entrar.
         // Así Quinta aparece desde el momento en que comienza a entrar al viewport.
         if (direction < 0) {
-          if (isFeaturedImageProject(transition.index)) {
-            setFeaturedExpansionProgress(transition.index, 1);
-          }
-          commitFeaturedProjectIndex(transition.index);
+        commitFeaturedProjectIndex(transition.index);
+
+        if (isFeaturedImageProject(transition.index)) {
+          window.requestAnimationFrame(() => {
+            setFeaturedExpansionProgress(
+              transition.index,
+              1,
+            );
+          });
         }
+      }
 
         const completeTransition = () => {
           activeTween = undefined;
@@ -402,13 +408,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
             // Al regresar desde Procesos, activamos el último proyecto
             // antes de comenzar la entrada.
             if (featuredProjectIndex !== null) {
+              commitFeaturedProjectIndex(featuredProjectIndex);
+
               if (
                 targetAlignment === "end" &&
                 isFeaturedImageProject(featuredProjectIndex)
               ) {
-                setFeaturedExpansionProgress(featuredProjectIndex, 1);
+                window.requestAnimationFrame(() => {
+                  setFeaturedExpansionProgress(
+                    featuredProjectIndex,
+                    1,
+                  );
+                });
               }
-              commitFeaturedProjectIndex(featuredProjectIndex);
             }
             
             let targetElement = target;
