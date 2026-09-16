@@ -116,8 +116,7 @@ function OpeningHome() {
           {initialScrollReady && (
             <>
               <ServicesSection
-                onNextSection={() => navigateToSection("featured-projects")}
-                onPreviousSection={() => navigateToSection("statement")}
+                active={activeSectionId === "services"}
                 titleVisible={titleIsVisible("services")}
               />
               <FeaturedProjectsSection

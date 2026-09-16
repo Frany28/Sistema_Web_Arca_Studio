@@ -3,9 +3,8 @@ import useServicesCategoryScroll from "../hooks/useServicesCategoryScroll.js";
 import "./ServicesCategoryShowcase.css";
 
 function ServicesCategoryShowcase({
+  active = false,
   categories,
-  onNextSection,
-  onPreviousSection,
 }) {
   const sectionRef = useRef(null);
   const layoutRef = useRef(null);
@@ -14,10 +13,7 @@ function ServicesCategoryShowcase({
   sectionRef,
   layoutRef,
   categories,
-  true,
-  undefined,
-  onNextSection,
-  onPreviousSection,
+  active,
   );
   const activeCategory = categories[activeIndex] ?? categories[0];
 
@@ -55,7 +51,7 @@ function ServicesCategoryShowcase({
       >
         <div
           ref={layoutRef}
-          className="services-category-showcase__content flex w-full max-w-[882px] touch-pan-x items-center justify-center gap-[var(--spacing-gap-8)]"
+          className="services-category-showcase__content flex w-full max-w-[882px] touch-auto items-center justify-center gap-[var(--spacing-gap-8)]"
         >
           <div
             className="services-category-showcase__list relative flex min-w-0 max-w-[514px] flex-1 flex-col items-start gap-[24px] py-[48px] pl-[16px]"
@@ -85,7 +81,7 @@ function ServicesCategoryShowcase({
                 onClick={() => selectCategory(index)}
                 onKeyDown={(event) => handleCategoryKeyDown(event, index)}
               >
-                <span data-service-category-scroll-trigger>
+                <span>
                   {category.label}
                 </span>
               </button>

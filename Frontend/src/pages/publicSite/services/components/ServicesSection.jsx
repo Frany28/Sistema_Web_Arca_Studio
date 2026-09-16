@@ -7,8 +7,7 @@ import {
 } from "../servicesContent.js";
 
 function ServicesSection({
-  onNextSection,
-  onPreviousSection,
+  active = false,
   titleVisible = false,
 }) {
   return (
@@ -20,10 +19,9 @@ function ServicesSection({
     >
       <ServicesHeading {...SERVICES_HEADING} visible={titleVisible} />
       <ServicesCategoryShowcase
-      categories={SERVICES_CATEGORIES}
-      onNextSection={onNextSection}
-      onPreviousSection={onPreviousSection}
-    />
+        active={active}
+        categories={SERVICES_CATEGORIES}
+      />
     </section>
   );
 }

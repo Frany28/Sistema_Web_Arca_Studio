@@ -1,253 +1,273 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { visitServiceCategory } from "../src/pages/publicSite/services/utils/servicesProgress.js";
 import { createFakeClock } from "./helpers/fakeClock.js";
-import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 
-function setup(reducedMotion = false, deferAnimations = false, captureScroll = true, nativeExit = false) {
-  const animations = [];
+const showcaseSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/services/components/ServicesCategoryShowcase.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const homeSource = readFileSync(
+  new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
+  "utf8",
+);
+
+function setup({ categoryCount = 7, enabled = true, reducedMotion = false } = {}) {
   const clock = createFakeClock();
-  const completion = [];
-  const exits = [];
-  const returns = [];
   const durations = [];
-  const handlers = {};
-  const effects = [];
   const selected = [];
-  const tabs = [0, 1, 2].map((i) => ({ offsetTop: i * 50, offsetHeight: 30 }));
-  const slides = [{}, {}, {}];
+  const hookSlots = [];
+  const tabs = Array.from({ length: categoryCount }, (_, index) => ({
+    offsetHeight: 30,
+    offsetTop: index * 50,
+  }));
+  const slides = Array.from({ length: categoryCount }, () => ({}));
   const indicator = {};
-  const trigger = new (class FakeElement {
-    closest(selector) {
-      return selector === "[data-service-category-scroll-trigger]" ? this : null;
-    }
-  })();
-  const Element = trigger.constructor;
+  const categories = Array.from({ length: categoryCount }, (_, index) => ({
+    id: `category-${index}`,
+  }));
   const section = {
-    querySelectorAll: (selector) => selector.includes('role=') ? tabs : slides,
+    querySelectorAll: (selector) => selector.includes("role=") ? tabs : slides,
     querySelector: () => indicator,
-    addEventListener: (type, handler) => { handlers[type] = handler; },
-    removeEventListener: (type) => { delete handlers[type]; },
   };
-  Object.defineProperty(section, "scrollTop", { set() { assert.fail("El selector no debe desplazar la p?gina"); } });
+  const layout = {};
+  let cleanup;
+  let cursor = 0;
+  let pendingEffect;
+
   const dependencies = {
-    ...navigation, visitServiceCategory,
-    Element,
-    useLayoutEffect: (effect) => effects.push(effect),
-    useRef: (current) => ({ current }), useState: (value) => [value, (next) => selected.push(next)],
-    useReducedMotion: () => reducedMotion,
-    gsap: { to(target, options) {
-      durations.push(options.duration);
-      if (deferAnimations && options.duration > 0) animations.push(() => options.onComplete?.());
-      else options.onComplete?.();
-    }, set() {}, killTweensOf() {}, context(fn) { fn(); return { revert() {} }; } },
-    getComputedStyle: () => ({ lineHeight: "30" }),
-    ResizeObserver: class { observe() {} disconnect() {} },
-    document: { fonts: { ready: Promise.resolve() } },
-    setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout,
-  };
-  const source = readFileSync(new URL("../src/pages/publicSite/services/hooks/useServicesCategoryScroll.js", import.meta.url), "utf8")
-    .replace(/import[^;]+;\s*/g, "")
-    .replace("export default useServicesCategoryScroll;", "return useServicesCategoryScroll;");
-  const hook = new Function(...Object.keys(dependencies), source)(...Object.values(dependencies));
-  const layout = {
-    clientHeight: 600,
-    getBoundingClientRect: () => ({ left: 100, right: 900, top: 100, bottom: 700 }),
-    addEventListener: (type, handler) => {
-      handlers[type] = (event) => handler({
-        ...event,
-        target: event.target ?? trigger,
-      });
+    useLayoutEffect: (effect) => {
+      pendingEffect = effect;
     },
-    removeEventListener: (type) => { delete handlers[type]; },
+    useRef: (initialValue) => {
+      const slot = cursor;
+      cursor += 1;
+      hookSlots[slot] ??= { current: initialValue };
+      return hookSlots[slot];
+    },
+    useState: (initialValue) => {
+      const slot = cursor;
+      cursor += 1;
+      if (!(slot in hookSlots)) hookSlots[slot] = initialValue;
+      const setValue = (nextValue) => {
+        hookSlots[slot] = typeof nextValue === "function"
+          ? nextValue(hookSlots[slot])
+          : nextValue;
+        selected.push(hookSlots[slot]);
+      };
+      return [hookSlots[slot], setValue];
+    },
+    useReducedMotion: () => reducedMotion,
+    gsap: {
+      to(_target, options) {
+        durations.push(options.duration);
+      },
+      set() {},
+      killTweensOf() {},
+      context(callback) {
+        callback();
+        return { revert() {} };
+      },
+    },
+    getComputedStyle: () => ({ lineHeight: "30" }),
+    ResizeObserver: class {
+      observe() {}
+      disconnect() {}
+    },
+    document: { fonts: { ready: Promise.resolve() } },
+    setTimeout: clock.setTimeout,
+    clearTimeout: clock.clearTimeout,
   };
-  section.addEventListener = () => assert.fail("No capturar el margen exterior del selector");
-  const api = hook({ current: section }, { current: layout }, [{}, {}, {}], true, (value) => completion.push(value), nativeExit ? undefined : () => exits.push(true), nativeExit ? undefined : () => returns.push(true), captureScroll);
-  const cleanup = effects[0]();
-  return { handlers, selected, cleanup, api, clock, completion, durations, exits, returns,
-    finishAnimations: () => { while (animations.length) animations.shift()(); } };
+  const source = readFileSync(
+    new URL(
+      "../src/pages/publicSite/services/hooks/useServicesCategoryScroll.js",
+      import.meta.url,
+    ),
+    "utf8",
+  )
+    .replace(/import[^;]+;\s*/g, "")
+    .replace(
+      "export default useServicesCategoryScroll;",
+      "return useServicesCategoryScroll;",
+    );
+  const hook = new Function(...Object.keys(dependencies), source)(
+    ...Object.values(dependencies),
+  );
+  let api;
+
+  const render = (isEnabled) => {
+    cursor = 0;
+    pendingEffect = undefined;
+    api = hook(
+      { current: section },
+      { current: layout },
+      categories,
+      isEnabled,
+    );
+    cleanup?.();
+    cleanup = pendingEffect?.();
+    return api;
+  };
+
+  render(enabled);
+
+  return {
+    clock,
+    durations,
+    selected,
+    get api() {
+      return api;
+    },
+    render,
+    cleanup: () => cleanup?.(),
+  };
 }
 
-test("native exit waits for a fresh gesture after the last category, then releases the page", () => {
-  const app = setup(false, false, true, true);
-  const wheel = () => {
-    let prevented = false;
-    app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() { prevented = true; }, stopPropagation() {} });
-    return prevented;
-  };
-  assert.equal(wheel(), true);
-  app.clock.advance(180);
-  assert.equal(wheel(), true);
-  assert.equal(app.selected.at(-1), 2);
-  assert.equal(wheel(), true);
-  app.clock.advance(180);
-  assert.equal(wheel(), false);
-  assert.equal(wheel(), false);
-  app.cleanup();
-});
+test("autoplay advances every two seconds in category order", () => {
+  const app = setup();
 
-test("a manual jump to the last category releases downward scrolling", () => {
-  const app = setup(false, false, true, true);
-  app.api.selectCategory(2);
-  app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() { assert.fail("La última opción debe permitir bajar"); }, stopPropagation() {} });
-  assert.equal(app.selected.at(-1), 2);
-  app.cleanup();
-});
-
-test("sustained wheel input advances options and releases the page at the end", () => {
-  const app = setup(false, false, true, true);
-  const wheel = (timeStamp) => {
-    let prevented = false;
-    app.handlers.wheel({ deltaY: 60, deltaX: 0, clientX: 500, clientY: 400, timeStamp,
-      preventDefault() { prevented = true; }, stopPropagation() {} });
-    return prevented;
-  };
-  assert.equal(wheel(0), true);
-  assert.equal(app.selected.at(-1), 1);
-  assert.equal(wheel(100), true);
-  assert.equal(app.selected.at(-1), 1);
-  assert.equal(wheel(260), true);
-  assert.equal(app.selected.at(-1), 2);
-  assert.equal(wheel(520), false);
-  app.cleanup();
-});
-
-test("wheel outside the layout never captures scrolling or changes the selected option", () => {
-  const app = setup(false, false, true, true);
-  for (const [clientX, clientY] of [[50, 400], [950, 400], [500, 50], [500, 750]]) {
-    app.handlers.wheel({ deltaY: 60, deltaX: 0, clientX, clientY, timeStamp: 0,
-      preventDefault() { assert.fail("Scroll fuera del contenedor"); }, stopPropagation() {} });
-  }
   assert.equal(app.selected.at(-1), 0);
-  app.cleanup();
-});
-
-test("continuous mode leaves wheel and touch native while category selection still works", () => {
-  const app = setup(false, false, false);
-  assert.equal(app.handlers.wheel, undefined);
-  assert.equal(app.handlers.pointerdown, undefined);
-  assert.equal(app.handlers.pointermove, undefined);
-  app.api.selectCategory(2);
-  assert.equal(app.selected.at(-1), 2);
-  assert.equal(app.exits.length, 0);
-  app.cleanup();
-});
-
-test("skipping a service before its transition ends cannot unlock downward navigation", () => {
-  const app = setup(false, true);
-  app.api.selectCategory(1);
-  app.api.selectCategory(2);
-  app.finishAnimations();
-  assert.equal(app.completion.at(-1), false);
-  app.api.selectCategory(1);
-  assert.equal(app.completion.at(-1), false);
-  app.finishAnimations();
-  assert.equal(app.completion.at(-1), true);
-  app.cleanup();
-});
-
-test("scrolling up at the first service releases the selector without completing categories", () => {
-  const app = setup();
-  const up = () => app.handlers.wheel({ deltaY: -60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
-  up(); up();
-  assert.equal(app.returns.length, 1);
-  assert.equal(app.completion.at(-1), false);
-  app.cleanup();
-});
-
-test("the next wheel gesture after the last visited service requests the next section", () => {
-  const app = setup();
-  const wheel = () => app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
-  wheel();
-  app.clock.advance(180);
-  wheel();
-  wheel();
-  assert.equal(app.exits.length, 0);
-  app.clock.advance(180);
-  wheel();
-  wheel();
-  assert.equal(app.exits.length, 1);
-  app.cleanup();
-});
-
-test("jumping straight to the last service does not allow exit with unvisited categories", () => {
-  const app = setup();
-  app.api.selectCategory(2);
-  app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
-  assert.equal(app.exits.length, 0);
-  app.cleanup();
-});
-
-test("internal wheel consumes inertia, rearms after idle and cleans its timer", () => {
-  const app = setup();
-  const wheel = () => app.handlers.wheel({ deltaY: 60, deltaX: 0, timeStamp: 0, preventDefault() {}, stopPropagation() {} });
-  wheel(); wheel();
+  assert.equal(app.clock.pending(), 1);
+  app.clock.advance(1999);
+  assert.equal(app.selected.at(-1), 0);
+  app.clock.advance(1);
   assert.equal(app.selected.at(-1), 1);
-  app.clock.advance(180);
-  wheel();
+  app.clock.advance(2000);
   assert.equal(app.selected.at(-1), 2);
-  assert.equal(app.completion.at(-1), true);
+
+  app.cleanup();
+});
+
+test("manual selection restarts the complete two-second delay", () => {
+  const app = setup();
+
+  app.clock.advance(2000);
+  assert.equal(app.selected.at(-1), 1);
+  app.clock.advance(1000);
+  app.api.selectCategory(4);
+  assert.equal(app.selected.at(-1), 4);
+  assert.equal(app.clock.pending(), 1);
+  app.clock.advance(1999);
+  assert.equal(app.selected.at(-1), 4);
+  app.clock.advance(1);
+  assert.equal(app.selected.at(-1), 5);
+
+  app.cleanup();
+});
+
+test("rapid manual selections keep exactly one autoplay timer", () => {
+  const app = setup();
+
+  app.api.selectCategory(1);
+  app.api.selectCategory(4);
+  app.api.selectCategory(2);
+  assert.equal(app.selected.at(-1), 2);
+  assert.equal(app.clock.pending(), 1);
+  const selectionCount = app.selected.length;
+  app.clock.advance(2000);
+  assert.equal(app.selected.length, selectionCount + 1);
+  assert.equal(app.selected.at(-1), 3);
+  assert.equal(app.clock.pending(), 1);
+
+  app.cleanup();
+});
+
+test("autoplay wraps from the final category to the first", () => {
+  const app = setup();
+
+  app.api.selectCategory(6);
+  app.clock.advance(2000);
+  assert.equal(app.selected.at(-1), 0);
+
+  app.cleanup();
+});
+
+test("autoplay pauses while Services is inactive and resumes from its selection", () => {
+  const app = setup();
+
+  app.api.selectCategory(3);
+  app.render(false);
+  assert.equal(app.clock.pending(), 0);
+  const pausedSelectionCount = app.selected.length;
+  app.clock.advance(6000);
+  assert.equal(app.selected.length, pausedSelectionCount);
+
+  app.render(true);
+  assert.equal(app.selected.at(-1), 3);
+  assert.equal(app.clock.pending(), 1);
+  app.clock.advance(2000);
+  assert.equal(app.selected.at(-1), 4);
+
+  app.cleanup();
+});
+
+test("cleanup removes autoplay and prevents updates after unmount", () => {
+  const app = setup();
+  const selectionCount = app.selected.length;
+
   app.cleanup();
   assert.equal(app.clock.pending(), 0);
+  app.clock.advance(6000);
+  assert.equal(app.selected.length, selectionCount);
 });
 
-test("manual tab selection must visit every category before signaling completion", () => {
-  const app = setup();
-  app.api.selectCategory(2);
-  assert.equal(app.completion.at(-1), false);
-  app.api.selectCategory(1);
-  assert.equal(app.completion.at(-1), true);
-  app.cleanup();
+test("category changes preserve GSAP crossfade and reduced motion", () => {
+  const animated = setup();
+  animated.api.selectCategory(1);
+  assert.ok(animated.durations.slice(-8).every((duration) => duration === 0.2));
+  animated.cleanup();
+
+  const reduced = setup({ reducedMotion: true });
+  reduced.api.selectCategory(1);
+  reduced.clock.advance(2000);
+  assert.ok(reduced.durations.every((duration) => duration === 0));
+  reduced.cleanup();
 });
 
-test("reduced motion still allows category selection with zero animation duration", () => {
-  const app = setup(true);
-  app.api.selectCategory(1);
-  assert.equal(app.selected.at(-1), 1);
-  assert.ok(app.durations.every((duration) => duration === 0));
-  app.cleanup();
+test("Services registers no internal wheel or swipe navigation", () => {
+  const hookSource = readFileSync(
+    new URL(
+      "../src/pages/publicSite/services/hooks/useServicesCategoryScroll.js",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.doesNotMatch(
+    hookSource,
+    /addEventListener|preventDefault|stopPropagation|advanceWheelGesture|normalizeWheelDelta|getSwipeDirection/,
+  );
+  assert.doesNotMatch(showcaseSource, /onMouseEnter|touch-pan-x/);
+  assert.match(showcaseSource, /touch-auto/);
 });
 
-test("internal selector ignores Ctrl-wheel zoom and horizontal gestures", () => {
-  const app = setup();
-  const fail = () => assert.fail("Native gesture was intercepted");
-  app.handlers.wheel({ deltaX: 0, deltaY: -50, ctrlKey: true, preventDefault: fail });
-  app.handlers.wheel({ deltaX: 100, deltaY: 1, preventDefault: fail });
-  assert.equal(app.selected.at(-1), 0);
-  app.cleanup();
+test("click and accessible keyboard navigation share selectCategory", () => {
+  assert.match(showcaseSource, /onClick=\{\(\) => selectCategory\(index\)\}/);
+  assert.match(showcaseSource, /selectCategory\(nextIndex\)/);
+  assert.match(showcaseSource, /role="tab"/);
+  assert.match(showcaseSource, /role="tabpanel"/);
+  for (const key of [
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "Home",
+    "End",
+  ]) {
+    assert.match(showcaseSource, new RegExp(`event\\.key === "${key}"`));
+  }
 });
 
-test("wheel changes categories internally and contains scrolling at both boundaries", () => {
-  const app = setup();
-  const wheel = (deltaY, timeStamp) => {
-    let prevented = false;
-    let stopped = false;
-    app.handlers.wheel({ deltaY, deltaX: 0, timeStamp,
-      preventDefault() { prevented = true; }, stopPropagation() { stopped = true; } });
-    assert.equal(prevented, true);
-    assert.equal(stopped, true);
-  };
-  wheel(-50, 0);
-  assert.equal(app.selected.at(-1), 0);
-  wheel(50, 300);
-  assert.equal(app.selected.at(-1), 1);
-  wheel(50, 320);
-  assert.equal(app.selected.at(-1), 1);
-  app.api.selectCategory(2);
-  wheel(50, 340);
-  assert.equal(app.selected.at(-1), 2);
-  app.cleanup();
-  assert.deepEqual(app.handlers, {});
-});
-
-test("touch changes a category without moving the outer scroll", () => {
-  const app = setup();
-  app.handlers.pointerdown({ pointerType: "touch", isPrimary: true, pointerId: 1, clientX: 50, clientY: 200 });
-  let prevented = false;
-  app.handlers.pointermove({ pointerId: 1, clientX: 50, clientY: 100,
-    preventDefault() { prevented = true; }, stopPropagation() {} });
-  assert.equal(prevented, true);
-  assert.equal(app.selected.at(-1), 1);
-  app.cleanup();
+test("OpeningHome activates autoplay through its existing section state", () => {
+  assert.match(
+    homeSource,
+    /<ServicesSection\s+active=\{activeSectionId === "services"\}/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /<ServicesSection[\s\S]*?onNextSection|<ServicesSection[\s\S]*?onPreviousSection/,
+  );
 });
