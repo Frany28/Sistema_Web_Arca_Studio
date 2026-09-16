@@ -189,7 +189,7 @@ test('content titles follow complete viewport exit instead of active navigation 
 });
 
 test('project and process titles keep the same last-pixel rule in both directions', () => {
-  const app = setup();
+  const app = setup(true);
   const scrollTo = (scrollTop) => {
     app.scroller.scrollTop = scrollTop;
     app.handlers.scroll();
@@ -568,6 +568,37 @@ test("native scroll cannot reveal the next project before expansion starts", () 
     app.scroller.scrollTop,
     4999,
     "Upward native scrolling remains available before expansion starts",
+  );
+  app.cleanup();
+});
+
+test("native upward scroll cannot reveal the previous content before contraction starts", () => {
+  const app = setup();
+  placeAtContentBoundary(app, "featured-projects", 5000);
+  app.controller.featuredProjectExpansionProgress[0].set(1);
+
+  app.scroller.scrollTop = 4962;
+  app.handlers.scroll();
+
+  assert.equal(
+    app.scroller.scrollTop,
+    5000,
+    "The viewport returns to the fullscreen contraction boundary",
+  );
+  assert.equal(app.getFeaturedExpansionProgress(0), 1);
+  assert.equal(app.getActiveFeaturedProject(), 0);
+  assert.deepEqual(
+    app.getVisibleTitles(),
+    ["featured-project-quinta-bella-vista"],
+    "Visibility is synchronized after correcting the upward overshoot",
+  );
+
+  app.scroller.scrollTop = 5001;
+  app.handlers.scroll();
+  assert.equal(
+    app.scroller.scrollTop,
+    5001,
+    "Downward navigation remains available after fullscreen is complete",
   );
   app.cleanup();
 });

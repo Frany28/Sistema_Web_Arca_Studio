@@ -649,6 +649,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const expansionIsRunning = progress > 0 && progress < 1;
       const expansionHasNotStartedAtBoundary =
         progress <= 0 && scroller.scrollTop >= expansionAnchor;
+      const contractionHasNotStartedAtBoundary =
+        progress >= 1 && scroller.scrollTop <= expansionAnchor;
 
       const expansionJustCompleted =
         featuredExpansionCompletionLock === currentIndex &&
@@ -657,14 +659,16 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (
         !expansionIsRunning &&
         !expansionHasNotStartedAtBoundary &&
+        !contractionHasNotStartedAtBoundary &&
         !expansionJustCompleted
       ) {
         return false;
       }
 
       /*
-      * Mientras la expansión no haya terminado,
-      * el viewport NO puede avanzar hacia el siguiente proyecto.
+      * El viewport permanece en el ancla mientras la imagen se amplía
+      * o se contrae. Tampoco puede cruzarla antes de iniciar el efecto
+      * correspondiente en ninguna de las dos direcciones.
       */
       if (
         Math.abs(scroller.scrollTop - expansionAnchor) >
