@@ -201,6 +201,9 @@ test('project and process titles keep the same last-pixel rule in both direction
 
   app.controller.navigateToSection('featured-projects');
   app.flush();
+  app.controller.featuredProjectExpansionProgress.forEach((progress) => {
+    progress.set(1);
+  });
 
   assert.deepEqual(scrollTo(5799), [quinta, muelle]);
   assert.deepEqual(scrollTo(5800), [muelle]);
@@ -434,6 +437,22 @@ function placeAtContentBoundary(app, sectionId, scrollTop) {
   app.handlers.scroll();
 }
 
+function placeAtFeaturedProjectBoundary(app, projectIndex, scrollTop) {
+  app.controller.navigateToSection("featured-projects");
+  app.flush();
+
+  for (let nextIndex = 1; nextIndex <= projectIndex; nextIndex += 1) {
+    app.controller.featuredProjectExpansionProgress[nextIndex - 1].set(1);
+    app.scroller.scrollTop =
+      app.featured.offsetTop +
+      (nextIndex * app.featuredProjects[nextIndex - 1].offsetHeight);
+    app.handlers.scroll();
+  }
+
+  app.scroller.scrollTop = scrollTop;
+  app.handlers.scroll();
+}
+
 test("content hands native scroll to a reversible scrub before navigation", () => {
   const app = setup();
   const wheel = createWheelDriver(app);
@@ -519,6 +538,40 @@ test("the wheel event that completes Quinta fullscreen cannot start the next pro
   app.cleanup();
 });
 
+test("native scroll cannot reveal the next project before expansion starts", () => {
+  const app = setup();
+  placeAtContentBoundary(app, "featured-projects", 5000);
+
+  app.scroller.scrollTop = 5038;
+  app.handlers.scroll();
+
+  assert.equal(
+    app.scroller.scrollTop,
+    5000,
+    "The viewport returns to the current project expansion boundary",
+  );
+  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  assert.equal(
+    app.getActiveFeaturedProject(),
+    0,
+    "A native overshoot cannot activate the following project",
+  );
+  assert.deepEqual(
+    app.getVisibleTitles(),
+    ["featured-project-quinta-bella-vista"],
+    "Visibility is synchronized only after correcting the overshoot",
+  );
+
+  app.scroller.scrollTop = 4999;
+  app.handlers.scroll();
+  assert.equal(
+    app.scroller.scrollTop,
+    4999,
+    "Upward native scrolling remains available before expansion starts",
+  );
+  app.cleanup();
+});
+
 test("every expandable featured project pins until its own fullscreen is rendered", () => {
   const imageProjectCases = [
     { anchor: 5000, index: 0 },
@@ -528,7 +581,7 @@ test("every expandable featured project pins until its own fullscreen is rendere
   for (const { anchor, index } of imageProjectCases) {
     const app = setup();
     const wheel = createWheelDriver(app);
-    placeAtContentBoundary(app, "featured-projects", anchor);
+    placeAtFeaturedProjectBoundary(app, index, anchor);
     app.controller.featuredProjectExpansionProgress[index].set(0.75);
 
     assert.equal(app.getActiveFeaturedProject(), index);
@@ -593,7 +646,11 @@ test("every content boundary uses one shared transition for wheel and trackpad i
       const app = setup();
       const wheel = createWheelDriver(app);
       const label = `${boundary.name} with ${profile.name}`;
-      placeAtContentBoundary(app, boundary.section, boundary.edge);
+      placeAtFeaturedProjectBoundary(
+        app,
+        boundary.projectIndex,
+        boundary.edge,
+      );
       if (boundary.projectIndex !== null) {
         app.controller.featuredProjectExpansionProgress[boundary.projectIndex].set(1);
       }
@@ -704,6 +761,7 @@ test("reduced motion bypasses scrub without trapping navigation", () => {
   placeAtContentBoundary(app, "featured-projects", 5000);
   assert.equal(wheel(80), false);
   assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  assert.equal(app.scroller.scrollTop, 5080);
   app.cleanup();
 });
 

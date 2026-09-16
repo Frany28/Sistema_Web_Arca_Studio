@@ -588,20 +588,16 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     ) => {
       const currentPanel = projectPanels[currentIndex];
       const bounds = getPanelScrollBounds(currentPanel);
+
       if (!bounds) return null;
 
-      const nextPanel = projectPanels[currentIndex + 1];
-      if (!nextPanel) return bounds.end;
-
-      const viewportRect = scroller.getBoundingClientRect();
-      const nextPanelTop = getElementScrollTop(nextPanel);
-      const nextPanelEntryScrollTop =
-        nextPanelTop - (viewportRect.bottom - viewportRect.top);
-
-      return Math.max(
-        bounds.start,
-        Math.min(bounds.end, nextPanelEntryScrollTop),
-      );
+      /*
+      * La expansión debe ocurrir completamente dentro del proyecto actual.
+      * No calculamos el anchor a partir de la entrada del siguiente panel,
+      * porque eso permite que el siguiente proyecto se asome durante
+      * la ampliación.
+      */
+      return bounds.end;
     };
     const logFeaturedExpansionGeometry = (
       phase,
@@ -628,18 +624,17 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       });
     };
     const pinFeaturedExpansion = () => {
-      if (activeSectionRef.current !== "featured-projects") return false;
+      if (
+        reduceMotion ||
+        activeSectionRef.current !== "featured-projects"
+      ) {
+        return false;
+      }
 
       const projectPanels = getFeaturedProjectPanels();
       const currentIndex = activeFeaturedProjectIndexRef.current;
-      const progress = getFeaturedExpansionProgress(currentIndex);
-      const preservesCompletedFullscreen =
-        featuredExpansionCompletionLock === currentIndex;
-      if (
-        (!preservesCompletedFullscreen &&
-          (progress <= 0 || progress >= 1)) ||
-        !isFeaturedImageProject(currentIndex, projectPanels)
-      ) {
+
+      if (!isFeaturedImageProject(currentIndex, projectPanels)) {
         return false;
       }
 
@@ -649,6 +644,28 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       );
       if (expansionAnchor === null) return false;
 
+      const progress = getFeaturedExpansionProgress(currentIndex);
+
+      const expansionIsRunning = progress > 0 && progress < 1;
+      const expansionHasNotStartedAtBoundary =
+        progress <= 0 && scroller.scrollTop >= expansionAnchor;
+
+      const expansionJustCompleted =
+        featuredExpansionCompletionLock === currentIndex &&
+        progress >= 1;
+
+      if (
+        !expansionIsRunning &&
+        !expansionHasNotStartedAtBoundary &&
+        !expansionJustCompleted
+      ) {
+        return false;
+      }
+
+      /*
+      * Mientras la expansión no haya terminado,
+      * el viewport NO puede avanzar hacia el siguiente proyecto.
+      */
       if (
         Math.abs(scroller.scrollTop - expansionAnchor) >
         FEATURED_PROJECT_EDGE_TOLERANCE_PX
@@ -1335,13 +1352,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handleNativeScroll = () => {
-      synchronizeContentTitleVisibility();
-      if (isProgrammaticScroll) return;
-      if (contentMode) {
-        if (pinFeaturedExpansion()) return;
-        synchronizeContentScroll({ titlesSynchronized: true });
+      if (isProgrammaticScroll) {
+        synchronizeContentTitleVisibility();
         return;
       }
+      if (contentMode) {
+        if (pinFeaturedExpansion()) {
+          synchronizeContentTitleVisibility();
+          return;
+        }
+        synchronizeContentScroll();
+        return;
+      }
+      synchronizeContentTitleVisibility();
       const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
       if (scroller.scrollTop > statementTop + 1) {
         if (!contentMode) {
