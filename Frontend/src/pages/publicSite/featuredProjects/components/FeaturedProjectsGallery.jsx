@@ -207,17 +207,12 @@ function FeaturedProjectsGallery({
         if (!rect) return;
 
         if (cardId === PRIMARY_CARD_ID) {
-        const galleryRect = gallery.getBoundingClientRect();
-
         gsap.set(card, {
-          position: "absolute",
-
-          left: -galleryRect.left,
-          top: -galleryRect.top,
-
+          position: "fixed",
+          left: 0,
+          top: 0,
           width: viewportWidth,
           height: viewportHeight,
-
           margin: 0,
           borderRadius: 0,
           opacity: 1,
