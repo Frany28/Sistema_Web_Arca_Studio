@@ -490,6 +490,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
               targetSectionId === "featured-projects" &&
               featuredProjectIndex === 0 &&
               targetAlignment === "start";
+            const entersAptoFromProcess =
+              activeSectionRef.current === "process" &&
+              targetSectionId === "featured-projects" &&
+              featuredProjectIndex !== null &&
+              targetAlignment === "end";
 
             if (entersQuintaFromServices) {
               setFeaturedExpansionProgress(0, 0);
@@ -532,6 +537,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
         if (featuredProjectIndex !== null) {
           commitFeaturedProjectIndex(featuredProjectIndex);
+        }
+
+        if (entersAptoFromProcess) {
+          selectSection(targetSectionId);
         }
 
         const completeTransition = () => {

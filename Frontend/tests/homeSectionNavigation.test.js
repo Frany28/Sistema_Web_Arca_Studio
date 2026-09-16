@@ -775,6 +775,49 @@ test("returning to an image project restores fullscreen before contraction", () 
   app.cleanup();
 });
 
+test("Process hands off to Apto. JC already active and fully expanded", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+
+  app.controller.navigateToSection("process");
+  app.flush();
+  assert.equal(app.getActiveSection(), "process");
+  assert.equal(app.getFeaturedExpansionProgress(2), 0);
+
+  for (const deltaY of [-8, -8, -8, -8]) {
+    assert.equal(wheel(deltaY), true);
+  }
+
+  assert.equal(app.getPendingTweenCount(), 1);
+  assert.equal(app.getFeaturedExpansionProgress(2), 1);
+  assert.equal(app.getActiveFeaturedProject(), 2);
+  assert.equal(
+    app.getActiveSection(),
+    "featured-projects",
+    "The expanded stage is active before the scroll tween can expose Apto. JC",
+  );
+
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 7800);
+
+  for (const deltaY of [8, 8, 8, 8]) {
+    assert.equal(wheel(deltaY), true);
+  }
+
+  assert.equal(app.getPendingTweenCount(), 1);
+  assert.equal(
+    app.getActiveSection(),
+    "featured-projects",
+    "Apto. JC stays active and expanded throughout its exit",
+  );
+  assert.equal(app.getFeaturedExpansionProgress(2), 1);
+
+  app.flush();
+  assert.equal(app.getActiveSection(), "process");
+  assert.equal(app.scroller.scrollTop, app.processSection.offsetTop);
+  app.cleanup();
+});
+
 test("Services continues with native scroll into Quinta", () => {
   const app = setup();
   const wheel = createWheelDriver(app);
