@@ -201,6 +201,7 @@ try {
     expanded.overlay.width <= expanded.primary.width ||
     expanded.overlay.width >= expanded.viewport.width ||
     expanded.activeProject !== 0 ||
+    Math.abs(expanded.scrollTop - initial.scrollTop) > 1 ||
     expanded.secondaryDistance <= 10
   ) {
     throw new Error(`Estado intermedio inválido: ${JSON.stringify(expanded)}`);
@@ -208,7 +209,11 @@ try {
 
   await wheel(-160);
   const reversed = await evaluate(readGallery);
-  if (reversed.overlay.width >= expanded.overlay.width || reversed.activeProject !== 0) {
+  if (
+    reversed.overlay.width >= expanded.overlay.width ||
+    reversed.activeProject !== 0 ||
+    Math.abs(reversed.scrollTop - initial.scrollTop) > 1
+  ) {
     throw new Error("La inversión parcial no contrajo la imagen central.");
   }
 

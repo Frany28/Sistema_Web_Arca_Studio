@@ -259,6 +259,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const nextIndex = currentIndex + direction;
       if (nextIndex < 0 || nextIndex >= projectPanels.length) return null;
 
+      const expansionProgress = getFeaturedExpansionProgress(currentIndex);
+      if (
+        isFeaturedImageProject(currentIndex, projectPanels) &&
+        ((direction > 0 && expansionProgress < 1) ||
+          (direction < 0 && expansionProgress > 0))
+      ) {
+        return null;
+      }
+
       const viewportRect = scroller.getBoundingClientRect();
       const currentRect = projectPanels[currentIndex].getBoundingClientRect();
       const projectedDistance = Math.max(0, direction * travelDistance);
@@ -485,6 +494,32 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         end: panelTop + Math.max(0, panelHeight - scroller.clientHeight),
       };
     };
+    const pinFeaturedExpansion = () => {
+      if (activeSectionRef.current !== "featured-projects") return false;
+
+      const projectPanels = getFeaturedProjectPanels();
+      const currentIndex = activeFeaturedProjectIndexRef.current;
+      const progress = getFeaturedExpansionProgress(currentIndex);
+      if (
+        progress <= 0 ||
+        progress >= 1 ||
+        !isFeaturedImageProject(currentIndex, projectPanels)
+      ) {
+        return false;
+      }
+
+      const bounds = getPanelScrollBounds(projectPanels[currentIndex]);
+      if (!bounds) return false;
+
+      if (
+        Math.abs(scroller.scrollTop - bounds.end) >
+        FEATURED_PROJECT_EDGE_TOLERANCE_PX
+      ) {
+        scroller.scrollTop = bounds.end;
+      }
+
+      return true;
+    };
     const getContentWheelBoundary = (direction) => {
       if (activeSectionRef.current === "services" && direction > 0) {
         const bounds = getPanelScrollBounds(getSection("services"));
@@ -568,11 +603,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const magnitude = Math.abs(deltaY);
       const reachesEnd =
         distanceToEnd <= magnitude + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
-      const expands = direction > 0 && progress < 1 && reachesEnd;
+      const isScrubbing = progress > 0 && progress < 1;
+      const expands =
+        direction > 0 && progress < 1 && (isScrubbing || reachesEnd);
       const contracts =
         direction < 0 &&
         progress > 0 &&
-        scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+        (isScrubbing ||
+          scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX);
 
       if (!expands && !contracts) return false;
 
@@ -1113,6 +1151,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       synchronizeContentTitleVisibility();
       if (isProgrammaticScroll) return;
       if (contentMode) {
+        if (pinFeaturedExpansion()) return;
         synchronizeContentScroll({ titlesSynchronized: true });
         return;
       }

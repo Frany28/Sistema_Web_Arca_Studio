@@ -59,6 +59,7 @@ test("secondary images move beyond the viewport while the Flip stage stays non-i
   assert.match(gallerySource, /getSecondaryFinalPosition/);
   assert.match(gallerySource, /left: -rect\.width - gutter/);
   assert.match(gallerySource, /left: viewportWidth \+ gutter/);
+  assert.match(gallerySource, /top: rect\.top/);
   assert.match(gallerySource, /top: -rect\.height - gutter/);
   assert.match(gallerySource, /pointer-events-none fixed inset-0 z-\[55\]/);
   assert.match(gallerySource, /aria-hidden="true"/);

@@ -43,20 +43,20 @@ function clampProgress(progress) {
 }
 
 function getSecondaryFinalPosition(cardId, rect, viewportWidth, viewportHeight) {
-  const [column, row] = cardId.split("-").map(Number);
+  const [column] = cardId.split("-").map(Number);
   const gutter = Math.max(24, Math.min(viewportWidth, viewportHeight) * 0.04);
 
   if (column === 0) {
     return {
       left: -rect.width - gutter,
-      top: row === 0 ? -rect.height - gutter : viewportHeight + gutter,
+      top: rect.top,
     };
   }
 
   if (column === 2) {
     return {
       left: viewportWidth + gutter,
-      top: row === 0 ? -rect.height - gutter : viewportHeight + gutter,
+      top: rect.top,
     };
   }
 

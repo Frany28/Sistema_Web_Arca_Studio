@@ -444,6 +444,7 @@ El formato relativo compacto destinado a espacios restringidos constituye una va
 ### Movimiento de Proyectos destacados
 
 - La expansión de cada galería bento utiliza una timeline pausada de GSAP Flip, inspirada en el demo oficial `Scrubbed Bento Gallery`. Las cards secundarias salen físicamente del viewport y la card central ocupa progresivamente `100vw × 100dvh`, sin overlay de oscurecimiento ni fade como movimiento principal. La timeline se conduce exclusivamente con el progreso compartido de wheel, trackpad, touch o teclado; no crea un `ScrollTrigger` ni un pin adicional. La apertura y el cierre recorren el mismo estado FLIP en sentidos opuestos, y la geometría se reconstruye con `gsap.context().revert()` al cambiar el viewport.
+- Mientras el progreso esté entre cero y uno, el controlador fija `scrollTop` en el borde final del panel: el gesto solo modifica la timeline y no desplaza verticalmente la sección. La transición al proyecto siguiente, anterior o Procesos se habilita únicamente después de fullscreen completo; al retroceder, primero se recompone el bento hasta progreso cero.
 
 ## Criterio de entrega
 

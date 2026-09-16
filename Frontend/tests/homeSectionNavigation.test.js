@@ -450,6 +450,14 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   assert.equal(app.getActiveFeaturedProject(), 0);
   assert.equal(app.getPendingTweenCount(), 0);
 
+  app.scroller.scrollTop = 4960;
+  app.handlers.scroll();
+  assert.equal(
+    app.scroller.scrollTop,
+    5000,
+    "El panel permanece fijado mientras el scrub está incompleto",
+  );
+
   assert.equal(wheel(-32), true);
   assert.equal(app.getFeaturedExpansionProgress(0), 0.05);
   assert.equal(app.scroller.scrollTop, 5000);
