@@ -1,4 +1,3 @@
-import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { motion as Motion, useReducedMotion } from "motion/react";
 import { gsap } from "gsap";
@@ -174,6 +173,7 @@ function FeaturedProjectsGallery({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const sourceRect = sourceGrid.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
     const sourceStyles = window.getComputedStyle(sourceGrid);
     const gap = Number.parseFloat(sourceStyles.columnGap) || 0;
 
@@ -181,8 +181,8 @@ function FeaturedProjectsGallery({
       // El stage empieza como una copia geométrica del Bento visible.
       gsap.set(stageGrid, {
         height: sourceRect.height,
-        left: sourceRect.left,
-        top: sourceRect.top,
+        left: sourceRect.left - stageRect.left,
+        top: sourceRect.top - stageRect.top,
         width: sourceRect.width,
       });
       const initialGridStyle = stageGrid.style.cssText;
@@ -194,8 +194,8 @@ function FeaturedProjectsGallery({
       // fuera por el crecimiento del Bento, no por destinos de cada tarjeta.
       gsap.set(stageGrid, {
         height: viewportHeight * 1.5 + gap,
-        left: -(viewportWidth + gap),
-        top: -(viewportHeight * 0.5 + gap),
+        left: -(viewportWidth + gap) - stageRect.left,
+        top: -(viewportHeight * 0.5 + gap) - stageRect.top,
         width: viewportWidth * 3 + gap * 2,
         gridTemplateColumns: `repeat(3, ${viewportWidth}px)`,
       });
@@ -218,7 +218,7 @@ function FeaturedProjectsGallery({
 
       flipTimelineRef.current = Flip.to(finalState, {
         duration: 1,
-        ease: reduceMotion ? "none" : "expoScale(1, 5)",
+        ease: reduceMotion ? "none" : "sine.inOut",
         paused: true,
         simple: true,
       });
@@ -309,7 +309,7 @@ function FeaturedProjectsGallery({
       ref={stageRef}
       aria-hidden="true"
       data-featured-gallery-stage
-      className="pointer-events-none fixed inset-0 z-[55] overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
       style={{ visibility: "hidden" }}
     >
       <div
@@ -357,6 +357,7 @@ function FeaturedProjectsGallery({
         onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
         className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
       >
+        {stage}
         <div ref={gridRef} className="mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]">
           {columns.map((cards, column) => (
             <div
@@ -379,10 +380,6 @@ function FeaturedProjectsGallery({
           ))}
         </div>
       </Motion.div>
-
-      {stage && typeof document !== "undefined"
-        ? createPortal(stage, document.body)
-        : stage}
     </>
   );
 }

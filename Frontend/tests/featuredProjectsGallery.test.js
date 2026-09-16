@@ -45,9 +45,10 @@ test("the bento scrubs through a reversible GSAP Flip layout", () => {
   assert.match(gallerySource, /expansionProgress\.on\("change"/);
   assert.match(gallerySource, /Flip\.getState\(/);
   assert.match(gallerySource, /Flip\.to\(finalState/);
-  assert.match(gallerySource, /ease: reduceMotion \? "none" : "expoScale\(1, 5\)"/);
+  assert.match(gallerySource, /ease: reduceMotion \? "none" : "sine\.inOut"/);
   assert.match(gallerySource, /flipTimelineRef\.current\?\.progress\(progress, false\)/);
-  assert.match(gallerySource, /createPortal\(stage, document\.body\)/);
+  assert.match(gallerySource, /const stageRect = stage\.getBoundingClientRect\(\)/);
+  assert.match(gallerySource, /\{stage\}/);
   assert.match(gallerySource, /object-fit|fit = "cover"/);
   assert.match(gallerySource, /ResizeObserver/);
   assert.match(gallerySource, /orientationchange/);
@@ -60,14 +61,15 @@ test("the expanded layout is a single larger Bento grid, not scattered cards", (
   assert.match(gallerySource, /gridTemplateColumns: `repeat\(3, \$\{viewportWidth\}px\)`/);
   assert.match(gallerySource, /gridTemplateRows: column === 1/);
   assert.match(gallerySource, /height: viewportHeight \* 1\.5 \+ gap/);
-  assert.match(gallerySource, /left: -\(viewportWidth \+ gap\)/);
-  assert.match(gallerySource, /top: -\(viewportHeight \* 0\.5 \+ gap\)/);
+  assert.match(gallerySource, /left: -\(viewportWidth \+ gap\) - stageRect\.left/);
+  assert.match(gallerySource, /top: -\(viewportHeight \* 0\.5 \+ gap\) - stageRect\.top/);
   assert.doesNotMatch(gallerySource, /getSecondaryFinalPosition/);
   assert.doesNotMatch(gallerySource, /rect\.width - gutter/);
   assert.doesNotMatch(gallerySource, /viewportWidth \+ gutter/);
-  assert.match(gallerySource, /pointer-events-none fixed inset-0 z-\[55\]/);
+  assert.match(gallerySource, /pointer-events-none absolute inset-0 z-10 overflow-hidden/);
   assert.match(gallerySource, /aria-hidden="true"/);
   assert.doesNotMatch(gallerySource, /card\.style\.opacity/);
+  assert.doesNotMatch(gallerySource, /createPortal/);
 });
 
 test("process videos retain their click and modal behavior", () => {
