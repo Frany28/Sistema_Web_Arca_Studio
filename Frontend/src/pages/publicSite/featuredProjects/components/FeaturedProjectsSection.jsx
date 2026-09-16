@@ -7,6 +7,7 @@ import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 function FeaturedProjectsSection({
   active = false,
   activeProjectIndex = 0,
+  expansionProgress = [],
   step = 1,
   onRevealComplete,
   titleVisibility = [],
@@ -43,16 +44,20 @@ function FeaturedProjectsSection({
           </p>
         </SectionTitleReveal>
         <FeaturedProjectsGallery
+          active={firstProjectActive}
+          expansionProgress={expansionProgress[0]}
           visible={step === 2}
           onRevealComplete={onRevealComplete}
         />
       </article>
       <FeaturedProjectsProjectPanel
         active={active && activeProjectIndex === 1}
+        expansionProgress={expansionProgress[1]}
         titleVisible={Boolean(titleVisibility[1])}
       />
       <FeaturedProjectsProjectPanel
         active={active && activeProjectIndex === 2}
+        expansionProgress={expansionProgress[2]}
         project={APTO_JC_PROJECT}
         titleVisible={Boolean(titleVisibility[2])}
       />

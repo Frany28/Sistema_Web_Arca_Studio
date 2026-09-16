@@ -19,6 +19,9 @@ const STATEMENT_MAX_TRAVEL_PX = 320;
 const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.3;
 const STATEMENT_INITIAL_MASK_SCALE = 1000;
 const STATEMENT_WHEEL_DELTA_LIMIT_PX = 48;
+const FEATURED_EXPANSION_MIN_TRAVEL_PX = 420;
+const FEATURED_EXPANSION_MAX_TRAVEL_PX = 760;
+const FEATURED_EXPANSION_VIEWPORT_RATIO = 0.8;
 
 function clampHomeStatementProgress(progress) {
   if (!Number.isFinite(progress)) return 0;
@@ -69,6 +72,39 @@ function limitHomeStatementWheelDelta(
   }
 
   return Math.min(Math.max(deltaY, -limit), limit);
+}
+
+function clampFeaturedExpansionProgress(progress) {
+  if (!Number.isFinite(progress)) return 0;
+  return Math.min(Math.max(progress, 0), 1);
+}
+
+function getFeaturedExpansionTravelDistance(viewportHeight) {
+  const safeViewportHeight = Number.isFinite(viewportHeight)
+    ? viewportHeight
+    : 0;
+
+  return Math.min(
+    Math.max(
+      safeViewportHeight * FEATURED_EXPANSION_VIEWPORT_RATIO,
+      FEATURED_EXPANSION_MIN_TRAVEL_PX,
+    ),
+    FEATURED_EXPANSION_MAX_TRAVEL_PX,
+  );
+}
+
+function advanceFeaturedExpansionProgress(
+  progress,
+  deltaY,
+  viewportHeight,
+) {
+  const currentProgress = clampFeaturedExpansionProgress(progress);
+  if (!Number.isFinite(deltaY) || deltaY === 0) return currentProgress;
+
+  return clampFeaturedExpansionProgress(
+    currentProgress +
+      deltaY / getFeaturedExpansionTravelDistance(viewportHeight),
+  );
 }
 
 function getHomeStatementVisualState(progress) {
@@ -305,9 +341,11 @@ function getSequentialScrollbarPanelIndex(
 export {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
+  advanceFeaturedExpansionProgress,
   advanceHomeStatementProgress,
   advanceWheelGesture,
   clampHomeStatementProgress,
+  clampFeaturedExpansionProgress,
   createHomeScrollState,
   createScrollbarHomeScrollState,
   createWheelGestureState,
@@ -317,6 +355,7 @@ export {
   getSequentialScrollbarPanelIndex,
   getHomeStatementTravelDistance,
   getHomeStatementVisualState,
+  getFeaturedExpansionTravelDistance,
   getSwipeDirection,
   limitHomeStatementWheelDelta,
   normalizeWheelDelta,

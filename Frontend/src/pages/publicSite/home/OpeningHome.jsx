@@ -38,6 +38,7 @@ function OpeningHome() {
     contentScrollActive,
     activeSectionId,
     featuredStep,
+    featuredProjectExpansionProgress,
     scrollerRef,
     statementPanelIndex,
     statementProgress,
@@ -121,6 +122,7 @@ function OpeningHome() {
               <FeaturedProjectsSection
                 active={activeSectionId === "featured-projects"}
                 activeProjectIndex={activeFeaturedProjectIndex}
+                expansionProgress={featuredProjectExpansionProgress}
                 step={featuredStep}
                 titleVisibility={[
                   titleIsVisible("featured-project-quinta-bella-vista"),

@@ -55,6 +55,9 @@ function setup(reduceMotion = false) {
   const featuredProjects = [0, 1, 2].map((index) => ({
     offsetHeight: featuredProjectHeight,
     dataset: { contentTitleScope: featuredTitleIds[index] },
+    querySelector: (selector) => selector === "[data-featured-image-gallery]"
+      ? {}
+      : null,
     getBoundingClientRect() {
       const top = featured.offsetTop + (index * featuredProjectHeight) - scroller.scrollTop;
       return { top, bottom: top + featuredProjectHeight, height: featuredProjectHeight };
@@ -135,6 +138,8 @@ function setup(reduceMotion = false) {
     getActiveSection: () => states[2],
     getFeaturedStep: () => states[3],
     getActiveFeaturedProject: () => states[5],
+    getFeaturedExpansionProgress: (index) =>
+      controller.featuredProjectExpansionProgress[index].get(),
     getPendingTweenCount: () => tweens.length,
     cleanup: () => cleanups.forEach((fn) => fn?.()),
   };
@@ -425,7 +430,7 @@ function placeAtContentBoundary(app, sectionId, scrollTop) {
   app.handlers.scroll();
 }
 
-test("content keeps native scrolling until the controlled boundary", () => {
+test("content hands native scroll to a reversible scrub before navigation", () => {
   const app = setup();
   const wheel = createWheelDriver(app);
   placeAtContentBoundary(app, "featured-projects", 4880);
@@ -440,9 +445,22 @@ test("content keeps native scrolling until the controlled boundary", () => {
   assert.equal(app.scroller.scrollTop, 5000, "The handoff aligns to the exact edge");
   assert.equal(app.getPendingTweenCount(), 0, "Reaching the edge does not bypass the intent threshold");
 
+  assert.equal(wheel(64), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.1);
+  assert.equal(app.getActiveFeaturedProject(), 0);
+  assert.equal(app.getPendingTweenCount(), 0);
+
+  assert.equal(wheel(-32), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.05);
+  assert.equal(app.scroller.scrollTop, 5000);
+
+  assert.equal(wheel(608), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 1);
+  assert.equal(app.getActiveFeaturedProject(), 0, "Fullscreen does not change the active project");
+  assert.equal(app.getPendingTweenCount(), 0, "Fullscreen must render before panel navigation");
+
   for (const deltaY of [8, 8, 8]) {
     assert.equal(wheel(deltaY), true);
-    assert.equal(app.scroller.scrollTop, 5000, "Micro-deltas cannot move the viewport between panels");
     assert.equal(app.getPendingTweenCount(), 0);
   }
   assert.equal(wheel(8), true);
@@ -454,20 +472,21 @@ test("content keeps native scrolling until the controlled boundary", () => {
   placeAtContentBoundary(largeWheelApp, "featured-projects", 4960);
   assert.equal(largeWheel(100), true);
   assert.equal(largeWheelApp.scroller.scrollTop, 5000);
+  assert.equal(largeWheelApp.getPendingTweenCount(), 0);
   assert.equal(
-    largeWheelApp.getPendingTweenCount(),
-    1,
-    "Only the distance beyond the edge contributes to a large wheel gesture",
+    largeWheelApp.getFeaturedExpansionProgress(0),
+    60 / 640,
+    "Only the distance beyond the edge contributes to the scrub",
   );
   largeWheelApp.cleanup();
 });
 
 test("every content boundary uses one shared transition for wheel and trackpad input", () => {
   const boundaries = [
-    { name: "Services / Quinta", section: "services", edge: 3600, next: 4400, previous: 3600 },
-    { name: "Quinta / project 2", section: "featured-projects", edge: 5000, next: 5800, previous: 5000 },
-    { name: "project 2 / project 3", section: "featured-projects", edge: 6400, next: 7200, previous: 6400 },
-    { name: "project 3 / Process", section: "featured-projects", edge: 7800, next: 8600, previous: 7800 },
+    { name: "Services / Quinta", section: "services", edge: 3600, next: 4400, previous: 3600, projectIndex: null },
+    { name: "Quinta / project 2", section: "featured-projects", edge: 5000, next: 5800, previous: 5000, projectIndex: 0 },
+    { name: "project 2 / project 3", section: "featured-projects", edge: 6400, next: 7200, previous: 6400, projectIndex: 1 },
+    { name: "project 3 / Process", section: "featured-projects", edge: 7800, next: 8600, previous: 7800, projectIndex: 2 },
   ];
   const inputProfiles = [
     { name: "large wheel", deltas: [100] },
@@ -481,6 +500,9 @@ test("every content boundary uses one shared transition for wheel and trackpad i
       const wheel = createWheelDriver(app);
       const label = `${boundary.name} with ${profile.name}`;
       placeAtContentBoundary(app, boundary.section, boundary.edge);
+      if (boundary.projectIndex !== null) {
+        app.controller.featuredProjectExpansionProgress[boundary.projectIndex].set(1);
+      }
 
       for (const deltaY of profile.deltas.slice(0, -1)) {
         assert.equal(wheel(deltaY), true, `${label} owns the boundary gesture`);
@@ -517,6 +539,7 @@ test("boundary intent resets after idle or a native direction reversal", () => {
   const app = setup();
   const wheel = createWheelDriver(app);
   placeAtContentBoundary(app, "featured-projects", 5000);
+  app.controller.featuredProjectExpansionProgress[0].set(1);
 
   assert.equal(wheel(20), true);
   app.clock.advance(180);
@@ -536,4 +559,80 @@ test("boundary intent resets after idle or a native direction reversal", () => {
   assert.equal(wheel(-20), true);
   assert.equal(app.getPendingTweenCount(), 1);
   app.cleanup();
+});
+
+test("returning to an image project restores fullscreen before contraction", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  placeAtContentBoundary(app, "featured-projects", 5000);
+  app.controller.featuredProjectExpansionProgress[0].set(1);
+
+  for (const deltaY of [8, 8, 8, 8]) wheel(deltaY);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 5800);
+  assert.equal(app.getActiveFeaturedProject(), 1);
+
+  for (const deltaY of [-8, -8, -8, -8]) wheel(deltaY);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 5000);
+  assert.equal(app.getActiveFeaturedProject(), 0);
+  assert.equal(app.getFeaturedExpansionProgress(0), 1);
+
+  assert.equal(wheel(-320), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.5);
+  assert.equal(app.getPendingTweenCount(), 0);
+  assert.equal(wheel(160), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.75);
+  assert.equal(wheel(-480), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  assert.equal(wheel(-8), false, "Native upward scroll resumes after the card is restored");
+  assert.equal(app.scroller.scrollTop, 4992);
+  app.cleanup();
+});
+
+test("reduced motion bypasses scrub without trapping navigation", () => {
+  const app = setup(true);
+  const wheel = createWheelDriver(app);
+  placeAtContentBoundary(app, "featured-projects", 5000);
+  assert.equal(wheel(80), false);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  app.cleanup();
+});
+
+test("touch and keyboard drive the same image expansion progress", () => {
+  const touchApp = setup();
+  placeAtContentBoundary(touchApp, "featured-projects", 5000);
+  touchApp.handlers.pointerdown({
+    pointerType: "touch",
+    isPrimary: true,
+    pointerId: 7,
+    clientX: 200,
+    clientY: 400,
+  });
+  let prevented = false;
+  touchApp.handlers.pointermove({
+    pointerId: 7,
+    clientX: 200,
+    clientY: 240,
+    preventDefault() { prevented = true; },
+  });
+  assert.equal(prevented, true);
+  assert.equal(touchApp.getFeaturedExpansionProgress(0), 0.25);
+  touchApp.handlers.pointermove({
+    pointerId: 7,
+    clientX: 200,
+    clientY: 320,
+    preventDefault() {},
+  });
+  assert.equal(touchApp.getFeaturedExpansionProgress(0), 0.125);
+  touchApp.cleanup();
+
+  const keyboardApp = setup();
+  placeAtContentBoundary(keyboardApp, "featured-projects", 5000);
+  keyboardApp.handlers.keydown({ key: "PageDown", preventDefault() {} });
+  assert.equal(keyboardApp.getFeaturedExpansionProgress(0), 1);
+  assert.equal(keyboardApp.getPendingTweenCount(), 0);
+  keyboardApp.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
+  assert.equal(keyboardApp.getFeaturedExpansionProgress(0), 0.9375);
+  keyboardApp.cleanup();
 });

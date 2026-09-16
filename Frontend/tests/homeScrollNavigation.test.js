@@ -4,12 +4,14 @@ import test from "node:test";
 import {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
+  advanceFeaturedExpansionProgress,
   advanceHomeStatementProgress,
   advanceWheelGesture,
   createHomeScrollState,
   createScrollbarHomeScrollState,
   createWheelGestureState,
   getKeyboardDirection,
+  getFeaturedExpansionTravelDistance,
   getHomeStatementTravelDistance,
   getHomeStatementVisualState,
   getNearestPanelIndex,
@@ -328,4 +330,25 @@ test("statement visual state zooms out through the solid black surround", () => 
   });
   assert.equal(getHomeStatementVisualState(0.5).maskScale, 500.5);
   assert.ok(getHomeStatementVisualState(0.05).maskScale > 992);
+});
+
+test("featured image expansion follows wheel distance and reverses exactly", () => {
+  assert.equal(getFeaturedExpansionTravelDistance(800), 640);
+  assert.equal(getFeaturedExpansionTravelDistance(300), 420);
+  assert.equal(getFeaturedExpansionTravelDistance(1400), 760);
+
+  const partial = advanceFeaturedExpansionProgress(0, 160, 800);
+  assert.equal(partial, 0.25);
+  assert.equal(
+    advanceFeaturedExpansionProgress(partial, -80, 800),
+    0.125,
+  );
+  assert.equal(
+    advanceFeaturedExpansionProgress(partial, 1000, 800),
+    1,
+  );
+  assert.equal(
+    advanceFeaturedExpansionProgress(partial, -1000, 800),
+    0,
+  );
 });

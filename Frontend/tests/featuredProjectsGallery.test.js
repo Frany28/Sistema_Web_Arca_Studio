@@ -9,37 +9,64 @@ const gallerySource = readFileSync(
   ),
   "utf8",
 );
+const processGridSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/processes/components/ProcessesVideoGrid.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const processModalSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/processes/components/ProcessesVideoModal.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
-test("the featured-project gallery expands every masonry image from its original position", () => {
-  assert.match(gallerySource, /const \[activeImage, setActiveImage\] = useState\(null\)/);
-  assert.match(gallerySource, /const \[sourceRect, setSourceRect\] = useState\(null\)/);
-  assert.match(gallerySource, /const \[expandedRect, setExpandedRect\] = useState\(null\)/);
-  assert.match(gallerySource, /const \[isClosing, setIsClosing\] = useState\(false\)/);
-  assert.match(gallerySource, /function getExpandedImageRect\(image\)/);
-  assert.match(gallerySource, /availableWidth \/ naturalWidth/);
-  assert.match(gallerySource, /availableHeight \/ naturalHeight/);
-  assert.match(gallerySource, /function getRectAnimation\(rect\)/);
-  assert.match(gallerySource, /triggerRefs\.current\.get\(image\.id\)\?\.getBoundingClientRect\(\)/);
-  assert.match(gallerySource, /setExpandedRect\(getExpandedImageRect\(image\)\)/);
-  assert.match(gallerySource, /<FeaturedProjectsImageContent \{\.\.\.image\} \/>/);
+test("image galleries keep their bento layout but are no longer interactive viewers", () => {
   assert.match(gallerySource, /columns\.map\(\(cards, column\)/);
-  assert.match(gallerySource, /columns = COLUMNS/);
-  assert.match(gallerySource, /galleryLabel = "Galería de Quinta Bella Vista"/);
-  assert.match(gallerySource, /cards\.map\(\(image, row\)/);
   assert.match(gallerySource, /grid-rows-\[568fr_336fr\]/);
   assert.match(gallerySource, /grid-rows-\[335fr_569fr\]/);
-  assert.match(gallerySource, /reduceMotion=\{reduceMotion\}/);
-  assert.match(gallerySource, /initial=\{reduceMotion \? expandedAnimation : sourceAnimation\}/);
-  assert.match(gallerySource, /animate=\{isClosing \? sourceAnimation : expandedAnimation\}/);
-  assert.match(gallerySource, /duration: 1\.25/);
-  assert.match(gallerySource, /bounce: 0/);
-  assert.match(gallerySource, /backdropFilter: "var\(--effect-blur-b1\)"/);
-  assert.match(gallerySource, /createPortal\(activeImage, document\.body\)/);
-  assert.match(gallerySource, /className="fixed inset-0 z-\[60\]/);
-  assert.match(gallerySource, /onClick=\{onClose\}/);
-  assert.match(gallerySource, /event\.key === "Escape"/);
-  assert.match(gallerySource, /if \(isClosing\) onCloseComplete\(\)/);
-  assert.doesNotMatch(gallerySource, /LayoutGroup|layoutId/);
-  assert.doesNotMatch(gallerySource, /addEventListener\("scroll"/);
-  assert.doesNotMatch(gallerySource, /useMotionValue|useSpring|useTransform/);
+  assert.match(gallerySource, /PRIMARY_CARD_ID = "1-1"/);
+  assert.match(gallerySource, /data-featured-image-gallery/);
+  assert.doesNotMatch(gallerySource, /<button/);
+  assert.doesNotMatch(gallerySource, /onClick=/);
+  assert.doesNotMatch(gallerySource, /activeImage|selectedImage|isClosing/);
+  assert.doesNotMatch(gallerySource, /role="dialog"|aria-modal/);
+});
+
+test("the central image scrubs from its measured card to the viewport", () => {
+  assert.match(gallerySource, /getBoundingClientRect\(\)/);
+  assert.match(gallerySource, /window\.innerWidth/);
+  assert.match(gallerySource, /window\.innerHeight/);
+  assert.match(gallerySource, /expansionProgress\.on\("change"/);
+  assert.match(gallerySource, /interpolate\(primaryRect\.left, 0, progress\)/);
+  assert.match(gallerySource, /interpolate\(primaryRect\.top, 0, progress\)/);
+  assert.match(gallerySource, /interpolate\(primaryRect\.width, viewportWidth, progress\)/);
+  assert.match(gallerySource, /interpolate\(primaryRect\.height, viewportHeight, progress\)/);
+  assert.match(gallerySource, /interpolate\(borderRadius, 0, progress\)/);
+  assert.match(gallerySource, /createPortal\(overlay, document\.body\)/);
+  assert.match(gallerySource, /object-fit|fit = "cover"/);
+  assert.match(gallerySource, /ResizeObserver/);
+  assert.match(gallerySource, /orientationchange/);
+});
+
+test("secondary images leave progressively while the fullscreen layer stays non-interactive", () => {
+  assert.match(gallerySource, /SECONDARY_EXIT_PROGRESS/);
+  assert.match(gallerySource, /card\.style\.opacity/);
+  assert.match(gallerySource, /translate3d/);
+  assert.match(gallerySource, /pointer-events-none fixed z-\[55\]/);
+  assert.match(gallerySource, /aria-hidden="true"/);
+});
+
+test("process videos retain their click and modal behavior", () => {
+  assert.match(processGridSource, /<button/);
+  assert.match(processGridSource, /onClick=\{\(event\) =>/);
+  assert.match(processGridSource, /onVideoOpen\(video/);
+  assert.match(processModalSource, /createPortal\(/);
+  assert.match(processModalSource, /onClick=\{handleClose\}/);
+  assert.match(processModalSource, /autoPlay/);
+  assert.match(processModalSource, /<source src=\{video\.webm\}/);
+  assert.match(processModalSource, /<source src=\{video\.mp4\}/);
 });

@@ -11,6 +11,7 @@ import {
 import {
   HOME_SCROLL_DIRECTIONS,
   HOME_SCROLL_PHASES,
+  advanceFeaturedExpansionProgress,
   advanceHomeStatementProgress,
   advanceWheelGesture,
   createHomeScrollState,
@@ -33,6 +34,7 @@ const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
 const STATEMENT_PANEL_INDEX = 3;
 const FEATURED_PROJECT_SELECTOR = "[data-featured-project-panel]";
+const FEATURED_IMAGE_GALLERY_SELECTOR = "[data-featured-image-gallery]";
 const CONTENT_TITLE_SCOPE_SELECTOR = "[data-content-title-scope]";
 const FEATURED_PROJECT_EDGE_TOLERANCE_PX = 2;
 const INITIAL_NAVIGATION_STATE = createHomeScrollState();
@@ -65,6 +67,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
   const titleRevealLockedRef = useRef(false);
   const statementProgress = useMotionValue(0);
+  const firstFeaturedExpansionProgress = useMotionValue(0);
+  const secondFeaturedExpansionProgress = useMotionValue(0);
+  const thirdFeaturedExpansionProgress = useMotionValue(0);
+  const featuredProjectExpansionProgressRef = useRef(null);
+  if (!featuredProjectExpansionProgressRef.current) {
+    featuredProjectExpansionProgressRef.current = [
+      firstFeaturedExpansionProgress,
+      secondFeaturedExpansionProgress,
+      thirdFeaturedExpansionProgress,
+    ];
+  }
+  const featuredProjectExpansionProgress =
+    featuredProjectExpansionProgressRef.current;
   const [contentScrollActive, setContentScrollActive] = useState(false);
   const contentModeRef = useRef(false);
   const [activeSectionId, setActiveSectionId] = useState(null);
@@ -221,6 +236,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
     const getFeaturedProjectPanels = (section = getSection("featured-projects")) =>
       section ? [...section.querySelectorAll(FEATURED_PROJECT_SELECTOR)] : [];
+    const isFeaturedImageProject = (index, projectPanels = getFeaturedProjectPanels()) =>
+      Boolean(
+        projectPanels[index]?.querySelector?.(FEATURED_IMAGE_GALLERY_SELECTOR),
+      );
+    const getFeaturedExpansionProgress = (index) =>
+      featuredProjectExpansionProgress[index]?.get() ?? 0;
+    const setFeaturedExpansionProgress = (index, progress) => {
+      featuredProjectExpansionProgress[index]?.set(progress);
+    };
+    const resetFeaturedExpansionProgress = () => {
+      featuredProjectExpansionProgress.forEach((progress) => progress.set(0));
+    };
     const getElementScrollTop = (element) => {
       const viewportRect = scroller.getBoundingClientRect();
       return scroller.scrollTop + element.getBoundingClientRect().top - viewportRect.top;
@@ -314,6 +341,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         // Al subir, activar primero el proyecto que va a entrar.
         // Así Quinta aparece desde el momento en que comienza a entrar al viewport.
         if (direction < 0) {
+          if (isFeaturedImageProject(transition.index)) {
+            setFeaturedExpansionProgress(transition.index, 1);
+          }
           commitFeaturedProjectIndex(transition.index);
         }
 
@@ -372,6 +402,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
             // Al regresar desde Procesos, activamos el último proyecto
             // antes de comenzar la entrada.
             if (featuredProjectIndex !== null) {
+              if (
+                targetAlignment === "end" &&
+                isFeaturedImageProject(featuredProjectIndex)
+              ) {
+                setFeaturedExpansionProgress(featuredProjectIndex, 1);
+              }
               commitFeaturedProjectIndex(featuredProjectIndex);
             }
             
@@ -504,6 +540,61 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       return null;
     };
+    const handleFeaturedExpansionInput = (event, deltaY, direction) => {
+      if (activeSectionRef.current !== "featured-projects") return false;
+
+      const projectPanels = getFeaturedProjectPanels();
+      const currentIndex = activeFeaturedProjectIndexRef.current;
+      const currentPanel = projectPanels[currentIndex];
+      const bounds = getPanelScrollBounds(currentPanel);
+      if (!bounds || !isFeaturedImageProject(currentIndex, projectPanels)) {
+        return false;
+      }
+
+      const progress = getFeaturedExpansionProgress(currentIndex);
+      const distanceToEnd = Math.max(0, bounds.end - scroller.scrollTop);
+      const magnitude = Math.abs(deltaY);
+      const reachesEnd =
+        distanceToEnd <= magnitude + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+      const expands = direction > 0 && progress < 1 && reachesEnd;
+      const contracts =
+        direction < 0 &&
+        progress > 0 &&
+        scroller.scrollTop >= bounds.end - FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+
+      if (!expands && !contracts) return false;
+
+      event.preventDefault();
+      event.stopPropagation?.();
+
+      if (Math.abs(scroller.scrollTop - bounds.end) > 0.01) {
+        scroller.scrollTop = bounds.end;
+        synchronizeContentScroll();
+      }
+
+      const nativeDistance =
+        expands && distanceToEnd > FEATURED_PROJECT_EDGE_TOLERANCE_PX
+          ? distanceToEnd
+          : 0;
+      const scrubDelta = direction * Math.max(0, magnitude - nativeDistance);
+
+      window.clearTimeout(wheelIdleTimer);
+      wheelGestureState = createWheelGestureState();
+      wheelTransitionLock = false;
+
+      if (scrubDelta !== 0) {
+        setFeaturedExpansionProgress(
+          currentIndex,
+          advanceFeaturedExpansionProgress(
+            progress,
+            scrubDelta,
+            scroller.clientHeight,
+          ),
+        );
+      }
+
+      return true;
+    };
     const handleContentBoundaryWheel = (event, deltaY, direction) => {
       const boundary = getContentWheelBoundary(direction);
       if (!boundary) {
@@ -591,6 +682,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       setContentMode(false);
 
       if (sectionId === "featured-projects" || sectionId === "services" || sectionId === "home") {
+        resetFeaturedExpansionProgress();
         commitFeaturedProjectIndex(0);
       }
       selectSection(sectionId === "home" ? null : sectionId);
@@ -684,6 +776,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         const direction = Math.sign(delta.y);
 
         if (!direction) return;
+        if (handleFeaturedExpansionInput(event, delta.y, direction)) return;
         handleContentBoundaryWheel(event, delta.y, direction);
         return;
       }
@@ -741,11 +834,23 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         activeSectionRef.current === "featured-projects" &&
         !reduceMotion;
       if (featuredProjectReady && event.pointerType === "touch" && event.isPrimary) {
+        const projectPanels = getFeaturedProjectPanels();
+        const projectIndex = activeFeaturedProjectIndexRef.current;
+        const bounds = getPanelScrollBounds(projectPanels[projectIndex]);
+        const imageProject = isFeaturedImageProject(projectIndex, projectPanels);
         touchGesture = {
           pointerId: event.pointerId,
           startX: event.clientX,
           startY: event.clientY,
           featuredProject: true,
+          featuredExpansion: imageProject && bounds
+            ? {
+              boundaryScrollTop: bounds.end,
+              distanceToEnd: Math.max(0, bounds.end - scroller.scrollTop),
+              projectIndex,
+              startProgress: getFeaturedExpansionProgress(projectIndex),
+            }
+            : null,
           consumed: false,
         };
         return;
@@ -778,6 +883,51 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const horizontalDistance = event.clientX - touchGesture.startX;
       const verticalDistance = touchGesture.startY - event.clientY;
       if (touchGesture.featuredProject) {
+        const expansion = touchGesture.featuredExpansion;
+        const absoluteVerticalDistance = Math.abs(verticalDistance);
+        const isVerticalGesture =
+          absoluteVerticalDistance >=
+          Math.abs(horizontalDistance) * TOUCH_VERTICAL_DOMINANCE;
+
+        if (expansion && isVerticalGesture) {
+          const expands =
+            verticalDistance > 0 &&
+            expansion.startProgress < 1 &&
+            verticalDistance + FEATURED_PROJECT_EDGE_TOLERANCE_PX >=
+              expansion.distanceToEnd;
+          const contracts =
+            verticalDistance < 0 && expansion.startProgress > 0;
+
+          if (expands || contracts) {
+            event.preventDefault();
+            scroller.scrollTop = expansion.boundaryScrollTop;
+            const nativeDistance = expands ? expansion.distanceToEnd : 0;
+            const scrubDistance = verticalDistance - nativeDistance;
+            setFeaturedExpansionProgress(
+              expansion.projectIndex,
+              advanceFeaturedExpansionProgress(
+                expansion.startProgress,
+                scrubDistance,
+                scroller.clientHeight,
+              ),
+            );
+            return;
+          }
+
+          if (
+            verticalDistance > TOUCH_SWIPE_THRESHOLD_PX &&
+            expansion.startProgress >= 1
+          ) {
+            const boundary = getContentWheelBoundary(HOME_SCROLL_DIRECTIONS.DOWN);
+            if (boundary) {
+              event.preventDefault();
+              touchGesture.consumed = true;
+              boundary.transition();
+              return;
+            }
+          }
+        }
+
         const direction = getSwipeDirection(
           {
             startX: touchGesture.startX,
@@ -880,6 +1030,16 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           event.key === "PageDown" || event.key === "PageUp" || event.key === " "
             ? direction * scroller.clientHeight
             : direction * 40;
+        if (
+          activeSectionRef.current === "featured-projects" &&
+          handleFeaturedExpansionInput(
+            event,
+            keyboardTravelDistance,
+            direction,
+          )
+        ) {
+          return;
+        }
         if (
           activeSectionRef.current === "featured-projects" &&
           getFeaturedProjectTransition(direction, keyboardTravelDistance)
@@ -1057,12 +1217,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("orientationchange", handleResize);
     };
-  }, [enabled, reduceMotion, statementProgress]);
+  }, [
+    enabled,
+    featuredProjectExpansionProgress,
+    reduceMotion,
+    statementProgress,
+  ]);
 
   return {
     activeFeaturedProjectIndex,
     activeSectionId,
     featuredStep,
+    featuredProjectExpansionProgress,
     contentScrollActive,
     navigateToSection,
     completeTitleReveal,
