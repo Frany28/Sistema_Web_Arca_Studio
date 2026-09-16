@@ -86,6 +86,10 @@ function setup(reduceMotion = false) {
       tweens.push(() => {
         if (tween.killed) return;
         if (options.scrollTo) target.scrollTop = options.scrollTo.y;
+        if (Object.hasOwn(options, "value") && target && "value" in target) {
+          target.value = options.value;
+          options.onUpdate?.();
+        }
         options.onComplete?.();
       });
       return tween;
@@ -446,6 +450,7 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   assert.equal(app.getPendingTweenCount(), 0, "Reaching the edge does not bypass the intent threshold");
 
   assert.equal(wheel(64), true);
+  app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 0.08);
   assert.equal(app.getActiveFeaturedProject(), 0);
   assert.equal(app.getPendingTweenCount(), 0);
@@ -459,10 +464,12 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   );
 
   assert.equal(wheel(-32), true);
+  app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 0.04);
   assert.equal(app.scroller.scrollTop, 5000);
 
   assert.equal(wheel(768), true);
+  app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 1);
   assert.equal(app.getActiveFeaturedProject(), 0, "Fullscreen does not change the active project");
   assert.equal(app.getPendingTweenCount(), 0, "Fullscreen must render before panel navigation");
@@ -479,6 +486,7 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   const largeWheel = createWheelDriver(largeWheelApp);
   placeAtContentBoundary(largeWheelApp, "featured-projects", 4960);
   assert.equal(largeWheel(100), true);
+  largeWheelApp.flush();
   assert.equal(largeWheelApp.scroller.scrollTop, 5000);
   assert.equal(largeWheelApp.getPendingTweenCount(), 0);
   assert.equal(
@@ -496,6 +504,7 @@ test("the wheel event that completes Quinta fullscreen cannot start the next pro
   app.controller.featuredProjectExpansionProgress[0].set(0.95);
 
   assert.equal(wheel(64), true);
+  app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 1);
   assert.equal(app.getActiveFeaturedProject(), 0);
   assert.equal(app.getPendingTweenCount(), 0);
@@ -507,6 +516,28 @@ test("the wheel event that completes Quinta fullscreen cannot start the next pro
 
   assert.equal(wheel(64), true);
   assert.equal(app.getPendingTweenCount(), 1, "A new wheel event may enter Muelle Zulima");
+  app.cleanup();
+});
+
+test("wheel input smooths the rendered expansion progress without delaying reversal", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  placeAtContentBoundary(app, "featured-projects", 5000);
+
+  assert.equal(wheel(16), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0, "A wheel target is not rendered as a jump");
+  app.flush();
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.02);
+
+  assert.equal(wheel(16), true);
+  app.flush();
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.04, "Small deltas remain continuous");
+
+  assert.equal(wheel(160), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.04, "A large delta starts from the rendered value");
+  assert.equal(wheel(-160), true);
+  app.flush();
+  assert.equal(app.getFeaturedExpansionProgress(0), 0, "Reversal cancels the pending expansion exactly");
   app.cleanup();
 });
 
@@ -607,11 +638,14 @@ test("returning to an image project restores fullscreen before contraction", () 
   assert.equal(app.getFeaturedExpansionProgress(0), 1);
 
   assert.equal(wheel(-320), true);
+  app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 0.6);
   assert.equal(app.getPendingTweenCount(), 0);
   assert.equal(wheel(160), true);
+  app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 0.8);
   assert.equal(wheel(-640), true);
+  app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 0);
   assert.equal(wheel(-8), false, "Native upward scroll resumes after the card is restored");
   assert.equal(app.scroller.scrollTop, 4992);

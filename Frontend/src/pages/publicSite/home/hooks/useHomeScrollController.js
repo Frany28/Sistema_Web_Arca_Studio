@@ -37,6 +37,8 @@ const FEATURED_PROJECT_SELECTOR = "[data-featured-project-panel]";
 const FEATURED_IMAGE_GALLERY_SELECTOR = "[data-featured-image-gallery]";
 const CONTENT_TITLE_SCOPE_SELECTOR = "[data-content-title-scope]";
 const FEATURED_PROJECT_EDGE_TOLERANCE_PX = 2;
+const FEATURED_EXPANSION_SMOOTH_MIN_SECONDS = 0.06;
+const FEATURED_EXPANSION_SMOOTH_MAX_SECONDS = 0.16;
 const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 
 gsap.registerPlugin(ScrollToPlugin);
@@ -129,6 +131,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let wheelIdleTimer;
     let wheelGestureState = createWheelGestureState();
     let featuredExpansionCompletionLock = null;
+    const featuredExpansionTweens = new Map();
+    const featuredExpansionTargets = featuredProjectExpansionProgress.map(
+      (progress) => progress.get(),
+    );
     let touchGesture = null;
     let isProgrammaticScroll = false;
     let ignoreNextScrollEnd = false;
@@ -256,15 +262,62 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       );
     const getFeaturedExpansionProgress = (index) =>
       featuredProjectExpansionProgress[index]?.get() ?? 0;
+    const getFeaturedExpansionTarget = (index) =>
+      featuredExpansionTargets[index] ?? 0;
     const setFeaturedExpansionProgress = (index, progress) => {
+      featuredExpansionTweens.get(index)?.kill();
+      featuredExpansionTweens.delete(index);
+      featuredExpansionTargets[index] = progress;
       featuredProjectExpansionProgress[index]?.set(progress);
+    };
+    const smoothFeaturedExpansionProgress = (index, nextProgress) => {
+      const renderedProgress = getFeaturedExpansionProgress(index);
+      const targetProgress = Math.min(Math.max(nextProgress, 0), 1);
+      const distance = Math.abs(targetProgress - renderedProgress);
+
+      featuredExpansionTargets[index] = targetProgress;
+      featuredExpansionTweens.get(index)?.kill();
+      featuredExpansionTweens.delete(index);
+
+      if (reduceMotion || distance <= 0.0001) {
+        featuredProjectExpansionProgress[index]?.set(targetProgress);
+        if (targetProgress >= 1) featuredExpansionCompletionLock = index;
+        return;
+      }
+
+      const progressProxy = { value: renderedProgress };
+      const duration = Math.min(
+        FEATURED_EXPANSION_SMOOTH_MAX_SECONDS,
+        Math.max(FEATURED_EXPANSION_SMOOTH_MIN_SECONDS, distance * 0.75),
+      );
+      const tween = gsap.to(progressProxy, {
+        value: targetProgress,
+        duration,
+        ease: "power1.out",
+        overwrite: true,
+        onUpdate: () => {
+          featuredProjectExpansionProgress[index]?.set(
+            Math.min(Math.max(progressProxy.value, 0), 1),
+          );
+        },
+        onComplete: () => {
+          featuredProjectExpansionProgress[index]?.set(targetProgress);
+          if (featuredExpansionTargets[index] === targetProgress) {
+            if (targetProgress >= 1) featuredExpansionCompletionLock = index;
+            featuredExpansionTweens.delete(index);
+          }
+        },
+      });
+      featuredExpansionTweens.set(index, tween);
     };
     const setFeaturedPreparationOffset = (index, offset) => {
       featuredProjectPreparationOffsets[index]?.set(offset);
     };
     const resetFeaturedExpansionProgress = () => {
       featuredExpansionCompletionLock = null;
-      featuredProjectExpansionProgress.forEach((progress) => progress.set(0));
+      featuredProjectExpansionProgress.forEach((_, index) => {
+        setFeaturedExpansionProgress(index, 0);
+      });
     };
     const getElementScrollTop = (element) => {
       const viewportRect = scroller.getBoundingClientRect();
@@ -611,7 +664,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       return null;
     };
-    const handleFeaturedExpansionInput = (event, deltaY, direction) => {
+    const handleFeaturedExpansionInput = (
+      event,
+      deltaY,
+      direction,
+      { smooth = false } = {},
+    ) => {
       if (activeSectionRef.current !== "featured-projects") return false;
 
       const projectPanels = getFeaturedProjectPanels();
@@ -623,10 +681,23 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       }
 
       const progress = getFeaturedExpansionProgress(currentIndex);
+      let targetProgress = getFeaturedExpansionTarget(currentIndex);
+      if (
+        !featuredExpansionTweens.has(currentIndex) &&
+        Math.abs(targetProgress - progress) > 0.0001
+      ) {
+        targetProgress = progress;
+        featuredExpansionTargets[currentIndex] = progress;
+      }
       if (featuredExpansionCompletionLock === currentIndex) {
         featuredExpansionCompletionLock = null;
         if (direction > 0 && progress >= 1) return false;
       }
+
+      const reversingPendingExpansion =
+        (direction > 0 && targetProgress < progress) ||
+        (direction < 0 && targetProgress > progress);
+      if (reversingPendingExpansion) targetProgress = progress;
 
       const distanceToEnd = Math.max(0, bounds.end - scroller.scrollTop);
       const magnitude = Math.abs(deltaY);
@@ -663,16 +734,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       if (scrubDelta !== 0) {
         const nextProgress = advanceFeaturedExpansionProgress(
-          progress,
+          targetProgress,
           scrubDelta,
           scroller.clientHeight,
         );
-        setFeaturedExpansionProgress(
-          currentIndex,
-          nextProgress,
-        );
-        if (expands && progress < 1 && nextProgress >= 1) {
-          featuredExpansionCompletionLock = currentIndex;
+        if (smooth) {
+          smoothFeaturedExpansionProgress(currentIndex, nextProgress);
+        } else {
+          setFeaturedExpansionProgress(currentIndex, nextProgress);
         }
       }
 
@@ -859,7 +928,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         const direction = Math.sign(delta.y);
 
         if (!direction) return;
-        if (handleFeaturedExpansionInput(event, delta.y, direction)) return;
+        if (handleFeaturedExpansionInput(event, delta.y, direction, { smooth: true })) return;
         handleContentBoundaryWheel(event, delta.y, direction);
         return;
       }
@@ -1285,6 +1354,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       window.cancelAnimationFrame(resizeFrame);
       window.clearTimeout(scrollSettleTimer);
       window.clearTimeout(wheelIdleTimer);
+      featuredExpansionTweens.forEach((tween) => tween.kill());
+      featuredExpansionTweens.clear();
       activeTween?.kill();
       titleRevealLockedRef.current = false;
       statement.destroy();
