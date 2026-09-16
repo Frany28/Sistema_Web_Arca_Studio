@@ -5,7 +5,7 @@ import { PROCESSES_HEADING, PROCESS_VIDEOS } from "../processesContent.js";
 import ProcessesVideoGrid from "./ProcessesVideoGrid.jsx";
 import ProcessesVideoModal from "./ProcessesVideoModal.jsx";
 
-function ProcessesSection({ active = false, onTitleRevealComplete }) {
+function ProcessesSection({ active = false, titleVisible = false }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [videoOrigin, setVideoOrigin] = useState(null);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -29,11 +29,10 @@ function ProcessesSection({ active = false, onTitleRevealComplete }) {
       aria-label="Nuestros procesos"
       className="dark flex min-h-dvh flex-col gap-[var(--spacing-gap-8)] bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)] pb-[var(--spacing-gap-8)]"
       data-node-id="4765:4729"
+      data-content-title-scope="process"
     >
       <SectionTitleReveal
-        enabled={active}
-        visible={active}
-        onRevealComplete={() => onTitleRevealComplete?.("process")}
+        visible={titleVisible}
         className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
         data-node-id="4856:5047"
       >

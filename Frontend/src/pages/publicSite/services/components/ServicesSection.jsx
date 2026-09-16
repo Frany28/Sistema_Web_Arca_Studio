@@ -9,11 +9,16 @@ import {
 function ServicesSection({
   onNextSection,
   onPreviousSection,
-  onTitleRevealComplete,
+  titleVisible = false,
 }) {
   return (
-    <section id="services" aria-label="Servicios" className="services-section dark flex min-h-dvh flex-col gap-[var(--spacing-gap-8)] bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)] pb-[var(--spacing-gap-8)]">
-      <ServicesHeading {...SERVICES_HEADING} onRevealComplete={() => onTitleRevealComplete?.("services")} />
+    <section
+      id="services"
+      aria-label="Servicios"
+      className="services-section dark flex min-h-dvh flex-col gap-[var(--spacing-gap-8)] bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)] pb-[var(--spacing-gap-8)]"
+      data-content-title-scope="services"
+    >
+      <ServicesHeading {...SERVICES_HEADING} visible={titleVisible} />
       <ServicesCategoryShowcase
       categories={SERVICES_CATEGORIES}
       onNextSection={onNextSection}

@@ -38,7 +38,10 @@ test("Home is the only global owner of featured-project vertical navigation", ()
 });
 
 test("featured-project transitions reuse the Home ScrollTo motion", () => {
-  assert.match(homeControllerSource, /scrollTo: \{ y: transition\.scrollTop, autoKill: false \}/);
+  assert.match(
+    homeControllerSource,
+    /scrollTo: \{\s*y: transition\.scrollTop,\s*autoKill: false,?\s*\}/,
+  );
   assert.match(homeControllerSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
   assert.match(homeControllerSource, /ease: SECTION_NAVIGATION_EASE/);
   assert.match(homeControllerSource, /if \(reduceMotion\)/);

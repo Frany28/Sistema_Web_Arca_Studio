@@ -33,6 +33,7 @@ const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
 const STATEMENT_PANEL_INDEX = 3;
 const FEATURED_PROJECT_SELECTOR = "[data-featured-project-panel]";
+const CONTENT_TITLE_SCOPE_SELECTOR = "[data-content-title-scope]";
 const FEATURED_PROJECT_EDGE_TOLERANCE_PX = 2;
 const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 
@@ -49,6 +50,13 @@ function isInteractiveTarget(target) {
   );
 }
 
+function isVisibleWithinViewport(elementRect, viewportRect) {
+  return (
+    elementRect.bottom > viewportRect.top &&
+    elementRect.top < viewportRect.bottom
+  );
+}
+
 function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) {
   const [navigationState, setNavigationState] = useState(
     INITIAL_NAVIGATION_STATE,
@@ -62,14 +70,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const [activeSectionId, setActiveSectionId] = useState(null);
   const activeSectionRef = useRef(null);
   const [featuredStep, setFeaturedStep] = useState(1);
-  const [revealedSectionId, setRevealedSectionId] = useState(null);
+  const [visibleContentTitleIds, setVisibleContentTitleIds] = useState([]);
   const [activeFeaturedProjectIndex, setActiveFeaturedProjectIndex] = useState(0);
   const activeFeaturedProjectIndexRef = useRef(0);
-  const sectionTitleLockedRef = useRef(false);
-  const revealedSectionRef = useRef(null);
-  const completeSectionTitleReveal = useCallback((sectionId) => {
-    if (sectionId === activeSectionRef.current) sectionTitleLockedRef.current = false;
-  }, []);
   const sectionNavigationRef = useRef(null);
   const navigateToSection = useCallback((sectionId) => {
     sectionNavigationRef.current?.(sectionId);
@@ -146,6 +149,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         scroller.scrollTop = targetScrollTop;
         window.requestAnimationFrame(() => {
           isProgrammaticScroll = false;
+          synchronizeContentTitleVisibility();
         });
         return true;
       }
@@ -158,6 +162,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         onComplete: () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
+          synchronizeContentTitleVisibility();
         },
       });
       return true;
@@ -194,6 +199,21 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const getSection = (id) => [...scroller.querySelectorAll("section[id]")].find((section) => section.id === id);
+    const synchronizeContentTitleVisibility = () => {
+      const viewportRect = scroller.getBoundingClientRect();
+      const nextVisibleIds = [...scroller.querySelectorAll(CONTENT_TITLE_SCOPE_SELECTOR)]
+        .filter((element) =>
+          isVisibleWithinViewport(element.getBoundingClientRect(), viewportRect),
+        )
+        .map((element) => element.dataset.contentTitleScope);
+
+      setVisibleContentTitleIds((currentVisibleIds) =>
+        currentVisibleIds.length === nextVisibleIds.length &&
+        currentVisibleIds.every((id, index) => id === nextVisibleIds[index])
+          ? currentVisibleIds
+          : nextVisibleIds,
+      );
+    };
     const commitFeaturedProjectIndex = (index) => {
       if (activeFeaturedProjectIndexRef.current === index) return;
       activeFeaturedProjectIndexRef.current = index;
@@ -412,15 +432,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (activeSectionRef.current === id) return;
       activeSectionRef.current = id;
       setActiveSectionId(id);
-      // Habilitar el título de la sección que se acaba de alcanzar. El componente
-      // espera su entrada real al viewport antes de iniciar el revelado.
-      revealedSectionRef.current = id;
-      setRevealedSectionId(id);
-      sectionTitleLockedRef.current = Boolean(id);
-      // El gesto de llegada no puede revelar también el encabezado.
-      wheelTransitionLock = true;
-      window.clearTimeout(wheelIdleTimer);
-      wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
     };
     const navigateSection = (sectionId, { direct = false } = {}) => {
       const currentState = navigationStateRef.current;
@@ -456,7 +467,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         window.requestAnimationFrame(() => {
           isProgrammaticScroll = false;
           setContentMode(sectionId !== "home");
-          if (sectionId !== "home") synchronizeContentScroll();
+          if (sectionId !== "home") {
+            synchronizeContentScroll();
+          } else {
+            synchronizeContentTitleVisibility();
+          }
         });
         return;
       }
@@ -469,13 +484,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           activeTween = undefined;
           isProgrammaticScroll = false;
           setContentMode(sectionId !== "home");
-          if (sectionId !== "home") synchronizeContentScroll();
+          if (sectionId !== "home") {
+            synchronizeContentScroll();
+          } else {
+            synchronizeContentTitleVisibility();
+          }
         },
       });
     };
     sectionNavigationRef.current = (sectionId) => navigateSection(sectionId, { direct: true });
 
-    const synchronizeContentScroll = () => {
+    const synchronizeContentScroll = ({ titlesSynchronized = false } = {}) => {
+      if (!titlesSynchronized) synchronizeContentTitleVisibility();
       const servicesTop = getSection("services")?.offsetTop;
       // Al cruzar el inicio de Servicios hacia arriba, recuperar la transición
       // completa al video antes de permitir nuevamente sus gestos internos.
@@ -507,14 +527,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       }
     };
 
-    const revealSectionTitle = () => {
-      const id = activeSectionRef.current;
-      if (!id || sectionTitleLockedRef.current || revealedSectionRef.current === id) return;
-      revealedSectionRef.current = id;
-      sectionTitleLockedRef.current = true;
-      setRevealedSectionId(id);
-    };
-
     const handleWheel = (event) => {
       if (event.ctrlKey) return;
       if (activeTween || isProgrammaticScroll) {
@@ -530,14 +542,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       if (contentMode) {
         if (reduceMotion) return;
-        const contentReady =
-          revealedSectionRef.current === activeSectionRef.current &&
-          !sectionTitleLockedRef.current &&
-          !wheelTransitionLock;
-    if (contentReady) {
-      const direction = Math.sign(delta.y);
+        const direction = Math.sign(delta.y);
 
-      if (!direction) return;
+        if (!direction) return;
 
       /*
       * PROCESOS → PROYECTOS DESTACADOS
@@ -649,16 +656,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       // Todavía hay contenido dentro del proyecto:
       // permitir scroll normal.
-      wheelGestureState = createWheelGestureState();
-      return;
-    }
-        event.preventDefault();
-        event.stopPropagation?.();
-        window.clearTimeout(wheelIdleTimer);
-        wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
-        if (wheelTransitionLock || sectionTitleLockedRef.current) return;
-        wheelGestureState = advanceWheelGesture(wheelGestureState, delta.y, WHEEL_GESTURE_THRESHOLD_PX, event.timeStamp);
-        if (wheelGestureState.triggeredDirection !== null) revealSectionTitle();
+        wheelGestureState = createWheelGestureState();
         return;
       }
 
@@ -713,8 +711,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       const featuredProjectReady =
         contentMode &&
         activeSectionRef.current === "featured-projects" &&
-        revealedSectionRef.current === "featured-projects" &&
-        !sectionTitleLockedRef.current &&
         !reduceMotion;
       if (featuredProjectReady && event.pointerType === "touch" && event.isPrimary) {
         touchGesture = {
@@ -726,7 +722,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         };
         return;
       }
-      if (contentMode && (reduceMotion || revealedSectionRef.current === activeSectionRef.current)) return;
+      if (contentMode) return;
       if (event.pointerType !== "touch" || !event.isPrimary) return;
       const isStatementGesture =
         !contentMode && navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX;
@@ -837,11 +833,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       event.preventDefault();
       touchGesture.consumed = true;
-      if (contentMode) {
-        event.stopPropagation?.();
-        revealSectionTitle();
-        return;
-      }
       moveByDirection(direction);
     };
 
@@ -857,29 +848,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
       if (contentMode) {
-        const contentReady =
-          revealedSectionRef.current === activeSectionRef.current &&
-          !sectionTitleLockedRef.current;
-        if (contentReady) {
-          const keyboardTravelDistance =
-            event.key === "PageDown" || event.key === "PageUp" || event.key === " "
-              ? direction * scroller.clientHeight
-              : direction * 40;
-          if (
-            activeSectionRef.current === "featured-projects" &&
-            getFeaturedProjectTransition(direction, keyboardTravelDistance)
-          ) {
-            event.preventDefault();
-            if (!event.repeat) {
-              transitionFeaturedProject(direction, keyboardTravelDistance);
-            }
+        const keyboardTravelDistance =
+          event.key === "PageDown" || event.key === "PageUp" || event.key === " "
+            ? direction * scroller.clientHeight
+            : direction * 40;
+        if (
+          activeSectionRef.current === "featured-projects" &&
+          getFeaturedProjectTransition(direction, keyboardTravelDistance)
+        ) {
+          event.preventDefault();
+          if (!event.repeat) {
+            transitionFeaturedProject(direction, keyboardTravelDistance);
           }
-          return;
         }
-        if (reduceMotion) return;
-        event.preventDefault();
-        event.stopPropagation?.();
-        if (!event.repeat) revealSectionTitle();
         return;
       }
 
@@ -929,9 +910,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handleNativeScroll = () => {
+      synchronizeContentTitleVisibility();
       if (isProgrammaticScroll) return;
       if (contentMode) {
-        synchronizeContentScroll();
+        synchronizeContentScroll({ titlesSynchronized: true });
         return;
       }
       const statementTop = panels[STATEMENT_PANEL_INDEX]?.offsetTop ?? 0;
@@ -998,12 +980,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         scroller.scrollTop = activePanel?.offsetTop ?? 0;
         window.requestAnimationFrame(() => {
           isProgrammaticScroll = false;
+          synchronizeContentTitleVisibility();
         });
       });
     };
 
     isProgrammaticScroll = true;
     ignoreNextScrollEnd = supportsScrollEnd;
+    synchronizeContentTitleVisibility();
     if (!contentMode) {
       scroller.scrollTop = panels[navigationStateRef.current.panelIndex]?.offsetTop ?? 0;
     }
@@ -1050,8 +1034,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   return {
     activeFeaturedProjectIndex,
     activeSectionId,
-    revealedSectionId,
-    completeSectionTitleReveal,
     featuredStep,
     contentScrollActive,
     navigateToSection,
@@ -1060,6 +1042,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     scrollerRef,
     statementPanelIndex: STATEMENT_PANEL_INDEX,
     statementProgress,
+    visibleContentTitleIds,
   };
 }
 
@@ -1071,5 +1054,6 @@ export {
   TOUCH_VERTICAL_DOMINANCE,
   WHEEL_GESTURE_IDLE_MS,
   WHEEL_GESTURE_THRESHOLD_PX,
+  isVisibleWithinViewport,
 };
 export default useHomeScrollController;

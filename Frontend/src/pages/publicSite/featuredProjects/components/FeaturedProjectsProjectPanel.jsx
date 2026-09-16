@@ -73,11 +73,13 @@ const APTO_JC_PROJECT = {
 function FeaturedProjectsProjectPanel({
   active = false,
   project = MUELLE_ZULIMA_PROJECT,
+  titleVisible = false,
 }) {
   return (
     <article
       data-featured-next-project={project.id}
       data-featured-project-panel
+      data-content-title-scope={`featured-project-${project.id}`}
       data-node-id={project.nodeId}
       data-navbar-background="light"
       aria-label={`Proyecto destacado ${project.title}`}
@@ -86,8 +88,7 @@ function FeaturedProjectsProjectPanel({
       className="relative flex min-h-0 flex-col gap-[var(--spacing-gap-7)] bg-[var(--color-neutral-100-uniform)] pt-[var(--spacing-gap-8)] text-[var(--color-primary-300)]"
     >
       <SectionTitleReveal
-        enabled={active}
-        visible={active}
+        visible={titleVisible}
         className={`mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] ${project.headingClassName} text-center min-[768px]:px-[var(--spacing-gap-7)]`}
         data-node-id={project.nodeId}
       >

@@ -24,24 +24,48 @@ function setup(reduceMotion = false) {
   const tweens = [];
   const handlers = {};
   const panels = [0, 800, 1600, 2400].map((offsetTop) => ({ offsetTop }));
-  const services = { id: "services", offsetTop: 3200 };
+  const services = {
+    id: "services",
+    offsetTop: 3200,
+    dataset: { contentTitleScope: "services" },
+  };
   const featured = { id: "featured-projects", offsetTop: 4400 };
-  const processSection = { id: "process", offsetTop: 8600 };
+  const processSection = {
+    id: "process",
+    offsetTop: 8600,
+    dataset: { contentTitleScope: "process" },
+  };
   const featuredProjectHeight = 1400;
   const scroller = {
     scrollTop: 0, clientHeight: 800,
     getBoundingClientRect: () => ({ top: 0, bottom: 800, height: 800 }),
-    querySelectorAll: () => [services, featured, processSection],
+    querySelectorAll: (selector) => selector === "[data-content-title-scope]"
+      ? [services, ...featuredProjects, processSection]
+      : [services, featured, processSection],
     addEventListener: (type, handler) => { handlers[type] = handler; },
     removeEventListener: (type) => { delete handlers[type]; },
   };
+  const featuredTitleIds = [
+    "featured-project-quinta-bella-vista",
+    "featured-project-muelle-zulima",
+    "featured-project-apto-jc",
+  ];
   const featuredProjects = [0, 1, 2].map((index) => ({
     offsetHeight: featuredProjectHeight,
+    dataset: { contentTitleScope: featuredTitleIds[index] },
     getBoundingClientRect() {
       const top = featured.offsetTop + (index * featuredProjectHeight) - scroller.scrollTop;
       return { top, bottom: top + featuredProjectHeight, height: featuredProjectHeight };
     },
   }));
+  services.getBoundingClientRect = () => ({
+    top: services.offsetTop - scroller.scrollTop,
+    bottom: featured.offsetTop - scroller.scrollTop,
+  });
+  processSection.getBoundingClientRect = () => ({
+    top: processSection.offsetTop - scroller.scrollTop,
+    bottom: processSection.offsetTop + 1600 - scroller.scrollTop,
+  });
   featured.querySelectorAll = () => featuredProjects;
   featured.querySelector = () => null;
   const window = {
@@ -94,17 +118,28 @@ function setup(reduceMotion = false) {
     while (frames.length) frames.shift()();
   };
   flush();
-  const revealTitle = () => {
-    clock.advance(180);
-    handlers.keydown({ key: 'ArrowDown', preventDefault() {} });
-    controller.completeSectionTitleReveal(states[2]);
-    clock.advance(180);
+  return {
+    controller,
+    handlers,
+    scroller,
+    panels,
+    services,
+    featured,
+    processSection,
+    featuredProjects,
+    flush,
+    clock,
+    getVisibleTitles: () => states[4],
+    getActiveSection: () => states[2],
+    getFeaturedStep: () => states[3],
+    getActiveFeaturedProject: () => states[5],
+    getPendingTweenCount: () => tweens.length,
+    cleanup: () => cleanups.forEach((fn) => fn?.()),
   };
-  return { controller, handlers, scroller, panels, services, featured, processSection, featuredProjects, flush, clock, revealTitle, getRevealedSection: () => states[4], getActiveSection: () => states[2], getFeaturedStep: () => states[3], getActiveFeaturedProject: () => states[5], getPendingTweenCount: () => tweens.length, cleanup: () => cleanups.forEach((fn) => fn?.()) };
 }
 
 
-test('services heading reveals on arrival before native content scrolling resumes', () => {
+test('content titles follow complete viewport exit instead of active navigation state', () => {
   const app = setup();
   const wheel = () => {
     let prevented = false;
@@ -114,38 +149,72 @@ test('services heading reveals on arrival before native content scrolling resume
   app.controller.navigateToSection('services');
   assert.equal(wheel(), true);
   app.flush();
-  assert.equal(app.getRevealedSection(), 'services');
+  assert.deepEqual(app.getVisibleTitles(), ['services']);
   assert.equal(app.scroller.scrollTop, 3200);
-  assert.equal(wheel(), true, 'Wait for the reveal animation');
-  app.controller.completeSectionTitleReveal('featured-projects');
-  assert.equal(wheel(), true, 'Ignore completion from another heading');
-  app.controller.completeSectionTitleReveal('services');
-  app.clock.advance(180);
-  assert.equal(wheel(), false);
+  assert.equal(wheel(), false, 'The automatic title reveal does not lock scrolling');
+
+  app.scroller.scrollTop = 4399;
+  app.handlers.scroll();
+  assert.equal(app.getActiveSection(), 'featured-projects');
+  assert.deepEqual(
+    app.getVisibleTitles(),
+    ['services', 'featured-project-quinta-bella-vista'],
+    'Services stays revealed while its final pixel remains visible',
+  );
+
   app.scroller.scrollTop = 4400;
   app.handlers.scroll();
-  assert.equal(app.getRevealedSection(), 'featured-projects');
-  assert.equal(wheel(), true);
-  assert.equal(app.getRevealedSection(), 'featured-projects');
-  app.clock.advance(180);
-  assert.equal(wheel(), true);
-  assert.equal(app.getRevealedSection(), 'featured-projects');
-  assert.equal(app.scroller.scrollTop, 4400);
+  assert.deepEqual(app.getVisibleTitles(), ['featured-project-quinta-bella-vista']);
+
+  app.scroller.scrollTop = 4399;
+  app.handlers.scroll();
+  assert.deepEqual(
+    app.getVisibleTitles(),
+    ['services', 'featured-project-quinta-bella-vista'],
+    'The same rule applies immediately when reversing direction',
+  );
   app.cleanup();
   assert.equal(app.clock.pending(), 0);
 });
 
-test('services heading reveals immediately on every section entry', () => {
+test('project and process titles keep the same last-pixel rule in both directions', () => {
+  const app = setup();
+  const scrollTo = (scrollTop) => {
+    app.scroller.scrollTop = scrollTop;
+    app.handlers.scroll();
+    return app.getVisibleTitles();
+  };
+  const quinta = 'featured-project-quinta-bella-vista';
+  const muelle = 'featured-project-muelle-zulima';
+  const apto = 'featured-project-apto-jc';
+
+  app.controller.navigateToSection('featured-projects');
+  app.flush();
+
+  assert.deepEqual(scrollTo(5799), [quinta, muelle]);
+  assert.deepEqual(scrollTo(5800), [muelle]);
+  assert.deepEqual(scrollTo(7199), [muelle, apto]);
+  assert.deepEqual(scrollTo(7200), [apto]);
+  assert.deepEqual(scrollTo(8599), [apto, 'process']);
+  assert.deepEqual(scrollTo(8600), ['process']);
+
+  assert.deepEqual(scrollTo(8599), [apto, 'process']);
+  assert.deepEqual(scrollTo(7200), [apto]);
+  assert.deepEqual(scrollTo(7199), [muelle, apto]);
+  assert.deepEqual(scrollTo(5800), [muelle]);
+  assert.deepEqual(scrollTo(5799), [quinta, muelle]);
+
+  app.cleanup();
+});
+
+test('services heading reveals automatically on every section entry', () => {
   const app = setup();
   app.controller.navigateToSection('services'); app.flush();
-  let prevented = false;
-  app.handlers.keydown({ key: 'ArrowDown', preventDefault() { prevented = true; } });
-  assert.equal(prevented, true);
-  assert.equal(app.getRevealedSection(), 'services');
+  assert.deepEqual(app.getVisibleTitles(), ['services']);
   assert.equal(app.scroller.scrollTop, 3200);
   app.controller.navigateToSection('featured-projects'); app.flush();
   app.controller.navigateToSection('services'); app.flush();
-  assert.equal(app.getRevealedSection(), 'services');
+  assert.deepEqual(app.getVisibleTitles(), ['services']);
   assert.equal(app.scroller.scrollTop, 3200);
   app.cleanup();
 });
@@ -155,7 +224,6 @@ for (const reducedMotion of [false, true]) {
     const app = setup(reducedMotion);
     app.controller.navigateToSection('services'); app.flush();
     assert.equal(app.scroller.scrollTop, 3200);
-    app.revealTitle();
     const blocked = () => assert.fail('Native scrolling was blocked');
     for (const deltaMode of [0, 1, 2]) app.handlers.wheel({ deltaMode, deltaY: 60, deltaX: 0, preventDefault: blocked });
     for (const key of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'End', 'Home']) app.handlers.keydown({ key, preventDefault: blocked });
@@ -179,7 +247,6 @@ for (const reducedMotion of [false, true]) {
 test('viewport growth cannot return continuous content to the video', () => {
   const app = setup();
   app.controller.navigateToSection('services'); app.flush();
-  app.revealTitle();
   app.panels[3].offsetTop = 3600;
   app.services.offsetTop = 4800;
   app.featured.offsetTop = 6000;
@@ -211,7 +278,6 @@ test('an early gallery reveal cannot leave featured-project scrolling locked', (
     getBoundingClientRect: () => ({ top: 5000 - app.scroller.scrollTop }),
   });
   app.controller.navigateToSection('services'); app.flush();
-  app.revealTitle();
 
   app.scroller.scrollTop = 4210; app.handlers.scroll();
   assert.equal(app.getFeaturedStep(), 2);
@@ -219,26 +285,13 @@ test('an early gallery reveal cannot leave featured-project scrolling locked', (
 
   app.scroller.scrollTop = 4400; app.handlers.scroll();
   assert.equal(app.getActiveSection(), 'featured-projects');
-  assert.equal(app.getRevealedSection(), 'featured-projects');
-  app.clock.advance(180);
+  assert.deepEqual(app.getVisibleTitles(), ['featured-project-quinta-bella-vista']);
 
-  let prevented = false;
   app.handlers.wheel({
     deltaY: 60,
     deltaX: 0,
     timeStamp: 400,
-    preventDefault() { prevented = true; },
-  });
-  assert.equal(prevented, true);
-  assert.equal(app.getRevealedSection(), 'featured-projects');
-
-  app.controller.completeSectionTitleReveal('featured-projects');
-  app.clock.advance(180);
-  app.handlers.wheel({
-    deltaY: 60,
-    deltaX: 0,
-    timeStamp: 800,
-    preventDefault() { assert.fail('Featured-project scroll stayed locked'); },
+    preventDefault() { assert.fail('Automatic title reveal blocked featured-project scroll'); },
   });
   app.cleanup();
 });
@@ -256,31 +309,20 @@ test('direct navigation updates the section and reveals an already visible galle
   app.cleanup();
 });
 
-test('process navigation uses the shared section transition and title reveal lock', () => {
+test('process navigation reveals its title without a title-animation lock', () => {
   const app = setup();
   app.controller.navigateToSection('process');
   app.flush();
 
   assert.equal(app.scroller.scrollTop, app.processSection.offsetTop);
   assert.equal(app.getActiveSection(), 'process');
-  assert.equal(app.getRevealedSection(), 'process');
+  assert.deepEqual(app.getVisibleTitles(), ['process']);
 
-  let prevented = false;
   app.handlers.wheel({
     deltaX: 0,
     deltaY: 60,
     timeStamp: 200,
-    preventDefault() { prevented = true; },
-  });
-  assert.equal(prevented, true, 'Wait for the process title reveal');
-
-  app.controller.completeSectionTitleReveal('process');
-  app.clock.advance(180);
-  app.handlers.wheel({
-    deltaX: 0,
-    deltaY: 60,
-    timeStamp: 400,
-    preventDefault() { assert.fail('Process scrolling stayed locked'); },
+    preventDefault() { assert.fail('Process title reveal blocked native scrolling'); },
   });
   app.cleanup();
 });
@@ -322,7 +364,6 @@ test('an unfinished explicit navbar jump temporarily consumes wheel input', () =
   assert.equal(prevented, true);
   app.handlers.wheel({ ctrlKey: true, preventDefault() { assert.fail('Zoom blocked'); } });
   app.flush();
-  app.revealTitle();
   app.handlers.wheel({ deltaY: 60, preventDefault() { assert.fail('Scroll blocked'); } });
   app.controller.navigateToSection('featured-projects');
   app.controller.navigateToSection('home'); app.flush();
@@ -376,8 +417,6 @@ test("Home exclusively coordinates the sequential featured-project traversal", (
 
   app.controller.navigateToSection("featured-projects");
   app.flush();
-  app.controller.completeSectionTitleReveal("featured-projects");
-  app.clock.advance(180);
 
   app.scroller.scrollTop = 4880;
   app.handlers.scroll();
@@ -395,8 +434,8 @@ test("Home exclusively coordinates the sequential featured-project traversal", (
   app.scroller.scrollTop = 6320;
   app.handlers.scroll();
   const muelleTrackpadEvents = repeatWheel(8, 14);
-  assert.equal(muelleTrackpadEvents.slice(0, 10).every((value) => !value), true);
-  assert.equal(muelleTrackpadEvents.slice(10).every(Boolean), true);
+  assert.equal(muelleTrackpadEvents.slice(0, 9).every((value) => !value), true);
+  assert.equal(muelleTrackpadEvents.slice(9).every(Boolean), true);
   assert.equal(app.getPendingTweenCount(), 1);
   assert.equal(app.getActiveFeaturedProject(), 1);
   app.flush();
@@ -426,7 +465,12 @@ test("Home exclusively coordinates the sequential featured-project traversal", (
 
   app.scroller.scrollTop = 7800;
   app.handlers.scroll();
-  assert.equal(wheel(8), false, "The final project releases downward scrolling");
+  assert.equal(wheel(8), true, "The final project starts the shared transition to Processes");
   assert.equal(app.getActiveFeaturedProject(), 2);
+  assert.equal(app.getPendingTweenCount(), 1);
+  app.flush();
+  assert.equal(app.scroller.scrollTop, 8600);
+  assert.equal(app.getActiveSection(), "process");
+  assert.equal(wheel(8), false, "Process scrolling is available as soon as the transition completes");
   app.cleanup();
 });

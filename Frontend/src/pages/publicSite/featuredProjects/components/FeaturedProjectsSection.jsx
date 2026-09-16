@@ -9,7 +9,7 @@ function FeaturedProjectsSection({
   activeProjectIndex = 0,
   step = 1,
   onRevealComplete,
-  onTitleRevealComplete,
+  titleVisibility = [],
 }) {
   const firstProjectActive = active && activeProjectIndex === 0;
 
@@ -21,15 +21,14 @@ function FeaturedProjectsSection({
     >
       <article
         data-featured-project-panel
+        data-content-title-scope="featured-project-quinta-bella-vista"
         aria-label="Proyecto destacado Quinta Bella Vista"
         aria-hidden={!firstProjectActive}
         inert={firstProjectActive ? undefined : ""}
         className="relative flex min-h-0 flex-col bg-[var(--color-neutral-950-uniform)] pt-[var(--spacing-gap-9)]"
       >
         <SectionTitleReveal
-          enabled={firstProjectActive}
-          visible={firstProjectActive}
-          onRevealComplete={() => onTitleRevealComplete?.("featured-projects")}
+          visible={Boolean(titleVisibility[0])}
           className="mx-auto flex w-full shrink-0 max-w-[1200px] flex-col items-center gap-[24px] px-[16px] py-[var(--spacing-gap-8)] text-center text-[var(--color-neutral-100-uniform)] min-[768px]:px-[var(--spacing-gap-8)]"
           data-node-id="4856:5032"
         >
@@ -50,10 +49,12 @@ function FeaturedProjectsSection({
       </article>
       <FeaturedProjectsProjectPanel
         active={active && activeProjectIndex === 1}
+        titleVisible={Boolean(titleVisibility[1])}
       />
       <FeaturedProjectsProjectPanel
         active={active && activeProjectIndex === 2}
         project={APTO_JC_PROJECT}
+        titleVisible={Boolean(titleVisibility[2])}
       />
     </section>
   );

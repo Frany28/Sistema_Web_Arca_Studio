@@ -64,7 +64,9 @@ test("process grid autoplays without distorting its Figma proportions", () => {
 test("process section reuses navigation, title reveal and the shared modal", () => {
   assert.match(sectionSource, /id="process"/);
   assert.match(sectionSource, /<SectionTitleReveal/);
-  assert.match(sectionSource, /onTitleRevealComplete\?\.\("process"\)/);
+  assert.match(sectionSource, /data-content-title-scope="process"/);
+  assert.match(sectionSource, /visible=\{titleVisible\}/);
+  assert.doesNotMatch(sectionSource, /enabled=\{active\}/);
   assert.match(homeSource, /<ProcessesSection/);
   assert.match(homeSource, /active=\{activeSectionId === "process"\}/);
   assert.match(homeSource, /"#process"/);

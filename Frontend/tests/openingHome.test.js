@@ -273,6 +273,7 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollControllerSource, /getNearestPanelIndex/);
   assert.match(scrollControllerSource, /getSequentialScrollbarPanelIndex/);
   assert.match(scrollControllerSource, /titleRevealLockedRef/);
+  assert.doesNotMatch(scrollControllerSource, /sectionTitleLockedRef/);
   assert.match(homeSectionsSource, /onTitleRevealComplete/);
   assert.match(scrollControllerSource, /window\.addEventListener\("resize", handleResize\)/);
   assert.match(scrollControllerSource, /window\.addEventListener\("orientationchange", handleResize\)/);
@@ -351,10 +352,14 @@ test("services navigation scrolls within Home and preserves its responsive headi
   assert.match(homeSource, /onNavigate=\{navigateToSection\}/);
   assert.match(
     homeSource,
-    /<ServicesSection[\s\S]*onTitleRevealComplete=\{completeSectionTitleReveal\}/,
+    /<ServicesSection[\s\S]*titleVisible=\{titleIsVisible\("services"\)\}/,
   );
   assert.match(scrollControllerSource, /const selectSection = \(id\) =>/);
-  assert.match(scrollControllerSource, /setRevealedSectionId\(id\)/);
+  assert.match(scrollControllerSource, /isVisibleWithinViewport/);
+  assert.match(scrollControllerSource, /CONTENT_TITLE_SCOPE_SELECTOR/);
+  assert.doesNotMatch(scrollControllerSource, /setRevealedSectionId|completeSectionTitleReveal/);
+  assert.match(servicesPageSource, /data-content-title-scope="services"/);
+  assert.match(servicesHeadingSource, /visible=\{visible\}/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
   assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4848:8081"/);
@@ -430,10 +435,8 @@ test("OpeningHome delegates loading, navigation, content and statement behavior"
   assert.match(homeSource, /<FeaturedProjectsSection/);
   assert.match(homeSource, /active=\{activeSectionId === "featured-projects"\}/);
   assert.match(homeSource, /activeProjectIndex=\{activeFeaturedProjectIndex\}/);
-  assert.match(
-    homeSource,
-    /onTitleRevealComplete=\{completeSectionTitleReveal\}/,
-  );
+  assert.match(homeSource, /titleVisibility=\{\[/);
+  assert.match(homeSource, /titleIsVisible\("featured-project-quinta-bella-vista"\)/);
   assert.match(homeSource, /useHomeOpeningSequence/);
   assert.match(homeSource, /useHomeScrollController/);
   assert.match(homeSource, /<HomeSections/);

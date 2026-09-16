@@ -14,7 +14,9 @@ test("Muelle Zulima and Apto. JC use the shared featured-project flow", () => {
   assert.match(panelSource, /data-featured-next-project/);
   assert.match(panelSource, /data-navbar-background="light"/);
   assert.match(panelSource, /<SectionTitleReveal/);
-  assert.match(panelSource, /visible=\{active\}/);
+  assert.match(panelSource, /data-content-title-scope=\{`featured-project-\$\{project\.id\}`\}/);
+  assert.match(panelSource, /visible=\{titleVisible\}/);
+  assert.doesNotMatch(panelSource, /enabled=\{active\}/);
   assert.match(panelSource, /Muelle Zulima/);
   assert.match(panelSource, /Apto\. JC/);
   assert.match(panelSource, /<FeaturedProjectsGallery/);
