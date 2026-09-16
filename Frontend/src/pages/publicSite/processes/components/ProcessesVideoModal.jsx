@@ -111,7 +111,10 @@ function ProcessesVideoModal({ onClose, origin, video, visible }) {
       : origin;
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] overflow-hidden">
+    <div
+      className="fixed inset-0 z-[60] overflow-hidden"
+      onClick={handleClose}
+    >
       <div
         className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity ${
           active ? "opacity-100" : "opacity-0"
@@ -123,17 +126,18 @@ function ProcessesVideoModal({ onClose, origin, video, visible }) {
       />
 
       <div
-        className="fixed overflow-hidden rounded-[var(--radius-3)]"
-        style={{
-          top: currentRect.top,
-          left: currentRect.left,
-          width: currentRect.width,
-          height: currentRect.height,
-          transitionProperty: "top, left, width, height",
-          transitionDuration: `${TRANSITION_MS}ms`,
-          transitionTimingFunction: TRANSITION_EASING,
-        }}
-      >
+      className="fixed overflow-hidden rounded-[var(--radius-3)]"
+      onClick={(event) => event.stopPropagation()}
+      style={{
+        top: currentRect.top,
+        left: currentRect.left,
+        width: currentRect.width,
+        height: currentRect.height,
+        transitionProperty: "top, left, width, height",
+        transitionDuration: `${TRANSITION_MS}ms`,
+        transitionTimingFunction: TRANSITION_EASING,
+      }}
+    >
         <video
           ref={videoRef}
           key={video.id}
