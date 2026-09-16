@@ -39,13 +39,13 @@ test("image galleries keep their bento layout but are no longer interactive view
 test("the bento scrubs through a reversible GSAP Flip layout", () => {
   assert.match(gallerySource, /import \{ Flip \} from "gsap\/Flip"/);
   assert.match(gallerySource, /gsap\.registerPlugin\(ExpoScaleEase, Flip\)/);
-  assert.match(gallerySource, /getBoundingClientRect\(\)/);
+  assert.match(gallerySource, /sourceGrid\.getBoundingClientRect\(\)/);
   assert.match(gallerySource, /window\.innerWidth/);
   assert.match(gallerySource, /window\.innerHeight/);
   assert.match(gallerySource, /expansionProgress\.on\("change"/);
   assert.match(gallerySource, /Flip\.getState\(/);
   assert.match(gallerySource, /Flip\.to\(finalState/);
-  assert.match(gallerySource, /ease: "expoScale\(1, 5\)"/);
+  assert.match(gallerySource, /ease: reduceMotion \? "none" : "expoScale\(1, 5\)"/);
   assert.match(gallerySource, /flipTimelineRef\.current\?\.progress\(progress, false\)/);
   assert.match(gallerySource, /createPortal\(stage, document\.body\)/);
   assert.match(gallerySource, /object-fit|fit = "cover"/);
@@ -55,12 +55,16 @@ test("the bento scrubs through a reversible GSAP Flip layout", () => {
   assert.doesNotMatch(gallerySource, /interpolate\(/);
 });
 
-test("secondary images move beyond the viewport while the Flip stage stays non-interactive", () => {
-  assert.match(gallerySource, /getSecondaryFinalPosition/);
-  assert.match(gallerySource, /left: -rect\.width - gutter/);
-  assert.match(gallerySource, /left: viewportWidth \+ gutter/);
-  assert.match(gallerySource, /top: rect\.top/);
-  assert.match(gallerySource, /top: -rect\.height - gutter/);
+test("the expanded layout is a single larger Bento grid, not scattered cards", () => {
+  assert.match(gallerySource, /data-featured-gallery-stage-grid/);
+  assert.match(gallerySource, /gridTemplateColumns: `repeat\(3, \$\{viewportWidth\}px\)`/);
+  assert.match(gallerySource, /gridTemplateRows: column === 1/);
+  assert.match(gallerySource, /height: viewportHeight \* 1\.5 \+ gap/);
+  assert.match(gallerySource, /left: -\(viewportWidth \+ gap\)/);
+  assert.match(gallerySource, /top: -\(viewportHeight \* 0\.5 \+ gap\)/);
+  assert.doesNotMatch(gallerySource, /getSecondaryFinalPosition/);
+  assert.doesNotMatch(gallerySource, /rect\.width - gutter/);
+  assert.doesNotMatch(gallerySource, /viewportWidth \+ gutter/);
   assert.match(gallerySource, /pointer-events-none fixed inset-0 z-\[55\]/);
   assert.match(gallerySource, /aria-hidden="true"/);
   assert.doesNotMatch(gallerySource, /card\.style\.opacity/);

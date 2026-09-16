@@ -42,30 +42,6 @@ function clampProgress(progress) {
   return Math.min(Math.max(progress, 0), 1);
 }
 
-function getSecondaryFinalPosition(cardId, rect, viewportWidth, viewportHeight) {
-  const [column] = cardId.split("-").map(Number);
-  const gutter = Math.max(24, Math.min(viewportWidth, viewportHeight) * 0.04);
-
-  if (column === 0) {
-    return {
-      left: -rect.width - gutter,
-      top: rect.top,
-    };
-  }
-
-  if (column === 2) {
-    return {
-      left: viewportWidth + gutter,
-      top: rect.top,
-    };
-  }
-
-  return {
-    left: (viewportWidth - rect.width) / 2,
-    top: -rect.height - gutter,
-  };
-}
-
 function FeaturedProjectsImageContent({
   alt,
   fit = "cover",
@@ -93,13 +69,21 @@ function FeaturedProjectsImageContent({
   );
 }
 
-function FeaturedProjectsGalleryCard({ cardId, image, primary, setCardRef }) {
+function FeaturedProjectsGalleryCard({
+  cardId,
+  image,
+  primary,
+  setCardRef,
+  stage = false,
+}) {
   return (
     <div
       ref={(element) => setCardRef(cardId, element)}
       data-featured-gallery-card
       data-card-id={cardId}
       data-featured-gallery-primary={primary ? "" : undefined}
+      data-featured-gallery-overlay={stage && primary ? "" : undefined}
+      data-featured-gallery-stage-card={stage ? "" : undefined}
       className="relative size-full overflow-hidden rounded-[var(--radius-2)]"
     >
       <FeaturedProjectsImageContent {...image} />
@@ -119,6 +103,9 @@ function FeaturedProjectsGallery({
 }) {
   const cardRefs = useRef(new Map());
   const stageCardRefs = useRef(new Map());
+  const gridRef = useRef(null);
+  const stageGridRef = useRef(null);
+  const stageColumnRefs = useRef(new Map());
   const stageRef = useRef(null);
   const flipContextRef = useRef(null);
   const flipTimelineRef = useRef(null);
@@ -134,6 +121,11 @@ function FeaturedProjectsGallery({
   const setStageCardRef = useCallback((cardId, element) => {
     if (element) stageCardRefs.current.set(cardId, element);
     else stageCardRefs.current.delete(cardId);
+  }, []);
+
+  const setStageColumnRef = useCallback((column, element) => {
+    if (element) stageColumnRefs.current.set(column, element);
+    else stageColumnRefs.current.delete(column);
   }, []);
 
   const showOriginalCards = useCallback(() => {
@@ -152,6 +144,10 @@ function FeaturedProjectsGallery({
     flipContextRef.current?.revert();
     flipContextRef.current = null;
     flipTimelineRef.current = null;
+    gsap.set(stageGridRef.current, { clearProps: "all" });
+    stageColumnRefs.current.forEach((column) => {
+      gsap.set(column, { clearProps: "all" });
+    });
     stageCardRefs.current.forEach((card) => {
       gsap.set(card, { clearProps: "all" });
     });
@@ -159,74 +155,70 @@ function FeaturedProjectsGallery({
 
   const createFlipTimeline = useCallback((rawProgress) => {
     const stage = stageRef.current;
-    const entries = [...stageCardRefs.current.entries()]
-      .map(([cardId, stageCard]) => ({
-        cardId,
-        sourceCard: cardRefs.current.get(cardId),
-        stageCard,
-      }))
-      .filter(({ sourceCard }) => sourceCard);
+    const sourceGrid = gridRef.current;
+    const stageGrid = stageGridRef.current;
+    const stageCards = [...stageCardRefs.current.values()];
+    const stageColumns = [...stageColumnRefs.current.entries()];
 
     if (
       !stage ||
-      entries.length === 0 ||
-      entries.length !== stageCardRefs.current.size
+      !sourceGrid ||
+      !stageGrid ||
+      stageCards.length === 0 ||
+      stageCards.length !== cardRefs.current.size ||
+      stageColumns.length !== columns.length
     ) return false;
 
     clearFlipTimeline();
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const initialLayouts = entries.map((entry) => {
-      const rect = entry.sourceCard.getBoundingClientRect();
-      return {
-        ...entry,
-        borderRadius: Number.parseFloat(
-          window.getComputedStyle(entry.sourceCard).borderTopLeftRadius,
-        ) || 0,
-        rect,
-      };
-    });
+    const sourceRect = sourceGrid.getBoundingClientRect();
+    const sourceStyles = window.getComputedStyle(sourceGrid);
+    const gap = Number.parseFloat(sourceStyles.columnGap) || 0;
 
     flipContextRef.current = gsap.context(() => {
-      initialLayouts.forEach(({ cardId, rect, stageCard }) => {
-        const position = cardId === PRIMARY_CARD_ID
-          ? { left: 0, top: 0 }
-          : getSecondaryFinalPosition(
-            cardId,
-            rect,
-            viewportWidth,
-            viewportHeight,
-          );
-
-        gsap.set(stageCard, {
-          borderRadius: 0,
-          height: cardId === PRIMARY_CARD_ID ? viewportHeight : rect.height,
-          left: position.left,
-          top: position.top,
-          width: cardId === PRIMARY_CARD_ID ? viewportWidth : rect.width,
-          zIndex: cardId === PRIMARY_CARD_ID ? 2 : 1,
-        });
+      // El stage empieza como una copia geométrica del Bento visible.
+      gsap.set(stageGrid, {
+        height: sourceRect.height,
+        left: sourceRect.left,
+        top: sourceRect.top,
+        width: sourceRect.width,
       });
-
-      const finalState = Flip.getState(
-        initialLayouts.map(({ stageCard }) => stageCard),
-        { props: "borderRadius" },
+      const initialGridStyle = stageGrid.style.cssText;
+      const initialColumnStyles = new Map(
+        stageColumns.map(([column, element]) => [column, element.style.cssText]),
       );
 
-      initialLayouts.forEach(({ borderRadius, rect, stageCard }) => {
-        gsap.set(stageCard, {
-          borderRadius,
-          height: rect.height,
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
+      // El estado final es otro layout de grid: las columnas laterales quedan
+      // fuera por el crecimiento del Bento, no por destinos de cada tarjeta.
+      gsap.set(stageGrid, {
+        height: viewportHeight * 1.5 + gap,
+        left: -(viewportWidth + gap),
+        top: -(viewportHeight * 0.5 + gap),
+        width: viewportWidth * 3 + gap * 2,
+        gridTemplateColumns: `repeat(3, ${viewportWidth}px)`,
+      });
+      stageColumns.forEach(([column, element]) => {
+        gsap.set(element, {
+          gridTemplateRows: column === 1
+            ? `${viewportHeight * 0.5}px ${viewportHeight}px`
+            : `${viewportHeight}px ${viewportHeight * 0.5}px`,
         });
       });
+      gsap.set(stageCards, { borderRadius: 0 });
+
+      const finalState = Flip.getState(stageCards, { props: "borderRadius" });
+
+      stageGrid.style.cssText = initialGridStyle;
+      stageColumns.forEach(([column, element]) => {
+        element.style.cssText = initialColumnStyles.get(column) || "";
+      });
+      gsap.set(stageCards, { clearProps: "borderRadius" });
 
       flipTimelineRef.current = Flip.to(finalState, {
         duration: 1,
-        ease: "expoScale(1, 5)",
+        ease: reduceMotion ? "none" : "expoScale(1, 5)",
         paused: true,
         simple: true,
       });
@@ -234,7 +226,7 @@ function FeaturedProjectsGallery({
 
     flipTimelineRef.current?.progress(clampProgress(rawProgress), false);
     return Boolean(flipTimelineRef.current);
-  }, [clearFlipTimeline]);
+  }, [clearFlipTimeline, columns.length, reduceMotion]);
 
   const renderExpansion = useCallback((rawProgress) => {
     const progress = clampProgress(rawProgress);
@@ -320,21 +312,33 @@ function FeaturedProjectsGallery({
       className="pointer-events-none fixed inset-0 z-[55] overflow-hidden"
       style={{ visibility: "hidden" }}
     >
-      {columns.flatMap((cards, column) => cards.map((image, row) => {
-        const cardId = `${column}-${row}`;
-        const primary = cardId === PRIMARY_CARD_ID;
-        return (
+      <div
+        ref={stageGridRef}
+        data-featured-gallery-stage-grid
+        className="absolute grid grid-cols-3 gap-[24px] max-[767px]:gap-[8px]"
+      >
+        {columns.map((cards, column) => (
           <div
-            key={cardId}
-            ref={(element) => setStageCardRef(cardId, element)}
-            data-featured-gallery-overlay={primary ? "" : undefined}
-            data-featured-gallery-stage-card
-            className="absolute overflow-hidden rounded-[var(--radius-2)]"
+            key={column}
+            ref={(element) => setStageColumnRef(column, element)}
+            className={`grid min-h-0 min-w-0 gap-[24px] max-[767px]:gap-[8px] ${column === 1 ? "grid-rows-[335fr_569fr]" : "grid-rows-[568fr_336fr]"}`}
           >
-            <FeaturedProjectsImageContent {...image} />
+            {cards.map((image, row) => {
+              const cardId = `${column}-${row}`;
+              return (
+                <FeaturedProjectsGalleryCard
+                  key={cardId}
+                  cardId={cardId}
+                  image={image}
+                  primary={cardId === PRIMARY_CARD_ID}
+                  setCardRef={setStageCardRef}
+                  stage
+                />
+              );
+            })}
           </div>
-        );
-      }))}
+        ))}
+      </div>
     </div>
   ) : null;
 
@@ -353,7 +357,7 @@ function FeaturedProjectsGallery({
         onAnimationComplete={() => onRevealComplete?.(visible ? 2 : 1)}
         className={`relative ${containerClassName} overflow-hidden ${backgroundClassName}`}
       >
-        <div className="mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]">
+        <div ref={gridRef} className="mx-auto grid h-full w-full max-w-[1441px] grid-cols-3 gap-[24px] px-[24px] py-[48px] max-[767px]:gap-[8px] max-[767px]:px-[16px]">
           {columns.map((cards, column) => (
             <div
               key={column}
