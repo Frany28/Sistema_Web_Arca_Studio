@@ -39,6 +39,7 @@ function OpeningHome() {
     activeSectionId,
     featuredStep,
     featuredProjectExpansionProgress,
+    featuredProjectPreparationOffsets,
     scrollerRef,
     statementPanelIndex,
     statementProgress,
@@ -123,6 +124,7 @@ function OpeningHome() {
                 active={activeSectionId === "featured-projects"}
                 activeProjectIndex={activeFeaturedProjectIndex}
                 expansionProgress={featuredProjectExpansionProgress}
+                preparationOffsets={featuredProjectPreparationOffsets}
                 step={featuredStep}
                 titleVisibility={[
                   titleIsVisible("featured-project-quinta-bella-vista"),

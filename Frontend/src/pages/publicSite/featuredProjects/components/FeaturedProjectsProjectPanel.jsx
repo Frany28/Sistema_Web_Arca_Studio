@@ -73,6 +73,7 @@ const APTO_JC_PROJECT = {
 function FeaturedProjectsProjectPanel({
   active = false,
   expansionProgress,
+  preparationOffset,
   project = MUELLE_ZULIMA_PROJECT,
   titleVisible = false,
 }) {
@@ -108,6 +109,7 @@ function FeaturedProjectsProjectPanel({
         backgroundClassName="bg-[var(--color-neutral-100-uniform)]"
         columns={project.columns}
         expansionProgress={expansionProgress}
+        preparationOffset={preparationOffset}
         galleryLabel={project.galleryLabel}
       />
     </article>

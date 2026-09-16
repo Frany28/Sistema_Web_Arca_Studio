@@ -8,6 +8,7 @@ function FeaturedProjectsSection({
   active = false,
   activeProjectIndex = 0,
   expansionProgress = [],
+  preparationOffsets = [],
   step = 1,
   onRevealComplete,
   titleVisibility = [],
@@ -46,6 +47,7 @@ function FeaturedProjectsSection({
         <FeaturedProjectsGallery
           active={firstProjectActive}
           expansionProgress={expansionProgress[0]}
+          preparationOffset={preparationOffsets[0]}
           sectionReveal={false}
           visible={step === 2}
           onRevealComplete={onRevealComplete}
@@ -54,11 +56,13 @@ function FeaturedProjectsSection({
       <FeaturedProjectsProjectPanel
         active={active && activeProjectIndex === 1}
         expansionProgress={expansionProgress[1]}
+        preparationOffset={preparationOffsets[1]}
         titleVisible={Boolean(titleVisibility[1])}
       />
       <FeaturedProjectsProjectPanel
         active={active && activeProjectIndex === 2}
         expansionProgress={expansionProgress[2]}
+        preparationOffset={preparationOffsets[2]}
         project={APTO_JC_PROJECT}
         titleVisible={Boolean(titleVisibility[2])}
       />

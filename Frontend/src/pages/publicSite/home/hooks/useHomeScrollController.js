@@ -70,6 +70,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const firstFeaturedExpansionProgress = useMotionValue(0);
   const secondFeaturedExpansionProgress = useMotionValue(0);
   const thirdFeaturedExpansionProgress = useMotionValue(0);
+  const firstFeaturedPreparationOffset = useMotionValue(0);
+  const secondFeaturedPreparationOffset = useMotionValue(0);
+  const thirdFeaturedPreparationOffset = useMotionValue(0);
   const featuredProjectExpansionProgressRef = useRef(null);
   if (!featuredProjectExpansionProgressRef.current) {
     featuredProjectExpansionProgressRef.current = [
@@ -80,6 +83,16 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }
   const featuredProjectExpansionProgress =
     featuredProjectExpansionProgressRef.current;
+  const featuredProjectPreparationOffsetsRef = useRef(null);
+  if (!featuredProjectPreparationOffsetsRef.current) {
+    featuredProjectPreparationOffsetsRef.current = [
+      firstFeaturedPreparationOffset,
+      secondFeaturedPreparationOffset,
+      thirdFeaturedPreparationOffset,
+    ];
+  }
+  const featuredProjectPreparationOffsets =
+    featuredProjectPreparationOffsetsRef.current;
   const [contentScrollActive, setContentScrollActive] = useState(false);
   const contentModeRef = useRef(false);
   const [activeSectionId, setActiveSectionId] = useState(null);
@@ -245,6 +258,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const setFeaturedExpansionProgress = (index, progress) => {
       featuredProjectExpansionProgress[index]?.set(progress);
     };
+    const setFeaturedPreparationOffset = (index, offset) => {
+      featuredProjectPreparationOffsets[index]?.set(offset);
+    };
     const resetFeaturedExpansionProgress = () => {
       featuredProjectExpansionProgress.forEach((progress) => progress.set(0));
     };
@@ -350,12 +366,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         // Al subir, activar primero el proyecto que va a entrar.
         // Así Quinta aparece desde el momento en que comienza a entrar al viewport.
         if (direction < 0) {
-        commitFeaturedProjectIndex(transition.index);
-
-        if (isFeaturedImageProject(transition.index)) {
-          setFeaturedExpansionProgress(transition.index, 1);
+          if (isFeaturedImageProject(transition.index)) {
+            setFeaturedPreparationOffset(
+              transition.index,
+              scroller.scrollTop - transition.scrollTop,
+            );
+            setFeaturedExpansionProgress(transition.index, 1);
+          }
+          commitFeaturedProjectIndex(transition.index);
         }
-      }
 
         const completeTransition = () => {
           activeTween = undefined;
@@ -369,6 +388,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           // su salida y cambiar al siguiente solo al finalizar.
               if (direction > 0) {
                 commitFeaturedProjectIndex(transition.index);
+              }
+
+              if (direction < 0) {
+                setFeaturedPreparationOffset(transition.index, 0);
               }
 
               synchronizeContentScroll();
@@ -421,17 +444,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
             // Al regresar desde Procesos, activamos el último proyecto
             // antes de comenzar la entrada.
-            if (featuredProjectIndex !== null) {
-              commitFeaturedProjectIndex(featuredProjectIndex);
-
-              if (
-                targetAlignment === "end" &&
-                isFeaturedImageProject(featuredProjectIndex)
-              ) {
-                setFeaturedExpansionProgress(featuredProjectIndex, 1);
-              }
-            }
-            
             let targetElement = target;
 
             if (
@@ -450,11 +462,31 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
               )
               : targetElementTop;
 
+        if (
+          targetAlignment === "end" &&
+          featuredProjectIndex !== null &&
+          isFeaturedImageProject(featuredProjectIndex)
+        ) {
+          setFeaturedPreparationOffset(
+            featuredProjectIndex,
+            scroller.scrollTop - targetScrollTop,
+          );
+          setFeaturedExpansionProgress(featuredProjectIndex, 1);
+        }
+
+        if (featuredProjectIndex !== null) {
+          commitFeaturedProjectIndex(featuredProjectIndex);
+        }
+
         const completeTransition = () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
 
           selectSection(targetSectionId);
+
+          if (featuredProjectIndex !== null) {
+            setFeaturedPreparationOffset(featuredProjectIndex, 0);
+          }
 
           window.clearTimeout(wheelIdleTimer);
           wheelGestureState = createWheelGestureState();
@@ -1258,6 +1290,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   }, [
     enabled,
     featuredProjectExpansionProgress,
+    featuredProjectPreparationOffsets,
     reduceMotion,
     statementProgress,
   ]);
@@ -1267,6 +1300,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     activeSectionId,
     featuredStep,
     featuredProjectExpansionProgress,
+    featuredProjectPreparationOffsets,
     contentScrollActive,
     navigateToSection,
     completeTitleReveal,

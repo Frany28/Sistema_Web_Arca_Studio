@@ -98,6 +98,7 @@ function FeaturedProjectsGallery({
   expansionProgress,
   galleryLabel = "Galería de Quinta Bella Vista",
   onRevealComplete,
+  preparationOffset,
   sectionReveal = true,
   visible = true,
 }) {
@@ -175,6 +176,7 @@ function FeaturedProjectsGallery({
     const viewportHeight = window.innerHeight;
     const sourceRect = sourceGrid.getBoundingClientRect();
     const stageRect = stage.getBoundingClientRect();
+    const preparedStageTop = stageRect.top + (preparationOffset?.get?.() ?? 0);
     const sourceStyles = window.getComputedStyle(sourceGrid);
     const gap = Number.parseFloat(sourceStyles.columnGap) || 0;
 
@@ -197,7 +199,7 @@ function FeaturedProjectsGallery({
         height: viewportHeight * 1.5 + gap,
         left: -(viewportWidth + gap) - stageRect.left,
         padding: 0,
-        top: -(viewportHeight * 0.5 + gap) - stageRect.top,
+        top: -(viewportHeight * 0.5 + gap) - preparedStageTop,
         width: viewportWidth * 3 + gap * 2,
         gridTemplateColumns: `repeat(3, ${viewportWidth}px)`,
       });
@@ -228,24 +230,20 @@ function FeaturedProjectsGallery({
 
     flipTimelineRef.current?.progress(clampProgress(rawProgress), false);
     return Boolean(flipTimelineRef.current);
-  }, [clearFlipTimeline, columns.length, reduceMotion]);
+  }, [clearFlipTimeline, columns.length, preparationOffset, reduceMotion]);
 
   const renderExpansion = useCallback((rawProgress) => {
     const progress = clampProgress(rawProgress);
-    const previousProgress = renderedProgressRef.current;
     const stage = stageRef.current;
 
-    if (!stage || !active || progress <= 0) {
+    if (!stage || progress <= 0) {
       if (stage) stage.style.visibility = "hidden";
-      if (progress <= 0) clearFlipTimeline();
       showOriginalCards();
       renderedProgressRef.current = progress;
       return;
     }
 
-    const needsFreshLayout = !flipTimelineRef.current
-      || previousProgress <= 0
-      || (previousProgress >= 1 && progress < 1);
+    const needsFreshLayout = !flipTimelineRef.current;
 
     if (needsFreshLayout && !createFlipTimeline(progress)) {
       stage.style.visibility = "hidden";
@@ -254,15 +252,20 @@ function FeaturedProjectsGallery({
       return;
     }
 
-    hideOriginalCards();
-    stage.style.visibility = "visible";
     flipTimelineRef.current?.progress(progress, false);
+    if (active) {
+      hideOriginalCards();
+      stage.style.visibility = "visible";
+    } else {
+      stage.style.visibility = "hidden";
+      showOriginalCards();
+    }
     renderedProgressRef.current = progress;
   }, [
     active,
-    clearFlipTimeline,
     createFlipTimeline,
     hideOriginalCards,
+    preparationOffset,
     showOriginalCards,
   ]);
 
@@ -284,7 +287,7 @@ function FeaturedProjectsGallery({
       resizeFrameRef.current = window.requestAnimationFrame(() => {
         resizeFrameRef.current = null;
         const progress = clampProgress(expansionProgress?.get?.() ?? 0);
-        if (active && progress > 0) createFlipTimeline(progress);
+        if (progress > 0) createFlipTimeline(progress);
         renderExpansion(progress);
       });
     };

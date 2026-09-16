@@ -75,6 +75,16 @@ test("the active project state flows from Home into the visual section", () => {
   assert.match(sectionSource, /activeProjectIndex === 0/);
   assert.match(sectionSource, /activeProjectIndex === 1/);
   assert.match(sectionSource, /activeProjectIndex === 2/);
+  assert.match(openingHomeSource, /preparationOffsets=\{featuredProjectPreparationOffsets\}/);
+  assert.match(sectionSource, /preparationOffset=\{preparationOffsets\[0\]\}/);
+});
+
+test("an incoming image project is prepared before it becomes active", () => {
+  assert.match(
+    homeControllerSource,
+    /setFeaturedPreparationOffset\([\s\S]*scroller\.scrollTop - transition\.scrollTop[\s\S]*setFeaturedExpansionProgress\(transition\.index, 1\);[\s\S]*commitFeaturedProjectIndex\(transition\.index\);/,
+  );
+  assert.match(homeControllerSource, /featuredProjectPreparationOffsets/);
 });
 
 test("featured projects remain in their required visual order", () => {

@@ -62,18 +62,21 @@ test("the stage hands off only after matching the source Bento geometry", () => 
     /mx-auto grid h-full w-full max-w-\[1441px\][\s\S]*px-\[24px\] py-\[48px\]/,
   );
   assert.match(gallerySource, /padding: 0/);
-  assert.match(gallerySource, /if \(progress <= 0\) clearFlipTimeline\(\)/);
   assert.match(
     gallerySource,
     /hideOriginalCards\(\);\s*stage\.style\.visibility = "visible"/,
   );
 });
 
-test("a completed Flip is retained at fullscreen until reverse progress begins", () => {
+test("a Flip timeline persists through progress reversals", () => {
   assert.match(
     gallerySource,
-    /previousProgress >= 1 && progress < 1/,
+    /const needsFreshLayout = !flipTimelineRef\.current/,
   );
+  assert.match(gallerySource, /const preparedStageTop = stageRect\.top/);
+  assert.match(gallerySource, /preparationOffset\?\.get\?\.\(\) \?\? 0/);
+  assert.doesNotMatch(gallerySource, /previousProgress >= 1/);
+  assert.doesNotMatch(gallerySource, /if \(progress <= 0\) clearFlipTimeline/);
   assert.doesNotMatch(gallerySource, /createPortal/);
 });
 
@@ -83,7 +86,7 @@ test("the expanded layout is a single larger Bento grid, not scattered cards", (
   assert.match(gallerySource, /gridTemplateRows: column === 1/);
   assert.match(gallerySource, /height: viewportHeight \* 1\.5 \+ gap/);
   assert.match(gallerySource, /left: -\(viewportWidth \+ gap\) - stageRect\.left/);
-  assert.match(gallerySource, /top: -\(viewportHeight \* 0\.5 \+ gap\) - stageRect\.top/);
+  assert.match(gallerySource, /top: -\(viewportHeight \* 0\.5 \+ gap\) - preparedStageTop/);
   assert.doesNotMatch(gallerySource, /getSecondaryFinalPosition/);
   assert.doesNotMatch(gallerySource, /rect\.width - gutter/);
   assert.doesNotMatch(gallerySource, /viewportWidth \+ gutter/);
