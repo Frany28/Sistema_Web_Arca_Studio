@@ -324,6 +324,101 @@ test("moderate, strong and residual trackpad curves each keep one intention", ()
   });
 });
 
+function collectWheelIntentions(sequences, { pauseMs = 0, markIdle = false } = {}) {
+  let gesture = createWheelGestureState();
+  let eventTime = 0;
+  const intentions = [];
+
+  sequences.forEach((sequence, sequenceIndex) => {
+    if (sequenceIndex > 0) {
+      eventTime += pauseMs;
+      if (markIdle) gesture = markWheelGestureIdle(gesture);
+    }
+
+    sequence.forEach((deltaY) => {
+      eventTime += 16;
+      gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime);
+      if (gesture.triggeredDirection !== null) {
+        intentions.push(gesture.triggeredDirection);
+      }
+    });
+  });
+
+  return intentions;
+}
+
+test("realistic smooth trackpad curve produces one intention", () => {
+  assert.deepEqual(
+    collectWheelIntentions([[2, 5, 11, 20, 34, 25, 16, 9, 4, 2]]),
+    [DOWN],
+  );
+});
+
+test("realistic trackpad curves separated by idle produce two intentions", () => {
+  assert.deepEqual(
+    collectWheelIntentions(
+      [[5, 14, 29, 20, 10, 4, 2], [3, 8, 18, 32]],
+      { pauseMs: 300, markIdle: true },
+    ),
+    [DOWN, DOWN],
+  );
+});
+
+test("a renewed gesture during short residual inertia is recognized", () => {
+  assert.deepEqual(
+    collectWheelIntentions(
+      [[30, 22, 14, 8, 4, 2], [7, 15, 26]],
+      { pauseMs: 96 },
+    ),
+    [DOWN, DOWN],
+  );
+});
+
+test("purely decaying inertia produces one intention", () => {
+  assert.deepEqual(
+    collectWheelIntentions([[35, 28, 21, 15, 10, 6, 3, 2]]),
+    [DOWN],
+  );
+});
+
+test("a small rebound inside inertia does not rearm", () => {
+  assert.deepEqual(
+    collectWheelIntentions([[35, 24, 14, 7, 3, 5, 3, 2]]),
+    [DOWN],
+  );
+});
+
+test("a renewed acceleration accumulates enough evidence to rearm", () => {
+  assert.deepEqual(
+    collectWheelIntentions([[35, 24, 14, 7, 3, 2, 7, 14, 25]]),
+    [DOWN, DOWN],
+  );
+});
+
+test("sustained small trackpad deltas eventually produce one intention", () => {
+  assert.deepEqual(
+    collectWheelIntentions([[1, 2, 3, 4, 5, 6, 5, 4]]),
+    [DOWN],
+  );
+});
+
+test("a deliberate opposite trackpad curve produces one intention per direction", () => {
+  assert.deepEqual(
+    collectWheelIntentions(
+      [[8, 18, 30, 18, 7, 3], [-4, -10, -22, -35]],
+      { pauseMs: 16 },
+    ),
+    [DOWN, UP],
+  );
+});
+
+test("a micro direction correction remains part of the original gesture", () => {
+  assert.deepEqual(
+    collectWheelIntentions([[6, 14, 25, 18, -2, 10, 5, 2]]),
+    [DOWN],
+  );
+});
+
 test("a renewed trackpad impulse responds immediately after genuine idle", () => {
   let gesture = createWheelGestureState();
   let eventTime = 0;

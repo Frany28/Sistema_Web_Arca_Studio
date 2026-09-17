@@ -1140,12 +1140,57 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handleWheel = (event) => {
-      if (event.ctrlKey) return;
+      const debugWheel = (normalizedDelta, scaledDelta, direction, decision) => {
+        if (!window.__ARCA_DEBUG_WHEEL__) return;
+
+        const currentState = navigationStateRef.current;
+        const featuredIndex = activeFeaturedProjectIndexRef.current;
+
+        console.debug("[home-wheel]", {
+          timestamp: event.timeStamp,
+          deltaY: event.deltaY,
+          deltaMode: event.deltaMode,
+          normalizedDelta,
+          scaledDelta,
+          direction,
+          wheelGestureState: { ...wheelGestureState },
+          accumulator: wheelGestureState.accumulator,
+          gestureDirection: wheelGestureState.direction,
+          consumed: wheelGestureState.consumed,
+          idle: wheelGestureState.idle,
+          triggeredDirection: wheelGestureState.triggeredDirection,
+          lastMagnitude: wheelGestureState.lastMagnitude,
+          minimumMagnitudeAfterTrigger:
+            wheelGestureState.minimumMagnitudeAfterTrigger,
+          oppositeAccumulator: wheelGestureState.oppositeAccumulator,
+          rearmAccumulator: wheelGestureState.rearmAccumulator,
+          rearmLastMagnitude: wheelGestureState.rearmLastMagnitude,
+          wheelTransitionLock,
+          activeTween: Boolean(activeTween),
+          isProgrammaticScroll,
+          contentMode,
+          panelIndex: currentState.panelIndex,
+          phase: currentState.phase,
+          activeSection: activeSectionRef.current,
+          activeFeaturedProjectIndex: featuredIndex,
+          featuredExpansionProgress:
+            activeSectionRef.current === "featured-projects"
+              ? getFeaturedExpansionProgress(featuredIndex)
+              : null,
+          decision,
+        });
+      };
+
+      if (event.ctrlKey) {
+        debugWheel({ x: 0, y: 0 }, { x: 0, y: 0 }, null, "IGNORED_CTRL_KEY");
+        return;
+      }
       const normalizedDelta = normalizeWheelDelta(event, scroller.clientHeight);
       if (
         Math.abs(normalizedDelta.y) <=
         Math.abs(normalizedDelta.x) * WHEEL_VERTICAL_DOMINANCE
       ) {
+        debugWheel(normalizedDelta, normalizedDelta, null, "IGNORED_DIAGONAL");
         return;
       }
       wheelGestureDeltaScale ??= getWheelGestureDeltaScale(event);
@@ -1159,6 +1204,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         observeConsumedWheelGesture(normalizedDelta.y, event.timeStamp);
         wheelTransitionLock = true;
         scheduleWheelGestureSettlement();
+        debugWheel(
+          normalizedDelta,
+          progressDelta,
+          Math.sign(normalizedDelta.y),
+          activeTween ? "BLOCKED_ACTIVE_TWEEN" : "BLOCKED_PROGRAMMATIC_SCROLL",
+        );
         return;
       }
 
@@ -1175,16 +1226,38 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
             { smooth: true },
           )
         ) {
+          debugWheel(
+            normalizedDelta,
+            progressDelta,
+            direction,
+            "FEATURED_EXPANSION",
+          );
           return;
         }
         handleContentBoundaryWheel(event, normalizedDelta.y, direction);
+        debugWheel(
+          normalizedDelta,
+          progressDelta,
+          direction,
+          wheelGestureState.triggeredDirection !== null
+            ? "FEATURED_TRANSITION"
+            : "NATIVE_CONTENT_SCROLL",
+        );
         return;
       }
 
       event.preventDefault();
       scheduleWheelGestureSettlement();
       statement.stopAnimation();
-      if (wheelTransitionLock) return;
+      if (wheelTransitionLock) {
+        debugWheel(
+          normalizedDelta,
+          progressDelta,
+          Math.sign(normalizedDelta.y),
+          "BLOCKED_TRANSITION_LOCK",
+        );
+        return;
+      }
 
       const currentState = navigationStateRef.current;
       const isStatementReady =
@@ -1194,9 +1267,16 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         statement.queueDelta(limitHomeStatementWheelDelta(
           statementEnteringUp ? Math.abs(progressDelta.y) : progressDelta.y,
         ));
+        debugWheel(
+          normalizedDelta,
+          progressDelta,
+          Math.sign(normalizedDelta.y),
+          "STATEMENT_SCRUBBING",
+        );
         return;
       }
 
+      const previousWheelGestureState = wheelGestureState;
       wheelGestureState = advanceWheelGesture(
         wheelGestureState,
         normalizedDelta.y,
@@ -1219,12 +1299,44 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         statement.queueDelta(limitHomeStatementWheelDelta(
           statementEnteringUp ? Math.abs(progressDelta.y) : progressDelta.y,
         ));
+        debugWheel(
+          normalizedDelta,
+          progressDelta,
+          direction,
+          "STATEMENT_SCRUBBING_TRIGGERED",
+        );
         return;
       }
 
       if (!activeTween && wheelGestureState.triggeredDirection !== null) {
         moveByDirection(wheelGestureState.triggeredDirection);
+        debugWheel(
+          normalizedDelta,
+          progressDelta,
+          wheelGestureState.triggeredDirection,
+          previousWheelGestureState.rearmAccumulator !== 0
+            ? "REARMED -> TRIGGER_NAVIGATION"
+            : "TRIGGER_NAVIGATION",
+        );
+        return;
       }
+
+      const gestureDecision = wheelGestureState.oppositeAccumulator !== 0
+        ? "OPPOSITE_DIRECTION"
+        : wheelGestureState.consumed &&
+            (wheelGestureState.rearmAccumulator !== 0 ||
+              wheelGestureState.minimumMagnitudeAfterTrigger !==
+                Number.POSITIVE_INFINITY)
+          ? "REARM_WAITING"
+          : wheelGestureState.consumed
+            ? "CONSUMED_INERTIA"
+            : "ACCUMULATING";
+      debugWheel(
+        normalizedDelta,
+        progressDelta,
+        Math.sign(normalizedDelta.y),
+        gestureDecision,
+      );
     };
 
     const handlePointerDown = (event) => {

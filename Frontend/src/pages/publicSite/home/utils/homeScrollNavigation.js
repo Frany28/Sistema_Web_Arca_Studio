@@ -275,6 +275,30 @@ function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
       minimumMagnitudeAfterTrigger <= WHEEL_DECAY_MAGNITUDE_PX &&
       magnitude >= WHEEL_NEW_IMPULSE_MAGNITUDE_PX &&
       magnitude >= currentState.lastMagnitude * WHEEL_NEW_IMPULSE_RATIO;
+    const renewedAcceleration =
+      minimumMagnitudeAfterTrigger <= WHEEL_DECAY_MAGNITUDE_PX &&
+      magnitude > currentState.lastMagnitude;
+    const renewedAccelerationAccumulator = renewedAcceleration
+      ? currentState.rearmAccumulator + magnitude
+      : 0;
+    const renewedAccelerationConfirmed =
+      renewedAccelerationAccumulator >= threshold;
+
+    if (!enoughTimePassed && renewedAccelerationConfirmed) {
+      return {
+        accumulator: deltaY,
+        direction,
+        consumed: true,
+        idle: false,
+        triggeredDirection: direction,
+        lastMagnitude: magnitude,
+        minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
+        lastTriggerTime: eventTime,
+        oppositeAccumulator: 0,
+        rearmAccumulator: 0,
+        rearmLastMagnitude: 0,
+      };
+    }
 
     if (
       !discreteIdleImpulse &&
@@ -287,8 +311,10 @@ function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
         lastMagnitude: magnitude,
         minimumMagnitudeAfterTrigger,
         oppositeAccumulator: 0,
-        rearmAccumulator: 0,
-        rearmLastMagnitude: 0,
+        rearmAccumulator: renewedAccelerationAccumulator,
+        rearmLastMagnitude: renewedAcceleration
+          ? magnitude
+          : 0,
       };
     }
 
