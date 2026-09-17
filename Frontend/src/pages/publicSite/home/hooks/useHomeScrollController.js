@@ -970,66 +970,122 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
     const navigateSection = (sectionId, { direct = false } = {}) => {
       const currentState = navigationStateRef.current;
+
       const currentSectionComplete = contentMode
         ? true
-        : !titleRevealLockedRef.current && currentState.phase === HOME_SCROLL_PHASES.TITLE &&
-          (currentState.panelIndex !== STATEMENT_PANEL_INDEX || statement.getProgress() >= 1);
-      if (!direct && (activeTween || isProgrammaticScroll || !currentSectionComplete)) return;
-      const target = sectionId === "home" ? panels[0] :
-        [...scroller.querySelectorAll("section[id]")].find((section) => section.id === sectionId);
-      if (!target) return;
-      activeTween?.kill();
-      activeTween = undefined;
-      statement.stopAnimation();
-      statement.resetWheelScrubbing();
-      titleRevealLockedRef.current = false;
-      setContentMode(false);
+        : !titleRevealLockedRef.current &&
+          currentState.phase === HOME_SCROLL_PHASES.TITLE &&
+          (
+            currentState.panelIndex !== STATEMENT_PANEL_INDEX ||
+            statement.getProgress() >= 1
+          );
 
-      selectSection(sectionId === "home" ? null : sectionId);
-      commitNavigationState(createScrollbarHomeScrollState(
-        sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
-      ));
-      statementEnteringUp = false;
-      statement.commitProgress(0);
-      isProgrammaticScroll = true;
-      ignoreNextScrollEnd = supportsScrollEnd;
-      if (reduceMotion) {
-        scroller.scrollTop = target.offsetTop;
-        window.requestAnimationFrame(() => {
-        resetFeaturedNavigationState();
-
-        isProgrammaticScroll = false;
-        releaseWheelTransitionLock();
-        setContentMode(sectionId !== "home");
-
-        if (sectionId !== "home") {
-          synchronizeContentScroll();
-              } else {
-                synchronizeContentTitleVisibility();
-              }
-            });
+      if (
+        !direct &&
+        (activeTween || isProgrammaticScroll || !currentSectionComplete)
+      ) {
         return;
       }
-      activeTween = gsap.to(scroller, {
-        scrollTo: { y: target.offsetTop, autoKill: false },
-        duration: reduceMotion ? 0 : SCROLL_STEP_DURATION_SECONDS,
-        ease: SECTION_NAVIGATION_EASE,
-        overwrite: true,
-        onComplete: () => {
+
+      const target =
+        sectionId === "home"
+          ? panels[0]
+          : [...scroller.querySelectorAll("section[id]")].find(
+              (section) => section.id === sectionId,
+            );
+
+      if (!target) return;
+
+      /*
+      * El navbar puede interrumpir una navegación anterior.
+      * Cancelamos únicamente el desplazamiento anterior.
+      */
+      activeTween?.kill();
+      activeTween = undefined;
+
+      statement.stopAnimation();
+      statement.resetWheelScrubbing();
+
+      titleRevealLockedRef.current = false;
+
+      /*
+      * IMPORTANTE:
+      * no declarar todavía la sección destino como activa.
+      * La posición visual todavía pertenece a la sección de origen.
+      */
+      isProgrammaticScroll = true;
+      ignoreNextScrollEnd = supportsScrollEnd;
+
+      wheelTransitionLock = true;
+      window.clearTimeout(scrollSettleTimer);
+
+      commitNavigationState(
+        createScrollbarHomeScrollState(
+          sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
+        ),
+      );
+
+      statementEnteringUp = false;
+      statement.commitProgress(0);
+
+      const completeNavigation = () => {
         activeTween = undefined;
 
-        resetFeaturedNavigationState();
-
+        /*
+        * Primero terminamos el estado programático.
+        * Después sincronizamos todo contra la posición REAL
+        * a la que llegó el scroller.
+        */
         isProgrammaticScroll = false;
         releaseWheelTransitionLock();
-        setContentMode(sectionId !== "home");
 
-        if (sectionId !== "home") {
-          synchronizeContentScroll();
-        } else {
+        if (sectionId === "home") {
+          setContentMode(false);
+          selectSection(null);
+
+          resetFeaturedNavigationState();
           synchronizeContentTitleVisibility();
+
+          return;
         }
+
+        /*
+        * Ya estamos físicamente en la sección destino.
+        * Ahora sí activamos contentMode.
+        */
+        setContentMode(true);
+
+        /*
+        * Si entramos directamente a Featured desde el navbar,
+        * su estado inicial debe ser Quinta Bella Vista cerrada.
+        */
+        if (sectionId === "featured-projects") {
+          resetFeaturedNavigationState();
+        }
+
+        /*
+        * La posición real decide finalmente qué sección/proyecto
+        * está activo.
+        */
+        synchronizeContentScroll();
+      };
+
+      if (reduceMotion) {
+        scroller.scrollTop = target.offsetTop;
+
+        window.requestAnimationFrame(completeNavigation);
+        return;
+      }
+
+      activeTween = gsap.to(scroller, {
+        scrollTo: {
+          y: target.offsetTop,
+          autoKill: false,
         },
+        duration: SCROLL_STEP_DURATION_SECONDS,
+        ease: SECTION_NAVIGATION_EASE,
+        overwrite: true,
+        onComplete: completeNavigation,
       });
     };
     sectionNavigationRef.current = (sectionId) => navigateSection(sectionId, { direct: true });
