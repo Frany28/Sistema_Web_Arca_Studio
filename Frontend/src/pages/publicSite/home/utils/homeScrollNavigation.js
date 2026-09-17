@@ -269,7 +269,7 @@ function advanceWheelGesture(
       }
     }
 
-        if (!allowSameDirectionRearm) {
+        if (!allowSameDirectionRearm) { 
       return {
         ...currentState,
         idle: false,

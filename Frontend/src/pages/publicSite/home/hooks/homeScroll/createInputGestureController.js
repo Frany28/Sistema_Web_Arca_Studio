@@ -29,6 +29,7 @@ function isInteractiveTarget(target) {
 }
 
 function createInputGestureController({
+  titleRevealLockedRef,
   activeFeaturedProjectIndexRef,
   activeSectionRef,
   coordination,
@@ -103,6 +104,8 @@ function createInputGestureController({
       rearmAccumulator: gesture.rearmAccumulator,
       rearmLastMagnitude: gesture.rearmLastMagnitude,
       wheelTransitionLock: runtime.wheelTransitionLock,
+      wheelGestureDeltaScale: runtime.wheelGestureDeltaScale,
+      titleRevealLocked: titleRevealLockedRef.current,
       activeTween: Boolean(runtime.activeTween),
       isProgrammaticScroll: runtime.isProgrammaticScroll,
       contentMode: runtime.contentMode,
@@ -132,7 +135,15 @@ function createInputGestureController({
       return;
     }
 
-    runtime.wheelGestureDeltaScale ??= getWheelGestureDeltaScale(event);
+    const currentGestureScale = getWheelGestureDeltaScale(event);
+
+      runtime.wheelGestureDeltaScale =
+      runtime.wheelGestureDeltaScale === null
+    ? currentGestureScale
+    : Math.min(
+        runtime.wheelGestureDeltaScale,
+        currentGestureScale,
+      );
     const progressDelta = {
       x: normalizedDelta.x * runtime.wheelGestureDeltaScale,
       y: normalizedDelta.y * runtime.wheelGestureDeltaScale,
@@ -188,6 +199,17 @@ function createInputGestureController({
         progressDelta,
         Math.sign(normalizedDelta.y),
         "BLOCKED_TRANSITION_LOCK",
+      );
+      return;
+    }
+
+        if (titleRevealLockedRef.current) {
+      debugWheel(
+        event,
+        normalizedDelta,
+        progressDelta,
+        Math.sign(normalizedDelta.y),
+        "BLOCKED_TITLE_REVEAL",
       );
       return;
     }

@@ -181,6 +181,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       runtime,
       scroller,
       statement,
+      titleRevealLockedRef,
     });
 
     sectionNavigationRef.current = (sectionId) =>
