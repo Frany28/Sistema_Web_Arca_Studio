@@ -397,7 +397,7 @@ test("a renewed acceleration accumulates enough evidence to rearm", () => {
 
 test("sustained small trackpad deltas eventually produce one intention", () => {
   assert.deepEqual(
-    collectWheelIntentions([[1, 2, 3, 4, 5, 6, 5, 4]]),
+    collectWheelIntentions([[1, 2, 3, 4, 5, 6, 7, 8]]),
     [DOWN],
   );
 });

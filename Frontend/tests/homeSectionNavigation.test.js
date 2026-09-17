@@ -5,6 +5,7 @@ import * as servicesProgress from "../src/pages/publicSite/services/utils/servic
 import { createFakeClock } from "./helpers/fakeClock.js";
 import * as navigation from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 import * as sectionNavigationMotion from "../src/pages/publicSite/utils/sectionNavigationMotion.js";
+import * as homeScrollConstants from "../src/pages/publicSite/home/hooks/homeScroll/homeScrollConstants.js";
 
 function loadFunction(path, name, dependencies) {
   const source = readFileSync(new URL(path, import.meta.url), "utf8")
@@ -99,12 +100,43 @@ function setup(reduceMotion = false) {
     "../src/pages/publicSite/home/hooks/homeScroll/createHomeStatementController.js",
     "createHomeStatementController", { ...navigation, gsap, window },
   );
+  const createPanelNavigationController = loadFunction(
+    "../src/pages/publicSite/home/hooks/homeScroll/createPanelNavigationController.js",
+    "createPanelNavigationController",
+    { ...navigation, ...sectionNavigationMotion, ...homeScrollConstants, gsap, window },
+  );
+  const createFeaturedProjectsController = loadFunction(
+    "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js",
+    "createFeaturedProjectsController",
+    { ...navigation, ...homeScrollConstants, gsap, window },
+  );
+  const createContentScrollController = loadFunction(
+    "../src/pages/publicSite/home/hooks/homeScroll/createContentScrollController.js",
+    "createContentScrollController",
+    { ...navigation, ...homeScrollConstants, window },
+  );
+  const createInputGestureController = loadFunction(
+    "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js",
+    "createInputGestureController",
+    {
+      ...navigation,
+      ...homeScrollConstants,
+      Element: class {},
+      window,
+    },
+  );
   const createController = loadFunction(
     "../src/pages/publicSite/home/hooks/useHomeScrollController.js",
     "useHomeScrollController", {
       ...navigation, ...servicesProgress, ...sectionNavigationMotion,
+      ...homeScrollConstants,
       gsap, window, ScrollToPlugin: {}, createHomeStatementController,
+      createPanelNavigationController,
+      createFeaturedProjectsController,
+      createContentScrollController,
+      createInputGestureController,
       Element: class {}, useCallback: (callback) => callback,
+      useMemo: (factory) => factory(),
       useLayoutEffect: (effect) => effects.push(effect),
       useRef: (current) => ({ current }), useState: (initial) => {
         const index = states.length;

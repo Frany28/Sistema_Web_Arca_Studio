@@ -9,6 +9,27 @@ const homeControllerSource = readFileSync(
   ),
   "utf8",
 );
+const inputControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const panelControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createPanelNavigationController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const featuredControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const openingHomeSource = readFileSync(
   new URL("../src/pages/publicSite/home/OpeningHome.jsx", import.meta.url),
   "utf8",
@@ -43,25 +64,26 @@ test("Home is the only global owner of featured-project vertical navigation", ()
   assert.equal(existsSync(removedPanelLoopPath), false);
   assert.doesNotMatch(sectionSource, /useFeaturedProjectsPanelLoop/);
   assert.match(
-    homeControllerSource,
+    inputControllerSource,
     /scroller\.addEventListener\("wheel", handleWheel, \{ passive: false, capture: true \}\)/,
   );
-  assert.match(homeControllerSource, /FEATURED_PROJECT_SELECTOR/);
-  assert.match(homeControllerSource, /getFeaturedProjectTransition/);
-  assert.match(homeControllerSource, /transitionFeaturedProject/);
+  assert.match(featuredControllerSource, /FEATURED_PROJECT_SELECTOR/);
+  assert.match(featuredControllerSource, /getProjectTransition/);
+  assert.match(featuredControllerSource, /transitionProject/);
+  assert.match(homeControllerSource, /createFeaturedProjectsController/);
 });
 
 test("featured-project transitions reuse the Home ScrollTo motion", () => {
   assert.match(
-    homeControllerSource,
-    /scrollTo: \{\s*y: transition\.scrollTop,\s*autoKill: false,?\s*\}/,
+    panelControllerSource,
+    /scrollTo: \{ y: scrollTop, autoKill: false \}/,
   );
-  assert.match(homeControllerSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
-  assert.match(homeControllerSource, /ease: SECTION_NAVIGATION_EASE/);
-  assert.match(homeControllerSource, /if \(reduceMotion\)/);
+  assert.match(panelControllerSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
+  assert.match(panelControllerSource, /ease: SECTION_NAVIGATION_EASE/);
+  assert.match(panelControllerSource, /if \(reduceMotion\)/);
   assert.match(
-    homeControllerSource,
-    /commitFeaturedProjectIndex\(transition\.index\);[\s\S]*synchronizeContentScroll\(\)/,
+    featuredControllerSource,
+    /commitProjectIndex\(transition\.index\);[\s\S]*coordination\.content\.synchronizeContentScroll\(\)/,
   );
 });
 
@@ -81,8 +103,8 @@ test("the active project state flows from Home into the visual section", () => {
 
 test("an incoming image project is prepared before it becomes active", () => {
   assert.match(
-    homeControllerSource,
-    /setFeaturedPreparationOffset\([\s\S]*scroller\.scrollTop - transition\.scrollTop[\s\S]*setFeaturedExpansionProgress\(transition\.index, 1\);[\s\S]*commitFeaturedProjectIndex\(transition\.index\);/,
+    featuredControllerSource,
+    /setPreparationOffset\([\s\S]*scroller\.scrollTop - transition\.scrollTop[\s\S]*setExpansionProgress\(transition\.index, 1\);[\s\S]*commitProjectIndex\(transition\.index\);/,
   );
   assert.match(homeControllerSource, /featuredProjectPreparationOffsets/);
 });
@@ -108,5 +130,5 @@ test("only the Services-to-Quinta gallery bypasses the section reveal", () => {
     /style=\{sectionReveal \? undefined : \{ clipPath: "inset\(0 0 0 0\)" \}\}/,
   );
   assert.doesNotMatch(projectPanelSource, /sectionReveal=\{false\}/);
-  assert.match(homeControllerSource, /transitionFeaturedProject/);
+  assert.match(featuredControllerSource, /transitionProject/);
 });

@@ -101,6 +101,49 @@ const scrollControllerSource = readFileSync(
   ),
   "utf8",
 );
+const panelNavigationControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createPanelNavigationController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const inputGestureControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createInputGestureController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const contentScrollControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createContentScrollController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const featuredProjectsControllerSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/createFeaturedProjectsController.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const homeScrollConstantsSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/home/hooks/homeScroll/homeScrollConstants.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const scrollSubsystemSource = [
+  scrollControllerSource,
+  panelNavigationControllerSource,
+  inputGestureControllerSource,
+  contentScrollControllerSource,
+  featuredProjectsControllerSource,
+  homeScrollConstantsSource,
+].join("\n");
 const statementControllerSource = readFileSync(
   new URL(
     "../src/pages/publicSite/home/hooks/homeScroll/createHomeStatementController.js",
@@ -235,54 +278,54 @@ test("initial scrolling unlocks only after Arquitectura finishes revealing", () 
 
 test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollControllerSource, /gsap\.registerPlugin\(ScrollToPlugin\)/);
-  assert.doesNotMatch(scrollControllerSource, /ScrollTrigger|pinSpacing|data-home-scroll-step/);
-  assert.match(scrollControllerSource, /getNextHomeScrollState/);
-  assert.match(scrollControllerSource, /createScrollbarHomeScrollState/);
+  assert.doesNotMatch(scrollSubsystemSource, /ScrollTrigger|pinSpacing|data-home-scroll-step/);
+  assert.match(panelNavigationControllerSource, /getNextHomeScrollState/);
+  assert.match(contentScrollControllerSource, /createScrollbarHomeScrollState/);
   assert.match(homeSectionsSource, /navigationState\.panelIndex === panelIndex/);
   assert.match(homeSectionsSource, /navigationState\.phase === HOME_SCROLL_PHASES\.TITLE/);
   assert.match(navigationMotionSource, /SECTION_NAVIGATION_DURATION_SECONDS = 0\.5/);
-  assert.match(scrollControllerSource, /SECTION_NAVIGATION_DURATION_SECONDS/);
-  assert.match(scrollControllerSource, /if \(reduceMotion\) \{/);
-  assert.match(scrollControllerSource, /scroller\.scrollTop = targetScrollTop/);
-  assert.match(scrollControllerSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
-  assert.doesNotMatch(scrollControllerSource, /dataset\.homeStepHoldMs|setTimeout\(releaseScroll/);
+  assert.match(homeScrollConstantsSource, /SECTION_NAVIGATION_DURATION_SECONDS/);
+  assert.match(panelNavigationControllerSource, /if \(reduceMotion\) \{/);
+  assert.match(panelNavigationControllerSource, /scroller\.scrollTop = targetScrollTop/);
+  assert.match(panelNavigationControllerSource, /duration: SCROLL_STEP_DURATION_SECONDS/);
+  assert.doesNotMatch(scrollSubsystemSource, /dataset\.homeStepHoldMs|setTimeout\(releaseScroll/);
 
-  assert.match(scrollControllerSource, /scroller\.addEventListener\("wheel", handleWheel/);
-  assert.match(scrollControllerSource, /normalizeWheelDelta\(event, scroller\.clientHeight\)/);
-  assert.match(scrollControllerSource, /WHEEL_GESTURE_THRESHOLD_PX = 32/);
-  assert.match(scrollControllerSource, /WHEEL_GESTURE_IDLE_MS = 180/);
+  assert.match(inputGestureControllerSource, /scroller\.addEventListener\("wheel", handleWheel/);
+  assert.match(inputGestureControllerSource, /normalizeWheelDelta\(event, scroller\.clientHeight\)/);
+  assert.match(homeScrollConstantsSource, /WHEEL_GESTURE_THRESHOLD_PX = 32/);
+  assert.match(homeScrollConstantsSource, /WHEEL_GESTURE_IDLE_MS = 180/);
   assert.match(
-    scrollControllerSource,
-    /limitHomeStatementWheelDelta\([\s\S]*statementEnteringUp \? Math\.abs\(progressDelta\.y\) : progressDelta\.y/,
+    inputGestureControllerSource,
+    /statement\.animateTo\([\s\S]*runtime\.statementEnteringUp/,
   );
-  assert.match(scrollControllerSource, /getWheelGestureDeltaScale\(event\)/);
+  assert.match(inputGestureControllerSource, /getWheelGestureDeltaScale\(event\)/);
   assert.doesNotMatch(
-    scrollControllerSource,
+    inputGestureControllerSource,
     /statement\.queueDelta\(wheelGestureState\.accumulator\)/,
   );
 
-  assert.match(scrollControllerSource, /scroller\.addEventListener\("pointerdown"/);
-  assert.match(scrollControllerSource, /scroller\.addEventListener\("pointermove"/);
-  assert.match(scrollControllerSource, /TOUCH_SWIPE_THRESHOLD_PX = 48/);
-  assert.match(scrollControllerSource, /TOUCH_VERTICAL_DOMINANCE = 1\.2/);
+  assert.match(inputGestureControllerSource, /scroller\.addEventListener\("pointerdown"/);
+  assert.match(inputGestureControllerSource, /scroller\.addEventListener\("pointermove"/);
+  assert.match(homeScrollConstantsSource, /TOUCH_SWIPE_THRESHOLD_PX = 48/);
+  assert.match(homeScrollConstantsSource, /TOUCH_VERTICAL_DOMINANCE = 1\.2/);
   assert.match(homeSource, /usesControlledTouchNavigation/);
   assert.match(homeSource, /touch-pan-x/);
   assert.match(homeSource, /touch-auto/);
 
-  assert.match(scrollControllerSource, /scroller\.addEventListener\("keydown"/);
-  assert.match(scrollControllerSource, /getKeyboardDirection\(event\)/);
-  assert.match(scrollControllerSource, /event\.repeat/);
-  assert.match(scrollControllerSource, /isInteractiveTarget\(event\.target\)/);
+  assert.match(inputGestureControllerSource, /scroller\.addEventListener\("keydown"/);
+  assert.match(inputGestureControllerSource, /getKeyboardDirection\(event\)/);
+  assert.match(inputGestureControllerSource, /event\.repeat/);
+  assert.match(inputGestureControllerSource, /isInteractiveTarget\(event\.target\)/);
 
   assert.match(scrollControllerSource, /"onscrollend" in scroller/);
-  assert.match(scrollControllerSource, /SCROLL_SETTLE_DELAY_MS = 180/);
-  assert.match(scrollControllerSource, /getNearestPanelIndex/);
-  assert.match(scrollControllerSource, /getSequentialScrollbarPanelIndex/);
+  assert.match(homeScrollConstantsSource, /SCROLL_SETTLE_DELAY_MS = 180/);
+  assert.match(contentScrollControllerSource, /getNearestPanelIndex/);
+  assert.match(contentScrollControllerSource, /getSequentialScrollbarPanelIndex/);
   assert.match(scrollControllerSource, /titleRevealLockedRef/);
-  assert.doesNotMatch(scrollControllerSource, /sectionTitleLockedRef/);
+  assert.doesNotMatch(scrollSubsystemSource, /sectionTitleLockedRef/);
   assert.match(homeSectionsSource, /onTitleRevealComplete/);
-  assert.match(scrollControllerSource, /window\.addEventListener\("resize", handleResize\)/);
-  assert.match(scrollControllerSource, /window\.addEventListener\("orientationchange", handleResize\)/);
+  assert.match(inputGestureControllerSource, /window\.addEventListener\("resize", coordination\.content\.handleResize\)/);
+  assert.match(inputGestureControllerSource, /window\.addEventListener\("orientationchange", coordination\.content\.handleResize\)/);
 
   assert.match(homeSectionsSource, /HOME_IMAGE_PANELS\.map/);
   assert.match(homeSectionsSource, /<HomeScrollPanel/);
@@ -292,11 +335,11 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.doesNotMatch(scrollPanelSource, /useInView|revealOnNextScroll|h-\[200dvh\]/);
   assert.match(homeSource, /overscroll-y-contain/);
   assert.match(homeSource, /tabIndex=\{initialScrollReady \? 0 : -1\}/);
-  assert.doesNotMatch(scrollControllerSource, /setInterval/);
+  assert.doesNotMatch(scrollSubsystemSource, /setInterval/);
 });
 
 test("the final home panel scrubs a responsive video statement", () => {
-  assert.match(scrollControllerSource, /STATEMENT_PANEL_INDEX = 3/);
+  assert.match(homeScrollConstantsSource, /STATEMENT_PANEL_INDEX = 3/);
   assert.match(homeContentSource, /Pi.nsalo y lo hacemos realidad\./);
   assert.match(homeContentSource, /arca-statement-bg\.mp4/);
   assert.match(homeContentSource, /arca-statement-bg\.webm/);
@@ -306,8 +349,8 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementControllerSource, /window\.requestAnimationFrame/);
   assert.match(statementControllerSource, /advanceHomeStatementProgress/);
   assert.match(statementControllerSource, /STATEMENT_KEYBOARD_DURATION_SECONDS = 0\.35/);
-  assert.match(scrollControllerSource, /createScrollbarHomeScrollState\(panelIndex\)/);
-  assert.doesNotMatch(scrollControllerSource, /pendingStatementEntryDelta/);
+  assert.match(contentScrollControllerSource, /createScrollbarHomeScrollState\(panelIndex\)/);
+  assert.doesNotMatch(scrollSubsystemSource, /pendingStatementEntryDelta/);
 
   assert.match(statementPanelSource, /data-home-statement-panel/);
   assert.match(statementPanelSource, /autoPlay/);
@@ -323,7 +366,7 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.doesNotMatch(statementPanelSource, /video\.pause\(\)/);
   assert.doesNotMatch(statementControllerSource, /currentTime|\.pause\(/);
   assert.match(statementPanelSource, /\[active, mediaEnabled, videoPlaying\]/);
-  assert.doesNotMatch(scrollControllerSource, /restartStatementPlayback/);
+  assert.doesNotMatch(scrollSubsystemSource, /restartStatementPlayback/);
   assert.doesNotMatch(homeSectionsSource, /playbackVersion/);
   assert.match(statementPanelSource, /preload=\{mediaEnabled \? "auto" : "none"\}/);
   assert.match(statementPanelSource, /<source src=\{webmSource\}/);
@@ -363,14 +406,14 @@ test("services navigation scrolls within Home and preserves its responsive headi
     homeSource,
     /<ServicesSection[\s\S]*titleVisible=\{titleIsVisible\("services"\)\}/,
   );
-  assert.match(scrollControllerSource, /const selectSection = \(id\) =>/);
-  assert.match(scrollControllerSource, /isVisibleWithinViewport/);
-  assert.match(scrollControllerSource, /CONTENT_TITLE_SCOPE_SELECTOR/);
-  assert.doesNotMatch(scrollControllerSource, /setRevealedSectionId|completeSectionTitleReveal/);
+  assert.match(contentScrollControllerSource, /const selectSection = \(id\) =>/);
+  assert.match(contentScrollControllerSource, /isVisibleWithinViewport/);
+  assert.match(contentScrollControllerSource, /CONTENT_TITLE_SCOPE_SELECTOR/);
+  assert.doesNotMatch(scrollSubsystemSource, /setRevealedSectionId|completeSectionTitleReveal/);
   assert.match(servicesPageSource, /data-content-title-scope="services"/);
   assert.match(servicesHeadingSource, /visible=\{visible\}/);
   assert.doesNotMatch(homeSectionsSource, /ServicesHeading/);
-  assert.doesNotMatch(scrollControllerSource, /SERVICES_PANEL_INDEX/);
+  assert.doesNotMatch(scrollSubsystemSource, /SERVICES_PANEL_INDEX/);
   assert.match(servicesHeadingSource, /data-node-id="4848:8081"/);
   assert.match(servicesHeadingSource, /data-node-id="4848:8083"/);
   assert.match(servicesHeadingSource, /data-node-id="4848:8084"/);
@@ -414,7 +457,7 @@ test("services navigation scrolls within Home and preserves its responsive headi
 test("the public navigation logo returns to home", () => {
   assert.match(publicSiteHeaderSource, /aria-label="Ir al inicio"/);
   assert.match(publicSiteHeaderSource, /onNavigate\?\.\("home"\)/);
-  assert.match(scrollControllerSource, /sectionId === "home" \? panels\[0\]/);
+  assert.match(contentScrollControllerSource, /sectionId === "home"\s*\? panels\[0\]/);
   assert.doesNotMatch(servicesPageSource, /PublicSiteHeader|useNavigate/);
 });
 
