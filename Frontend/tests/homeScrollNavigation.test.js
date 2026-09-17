@@ -255,6 +255,22 @@ test("trackpad inertia cannot rearm without decaying first", () => {
   assert.equal(gesture.consumed, true);
 });
 
+test("observed tween inertia lets a renewed same-direction gesture rearm", () => {
+  let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
+
+  [18, 10, 6].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, 100 + index * 80);
+    assert.equal(gesture.triggeredDirection, null);
+  });
+
+  gesture = advanceWheelGesture(gesture, 12, 32, 520);
+  assert.equal(gesture.triggeredDirection, null);
+
+  gesture = advanceWheelGesture(gesture, 20, 32, 536);
+
+  assert.equal(gesture.triggeredDirection, DOWN);
+});
+
 test("an intentional opposite trackpad gesture rearms after the lock window", () => {
   let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
 

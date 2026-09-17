@@ -1139,6 +1139,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (activeTween || isProgrammaticScroll) {
         event.preventDefault();
         event.stopPropagation?.();
+        observeConsumedWheelGesture(normalizedDelta.y, event.timeStamp);
         wheelTransitionLock = true;
         scheduleWheelGestureSettlement();
         return;
