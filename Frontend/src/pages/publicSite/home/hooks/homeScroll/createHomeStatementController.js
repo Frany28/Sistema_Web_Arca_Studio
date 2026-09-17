@@ -17,6 +17,7 @@ function createHomeStatementController({
   panelIndex,
   progress,
   reduceMotion,
+  onWheelPhaseComplete = () => {},
 }) {
   let animationFrame;
   let pendingDelta = 0;
@@ -70,7 +71,10 @@ function createHomeStatementController({
         reduceMotion,
       );
       commitProgress(nextProgress);
-      if (nextProgress === 0 || nextProgress === 1) wheelScrubbing = false;
+      if (nextProgress === 0 || nextProgress === 1) {
+        wheelScrubbing = false;
+        onWheelPhaseComplete();
+      }
     });
   };
 

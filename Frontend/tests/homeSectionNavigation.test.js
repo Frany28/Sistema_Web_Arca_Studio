@@ -492,6 +492,139 @@ test("the scrollbar cannot skip the intro and video to enter Services", () => {
   app.cleanup();
 });
 
+function runWheelGesture(app, wheel, deltas) {
+  deltas.forEach((deltaY) => wheel(deltaY));
+  app.flush();
+  app.clock.advance(200);
+}
+
+function enterStatementImage(app) {
+  const down = () => app.handlers.keydown({
+    key: "ArrowDown",
+    preventDefault() {},
+  });
+
+  down(); app.flush();
+  down(); app.flush(); app.controller.completeTitleReveal(1);
+  down(); app.flush();
+  down(); app.flush(); app.controller.completeTitleReveal(2);
+  down(); app.flush();
+}
+
+test("one long wheel gesture from an image reveals its title only", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  runWheelGesture(app, wheel, [35]);
+  assert.deepEqual(app.getNavigationState(), {
+    panelIndex: 1,
+    phase: navigation.HOME_SCROLL_PHASES.IMAGE,
+    entryDirection: navigation.HOME_SCROLL_DIRECTIONS.DOWN,
+  });
+
+  runWheelGesture(app, wheel, [6, 14, 27, 35, 28, 18, 9, 4, 2]);
+
+  assert.deepEqual(app.getNavigationState(), {
+    panelIndex: 1,
+    phase: navigation.HOME_SCROLL_PHASES.TITLE,
+    entryDirection: null,
+  });
+  app.cleanup();
+});
+
+test("residual wheel input cannot cross the next image phase", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  runWheelGesture(app, wheel, [35]);
+  runWheelGesture(app, wheel, [6, 14, 27, 35, 28, 18, 9, 4, 2]);
+
+  assert.equal(app.getNavigationState().panelIndex, 1);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.TITLE);
+  app.cleanup();
+});
+
+test("a renewed acceleration in the same wheel burst cannot cross the image title", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  runWheelGesture(app, wheel, [35]);
+
+  [6, 14, 27, 35, 28, 18, 9, 4, 2, 7, 16, 29, 34]
+    .forEach((deltaY) => wheel(deltaY));
+  app.flush();
+
+  assert.equal(app.getNavigationState().panelIndex, 1);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.TITLE);
+  app.cleanup();
+});
+
+test("a new wheel gesture advances from an image title to the next panel", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  runWheelGesture(app, wheel, [35]);
+  runWheelGesture(app, wheel, [6, 14, 27, 35, 28, 18, 9, 4, 2]);
+  app.controller.completeTitleReveal(1);
+  runWheelGesture(app, wheel, [7, 16, 29, 34]);
+
+  assert.equal(app.getNavigationState().panelIndex, 2);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.IMAGE);
+  app.cleanup();
+});
+
+test("upward navigation consumes one image phase per new gesture", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+  runWheelGesture(app, wheel, [35]);
+  runWheelGesture(app, wheel, [35]);
+  app.controller.completeTitleReveal(1);
+
+  runWheelGesture(app, wheel, [-6, -14, -27, -35, -28, -18, -9, -4, -2]);
+  assert.equal(app.getNavigationState().panelIndex, 1);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.TITLE);
+
+  app.controller.completeTitleReveal(1);
+  runWheelGesture(app, wheel, [-7, -16, -29, -34]);
+  assert.equal(app.getNavigationState().panelIndex, 0);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.IMAGE);
+  app.cleanup();
+});
+
+test("the statement requires separate gestures for video, title and next panel", () => {
+  const app = setup();
+  enterStatementImage(app);
+  const wheel = createWheelDriver(app);
+
+  assert.equal(app.getNavigationState().panelIndex, 3);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.IMAGE);
+
+  runWheelGesture(app, wheel, [35]);
+  assert.equal(app.getNavigationState().panelIndex, 3);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.EFFECT);
+
+  runWheelGesture(app, wheel, [300, 300, 300, 300, 300]);
+  assert.equal(app.getNavigationState().panelIndex, 3);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.TITLE);
+
+  runWheelGesture(app, wheel, [300]);
+  assert.equal(app.getActiveSection(), "services");
+  app.cleanup();
+});
+
+test("statement completion cannot let residual input enter Services", () => {
+  const app = setup();
+  enterStatementImage(app);
+  const wheel = createWheelDriver(app);
+
+  runWheelGesture(app, wheel, [35]);
+  [300, 300, 300, 300, 300].forEach((deltaY) => wheel(deltaY));
+  app.flush();
+
+  [20, 10, 5, 2, 7, 16, 29, 34].forEach((deltaY) => wheel(deltaY));
+  app.flush();
+
+  assert.notEqual(app.getActiveSection(), "services");
+  assert.equal(app.getNavigationState().panelIndex, 3);
+  app.cleanup();
+});
+
 function createWheelDriver(app) {
   let timeStamp = 0;
 

@@ -160,6 +160,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       panelIndex: STATEMENT_PANEL_INDEX,
       progress: statementProgress,
       reduceMotion,
+      onWheelPhaseComplete: () => {
+        wheelTransitionLock = true;
+      },
     });
 
     const alignToPanel = (nextState) => {
@@ -167,6 +170,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       const currentState = navigationStateRef.current;
       const panelChanged = nextState.panelIndex !== currentState.panelIndex;
+      const phaseChanged = nextState.phase !== currentState.phase;
       const targetPanel = panels[nextState.panelIndex];
       const targetScrollTop = targetPanel?.offsetTop ?? 0;
       const needsAlignment = Math.abs(scroller.scrollTop - targetScrollTop) > 1;
@@ -181,7 +185,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         titleRevealLockedRef.current = true;
       }
       commitNavigationState(nextState);
-      if (panelChanged) wheelTransitionLock = true;
+      if (panelChanged || phaseChanged) wheelTransitionLock = true;
       if (!panelChanged && !needsAlignment) return true;
 
       isProgrammaticScroll = true;
