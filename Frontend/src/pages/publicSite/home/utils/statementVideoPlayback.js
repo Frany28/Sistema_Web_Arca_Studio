@@ -1,9 +1,6 @@
 function connectStatementPlayback(video, { active, enabled, playing, documentTarget = document }) {
   const synchronize = () => {
-    if (!active || !enabled || !playing || documentTarget.hidden) {
-      video.pause();
-      return;
-    }
+    if (!active || !enabled || !playing || documentTarget.hidden) return;
     video.defaultMuted = true;
     video.muted = true;
     video.play()?.catch(() => undefined);
@@ -14,7 +11,6 @@ function connectStatementPlayback(video, { active, enabled, playing, documentTar
   return () => {
     video.removeEventListener("canplay", synchronize);
     documentTarget.removeEventListener("visibilitychange", synchronize);
-    video.pause();
   };
 }
 

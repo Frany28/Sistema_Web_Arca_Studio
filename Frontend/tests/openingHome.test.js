@@ -318,7 +318,10 @@ test("the final home panel scrubs a responsive video statement", () => {
 
 
 
-  assert.match(statementPanelSource, /videoRef\.current\.currentTime = 0/);
+  assert.doesNotMatch(statementPanelSource, /videoRef\.current\.currentTime = 0/);
+  assert.doesNotMatch(statementPanelSource, /video\.load\(\)/);
+  assert.doesNotMatch(statementPanelSource, /video\.pause\(\)/);
+  assert.doesNotMatch(statementControllerSource, /currentTime|\.pause\(/);
   assert.match(statementPanelSource, /\[active, mediaEnabled, videoPlaying\]/);
   assert.doesNotMatch(scrollControllerSource, /restartStatementPlayback/);
   assert.doesNotMatch(homeSectionsSource, /playbackVersion/);

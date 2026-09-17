@@ -5,6 +5,7 @@ import { HOME_IMAGE_PANELS, HOME_STATEMENT } from "../homeContent.js";
 
 function HomeSections({
   active,
+  mediaEnabled = active,
   navigationState,
   onInitialTitleReveal,
   onTitleRevealComplete,
@@ -37,7 +38,7 @@ function HomeSections({
           navigationState.panelIndex === statementPanelIndex &&
           navigationState.phase !== HOME_SCROLL_PHASES.IMAGE
         }
-        mediaEnabled={active}
+        mediaEnabled={mediaEnabled}
         {...HOME_STATEMENT}
         progress={statementProgress}
         statementVisible={

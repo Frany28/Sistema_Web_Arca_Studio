@@ -91,23 +91,6 @@ function HomeStatementPanel({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return undefined;
-
-    if (!mediaEnabled) {
-      video.pause();
-      return undefined;
-    }
-
-    video.load();
-    return undefined;
-  }, [mediaEnabled]);
-
-  useEffect(() => {
-    if (active && videoRef.current) videoRef.current.currentTime = 0;
-  }, [active]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return undefined;
     return connectStatementPlayback(video, { active, enabled: mediaEnabled, playing: videoPlaying });
   }, [active, mediaEnabled, videoPlaying]);
 
@@ -130,7 +113,7 @@ function HomeStatementPanel({
         className={`absolute inset-0 h-full w-full object-cover object-center ${
           videoFailed ? "hidden" : "block"
         }`}
-        autoPlay={active && mediaEnabled && videoPlaying}
+        autoPlay={mediaEnabled && videoPlaying}
         muted
         loop
         playsInline

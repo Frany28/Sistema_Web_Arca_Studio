@@ -509,6 +509,14 @@ function enterStatementImage(app) {
   down(); app.flush();
   down(); app.flush(); app.controller.completeTitleReveal(2);
   down(); app.flush();
+  app.handlers.wheel({
+    deltaX: 0,
+    deltaY: 1,
+    timeStamp: 0,
+    preventDefault() {},
+    stopPropagation() {},
+  });
+  app.clock.advance(200);
 }
 
 test("one long wheel gesture from an image reveals its title only", () => {
@@ -595,15 +603,11 @@ test("the statement requires separate gestures for video, title and next panel",
   assert.equal(app.getNavigationState().panelIndex, 3);
   assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.IMAGE);
 
-  runWheelGesture(app, wheel, [35]);
-  assert.equal(app.getNavigationState().panelIndex, 3);
-  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.EFFECT);
-
-  runWheelGesture(app, wheel, [300, 300, 300, 300, 300]);
+  runWheelGesture(app, wheel, [8, 17, 31, 38, 27, 16, 7, 3]);
   assert.equal(app.getNavigationState().panelIndex, 3);
   assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.TITLE);
 
-  runWheelGesture(app, wheel, [300]);
+  runWheelGesture(app, wheel, [7, 16, 29, 36]);
   assert.equal(app.getActiveSection(), "services");
   app.cleanup();
 });
@@ -613,8 +617,7 @@ test("statement completion cannot let residual input enter Services", () => {
   enterStatementImage(app);
   const wheel = createWheelDriver(app);
 
-  runWheelGesture(app, wheel, [35]);
-  [300, 300, 300, 300, 300].forEach((deltaY) => wheel(deltaY));
+  [8, 17, 31, 38, 27, 16, 7, 3].forEach((deltaY) => wheel(deltaY));
   app.flush();
 
   [20, 10, 5, 2, 7, 16, 29, 34].forEach((deltaY) => wheel(deltaY));
@@ -622,6 +625,25 @@ test("statement completion cannot let residual input enter Services", () => {
 
   assert.notEqual(app.getActiveSection(), "services");
   assert.equal(app.getNavigationState().panelIndex, 3);
+  app.cleanup();
+});
+
+test("the statement reverses title and zoom before leaving to the previous panel", () => {
+  const app = setup();
+  enterStatementImage(app);
+  const wheel = createWheelDriver(app);
+
+  runWheelGesture(app, wheel, [8, 17, 31, 38, 27, 16, 7, 3]);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.TITLE);
+
+  runWheelGesture(app, wheel, [-8, -17, -31, -38, -27, -16, -7, -3]);
+  assert.equal(app.getNavigationState().panelIndex, 3);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.IMAGE);
+  assert.equal(app.controller.statementProgress.get(), 0);
+
+  runWheelGesture(app, wheel, [-7, -16, -29, -36]);
+  assert.equal(app.getNavigationState().panelIndex, 2);
+  assert.equal(app.getNavigationState().phase, navigation.HOME_SCROLL_PHASES.IMAGE);
   app.cleanup();
 });
 

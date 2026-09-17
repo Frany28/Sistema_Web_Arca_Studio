@@ -22,18 +22,20 @@ function setup() {
 }
 
 for (const [active, enabled, playing] of [[false, true, true], [true, false, true], [true, true, false]]) {
-  test(`video remains paused when active=${active}, enabled=${enabled}, playing=${playing}`, () => {
+  test(`phase synchronization does not pause video when active=${active}, enabled=${enabled}, playing=${playing}`, () => {
     const app = setup();
     const cleanup = connectStatementPlayback(app.video, { active, enabled, playing, documentTarget: app.documentTarget });
+    assert.deepEqual(app.calls, []);
     app.videoEvents.canplay();
     app.documentEvents.visibilitychange();
-    assert.ok(app.calls.every((call) => call === "pause"));
+    assert.deepEqual(app.calls, []);
     assert.equal(app.video.currentTime, 12);
     cleanup();
+    assert.deepEqual(app.calls, []);
   });
 }
 
-test("video pauses in a hidden tab, resumes muted and removes all subscriptions", () => {
+test("video resumes when visible and removes subscriptions without pausing", () => {
   const app = setup();
   const cleanup = connectStatementPlayback(app.video, { active: true, enabled: true, playing: true, documentTarget: app.documentTarget });
   assert.equal(app.video.muted, true);
@@ -41,8 +43,9 @@ test("video pauses in a hidden tab, resumes muted and removes all subscriptions"
   app.documentEvents.visibilitychange();
   app.documentTarget.hidden = false;
   app.documentEvents.visibilitychange();
-  assert.deepEqual(app.calls, ["play", "pause", "play"]);
+  assert.deepEqual(app.calls, ["play", "play"]);
   cleanup();
+  assert.deepEqual(app.calls, ["play", "play"]);
   assert.deepEqual(app.videoEvents, {});
   assert.deepEqual(app.documentEvents, {});
 });

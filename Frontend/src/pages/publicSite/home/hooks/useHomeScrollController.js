@@ -24,7 +24,6 @@ import {
   getSequentialScrollbarPanelIndex,
   getSwipeDirection,
   getWheelGestureDeltaScale,
-  limitHomeStatementWheelDelta,
   markWheelGestureIdle,
   normalizeWheelDelta,
 } from "../utils/homeScrollNavigation.js";
@@ -160,9 +159,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       panelIndex: STATEMENT_PANEL_INDEX,
       progress: statementProgress,
       reduceMotion,
-      onWheelPhaseComplete: () => {
-        wheelTransitionLock = true;
-      },
     });
 
     const alignToPanel = (nextState) => {
@@ -1252,7 +1248,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       event.preventDefault();
       scheduleWheelGestureSettlement();
-      statement.stopAnimation();
       if (wheelTransitionLock) {
         debugWheel(
           normalizedDelta,
@@ -1262,24 +1257,12 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         );
         return;
       }
+      statement.stopAnimation();
 
       const currentState = navigationStateRef.current;
       const isStatementReady =
         !contentMode && currentState.panelIndex === STATEMENT_PANEL_INDEX && !activeTween;
       if (isStatementReady && statement.getProgress() >= 1) statementEnteringUp = false;
-      if (isStatementReady && statement.isWheelScrubbing()) {
-        statement.queueDelta(limitHomeStatementWheelDelta(
-          statementEnteringUp ? Math.abs(progressDelta.y) : progressDelta.y,
-        ));
-        debugWheel(
-          normalizedDelta,
-          progressDelta,
-          Math.sign(normalizedDelta.y),
-          "STATEMENT_SCRUBBING",
-        );
-        return;
-      }
-
       const previousWheelGestureState = wheelGestureState;
       wheelGestureState = advanceWheelGesture(
         wheelGestureState,
@@ -1299,15 +1282,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           return;
         }
 
-        statement.startWheelScrubbing();
-        statement.queueDelta(limitHomeStatementWheelDelta(
-          statementEnteringUp ? Math.abs(progressDelta.y) : progressDelta.y,
-        ));
+        statement.animateTo(
+          statementEnteringUp || direction === HOME_SCROLL_DIRECTIONS.DOWN
+            ? 1
+            : 0,
+        );
+        wheelTransitionLock = true;
+        statementEnteringUp = false;
         debugWheel(
           normalizedDelta,
           progressDelta,
           direction,
-          "STATEMENT_SCRUBBING_TRIGGERED",
+          "STATEMENT_PHASE_TRANSITION",
         );
         return;
       }

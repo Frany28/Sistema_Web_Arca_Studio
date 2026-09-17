@@ -110,6 +110,7 @@ function OpeningHome() {
 
           <HomeSections
             active={homeActive && !contentScrollActive}
+            mediaEnabled={homeActive}
             navigationState={navigationState}
             onInitialTitleReveal={completeInitialTitleReveal}
             onTitleRevealComplete={completeTitleReveal}
