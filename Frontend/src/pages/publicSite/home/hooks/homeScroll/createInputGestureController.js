@@ -56,13 +56,22 @@ function createInputGestureController({
   };
 
   const observeConsumedWheelGesture = (deltaY, eventTime) => {
-    if (!runtime.wheelGestureState.consumed) return;
+  if (!runtime.wheelGestureState.consumed) return;
+
+    const isTrackpadGesture =
+      runtime.wheelGestureDeltaScale !== null &&
+      runtime.wheelGestureDeltaScale < 1;
+
     const observedGesture = advanceWheelGesture(
       runtime.wheelGestureState,
       deltaY,
       WHEEL_GESTURE_THRESHOLD_PX,
       eventTime,
+      {
+        allowSameDirectionRearm: !isTrackpadGesture,
+      },
     );
+
     runtime.wheelGestureState = {
       ...observedGesture,
       triggeredDirection: null,
@@ -191,11 +200,19 @@ function createInputGestureController({
       runtime.statementEnteringUp = false;
     }
     const previousWheelGestureState = runtime.wheelGestureState;
+
+    const isTrackpadGesture =
+      runtime.wheelGestureDeltaScale !== null &&
+      runtime.wheelGestureDeltaScale < 1;
+
     runtime.wheelGestureState = advanceWheelGesture(
       runtime.wheelGestureState,
       normalizedDelta.y,
       WHEEL_GESTURE_THRESHOLD_PX,
       event.timeStamp,
+      {
+        allowSameDirectionRearm: !isTrackpadGesture,
+      },
     );
     if (isStatementReady && runtime.wheelGestureState.triggeredDirection !== null) {
       const direction = runtime.wheelGestureState.triggeredDirection;

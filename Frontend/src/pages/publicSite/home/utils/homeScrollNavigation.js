@@ -172,7 +172,13 @@ function consumeWheelGesture(state, deltaY, eventTime = 0) {
   };
 }
 
-function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
+function advanceWheelGesture(
+  state,
+  deltaY,
+  threshold = 32,
+  eventTime = 0,
+  { allowSameDirectionRearm = true } = {},
+) {
   if (!Number.isFinite(deltaY) || deltaY === 0) {
     return {
       ...(state ?? createWheelGestureState()),
@@ -261,6 +267,22 @@ function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
           triggeredDirection: rearmed ? direction : null,
         };
       }
+    }
+
+        if (!allowSameDirectionRearm) {
+      return {
+        ...currentState,
+        idle: false,
+        triggeredDirection: null,
+        lastMagnitude: magnitude,
+        minimumMagnitudeAfterTrigger: Math.min(
+          currentState.minimumMagnitudeAfterTrigger,
+          magnitude,
+        ),
+        oppositeAccumulator: 0,
+        rearmAccumulator: 0,
+        rearmLastMagnitude: 0,
+      };
     }
 
     const minimumMagnitudeAfterTrigger = sameDirection

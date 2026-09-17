@@ -324,7 +324,14 @@ test("moderate, strong and residual trackpad curves each keep one intention", ()
   });
 });
 
-function collectWheelIntentions(sequences, { pauseMs = 0, markIdle = false } = {}) {
+function collectWheelIntentions(
+  sequences,
+  {
+    pauseMs = 0,
+    markIdle = false,
+    allowSameDirectionRearm = false,
+  } = {},
+) {
   let gesture = createWheelGestureState();
   let eventTime = 0;
   const intentions = [];
@@ -332,12 +339,25 @@ function collectWheelIntentions(sequences, { pauseMs = 0, markIdle = false } = {
   sequences.forEach((sequence, sequenceIndex) => {
     if (sequenceIndex > 0) {
       eventTime += pauseMs;
-      if (markIdle) gesture = markWheelGestureIdle(gesture);
+
+      if (markIdle) {
+        gesture = markWheelGestureIdle(gesture);
+      }
     }
 
     sequence.forEach((deltaY) => {
       eventTime += 16;
-      gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime);
+
+      gesture = advanceWheelGesture(
+        gesture,
+        deltaY,
+        32,
+        eventTime,
+        {
+          allowSameDirectionRearm,
+        },
+      );
+
       if (gesture.triggeredDirection !== null) {
         intentions.push(gesture.triggeredDirection);
       }
@@ -364,13 +384,13 @@ test("realistic trackpad curves separated by idle produce two intentions", () =>
   );
 });
 
-test("a renewed gesture during short residual inertia is recognized", () => {
+test("short residual inertia remains part of the same trackpad gesture", () => {
   assert.deepEqual(
     collectWheelIntentions(
       [[30, 22, 14, 8, 4, 2], [7, 15, 26]],
       { pauseMs: 96 },
     ),
-    [DOWN, DOWN],
+    [DOWN],
   );
 });
 
@@ -388,10 +408,54 @@ test("a small rebound inside inertia does not rearm", () => {
   );
 });
 
-test("a renewed acceleration accumulates enough evidence to rearm", () => {
+test("trackpad rebound cannot consume a second navigation phase", () => {
+  let gesture = createWheelGestureState();
+
+  const deltas = [
+    3,
+    8,
+    18,
+    31,
+    24,
+    14,
+    7,
+    3,
+    2,
+    6,
+    12,
+    20,
+    10,
+    4,
+    2,
+  ];
+
+  const triggers = [];
+
+  deltas.forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(
+      gesture,
+      deltaY,
+      32,
+      index * 16,
+      {
+        allowSameDirectionRearm: false,
+      },
+    );
+
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
+  });
+
+  assert.deepEqual(triggers, [DOWN]);
+});
+
+test("renewed acceleration inside the same trackpad gesture does not rearm", () => {
   assert.deepEqual(
-    collectWheelIntentions([[35, 24, 14, 7, 3, 2, 7, 14, 25]]),
-    [DOWN, DOWN],
+    collectWheelIntentions([
+      [35, 24, 14, 7, 3, 2, 7, 14, 25],
+    ]),
+    [DOWN],
   );
 });
 
