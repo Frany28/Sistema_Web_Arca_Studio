@@ -532,8 +532,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
               targetAlignment === "end";
 
             if (entersQuintaFromServices) {
-              setFeaturedExpansionProgress(0, 0);
-            }
+            featuredExpansionCompletionLock = null;
+
+            setFeaturedPreparationOffset(0, 0);
+            setFeaturedExpansionProgress(0, 0);
+
+            commitFeaturedProjectIndex(0);
+          }
 
             isProgrammaticScroll = true;
             ignoreNextScrollEnd = supportsScrollEnd;
@@ -980,7 +985,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       titleRevealLockedRef.current = false;
       setContentMode(false);
 
-      resetFeaturedNavigationState();
       selectSection(sectionId === "home" ? null : sectionId);
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
@@ -992,15 +996,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (reduceMotion) {
         scroller.scrollTop = target.offsetTop;
         window.requestAnimationFrame(() => {
-          isProgrammaticScroll = false;
-          releaseWheelTransitionLock();
-          setContentMode(sectionId !== "home");
-          if (sectionId !== "home") {
-            synchronizeContentScroll();
-          } else {
-            synchronizeContentTitleVisibility();
-          }
-        });
+        resetFeaturedNavigationState();
+
+        isProgrammaticScroll = false;
+        releaseWheelTransitionLock();
+        setContentMode(sectionId !== "home");
+
+        if (sectionId !== "home") {
+          synchronizeContentScroll();
+              } else {
+                synchronizeContentTitleVisibility();
+              }
+            });
         return;
       }
       activeTween = gsap.to(scroller, {
@@ -1009,15 +1016,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         ease: SECTION_NAVIGATION_EASE,
         overwrite: true,
         onComplete: () => {
-          activeTween = undefined;
-          isProgrammaticScroll = false;
-          releaseWheelTransitionLock();
-          setContentMode(sectionId !== "home");
-          if (sectionId !== "home") {
-            synchronizeContentScroll();
-          } else {
-            synchronizeContentTitleVisibility();
-          }
+        activeTween = undefined;
+
+        resetFeaturedNavigationState();
+
+        isProgrammaticScroll = false;
+        releaseWheelTransitionLock();
+        setContentMode(sectionId !== "home");
+
+        if (sectionId !== "home") {
+          synchronizeContentScroll();
+        } else {
+          synchronizeContentTitleVisibility();
+        }
         },
       });
     };
