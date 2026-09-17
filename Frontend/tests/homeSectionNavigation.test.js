@@ -402,6 +402,7 @@ test("navbar navigation resets the complete Featured lifecycle before returning 
   assert.equal(app.getFeaturedExpansionProgress(2), 1);
 
   app.controller.navigateToSection("home");
+  app.flush();
 
   assert.equal(app.getActiveFeaturedProject(), 0);
   app.controller.featuredProjectExpansionProgress.forEach((_, index) => {

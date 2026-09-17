@@ -137,6 +137,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let wheelGestureDeltaScale = null;
     let featuredExpansionCompletionLock = null;
     const featuredExpansionTweens = new Map();
+    let featuredExpansionGeneration = 0;
     const featuredExpansionTargets = featuredProjectExpansionProgress.map(
       (progress) => progress.get(),
     );
@@ -321,17 +322,20 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         FEATURED_EXPANSION_SMOOTH_MAX_SECONDS,
         Math.max(FEATURED_EXPANSION_SMOOTH_MIN_SECONDS, distance * 0.75),
       );
+      const tweenGeneration = featuredExpansionGeneration;
       const tween = gsap.to(progressProxy, {
         value: targetProgress,
         duration,
         ease: "power1.out",
         overwrite: true,
         onUpdate: () => {
+          if (featuredExpansionGeneration !== tweenGeneration) return;
           featuredProjectExpansionProgress[index]?.set(
             Math.min(Math.max(progressProxy.value, 0), 1),
           );
         },
         onComplete: () => {
+          if (featuredExpansionGeneration !== tweenGeneration) return;
           featuredProjectExpansionProgress[index]?.set(targetProgress);
           if (featuredExpansionTargets[index] === targetProgress) {
             if (targetProgress >= 1) featuredExpansionCompletionLock = index;
@@ -344,7 +348,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const setFeaturedPreparationOffset = (index, offset) => {
       featuredProjectPreparationOffsets[index]?.set(offset);
     };
+    const cancelFeaturedExpansionTweens = () => {
+      featuredExpansionGeneration += 1;
+      featuredExpansionTweens.forEach((tween) => tween.kill());
+      featuredExpansionTweens.clear();
+    };
     const resetFeaturedExpansionProgress = () => {
+      cancelFeaturedExpansionTweens();
       featuredExpansionCompletionLock = null;
       featuredProjectExpansionProgress.forEach((_, index) => {
         setFeaturedExpansionProgress(index, 0);
@@ -996,12 +1006,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       if (!target) return;
 
+      const leavingFeatured =
+        activeSectionRef.current === "featured-projects" &&
+        sectionId !== "featured-projects";
+
       /*
       * El navbar puede interrumpir una navegación anterior.
       * Cancelamos únicamente el desplazamiento anterior.
       */
       activeTween?.kill();
       activeTween = undefined;
+      if (activeSectionRef.current === "featured-projects") {
+        cancelFeaturedExpansionTweens();
+      }
 
       statement.stopAnimation();
       statement.resetWheelScrubbing();
@@ -1059,7 +1076,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         * Si entramos directamente a Featured desde el navbar,
         * su estado inicial debe ser Quinta Bella Vista cerrada.
         */
-        if (sectionId === "featured-projects") {
+        if (sectionId === "featured-projects" || leavingFeatured) {
           resetFeaturedNavigationState();
         }
 
