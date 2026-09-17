@@ -139,6 +139,7 @@ function setup(reduceMotion = false) {
     flush,
     clock,
     getVisibleTitles: () => states[4],
+    getNavigationState: () => states[0],
     getActiveSection: () => states[2],
     getFeaturedStep: () => states[3],
     getActiveFeaturedProject: () => states[5],
@@ -493,6 +494,11 @@ test("content hands native scroll to a reversible scrub before navigation", () =
   assert.equal(app.getActiveFeaturedProject(), 0, "Fullscreen does not change the active project");
   assert.equal(app.getPendingTweenCount(), 0, "Fullscreen must render before panel navigation");
 
+  for (const deltaY of [8, 8, 8, 8]) {
+    assert.equal(wheel(deltaY), true);
+    assert.equal(app.getPendingTweenCount(), 0);
+  }
+  app.clock.advance(180);
   for (const deltaY of [8, 8, 8]) {
     assert.equal(wheel(deltaY), true);
     assert.equal(app.getPendingTweenCount(), 0);
@@ -533,6 +539,7 @@ test("the wheel event that completes Quinta fullscreen cannot start the next pro
   app.handlers.scroll();
   assert.equal(app.scroller.scrollTop, 5000, "Fullscreen completion remains pinned");
 
+  app.clock.advance(180);
   assert.equal(wheel(64), true);
   assert.equal(app.getPendingTweenCount(), 1, "A new wheel event may enter Muelle Zulima");
   app.cleanup();
@@ -632,6 +639,7 @@ test("every expandable featured project pins until its own fullscreen is rendere
     assert.equal(app.getActiveFeaturedProject(), index);
     assert.equal(app.scroller.scrollTop, anchor);
 
+    app.clock.advance(180);
     assert.equal(wheel(64), true);
     assert.equal(app.getPendingTweenCount(), 1, "A new wheel event starts the next panel transition");
     app.cleanup();
@@ -740,6 +748,45 @@ test("boundary intent resets after idle or a native direction reversal", () => {
   assert.equal(app.getPendingTweenCount(), 0, "Old downward intent was discarded");
   assert.equal(wheel(-20), true);
   assert.equal(app.getPendingTweenCount(), 1);
+  app.cleanup();
+});
+
+test("momentum that outlives a tween remains part of the consumed gesture", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+
+  for (const deltaY of [8, 8, 8, 8]) {
+    assert.equal(wheel(deltaY), true);
+  }
+  assert.equal(app.getPendingTweenCount(), 1);
+  app.flush();
+  assert.equal(app.getNavigationState().panelIndex, 1);
+  assert.equal(app.getNavigationState().phase, "image");
+
+  for (const residualDelta of [40, 30, 18, 11, 6, 3, 1]) {
+    assert.equal(wheel(residualDelta), true);
+  }
+
+  assert.equal(
+    app.getNavigationState().phase,
+    "image",
+    "Residual momentum cannot reveal the next navigation state",
+  );
+  assert.equal(app.getPendingTweenCount(), 0);
+  app.cleanup();
+});
+
+test("diagonal trackpad input remains native and cannot trigger Home navigation", () => {
+  const app = setup();
+
+  app.handlers.wheel({
+    deltaX: 50,
+    deltaY: 55,
+    preventDefault() { assert.fail("Diagonal input was captured"); },
+  });
+
+  assert.equal(app.getPendingTweenCount(), 0);
+  assert.equal(app.getNavigationState().panelIndex, 0);
   app.cleanup();
 });
 
@@ -875,4 +922,165 @@ test("touch and keyboard drive the same image expansion progress", () => {
   keyboardApp.handlers.keydown({ key: "ArrowUp", preventDefault() {} });
   assert.equal(keyboardApp.getFeaturedExpansionProgress(0), 0.95);
   keyboardApp.cleanup();
+});
+
+test("one primary touch contact can trigger at most one discrete transition", () => {
+  const app = setup();
+  let preventedMoves = 0;
+  const move = (clientX, clientY) => app.handlers.pointermove({
+    pointerId: 1,
+    clientX,
+    clientY,
+    preventDefault() { preventedMoves += 1; },
+  });
+
+  app.handlers.pointerdown({
+    pointerType: "touch",
+    isPrimary: true,
+    pointerId: 1,
+    clientX: 100,
+    clientY: 700,
+  });
+  move(100, 670);
+  move(100, 620);
+  move(100, 550);
+  move(100, 420);
+
+  assert.equal(app.getPendingTweenCount(), 1);
+  assert.equal(preventedMoves, 1);
+  app.handlers.pointerup({ pointerId: 1 });
+  app.cleanup();
+});
+
+test("short, horizontal and cancelled touch contacts do not navigate", () => {
+  for (const move of [
+    { clientX: 100, clientY: 685 },
+    { clientX: 220, clientY: 640 },
+  ]) {
+    const app = setup();
+    app.handlers.pointerdown({
+      pointerType: "touch",
+      isPrimary: true,
+      pointerId: 2,
+      clientX: 100,
+      clientY: 700,
+    });
+    app.handlers.pointermove({
+      pointerId: 2,
+      ...move,
+      preventDefault() { assert.fail("An uncaptured touch was blocked"); },
+    });
+    app.handlers.pointerup({ pointerId: 2 });
+    assert.equal(app.getPendingTweenCount(), 0);
+    app.cleanup();
+  }
+
+  const cancelledApp = setup();
+  cancelledApp.handlers.pointerdown({
+    pointerType: "touch",
+    isPrimary: true,
+    pointerId: 3,
+    clientX: 100,
+    clientY: 700,
+  });
+  cancelledApp.handlers.pointercancel({ pointerId: 3 });
+  cancelledApp.handlers.pointermove({
+    pointerId: 3,
+    clientX: 100,
+    clientY: 600,
+    preventDefault() { assert.fail("A cancelled touch was retained"); },
+  });
+  assert.equal(cancelledApp.getPendingTweenCount(), 0);
+  cancelledApp.cleanup();
+});
+
+test("secondary pointers cannot replace the active primary touch", () => {
+  const app = setup();
+  app.handlers.pointerdown({
+    pointerType: "touch",
+    isPrimary: true,
+    pointerId: 4,
+    clientX: 100,
+    clientY: 700,
+  });
+  app.handlers.pointerdown({
+    pointerType: "touch",
+    isPrimary: false,
+    pointerId: 5,
+    clientX: 200,
+    clientY: 700,
+  });
+  app.handlers.pointermove({
+    pointerId: 4,
+    clientX: 100,
+    clientY: 600,
+    preventDefault() {},
+  });
+
+  assert.equal(app.getPendingTweenCount(), 1);
+  app.cleanup();
+});
+
+test("Featured touch owns vertical movement only after capture", () => {
+  const app = setup();
+  placeAtContentBoundary(app, "featured-projects", 4400);
+  let prevented = false;
+
+  app.handlers.pointerdown({
+    pointerType: "touch",
+    isPrimary: true,
+    pointerId: 6,
+    clientX: 200,
+    clientY: 700,
+  });
+  app.handlers.pointermove({
+    pointerId: 6,
+    clientX: 200,
+    clientY: 670,
+    preventDefault() { assert.fail("Movement below the threshold was blocked"); },
+  });
+  app.handlers.pointermove({
+    pointerId: 6,
+    clientX: 200,
+    clientY: 600,
+    preventDefault() { prevented = true; },
+  });
+
+  assert.equal(prevented, true);
+  assert.equal(app.scroller.scrollTop, 4500);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  assert.equal(app.getPendingTweenCount(), 0);
+  app.handlers.pointercancel({ pointerId: 6 });
+  app.cleanup();
+});
+
+test("Featured consumes one project transition for the complete touch contact", () => {
+  const app = setup();
+  placeAtContentBoundary(app, "featured-projects", 5000);
+  app.controller.featuredProjectExpansionProgress[0].set(1);
+
+  app.handlers.pointerdown({
+    pointerType: "touch",
+    isPrimary: true,
+    pointerId: 7,
+    clientX: 200,
+    clientY: 700,
+  });
+  app.handlers.pointermove({
+    pointerId: 7,
+    clientX: 200,
+    clientY: 640,
+    preventDefault() {},
+  });
+  assert.equal(app.getPendingTweenCount(), 1);
+
+  app.handlers.pointermove({
+    pointerId: 7,
+    clientX: 200,
+    clientY: 400,
+    preventDefault() { assert.fail("A consumed touch was processed twice"); },
+  });
+  assert.equal(app.getPendingTweenCount(), 1);
+  app.handlers.pointerup({ pointerId: 7 });
+  app.cleanup();
 });

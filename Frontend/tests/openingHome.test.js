@@ -261,7 +261,9 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollControllerSource, /scroller\.addEventListener\("pointermove"/);
   assert.match(scrollControllerSource, /TOUCH_SWIPE_THRESHOLD_PX = 48/);
   assert.match(scrollControllerSource, /TOUCH_VERTICAL_DOMINANCE = 1\.2/);
+  assert.match(homeSource, /usesControlledTouchNavigation/);
   assert.match(homeSource, /touch-pan-x/);
+  assert.match(homeSource, /touch-auto/);
 
   assert.match(scrollControllerSource, /scroller\.addEventListener\("keydown"/);
   assert.match(scrollControllerSource, /getKeyboardDirection\(event\)/);

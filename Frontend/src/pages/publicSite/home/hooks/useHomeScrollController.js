@@ -14,6 +14,7 @@ import {
   advanceFeaturedExpansionProgress,
   advanceHomeStatementProgress,
   advanceWheelGesture,
+  consumeWheelGesture,
   createHomeScrollState,
   createScrollbarHomeScrollState,
   createWheelGestureState,
@@ -23,6 +24,7 @@ import {
   getSequentialScrollbarPanelIndex,
   getSwipeDirection,
   limitHomeStatementWheelDelta,
+  markWheelGestureIdle,
   normalizeWheelDelta,
 } from "../utils/homeScrollNavigation.js";
 
@@ -32,6 +34,7 @@ const WHEEL_GESTURE_IDLE_MS = 180;
 const SCROLL_SETTLE_DELAY_MS = 180;
 const TOUCH_SWIPE_THRESHOLD_PX = 48;
 const TOUCH_VERTICAL_DOMINANCE = 1.2;
+const WHEEL_VERTICAL_DOMINANCE = 1.2;
 const STATEMENT_PANEL_INDEX = 3;
 const FEATURED_PROJECT_SELECTOR = "[data-featured-project-panel]";
 const FEATURED_IMAGE_GALLERY_SELECTOR = "[data-featured-image-gallery]";
@@ -184,6 +187,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         scroller.scrollTop = targetScrollTop;
         window.requestAnimationFrame(() => {
           isProgrammaticScroll = false;
+          releaseWheelTransitionLock();
           synchronizeContentTitleVisibility();
         });
         return true;
@@ -197,6 +201,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         onComplete: () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
+          releaseWheelTransitionLock();
           synchronizeContentTitleVisibility();
         },
       });
@@ -219,10 +224,33 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       return nextState === currentState ? false : alignToPanel(nextState);
     };
 
-    const resetWheelGesture = () => {
-      wheelGestureState = createWheelGestureState();
+    const settleWheelGesture = () => {
+      wheelGestureState = markWheelGestureIdle(wheelGestureState);
       statement.resetWheelScrubbing();
       wheelTransitionLock = false;
+    };
+    const releaseWheelTransitionLock = () => {
+      wheelTransitionLock = false;
+    };
+    const scheduleWheelGestureSettlement = () => {
+      window.clearTimeout(wheelIdleTimer);
+      wheelIdleTimer = window.setTimeout(
+        settleWheelGesture,
+        WHEEL_GESTURE_IDLE_MS,
+      );
+    };
+    const observeConsumedWheelGesture = (deltaY, eventTime) => {
+      if (!wheelGestureState.consumed) return;
+      const observedGesture = advanceWheelGesture(
+        wheelGestureState,
+        deltaY,
+        WHEEL_GESTURE_THRESHOLD_PX,
+        eventTime,
+      );
+      wheelGestureState = {
+        ...observedGesture,
+        triggeredDirection: null,
+      };
     };
 
     const setContentMode = (value) => {
@@ -435,10 +463,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         const completeTransition = () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
-
-          window.clearTimeout(wheelIdleTimer);
-          wheelGestureState = createWheelGestureState();
-          wheelTransitionLock = false;
+          releaseWheelTransitionLock();
 
           // Al bajar, mantener el proyecto anterior activo durante toda
           // su salida y cambiar al siguiente solo al finalizar.
@@ -546,16 +571,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         const completeTransition = () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
+          releaseWheelTransitionLock();
 
           selectSection(targetSectionId);
 
           if (featuredProjectIndex !== null) {
             setFeaturedPreparationOffset(featuredProjectIndex, 0);
           }
-
-          window.clearTimeout(wheelIdleTimer);
-          wheelGestureState = createWheelGestureState();
-          wheelTransitionLock = false;
 
           synchronizeContentScroll();
         };
@@ -822,12 +844,11 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           : 0;
       const scrubDelta = direction * Math.max(0, magnitude - nativeDistance);
 
-      window.clearTimeout(wheelIdleTimer);
-      wheelGestureState = createWheelGestureState();
-      wheelTransitionLock = false;
+      scheduleWheelGestureSettlement();
 
+      let nextProgress = targetProgress;
       if (scrubDelta !== 0) {
-        const nextProgress = advanceFeaturedExpansionProgress(
+        nextProgress = advanceFeaturedExpansionProgress(
           targetProgress,
           scrubDelta,
           scroller.clientHeight,
@@ -837,6 +858,14 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         } else {
           setFeaturedExpansionProgress(currentIndex, nextProgress);
         }
+      }
+
+      if (nextProgress <= 0 || nextProgress >= 1) {
+        wheelGestureState = consumeWheelGesture(
+          wheelGestureState,
+          direction * magnitude,
+          event.timeStamp,
+        );
       }
 
       logFeaturedExpansionGeometry(
@@ -865,9 +894,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     const handleContentBoundaryWheel = (event, deltaY, direction) => {
       const boundary = getContentWheelBoundary(direction);
       if (!boundary) {
-        window.clearTimeout(wheelIdleTimer);
-        wheelGestureState = createWheelGestureState();
-        wheelTransitionLock = false;
+        observeConsumedWheelGesture(deltaY, event.timeStamp);
+        scheduleWheelGestureSettlement();
         return false;
       }
 
@@ -880,9 +908,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         distanceToBoundary <= magnitude + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
 
       if (!reachesBoundary) {
-        window.clearTimeout(wheelIdleTimer);
-        wheelGestureState = createWheelGestureState();
-        wheelTransitionLock = false;
+        observeConsumedWheelGesture(deltaY, event.timeStamp);
+        scheduleWheelGestureSettlement();
         return false;
       }
 
@@ -899,11 +926,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         : 0;
       const intentMagnitude = Math.max(0, magnitude - nativeDistance);
 
-      window.clearTimeout(wheelIdleTimer);
-      wheelIdleTimer = window.setTimeout(
-        resetWheelGesture,
-        WHEEL_GESTURE_IDLE_MS,
-      );
+      scheduleWheelGestureSettlement();
 
       if (intentMagnitude > 0) {
         wheelGestureState = advanceWheelGesture(
@@ -944,7 +967,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       activeTween = undefined;
       statement.stopAnimation();
       statement.resetWheelScrubbing();
-      wheelTransitionLock = false;
       titleRevealLockedRef.current = false;
       setContentMode(false);
 
@@ -964,6 +986,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         scroller.scrollTop = target.offsetTop;
         window.requestAnimationFrame(() => {
           isProgrammaticScroll = false;
+          releaseWheelTransitionLock();
           setContentMode(sectionId !== "home");
           if (sectionId !== "home") {
             synchronizeContentScroll();
@@ -981,6 +1004,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         onComplete: () => {
           activeTween = undefined;
           isProgrammaticScroll = false;
+          releaseWheelTransitionLock();
           setContentMode(sectionId !== "home");
           if (sectionId !== "home") {
             synchronizeContentScroll();
@@ -1000,7 +1024,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       if (servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
         setContentMode(false);
         selectSection(null);
-        resetWheelGesture();
         statementEnteringUp = true;
         alignToPanel(createHomeScrollState({ panelIndex: STATEMENT_PANEL_INDEX, phase: HOME_SCROLL_PHASES.IMAGE }));
         return;
@@ -1027,16 +1050,20 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const handleWheel = (event) => {
       if (event.ctrlKey) return;
+      const delta = normalizeWheelDelta(event, scroller.clientHeight);
+      if (
+        Math.abs(delta.y) <=
+        Math.abs(delta.x) * WHEEL_VERTICAL_DOMINANCE
+      ) {
+        return;
+      }
       if (activeTween || isProgrammaticScroll) {
         event.preventDefault();
         event.stopPropagation?.();
         wheelTransitionLock = true;
-        window.clearTimeout(wheelIdleTimer);
-        wheelIdleTimer = window.setTimeout(resetWheelGesture, WHEEL_GESTURE_IDLE_MS);
+        scheduleWheelGestureSettlement();
         return;
       }
-      const delta = normalizeWheelDelta(event, scroller.clientHeight);
-      if (Math.abs(delta.y) <= Math.abs(delta.x)) return;
 
       if (contentMode) {
         if (reduceMotion) return;
@@ -1049,11 +1076,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       }
 
       event.preventDefault();
-      window.clearTimeout(wheelIdleTimer);
-      wheelIdleTimer = window.setTimeout(
-        resetWheelGesture,
-        WHEEL_GESTURE_IDLE_MS,
-      );
+      scheduleWheelGestureSettlement();
       statement.stopAnimation();
       if (wheelTransitionLock) return;
 
@@ -1095,12 +1118,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     };
 
     const handlePointerDown = (event) => {
-      touchGesture = null;
+      if (event.pointerType !== "touch" || !event.isPrimary || touchGesture) return;
+
       const featuredProjectReady =
         contentMode &&
         activeSectionRef.current === "featured-projects" &&
         !reduceMotion;
-      if (featuredProjectReady && event.pointerType === "touch" && event.isPrimary) {
+      if (featuredProjectReady) {
         const projectPanels = getFeaturedProjectPanels();
         const projectIndex = activeFeaturedProjectIndexRef.current;
         const bounds = getPanelScrollBounds(projectPanels[projectIndex]);
@@ -1109,7 +1133,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           pointerId: event.pointerId,
           startX: event.clientX,
           startY: event.clientY,
+          startScrollTop: scroller.scrollTop,
           featuredProject: true,
+          featuredBounds: bounds,
           featuredExpansion: imageProject && bounds
             ? {
               boundaryScrollTop: bounds.end,
@@ -1118,12 +1144,23 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
               startProgress: getFeaturedExpansionProgress(projectIndex),
             }
             : null,
+          captured: false,
           consumed: false,
         };
         return;
       }
-      if (contentMode) return;
-      if (event.pointerType !== "touch" || !event.isPrimary) return;
+
+      if (contentMode) {
+        touchGesture = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          nativeContent: true,
+          consumed: false,
+        };
+        return;
+      }
+
       const isStatementGesture =
         !contentMode && navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX;
 
@@ -1147,6 +1184,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         return;
       }
 
+      if (touchGesture.nativeContent) return;
+
       const horizontalDistance = event.clientX - touchGesture.startX;
       const verticalDistance = touchGesture.startY - event.clientY;
       if (touchGesture.featuredProject) {
@@ -1156,7 +1195,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           absoluteVerticalDistance >=
           Math.abs(horizontalDistance) * TOUCH_VERTICAL_DOMINANCE;
 
-        if (expansion && isVerticalGesture) {
+        if (!isVerticalGesture) return;
+        if (
+          !touchGesture.captured &&
+          absoluteVerticalDistance < TOUCH_SWIPE_THRESHOLD_PX
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        touchGesture.captured = true;
+
+        if (expansion) {
           const expands =
             verticalDistance > 0 &&
             expansion.startProgress < 1 &&
@@ -1166,7 +1216,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
             verticalDistance < 0 && expansion.startProgress > 0;
 
           if (expands || contracts) {
-            event.preventDefault();
             scroller.scrollTop = expansion.boundaryScrollTop;
             const nativeDistance = expands ? expansion.distanceToEnd : 0;
             const scrubDistance = verticalDistance - nativeDistance;
@@ -1181,18 +1230,6 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
             return;
           }
 
-          if (
-            verticalDistance > TOUCH_SWIPE_THRESHOLD_PX &&
-            expansion.startProgress >= 1
-          ) {
-            const boundary = getContentWheelBoundary(HOME_SCROLL_DIRECTIONS.DOWN);
-            if (boundary) {
-              event.preventDefault();
-              touchGesture.consumed = true;
-              boundary.transition();
-              return;
-            }
-          }
         }
 
         const direction = getSwipeDirection(
@@ -1208,14 +1245,37 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           },
         );
         if (direction === null) return;
-        if (!getFeaturedProjectTransition(direction, verticalDistance)) {
-          touchGesture = null;
+
+        const boundary = getContentWheelBoundary(direction);
+        const distanceToBoundary = boundary
+          ? Math.max(
+              0,
+              direction * (boundary.scrollTop - touchGesture.startScrollTop),
+            )
+          : Number.POSITIVE_INFINITY;
+
+        if (
+          boundary &&
+          distanceToBoundary <=
+            absoluteVerticalDistance + FEATURED_PROJECT_EDGE_TOLERANCE_PX
+        ) {
+          scroller.scrollTop = boundary.scrollTop;
+          touchGesture.consumed = true;
+          boundary.transition();
           return;
         }
 
-        event.preventDefault();
-        touchGesture.consumed = true;
-        transitionFeaturedProject(direction, verticalDistance);
+        const bounds = touchGesture.featuredBounds;
+        if (bounds) {
+          scroller.scrollTop = Math.min(
+            Math.max(
+              touchGesture.startScrollTop + verticalDistance,
+              bounds.start,
+            ),
+            bounds.end,
+          );
+          synchronizeContentScroll();
+        }
         return;
       }
       if (touchGesture.statement && !activeTween) {

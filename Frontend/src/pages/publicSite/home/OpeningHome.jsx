@@ -51,6 +51,9 @@ function OpeningHome() {
   });
   const homeActive = phase === "complete";
   const titleIsVisible = (id) => visibleContentTitleIds.includes(id);
+  const usesControlledTouchNavigation =
+    !contentScrollActive ||
+    (activeSectionId === "featured-projects" && !reduceMotion);
 
   useEffect(() => {
     if (
@@ -88,7 +91,7 @@ function OpeningHome() {
 
         <main
           ref={scrollerRef}
-          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${contentScrollActive ? "touch-auto" : "touch-pan-x"} ${
+          className={`dark relative h-dvh shrink-0 overflow-x-hidden overscroll-y-contain bg-[var(--color-neutral-950-uniform)] [scrollbar-gutter:stable] ${usesControlledTouchNavigation ? "touch-pan-x" : "touch-auto"} ${
             initialScrollReady ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
           aria-hidden={!homeActive}

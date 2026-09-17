@@ -12,6 +12,7 @@ const HOME_SCROLL_DIRECTIONS = Object.freeze({
 const WHEEL_LINE_HEIGHT_PX = 16;
 const WHEEL_REARM_MIN_DELAY_MS = 220;
 const WHEEL_DECAY_MAGNITUDE_PX = 6;
+const WHEEL_DISCRETE_IMPULSE_MIN_PX = 50;
 const WHEEL_NEW_IMPULSE_MAGNITUDE_PX = 10;
 const WHEEL_NEW_IMPULSE_RATIO = 1.8;
 const STATEMENT_MIN_TRAVEL_PX = 200;
@@ -121,10 +122,52 @@ function createWheelGestureState() {
     accumulator: 0,
     direction: null,
     consumed: false,
+    idle: true,
     triggeredDirection: null,
     lastMagnitude: 0,
     minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
     lastTriggerTime: Number.NEGATIVE_INFINITY,
+    oppositeAccumulator: 0,
+    rearmAccumulator: 0,
+    rearmLastMagnitude: 0,
+  };
+}
+
+function markWheelGestureIdle(state) {
+  const currentState = state ?? createWheelGestureState();
+
+  if (!currentState.consumed) return createWheelGestureState();
+
+  return {
+    ...currentState,
+    idle: true,
+    oppositeAccumulator: 0,
+    rearmAccumulator: 0,
+    rearmLastMagnitude: 0,
+    triggeredDirection: null,
+  };
+}
+
+function consumeWheelGesture(state, deltaY, eventTime = 0) {
+  const currentState = state ?? createWheelGestureState();
+  const direction = deltaY >= 0
+    ? HOME_SCROLL_DIRECTIONS.DOWN
+    : HOME_SCROLL_DIRECTIONS.UP;
+  const magnitude = Math.abs(deltaY);
+
+  return {
+    ...currentState,
+    accumulator: deltaY,
+    consumed: true,
+    direction,
+    idle: false,
+    lastMagnitude: magnitude,
+    lastTriggerTime: eventTime,
+    minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
+    oppositeAccumulator: 0,
+    rearmAccumulator: 0,
+    rearmLastMagnitude: 0,
+    triggeredDirection: null,
   };
 }
 
@@ -145,25 +188,106 @@ function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
 
   if (currentState.consumed) {
     const sameDirection = currentState.direction === direction;
+
+    if (!sameDirection) {
+      const oppositeAccumulator =
+        Math.sign(currentState.oppositeAccumulator) === direction
+          ? currentState.oppositeAccumulator + deltaY
+          : deltaY;
+      const oppositeIntentConfirmed =
+        Math.abs(oppositeAccumulator) >= threshold;
+
+      if (!oppositeIntentConfirmed) {
+        return {
+          ...currentState,
+          idle: false,
+          lastMagnitude: magnitude,
+          oppositeAccumulator,
+          rearmAccumulator: 0,
+          rearmLastMagnitude: 0,
+          triggeredDirection: null,
+        };
+      }
+
+      return {
+        accumulator: oppositeAccumulator,
+        direction,
+        consumed: true,
+        idle: false,
+        triggeredDirection: direction,
+        lastMagnitude: magnitude,
+        minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
+        lastTriggerTime: eventTime,
+        oppositeAccumulator: 0,
+        rearmAccumulator: 0,
+        rearmLastMagnitude: 0,
+      };
+    }
+
+    if (
+      currentState.idle &&
+      magnitude < Math.max(threshold, WHEEL_DISCRETE_IMPULSE_MIN_PX)
+    ) {
+      return {
+        ...currentState,
+        idle: false,
+        lastMagnitude: magnitude,
+        oppositeAccumulator: 0,
+        rearmAccumulator: deltaY,
+        rearmLastMagnitude: magnitude,
+        triggeredDirection: null,
+      };
+    }
+
+    if (currentState.rearmAccumulator !== 0) {
+      const continuesWithFreshImpulse =
+        magnitude >= currentState.rearmLastMagnitude;
+
+      if (continuesWithFreshImpulse) {
+        const rearmAccumulator = currentState.rearmAccumulator + deltaY;
+        const rearmed = Math.abs(rearmAccumulator) >= threshold;
+
+        return {
+          ...currentState,
+          accumulator: rearmAccumulator,
+          consumed: true,
+          idle: false,
+          lastMagnitude: magnitude,
+          lastTriggerTime: rearmed ? eventTime : currentState.lastTriggerTime,
+          oppositeAccumulator: 0,
+          rearmAccumulator: rearmed ? 0 : rearmAccumulator,
+          rearmLastMagnitude: rearmed ? 0 : magnitude,
+          triggeredDirection: rearmed ? direction : null,
+        };
+      }
+    }
+
     const minimumMagnitudeAfterTrigger = sameDirection
       ? Math.min(currentState.minimumMagnitudeAfterTrigger, magnitude)
       : currentState.minimumMagnitudeAfterTrigger;
     const enoughTimePassed =
       eventTime - currentState.lastTriggerTime >= WHEEL_REARM_MIN_DELAY_MS;
-    const directionChanged =
-      !sameDirection && magnitude >= WHEEL_NEW_IMPULSE_MAGNITUDE_PX;
+    const discreteIdleImpulse =
+      currentState.idle &&
+      magnitude >= Math.max(threshold, WHEEL_DISCRETE_IMPULSE_MIN_PX);
     const newSameDirectionImpulse =
-      sameDirection &&
       minimumMagnitudeAfterTrigger <= WHEEL_DECAY_MAGNITUDE_PX &&
       magnitude >= WHEEL_NEW_IMPULSE_MAGNITUDE_PX &&
       magnitude >= currentState.lastMagnitude * WHEEL_NEW_IMPULSE_RATIO;
 
-    if (!enoughTimePassed || (!directionChanged && !newSameDirectionImpulse)) {
+    if (
+      !discreteIdleImpulse &&
+      (!enoughTimePassed || !newSameDirectionImpulse)
+    ) {
       return {
         ...currentState,
+        idle: false,
         triggeredDirection: null,
         lastMagnitude: magnitude,
         minimumMagnitudeAfterTrigger,
+        oppositeAccumulator: 0,
+        rearmAccumulator: 0,
+        rearmLastMagnitude: 0,
       };
     }
 
@@ -173,10 +297,14 @@ function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
       accumulator: deltaY,
       direction,
       consumed,
+      idle: false,
       triggeredDirection: consumed ? direction : null,
       lastMagnitude: magnitude,
       minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
       lastTriggerTime: consumed ? eventTime : currentState.lastTriggerTime,
+      oppositeAccumulator: 0,
+      rearmAccumulator: 0,
+      rearmLastMagnitude: 0,
     };
   }
 
@@ -190,10 +318,14 @@ function advanceWheelGesture(state, deltaY, threshold = 32, eventTime = 0) {
     accumulator,
     direction,
     consumed,
+    idle: false,
     triggeredDirection: consumed ? direction : null,
     lastMagnitude: magnitude,
     minimumMagnitudeAfterTrigger: Number.POSITIVE_INFINITY,
     lastTriggerTime: consumed ? eventTime : currentState.lastTriggerTime,
+    oppositeAccumulator: 0,
+    rearmAccumulator: 0,
+    rearmLastMagnitude: 0,
   };
 }
 
@@ -342,6 +474,7 @@ export {
   advanceWheelGesture,
   clampHomeStatementProgress,
   clampFeaturedExpansionProgress,
+  consumeWheelGesture,
   createHomeScrollState,
   createScrollbarHomeScrollState,
   createWheelGestureState,
@@ -354,5 +487,6 @@ export {
   getFeaturedExpansionTravelDistance,
   getSwipeDirection,
   limitHomeStatementWheelDelta,
+  markWheelGestureIdle,
   normalizeWheelDelta,
 };

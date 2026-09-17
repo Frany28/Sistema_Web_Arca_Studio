@@ -19,6 +19,7 @@ import {
   getSequentialScrollbarPanelIndex,
   getSwipeDirection,
   limitHomeStatementWheelDelta,
+  markWheelGestureIdle,
   normalizeWheelDelta,
 } from "../src/pages/publicSite/home/utils/homeScrollNavigation.js";
 
@@ -242,11 +243,76 @@ test("an intentional opposite trackpad gesture rearms after the lock window", ()
   let gesture = advanceWheelGesture(createWheelGestureState(), 40, 32, 0);
 
   gesture = advanceWheelGesture(gesture, -14, 32, 240);
-  assert.equal(gesture.consumed, false);
+  assert.equal(gesture.consumed, true);
   assert.equal(gesture.triggeredDirection, null);
 
   gesture = advanceWheelGesture(gesture, -20, 32, 260);
   assert.equal(gesture.triggeredDirection, UP);
+});
+
+test("one complete trackpad curve keeps a single discrete intention", () => {
+  let gesture = createWheelGestureState();
+  const triggers = [];
+
+  [3, 6, 12, 24, 31, 26, 18, 11, 6, 3, 1].forEach((deltaY, index) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, index * 16);
+    if (gesture.triggeredDirection !== null) {
+      triggers.push(gesture.triggeredDirection);
+    }
+  });
+
+  assert.deepEqual(triggers, [DOWN]);
+});
+
+test("a real pause and renewed acceleration allow a second trackpad intention", () => {
+  let gesture = createWheelGestureState();
+  const triggers = [];
+  let eventTime = 0;
+
+  [3, 8, 17, 28, 18, 8, 3, 1].forEach((deltaY) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
+    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
+  });
+
+  eventTime += 300;
+  [4, 10, 21, 30].forEach((deltaY) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
+    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
+  });
+
+  assert.deepEqual(triggers, [DOWN, DOWN]);
+});
+
+test("an accumulated opposite impulse rearms quickly without accepting sign noise", () => {
+  let gesture = createWheelGestureState();
+  const triggers = [];
+  let eventTime = 0;
+
+  [20, 28, 15, 5, -18, -30].forEach((deltaY) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
+    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
+  });
+
+  assert.deepEqual(triggers, [DOWN, UP]);
+
+  gesture = createWheelGestureState();
+  const noisyTriggers = [];
+  eventTime = 0;
+  [24, 18, 8, 3, -1, 2, 1].forEach((deltaY) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
+    if (gesture.triggeredDirection !== null) noisyTriggers.push(gesture.triggeredDirection);
+  });
+
+  assert.deepEqual(noisyTriggers, [DOWN]);
+});
+
+test("an idle discrete mouse-wheel pulse remains immediately reusable", () => {
+  let gesture = advanceWheelGesture(createWheelGestureState(), 100, 32, 0);
+  assert.equal(gesture.triggeredDirection, DOWN);
+
+  gesture = markWheelGestureIdle(gesture);
+  gesture = advanceWheelGesture(gesture, 100, 32, 300);
+  assert.equal(gesture.triggeredDirection, DOWN);
 });
 
 test("touch gestures require distance and vertical dominance", () => {
