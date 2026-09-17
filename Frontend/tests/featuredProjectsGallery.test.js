@@ -80,6 +80,15 @@ test("a Flip timeline persists through progress reversals", () => {
   assert.doesNotMatch(gallerySource, /createPortal/);
 });
 
+test("cancelling a prepared navbar entry invalidates only its stale Flip geometry", () => {
+  assert.match(gallerySource, /preparationOffset\.on\("change"/);
+  assert.match(
+    gallerySource,
+    /if \(\(expansionProgress\?\.get\?\.\(\) \?\? 0\) <= 0\) \{\s*clearFlipTimeline\(\);/,
+  );
+  assert.doesNotMatch(gallerySource, /if \(progress <= 0\) clearFlipTimeline/);
+});
+
 test("the expanded layout is a single larger Bento grid, not scattered cards", () => {
   assert.match(gallerySource, /data-featured-gallery-stage-grid/);
   assert.match(gallerySource, /gridTemplateColumns: `repeat\(3, \$\{viewportWidth\}px\)`/);

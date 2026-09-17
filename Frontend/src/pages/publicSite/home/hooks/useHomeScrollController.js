@@ -347,6 +347,13 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         setFeaturedExpansionProgress(index, 0);
       });
     };
+    const resetFeaturedNavigationState = () => {
+      resetFeaturedExpansionProgress();
+      featuredProjectPreparationOffsets.forEach((_, index) => {
+        setFeaturedPreparationOffset(index, 0);
+      });
+      commitFeaturedProjectIndex(0);
+    };
     const getElementScrollTop = (element) => {
       const viewportRect = scroller.getBoundingClientRect();
       return scroller.scrollTop + element.getBoundingClientRect().top - viewportRect.top;
@@ -970,10 +977,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       titleRevealLockedRef.current = false;
       setContentMode(false);
 
-      if (sectionId === "featured-projects" || sectionId === "services" || sectionId === "home") {
-        resetFeaturedExpansionProgress();
-        commitFeaturedProjectIndex(0);
-      }
+      resetFeaturedNavigationState();
       selectSection(sectionId === "home" ? null : sectionId);
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,

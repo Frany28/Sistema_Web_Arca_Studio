@@ -265,7 +265,6 @@ function FeaturedProjectsGallery({
     active,
     createFlipTimeline,
     hideOriginalCards,
-    preparationOffset,
     showOriginalCards,
   ]);
 
@@ -277,6 +276,15 @@ function FeaturedProjectsGallery({
     if (!expansionProgress?.on) return undefined;
     return expansionProgress.on("change", renderExpansion);
   }, [expansionProgress, renderExpansion]);
+
+  useEffect(() => {
+    if (!preparationOffset?.on) return undefined;
+    return preparationOffset.on("change", () => {
+      if ((expansionProgress?.get?.() ?? 0) <= 0) {
+        clearFlipTimeline();
+      }
+    });
+  }, [clearFlipTimeline, expansionProgress, preparationOffset]);
 
   useEffect(() => {
     const handleResize = () => {

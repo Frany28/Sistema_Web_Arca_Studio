@@ -145,6 +145,8 @@ function setup(reduceMotion = false) {
     getActiveFeaturedProject: () => states[5],
     getFeaturedExpansionProgress: (index) =>
       controller.featuredProjectExpansionProgress[index].get(),
+    getFeaturedPreparationOffset: (index) =>
+      controller.featuredProjectPreparationOffsets[index].get(),
     getPendingTweenCount: () => tweens.length,
     cleanup: () => cleanups.forEach((fn) => fn?.()),
   };
@@ -385,6 +387,84 @@ test('an unfinished explicit navbar jump temporarily consumes wheel input', () =
   app.controller.navigateToSection('featured-projects');
   app.controller.navigateToSection('home'); app.flush();
   assert.equal(app.scroller.scrollTop, 0);
+  app.cleanup();
+});
+
+test("navbar navigation resets the complete Featured lifecycle before returning from above", () => {
+  const app = setup();
+  const wheel = createWheelDriver(app);
+
+  app.controller.navigateToSection("process");
+  app.flush();
+  for (const deltaY of [-8, -8, -8, -8]) wheel(deltaY);
+
+  assert.notEqual(app.getFeaturedPreparationOffset(2), 0);
+  assert.equal(app.getFeaturedExpansionProgress(2), 1);
+
+  app.controller.navigateToSection("home");
+
+  assert.equal(app.getActiveFeaturedProject(), 0);
+  app.controller.featuredProjectExpansionProgress.forEach((_, index) => {
+    assert.equal(app.getFeaturedExpansionProgress(index), 0);
+    assert.equal(app.getFeaturedPreparationOffset(index), 0);
+  });
+
+  app.flush();
+  app.controller.navigateToSection("services");
+  app.flush();
+  app.scroller.scrollTop = app.featured.offsetTop;
+  app.handlers.scroll();
+
+  assert.equal(app.getActiveSection(), "featured-projects");
+  assert.equal(app.getActiveFeaturedProject(), 0);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0);
+  assert.equal(app.getFeaturedPreparationOffset(0), 0);
+  app.cleanup();
+});
+
+test("navbar navigation cancels residual Featured expansion tweens for every destination", () => {
+  for (const destination of ["home", "services", "featured-projects", "process"]) {
+    const app = setup();
+    const wheel = createWheelDriver(app);
+    placeAtContentBoundary(app, "featured-projects", 5000);
+
+    assert.equal(wheel(160), true);
+    assert.equal(app.getFeaturedExpansionProgress(0), 0);
+    app.controller.navigateToSection(destination);
+    app.flush();
+
+    assert.equal(
+      app.getFeaturedExpansionProgress(0),
+      0,
+      `${destination} cannot be modified by an old expansion tween`,
+    );
+    assert.equal(app.getActiveFeaturedProject(), 0);
+    app.controller.featuredProjectPreparationOffsets.forEach((_, index) => {
+      assert.equal(app.getFeaturedPreparationOffset(index), 0);
+    });
+    app.cleanup();
+  }
+});
+
+test("repeated navbar exits leave Featured in the same canonical state", () => {
+  const app = setup();
+
+  for (let cycle = 0; cycle < 3; cycle += 1) {
+    app.controller.navigateToSection("featured-projects");
+    app.flush();
+    app.controller.featuredProjectExpansionProgress[0].set(1);
+    app.controller.featuredProjectPreparationOffsets[0].set(240);
+
+    app.controller.navigateToSection(cycle % 2 === 0 ? "home" : "services");
+    app.flush();
+
+    assert.equal(app.getActiveFeaturedProject(), 0);
+    app.controller.featuredProjectExpansionProgress.forEach((_, index) => {
+      assert.equal(app.getFeaturedExpansionProgress(index), 0);
+      assert.equal(app.getFeaturedPreparationOffset(index), 0);
+    });
+  }
+
   app.cleanup();
 });
 
