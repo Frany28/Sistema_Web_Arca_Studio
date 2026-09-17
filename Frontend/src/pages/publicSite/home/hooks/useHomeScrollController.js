@@ -963,25 +963,77 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       activeSectionRef.current = id;
       setActiveSectionId(id);
     };
-    const navigateSection = (sectionId, { direct = false } = {}) => {
+   const navigateSection = (sectionId, { direct = false } = {}) => {
       const currentState = navigationStateRef.current;
+
       const currentSectionComplete = contentMode
         ? true
-        : !titleRevealLockedRef.current && currentState.phase === HOME_SCROLL_PHASES.TITLE &&
-          (currentState.panelIndex !== STATEMENT_PANEL_INDEX || statement.getProgress() >= 1);
-      if (!direct && (activeTween || isProgrammaticScroll || !currentSectionComplete)) return;
-      const target = sectionId === "home" ? panels[0] :
-        [...scroller.querySelectorAll("section[id]")].find((section) => section.id === sectionId);
+        : !titleRevealLockedRef.current &&
+          currentState.phase === HOME_SCROLL_PHASES.TITLE &&
+          (
+            currentState.panelIndex !== STATEMENT_PANEL_INDEX ||
+            statement.getProgress() >= 1
+          );
+
+      if (
+        !direct &&
+        (activeTween || isProgrammaticScroll || !currentSectionComplete)
+      ) {
+        return;
+      }
+
+      const target =
+        sectionId === "home"
+          ? panels[0]
+          : [...scroller.querySelectorAll("section[id]")].find(
+              (section) => section.id === sectionId,
+            );
+
       if (!target) return;
+
       activeTween?.kill();
+      activeTween = undefined;
+
+      stopFeaturedExpansionTweens();
+
+      statement.stopAnimation();
+      statement.resetWheelScrubbing();
+
+      titleRevealLockedRef.current = false;
+
+      setContentMode(false);
+
+      // Solo reiniciar Featured cuando el destino DIRECTO es Featured.
+      // Abandonar Featured no debe destruir su estado.
+      if (sectionId === "featured-projects") {
+        resetFeaturedNavigationState();
+      }
+
+      selectSection(sectionId === "home" ? null : sectionId);
+
+      commitNavigationState(
+        createScrollbarHomeScrollState(
+          sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
+        ),
+      );
+
+      statementEnteringUp = false;
+      statement.commitProgress(0);
+
+      isProgrammaticScroll = true;
+      ignoreNextScrollEnd = supportsScrollEnd;
       activeTween = undefined;
       statement.stopAnimation();
       statement.resetWheelScrubbing();
       titleRevealLockedRef.current = false;
       setContentMode(false);
 
-      resetFeaturedNavigationState();
+      if (sectionId === "featured-projects") {
+        resetFeaturedNavigationState();
+      }
+
       selectSection(sectionId === "home" ? null : sectionId);
+
       commitNavigationState(createScrollbarHomeScrollState(
         sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
       ));
@@ -1243,6 +1295,10 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
           if (expands || contracts) {
             scroller.scrollTop = expansion.boundaryScrollTop;
             const nativeDistance = expands ? expansion.distanceToEnd : 0;
+            const stopFeaturedExpansionTweens = () => {
+              featuredExpansionTweens.forEach((tween) => tween.kill());
+              featuredExpansionTweens.clear();
+            };
             const scrubDistance = verticalDistance - nativeDistance;
             setFeaturedExpansionProgress(
               expansion.projectIndex,
