@@ -251,7 +251,11 @@ test("all home inputs use the shared image and title navigation state", () => {
   assert.match(scrollControllerSource, /normalizeWheelDelta\(event, scroller\.clientHeight\)/);
   assert.match(scrollControllerSource, /WHEEL_GESTURE_THRESHOLD_PX = 32/);
   assert.match(scrollControllerSource, /WHEEL_GESTURE_IDLE_MS = 180/);
-  assert.match(scrollControllerSource, /limitHomeStatementWheelDelta\(statementEnteringUp \? Math\.abs\(delta\.y\) : delta\.y\)/);
+  assert.match(
+    scrollControllerSource,
+    /limitHomeStatementWheelDelta\([\s\S]*statementEnteringUp \? Math\.abs\(progressDelta\.y\) : progressDelta\.y/,
+  );
+  assert.match(scrollControllerSource, /getWheelGestureDeltaScale\(event\)/);
   assert.doesNotMatch(
     scrollControllerSource,
     /statement\.queueDelta\(wheelGestureState\.accumulator\)/,

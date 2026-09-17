@@ -551,7 +551,7 @@ test("content hands native scroll to a reversible scrub before navigation", () =
 
   assert.equal(wheel(64), true);
   app.flush();
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.08);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.06);
   assert.equal(app.getActiveFeaturedProject(), 0);
   assert.equal(app.getPendingTweenCount(), 0);
 
@@ -565,10 +565,10 @@ test("content hands native scroll to a reversible scrub before navigation", () =
 
   assert.equal(wheel(-32), true);
   app.flush();
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.04);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.03);
   assert.equal(app.scroller.scrollTop, 5000);
 
-  assert.equal(wheel(768), true);
+  assert.equal(wheel(1040), true);
   app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 1);
   assert.equal(app.getActiveFeaturedProject(), 0, "Fullscreen does not change the active project");
@@ -734,14 +734,14 @@ test("wheel input smooths the rendered expansion progress without delaying rever
   assert.equal(wheel(16), true);
   assert.equal(app.getFeaturedExpansionProgress(0), 0, "A wheel target is not rendered as a jump");
   app.flush();
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.02);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.015);
 
   assert.equal(wheel(16), true);
   app.flush();
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.04, "Small deltas remain continuous");
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.03, "Small deltas remain continuous");
 
   assert.equal(wheel(160), true);
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.04, "A large delta starts from the rendered value");
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.03, "A large delta starts from the rendered value");
   assert.equal(wheel(-160), true);
   app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 0, "Reversal cancels the pending expansion exactly");
@@ -889,12 +889,12 @@ test("returning to an image project restores fullscreen before contraction", () 
 
   assert.equal(wheel(-320), true);
   app.flush();
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.6);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.7);
   assert.equal(app.getPendingTweenCount(), 0);
   assert.equal(wheel(160), true);
   app.flush();
-  assert.equal(app.getFeaturedExpansionProgress(0), 0.8);
-  assert.equal(wheel(-640), true);
+  assert.equal(app.getFeaturedExpansionProgress(0), 0.85);
+  assert.equal(wheel(-960), true);
   app.flush();
   assert.equal(app.getFeaturedExpansionProgress(0), 0);
   assert.equal(wheel(-8), false, "Native upward scroll resumes after the card is restored");

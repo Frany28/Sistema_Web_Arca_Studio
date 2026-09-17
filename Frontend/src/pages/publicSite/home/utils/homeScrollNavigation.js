@@ -13,6 +13,7 @@ const WHEEL_LINE_HEIGHT_PX = 16;
 const WHEEL_REARM_MIN_DELAY_MS = 220;
 const WHEEL_DECAY_MAGNITUDE_PX = 6;
 const WHEEL_DISCRETE_IMPULSE_MIN_PX = 50;
+const TRACKPAD_WHEEL_DELTA_SCALE = 0.75;
 const WHEEL_NEW_IMPULSE_MAGNITUDE_PX = 10;
 const WHEEL_NEW_IMPULSE_RATIO = 1.8;
 const STATEMENT_MIN_TRAVEL_PX = 200;
@@ -396,6 +397,18 @@ function normalizeWheelDelta({ deltaX = 0, deltaY = 0, deltaMode = 0 }, viewport
   };
 }
 
+function getWheelGestureDeltaScale({ deltaY = 0, deltaMode = 0 }) {
+  if (
+    deltaMode === 0 &&
+    Math.abs(deltaY) > 0 &&
+    Math.abs(deltaY) < WHEEL_DISCRETE_IMPULSE_MIN_PX
+  ) {
+    return TRACKPAD_WHEEL_DELTA_SCALE;
+  }
+
+  return 1;
+}
+
 function getSwipeDirection(
   { startX, startY, endX, endY },
   { threshold = 48, verticalDominance = 1.2 } = {},
@@ -485,6 +498,7 @@ export {
   getHomeStatementTravelDistance,
   getHomeStatementVisualState,
   getFeaturedExpansionTravelDistance,
+  getWheelGestureDeltaScale,
   getSwipeDirection,
   limitHomeStatementWheelDelta,
   markWheelGestureIdle,

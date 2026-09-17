@@ -23,6 +23,7 @@ import {
   getNextHomeScrollState,
   getSequentialScrollbarPanelIndex,
   getSwipeDirection,
+  getWheelGestureDeltaScale,
   limitHomeStatementWheelDelta,
   markWheelGestureIdle,
   normalizeWheelDelta,
@@ -133,6 +134,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     let wheelTransitionLock = false;
     let wheelIdleTimer;
     let wheelGestureState = createWheelGestureState();
+    let wheelGestureDeltaScale = null;
     let featuredExpansionCompletionLock = null;
     const featuredExpansionTweens = new Map();
     const featuredExpansionTargets = featuredProjectExpansionProgress.map(
@@ -226,6 +228,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const settleWheelGesture = () => {
       wheelGestureState = markWheelGestureIdle(wheelGestureState);
+      wheelGestureDeltaScale = null;
       statement.resetWheelScrubbing();
       wheelTransitionLock = false;
     };
@@ -1054,13 +1057,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
     const handleWheel = (event) => {
       if (event.ctrlKey) return;
-      const delta = normalizeWheelDelta(event, scroller.clientHeight);
+      const normalizedDelta = normalizeWheelDelta(event, scroller.clientHeight);
       if (
-        Math.abs(delta.y) <=
-        Math.abs(delta.x) * WHEEL_VERTICAL_DOMINANCE
+        Math.abs(normalizedDelta.y) <=
+        Math.abs(normalizedDelta.x) * WHEEL_VERTICAL_DOMINANCE
       ) {
         return;
       }
+      wheelGestureDeltaScale ??= getWheelGestureDeltaScale(event);
+      const progressDelta = {
+        x: normalizedDelta.x * wheelGestureDeltaScale,
+        y: normalizedDelta.y * wheelGestureDeltaScale,
+      };
       if (activeTween || isProgrammaticScroll) {
         event.preventDefault();
         event.stopPropagation?.();
@@ -1071,11 +1079,20 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
 
       if (contentMode) {
         if (reduceMotion) return;
-        const direction = Math.sign(delta.y);
+        const direction = Math.sign(normalizedDelta.y);
 
         if (!direction) return;
-        if (handleFeaturedExpansionInput(event, delta.y, direction, { smooth: true })) return;
-        handleContentBoundaryWheel(event, delta.y, direction);
+        if (
+          handleFeaturedExpansionInput(
+            event,
+            progressDelta.y,
+            direction,
+            { smooth: true },
+          )
+        ) {
+          return;
+        }
+        handleContentBoundaryWheel(event, normalizedDelta.y, direction);
         return;
       }
 
@@ -1089,13 +1106,15 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         !contentMode && currentState.panelIndex === STATEMENT_PANEL_INDEX && !activeTween;
       if (isStatementReady && statement.getProgress() >= 1) statementEnteringUp = false;
       if (isStatementReady && statement.isWheelScrubbing()) {
-        statement.queueDelta(limitHomeStatementWheelDelta(statementEnteringUp ? Math.abs(delta.y) : delta.y));
+        statement.queueDelta(limitHomeStatementWheelDelta(
+          statementEnteringUp ? Math.abs(progressDelta.y) : progressDelta.y,
+        ));
         return;
       }
 
       wheelGestureState = advanceWheelGesture(
         wheelGestureState,
-        delta.y,
+        normalizedDelta.y,
         WHEEL_GESTURE_THRESHOLD_PX,
         event.timeStamp,
       );
@@ -1112,7 +1131,9 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
         }
 
         statement.startWheelScrubbing();
-        statement.queueDelta(limitHomeStatementWheelDelta(statementEnteringUp ? Math.abs(delta.y) : delta.y));
+        statement.queueDelta(limitHomeStatementWheelDelta(
+          statementEnteringUp ? Math.abs(progressDelta.y) : progressDelta.y,
+        ));
         return;
       }
 

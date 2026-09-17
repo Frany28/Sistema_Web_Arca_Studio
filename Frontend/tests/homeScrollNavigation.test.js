@@ -14,6 +14,7 @@ import {
   getFeaturedExpansionTravelDistance,
   getHomeStatementTravelDistance,
   getHomeStatementVisualState,
+  getWheelGestureDeltaScale,
   getNearestPanelIndex,
   getNextHomeScrollState,
   getSequentialScrollbarPanelIndex,
@@ -174,6 +175,21 @@ test("wheel deltas normalize pixel, line and page units", () => {
   );
 });
 
+test("trackpad bursts use a reduced scale without changing discrete mouse wheel input", () => {
+  assert.equal(
+    getWheelGestureDeltaScale({ deltaY: 4, deltaMode: 0 }),
+    0.75,
+  );
+  assert.equal(
+    getWheelGestureDeltaScale({ deltaY: 100, deltaMode: 0 }),
+    1,
+  );
+  assert.equal(
+    getWheelGestureDeltaScale({ deltaY: 3, deltaMode: 1 }),
+    1,
+  );
+});
+
 test("statement wheel deltas cap trackpad spikes without changing direction", () => {
   assert.equal(limitHomeStatementWheelDelta(18), 18);
   assert.equal(limitHomeStatementWheelDelta(120), 48);
@@ -262,6 +278,55 @@ test("one complete trackpad curve keeps a single discrete intention", () => {
   });
 
   assert.deepEqual(triggers, [DOWN]);
+});
+
+test("moderate, strong and residual trackpad curves each keep one intention", () => {
+  const sequences = [
+    [4, 9, 17, 26, 20, 13, 7, 3, 1],
+    [8, 18, 35, 52, 38, 20, 9, 3],
+    [30, 22, 15, 10, 6, 3, 2, 1, 10, 6, 3, 2, 1],
+  ];
+
+  sequences.forEach((sequence) => {
+    let gesture = createWheelGestureState();
+    let eventTime = 0;
+    const triggers = [];
+
+    sequence.forEach((deltaY) => {
+      gesture = advanceWheelGesture(
+        gesture,
+        deltaY,
+        32,
+        eventTime += 16,
+      );
+      if (gesture.triggeredDirection !== null) {
+        triggers.push(gesture.triggeredDirection);
+      }
+    });
+
+    assert.deepEqual(triggers, [DOWN]);
+  });
+});
+
+test("a renewed trackpad impulse responds immediately after genuine idle", () => {
+  let gesture = createWheelGestureState();
+  let eventTime = 0;
+  const triggers = [];
+
+  [30, 22, 15, 10, 6, 3, 2, 1].forEach((deltaY) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
+    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
+  });
+
+  gesture = markWheelGestureIdle(gesture);
+  eventTime += 200;
+
+  [8, 20, 35].forEach((deltaY) => {
+    gesture = advanceWheelGesture(gesture, deltaY, 32, eventTime += 16);
+    if (gesture.triggeredDirection !== null) triggers.push(gesture.triggeredDirection);
+  });
+
+  assert.deepEqual(triggers, [DOWN, DOWN]);
 });
 
 test("a real pause and renewed acceleration allow a second trackpad intention", () => {
