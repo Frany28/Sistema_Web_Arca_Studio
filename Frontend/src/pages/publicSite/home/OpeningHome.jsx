@@ -10,6 +10,7 @@ import HomeSections from "./components/HomeSections.jsx";
 import ServicesSection from "../services/components/ServicesSection.jsx";
 import FeaturedProjectsSection from "../featuredProjects/components/FeaturedProjectsSection.jsx";
 import ProcessesSection from "../processes/components/ProcessesSection.jsx";
+import AboutSection from "../about/components/AboutSection.jsx";
 import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
 import useHomeScrollController from "./hooks/useHomeScrollController.js";
 import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
@@ -57,8 +58,8 @@ function OpeningHome() {
 
   useEffect(() => {
     if (
-      initialScrollReady &&
-      ["#services", "#featured-projects", "#process"].includes(hash)
+     initialScrollReady &&
+      ["#services", "#featured-projects", "#process", "#about"].includes(hash)
     ) {
       navigateToSection(hash.slice(1));
     }
@@ -138,6 +139,10 @@ function OpeningHome() {
               <ProcessesSection
                 active={activeSectionId === "process"}
                 titleVisible={titleIsVisible("process")}
+              />
+              <AboutSection
+                active={activeSectionId === "about"}
+                titleVisible={titleIsVisible("about")}
               />
             </>
           )}
