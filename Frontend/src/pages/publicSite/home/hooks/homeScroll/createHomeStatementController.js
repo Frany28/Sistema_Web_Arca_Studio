@@ -74,12 +74,13 @@ function createHomeStatementController({
     });
   };
 
-  const animateTo = (targetProgress) => {
+  const animateTo = (targetProgress, onComplete) => {
     stopAnimation();
     if (reduceMotion) {
-      commitProgress(targetProgress);
-      return;
-    }
+  commitProgress(targetProgress);
+  onComplete?.();
+  return;
+  }
 
     const animatedProgress = { value: progress.get() };
     commitNavigationState({
@@ -94,9 +95,10 @@ function createHomeStatementController({
       overwrite: true,
       onUpdate: () => progress.set(animatedProgress.value),
       onComplete: () => {
-        progressTween = undefined;
-        commitProgress(targetProgress);
-      },
+      progressTween = undefined;
+      commitProgress(targetProgress);
+      onComplete?.();
+    },
     });
   };
 

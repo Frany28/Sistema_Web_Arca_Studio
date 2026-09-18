@@ -30,6 +30,7 @@ function isInteractiveTarget(target) {
 
 function createInputGestureController({
   titleRevealLockedRef,
+  pendingPanelDirectionRef,
   activeFeaturedProjectIndexRef,
   activeSectionRef,
   coordination,
@@ -42,10 +43,12 @@ function createInputGestureController({
   let touchGesture = null;
 
   const settleWheelGesture = () => {
-    runtime.wheelGestureState = markWheelGestureIdle(runtime.wheelGestureState);
-    runtime.wheelGestureDeltaScale = null;
-    statement.resetWheelScrubbing();
-    runtime.wheelTransitionLock = false;
+  runtime.wheelGestureState =
+    markWheelGestureIdle(runtime.wheelGestureState);
+
+  runtime.wheelGestureDeltaScale = null;
+
+  statement.resetWheelScrubbing();
   };
 
   const scheduleWheelGestureSettlement = () => {
@@ -211,12 +214,32 @@ function createInputGestureController({
     
 
     runtime.wheelGestureState = advanceWheelGesture(
-      runtime.wheelGestureState,
-      normalizedDelta.y,
-      WHEEL_GESTURE_THRESHOLD_PX,
-      event.timeStamp,
-      
-    );
+          runtime.wheelGestureState,
+          normalizedDelta.y,
+          WHEEL_GESTURE_THRESHOLD_PX,
+          event.timeStamp,
+          
+        );
+        const triggeredDirection =
+      runtime.wheelGestureState.triggeredDirection;
+
+    if (
+      triggeredDirection !== null &&
+      titleRevealLockedRef.current &&
+      currentState.panelIndex < STATEMENT_PANEL_INDEX
+    ) {
+      pendingPanelDirectionRef.current = triggeredDirection;
+
+      debugWheel(
+        event,
+        normalizedDelta,
+        progressDelta,
+        triggeredDirection,
+        "QUEUED_TITLE_REVEAL",
+      );
+
+      return;
+    }
     if (isStatementReady && runtime.wheelGestureState.triggeredDirection !== null) {
       const direction = runtime.wheelGestureState.triggeredDirection;
       const currentProgress = statement.getProgress();
@@ -233,10 +256,15 @@ function createInputGestureController({
         return;
       }
 
-      statement.animateTo(
-        runtime.statementEnteringUp || direction === HOME_SCROLL_DIRECTIONS.DOWN ? 1 : 0,
-      );
       runtime.wheelTransitionLock = true;
+
+      statement.animateTo(
+        runtime.statementEnteringUp ||
+        direction === HOME_SCROLL_DIRECTIONS.DOWN
+          ? 1
+          : 0,
+        coordination.panel.releaseTransitionLock,
+      );
       runtime.statementEnteringUp = false;
       debugWheel(event, normalizedDelta, progressDelta, direction, "STATEMENT_PHASE_TRANSITION");
       return;

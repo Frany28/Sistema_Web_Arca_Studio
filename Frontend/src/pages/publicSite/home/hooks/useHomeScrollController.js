@@ -34,6 +34,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
   const scrollerRef = useRef(null);
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
   const titleRevealLockedRef = useRef(false);
+  const pendingPanelDirectionRef = useRef(null);
+  const panelNavigationRef = useRef(null);
   const statementProgress = useMotionValue(0);
   const firstFeaturedExpansionProgress = useMotionValue(0);
   const secondFeaturedExpansionProgress = useMotionValue(0);
@@ -73,11 +75,18 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
     sectionNavigationRef.current?.(sectionId);
   }, []);
 
-  const completeTitleReveal = useCallback((panelIndex) => {
-    if (panelIndex === navigationStateRef.current.panelIndex) {
+ const completeTitleReveal = useCallback((panelIndex) => {
+      if (panelIndex !== navigationStateRef.current.panelIndex) return;
+
       titleRevealLockedRef.current = false;
-    }
-  }, []);
+
+      const pendingDirection = pendingPanelDirectionRef.current;
+      pendingPanelDirectionRef.current = null;
+
+      if (pendingDirection !== null) {
+        panelNavigationRef.current?.moveByDirection(pendingDirection);
+      }
+    }, []);
 
   useLayoutEffect(() => {
     if (!initialScrollReady && scrollerRef.current) {
@@ -134,16 +143,17 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       reduceMotion,
     });
 
-    coordination.panel = createPanelNavigationController({
+    coordination.input = createInputGestureController({
+      activeFeaturedProjectIndexRef,
+      activeSectionRef,
       coordination,
       navigationStateRef,
-      panels,
+      pendingPanelDirectionRef,
       reduceMotion,
       runtime,
       scroller,
       statement,
       titleRevealLockedRef,
-      commitNavigationState,
     });
     coordination.featured = createFeaturedProjectsController({
       activeFeaturedProjectIndexRef,
