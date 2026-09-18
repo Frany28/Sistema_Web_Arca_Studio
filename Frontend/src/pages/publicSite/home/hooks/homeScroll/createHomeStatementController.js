@@ -7,7 +7,7 @@ import {
   createScrollbarHomeScrollState,
 } from "../../utils/homeScrollNavigation.js";
 
-const STATEMENT_KEYBOARD_DURATION_SECONDS = 0.35;
+const STATEMENT_KEYBOARD_DURATION_SECONDS = 0.5;
 
 function createHomeStatementController({
   commitNavigationState,
@@ -91,7 +91,7 @@ function createHomeStatementController({
     progressTween = gsap.to(animatedProgress, {
       value: targetProgress,
       duration: STATEMENT_KEYBOARD_DURATION_SECONDS,
-      ease: "power2.out",
+      ease: "power2.inOut",
       overwrite: true,
       onUpdate: () => progress.set(animatedProgress.value),
       onComplete: () => {
