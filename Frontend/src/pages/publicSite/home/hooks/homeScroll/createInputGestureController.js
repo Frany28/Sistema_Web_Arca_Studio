@@ -49,7 +49,9 @@ function createInputGestureController({
   runtime.wheelGestureDeltaScale = null;
 
   statement.resetWheelScrubbing();
-  };
+
+  coordination.featured?.settleProcessReturnGesture();
+};
 
   const scheduleWheelGestureSettlement = () => {
     window.clearTimeout(runtime.wheelIdleTimer);
@@ -165,6 +167,24 @@ function createInputGestureController({
       if (reduceMotion) return;
       const direction = Math.sign(normalizedDelta.y);
       if (!direction) return;
+      if (
+        coordination.featured.isProcessReturnGestureLocked()
+      ) {
+        event.preventDefault();
+        event.stopPropagation?.();
+
+        scheduleWheelGestureSettlement();
+
+        debugWheel(
+          event,
+          normalizedDelta,
+          progressDelta,
+          direction,
+          "BLOCKED_PROCESS_RETURN_INERTIA",
+        );
+
+        return;
+      }
       if (coordination.featured.handleExpansionInput(
         event,
         progressDelta.y,

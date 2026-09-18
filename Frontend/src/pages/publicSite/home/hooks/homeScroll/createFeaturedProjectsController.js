@@ -27,9 +27,33 @@ function createFeaturedProjectsController({
 }) {
   let expansionCompletionLock = null;
   let expansionGeneration = 0;
-  const expansionTweens = new Map();
-  const expansionTargets = expansionProgress.map((progress) => progress.get());
+  let processReturnGestureLocked = false;
+  let processReturnGestureBecameIdle = false;
+    const expansionTweens = new Map();
+    const expansionTargets = expansionProgress.map((progress) => progress.get());
+    const beginProcessReturnGestureLock = () => {
+    processReturnGestureLocked = true;
+    processReturnGestureBecameIdle = false;
+  };
 
+  const settleProcessReturnGesture = () => {
+    if (!processReturnGestureLocked) return;
+
+    processReturnGestureBecameIdle = true;
+
+    if (!runtime.activeTween && !runtime.isProgrammaticScroll) {
+      processReturnGestureLocked = false;
+    }
+  };
+
+  const completeProcessReturnGesture = () => {
+    if (processReturnGestureBecameIdle) {
+      processReturnGestureLocked = false;
+    }
+  };
+
+  const isProcessReturnGestureLocked = () =>
+    processReturnGestureLocked;
   const getSection = () => coordination.content.getSection("featured-projects");
   const getProjectPanels = (section = getSection()) =>
     section ? [...section.querySelectorAll(FEATURED_PROJECT_SELECTOR)] : [];
@@ -246,7 +270,9 @@ function createFeaturedProjectsController({
       targetSectionId === "featured-projects" &&
       featuredProjectIndex !== null &&
       targetAlignment === "end";
-
+    if (entersAptoFromProcess) {
+      beginProcessReturnGestureLock();
+    }
     if (entersQuintaFromServices) {
       expansionCompletionLock = null;
       setPreparationOffset(0, 0);
@@ -280,10 +306,18 @@ function createFeaturedProjectsController({
     return coordination.panel.startScrollTransition({
       scrollTop: targetScrollTop,
       onComplete: () => {
-        coordination.content.selectSection(targetSectionId);
-        if (featuredProjectIndex !== null) setPreparationOffset(featuredProjectIndex, 0);
-        coordination.content.synchronizeContentScroll();
-      },
+      coordination.content.selectSection(targetSectionId);
+
+      if (featuredProjectIndex !== null) {
+        setPreparationOffset(featuredProjectIndex, 0);
+      }
+
+      coordination.content.synchronizeContentScroll();
+
+      if (entersAptoFromProcess) {
+        completeProcessReturnGesture();
+      }
+    },
     });
   };
 
@@ -553,24 +587,26 @@ function createFeaturedProjectsController({
   };
 
   return {
-    cancelExpansionTweens,
-    commitProjectIndex,
-    destroy: cancelExpansionTweens,
-    getContentBoundary,
-    getExpansionProgress,
-    getPanelScrollBounds,
-    getProjectPanels,
-    getProjectTransition,
-    handleBoundaryWheel,
-    handleExpansionInput,
-    isImageProject,
-    pinExpansion,
-    resetNavigationState,
-    setExpansionProgress,
-    synchronizeProject,
-    transitionBetweenSections,
-    transitionProject,
-  };
+  cancelExpansionTweens,
+  commitProjectIndex,
+  destroy: cancelExpansionTweens,
+  getContentBoundary,
+  getExpansionProgress,
+  getPanelScrollBounds,
+  getProjectPanels,
+  getProjectTransition,
+  handleBoundaryWheel,
+  handleExpansionInput,
+  isImageProject,
+  isProcessReturnGestureLocked,
+  pinExpansion,
+  resetNavigationState,
+  setExpansionProgress,
+  settleProcessReturnGesture,
+  synchronizeProject,
+  transitionBetweenSections,
+  transitionProject,
+};
 }
 
 export { createFeaturedProjectsController };
