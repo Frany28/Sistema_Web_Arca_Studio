@@ -139,6 +139,9 @@ function createContentScrollController({
     if (activeSectionRef.current === "featured-projects") {
       coordination.featured.cancelExpansionTweens();
     }
+    if (sectionId === "featured-projects" || leavingFeatured) {
+     coordination.featured.resetNavigationState();
+    }
     statement.stopAnimation();
     statement.resetWheelScrubbing();
     titleRevealLockedRef.current = false;
@@ -164,9 +167,7 @@ function createContentScrollController({
         }
 
         setContentMode(true);
-        if (sectionId === "featured-projects" || leavingFeatured) {
-          coordination.featured.resetNavigationState();
-        }
+      
         synchronizeContentScroll();
       },
     });
