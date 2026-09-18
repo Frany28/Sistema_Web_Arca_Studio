@@ -102,24 +102,31 @@ function createContentScrollController({
     }
   };
 
-  const navigateSection = (sectionId, { direct = false } = {}) => {
-    const currentState = navigationStateRef.current;
+ const navigateSection = (sectionId, { direct = false } = {}) => {
+  const currentState = navigationStateRef.current;
+
     const currentSectionComplete = runtime.contentMode
       ? true
-      : !titleRevealLockedRef.current &&
-        currentState.phase === HOME_SCROLL_PHASES.TITLE &&
-        (currentState.panelIndex !== STATEMENT_PANEL_INDEX ||
-          statement.getProgress() >= 1);
+      : currentState.phase === HOME_SCROLL_PHASES.TITLE &&
+        (
+          currentState.panelIndex === STATEMENT_PANEL_INDEX
+            ? statement.getProgress() >= 1
+            : !titleRevealLockedRef.current
+        );
 
     if (
       !direct &&
-      (runtime.activeTween || runtime.isProgrammaticScroll || !currentSectionComplete)
+      (runtime.activeTween ||
+        runtime.isProgrammaticScroll ||
+        !currentSectionComplete)
     ) return;
 
     const target = sectionId === "home"
       ? panels[0]
       : getSection(sectionId);
+
     if (!target) return;
+
 
     const leavingFeatured =
       activeSectionRef.current === "featured-projects" &&
