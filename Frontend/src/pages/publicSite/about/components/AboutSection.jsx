@@ -13,13 +13,16 @@ function AboutSection({
       id="about"
       aria-label="Sobre nosotros"
       data-content-title-scope="about"
+      data-node-id="5133:813605"
       className="
         dark
         flex
         w-full
         flex-col
+        items-center
+        gap-[48px]
         bg-[var(--color-neutral-950-uniform)]
-        pt-[var(--spacing-gap-9)]
+        pt-[56px]
       "
     >
       <SectionTitleReveal
@@ -28,21 +31,20 @@ function AboutSection({
           mx-auto
           flex
           w-full
-          max-w-[1200px]
+          max-w-[1202px]
           flex-col
           items-center
           gap-[48px]
-          px-[16px]
-          py-[48px]
+          p-[48px]
           text-center
           text-[var(--color-neutral-100-uniform)]
-          min-[768px]:px-[48px]
+          max-[767px]:px-[16px]
         "
-        data-node-id="4856:5054"
+        data-node-id="5133:812440"
       >
         <p
-          className="text-heading-4 m-0 w-full"
-          data-node-id="4856:5055"
+          className="text-heading-4 m-0 whitespace-nowrap"
+          data-node-id="5133:812441"
         >
           {ABOUT_CONTENT.eyebrow}
         </p>
@@ -52,12 +54,13 @@ function AboutSection({
             text-heading-1
             m-0
             w-full
-            text-balance
+            max-w-[850px]
+            text-center
             max-[767px]:text-[38px]
             max-[767px]:leading-[46px]
             max-[767px]:tracking-[-1px]
           "
-          data-node-id="4856:5056"
+          data-node-id="5133:812442"
         >
           {ABOUT_CONTENT.title.map((line) => (
             <span key={line} className="block">

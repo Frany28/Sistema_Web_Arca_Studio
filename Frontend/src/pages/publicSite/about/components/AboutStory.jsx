@@ -102,48 +102,39 @@ function AboutStory({
     >
       <div
         className="
-          sticky
-          top-0
-          flex
-          h-dvh
-          w-full
-          items-center
-          justify-center
-          overflow-hidden
-          bg-[var(--color-neutral-950-uniform)]
-        "
-      >
-        <Motion.div
-          className="
-            relative
-            h-dvh
+            sticky
+            top-0
             w-full
             overflow-hidden
-            will-change-transform
-          "
-          style={{
-            scale: imageScale,
-            borderRadius,
-          }}
+            bg-[var(--color-neutral-950-uniform)]
+        "
+        >
+        <Motion.div
+        data-node-id="5133:813979"
+        className="
+            relative
+            aspect-[4096/2731]
+            w-full
+            overflow-hidden
+        "
         >
           <Motion.img
             src={image}
             alt=""
             aria-hidden="true"
             className="
-              absolute
-              inset-0
-              h-full
-              w-full
-              object-cover
-              object-bottom
-              will-change-transform
+                absolute
+                inset-0
+                size-full
+                object-cover
+                object-bottom
+                will-change-transform
             "
             style={{
-              filter: imageFilter,
-              scale: imageInnerScale,
+                filter: imageFilter,
+                scale: imageInnerScale,
             }}
-          />
+            />
 
           <Motion.div
             aria-hidden="true"
