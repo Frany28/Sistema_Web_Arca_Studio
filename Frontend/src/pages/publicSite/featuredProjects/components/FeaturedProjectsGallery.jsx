@@ -237,7 +237,11 @@ function FeaturedProjectsGallery({
     const stage = stageRef.current;
 
     if (!stage || progress <= 0) {
-      if (stage) stage.style.visibility = "hidden";
+      if (stage) {
+        stage.style.visibility = "hidden";
+      }
+
+      clearFlipTimeline();
       showOriginalCards();
       renderedProgressRef.current = progress;
       return;
@@ -261,8 +265,9 @@ function FeaturedProjectsGallery({
       showOriginalCards();
     }
     renderedProgressRef.current = progress;
-  }, [
+    }, [
     active,
+    clearFlipTimeline,
     createFlipTimeline,
     hideOriginalCards,
     showOriginalCards,
