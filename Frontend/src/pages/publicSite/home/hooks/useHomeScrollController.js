@@ -143,18 +143,20 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       reduceMotion,
     });
 
-    coordination.input = createInputGestureController({
-      activeFeaturedProjectIndexRef,
-      activeSectionRef,
+    coordination.panel = createPanelNavigationController({
       coordination,
       navigationStateRef,
-      pendingPanelDirectionRef,
+      panels,
       reduceMotion,
       runtime,
       scroller,
       statement,
       titleRevealLockedRef,
+      commitNavigationState,
     });
+
+    panelNavigationRef.current = coordination.panel;
+
     coordination.featured = createFeaturedProjectsController({
       activeFeaturedProjectIndexRef,
       activeSectionRef,
@@ -166,6 +168,7 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       scroller,
       setActiveFeaturedProjectIndex,
     });
+
     coordination.content = createContentScrollController({
       activeSectionRef,
       contentModeRef,
@@ -182,18 +185,19 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       setFeaturedStep,
       setVisibleContentTitleIds,
     });
+
     coordination.input = createInputGestureController({
       activeFeaturedProjectIndexRef,
       activeSectionRef,
       coordination,
       navigationStateRef,
+      pendingPanelDirectionRef,
       reduceMotion,
       runtime,
       scroller,
       statement,
       titleRevealLockedRef,
     });
-
     sectionNavigationRef.current = (sectionId) =>
       coordination.content.navigateSection(sectionId, { direct: true });
     coordination.content.initialize();
