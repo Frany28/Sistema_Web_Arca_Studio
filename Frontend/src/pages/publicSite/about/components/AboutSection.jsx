@@ -1,9 +1,12 @@
 import SectionTitleReveal from "../../components/SectionTitleReveal.jsx";
 import aboutHero from "../../../../assets/about/about-hero.webp";
+
 import { ABOUT_CONTENT } from "../aboutContent.js";
+import AboutStory from "./AboutStory.jsx";
 
 function AboutSection({
   titleVisible = false,
+  scrollContainerRef,
 }) {
   return (
     <section
@@ -15,7 +18,6 @@ function AboutSection({
         flex
         w-full
         flex-col
-        gap-[var(--spacing-gap-9)]
         bg-[var(--color-neutral-950-uniform)]
         pt-[var(--spacing-gap-9)]
       "
@@ -65,15 +67,10 @@ function AboutSection({
         </h2>
       </SectionTitleReveal>
 
-      <div className="mx-auto w-full max-w-[1440px] overflow-hidden">
-        <div className="relative aspect-[3/2] w-full overflow-hidden">
-          <img
-            src={aboutHero}
-            alt="Equipo de ARCA Studio"
-            className="absolute inset-0 h-full w-full object-cover object-bottom"
-          />
-        </div>
-      </div>
+      <AboutStory
+        image={aboutHero}
+        scrollContainerRef={scrollContainerRef}
+      />
     </section>
   );
 }

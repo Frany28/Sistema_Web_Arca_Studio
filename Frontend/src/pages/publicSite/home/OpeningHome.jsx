@@ -141,9 +141,9 @@ function OpeningHome() {
                 titleVisible={titleIsVisible("process")}
               />
               <AboutSection
-                active={activeSectionId === "about"}
-                titleVisible={titleIsVisible("about")}
-              />
+              titleVisible={titleIsVisible("about")}
+              scrollContainerRef={scrollerRef}
+            />
             </>
           )}
         </main>
