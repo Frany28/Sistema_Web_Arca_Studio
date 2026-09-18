@@ -7,7 +7,7 @@ import {
   createScrollbarHomeScrollState,
 } from "../../utils/homeScrollNavigation.js";
 
-const STATEMENT_KEYBOARD_DURATION_SECONDS = 0.5;
+const STATEMENT_KEYBOARD_DURATION_SECONDS = 1.0;
 
 function createHomeStatementController({
   commitNavigationState,
