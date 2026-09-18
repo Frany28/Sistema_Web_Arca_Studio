@@ -3,7 +3,6 @@ import {
   motion as Motion,
   useMotionValue,
   useReducedMotion,
-  useSpring,
   useTransform,
 } from "motion/react";
 
@@ -33,12 +32,7 @@ function HomeStatementPanel({
   const videoRef = useRef(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const focusOffsetX = useMotionValue(0);
-  const smoothedProgress = useSpring(progress, {
-    damping: 28,
-    mass: 0.55,
-    stiffness: 180,
-  });
-  const visualProgress = reduceMotion ? progress : smoothedProgress;
+  const visualProgress = progress;
   const maskScale = useTransform(
     visualProgress,
     (value) => getHomeStatementVisualState(value).maskScale,

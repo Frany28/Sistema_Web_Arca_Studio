@@ -71,14 +71,17 @@ function createContentScrollController({
   const synchronizeContentScroll = ({ titlesSynchronized = false } = {}) => {
     if (!titlesSynchronized) synchronizeTitleVisibility();
     const servicesTop = getSection("services")?.offsetTop;
-    if (servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
+   if (servicesTop !== undefined && scroller.scrollTop < servicesTop - 1) {
       setContentMode(false);
       selectSection(null);
-      runtime.statementEnteringUp = true;
+
+      runtime.statementEnteringUp = false;
+
       coordination.panel.alignToPanel(createHomeScrollState({
         panelIndex: STATEMENT_PANEL_INDEX,
-        phase: HOME_SCROLL_PHASES.IMAGE,
+        phase: HOME_SCROLL_PHASES.TITLE,
       }));
+
       return;
     }
 
