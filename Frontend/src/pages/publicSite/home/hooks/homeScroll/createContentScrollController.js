@@ -203,6 +203,10 @@ function createContentScrollController({
     }
 
     if (runtime.contentMode) {
+      if (coordination.about?.pinStory()) {
+        synchronizeTitleVisibility();
+        return;
+      }
       if (coordination.featured.pinExpansion()) {
         synchronizeTitleVisibility();
         return;

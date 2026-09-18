@@ -6,7 +6,7 @@ import AboutStory from "./AboutStory.jsx";
 
 function AboutSection({
   titleVisible = false,
-  scrollContainerRef,
+  progress,
 }) {
   return (
     <section
@@ -72,7 +72,7 @@ function AboutSection({
 
       <AboutStory
         image={aboutHero}
-        scrollContainerRef={scrollContainerRef}
+        
       />
     </section>
   );

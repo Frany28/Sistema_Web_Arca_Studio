@@ -1,187 +1,174 @@
-import { useRef } from "react";
 import {
   motion as Motion,
   useReducedMotion,
-  useScroll,
   useTransform,
 } from "motion/react";
 
 function AboutStory({
   image,
-  scrollContainerRef,
+  progress,
 }) {
-  const storyRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
-  const { scrollYProgress } = useScroll({
-    container: scrollContainerRef,
-    target: storyRef,
-    offset: ["start start", "end end"],
-  });
-
   /*
-   * Figma:
-   * 1440 × 960  ->  1104 × 736
-   *
-   * 1104 / 1440 = 0.766666...
+   * 0.00 - 0.12  imagen limpia
+   * 0.12 - 0.20  entra oscuridad / blur
+   * 0.18 - 0.68  créditos
+   * 0.68 - 0.78  salen créditos + vuelve nitidez
+   * 0.78 - 0.94  imagen se reduce
+   * 0.94 - 1.00  estado final
    */
-  const imageScale = useTransform(
-    scrollYProgress,
-    reduceMotion
-      ? [0, 1]
-      : [0, 0.78, 0.88, 1],
-    reduceMotion
-      ? [1, 1]
-      : [1, 1, 1, 0.7667],
-  );
 
-  const borderRadius = useTransform(
-    scrollYProgress,
-    [0, 0.88, 1],
-    ["0px", "0px", "16px"],
-  );
-
-  /*
-   * Primero la imagen está completamente limpia.
-   * Después aparece el estado oscuro/desenfocado.
-   * Al terminar vuelve a estar nítida.
-   */
   const imageFilter = useTransform(
-    scrollYProgress,
-    [0, 0.1, 0.2, 0.74, 0.88, 1],
+    progress,
+    [0, 0.1, 0.2, 0.68, 0.78, 1],
     [
       "blur(0px) brightness(1)",
       "blur(0px) brightness(1)",
-      "blur(7px) brightness(0.58)",
-      "blur(7px) brightness(0.58)",
-      "blur(0px) brightness(0.8)",
+      "blur(6px) brightness(0.62)",
+      "blur(6px) brightness(0.62)",
+      "blur(0px) brightness(1)",
       "blur(0px) brightness(1)",
     ],
   );
 
   const imageInnerScale = useTransform(
-    scrollYProgress,
-    [0, 0.18, 0.76, 0.9],
+    progress,
+    [0, 0.18, 0.68, 0.78],
     [1, 1.025, 1.025, 1],
   );
 
   const darkness = useTransform(
-    scrollYProgress,
-    [0, 0.1, 0.2, 0.72, 0.88],
-    [0, 0, 0.28, 0.28, 0],
+    progress,
+    [0.08, 0.18, 0.68, 0.78],
+    [0, 0.3, 0.3, 0],
   );
 
   /*
-   * Movimiento tipo créditos.
-   *
-   * El párrafo comienza debajo del viewport,
-   * cruza lentamente el centro y termina arriba.
+   * El texto empieza completamente debajo del viewport
+   * y termina completamente fuera por arriba.
    */
   const textY = useTransform(
-    scrollYProgress,
-    [0.16, 0.3, 0.58, 0.76],
-    ["75vh", "38vh", "-18vh", "-95vh"],
+    progress,
+    [0.16, 0.68],
+    ["0vh", "-160vh"],
   );
 
   const textOpacity = useTransform(
-    scrollYProgress,
-    [0.14, 0.21, 0.68, 0.77],
+    progress,
+    [0.14, 0.18, 0.66, 0.71],
     [0, 1, 1, 0],
+  );
+
+  /*
+   * Figma/video:
+   * 1440 → 1104
+   * 1104 / 1440 = 0.766666...
+   */
+  const imageScale = useTransform(
+    progress,
+    [0.76, 0.94],
+    [1, 0.7667],
+  );
+
+  const imageRadius = useTransform(
+    progress,
+    [0.76, 0.94],
+    ["0px", "16px"],
   );
 
   return (
     <div
-      ref={storyRef}
+      data-about-story
       className="
         relative
-        h-[500dvh]
+        flex
+        h-dvh
         w-full
+        items-center
+        justify-center
+        overflow-hidden
         bg-[var(--color-neutral-950-uniform)]
       "
-      data-about-story
     >
-      <div
+      <Motion.div
         className="
-            sticky
-            top-0
-            w-full
-            overflow-hidden
-            bg-[var(--color-neutral-950-uniform)]
+          relative
+          aspect-[4096/2731]
+          w-full
+          max-w-[1440px]
+          overflow-hidden
+          will-change-transform
         "
-        >
+        style={{
+          scale: reduceMotion ? 1 : imageScale,
+          borderRadius: imageRadius,
+        }}
+      >
+        <Motion.img
+          src={image}
+          alt=""
+          aria-hidden="true"
+          className="
+            absolute
+            inset-0
+            size-full
+            object-cover
+            object-bottom
+            will-change-transform
+          "
+          style={{
+            filter: imageFilter,
+            scale: imageInnerScale,
+          }}
+        />
+
         <Motion.div
-        data-node-id="5133:813979"
-        className="
-            relative
-            aspect-[4096/2731]
-            w-full
+          aria-hidden="true"
+          className="absolute inset-0 bg-black"
+          style={{ opacity: darkness }}
+        />
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            z-10
             overflow-hidden
-        "
+          "
         >
-          <Motion.img
-            src={image}
-            alt=""
-            aria-hidden="true"
+          <Motion.p
             className="
-                absolute
-                inset-0
-                size-full
-                object-cover
-                object-bottom
-                will-change-transform
+              absolute
+              left-1/2
+              top-full
+              m-0
+              w-[min(823px,calc(100%-32px))]
+              -translate-x-1/2
+              text-center
+              font-[var(--font-sans)]
+              text-[48px]
+              font-bold
+              leading-[58px]
+              tracking-[-1px]
+              text-[var(--color-neutral-100-uniform)]
+              max-[767px]:text-[30px]
+              max-[767px]:leading-[38px]
             "
             style={{
-                filter: imageFilter,
-                scale: imageInnerScale,
+              y: textY,
+              opacity: textOpacity,
             }}
-            />
-
-          <Motion.div
-            aria-hidden="true"
-            className="absolute inset-0 bg-black"
-            style={{ opacity: darkness }}
-          />
-
-          <div
-            className="
-              pointer-events-none
-              absolute
-              inset-0
-              z-10
-              overflow-hidden
-            "
           >
-            <Motion.p
-              className="
-                absolute
-                left-1/2
-                top-0
-                m-0
-                w-[min(823px,calc(100%-32px))]
-                -translate-x-1/2
-                text-center
-                font-[var(--font-sans)]
-                text-[clamp(30px,3.34vw,48px)]
-                font-bold
-                leading-[clamp(38px,4.03vw,58px)]
-                tracking-[-1px]
-                text-[var(--color-neutral-100-uniform)]
-                will-change-transform
-              "
-              style={{
-                y: textY,
-                opacity: textOpacity,
-              }}
-            >
-              En ARCA Studio entendemos que cada proyecto representa una
-              inversión importante y una decisión que impactará durante años.
-              Por eso combinamos diseño, planificación y ejecución para
-              desarrollar espacios funcionales, duraderos y cuidadosamente
-              pensados para quienes los habitan.
-            </Motion.p>
-          </div>
-        </Motion.div>
-      </div>
+            En ARCA Studio entendemos que cada proyecto representa una
+            inversión importante y una decisión que impactará durante años.
+            Por eso combinamos diseño, planificación y ejecución para
+            desarrollar espacios funcionales, duraderos y cuidadosamente
+            pensados para quienes los habitan.
+          </Motion.p>
+        </div>
+      </Motion.div>
     </div>
   );
 }
