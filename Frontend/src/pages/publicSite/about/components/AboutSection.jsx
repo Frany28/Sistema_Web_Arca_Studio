@@ -72,7 +72,7 @@ function AboutSection({
 
       <AboutStory
         image={aboutHero}
-        
+        progress={progress}
       />
     </section>
   );
