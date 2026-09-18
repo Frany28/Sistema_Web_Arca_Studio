@@ -150,7 +150,10 @@ function createInputGestureController({
     if (runtime.activeTween || runtime.isProgrammaticScroll) {
       event.preventDefault();
       event.stopPropagation?.();
-      observeConsumedWheelGesture(normalizedDelta.y, event.timeStamp);
+      observeConsumedWheelGesture(
+      progressDelta.y,
+      event.timeStamp,
+    );
       runtime.wheelTransitionLock = true;
       scheduleWheelGestureSettlement();
       debugWheel(
@@ -194,7 +197,11 @@ function createInputGestureController({
         debugWheel(event, normalizedDelta, progressDelta, direction, "FEATURED_EXPANSION");
         return;
       }
-      coordination.featured.handleBoundaryWheel(event, normalizedDelta.y, direction);
+     coordination.featured.handleBoundaryWheel(
+        event,
+        progressDelta.y,
+        direction,
+      );
       debugWheel(
         event,
         normalizedDelta,
@@ -234,12 +241,11 @@ function createInputGestureController({
     
 
     runtime.wheelGestureState = advanceWheelGesture(
-          runtime.wheelGestureState,
-          normalizedDelta.y,
-          WHEEL_GESTURE_THRESHOLD_PX,
-          event.timeStamp,
-          
-        );
+        runtime.wheelGestureState,
+        progressDelta.y,
+        WHEEL_GESTURE_THRESHOLD_PX,
+        event.timeStamp,
+      );
         const triggeredDirection =
       runtime.wheelGestureState.triggeredDirection;
 
