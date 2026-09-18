@@ -27,7 +27,6 @@ function createFeaturedProjectsController({
 }) {
   let expansionCompletionLock = null;
   let expansionGeneration = 0;
-  let expansionRequiresBoundaryArrival = false;
   const expansionTweens = new Map();
   const expansionTargets = expansionProgress.map((progress) => progress.get());
 
@@ -114,13 +113,7 @@ function createFeaturedProjectsController({
 
   const resetNavigationState = () => {
     resetExpansionProgress();
-
-    expansionRequiresBoundaryArrival = true;
-
-    preparationOffsets.forEach((_, index) =>
-      setPreparationOffset(index, 0)
-    );
-
+    preparationOffsets.forEach((_, index) => setPreparationOffset(index, 0));
     commitProjectIndex(0);
   };
 
@@ -432,21 +425,10 @@ function createFeaturedProjectsController({
       (direction < 0 && targetProgress > progress)
     ) targetProgress = progress;
 
-        const distanceToEnd = Math.max(
-      0,
-      expansionAnchor - scroller.scrollTop,
-    );
-
+    const distanceToEnd = Math.max(0, expansionAnchor - scroller.scrollTop);
     const magnitude = Math.abs(deltaY);
-
-    const physicallyAtEnd =
-      distanceToEnd <= FEATURED_PROJECT_EDGE_TOLERANCE_PX;
-
     const reachesEnd =
-      expansionRequiresBoundaryArrival && progress <= 0
-        ? physicallyAtEnd
-        : distanceToEnd <=
-          magnitude + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
+      distanceToEnd <= magnitude + FEATURED_PROJECT_EDGE_TOLERANCE_PX;
     const isScrubbing = progress > 0 && progress < 1;
     const expands = direction > 0 && progress < 1 && (isScrubbing || reachesEnd);
     const contracts =
@@ -455,14 +437,6 @@ function createFeaturedProjectsController({
       (isScrubbing ||
         scroller.scrollTop >= expansionAnchor - FEATURED_PROJECT_EDGE_TOLERANCE_PX);
     if (!expands && !contracts) return false;
-    if (
-      expansionRequiresBoundaryArrival &&
-      direction > 0 &&
-      progress <= 0 &&
-      physicallyAtEnd
-    ) {
-      expansionRequiresBoundaryArrival = false;
-    }
 
     logExpansionGeometry(
       "wheel-before-pin",
