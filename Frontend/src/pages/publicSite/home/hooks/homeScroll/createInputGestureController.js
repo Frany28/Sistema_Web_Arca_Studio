@@ -59,18 +59,12 @@ function createInputGestureController({
   const observeConsumedWheelGesture = (deltaY, eventTime) => {
   if (!runtime.wheelGestureState.consumed) return;
 
-    const isTrackpadGesture =
-      runtime.wheelGestureDeltaScale !== null &&
-      runtime.wheelGestureDeltaScale < 1;
-
     const observedGesture = advanceWheelGesture(
       runtime.wheelGestureState,
       deltaY,
       WHEEL_GESTURE_THRESHOLD_PX,
       eventTime,
-      {
-        allowSameDirectionRearm: !isTrackpadGesture,
-      },
+      
     );
 
     runtime.wheelGestureState = {
@@ -80,7 +74,7 @@ function createInputGestureController({
   };
 
   const debugWheel = (event, normalizedDelta, scaledDelta, direction, decision) => {
-    if (!window.__ARCA_DEBUG_WHEEL__) return;
+     if (!window.__ARCA_DEBUG_WHEEL__) return;
     const currentState = navigationStateRef.current;
     const featuredIndex = activeFeaturedProjectIndexRef.current;
     const gesture = runtime.wheelGestureState;
@@ -191,29 +185,20 @@ function createInputGestureController({
     }
 
     event.preventDefault();
-    scheduleWheelGestureSettlement();
-    if (runtime.wheelTransitionLock) {
-      debugWheel(
-        event,
-        normalizedDelta,
-        progressDelta,
-        Math.sign(normalizedDelta.y),
-        "BLOCKED_TRANSITION_LOCK",
-      );
-      return;
-    }
+      scheduleWheelGestureSettlement();
 
-        if (titleRevealLockedRef.current) {
-      debugWheel(
-        event,
-        normalizedDelta,
-        progressDelta,
-        Math.sign(normalizedDelta.y),
-        "BLOCKED_TITLE_REVEAL",
-      );
-      return;
-    }
-    statement.stopAnimation();
+      if (runtime.wheelTransitionLock) {
+        debugWheel(
+          event,
+          normalizedDelta,
+          progressDelta,
+          Math.sign(normalizedDelta.y),
+          "BLOCKED_TRANSITION_LOCK",
+        );
+        return;
+      }
+
+      statement.stopAnimation();
 
     const currentState = navigationStateRef.current;
     const isStatementReady =
@@ -223,18 +208,14 @@ function createInputGestureController({
     }
     const previousWheelGestureState = runtime.wheelGestureState;
 
-    const isTrackpadGesture =
-      runtime.wheelGestureDeltaScale !== null &&
-      runtime.wheelGestureDeltaScale < 1;
+    
 
     runtime.wheelGestureState = advanceWheelGesture(
       runtime.wheelGestureState,
       normalizedDelta.y,
       WHEEL_GESTURE_THRESHOLD_PX,
       event.timeStamp,
-      {
-        allowSameDirectionRearm: !isTrackpadGesture,
-      },
+      
     );
     if (isStatementReady && runtime.wheelGestureState.triggeredDirection !== null) {
       const direction = runtime.wheelGestureState.triggeredDirection;

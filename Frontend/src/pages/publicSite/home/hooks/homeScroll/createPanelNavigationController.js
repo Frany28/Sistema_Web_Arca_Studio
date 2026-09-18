@@ -69,7 +69,6 @@ function createPanelNavigationController({
 
     const currentState = navigationStateRef.current;
     const panelChanged = nextState.panelIndex !== currentState.panelIndex;
-    const phaseChanged = nextState.phase !== currentState.phase;
     const targetPanel = panels[nextState.panelIndex];
     const targetScrollTop = targetPanel?.offsetTop ?? 0;
     const needsAlignment = Math.abs(scroller.scrollTop - targetScrollTop) > 1;
@@ -84,7 +83,9 @@ function createPanelNavigationController({
       titleRevealLockedRef.current = true;
     }
     commitNavigationState(nextState);
-    if (panelChanged || phaseChanged) runtime.wheelTransitionLock = true;
+    if (panelChanged) {
+      runtime.wheelTransitionLock = true;
+    }
     if (!panelChanged && !needsAlignment) return true;
 
     runtime.isProgrammaticScroll = true;
@@ -115,7 +116,7 @@ function createPanelNavigationController({
   };
 
   const moveByDirection = (direction) => {
-    if (runtime.activeTween || titleRevealLockedRef.current) return false;
+    if (runtime.activeTween) return false;
     const currentState = navigationStateRef.current;
     const leavesStatementStart =
       currentState.panelIndex === STATEMENT_PANEL_INDEX &&
