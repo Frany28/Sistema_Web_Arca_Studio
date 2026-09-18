@@ -30,6 +30,7 @@ const INITIAL_NAVIGATION_STATE = createHomeScrollState();
 gsap.registerPlugin(ScrollToPlugin);
 
 function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) {
+
   const [navigationState, setNavigationState] = useState(INITIAL_NAVIGATION_STATE);
   const scrollerRef = useRef(null);
   const navigationStateRef = useRef(INITIAL_NAVIGATION_STATE);
@@ -106,6 +107,8 @@ function useHomeScrollController({ enabled, initialScrollReady, reduceMotion }) 
       ignoreNextScrollEnd: false,
       isProgrammaticScroll: false,
       nativeScrollOriginState: null,
+      scrollbarDragging: false,
+      scrollbarOriginState: null,
       resizeFrame: undefined,
       scrollSettleTimer: undefined,
       statementEnteringUp: false,

@@ -578,6 +578,17 @@ function createInputGestureController({
     scroller.addEventListener("pointercancel", clearTouchGesture);
     scroller.addEventListener("keydown", handleKeyDown);
     scroller.addEventListener("scroll", coordination.content.handleNativeScroll, { passive: true });
+    document.addEventListener(
+      "mousedown",
+      handleScrollbarMouseDown,
+      true,
+    );
+
+    window.addEventListener(
+      "mouseup",
+      handleScrollbarMouseUp,
+      true,
+    );
     if (runtime.supportsScrollEnd) {
       scroller.addEventListener("scrollend", coordination.content.handleScrollEnd);
     }
@@ -600,8 +611,47 @@ function createInputGestureController({
     }
     window.removeEventListener("resize", coordination.content.handleResize);
     window.removeEventListener("orientationchange", coordination.content.handleResize);
+    document.removeEventListener(
+      "mousedown",
+      handleScrollbarMouseDown,
+      true,
+    );
+
+    window.removeEventListener(
+      "mouseup",
+      handleScrollbarMouseUp,
+      true,
+    );
+  };
+  const handleScrollbarMouseDown = (event) => {
+  if (event.button !== 0) return;
+
+    const rect = scroller.getBoundingClientRect();
+
+    const nativeScrollbarWidth =
+      scroller.offsetWidth - scroller.clientWidth;
+
+    const detectionWidth = Math.max(
+      nativeScrollbarWidth,
+      12,
+    );
+
+    const insideScroller =
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom;
+
+    const overVerticalScrollbar =
+      event.clientX >= rect.right - detectionWidth &&
+      event.clientX <= rect.right;
+
+    if (!insideScroller || !overVerticalScrollbar) return;
+
+    coordination.content.beginScrollbarDrag();
   };
 
+  const handleScrollbarMouseUp = () => {
+    coordination.content.endScrollbarDrag();
+  };
   return {
     attach,
     destroy,

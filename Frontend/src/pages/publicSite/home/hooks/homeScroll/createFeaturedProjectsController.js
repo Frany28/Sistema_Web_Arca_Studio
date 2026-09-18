@@ -586,7 +586,23 @@ function createFeaturedProjectsController({
     return true;
   };
 
-  return {
+  const prepareForScrollbarNavigation = () => {
+    cancelExpansionTweens();
+
+    expansionCompletionLock = null;
+    processReturnGestureLocked = false;
+    processReturnGestureBecameIdle = false;
+
+    expansionProgress.forEach((_, index) => {
+      setExpansionProgress(index, 0);
+    });
+
+    preparationOffsets.forEach((_, index) => {
+      setPreparationOffset(index, 0);
+    });
+  };
+
+ return {
   cancelExpansionTweens,
   commitProjectIndex,
   destroy: cancelExpansionTweens,
@@ -600,6 +616,7 @@ function createFeaturedProjectsController({
   isImageProject,
   isProcessReturnGestureLocked,
   pinExpansion,
+  prepareForScrollbarNavigation,
   resetNavigationState,
   setExpansionProgress,
   settleProcessReturnGesture,
@@ -607,6 +624,7 @@ function createFeaturedProjectsController({
   transitionBetweenSections,
   transitionProject,
 };
+  
 }
 
 export { createFeaturedProjectsController };

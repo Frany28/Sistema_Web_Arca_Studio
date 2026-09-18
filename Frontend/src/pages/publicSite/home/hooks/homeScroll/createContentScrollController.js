@@ -197,6 +197,11 @@ function createContentScrollController({
       synchronizeTitleVisibility();
       return;
     }
+
+    if (runtime.scrollbarDragging) {
+      return;
+    }
+
     if (runtime.contentMode) {
       if (coordination.featured.pinExpansion()) {
         synchronizeTitleVisibility();
@@ -292,19 +297,93 @@ function createContentScrollController({
     window.clearTimeout(runtime.scrollSettleTimer);
   };
 
+  const beginScrollbarDrag = () => {
+    if (runtime.activeTween || runtime.isProgrammaticScroll) return;
+
+    runtime.scrollbarDragging = true;
+    runtime.scrollbarOriginState = navigationStateRef.current;
+
+    window.clearTimeout(runtime.scrollSettleTimer);
+
+    statement.stopAnimation();
+    statement.resetWheelScrubbing();
+
+    if (runtime.contentMode) {
+      coordination.featured.prepareForScrollbarNavigation();
+    }
+  };
+
+  const endScrollbarDrag = () => {
+  if (!runtime.scrollbarDragging) return;
+
+  runtime.scrollbarDragging = false;
+
+  const servicesTop = getSection("services")?.offsetTop;
+  const currentScrollTop = scroller.scrollTop;
+
+  runtime.nativeScrollOriginState = null;
+  titleRevealLockedRef.current = false;
+
+  /*
+   * La barra es navegación directa.
+   * No ejecutamos la narrativa de wheel/trackpad.
+   */
+  if (
+    servicesTop !== undefined &&
+    currentScrollTop >= servicesTop - 1
+  ) {
+    statement.stopAnimation();
+    statement.resetWheelScrubbing();
+
+    coordination.featured.prepareForScrollbarNavigation();
+
+    commitNavigationState(
+      createScrollbarHomeScrollState(
+        STATEMENT_PANEL_INDEX,
+        { settled: false },
+      ),
+    );
+
+    statement.commitProgress(0);
+
+    setContentMode(true);
+    synchronizeContentScroll();
+
+    return;
+  }
+
+  /*
+   * Si soltamos la barra dentro de la introducción,
+   * alineamos limpiamente al panel más cercano.
+   */
+    setContentMode(false);
+    selectSection(null);
+
+    const panelIndex = getNearestPanelIndex(
+      currentScrollTop,
+      panels.map((panel) => panel.offsetTop),
+    );
+
+    coordination.panel.alignToPanel(
+      createScrollbarHomeScrollState(panelIndex),
+    );
+  };
+
   return {
-    destroy,
-    getSection,
-    handleNativeScroll,
-    handleResize,
-    handleScrollEnd,
-    initialize,
-    navigateSection,
-    selectSection,
-    setContentMode,
-    settleNativeScroll,
-    synchronizeContentScroll,
-    synchronizeTitleVisibility,
+  beginScrollbarDrag,
+  destroy,
+  endScrollbarDrag,
+  getSection,
+  handleNativeScroll,
+  handleResize,
+  handleScrollEnd,
+  initialize,
+  navigateSection,
+  selectSection,
+  setContentMode,
+  settleNativeScroll,
+  synchronizeContentScroll,
+  synchronizeTitleVisibility,
   };
 }
 
