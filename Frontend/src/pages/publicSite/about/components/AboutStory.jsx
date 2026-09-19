@@ -38,10 +38,10 @@ function CreditLine({
    * La siguiente comienza después de la anterior.
    */
   const lineEnterStart =
-    0.22 + index * 0.035;
+  0.18 + index * 0.045;
 
   const lineEnterEnd =
-    lineEnterStart + 0.055;
+  lineEnterStart + 0.09;
 
 const opacity = useTransform(
   progress,
@@ -52,7 +52,7 @@ const opacity = useTransform(
 const y = useTransform(
   progress,
   [lineEnterStart, lineEnterEnd],
-  [32, 0],
+  [ 24,0,]
 );
 
 const blur = useTransform(
@@ -356,29 +356,29 @@ const darkness = useTransform(
   const creditsTrackY = useTransform(
     visualProgress,
     [
-      0.16,
-      0.82,
+      0.08,
+      0.92,
     ],
     [
-      "110vh",
-      "-120vh",
+      "100vh",
+      "-105vh",
     ],
   );
 
  const creditsOpacity = useTransform(
-    visualProgress,
-    [
-      0.14,
-      0.23,
-      0.64,
-      0.82,
-    ],
-    [
-      0,
-      1,
-      1,
-      0,
-    ],
+  visualProgress,
+  [
+    0.08,
+    0.18,
+    0.76,
+    0.92,
+  ],
+  [
+    0,
+    1,
+    1,
+    0,
+  ],
   );
 
   return (
