@@ -269,35 +269,35 @@ function AboutStory({
    */
 
   const frameWidth = useTransform(
-    visualProgress,
-    [
-      0,
-      0.70,
-      0.98,
-      1,
-    ],
-    [
-      initialWidth,
-      initialWidth,
-      finalWidth,
-      finalWidth,
-    ],
-  );
+  visualProgress,
+  [
+    0,
+    0.82,
+    0.98,
+    1,
+  ],
+  [
+    initialWidth,
+    initialWidth,
+    finalWidth,
+    finalWidth,
+  ],
+);
 
   const frameHeight = useTransform(
-    visualProgress,
-    [
-      0,
-      0.70,
-      0.98,
-      1,
-    ],
-    [
-      initialHeight,
-      initialHeight,
-      finalHeight,
-      finalHeight,
-    ],
+  visualProgress,
+  [
+    0,
+    0.82,
+    0.98,
+    1,
+  ],
+  [
+    initialHeight,
+    initialHeight,
+    finalHeight,
+    finalHeight,
+  ],
   );
 
   const imageRadius = useTransform(
