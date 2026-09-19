@@ -14,6 +14,7 @@ import {
 const FINAL_DESKTOP_WIDTH = 1104;
 const FINAL_DESKTOP_HEIGHT = 736;
 
+
 const IMAGE_ASPECT_RATIO = 4096 / 2731;
 
 const ABOUT_CREDIT_LINES = [
@@ -27,6 +28,12 @@ const ABOUT_CREDIT_LINES = [
   "cuidadosamente pensados para",
   "quienes los habitan.",
 ];
+
+const CREDITS_START_PROGRESS = 0.20;
+const CREDITS_END_PROGRESS = 0.80;
+
+const FRAME_SHRINK_START_PROGRESS = 0.84;
+const FRAME_SHRINK_END_PROGRESS = 0.99;
 
 function CreditLine({
   line,
@@ -268,12 +275,12 @@ function AboutStory({
    * tamaño final.
    */
 
-  const frameWidth = useTransform(
+ const frameWidth = useTransform(
   visualProgress,
   [
     0,
-    0.82,
-    0.98,
+    FRAME_SHRINK_START_PROGRESS,
+    FRAME_SHRINK_END_PROGRESS,
     1,
   ],
   [
@@ -284,12 +291,12 @@ function AboutStory({
   ],
 );
 
-  const frameHeight = useTransform(
+ const frameHeight = useTransform(
   visualProgress,
   [
     0,
-    0.82,
-    0.98,
+    FRAME_SHRINK_START_PROGRESS,
+    FRAME_SHRINK_END_PROGRESS,
     1,
   ],
   [
@@ -298,23 +305,23 @@ function AboutStory({
     finalHeight,
     finalHeight,
   ],
-  );
+);
 
-  const imageRadius = useTransform(
-    visualProgress,
-    [
-      0,
-      0.70,
-      0.98,
-      1,
-    ],
-    [
-      "0px",
-      "0px",
-      "16px",
-      "16px",
-    ],
-  );
+ const imageRadius = useTransform(
+  visualProgress,
+  [
+    0,
+    FRAME_SHRINK_START_PROGRESS,
+    FRAME_SHRINK_END_PROGRESS,
+    1,
+  ],
+  [
+    "0px",
+    "0px",
+    "16px",
+    "16px",
+  ],
+);
 
   /*
    * =====================================================
@@ -329,8 +336,8 @@ const imageFilter = useTransform(
     0.04,
     0.10,
     0.20,
-    0.62,
-    0.74,
+    0.76,
+    0.80,
     0.88,
     1,
   ],
@@ -340,7 +347,7 @@ const imageFilter = useTransform(
     "blur(1.5px) brightness(0.94)",
     "blur(3.5px) brightness(0.76)",
     "blur(3.5px) brightness(0.76)",
-    "blur(2px) brightness(0.84)",
+    "blur(3.5px) brightness(0.76)",
     "blur(0px) brightness(1)",
     "blur(0px) brightness(1)",
   ],
@@ -373,8 +380,8 @@ const darkness = useTransform(
     0.05,
     0.12,
     0.20,
-    0.62,
     0.76,
+    0.80,
     0.88,
     1,
   ],
@@ -384,11 +391,11 @@ const darkness = useTransform(
     0.08,
     0.18,
     0.18,
-    0.10,
+    0.18,
     0,
     0,
   ],
-);  
+); 
 
   /*
    * =====================================================
@@ -412,8 +419,8 @@ const creditsEndY =
   visualProgress,
   [
     0,
-    0.20,
-    0.96,
+    CREDITS_START_PROGRESS,
+    CREDITS_END_PROGRESS,
     1,
   ],
   [
@@ -422,7 +429,7 @@ const creditsEndY =
     creditsEndY,
     creditsEndY,
   ],
-  );
+);
 
  
 
