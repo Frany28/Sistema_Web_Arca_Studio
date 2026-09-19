@@ -9,7 +9,7 @@ const ABOUT_TRAVEL_VIEWPORT_RATIO = 5;
 const ABOUT_MIN_TRAVEL_PX = 2600;
 const ABOUT_CREDITS_START_PROGRESS = 0.20;
 const ABOUT_CREDITS_END_PROGRESS = 0.80;
-const ABOUT_CREDITS_SCROLL_SCALE = 0.35;
+const ABOUT_CREDITS_SCROLL_SCALE = 0.45;
 
 function clamp(value) {
   return Math.min(Math.max(value, 0), 1);
