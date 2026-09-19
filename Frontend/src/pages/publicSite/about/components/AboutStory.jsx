@@ -173,15 +173,10 @@ function AboutStory({
    * De esta manera NO queda estirada a todo el ancho.
    */
 
-  const initialHeight =
-    stageSize.height;
+  const initialHeight = stageSize.height;
 
   const initialWidth =
-    Math.min(
-      stageSize.width,
-      initialHeight *
-        IMAGE_ASPECT_RATIO,
-    );
+  initialHeight * IMAGE_ASPECT_RATIO;
 
   /*
    * =====================================================
@@ -402,12 +397,15 @@ function AboutStory({
        * actualmente en el repositorio.
        */}
       <Motion.div
-        className="
-          relative
-          shrink-0
-          overflow-hidden
-          will-change-[width,height,border-radius]
-        "
+      className="
+        relative
+        flex
+        shrink-0
+        items-center
+        justify-center
+        overflow-hidden
+        will-change-[width,height,border-radius]
+      "
         style={{
           width: reduceMotion
             ? finalWidth
