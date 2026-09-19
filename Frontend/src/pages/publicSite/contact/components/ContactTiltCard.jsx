@@ -14,7 +14,6 @@ import {
 import "./ContactTiltCard.css";
 
 const TILT_INTENSITY = 12;
-const TILT_INFLUENCE_FACTOR = 1.25;
 const GLARE_INTENSITY = 0.47;
 const MOVING_GRADIENT_SHADER = {
   setup: setupMovingGradient,
@@ -73,12 +72,10 @@ function ContactTiltCard() {
     if (reduceMotion) return undefined;
 
     const rotateXTo = gsap.quickTo(card, "rotationX", {
-      duration: 0.42,
-      ease: "power3.out",
+      ease: "power3",
     });
     const rotateYTo = gsap.quickTo(card, "rotationY", {
-      duration: 0.42,
-      ease: "power3.out",
+      ease: "power3",
     });
     const glareXTo = gsap.quickTo(glare, "x", {
       duration: 0.36,
@@ -99,13 +96,23 @@ function ContactTiltCard() {
       const rect = card.getBoundingClientRect();
       const offsetX = event.clientX - (rect.left + rect.width / 2);
       const offsetY = event.clientY - (rect.top + rect.height / 2);
-      const influenceDistanceX = rect.width * TILT_INFLUENCE_FACTOR;
-      const influenceDistanceY = rect.height * TILT_INFLUENCE_FACTOR;
-      const tiltX = Math.max(-1, Math.min(1, offsetX / influenceDistanceX));
-      const tiltY = Math.max(-1, Math.min(1, offsetY / influenceDistanceY));
+      const viewportX = gsap.utils.clamp(
+        0,
+        1,
+        event.clientX / Math.max(window.innerWidth, 1),
+      );
+      const viewportY = gsap.utils.clamp(
+        0,
+        1,
+        event.clientY / Math.max(window.innerHeight, 1),
+      );
 
-      rotateXTo(-tiltY * TILT_INTENSITY);
-      rotateYTo(tiltX * TILT_INTENSITY);
+      rotateXTo(
+        gsap.utils.interpolate(TILT_INTENSITY, -TILT_INTENSITY, viewportY),
+      );
+      rotateYTo(
+        gsap.utils.interpolate(-TILT_INTENSITY, TILT_INTENSITY, viewportX),
+      );
       glareXTo(offsetX * 0.47);
       glareYTo(offsetY * 0.47);
       glareOpacityTo(GLARE_INTENSITY);

@@ -1,16 +1,16 @@
 .contact-tilt-card {
-  perspective: 1000px;
+  perspective: 650px;
 }
 
 .contact-tilt-card__surface {
   isolation: isolate;
   padding: 12.9629629%;
+  transform-origin: center center;
   transform-style: preserve-3d;
 }
 
 .contact-tilt-card__surface::after {
-  border: var(--stroke-0) solid
-    color-mix(in srgb, var(--color-neutral-100-uniform) 12%, transparent);
+  border: 1px solid rgb(255 255 255 / 0.1);
   border-radius: inherit;
   content: "";
   inset: 0;
