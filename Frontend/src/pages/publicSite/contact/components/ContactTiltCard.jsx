@@ -14,7 +14,7 @@ import {
 import "./ContactTiltCard.css";
 
 const TILT_INTENSITY = 12;
-const TILT_INFLUENCE_FACTOR = 1.5;
+const TILT_INFLUENCE_FACTOR = 1.25;
 const GLARE_INTENSITY = 0.47;
 const MOVING_GRADIENT_SHADER = {
   setup: setupMovingGradient,
