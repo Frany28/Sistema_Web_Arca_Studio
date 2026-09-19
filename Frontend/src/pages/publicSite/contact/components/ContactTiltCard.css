@@ -10,8 +10,9 @@
 
 .contact-tilt-card__gradient {
   display: block;
+  filter: brightness(0.55) saturate(0.7);
   height: 100%;
-  opacity: 0.2;
+  opacity: 0.3;
   width: 100%;
 }
 
