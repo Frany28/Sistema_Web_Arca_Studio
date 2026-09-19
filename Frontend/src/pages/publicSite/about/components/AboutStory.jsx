@@ -275,63 +275,73 @@ function AboutStory({
    * =====================================================
    */
 
-  const imageFilter =
-    useTransform(
-      progress,
-      [
-        0,
-        0.1,
-        0.2,
-        0.68,
-        0.78,
-        1,
-      ],
-      [
-        "blur(0px) brightness(1)",
-        "blur(0px) brightness(1)",
-        "blur(6px) brightness(0.62)",
-        "blur(6px) brightness(0.62)",
-        "blur(0px) brightness(1)",
-        "blur(0px) brightness(1)",
-      ],
-    );
+const imageFilter = useTransform(
+  progress,
+  [
+    0,
+    0.08,
+    0.16,
+    0.26,
+    0.60,
+    0.70,
+    0.80,
+    1,
+  ],
+  [
+    "blur(0px) brightness(1)",
+    "blur(0px) brightness(1)",
+    "blur(1.5px) brightness(0.94)",
+    "blur(4px) brightness(0.72)",
+    "blur(4px) brightness(0.72)",
+    "blur(2px) brightness(0.86)",
+    "blur(0px) brightness(1)",
+    "blur(0px) brightness(1)",
+  ],
+);
 
-  /*
-   * Evita bordes del blur.
-   */
-  const imageInnerScale =
-    useTransform(
-      progress,
-      [
-        0,
-        0.18,
-        0.68,
-        0.78,
-      ],
-      [
-        1,
-        1.025,
-        1.025,
-        1,
-      ],
-    );
+const imageInnerScale = useTransform(
+  progress,
+  [
+    0,
+    0.12,
+    0.28,
+    0.62,
+    0.8,
+    1,
+  ],
+  [
+    1,
+    1,
+    1.015,
+    1.015,
+    1,
+    1,
+  ],
+);
 
-  const darkness =
-    useTransform(
-      progress,
-      [
-        0.08,
-        0.18,
-        0.68,
-        0.78,
-      ],
-      [
-        0,
-        0.3,
-        0.3,
-        0,
-      ],
-    );
+const darkness = useTransform(
+  progress,
+  [
+    0,
+    0.08,
+    0.18,
+    0.28,
+    0.60,
+    0.70,
+    0.82,
+    1,
+  ],
+  [
+    0,
+    0,
+    0.08,
+    0.22,
+    0.22,
+    0.12,
+    0,
+    0,
+  ],
+);
 
   /*
    * =====================================================
