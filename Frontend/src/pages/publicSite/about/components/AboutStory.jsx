@@ -61,19 +61,24 @@ function AboutStory({
   const reduceMotion =
     useReducedMotion();
 
-  
-  const visualProgress = useSpring(progress, {
-    stiffness: 65,
-    damping: 20,
-    mass: 0.65,
-    restDelta: 0.001,
-  });
+  const visualProgress = useSpring(
+    progress,
+    {
+      stiffness: 65,
+      damping: 20,
+      mass: 0.65,
+      restDelta: 0.001,
+    },
+  );
 
   const stageRef =
     useRef(null);
 
+  const creditsRef =
+    useRef(null);
+
   const [creditsHeight, setCreditsHeight] =
-  useState(0);
+    useState(0);
 
   const [stageSize, setStageSize] =
     useState(() => ({
@@ -88,10 +93,37 @@ function AboutStory({
           : 960,
     }));
 
-  /*
-   * Medimos el viewport real del
-   * contenedor de Home.
-   */
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+
+    if (!stage) {
+      return undefined;
+    }
+
+    const updateStageSize = () => {
+      const rect =
+        stage.getBoundingClientRect();
+
+      setStageSize({
+        width: rect.width,
+        height: rect.height,
+      });
+    };
+
+    updateStageSize();
+
+    const observer =
+      new ResizeObserver(
+        updateStageSize,
+      );
+
+    observer.observe(stage);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   useLayoutEffect(() => {
     const credits = creditsRef.current;
 
@@ -101,14 +133,17 @@ function AboutStory({
 
     const updateCreditsHeight = () => {
       setCreditsHeight(
-        credits.getBoundingClientRect().height,
+        credits.getBoundingClientRect()
+          .height,
       );
     };
 
     updateCreditsHeight();
 
     const observer =
-      new ResizeObserver(updateCreditsHeight);
+      new ResizeObserver(
+        updateCreditsHeight,
+      );
 
     observer.observe(credits);
 
@@ -327,21 +362,7 @@ const creditsTrackY = useTransform(
     ],
   );
 
- const creditsOpacity = useTransform(
-  visualProgress,
-  [
-    0.08,
-    0.18,
-    0.76,
-    0.92,
-  ],
-  [
-    0,
-    1,
-    1,
-    0,
-  ],
-  );
+ 
 
   return (
     <div
