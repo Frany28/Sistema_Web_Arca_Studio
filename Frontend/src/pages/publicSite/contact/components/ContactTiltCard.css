@@ -27,12 +27,7 @@
 }
 
 .contact-tilt-card__glare {
-  background: radial-gradient(
-    circle,
-    rgb(255 255 255 / 0.3) 0%,
-    rgb(255 255 255 / 0.16) 18%,
-    transparent 47%
-  );
+  background: transparent;
   inset: -47%;
   opacity: 0;
   transform: translate3d(0, 0, 0);
