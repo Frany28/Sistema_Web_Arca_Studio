@@ -34,23 +34,33 @@ function CreditLine({
   progress,
 }) {
   /*
-   * El bloque completo empieza a moverse en 0.20.
-   *
-   * La primera línea comienza a revelarse cuando
-   * físicamente está llegando desde la parte inferior.
-   * Las siguientes aparecen progresivamente.
+   * Suavizado independiente para las letras.
+   * El bloque puede seguir avanzando,
+   * pero cada línea tarda más en aparecer.
+   */
+  const lineProgress = useSpring(progress, {
+    stiffness: 38,
+    damping: 24,
+    mass: 1,
+    restDelta: 0.0005,
+  });
+
+  /*
+   * Cada línea tiene un rango de aparición
+   * más amplio para que el fade sea visible
+   * incluso con un scroll rápido.
    */
   const lineEnterStart =
-    0.26 + index * 0.035;
+    0.27 + index * 0.032;
 
   const lineEnterMiddle =
-    lineEnterStart + 0.035;
+    lineEnterStart + 0.065;
 
   const lineEnterEnd =
-    lineEnterStart + 0.075;
+    lineEnterStart + 0.14;
 
   const opacity = useTransform(
-    progress,
+    lineProgress,
     [
       lineEnterStart,
       lineEnterMiddle,
@@ -58,33 +68,35 @@ function CreditLine({
     ],
     [
       0,
-      0.55,
+      0.4,
       1,
     ],
   );
 
   const y = useTransform(
-    progress,
-    [
-      lineEnterStart,
-      lineEnterEnd,
-    ],
-    [
-      18,
-      0,
-    ],
-  );
-
-  const blur = useTransform(
-    progress,
+    lineProgress,
     [
       lineEnterStart,
       lineEnterMiddle,
       lineEnterEnd,
     ],
     [
-      "blur(6px)",
-      "blur(2.5px)",
+      22,
+      8,
+      0,
+    ],
+  );
+
+  const blur = useTransform(
+    lineProgress,
+    [
+      lineEnterStart,
+      lineEnterMiddle,
+      lineEnterEnd,
+    ],
+    [
+      "blur(5px)",
+      "blur(2px)",
       "blur(0px)",
     ],
   );
