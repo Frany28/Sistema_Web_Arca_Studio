@@ -31,73 +31,68 @@ const ABOUT_CREDIT_LINES = [
 function CreditLine({
   line,
   index,
-  progress,
+  creditsTrackY,
+  stageHeight,
+  mobile = false,
 }) {
-  /*
-   * Suavizado independiente para las letras.
-   * El bloque puede seguir avanzando,
-   * pero cada línea tarda más en aparecer.
-   */
-  const lineProgress = useSpring(progress, {
-    stiffness: 38,
-    damping: 24,
-    mass: 1,
-    restDelta: 0.0005,
-  });
+  const lineHeight = mobile ? 38 : 58;
+  const gap = 24;
+  const paddingTop = 48;
+
+  const lineOffset =
+    paddingTop +
+    index * (lineHeight + gap);
 
   /*
-   * Cada línea tiene un rango de aparición
-   * más amplio para que el fade sea visible
-   * incluso con un scroll rápido.
+   * Posición física de esta línea
+   * dentro del viewport.
    */
-  const lineEnterStart =
-    0.27 + index * 0.032;
-
-  const lineEnterMiddle =
-    lineEnterStart + 0.065;
-
-  const lineEnterEnd =
-    lineEnterStart + 0.14;
-
-  const opacity = useTransform(
-    lineProgress,
-    [
-      lineEnterStart,
-      lineEnterMiddle,
-      lineEnterEnd,
-    ],
-    [
-      0,
-      0.4,
-      1,
-    ],
+  const lineViewportY = useTransform(
+    () =>
+      creditsTrackY.get() +
+      lineOffset,
   );
 
-  const y = useTransform(
-    lineProgress,
+  /*
+   * La línea empieza prácticamente
+   * desde el borde inferior.
+   *
+   * 96% = casi abajo del todo.
+   * 68% = ya completamente visible.
+   */
+  const opacity = useTransform(
+    lineViewportY,
     [
-      lineEnterStart,
-      lineEnterMiddle,
-      lineEnterEnd,
+      stageHeight * 0.68,
+      stageHeight * 0.96,
     ],
     [
-      22,
-      8,
+      1,
       0,
     ],
   );
 
   const blur = useTransform(
-    lineProgress,
+    lineViewportY,
     [
-      lineEnterStart,
-      lineEnterMiddle,
-      lineEnterEnd,
+      stageHeight * 0.68,
+      stageHeight * 0.96,
     ],
     [
-      "blur(5px)",
-      "blur(2px)",
       "blur(0px)",
+      "blur(6px)",
+    ],
+  );
+
+  const y = useTransform(
+    lineViewportY,
+    [
+      stageHeight * 0.68,
+      stageHeight * 0.96,
+    ],
+    [
+      0,
+      24,
     ],
   );
 
@@ -120,8 +115,8 @@ function CreditLine({
       "
       style={{
         opacity,
-        y,
         filter: blur,
+        y,
       }}
     >
       {line}
@@ -567,11 +562,13 @@ const creditsEndY =
             {ABOUT_CREDIT_LINES.map(
             (line, index) => (
               <CreditLine
-                key={`${index}-${line}`}
-                line={line}
-                index={index}
-                progress={visualProgress}
-              />
+              key={`${index}-${line}`}
+              line={line}
+              index={index}
+              creditsTrackY={creditsTrackY}
+              stageHeight={stageSize.height}
+              mobile={stageSize.width <= 767}
+            />
             ),
           )}
           </Motion.div>
