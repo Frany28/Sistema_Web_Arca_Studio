@@ -29,6 +29,20 @@ const contactTiltCardStyles = readFileSync(
   ),
   "utf8",
 );
+const contactShaderRuntimeSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/contact/components/lib/custom-effect-runtime/index.jsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const movingGradientShaderSource = readFileSync(
+  new URL(
+    "../src/pages/publicSite/contact/components/lib/custom-effects/CodeComponentId_8ce92017e53431a2f04b3574f4ba7c98f6f55f1e_625.js",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const footerSource = readFileSync(
   new URL(
     "../src/components/ui/FooterSection/FooterSection.jsx",
@@ -75,8 +89,25 @@ test("Contact preserves the Home phases and owns no scroll interception", () => 
 test("the card disables tilt and gradient motion for reduced motion", () => {
   assert.match(contactTiltCardSource, /useReducedMotion/);
   assert.match(contactTiltCardSource, /if \(reduceMotion\) return undefined/);
+  assert.match(contactTiltCardSource, /paused=\{reduceMotion\}/);
   assert.match(contactTiltCardStyles, /prefers-reduced-motion: reduce/);
-  assert.match(contactTiltCardStyles, /animation: none/);
+  assert.match(contactShaderRuntimeSource, /frameState\.time = paused \? 0 : time/);
+});
+
+test("the color layer uses Figma's Moving gradient shader without scroll input", () => {
+  assert.match(contactTiltCardSource, /intensity: 3\.9800000190734863/);
+  assert.match(contactTiltCardSource, /morphSpeed: 3\.740000009536743/);
+  assert.match(contactTiltCardSource, /rotationSpeed: 12/);
+  assert.match(contactTiltCardSource, /zoom: 72/);
+  assert.match(contactTiltCardSource, /warp: 0\.25999999046325684/);
+  assert.match(contactTiltCardSource, /twist: 0\.03999999910593033/);
+  assert.match(movingGradientShaderSource, /fn perlin3/);
+  assert.match(movingGradientShaderSource, /fn warpDomainMotion/);
+  assert.doesNotMatch(contactTiltCardStyles, /@keyframes contact-gradient-flow/);
+  assert.doesNotMatch(
+    `${contactShaderRuntimeSource}\n${movingGradientShaderSource}`,
+    /addEventListener\(["'](?:wheel|scroll)["']|ScrollTrigger/,
+  );
 });
 
 test("the exact Figma logo vectors are stored locally", () => {
