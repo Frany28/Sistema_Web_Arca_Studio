@@ -16,24 +16,18 @@ const ABOUT_CREDIT_LINES = [
   "En ARCA Studio entendemos que",
   "cada proyecto representa una",
   "inversión importante y una decisión",
-  "que impactará durante años.",
-  "Por eso combinamos diseño,",
-  "planificación y ejecución",
-  "para desarrollar espacios",
+  "que impactará durante años. Por eso",
+  "combinamos diseño, planificación y",
+  "ejecución para desarrollar espacios",
   "funcionales, duraderos y",
-  "cuidadosamente pensados",
-  "para quienes los habitan.",
+  "cuidadosamente pensados para",
+  "quienes los habitan.",
 ];
-
 function CreditLine({
   line,
   index,
   progress,
 }) {
-  /*
-   * Cada fila entra un poco después que la anterior.
-   * Eso genera el efecto de aparición progresiva.
-   */
   const lineEnterStart = 0.19 + index * 0.028;
   const lineEnterEnd = lineEnterStart + 0.07;
 
@@ -59,6 +53,7 @@ function CreditLine({
     <Motion.p
       className="
         m-0
+        w-full
         text-center
         font-[var(--font-sans)]
         text-[48px]
@@ -66,6 +61,7 @@ function CreditLine({
         leading-[58px]
         tracking-[-1px]
         text-[var(--color-neutral-100-uniform)]
+
         max-[767px]:text-[30px]
         max-[767px]:leading-[38px]
       "
@@ -305,23 +301,17 @@ function AboutStory({
     >
       <Motion.div
         className="
-          relative
-          shrink-0
-          overflow-hidden
-          will-change-[width,height,border-radius]
+          flex
+          w-[min(900px,calc(100%-32px))]
+          flex-col
+          items-center
+          gap-[24px]
+          py-[48px]
+          will-change-transform
         "
         style={{
-          width: reduceMotion
-            ? finalWidth
-            : frameWidth,
-
-          height: reduceMotion
-            ? finalHeight
-            : frameHeight,
-
-          borderRadius: reduceMotion
-            ? "16px"
-            : imageRadius,
+          y: creditsTrackY,
+          opacity: creditsOpacity,
         }}
       >
         <Motion.img
@@ -390,7 +380,7 @@ function AboutStory({
           w-[min(900px,calc(100%-32px))]
           flex-col
           items-center
-          gap-[10px]
+          gap-[24px]
           will-change-transform
         "
         style={{
