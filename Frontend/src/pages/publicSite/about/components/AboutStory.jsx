@@ -30,45 +30,7 @@ const ABOUT_CREDIT_LINES = [
 
 function CreditLine({
   line,
-  index,
-  progress,
 }) {
-  /*
-   * Cada línea entra progresivamente.
-   * La siguiente comienza después de la anterior.
-   */
-  const lineEnterStart =
-  0.18 + index * 0.045;
-
-  const lineEnterEnd =
-  lineEnterStart + 0.09;
-
-const opacity = useTransform(
-  progress,
-  [lineEnterStart, lineEnterEnd],
-  [0, 1],
-);
-
-const y = useTransform(
-  progress,
-  [lineEnterStart, lineEnterEnd],
-  [ 24,0,]
-);
-
-const blur = useTransform(
-  progress,
-  [
-    lineEnterStart,
-    lineEnterStart + 0.025,
-    lineEnterEnd,
-  ],
-  [
-    "blur(5px)",
-    "blur(2px)",
-    "blur(0px)",
-  ],
-);
-
   return (
     <Motion.p
       className="
@@ -86,11 +48,6 @@ const blur = useTransform(
         max-[767px]:text-[30px]
         max-[767px]:leading-[38px]
       "
-      style={{
-        opacity,
-        y,
-        filter: blur,
-      }}
     >
       {line}
     </Motion.p>
@@ -115,6 +72,9 @@ function AboutStory({
   const stageRef =
     useRef(null);
 
+  const [creditsHeight, setCreditsHeight] =
+  useState(0);
+
   const [stageSize, setStageSize] =
     useState(() => ({
       width:
@@ -133,28 +93,24 @@ function AboutStory({
    * contenedor de Home.
    */
   useLayoutEffect(() => {
-    const stage = stageRef.current;
+    const credits = creditsRef.current;
 
-    if (!stage) {
+    if (!credits) {
       return undefined;
     }
 
-    const updateSize = () => {
-      const rect =
-        stage.getBoundingClientRect();
-
-      setStageSize({
-        width: rect.width,
-        height: rect.height,
-      });
+    const updateCreditsHeight = () => {
+      setCreditsHeight(
+        credits.getBoundingClientRect().height,
+      );
     };
 
-    updateSize();
+    updateCreditsHeight();
 
     const observer =
-      new ResizeObserver(updateSize);
+      new ResizeObserver(updateCreditsHeight);
 
-    observer.observe(stage);
+    observer.observe(credits);
 
     return () => {
       observer.disconnect();
@@ -353,15 +309,21 @@ const darkness = useTransform(
    * pantalla y termina fuera por arriba.
    */
 
-  const creditsTrackY = useTransform(
+  const creditsStartY =
+  stageSize.height + 64;
+
+const creditsEndY =
+  -(creditsHeight + 64);
+
+const creditsTrackY = useTransform(
     visualProgress,
     [
-      0.08,
-      0.92,
+      0.04,
+      0.96,
     ],
     [
-      "100vh",
-      "-105vh",
+      creditsStartY,
+      creditsEndY,
     ],
   );
 
@@ -477,32 +439,31 @@ const darkness = useTransform(
           "
           style={{
             maskImage:
-              "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+            "linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)",
 
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+            "linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)",
           }}
         >
-          <Motion.div
-            className="
-              absolute
-              left-1/2
-              top-0
-              flex
-              w-[min(900px,calc(100%-32px))]
-              -translate-x-1/2
-              flex-col
-              items-center
-              gap-[24px]
-              py-[48px]
-              will-change-transform
-            "
-            style={{
-              y: creditsTrackY,
-              opacity:
-                creditsOpacity,
-            }}
-          >
+        <Motion.div
+          ref={creditsRef}
+          className="
+            absolute
+            left-1/2
+            top-0
+            flex
+            w-[min(900px,calc(100%-32px))]
+            -translate-x-1/2
+            flex-col
+            items-center
+            gap-[24px]
+            py-[48px]
+            will-change-transform
+          "
+          style={{
+            y: creditsTrackY,
+          }}
+        >
             {ABOUT_CREDIT_LINES.map(
               (line, index) => (
                 <CreditLine

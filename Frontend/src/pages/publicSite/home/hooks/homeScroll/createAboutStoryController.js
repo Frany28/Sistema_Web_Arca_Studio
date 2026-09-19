@@ -5,8 +5,8 @@ import {
 } from "../../utils/homeScrollNavigation.js";
 
 const ABOUT_EDGE_TOLERANCE_PX = 2;
-const ABOUT_TRAVEL_VIEWPORT_RATIO = 3.4;
-const ABOUT_MIN_TRAVEL_PX = 1800;
+const ABOUT_TRAVEL_VIEWPORT_RATIO = 5;
+const ABOUT_MIN_TRAVEL_PX = 2600;
 
 function clamp(value) {
   return Math.min(Math.max(value, 0), 1);
