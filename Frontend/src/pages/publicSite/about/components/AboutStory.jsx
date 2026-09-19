@@ -30,7 +30,65 @@ const ABOUT_CREDIT_LINES = [
 
 function CreditLine({
   line,
+  index,
+  progress,
 }) {
+  /*
+   * El bloque completo empieza a moverse en 0.20.
+   *
+   * La primera línea comienza a revelarse cuando
+   * físicamente está llegando desde la parte inferior.
+   * Las siguientes aparecen progresivamente.
+   */
+  const lineEnterStart =
+    0.26 + index * 0.035;
+
+  const lineEnterMiddle =
+    lineEnterStart + 0.035;
+
+  const lineEnterEnd =
+    lineEnterStart + 0.075;
+
+  const opacity = useTransform(
+    progress,
+    [
+      lineEnterStart,
+      lineEnterMiddle,
+      lineEnterEnd,
+    ],
+    [
+      0,
+      0.55,
+      1,
+    ],
+  );
+
+  const y = useTransform(
+    progress,
+    [
+      lineEnterStart,
+      lineEnterEnd,
+    ],
+    [
+      18,
+      0,
+    ],
+  );
+
+  const blur = useTransform(
+    progress,
+    [
+      lineEnterStart,
+      lineEnterMiddle,
+      lineEnterEnd,
+    ],
+    [
+      "blur(6px)",
+      "blur(2.5px)",
+      "blur(0px)",
+    ],
+  );
+
   return (
     <Motion.p
       className="
@@ -48,6 +106,11 @@ function CreditLine({
         max-[767px]:text-[30px]
         max-[767px]:leading-[38px]
       "
+      style={{
+        opacity,
+        y,
+        filter: blur,
+      }}
     >
       {line}
     </Motion.p>
@@ -268,21 +331,21 @@ const imageFilter = useTransform(
   visualProgress,
   [
     0,
-    0.08,
-    0.18,
-    0.32,
-    0.58,
-    0.68,
-    0.84,
+    0.04,
+    0.10,
+    0.20,
+    0.62,
+    0.74,
+    0.88,
     1,
   ],
   [
     "blur(0px) brightness(1)",
     "blur(0px) brightness(1)",
-    "blur(1px) brightness(0.96)",
+    "blur(1.5px) brightness(0.94)",
     "blur(3.5px) brightness(0.76)",
     "blur(3.5px) brightness(0.76)",
-    "blur(2.5px) brightness(0.82)",
+    "blur(2px) brightness(0.84)",
     "blur(0px) brightness(1)",
     "blur(0px) brightness(1)",
   ],
@@ -312,25 +375,25 @@ const darkness = useTransform(
   visualProgress,
   [
     0,
-    0.10,
-    0.22,
-    0.34,
-    0.58,
-    0.70,
-    0.86,
+    0.05,
+    0.12,
+    0.20,
+    0.62,
+    0.76,
+    0.88,
     1,
   ],
   [
     0,
     0,
-    0.06,
+    0.08,
     0.18,
     0.18,
     0.10,
     0,
     0,
   ],
-);
+);  
 
   /*
    * =====================================================
@@ -345,21 +408,25 @@ const darkness = useTransform(
    */
 
   const creditsStartY =
-  stageSize.height + 64;
+  stageSize.height + 120;
 
 const creditsEndY =
   -(creditsHeight + 64);
 
-const creditsTrackY = useTransform(
-    visualProgress,
-    [
-      0.04,
-      0.96,
-    ],
-    [
-      creditsStartY,
-      creditsEndY,
-    ],
+  const creditsTrackY = useTransform(
+  visualProgress,
+  [
+    0,
+    0.20,
+    0.96,
+    1,
+  ],
+  [
+    creditsStartY,
+    creditsStartY,
+    creditsEndY,
+    creditsEndY,
+  ],
   );
 
  
@@ -486,15 +553,15 @@ const creditsTrackY = useTransform(
           }}
         >
             {ABOUT_CREDIT_LINES.map(
-              (line, index) => (
-                <CreditLine
-              key={`${index}-${line}`}
-              line={line}
-              index={index}
-              progress={visualProgress}
-            />
-              ),
-            )}
+            (line, index) => (
+              <CreditLine
+                key={`${index}-${line}`}
+                line={line}
+                index={index}
+                progress={visualProgress}
+              />
+            ),
+          )}
           </Motion.div>
         </div>
       </Motion.div>
