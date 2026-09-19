@@ -42,16 +42,18 @@ function createInputGestureController({
 }) {
   let touchGesture = null;
 
-  const settleWheelGesture = () => {
-  runtime.wheelGestureState =
-    markWheelGestureIdle(runtime.wheelGestureState);
+ const settleWheelGesture = () => {
+    runtime.wheelGestureState =
+      markWheelGestureIdle(runtime.wheelGestureState);
 
-  runtime.wheelGestureDeltaScale = null;
+    runtime.wheelGestureDeltaScale = null;
 
-  statement.resetWheelScrubbing();
+    statement.resetWheelScrubbing();
 
-  coordination.featured?.settleProcessReturnGesture();
-};
+    coordination.about?.settleGesture();
+
+    coordination.featured?.settleProcessReturnGesture();
+  };
 
   const scheduleWheelGestureSettlement = () => {
     window.clearTimeout(runtime.wheelIdleTimer);
@@ -167,9 +169,28 @@ function createInputGestureController({
     }
 
     if (runtime.contentMode) {
-      if (reduceMotion) return;
-      const direction = Math.sign(normalizedDelta.y);
-      if (!direction) return;
+            if (reduceMotion) return;
+
+            const direction = Math.sign(normalizedDelta.y);
+            if (!direction) return;
+            if (
+        coordination.about?.handleInput(
+          event,
+          progressDelta.y,
+          direction,
+          { smooth: true },
+        )
+      ) {
+        debugWheel(
+          event,
+          normalizedDelta,
+          progressDelta,
+          direction,
+          "ABOUT_STORY",
+        );
+
+        return;
+      }
       if (
         coordination.featured.isProcessReturnGestureLocked()
       ) {
