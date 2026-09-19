@@ -97,20 +97,20 @@ function ContactTiltCard() {
       if (event.pointerType === "touch") return;
 
       const rect = card.getBoundingClientRect();
-      const pointerX = (event.clientX - rect.left) / rect.width;
-      const pointerY = (event.clientY - rect.top) / rect.height;
-      const offsetX = pointerX - 0.5;
-      const offsetY = pointerY - 0.5;
+      const offsetX = event.clientX - (rect.left + rect.width / 2);
+      const offsetY = event.clientY - (rect.top + rect.height / 2);
+      const tiltX = Math.max(-1, Math.min(1, offsetX / (rect.width / 2)));
+      const tiltY = Math.max(-1, Math.min(1, offsetY / (rect.height / 2)));
 
-      rotateXTo(-offsetY * TILT_INTENSITY);
-      rotateYTo(offsetX * TILT_INTENSITY);
-      glareXTo(offsetX * rect.width * 0.47);
-      glareYTo(offsetY * rect.height * 0.47);
+      rotateXTo(-tiltY * TILT_INTENSITY);
+      rotateYTo(tiltX * TILT_INTENSITY);
+      glareXTo(offsetX * 0.47);
+      glareYTo(offsetY * 0.47);
       glareOpacityTo(GLARE_INTENSITY);
     };
 
-    const handlePointerLeave = (event) => {
-      if (event.pointerType === "touch") return;
+    const handleWindowPointerOut = (event) => {
+      if (event.pointerType === "touch" || event.relatedTarget) return;
 
       rotateXTo(0);
       rotateYTo(0);
@@ -119,12 +119,12 @@ function ContactTiltCard() {
       glareOpacityTo(0);
     };
 
-    card.addEventListener("pointermove", handlePointerMove);
-    card.addEventListener("pointerleave", handlePointerLeave);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerout", handleWindowPointerOut);
 
     return () => {
-      card.removeEventListener("pointermove", handlePointerMove);
-      card.removeEventListener("pointerleave", handlePointerLeave);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerout", handleWindowPointerOut);
       gsap.killTweensOf(card);
       gsap.killTweensOf(glare);
     };
