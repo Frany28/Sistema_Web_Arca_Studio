@@ -28,8 +28,8 @@ function CreditLine({
   index,
   progress,
 }) {
-  const lineEnterStart = 0.19 + index * 0.028;
-  const lineEnterEnd = lineEnterStart + 0.07;
+  const lineEnterStart = 0.22 + index * 0.035;
+  const lineEnterEnd = lineEnterStart + 0.055;
 
   const opacity = useTransform(
     progress,
@@ -38,15 +38,15 @@ function CreditLine({
   );
 
   const y = useTransform(
-    progress,
-    [lineEnterStart, lineEnterEnd],
-    [28, 0],
+  progress,
+  [lineEnterStart, lineEnterEnd],
+  [18, 0],
   );
 
   const blur = useTransform(
     progress,
     [lineEnterStart, lineEnterEnd],
-    ["blur(8px)", "blur(0px)"],
+    ["blur(4px)", "blur(0px)"],
   );
 
   return (
@@ -138,14 +138,22 @@ function AboutStory({
    * desborde horizontalmente.
    */
   const finalWidth =
-    stageSize.width >= FINAL_DESKTOP_WIDTH + 32
-      ? FINAL_DESKTOP_WIDTH
-      : Math.max(stageSize.width - 32, 0);
+  stageSize.width >= FINAL_DESKTOP_WIDTH + 32
+    ? FINAL_DESKTOP_WIDTH
+    : Math.max(stageSize.width - 32, 0);
 
   const finalHeight =
     finalWidth *
-    (FINAL_DESKTOP_HEIGHT /
-      FINAL_DESKTOP_WIDTH);
+    (FINAL_DESKTOP_HEIGHT / FINAL_DESKTOP_WIDTH);
+
+  const IMAGE_ASPECT_RATIO = 4096 / 2731;
+
+  const initialHeight = stageSize.height;
+
+  const initialWidth = Math.min(
+    stageSize.width,
+    initialHeight * IMAGE_ASPECT_RATIO,
+  );
 
   /*
    * ======================================================
@@ -166,22 +174,22 @@ function AboutStory({
     progress,
     [0, 0.76, 0.94, 1],
     [
-      stageSize.width,
-      stageSize.width,
+      initialWidth,
+      initialWidth,
       finalWidth,
       finalWidth,
     ],
   );
 
   const frameHeight = useTransform(
-    progress,
-    [0, 0.76, 0.94, 1],
-    [
-      stageSize.height,
-      stageSize.height,
-      finalHeight,
-      finalHeight,
-    ],
+  progress,
+  [0, 0.76, 0.94, 1],
+  [
+    initialHeight,
+    initialHeight,
+    finalHeight,
+    finalHeight,
+  ],
   );
 
   const imageRadius = useTransform(
@@ -258,8 +266,8 @@ function AboutStory({
 
   const creditsTrackY = useTransform(
   progress,
-  [0.18, 0.72],
-  ["35%", "-72%"],
+  [0.18, 0.76],
+  ["115vh", "-125vh"],
   );
 
   const creditsOpacity = useTransform(
@@ -323,7 +331,7 @@ function AboutStory({
             inset-0
             h-full
             w-full
-            object-cover
+            object-contain
             object-bottom
             will-change-transform
           "
