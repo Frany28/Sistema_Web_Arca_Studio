@@ -43,28 +43,17 @@ function CreditLine({
     paddingTop +
     index * (lineHeight + gap);
 
-  /*
-   * Posición física de esta línea
-   * dentro del viewport.
-   */
   const lineViewportY = useTransform(
     () =>
       creditsTrackY.get() +
       lineOffset,
   );
 
-  /*
-   * La línea empieza prácticamente
-   * desde el borde inferior.
-   *
-   * 96% = casi abajo del todo.
-   * 68% = ya completamente visible.
-   */
   const opacity = useTransform(
     lineViewportY,
     [
-      stageHeight * 0.68,
-      stageHeight * 0.96,
+      stageHeight * 0.84,
+      stageHeight * 1.03,
     ],
     [
       1,
@@ -75,8 +64,8 @@ function CreditLine({
   const blur = useTransform(
     lineViewportY,
     [
-      stageHeight * 0.68,
-      stageHeight * 0.96,
+      stageHeight * 0.84,
+      stageHeight * 1.03,
     ],
     [
       "blur(0px)",
@@ -87,12 +76,12 @@ function CreditLine({
   const y = useTransform(
     lineViewportY,
     [
-      stageHeight * 0.68,
-      stageHeight * 0.96,
+      stageHeight * 0.84,
+      stageHeight * 1.03,
     ],
     [
       0,
-      24,
+      18,
     ],
   );
 
@@ -123,7 +112,6 @@ function CreditLine({
     </Motion.p>
   );
 }
-
 function AboutStory({
   image,
   progress,
