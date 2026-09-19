@@ -12,6 +12,73 @@ import {
 
 const FINAL_DESKTOP_WIDTH = 1104;
 const FINAL_DESKTOP_HEIGHT = 736;
+const ABOUT_CREDIT_LINES = [
+  "En ARCA Studio entendemos que",
+  "cada proyecto representa una",
+  "inversión importante y una decisión",
+  "que impactará durante años.",
+  "Por eso combinamos diseño,",
+  "planificación y ejecución",
+  "para desarrollar espacios",
+  "funcionales, duraderos y",
+  "cuidadosamente pensados",
+  "para quienes los habitan.",
+];
+
+function CreditLine({
+  line,
+  index,
+  progress,
+}) {
+  /*
+   * Cada fila entra un poco después que la anterior.
+   * Eso genera el efecto de aparición progresiva.
+   */
+  const lineEnterStart = 0.19 + index * 0.028;
+  const lineEnterEnd = lineEnterStart + 0.07;
+
+  const opacity = useTransform(
+    progress,
+    [lineEnterStart, lineEnterEnd, lineEnterEnd + 0.12],
+    [0, 1, 1],
+  );
+
+  const y = useTransform(
+    progress,
+    [lineEnterStart, lineEnterEnd],
+    [28, 0],
+  );
+
+  const blur = useTransform(
+    progress,
+    [lineEnterStart, lineEnterEnd],
+    ["blur(8px)", "blur(0px)"],
+  );
+
+  return (
+    <Motion.p
+      className="
+        m-0
+        text-center
+        font-[var(--font-sans)]
+        text-[48px]
+        font-bold
+        leading-[58px]
+        tracking-[-1px]
+        text-[var(--color-neutral-100-uniform)]
+        max-[767px]:text-[30px]
+        max-[767px]:leading-[38px]
+      "
+      style={{
+        opacity,
+        y,
+        filter: blur,
+      }}
+    >
+      {line}
+    </Motion.p>
+  );
+}
 
 function AboutStory({
   image,
@@ -193,13 +260,16 @@ function AboutStory({
    * de la pantalla y termina fuera por arriba.
    */
 
-  const textY = useTransform(
-    progress,
-    [0.16, 0.68],
-    [
-      "0vh",
-      "-160vh",
-    ],
+  const creditsTrackY = useTransform(
+  progress,
+  [0.18, 0.72],
+  ["35%", "-72%"],
+  );
+
+  const creditsOpacity = useTransform(
+  progress,
+  [0.14, 0.18, 0.72, 0.78],
+  [0, 1, 1, 0],
   );
 
   const textOpacity = useTransform(
@@ -286,47 +356,59 @@ function AboutStory({
         />
 
         <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-10
-            overflow-hidden
-          "
-        >
-          <Motion.p
-            className="
-              absolute
-              left-1/2
-              top-full
-              m-0
-              w-[min(823px,calc(100%-32px))]
-              -translate-x-1/2
-              text-center
-              font-[var(--font-sans)]
-              text-[48px]
-              font-bold
-              leading-[58px]
-              tracking-[-1px]
-              text-[var(--color-neutral-100-uniform)]
-
-              max-[767px]:text-[30px]
-              max-[767px]:leading-[38px]
-            "
-            style={{
-              y: textY,
-              opacity: textOpacity,
-            }}
-          >
-            En ARCA Studio entendemos que cada proyecto
-            representa una inversión importante y una
-            decisión que impactará durante años. Por eso
-            combinamos diseño, planificación y ejecución
-            para desarrollar espacios funcionales,
-            duraderos y cuidadosamente pensados para
-            quienes los habitan.
-          </Motion.p>
-        </div>
+  className="
+    pointer-events-none
+    absolute
+    inset-0
+    z-10
+    overflow-hidden
+    flex
+    items-center
+    justify-center
+  "
+>
+    <div
+      className="
+        relative
+        h-full
+        w-full
+        overflow-hidden
+        flex
+        items-center
+        justify-center
+      "
+      style={{
+        maskImage:
+          "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+      }}
+    >
+      <Motion.div
+        className="
+          flex
+          w-[min(900px,calc(100%-32px))]
+          flex-col
+          items-center
+          gap-[10px]
+          will-change-transform
+        "
+        style={{
+          y: creditsTrackY,
+          opacity: creditsOpacity,
+        }}
+      >
+        {ABOUT_CREDIT_LINES.map((line, index) => (
+          <CreditLine
+            key={`${index}-${line}`}
+            line={line}
+            index={index}
+            progress={progress}
+          />
+        ))}
+      </Motion.div>
+    </div>
+  </div>
       </Motion.div>
     </div>
   );
