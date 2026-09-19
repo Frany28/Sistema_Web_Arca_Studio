@@ -12,6 +12,9 @@ import {
 
 const FINAL_DESKTOP_WIDTH = 1104;
 const FINAL_DESKTOP_HEIGHT = 736;
+
+const IMAGE_ASPECT_RATIO = 4096 / 2731;
+
 const ABOUT_CREDIT_LINES = [
   "En ARCA Studio entendemos que",
   "cada proyecto representa una",
@@ -23,30 +26,56 @@ const ABOUT_CREDIT_LINES = [
   "cuidadosamente pensados para",
   "quienes los habitan.",
 ];
+
 function CreditLine({
   line,
   index,
   progress,
 }) {
-  const lineEnterStart = 0.22 + index * 0.035;
-  const lineEnterEnd = lineEnterStart + 0.055;
+  /*
+   * Cada línea entra progresivamente.
+   * La siguiente comienza después de la anterior.
+   */
+  const lineEnterStart =
+    0.22 + index * 0.035;
+
+  const lineEnterEnd =
+    lineEnterStart + 0.055;
 
   const opacity = useTransform(
     progress,
-    [lineEnterStart, lineEnterEnd, lineEnterEnd + 0.12],
-    [0, 1, 1],
+    [
+      lineEnterStart,
+      lineEnterEnd,
+    ],
+    [
+      0,
+      1,
+    ],
   );
 
   const y = useTransform(
-  progress,
-  [lineEnterStart, lineEnterEnd],
-  [18, 0],
+    progress,
+    [
+      lineEnterStart,
+      lineEnterEnd,
+    ],
+    [
+      18,
+      0,
+    ],
   );
 
   const blur = useTransform(
     progress,
-    [lineEnterStart, lineEnterEnd],
-    ["blur(4px)", "blur(0px)"],
+    [
+      lineEnterStart,
+      lineEnterEnd,
+    ],
+    [
+      "blur(4px)",
+      "blur(0px)",
+    ],
   );
 
   return (
@@ -54,6 +83,7 @@ function CreditLine({
       className="
         m-0
         w-full
+        shrink-0
         text-center
         font-[var(--font-sans)]
         text-[48px]
@@ -80,33 +110,35 @@ function AboutStory({
   image,
   progress,
 }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion =
+    useReducedMotion();
 
-  const stageRef = useRef(null);
+  const stageRef =
+    useRef(null);
 
-  const [stageSize, setStageSize] = useState(() => ({
-    width:
-      typeof window !== "undefined"
-        ? window.innerWidth
-        : 1440,
+  const [stageSize, setStageSize] =
+    useState(() => ({
+      width:
+        typeof window !== "undefined"
+          ? window.innerWidth
+          : 1440,
 
-    height:
-      typeof window !== "undefined"
-        ? window.innerHeight
-        : 960,
-  }));
+      height:
+        typeof window !== "undefined"
+          ? window.innerHeight
+          : 960,
+    }));
 
   /*
-   * Medimos el viewport REAL del scroller.
-   *
-   * No usamos window.innerWidth directamente para renderizar
-   * porque el contenedor del Home puede descontar scrollbar,
-   * gutter, etc.
+   * Medimos el viewport real del
+   * contenedor de Home.
    */
   useLayoutEffect(() => {
     const stage = stageRef.current;
 
-    if (!stage) return undefined;
+    if (!stage) {
+      return undefined;
+    }
 
     const updateSize = () => {
       const rect =
@@ -131,166 +163,222 @@ function AboutStory({
   }, []);
 
   /*
-   * Desktop:
-   * final = 1104 × 736.
+   * =====================================================
+   * TAMAÑO INICIAL
+   * =====================================================
    *
-   * En pantallas menores no dejamos que
-   * desborde horizontalmente.
+   * La imagen ocupa toda la altura disponible,
+   * pero mantiene su proporción 3:2.
+   *
+   * De esta manera NO queda estirada a todo el ancho.
    */
+
+  const initialHeight =
+    stageSize.height;
+
+  const initialWidth =
+    Math.min(
+      stageSize.width,
+      initialHeight *
+        IMAGE_ASPECT_RATIO,
+    );
+
+  /*
+   * =====================================================
+   * TAMAÑO FINAL
+   * =====================================================
+   *
+   * Figma:
+   * 1104 × 736
+   */
+
   const finalWidth =
-  stageSize.width >= FINAL_DESKTOP_WIDTH + 32
-    ? FINAL_DESKTOP_WIDTH
-    : Math.max(stageSize.width - 32, 0);
+    stageSize.width >=
+    FINAL_DESKTOP_WIDTH + 32
+      ? FINAL_DESKTOP_WIDTH
+      : Math.max(
+          stageSize.width - 32,
+          0,
+        );
 
   const finalHeight =
     finalWidth *
-    (FINAL_DESKTOP_HEIGHT / FINAL_DESKTOP_WIDTH);
-
-  const IMAGE_ASPECT_RATIO = 4096 / 2731;
-
-  const initialHeight = stageSize.height;
-
-  const initialWidth = Math.min(
-    stageSize.width,
-    initialHeight * IMAGE_ASPECT_RATIO,
-  );
+    (
+      FINAL_DESKTOP_HEIGHT /
+      FINAL_DESKTOP_WIDTH
+    );
 
   /*
-   * ======================================================
-   * GEOMETRÍA DE LA IMAGEN
-   * ======================================================
+   * =====================================================
+   * TRANSFORMACIÓN DEL FRAME
+   * =====================================================
    *
-   * 0.00 → 0.76
-   * pantalla completa.
+   * Hasta 0.76:
+   * mantiene tamaño inicial.
    *
-   * 0.76 → 0.94
-   * se transforma progresivamente al tamaño final.
+   * 0.76 → 0.94:
+   * se reduce.
    *
-   * 0.94 → 1
-   * permanece exactamente en 1104 × 736.
+   * 0.94 → 1:
+   * tamaño final.
    */
 
-  const frameWidth = useTransform(
-    progress,
-    [0, 0.76, 0.94, 1],
-    [
-      initialWidth,
-      initialWidth,
-      finalWidth,
-      finalWidth,
-    ],
-  );
+  const frameWidth =
+    useTransform(
+      progress,
+      [
+        0,
+        0.76,
+        0.94,
+        1,
+      ],
+      [
+        initialWidth,
+        initialWidth,
+        finalWidth,
+        finalWidth,
+      ],
+    );
 
-  const frameHeight = useTransform(
-  progress,
-  [0, 0.76, 0.94, 1],
-  [
-    initialHeight,
-    initialHeight,
-    finalHeight,
-    finalHeight,
-  ],
-  );
+  const frameHeight =
+    useTransform(
+      progress,
+      [
+        0,
+        0.76,
+        0.94,
+        1,
+      ],
+      [
+        initialHeight,
+        initialHeight,
+        finalHeight,
+        finalHeight,
+      ],
+    );
 
-  const imageRadius = useTransform(
-    progress,
-    [0, 0.76, 0.94, 1],
-    [
-      "0px",
-      "0px",
-      "16px",
-      "16px",
-    ],
-  );
+  const imageRadius =
+    useTransform(
+      progress,
+      [
+        0,
+        0.76,
+        0.94,
+        1,
+      ],
+      [
+        "0px",
+        "0px",
+        "16px",
+        "16px",
+      ],
+    );
 
   /*
-   * ======================================================
-   * BLUR / OSCURECIMIENTO
-   * ======================================================
+   * =====================================================
+   * BLUR
+   * =====================================================
    */
 
-  const imageFilter = useTransform(
-    progress,
-    [
-      0,
-      0.1,
-      0.2,
-      0.68,
-      0.78,
-      1,
-    ],
-    [
-      "blur(0px) brightness(1)",
-      "blur(0px) brightness(1)",
-      "blur(6px) brightness(0.62)",
-      "blur(6px) brightness(0.62)",
-      "blur(0px) brightness(1)",
-      "blur(0px) brightness(1)",
-    ],
-  );
+  const imageFilter =
+    useTransform(
+      progress,
+      [
+        0,
+        0.1,
+        0.2,
+        0.68,
+        0.78,
+        1,
+      ],
+      [
+        "blur(0px) brightness(1)",
+        "blur(0px) brightness(1)",
+        "blur(6px) brightness(0.62)",
+        "blur(6px) brightness(0.62)",
+        "blur(0px) brightness(1)",
+        "blur(0px) brightness(1)",
+      ],
+    );
 
   /*
-   * Este pequeño zoom evita que al aplicar blur
-   * aparezcan bordes transparentes.
+   * Evita bordes del blur.
    */
-  const imageInnerScale = useTransform(
-    progress,
-    [0, 0.18, 0.68, 0.78],
-    [1, 1.025, 1.025, 1],
-  );
+  const imageInnerScale =
+    useTransform(
+      progress,
+      [
+        0,
+        0.18,
+        0.68,
+        0.78,
+      ],
+      [
+        1,
+        1.025,
+        1.025,
+        1,
+      ],
+    );
 
-  const darkness = useTransform(
-    progress,
-    [
-      0.08,
-      0.18,
-      0.68,
-      0.78,
-    ],
-    [
-      0,
-      0.3,
-      0.3,
-      0,
-    ],
-  );
+  const darkness =
+    useTransform(
+      progress,
+      [
+        0.08,
+        0.18,
+        0.68,
+        0.78,
+      ],
+      [
+        0,
+        0.3,
+        0.3,
+        0,
+      ],
+    );
 
   /*
-   * ======================================================
+   * =====================================================
    * CRÉDITOS
-   * ======================================================
+   * =====================================================
    *
-   * El texto comienza completamente debajo
-   * de la pantalla y termina fuera por arriba.
+   * El track COMPLETO comienza por debajo
+   * del viewport.
+   *
+   * Conforme se hace scroll atraviesa la
+   * pantalla y termina fuera por arriba.
    */
 
-  const creditsTrackY = useTransform(
-  progress,
-  [0.18, 0.76],
-  ["115vh", "-125vh"],
-  );
+  const creditsTrackY =
+    useTransform(
+      progress,
+      [
+        0.18,
+        0.76,
+      ],
+      [
+        "115vh",
+        "-125vh",
+      ],
+    );
 
-  const creditsOpacity = useTransform(
-  progress,
-  [0.14, 0.18, 0.72, 0.78],
-  [0, 1, 1, 0],
-  );
-
-  const textOpacity = useTransform(
-    progress,
-    [
-      0.14,
-      0.18,
-      0.66,
-      0.71,
-    ],
-    [
-      0,
-      1,
-      1,
-      0,
-    ],
-  );
+  const creditsOpacity =
+    useTransform(
+      progress,
+      [
+        0.16,
+        0.2,
+        0.72,
+        0.77,
+      ],
+      [
+        0,
+        1,
+        1,
+        0,
+      ],
+    );
 
   return (
     <div
@@ -307,21 +395,36 @@ function AboutStory({
         bg-[var(--color-neutral-950-uniform)]
       "
     >
+      {/*
+       * FRAME REAL DE LA IMAGEN.
+       *
+       * ESTE era el elemento que faltaba
+       * actualmente en el repositorio.
+       */}
       <Motion.div
         className="
-          flex
-          w-[min(900px,calc(100%-32px))]
-          flex-col
-          items-center
-          gap-[24px]
-          py-[48px]
-          will-change-transform
+          relative
+          shrink-0
+          overflow-hidden
+          will-change-[width,height,border-radius]
         "
         style={{
-          y: creditsTrackY,
-          opacity: creditsOpacity,
+          width: reduceMotion
+            ? finalWidth
+            : frameWidth,
+
+          height: reduceMotion
+            ? finalHeight
+            : frameHeight,
+
+          borderRadius: reduceMotion
+            ? "16px"
+            : imageRadius,
         }}
       >
+        {/*
+         * FOTO
+         */}
         <Motion.img
           src={image}
           alt=""
@@ -331,8 +434,8 @@ function AboutStory({
             inset-0
             h-full
             w-full
-            object-contain
-            object-bottom
+            object-cover
+            object-center
             will-change-transform
           "
           style={{
@@ -341,11 +444,15 @@ function AboutStory({
           }}
         />
 
+        {/*
+         * CAPA OSCURA
+         */}
         <Motion.div
           aria-hidden="true"
           className="
             absolute
             inset-0
+            z-[1]
             bg-black
           "
           style={{
@@ -353,60 +460,57 @@ function AboutStory({
           }}
         />
 
+        {/*
+         * CRÉDITOS
+         */}
         <div
-  className="
-    pointer-events-none
-    absolute
-    inset-0
-    z-10
-    overflow-hidden
-    flex
-    items-center
-    justify-center
-  "
->
-    <div
-      className="
-        relative
-        h-full
-        w-full
-        overflow-hidden
-        flex
-        items-center
-        justify-center
-      "
-      style={{
-        maskImage:
-          "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
-      }}
-    >
-      <Motion.div
-        className="
-          flex
-          w-[min(900px,calc(100%-32px))]
-          flex-col
-          items-center
-          gap-[24px]
-          will-change-transform
-        "
-        style={{
-          y: creditsTrackY,
-          opacity: creditsOpacity,
-        }}
-      >
-        {ABOUT_CREDIT_LINES.map((line, index) => (
-          <CreditLine
-            key={`${index}-${line}`}
-            line={line}
-            index={index}
-            progress={progress}
-          />
-        ))}
-      </Motion.div>
-    </div>
-  </div>
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            z-10
+            overflow-hidden
+          "
+          style={{
+            maskImage:
+              "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+          }}
+        >
+          <Motion.div
+            className="
+              absolute
+              left-1/2
+              top-0
+              flex
+              w-[min(900px,calc(100%-32px))]
+              -translate-x-1/2
+              flex-col
+              items-center
+              gap-[24px]
+              py-[48px]
+              will-change-transform
+            "
+            style={{
+              y: creditsTrackY,
+              opacity:
+                creditsOpacity,
+            }}
+          >
+            {ABOUT_CREDIT_LINES.map(
+              (line, index) => (
+                <CreditLine
+                  key={`${index}-${line}`}
+                  line={line}
+                  index={index}
+                  progress={progress}
+                />
+              ),
+            )}
+          </Motion.div>
+        </div>
       </Motion.div>
     </div>
   );
