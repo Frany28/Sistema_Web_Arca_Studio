@@ -7,6 +7,9 @@ import {
 const ABOUT_EDGE_TOLERANCE_PX = 2;
 const ABOUT_TRAVEL_VIEWPORT_RATIO = 5;
 const ABOUT_MIN_TRAVEL_PX = 2600;
+const ABOUT_CREDITS_START_PROGRESS = 0.20;
+const ABOUT_CREDITS_END_PROGRESS = 0.80;
+const ABOUT_CREDITS_SCROLL_SCALE = 0.35;
 
 function clamp(value) {
   return Math.min(Math.max(value, 0), 1);
@@ -241,32 +244,52 @@ function createAboutStoryController({
     );
 
     if (scrubDistance > 0) {
-      const signedDistance =
-        direction * scrubDistance;
+  const signedDistance =
+    direction * scrubDistance;
 
-      const nextProgress = clamp(
-        targetProgress +
-          signedDistance / getTravelDistance(),
+  /*
+   * Durante el recorrido de los créditos
+   * reducimos la fuerza del wheel/trackpad.
+   *
+   * Antes y después de los créditos,
+   * About mantiene su velocidad normal.
+   */
+  const creditsAreActive =
+    targetProgress >=
+      ABOUT_CREDITS_START_PROGRESS &&
+    targetProgress <=
+      ABOUT_CREDITS_END_PROGRESS;
+
+  const effectiveDistance =
+    creditsAreActive
+      ? signedDistance *
+        ABOUT_CREDITS_SCROLL_SCALE
+      : signedDistance;
+
+  const nextProgress = clamp(
+    targetProgress +
+      effectiveDistance /
+        getTravelDistance(),
+  );
+
+  if (smooth) {
+    smoothTo(nextProgress);
+  } else {
+    setProgress(nextProgress);
+  }
+
+  if (
+    nextProgress <= 0 ||
+    nextProgress >= 1
+  ) {
+    runtime.wheelGestureState =
+      consumeWheelGesture(
+        runtime.wheelGestureState,
+        direction * magnitude,
+        event.timeStamp,
       );
-
-      if (smooth) {
-        smoothTo(nextProgress);
-      } else {
-        setProgress(nextProgress);
-      }
-
-      if (
-        nextProgress <= 0 ||
-        nextProgress >= 1
-      ) {
-        runtime.wheelGestureState =
-          consumeWheelGesture(
-            runtime.wheelGestureState,
-            direction * magnitude,
-            event.timeStamp,
-          );
-      }
-    }
+  }
+}
 
     coordination.input.scheduleWheelGestureSettlement();
 
