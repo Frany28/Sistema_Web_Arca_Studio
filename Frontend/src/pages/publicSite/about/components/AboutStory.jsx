@@ -55,28 +55,30 @@ function CreditLine({
   );
 
   const y = useTransform(
-    progress,
-    [
-      lineEnterStart,
-      lineEnterEnd,
-    ],
-    [
-      18,
-      0,
-    ],
+  progress,
+  [
+    lineEnterStart,
+    lineEnterEnd,
+  ],
+  [
+    32,
+    0,
+  ],
   );
 
   const blur = useTransform(
-    progress,
-    [
-      lineEnterStart,
-      lineEnterEnd,
-    ],
-    [
-      "blur(4px)",
-      "blur(0px)",
-    ],
-  );
+  progress,
+  [
+    lineEnterStart,
+    lineEnterStart + 0.025,
+    lineEnterEnd,
+  ],
+  [
+    "blur(5px)",
+    "blur(2px)",
+    "blur(0px)",
+  ],
+);
 
   return (
     <Motion.p
@@ -172,11 +174,10 @@ function AboutStory({
    *
    * De esta manera NO queda estirada a todo el ancho.
    */
+  const initialWidth = stageSize.width;
 
-  const initialHeight = stageSize.height;
-
-  const initialWidth =
-  initialHeight * IMAGE_ASPECT_RATIO;
+  const initialHeight =
+  initialWidth / IMAGE_ASPECT_RATIO;
 
   /*
    * =====================================================
@@ -416,20 +417,20 @@ const darkness = useTransform(
         overflow-hidden
         will-change-[width,height,border-radius]
       "
-        style={{
-          width: reduceMotion
-            ? finalWidth
-            : frameWidth,
+      style={{
+        width: reduceMotion
+          ? finalWidth
+          : frameWidth,
 
-          height: reduceMotion
-            ? finalHeight
-            : frameHeight,
+        height: reduceMotion
+          ? finalHeight
+          : frameHeight,
 
-          borderRadius: reduceMotion
-            ? "16px"
-            : imageRadius,
-        }}
-      >
+        borderRadius: reduceMotion
+          ? "16px"
+          : imageRadius,
+      }}
+    >
         {/*
          * FOTO
          */}
