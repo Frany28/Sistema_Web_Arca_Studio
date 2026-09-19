@@ -1,5 +1,5 @@
 import { motion as Motion, useReducedMotion } from "motion/react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 import ArcaOpeningMark, {
@@ -11,6 +11,7 @@ import ServicesSection from "../services/components/ServicesSection.jsx";
 import FeaturedProjectsSection from "../featuredProjects/components/FeaturedProjectsSection.jsx";
 import ProcessesSection from "../processes/components/ProcessesSection.jsx";
 import AboutSection from "../about/components/AboutSection.jsx";
+import ContactSection from "../contact/components/ContactSection.jsx";
 import useHomeOpeningSequence from "./hooks/useHomeOpeningSequence.js";
 import useHomeScrollController from "./hooks/useHomeScrollController.js";
 import { HOME_PRELOAD_IMAGES } from "./homeContent.js";
@@ -59,6 +60,10 @@ function OpeningHome() {
   const titleIsVisible = (id) =>
     visibleContentTitleIds.includes(id);
 
+  const navigateToContact = useCallback(() => {
+    navigateToSection("contact");
+  }, [navigateToSection]);
+
   const usesControlledTouchNavigation =
     !contentScrollActive ||
     (
@@ -74,6 +79,7 @@ function OpeningHome() {
         "#featured-projects",
         "#process",
         "#about",
+        "#contact",
       ].includes(hash)
     ) {
       navigateToSection(hash.slice(1));
@@ -177,6 +183,7 @@ function OpeningHome() {
               onNavigate={
                 navigateToSection
               }
+              onContact={navigateToContact}
             />
           </div>
 
@@ -265,6 +272,12 @@ function OpeningHome() {
                 }
                 progress={
                   aboutStoryProgress
+                }
+              />
+
+              <ContactSection
+                onNavigate={
+                  navigateToSection
                 }
               />
             </>

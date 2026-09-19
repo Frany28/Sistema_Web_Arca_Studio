@@ -1,0 +1,86 @@
+.contact-tilt-card {
+  perspective: 200px;
+}
+
+.contact-tilt-card__surface {
+  isolation: isolate;
+  padding: 12.9629629%;
+  transform-style: preserve-3d;
+}
+
+.contact-tilt-card__gradient {
+  background:
+    radial-gradient(
+      circle at 22% 24%,
+      color-mix(in srgb, var(--color-accent-300) 80%, white) 0%,
+      transparent 43%
+    ),
+    radial-gradient(
+      circle at 78% 18%,
+      color-mix(
+        in srgb,
+        var(--color-accent-300) 42%,
+        var(--color-primary-300)
+      ) 0%,
+      transparent 47%
+    ),
+    radial-gradient(
+      circle at 54% 84%,
+      color-mix(
+        in srgb,
+        var(--color-primary-300) 72%,
+        var(--color-neutral-100-uniform)
+      ) 0%,
+      transparent 52%
+    ),
+    var(--color-primary-500-uniform);
+  background-size: 150% 150%, 170% 170%, 155% 155%, 100% 100%;
+  animation: contact-gradient-flow 14s ease-in-out infinite alternate;
+  opacity: 0.2;
+  transform: scale(1.18) rotate(-5deg);
+}
+
+.contact-tilt-card__glare {
+  background: radial-gradient(
+    circle,
+    rgb(255 255 255 / 0.3) 0%,
+    rgb(255 255 255 / 0.16) 18%,
+    transparent 47%
+  );
+  inset: -47%;
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
+}
+
+.contact-tilt-card__logo {
+  transform: translateZ(12px);
+}
+
+@keyframes contact-gradient-flow {
+  0% {
+    background-position: 0% 18%, 100% 0%, 48% 100%, 50% 50%;
+    transform: scale(1.18) rotate(-5deg);
+  }
+
+  50% {
+    background-position: 72% 4%, 36% 78%, 100% 38%, 50% 50%;
+    transform: scale(1.28) rotate(4deg);
+  }
+
+  100% {
+    background-position: 100% 82%, 0% 38%, 20% 0%, 50% 50%;
+    transform: scale(1.2) rotate(-2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-tilt-card__gradient {
+    animation: none;
+    background-position: 50% 50%;
+    transform: scale(1.18);
+  }
+
+  .contact-tilt-card__logo {
+    transform: none;
+  }
+}

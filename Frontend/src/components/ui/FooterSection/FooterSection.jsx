@@ -265,6 +265,108 @@ function getSocialIcon(type) {
   return <GoogleIcon className="size-5" />;
 }
 
+function PublicCtaFooter({
+  ariaLabel,
+  className,
+  copyrightText,
+  navItems,
+  onNavChange,
+  onSocialClick,
+  resolvedActiveNavIndex,
+  socialItems,
+  title,
+  ...props
+}) {
+  const navigationClassName =
+    "[&_button]:text-[var(--color-primary-500)] [&_button:hover]:text-[var(--color-neutral-100-uniform)]";
+
+  return (
+    <footer
+      className={clsx(
+        "dark flex w-full flex-col items-start gap-[24px]",
+        className,
+      )}
+      aria-label={ariaLabel}
+      data-node-id="5142:15337"
+      {...props}
+    >
+      <div className="w-full px-[var(--spacing-gap-7)] pt-[24px] max-[767px]:px-0">
+        <div className="w-full border-b border-[var(--color-neutral-200)] py-[24px]">
+          <h2 className="text-heading-4 m-0 text-[var(--color-neutral-100-uniform)]">
+            {title}
+          </h2>
+        </div>
+      </div>
+
+      <div className="w-full px-[var(--spacing-gap-7)] max-[767px]:px-0">
+        <div className="flex w-full flex-col items-center gap-[24px] min-[1200px]:flex-row min-[1200px]:justify-between">
+          <MainLogo
+            size="32px"
+            appearance="dark"
+            alt="ARCA Studio"
+            className="h-[32px] w-[152px] shrink-0 justify-start"
+          />
+
+          <HorizontalTabMenu
+            items={navItems}
+            activeIndex={resolvedActiveNavIndex}
+            interactive
+            onChange={onNavChange}
+            filled="off"
+            style="Brand"
+            orientation="horizontal"
+            className={clsx(
+              "hidden min-[1200px]:inline-flex",
+              navigationClassName,
+            )}
+            aria-label="Navegación del footer"
+          />
+
+          <HorizontalTabMenu
+            items={navItems}
+            activeIndex={resolvedActiveNavIndex}
+            interactive
+            onChange={onNavChange}
+            filled="off"
+            style="Brand"
+            orientation="vertical"
+            className={clsx(
+              "min-[1200px]:hidden",
+              navigationClassName,
+            )}
+            aria-label="Navegación del footer"
+          />
+
+          <div className="flex shrink-0 flex-wrap items-center justify-center gap-[var(--spacing-gap-2)]">
+            {socialItems.map((item) => (
+              <Button
+                key={item.id}
+                theme="Primary"
+                type="Ghost"
+                size="S"
+                showText={false}
+                showLeftIcon
+                showRightIcon={false}
+                iconLeft={getSocialIcon(item.icon)}
+                aria-label={item.label}
+                onClick={() => onSocialClick?.(item)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full px-[var(--spacing-gap-7)] max-[767px]:px-0">
+        <div className="flex w-full items-center justify-center border-t border-[var(--color-neutral-200)] py-[24px]">
+          <p className="text-body-2 m-0 text-center text-[var(--color-text-100)]">
+            {copyrightText}
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 function FooterSection({
   className,
   title = "Descubre nuevos proyectos y actualizaciones de nuestro estudio",
@@ -277,6 +379,7 @@ function FooterSection({
   socialItems = DEFAULT_SOCIAL_ITEMS,
   copyrightText = "© 2026 ARCA Studio. Todos los derechos reservados.",
   variant = "desktop",
+  presentation = "default",
   logo = null,
   onSubscribeClick,
   onInputChange,
@@ -339,6 +442,23 @@ function FooterSection({
   const nodeId = isDarkMode
     ? undefined
     : FOOTER_SECTION_NODE_IDS[resolvedVariant].light;
+
+  if (presentation === "publicCta") {
+    return (
+      <PublicCtaFooter
+        ariaLabel={ariaLabel}
+        className={className}
+        copyrightText={copyrightText}
+        navItems={navItems}
+        onNavChange={handleNavChange}
+        onSocialClick={onSocialClick}
+        resolvedActiveNavIndex={resolvedActiveNavIndex}
+        socialItems={socialItems}
+        title={title}
+        {...props}
+      />
+    );
+  }
 
   return (
     <section
