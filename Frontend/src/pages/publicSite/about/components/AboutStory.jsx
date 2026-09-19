@@ -7,6 +7,7 @@ import {
 import {
   motion as Motion,
   useReducedMotion,
+  useSpring,
   useTransform,
 } from "motion/react";
 
@@ -42,31 +43,19 @@ function CreditLine({
   const lineEnterEnd =
     lineEnterStart + 0.055;
 
-  const opacity = useTransform(
-    progress,
-    [
-      lineEnterStart,
-      lineEnterEnd,
-    ],
-    [
-      0,
-      1,
-    ],
-  );
-
-  const y = useTransform(
+const opacity = useTransform(
   progress,
-  [
-    lineEnterStart,
-    lineEnterEnd,
-  ],
-  [
-    32,
-    0,
-  ],
-  );
+  [lineEnterStart, lineEnterEnd],
+  [0, 1],
+);
 
-  const blur = useTransform(
+const y = useTransform(
+  progress,
+  [lineEnterStart, lineEnterEnd],
+  [32, 0],
+);
+
+const blur = useTransform(
   progress,
   [
     lineEnterStart,
@@ -114,6 +103,14 @@ function AboutStory({
 }) {
   const reduceMotion =
     useReducedMotion();
+
+  
+  const visualProgress = useSpring(progress, {
+    stiffness: 65,
+    damping: 20,
+    mass: 0.65,
+    restDelta: 0.001,
+  });
 
   const stageRef =
     useRef(null);
@@ -174,7 +171,10 @@ function AboutStory({
    *
    * De esta manera NO queda estirada a todo el ancho.
    */
-  const initialWidth = stageSize.width;
+  const initialWidth = Math.max(
+  stageSize.width,
+  stageSize.height * IMAGE_ASPECT_RATIO,
+  );
 
   const initialHeight =
   initialWidth / IMAGE_ASPECT_RATIO;
@@ -219,56 +219,53 @@ function AboutStory({
    * tamaño final.
    */
 
-  const frameWidth =
-    useTransform(
-      progress,
-      [
-        0,
-        0.76,
-        0.94,
-        1,
-      ],
-      [
-        initialWidth,
-        initialWidth,
-        finalWidth,
-        finalWidth,
-      ],
-    );
+  const frameWidth = useTransform(
+    visualProgress,
+    [
+      0,
+      0.70,
+      0.98,
+      1,
+    ],
+    [
+      initialWidth,
+      initialWidth,
+      finalWidth,
+      finalWidth,
+    ],
+  );
 
-  const frameHeight =
-    useTransform(
-      progress,
-      [
-        0,
-        0.76,
-        0.94,
-        1,
-      ],
-      [
-        initialHeight,
-        initialHeight,
-        finalHeight,
-        finalHeight,
-      ],
-    );
+  const frameHeight = useTransform(
+    visualProgress,
+    [
+      0,
+      0.70,
+      0.98,
+      1,
+    ],
+    [
+      initialHeight,
+      initialHeight,
+      finalHeight,
+      finalHeight,
+    ],
+  );
 
-  const imageRadius =
-    useTransform(
-      progress,
-      [
-        0,
-        0.76,
-        0.94,
-        1,
-      ],
-      [
-        "0px",
-        "0px",
-        "16px",
-        "16px",
-      ],
-    );
+  const imageRadius = useTransform(
+    visualProgress,
+    [
+      0,
+      0.70,
+      0.98,
+      1,
+    ],
+    [
+      "0px",
+      "0px",
+      "16px",
+      "16px",
+    ],
+  );
 
   /*
    * =====================================================
@@ -277,31 +274,31 @@ function AboutStory({
    */
 
 const imageFilter = useTransform(
-  progress,
+  visualProgress,
   [
     0,
     0.08,
-    0.16,
-    0.26,
-    0.60,
-    0.70,
-    0.80,
+    0.18,
+    0.32,
+    0.58,
+    0.68,
+    0.84,
     1,
   ],
   [
     "blur(0px) brightness(1)",
     "blur(0px) brightness(1)",
-    "blur(1.5px) brightness(0.94)",
-    "blur(4px) brightness(0.72)",
-    "blur(4px) brightness(0.72)",
-    "blur(2px) brightness(0.86)",
+    "blur(1px) brightness(0.96)",
+    "blur(3.5px) brightness(0.76)",
+    "blur(3.5px) brightness(0.76)",
+    "blur(2.5px) brightness(0.82)",
     "blur(0px) brightness(1)",
     "blur(0px) brightness(1)",
   ],
 );
 
 const imageInnerScale = useTransform(
-  progress,
+  visualProgress,
   [
     0,
     0.12,
@@ -321,24 +318,24 @@ const imageInnerScale = useTransform(
 );
 
 const darkness = useTransform(
-  progress,
+  visualProgress,
   [
     0,
-    0.08,
-    0.18,
-    0.28,
-    0.60,
+    0.10,
+    0.22,
+    0.34,
+    0.58,
     0.70,
-    0.82,
+    0.86,
     1,
   ],
   [
     0,
     0,
-    0.08,
-    0.22,
-    0.22,
-    0.12,
+    0.06,
+    0.18,
+    0.18,
+    0.10,
     0,
     0,
   ],
@@ -356,35 +353,33 @@ const darkness = useTransform(
    * pantalla y termina fuera por arriba.
    */
 
-  const creditsTrackY =
-    useTransform(
-      progress,
-      [
-        0.18,
-        0.76,
-      ],
-      [
-        "115vh",
-        "-125vh",
-      ],
-    );
+  const creditsTrackY = useTransform(
+    visualProgress,
+    [
+      0.16,
+      0.82,
+    ],
+    [
+      "110vh",
+      "-120vh",
+    ],
+  );
 
-  const creditsOpacity =
-    useTransform(
-      progress,
-      [
-        0.16,
-        0.2,
-        0.72,
-        0.77,
-      ],
-      [
-        0,
-        1,
-        1,
-        0,
-      ],
-    );
+ const creditsOpacity = useTransform(
+    visualProgress,
+    [
+      0.14,
+      0.23,
+      0.64,
+      0.82,
+    ],
+    [
+      0,
+      1,
+      1,
+      0,
+    ],
+  );
 
   return (
     <div
@@ -511,11 +506,11 @@ const darkness = useTransform(
             {ABOUT_CREDIT_LINES.map(
               (line, index) => (
                 <CreditLine
-                  key={`${index}-${line}`}
-                  line={line}
-                  index={index}
-                  progress={progress}
-                />
+              key={`${index}-${line}`}
+              line={line}
+              index={index}
+              progress={visualProgress}
+            />
               ),
             )}
           </Motion.div>
