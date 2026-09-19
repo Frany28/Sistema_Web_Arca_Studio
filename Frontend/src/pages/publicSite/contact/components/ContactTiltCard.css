@@ -1,5 +1,5 @@
 .contact-tilt-card {
-  perspective: 200px;
+  perspective: 1000px;
 }
 
 .contact-tilt-card__surface {
@@ -28,16 +28,8 @@
   transform: translate3d(0, 0, 0);
 }
 
-.contact-tilt-card__logo {
-  transform: translateZ(12px);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .contact-tilt-card__gradient {
     animation: none;
-  }
-
-  .contact-tilt-card__logo {
-    transform: none;
   }
 }

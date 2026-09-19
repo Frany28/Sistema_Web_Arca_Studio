@@ -14,6 +14,7 @@ import {
 import "./ContactTiltCard.css";
 
 const TILT_INTENSITY = 12;
+const TILT_INFLUENCE_FACTOR = 1.5;
 const GLARE_INTENSITY = 0.47;
 const MOVING_GRADIENT_SHADER = {
   setup: setupMovingGradient,
@@ -65,7 +66,6 @@ function ContactTiltCard() {
     gsap.set(card, {
       rotationX: 0,
       rotationY: 0,
-      transformPerspective: 200,
       transformOrigin: "center center",
     });
     gsap.set(glare, { opacity: 0, x: 0, y: 0 });
@@ -99,8 +99,10 @@ function ContactTiltCard() {
       const rect = card.getBoundingClientRect();
       const offsetX = event.clientX - (rect.left + rect.width / 2);
       const offsetY = event.clientY - (rect.top + rect.height / 2);
-      const tiltX = Math.max(-1, Math.min(1, offsetX / (rect.width / 2)));
-      const tiltY = Math.max(-1, Math.min(1, offsetY / (rect.height / 2)));
+      const influenceDistanceX = rect.width * TILT_INFLUENCE_FACTOR;
+      const influenceDistanceY = rect.height * TILT_INFLUENCE_FACTOR;
+      const tiltX = Math.max(-1, Math.min(1, offsetX / influenceDistanceX));
+      const tiltY = Math.max(-1, Math.min(1, offsetY / influenceDistanceY));
 
       rotateXTo(-tiltY * TILT_INTENSITY);
       rotateYTo(tiltX * TILT_INTENSITY);
