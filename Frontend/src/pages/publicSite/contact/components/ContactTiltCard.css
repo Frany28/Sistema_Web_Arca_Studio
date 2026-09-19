@@ -22,12 +22,16 @@
 .contact-tilt-card__gradient {
   display: block;
   height: 100%;
-  opacity: 0.1;
+  opacity: 0.06;
   width: 100%;
 }
 
 .contact-tilt-card__glare {
-  background: transparent;
+  background: radial-gradient(
+    circle,
+    rgb(255 255 255 / 0.08) 0%,
+    transparent 28%
+  );
   inset: -47%;
   opacity: 0;
   transform: translate3d(0, 0, 0);
