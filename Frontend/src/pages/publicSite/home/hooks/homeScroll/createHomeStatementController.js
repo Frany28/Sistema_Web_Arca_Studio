@@ -8,6 +8,7 @@ import {
 } from "../../utils/homeScrollNavigation.js";
 
 const STATEMENT_KEYBOARD_DURATION_SECONDS = 0.8;
+const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 4.8;
 
 function createHomeStatementController({
   commitNavigationState,
@@ -22,10 +23,12 @@ function createHomeStatementController({
   let pendingDelta = 0;
   let progressTween;
   let wheelScrubbing = false;
+  let autoRevealing = false;
 
   const stopAnimation = () => {
     progressTween?.kill();
     progressTween = undefined;
+    autoRevealing = false;
   };
 
   const commitProgress = (nextProgress) => {
@@ -102,6 +105,37 @@ function createHomeStatementController({
     });
   };
 
+  const startAutoReveal = (onComplete) => {
+    stopAnimation();
+    if (reduceMotion) {
+      commitProgress(1);
+      onComplete?.();
+      return true;
+    }
+
+    const animatedProgress = { value: progress.get() };
+    autoRevealing = true;
+    commitNavigationState({
+      panelIndex,
+      phase: HOME_SCROLL_PHASES.EFFECT,
+      entryDirection: null,
+    });
+    progressTween = gsap.to(animatedProgress, {
+      value: 1,
+      duration: STATEMENT_AUTO_REVEAL_DURATION_SECONDS,
+      ease: "sine.inOut",
+      overwrite: true,
+      onUpdate: () => progress.set(animatedProgress.value),
+      onComplete: () => {
+        progressTween = undefined;
+        autoRevealing = false;
+        commitProgress(1);
+        onComplete?.();
+      },
+    });
+    return true;
+  };
+
   const synchronizeWithNavigation = (nextState, currentState) => {
     stopAnimation();
     if (nextState.panelIndex === panelIndex) {
@@ -138,6 +172,7 @@ function createHomeStatementController({
     },
     getProgress: () => progress.get(),
     isWheelScrubbing: () => wheelScrubbing,
+    isAutoRevealing: () => autoRevealing,
     queueDelta,
     resetForNativeScroll,
     resetWheelScrubbing: () => {
@@ -147,8 +182,13 @@ function createHomeStatementController({
       wheelScrubbing = true;
     },
     stopAnimation,
+    startAutoReveal,
     synchronizeWithNavigation,
   };
 }
 
-export { STATEMENT_KEYBOARD_DURATION_SECONDS, createHomeStatementController };
+export {
+  STATEMENT_AUTO_REVEAL_DURATION_SECONDS,
+  STATEMENT_KEYBOARD_DURATION_SECONDS,
+  createHomeStatementController,
+};

@@ -149,6 +149,23 @@ function createInputGestureController({
       x: normalizedDelta.x * runtime.wheelGestureDeltaScale,
       y: normalizedDelta.y * runtime.wheelGestureDeltaScale,
     };
+    if (
+      statement.isAutoRevealing() &&
+      navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX
+    ) {
+      event.preventDefault();
+      event.stopPropagation?.();
+      observeConsumedWheelGesture(progressDelta.y, event.timeStamp);
+      scheduleWheelGestureSettlement();
+      debugWheel(
+        event,
+        normalizedDelta,
+        progressDelta,
+        Math.sign(normalizedDelta.y),
+        "BLOCKED_STATEMENT_AUTO_REVEAL",
+      );
+      return;
+    }
     if (runtime.activeTween || runtime.isProgrammaticScroll) {
       event.preventDefault();
       event.stopPropagation?.();
@@ -493,6 +510,13 @@ function createInputGestureController({
 
       event.preventDefault();
       touchGesture.captured = true;
+      if (
+        statement.isAutoRevealing() &&
+        navigationStateRef.current.panelIndex === STATEMENT_PANEL_INDEX
+      ) {
+        touchGesture.consumed = true;
+        return;
+      }
       statement.stopAnimation();
       if (
         touchGesture.startProgress <= 0 &&
@@ -571,6 +595,12 @@ function createInputGestureController({
     event.preventDefault();
     if (event.repeat) return;
     const currentState = navigationStateRef.current;
+    if (
+      statement.isAutoRevealing() &&
+      currentState.panelIndex === STATEMENT_PANEL_INDEX
+    ) {
+      return;
+    }
     if (currentState.panelIndex === STATEMENT_PANEL_INDEX && !runtime.activeTween) {
       const currentProgress = statement.getProgress();
       if (

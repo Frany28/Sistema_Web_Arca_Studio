@@ -11,6 +11,8 @@ import {
   STATEMENT_PANEL_INDEX,
 } from "./homeScrollConstants.js";
 
+const STATEMENT_ENTRY_DURATION_SECONDS = 1;
+
 function createPanelNavigationController({
   coordination,
   navigationStateRef,
@@ -72,6 +74,10 @@ function createPanelNavigationController({
     const targetPanel = panels[nextState.panelIndex];
     const targetScrollTop = targetPanel?.offsetTop ?? 0;
     const needsAlignment = Math.abs(scroller.scrollTop - targetScrollTop) > 1;
+    const isStatementEntry =
+      panelChanged &&
+      nextState.panelIndex === STATEMENT_PANEL_INDEX &&
+      nextState.entryDirection === HOME_SCROLL_DIRECTIONS.DOWN;
 
     statement.synchronizeWithNavigation(nextState, currentState);
     if (
@@ -92,6 +98,19 @@ function createPanelNavigationController({
     runtime.ignoreNextScrollEnd = runtime.supportsScrollEnd;
     const completeAlignment = () => {
       runtime.isProgrammaticScroll = false;
+      if (
+        isStatementEntry &&
+        window.matchMedia?.("(max-width: 1023px)").matches
+      ) {
+        runtime.wheelTransitionLock = true;
+        statement.startAutoReveal(() => {
+          releaseTransitionLock();
+          coordination.content?.synchronizeTitleVisibility();
+        });
+        runtime.statementEnteringUp = false;
+        coordination.content?.synchronizeTitleVisibility();
+        return;
+      }
       releaseTransitionLock();
       coordination.content?.synchronizeTitleVisibility();
     };
@@ -104,8 +123,10 @@ function createPanelNavigationController({
 
     runtime.activeTween = gsap.to(scroller, {
       scrollTo: { y: targetScrollTop, autoKill: false },
-      duration: SCROLL_STEP_DURATION_SECONDS,
-      ease: SECTION_NAVIGATION_EASE,
+      duration: isStatementEntry
+        ? STATEMENT_ENTRY_DURATION_SECONDS
+        : SCROLL_STEP_DURATION_SECONDS,
+      ease: isStatementEntry ? "power3.inOut" : SECTION_NAVIGATION_EASE,
       overwrite: true,
       onComplete: () => {
         runtime.activeTween = undefined;

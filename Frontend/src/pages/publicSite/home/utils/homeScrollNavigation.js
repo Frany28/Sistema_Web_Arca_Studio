@@ -108,13 +108,16 @@ function advanceFeaturedExpansionProgress(
 function getHomeStatementVisualState(progress) {
   const normalizedProgress = clampHomeStatementProgress(progress);
   const easedProgress =
-    normalizedProgress ** 2 * (3 - 2 * normalizedProgress);
+    (1 - Math.cos(normalizedProgress * Math.PI)) / 2;
 
   return {
     progress: normalizedProgress,
     maskScale:
-      STATEMENT_INITIAL_MASK_SCALE -
-      (STATEMENT_INITIAL_MASK_SCALE - 1) * easedProgress,
+      normalizedProgress >= 1
+        ? 1
+        : Math.exp(
+          Math.log(STATEMENT_INITIAL_MASK_SCALE) * (1 - easedProgress),
+        ),
   };
 }
 
