@@ -382,17 +382,21 @@ test("the final home panel scrubs a responsive video statement", () => {
     /navigationState\.phase !== HOME_SCROLL_PHASES\.IMAGE/,
   );
   assert.match(statementPanelSource, /STATEMENT_FOCUS_LETTER = "c"/);
-  assert.match(statementPanelSource, /STATEMENT_FOCUS_X_RATIO = 0\.14/);
   assert.match(statementPanelSource, /\(focusGlyph \?\? maskText\)\.getBBox\(\)/);
-  assert.match(statementPanelSource, /<text\s+ref=\{cameraGlyphRef\}/);
-  assert.match(statementPanelSource, /cameraGlyph\.setAttribute/);
-  assert.match(statementPanelSource, /initialScale: Math\.max/);
-  assert.match(statementPanelSource, /cameraScale/);
-  assert.doesNotMatch(statementPanelSource, /<circle|transformGroupRef|maskScale/);
+  assert.match(statementPanelSource, /focusBounds\.x \+ focusBounds\.width \/ 2/);
+  assert.match(statementPanelSource, /focusBounds\.y \+ focusBounds\.height \/ 2/);
+  assert.match(statementPanelSource, /<g ref=\{maskGroupRef\}>/);
+  assert.match(statementPanelSource, /getHomeStatementTransform/);
+  assert.match(statementPanelSource, /maskGroup\.setAttribute/);
+  assert.match(statementPanelSource, /viewBox="0 0 1 1"/);
+  assert.doesNotMatch(
+    statementPanelSource,
+    /<circle|cameraGlyphRef|transformOrigin|window\.innerWidth|Motion\./,
+  );
   assert.match(statementPanelSource, /opacity-20 mix-blend-multiply/);
   assert.doesNotMatch(statementPanelSource, /overlayOpacity/);
   assert.match(statementPanelSource, /ResizeObserver\(measureGeometry\)/);
-  assert.match(statementPanelSource, /progress\.on\("change", renderCameraViewport\)/);
+  assert.match(statementPanelSource, /progress\.on\("change", renderMaskTransform\)/);
   assert.match(statementPanelSource, /text-\[clamp\(24px,3\.2vw,46px\)\]/);
   assert.match(statementPanelSource, /aria-hidden=\{!active\}/);
   assert.match(statementPanelSource, /aria-hidden=\{!statementVisible\}/);

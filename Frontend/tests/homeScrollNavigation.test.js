@@ -13,6 +13,7 @@ import {
   getKeyboardDirection,
   getFeaturedExpansionTravelDistance,
   getHomeStatementTravelDistance,
+  getHomeStatementTransform,
   getHomeStatementVisualState,
   getWheelGestureDeltaScale,
   getNearestPanelIndex,
@@ -625,20 +626,36 @@ test("reduced motion keeps statement endpoints without intermediate zoom", () =>
   assert.equal(advanceHomeStatementProgress(0.6, -1, 900, true), 0);
 });
 
-test("statement visual state zooms an isolated camera glyph around the fixed phrase", () => {
-  assert.deepEqual(getHomeStatementVisualState(0, 400), {
+test("statement visual state scales the complete phrase from its final geometry", () => {
+  assert.deepEqual(getHomeStatementVisualState(0), {
     progress: 0,
-    cameraScale: 400,
+    maskScale: 180,
   });
-  assert.deepEqual(getHomeStatementVisualState(1, 400), {
+  assert.deepEqual(getHomeStatementVisualState(1), {
     progress: 1,
-    cameraScale: 1,
+    maskScale: 1,
   });
-  const midpoint = getHomeStatementVisualState(0.5, 400);
+  const midpoint = getHomeStatementVisualState(0.5);
   assert.equal(midpoint.progress, 0.5);
-  assert.ok(Math.abs(midpoint.cameraScale - 20) < Number.EPSILON * 20);
-  assert.equal(getHomeStatementVisualState(-1, 400).cameraScale, 400);
-  assert.equal(getHomeStatementVisualState(2, 400).cameraScale, 1);
+  assert.ok(Math.abs(midpoint.maskScale - Math.sqrt(180)) < Number.EPSILON * 180);
+});
+
+test("statement transform keeps the C anchor fixed for the complete scrub", () => {
+  const anchorX = 641.25;
+  const anchorY = 357.75;
+
+  for (const progress of [0, 0.25, 0.5, 0.75, 1]) {
+    const { scale, translateX, translateY } = getHomeStatementTransform(
+      progress,
+      anchorX,
+      anchorY,
+    );
+    const transformedX = anchorX * scale + translateX;
+    const transformedY = anchorY * scale + translateY;
+
+    assert.ok(Math.abs(transformedX - anchorX) < 0.5);
+    assert.ok(Math.abs(transformedY - anchorY) < 0.5);
+  }
 });
 
 test("featured image expansion follows wheel distance and reverses exactly", () => {

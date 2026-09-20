@@ -19,6 +19,7 @@ const WHEEL_NEW_IMPULSE_RATIO = 1.8;
 const STATEMENT_MIN_TRAVEL_PX = 650;
 const STATEMENT_MAX_TRAVEL_PX = 900;
 const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.85;
+const STATEMENT_INITIAL_MASK_SCALE = 180;
 const STATEMENT_WHEEL_DELTA_LIMIT_PX = 48;
 const FEATURED_EXPANSION_MIN_TRAVEL_PX = 420;
 const FEATURED_EXPANSION_VIEWPORT_RATIO = 1;
@@ -104,19 +105,30 @@ function advanceFeaturedExpansionProgress(
   );
 }
 
-function getHomeStatementVisualState(progress, initialCameraScale = 1) {
+function getHomeStatementVisualState(progress) {
   const normalizedProgress = clampHomeStatementProgress(progress);
-  const safeInitialScale = Number.isFinite(initialCameraScale)
-    ? Math.max(initialCameraScale, 1)
-    : 1;
 
   return {
     progress: normalizedProgress,
-    cameraScale: normalizedProgress <= 0
-      ? safeInitialScale
+    maskScale: normalizedProgress <= 0
+      ? STATEMENT_INITIAL_MASK_SCALE
       : normalizedProgress >= 1
         ? 1
-        : Math.exp(Math.log(safeInitialScale) * (1 - normalizedProgress)),
+        : Math.exp(
+            Math.log(STATEMENT_INITIAL_MASK_SCALE) * (1 - normalizedProgress),
+          ),
+  };
+}
+
+function getHomeStatementTransform(progress, anchorX, anchorY) {
+  const { maskScale } = getHomeStatementVisualState(progress);
+  const safeAnchorX = Number.isFinite(anchorX) ? anchorX : 0;
+  const safeAnchorY = Number.isFinite(anchorY) ? anchorY : 0;
+
+  return {
+    scale: maskScale,
+    translateX: safeAnchorX * (1 - maskScale),
+    translateY: safeAnchorY * (1 - maskScale),
   };
 }
 
@@ -521,6 +533,7 @@ export {
   getNextHomeScrollState,
   getSequentialScrollbarPanelIndex,
   getHomeStatementTravelDistance,
+  getHomeStatementTransform,
   getHomeStatementVisualState,
   getFeaturedExpansionTravelDistance,
   getWheelGestureDeltaScale,
