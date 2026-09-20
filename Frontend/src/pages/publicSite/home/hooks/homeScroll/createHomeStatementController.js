@@ -9,7 +9,7 @@ import {
 
 const STATEMENT_KEYBOARD_DURATION_SECONDS = 2;
 const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 3.6;
-const STATEMENT_WHEEL_SCRUB_DURATION_SECONDS = 0.42;
+const STATEMENT_WHEEL_SCRUB_DURATION_SECONDS = 0.5;
 
 function createHomeStatementController({
   commitNavigationState,
