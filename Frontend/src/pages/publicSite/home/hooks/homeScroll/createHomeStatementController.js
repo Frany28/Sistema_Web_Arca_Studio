@@ -7,7 +7,7 @@ import {
   createScrollbarHomeScrollState,
 } from "../../utils/homeScrollNavigation.js";
 
-const STATEMENT_KEYBOARD_DURATION_SECONDS = 0.8;
+const STATEMENT_KEYBOARD_DURATION_SECONDS = 1.2;
 const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 3.6;
 
 function createHomeStatementController({
@@ -82,7 +82,7 @@ function createHomeStatementController({
     onComplete,
     {
       duration = STATEMENT_KEYBOARD_DURATION_SECONDS,
-      ease = "power2.inOut",
+      ease = "sine.inOut",
     } = {},
   ) => {
     stopAnimation();
