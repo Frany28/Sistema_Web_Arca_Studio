@@ -43,7 +43,7 @@ const STATEMENT_REVERSE_SMOOTHING_MS = 85;
  * Esto afecta exclusivamente este efecto.
  */
 const STATEMENT_FORWARD_DELTA_MULTIPLIER =
-  1.16;
+  1.28;
 
 const STATEMENT_REVERSE_DELTA_MULTIPLIER =
   1.3;

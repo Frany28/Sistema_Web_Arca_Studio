@@ -350,6 +350,10 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementControllerSource, /advanceHomeStatementProgress/);
   assert.match(
     statementControllerSource,
+    /STATEMENT_FORWARD_DELTA_MULTIPLIER\s*=\s*\n?\s*1\.28/,
+  );
+  assert.match(
+    statementControllerSource,
     /STATEMENT_KEYBOARD_DURATION_SECONDS\s*=\s*1\.45/,
   );
   assert.match(contentScrollControllerSource, /createScrollbarHomeScrollState\(panelIndex\)/);
