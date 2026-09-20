@@ -3,18 +3,27 @@
   --public-navigation-hover-color: var(--color-text-200);
 }
 
-.public-site-header::before {
-  position: absolute;
-  z-index: 0;
-  inset-inline: 0;
-  top: 0;
-  height: 67px;
-  pointer-events: none;
-  content: "";
-  background: rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
+.public-site-header[data-mobile-menu-open="true"]::before {
+  height: 100dvh;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  backdrop-filter:
+    blur(32px)
+    saturate(0.85)
+    brightness(1.08);
+
+  -webkit-backdrop-filter:
+    blur(32px)
+    saturate(0.85)
+    brightness(1.08);
+
+  transition:
+  height 300ms cubic-bezier(0.22, 1, 0.36, 1),
+  backdrop-filter 300ms cubic-bezier(0.22, 1, 0.36, 1),
+  -webkit-backdrop-filter 300ms cubic-bezier(0.22, 1, 0.36, 1),
+  background-color 300ms cubic-bezier(0.22, 1, 0.36, 1);
+} 
 
 .public-site-header[data-mobile-menu-open="true"]::before {
   height: 100dvh;

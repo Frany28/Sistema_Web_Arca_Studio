@@ -1,6 +1,7 @@
 import { AnimatePresence, motion as Motion, useReducedMotion } from "motion/react";
 
 import Button from "../../../../components/ui/Button/Button.jsx";
+import HorizontalTabMenu from "../../../../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
 
 const MENU_EASE = [0.22, 1, 0.36, 1];
 
@@ -70,6 +71,9 @@ function PublicSiteMobileMenu({
 }) {
   const reduceMotion = useReducedMotion();
   const motionContext = { reduceMotion: Boolean(reduceMotion) };
+  const activeNavigationIndex = navigationItems.findIndex(
+    (item) => item.id === activeNavigationId,
+  );
 
   return (
     <AnimatePresence initial={false}>
@@ -95,21 +99,19 @@ function PublicSiteMobileMenu({
               variants={listVariants}
               custom={motionContext}
             >
-              <div className="flex flex-col items-center">
-                {navigationItems.map((item) => (
-                  <Motion.button
-                    key={item.id}
-                    type="button"
-                    className="flex h-[64px] w-fit items-center justify-center px-[4px] text-heading-8 text-[var(--public-navigation-color)] outline-none transition-colors duration-150 hover:text-[var(--public-navigation-hover-color)] focus-visible:rounded-[var(--radius-1)] focus-visible:ring-2 focus-visible:ring-current motion-reduce:transition-none"
-                    variants={itemVariants}
-                    custom={motionContext}
-                    aria-current={item.id === activeNavigationId ? "page" : undefined}
-                    onClick={() => onNavigate(item.id)}
-                  >
-                    {item.label}
-                  </Motion.button>
-                ))}
-              </div>
+              <Motion.div variants={itemVariants} custom={motionContext}>
+                <HorizontalTabMenu
+                  items={navigationItems.map((item) => item.label)}
+                  activeIndex={activeNavigationIndex}
+                  interactive
+                  orientation="vertical"
+                  presentation="publicNavigation"
+                  style="Underlined"
+                  filled="off"
+                  onChange={(index) => onNavigate(navigationItems[index].id)}
+                  aria-label="Secciones de inicio"
+                />
+              </Motion.div>
 
               <Motion.div variants={itemVariants} custom={motionContext}>
                 <Button
