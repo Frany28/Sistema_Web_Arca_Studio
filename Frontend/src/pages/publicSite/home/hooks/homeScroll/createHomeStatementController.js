@@ -85,7 +85,7 @@ function createHomeStatementController({
       progressTween = gsap.to(animatedProgress, {
         value: nextProgress,
         duration: STATEMENT_DESKTOP_SCRUB_DURATION_SECONDS,
-        ease: "power2.out",
+        ease: "sine.inOut",
         overwrite: true,
         onUpdate: () => progress.set(animatedProgress.value),
         onComplete: () => {

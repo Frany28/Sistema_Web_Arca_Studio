@@ -109,6 +109,7 @@ function getHomeStatementVisualState(progress) {
   const normalizedProgress = clampHomeStatementProgress(progress);
   const easedProgress =
     (1 - Math.cos(normalizedProgress * Math.PI)) / 2;
+  const perceptualProgress = Math.pow(easedProgress, 0.72);
 
   return {
     progress: normalizedProgress,
@@ -117,7 +118,7 @@ function getHomeStatementVisualState(progress) {
       : normalizedProgress >= 1
         ? 1
         : Math.exp(
-          Math.log(STATEMENT_INITIAL_MASK_SCALE) * (1 - easedProgress),
+          Math.log(STATEMENT_INITIAL_MASK_SCALE) * (1 - perceptualProgress),
         ),
   };
 }

@@ -11,7 +11,7 @@ import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js"
 import { getHomeStatementVisualState } from "../../utils/homeScrollNavigation.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
-const STATEMENT_FOCUS_LETTER = "c";
+const STATEMENT_FOCUS_LETTER = "a";
 const STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO = 0.2;
 
 function HomeStatementPanel({
