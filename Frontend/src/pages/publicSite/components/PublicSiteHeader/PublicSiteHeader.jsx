@@ -91,21 +91,12 @@ function PublicSiteHeader({
       ref={headerRef}
       className={clsx(
         "main-tool-bar public-site-header dark relative flex h-[67px] w-full justify-center will-change-transform md:h-[64px]",
-        isMobileMenuOpen
-          ? "bg-transparent backdrop-blur-none md:bg-black/[0.04] md:backdrop-blur-[15px]"
-          : "bg-black/[0.04] backdrop-blur-[15px]",
         className,
       )}
       data-node-id="4487:112595"
       data-background={backgroundAppearance}
+      data-mobile-menu-open={isMobileMenuOpen}
     >
-      {isMobileMenuOpen ? (
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[433px] bg-black/[0.04] backdrop-blur-[15px] md:hidden"
-          aria-hidden="true"
-        />
-      ) : null}
-
       <nav
         className="relative z-10 h-full w-full max-w-[1200px] px-[16px] pt-[12px] md:px-[48px]"
         aria-label="Navegación principal"
@@ -130,7 +121,7 @@ function PublicSiteHeader({
             />
           </button>
 
-          <div className="absolute left-1/2 top-0 hidden -translate-x-1/2 md:block">
+          <div className="absolute left-1/2 top-0 hidden -translate-x-1/2 lg:block">
             <HorizontalTabMenu
               items={navigationItems.map((item) => item.label)}
               activeIndex={activeNavigationIndex}

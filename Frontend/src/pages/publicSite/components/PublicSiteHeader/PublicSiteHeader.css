@@ -3,6 +3,29 @@
   --public-navigation-hover-color: var(--color-text-200);
 }
 
+.public-site-header::before {
+  position: absolute;
+  z-index: 0;
+  inset-inline: 0;
+  top: 0;
+  height: 67px;
+  pointer-events: none;
+  content: "";
+  background: rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.public-site-header[data-mobile-menu-open="true"]::before {
+  height: 433px;
+}
+
+@media (min-width: 768px) {
+  .public-site-header::before {
+    height: 100%;
+  }
+}
+
 .public-site-header[data-background="light"] {
   --public-navigation-color: var(--color-primary-300);
   --public-navigation-hover-color: var(--color-primary-400);
