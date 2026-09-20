@@ -37,7 +37,7 @@ const STATEMENT_AUTO_REVERSE_DURATION_SECONDS = 1.6;
  * regreso al video.
  */
 const STATEMENT_WHEEL_FORWARD_SMOOTHING_MS = 135;
-const STATEMENT_WHEEL_REVERSE_SMOOTHING_MS = 80;
+const STATEMENT_WHEEL_REVERSE_SMOOTHING_MS = 105;
 
 /*
  * Permite terminar ligeramente antes el seguimiento
