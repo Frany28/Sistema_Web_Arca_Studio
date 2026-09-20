@@ -112,8 +112,9 @@ function getHomeStatementVisualState(progress) {
 
   return {
     progress: normalizedProgress,
-    maskScale:
-      normalizedProgress >= 1
+    maskScale: normalizedProgress <= 0
+      ? STATEMENT_INITIAL_MASK_SCALE
+      : normalizedProgress >= 1
         ? 1
         : Math.exp(
           Math.log(STATEMENT_INITIAL_MASK_SCALE) * (1 - easedProgress),
