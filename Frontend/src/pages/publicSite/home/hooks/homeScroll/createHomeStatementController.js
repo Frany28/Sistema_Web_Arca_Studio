@@ -9,6 +9,7 @@ import {
 
 const STATEMENT_KEYBOARD_DURATION_SECONDS = 2;
 const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 3.6;
+const STATEMENT_DESKTOP_SCRUB_DURATION_SECONDS = 2.2;
 
 function createHomeStatementController({
   commitNavigationState,
@@ -24,6 +25,7 @@ function createHomeStatementController({
   let progressTween;
   let wheelScrubbing = false;
   let autoRevealing = false;
+  let scrubTargetProgress;
 
   const stopAnimation = () => {
     progressTween?.kill();
@@ -67,13 +69,32 @@ function createHomeStatementController({
       }
 
       const nextProgress = advanceHomeStatementProgress(
-        progress.get(),
+        scrubTargetProgress ?? progress.get(),
         delta,
         getViewportHeight(),
         reduceMotion,
       );
-      commitProgress(nextProgress);
-      if (nextProgress === 0 || nextProgress === 1) wheelScrubbing = false;
+      scrubTargetProgress = nextProgress;
+      if (reduceMotion) {
+        commitProgress(nextProgress);
+        if (nextProgress === 0 || nextProgress === 1) wheelScrubbing = false;
+        return;
+      }
+
+      const animatedProgress = { value: progress.get() };
+      progressTween = gsap.to(animatedProgress, {
+        value: nextProgress,
+        duration: STATEMENT_DESKTOP_SCRUB_DURATION_SECONDS,
+        ease: "power2.out",
+        overwrite: true,
+        onUpdate: () => progress.set(animatedProgress.value),
+        onComplete: () => {
+          progressTween = undefined;
+          if (scrubTargetProgress !== nextProgress) return;
+          commitProgress(nextProgress);
+          if (nextProgress === 0 || nextProgress === 1) wheelScrubbing = false;
+        },
+      });
     });
   };
 
@@ -86,6 +107,7 @@ function createHomeStatementController({
     } = {},
   ) => {
     stopAnimation();
+    scrubTargetProgress = undefined;
     if (reduceMotion) {
       commitProgress(targetProgress);
       onComplete?.();
@@ -114,6 +136,7 @@ function createHomeStatementController({
 
   const animateAutomatically = (targetProgress, onComplete) => {
     stopAnimation();
+    scrubTargetProgress = undefined;
     if (reduceMotion) {
       commitProgress(targetProgress);
       onComplete?.();
@@ -151,6 +174,7 @@ function createHomeStatementController({
 
   const synchronizeWithNavigation = (nextState, currentState) => {
     stopAnimation();
+    scrubTargetProgress = undefined;
     if (nextState.panelIndex === panelIndex) {
       progress.set(nextState.phase === HOME_SCROLL_PHASES.TITLE ? 1 : 0);
     } else if (currentState.panelIndex === panelIndex) {
@@ -160,6 +184,7 @@ function createHomeStatementController({
 
   const resetForNativeScroll = () => {
     stopAnimation();
+    scrubTargetProgress = undefined;
     wheelScrubbing = false;
     const currentState = getNavigationState();
     if (
@@ -203,6 +228,7 @@ function createHomeStatementController({
 
 export {
   STATEMENT_AUTO_REVEAL_DURATION_SECONDS,
+  STATEMENT_DESKTOP_SCRUB_DURATION_SECONDS,
   STATEMENT_KEYBOARD_DURATION_SECONDS,
   createHomeStatementController,
 };

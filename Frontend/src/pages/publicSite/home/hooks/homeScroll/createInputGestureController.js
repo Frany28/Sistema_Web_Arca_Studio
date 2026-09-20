@@ -266,8 +266,6 @@ function createInputGestureController({
         return;
       }
 
-      statement.stopAnimation();
-
     const currentState = navigationStateRef.current;
     const isStatementReady =
       currentState.panelIndex === STATEMENT_PANEL_INDEX && !runtime.activeTween;
@@ -295,6 +293,7 @@ function createInputGestureController({
       );
       return;
     }
+    statement.stopAnimation();
     if (isStatementReady && statement.getProgress() >= 1) {
       runtime.statementEnteringUp = false;
     }
