@@ -7,12 +7,44 @@ import {
   createScrollbarHomeScrollState,
 } from "../../utils/homeScrollNavigation.js";
 
-const STATEMENT_KEYBOARD_DURATION_SECONDS = 2;
-const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 3.6;
+/*
+ * Navegación por teclado.
+ */
+const STATEMENT_KEYBOARD_DURATION_SECONDS = 1.6;
 
-// Suavizado exclusivo del zoom-out controlado por wheel/trackpad.
-const STATEMENT_WHEEL_SMOOTHING_MS = 210;
-const STATEMENT_WHEEL_EPSILON = 0.0002;
+/*
+ * Tablet / mobile:
+ * aparición automática del efecto.
+ */
+const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 3;
+
+/*
+ * Tablet / mobile:
+ * al regresar queremos recuperar el video
+ * claramente más rápido que al revelar.
+ */
+const STATEMENT_AUTO_REVERSE_DURATION_SECONDS = 1.6;
+
+/*
+ * Desktop wheel / trackpad.
+ *
+ * Menor número = responde más rápido.
+ *
+ * DOWN:
+ * zoom-out / aparición del texto.
+ *
+ * UP:
+ * regreso al video.
+ */
+const STATEMENT_WHEEL_FORWARD_SMOOTHING_MS = 165;
+const STATEMENT_WHEEL_REVERSE_SMOOTHING_MS = 105;
+
+/*
+ * Permite terminar ligeramente antes el seguimiento
+ * para evitar una cola demasiado larga cuando estamos
+ * prácticamente en 0 o 1.
+ */
+const STATEMENT_WHEEL_EPSILON = 0.001;
 
 function createHomeStatementController({
   commitNavigationState,
@@ -36,12 +68,22 @@ function createHomeStatementController({
 
   let wheelTargetProgress = progress.get();
 
+  /*
+   * Dirección actual del scrub:
+   *
+   *  1 = zoom-out
+   * -1 = regreso al video
+   */
+  let wheelScrubDirection = 0;
+
   const commitProgress = (nextProgress) => {
     const currentState = getNavigationState();
 
     progress.set(nextProgress);
 
-    if (currentState.panelIndex !== panelIndex) {
+    if (
+      currentState.panelIndex !== panelIndex
+    ) {
       return;
     }
 
@@ -52,15 +94,19 @@ function createHomeStatementController({
           ? HOME_SCROLL_PHASES.TITLE
           : HOME_SCROLL_PHASES.EFFECT;
 
-    if (currentState.phase === nextPhase) {
+    if (
+      currentState.phase === nextPhase
+    ) {
       return;
     }
 
     commitNavigationState({
       panelIndex,
       phase: nextPhase,
+
       entryDirection:
-        nextPhase === HOME_SCROLL_PHASES.IMAGE
+        nextPhase ===
+        HOME_SCROLL_PHASES.IMAGE
           ? HOME_SCROLL_DIRECTIONS.DOWN
           : null,
     });
@@ -76,6 +122,7 @@ function createHomeStatementController({
     }
 
     lastScrubTimestamp = 0;
+    wheelScrubDirection = 0;
   };
 
   const stopAnimation = () => {
@@ -89,13 +136,22 @@ function createHomeStatementController({
     autoRevealing = false;
   };
 
+  /*
+   * Loop único de suavizado.
+   *
+   * No creamos un tween GSAP por cada wheel.
+   * El progreso visual persigue continuamente
+   * wheelTargetProgress.
+   */
   const runWheelScrub = (timestamp) => {
     if (
       isPanelTransitioning() ||
-      getNavigationState().panelIndex !== panelIndex
+      getNavigationState().panelIndex !==
+        panelIndex
     ) {
       scrubAnimationFrame = undefined;
       lastScrubTimestamp = 0;
+      wheelScrubDirection = 0;
 
       return;
     }
@@ -104,6 +160,10 @@ function createHomeStatementController({
       lastScrubTimestamp = timestamp;
     }
 
+    /*
+     * Evita que un frame lento produzca
+     * un salto visual demasiado grande.
+     */
     const deltaTime = Math.min(
       timestamp - lastScrubTimestamp,
       32,
@@ -114,41 +174,80 @@ function createHomeStatementController({
     const currentProgress = progress.get();
 
     /*
-     * Suavizado exponencial dependiente del tiempo.
+     * Detectamos hacia dónde está intentando
+     * ir realmente el target.
+     */
+    const targetDifference =
+      wheelTargetProgress -
+      currentProgress;
+
+    if (
+      Math.abs(targetDifference) >
+      STATEMENT_WHEEL_EPSILON
+    ) {
+      wheelScrubDirection =
+        targetDifference > 0 ? 1 : -1;
+    }
+
+    /*
+     * Al bajar queremos un zoom-out fluido,
+     * pero un poco más rápido.
      *
-     * Esto hace que el progreso visual persiga
-     * wheelTargetProgress sin crear un tween nuevo
-     * cada vez que llega un evento wheel.
+     * Al subir queremos volver al video
+     * claramente más rápido.
+     */
+    const smoothingDuration =
+      wheelScrubDirection < 0
+        ? STATEMENT_WHEEL_REVERSE_SMOOTHING_MS
+        : STATEMENT_WHEEL_FORWARD_SMOOTHING_MS;
+
+    /*
+     * Suavizado exponencial independiente
+     * de los FPS de la pantalla.
      */
     const smoothing =
       1 -
       Math.exp(
-        -deltaTime /
-          STATEMENT_WHEEL_SMOOTHING_MS,
+        -deltaTime / smoothingDuration,
       );
 
-    const nextProgress =
+    let nextProgress =
       currentProgress +
-      (wheelTargetProgress - currentProgress) *
-        smoothing;
+      targetDifference * smoothing;
+
+    /*
+     * Protección numérica.
+     */
+    nextProgress = Math.min(
+      Math.max(nextProgress, 0),
+      1,
+    );
 
     const distanceToTarget = Math.abs(
-      wheelTargetProgress - nextProgress,
+      wheelTargetProgress -
+        nextProgress,
     );
 
     /*
-     * Cuando estamos suficientemente cerca del
-     * objetivo, fijamos el valor exacto para evitar
-     * que quede flotando infinitamente.
+     * Si ya estamos suficientemente cerca,
+     * fijamos directamente el endpoint.
+     *
+     * Esto es especialmente importante
+     * cuando regresamos al video:
+     * evita permanecer innecesariamente
+     * en el estado intermedio.
      */
     if (
       distanceToTarget <=
       STATEMENT_WHEEL_EPSILON
     ) {
-      commitProgress(wheelTargetProgress);
+      commitProgress(
+        wheelTargetProgress,
+      );
 
       scrubAnimationFrame = undefined;
       lastScrubTimestamp = 0;
+      wheelScrubDirection = 0;
 
       if (
         wheelTargetProgress <= 0 ||
@@ -172,8 +271,8 @@ function createHomeStatementController({
     pendingDelta += deltaY;
 
     /*
-     * Agrupamos todos los wheel events del mismo
-     * frame para evitar trabajo duplicado.
+     * Acumulamos los eventos wheel que llegan
+     * dentro del mismo frame.
      */
     if (animationFrame) {
       return;
@@ -196,8 +295,22 @@ function createHomeStatementController({
         }
 
         /*
-         * El wheel modifica el TARGET, no el
-         * progreso visual directamente.
+         * Guardamos la dirección inmediatamente.
+         *
+         * Esto permite que al cambiar de bajar
+         * a subir, el smoothing rápido de regreso
+         * se aplique desde el primer gesto.
+         */
+        if (delta > 0) {
+          wheelScrubDirection = 1;
+        } else if (delta < 0) {
+          wheelScrubDirection = -1;
+        }
+
+        /*
+         * La rueda modifica únicamente el target.
+         * El progreso visual se actualiza
+         * independientemente mediante runWheelScrub.
          */
         wheelTargetProgress =
           advanceHomeStatementProgress(
@@ -216,20 +329,19 @@ function createHomeStatementController({
         }
 
         /*
-         * Si el loop de scrub ya está funcionando,
-         * no creamos otro.
-         *
-         * Solo actualizamos wheelTargetProgress
-         * y el loop existente seguirá persiguiéndolo.
+         * Ya existe un loop:
+         * solamente modificamos el target.
          */
-        if (!scrubAnimationFrame) {
-          lastScrubTimestamp = 0;
-
-          scrubAnimationFrame =
-            window.requestAnimationFrame(
-              runWheelScrub,
-            );
+        if (scrubAnimationFrame) {
+          return;
         }
+
+        lastScrubTimestamp = 0;
+
+        scrubAnimationFrame =
+          window.requestAnimationFrame(
+            runWheelScrub,
+          );
       });
   };
 
@@ -239,12 +351,14 @@ function createHomeStatementController({
     {
       duration =
         STATEMENT_KEYBOARD_DURATION_SECONDS,
+
       ease = "sine.inOut",
     } = {},
   ) => {
     stopAnimation();
 
-    wheelTargetProgress = targetProgress;
+    wheelTargetProgress =
+      targetProgress;
 
     if (reduceMotion) {
       commitProgress(targetProgress);
@@ -268,8 +382,11 @@ function createHomeStatementController({
       animatedProgress,
       {
         value: targetProgress,
+
         duration,
+
         ease,
+
         overwrite: true,
 
         onUpdate: () => {
@@ -284,7 +401,9 @@ function createHomeStatementController({
           wheelTargetProgress =
             targetProgress;
 
-          commitProgress(targetProgress);
+          commitProgress(
+            targetProgress,
+          );
 
           onComplete?.();
         },
@@ -298,7 +417,8 @@ function createHomeStatementController({
   ) => {
     stopAnimation();
 
-    wheelTargetProgress = targetProgress;
+    wheelTargetProgress =
+      targetProgress;
 
     if (reduceMotion) {
       commitProgress(targetProgress);
@@ -320,13 +440,31 @@ function createHomeStatementController({
       entryDirection: null,
     });
 
+    /*
+     * Reveal lento y estético.
+     *
+     * Reverse notablemente más rápido,
+     * porque queremos recuperar el video
+     * sin permanecer demasiado tiempo
+     * en el estado intermedio.
+     */
+    const duration =
+      targetProgress <= 0
+        ? STATEMENT_AUTO_REVERSE_DURATION_SECONDS
+        : STATEMENT_AUTO_REVEAL_DURATION_SECONDS;
+
     progressTween = gsap.to(
       animatedProgress,
       {
         value: targetProgress,
-        duration:
-          STATEMENT_AUTO_REVEAL_DURATION_SECONDS,
-        ease: "sine.inOut",
+
+        duration,
+
+        ease:
+          targetProgress <= 0
+            ? "power2.out"
+            : "sine.inOut",
+
         overwrite: true,
 
         onUpdate: () => {
@@ -342,7 +480,9 @@ function createHomeStatementController({
           wheelTargetProgress =
             targetProgress;
 
-          commitProgress(targetProgress);
+          commitProgress(
+            targetProgress,
+          );
 
           onComplete?.();
         },
@@ -352,13 +492,17 @@ function createHomeStatementController({
     return true;
   };
 
-  const startAutoReveal = (onComplete) =>
+  const startAutoReveal = (
+    onComplete,
+  ) =>
     animateAutomatically(
       1,
       onComplete,
     );
 
-  const startAutoReverse = (onComplete) =>
+  const startAutoReverse = (
+    onComplete,
+  ) =>
     animateAutomatically(
       0,
       onComplete,
@@ -371,7 +515,8 @@ function createHomeStatementController({
     stopAnimation();
 
     if (
-      nextState.panelIndex === panelIndex
+      nextState.panelIndex ===
+      panelIndex
     ) {
       const nextProgress =
         nextState.phase ===
@@ -388,7 +533,8 @@ function createHomeStatementController({
     }
 
     if (
-      currentState.panelIndex === panelIndex
+      currentState.panelIndex ===
+      panelIndex
     ) {
       wheelTargetProgress = 0;
 
@@ -442,6 +588,8 @@ function createHomeStatementController({
         window.cancelAnimationFrame(
           animationFrame,
         );
+
+        animationFrame = undefined;
       }
 
       stopWheelScrubAnimation();
@@ -452,7 +600,8 @@ function createHomeStatementController({
       pendingDelta = 0;
     },
 
-    getProgress: () => progress.get(),
+    getProgress: () =>
+      progress.get(),
 
     isWheelScrubbing: () =>
       wheelScrubbing,
