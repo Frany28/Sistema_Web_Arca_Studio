@@ -77,7 +77,7 @@ function PublicSiteMobileMenu({
         <Motion.div
           key="public-site-mobile-menu"
           id={id}
-          className="pointer-events-auto absolute inset-x-0 top-[67px] h-[calc(100dvh-67px)] lg:hidden"
+          className="pointer-events-auto absolute inset-x-0 top-[67px] h-[calc(100dvh-67px)] md:hidden"
           initial="closed"
           animate="open"
           exit="closed"
@@ -86,7 +86,7 @@ function PublicSiteMobileMenu({
           data-node-id="5156:130079"
         >
           <Motion.div
-            className="w-full overflow-hidden bg-black/[0.04] backdrop-blur-[15px]"
+            className="w-full overflow-hidden bg-transparent"
             variants={panelVariants}
             custom={motionContext}
           >

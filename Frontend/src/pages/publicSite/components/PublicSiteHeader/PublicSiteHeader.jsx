@@ -61,7 +61,7 @@ function PublicSiteHeader({
   }, [closeMobileMenu, onContact]);
 
   useEffect(() => {
-    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
     const closeAtDesktop = (event) => {
       if (event.matches) setIsMobileMenuOpen(false);
     };
@@ -90,14 +90,24 @@ function PublicSiteHeader({
     <header
       ref={headerRef}
       className={clsx(
-        "main-tool-bar public-site-header dark relative flex h-[67px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px] will-change-transform lg:h-[64px]",
+        "main-tool-bar public-site-header dark relative flex h-[67px] w-full justify-center will-change-transform md:h-[64px]",
+        isMobileMenuOpen
+          ? "bg-transparent backdrop-blur-none md:bg-black/[0.04] md:backdrop-blur-[15px]"
+          : "bg-black/[0.04] backdrop-blur-[15px]",
         className,
       )}
       data-node-id="4487:112595"
       data-background={backgroundAppearance}
     >
+      {isMobileMenuOpen ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[433px] bg-black/[0.04] backdrop-blur-[15px] md:hidden"
+          aria-hidden="true"
+        />
+      ) : null}
+
       <nav
-        className="relative h-full w-full max-w-[1200px] px-[16px] pt-[12px] md:px-[48px]"
+        className="relative z-10 h-full w-full max-w-[1200px] px-[16px] pt-[12px] md:px-[48px]"
         aria-label="Navegación principal"
         data-node-id="4487:112596"
       >
@@ -107,7 +117,7 @@ function PublicSiteHeader({
         >
           <button
             type="button"
-            className="absolute left-0 top-[6px] flex h-[32px] w-[152px] cursor-pointer items-center justify-start border-0 bg-transparent p-0 lg:top-[3.5px]"
+            className="absolute left-0 top-[6px] flex h-[32px] w-[152px] cursor-pointer items-center justify-start border-0 bg-transparent p-0 md:top-[3.5px]"
             aria-label="Ir al inicio"
             onClick={() => onNavigate?.("home")}
             data-node-id="4487:112602"
@@ -120,7 +130,7 @@ function PublicSiteHeader({
             />
           </button>
 
-          <div className="absolute left-1/2 top-0 hidden -translate-x-1/2 lg:block">
+          <div className="absolute left-1/2 top-0 hidden -translate-x-1/2 md:block">
             <HorizontalTabMenu
               items={navigationItems.map((item) => item.label)}
               activeIndex={activeNavigationIndex}
@@ -135,7 +145,7 @@ function PublicSiteHeader({
           </div>
 
           <div
-            className="absolute right-0 top-[3px] hidden items-center gap-[8px] lg:flex"
+            className="absolute right-0 top-[3px] hidden items-center gap-[8px] md:flex"
             data-node-id="4487:112599"
           >
             <Button
@@ -157,7 +167,7 @@ function PublicSiteHeader({
           <button
             ref={menuToggleRef}
             type="button"
-            className="public-site-menu-toggle absolute -top-[4px] right-0 flex size-[52px] items-center justify-center rounded-[var(--radius-3)] border-0 bg-transparent p-[16px] text-[var(--public-navigation-color)] outline-none transition-colors duration-150 hover:text-[var(--public-navigation-hover-color)] focus-visible:ring-2 focus-visible:ring-current motion-reduce:transition-none lg:hidden"
+            className="public-site-menu-toggle absolute -top-[4px] right-0 flex size-[52px] items-center justify-center rounded-[var(--radius-3)] border-0 bg-transparent p-[16px] text-[var(--public-navigation-color)] outline-none transition-colors duration-150 hover:text-[var(--public-navigation-hover-color)] focus-visible:ring-2 focus-visible:ring-current motion-reduce:transition-none md:hidden"
             aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={isMobileMenuOpen}
             aria-controls={MOBILE_MENU_ID}
