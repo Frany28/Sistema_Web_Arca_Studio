@@ -1,6 +1,8 @@
-import { useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
+import { Add, HambergerMenu } from "iconsax-react";
 import useHeaderBackground from "./useHeaderBackground.js";
+import PublicSiteMobileMenu from "./PublicSiteMobileMenu.jsx";
 import "./PublicSiteHeader.css";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
@@ -17,6 +19,8 @@ const DEFAULT_NAVIGATION_ITEMS = [
   { id: "about", label: "Sobre nosotros" },
 ];
 
+const MOBILE_MENU_ID = "public-site-mobile-menu";
+
 function PublicSiteHeader({
   activeNavigationId,
   className,
@@ -26,6 +30,8 @@ function PublicSiteHeader({
   scrollContainerRef,
 }) {
   const headerRef = useRef(null);
+  const menuToggleRef = useRef(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const backgroundAppearance = useHeaderBackground(headerRef, scrollContainerRef);
   const activeNavigationIndex = navigationItems.findIndex(
     (item) => item.id === activeNavigationId,
@@ -33,18 +39,65 @@ function PublicSiteHeader({
 
   useScrollDirectionVisibility(headerRef, { scrollContainerRef });
 
+  const closeMobileMenu = useCallback((restoreFocus = false) => {
+    setIsMobileMenuOpen(false);
+
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => menuToggleRef.current?.focus());
+    }
+  }, []);
+
+  const handleMobileNavigate = useCallback(
+    (navigationId) => {
+      closeMobileMenu();
+      onNavigate?.(navigationId);
+    },
+    [closeMobileMenu, onNavigate],
+  );
+
+  const handleMobileContact = useCallback(() => {
+    closeMobileMenu();
+    onContact?.();
+  }, [closeMobileMenu, onContact]);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const closeAtDesktop = (event) => {
+      if (event.matches) setIsMobileMenuOpen(false);
+    };
+
+    closeAtDesktop(desktopQuery);
+    desktopQuery.addEventListener("change", closeAtDesktop);
+    return () => desktopQuery.removeEventListener("change", closeAtDesktop);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closeMobileMenu(true);
+    };
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [closeMobileMenu, isMobileMenuOpen]);
+
   return (
     <header
       ref={headerRef}
       className={clsx(
-        "main-tool-bar public-site-header dark flex h-[64px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px] will-change-transform",
+        "main-tool-bar public-site-header dark relative flex h-[67px] w-full justify-center bg-black/[0.04] backdrop-blur-[15px] will-change-transform lg:h-[64px]",
         className,
       )}
       data-node-id="4487:112595"
       data-background={backgroundAppearance}
     >
       <nav
-        className="h-full w-full max-w-[1200px] px-[16px] pt-[12px] min-[768px]:px-[48px]"
+        className="relative h-full w-full max-w-[1200px] px-[16px] pt-[12px] md:px-[48px]"
         aria-label="Navegación principal"
         data-node-id="4487:112596"
       >
@@ -54,7 +107,7 @@ function PublicSiteHeader({
         >
           <button
             type="button"
-            className="absolute left-0 top-[3.5px] flex h-[32px] w-[152px] cursor-pointer items-center justify-start border-0 bg-transparent p-0"
+            className="absolute left-0 top-[6px] flex h-[32px] w-[152px] cursor-pointer items-center justify-start border-0 bg-transparent p-0 lg:top-[3.5px]"
             aria-label="Ir al inicio"
             onClick={() => onNavigate?.("home")}
             data-node-id="4487:112602"
@@ -67,21 +120,22 @@ function PublicSiteHeader({
             />
           </button>
 
-          <HorizontalTabMenu
-            className="absolute left-1/2 top-0 hidden -translate-x-1/2 min-[1024px]:flex"
-            items={navigationItems.map((item) => item.label)}
-            activeIndex={activeNavigationIndex}
-            interactive
-            presentation="publicNavigation"
-            style="Underlined"
-            filled="off"
-            onChange={(index) => onNavigate?.(navigationItems[index].id)}
-            aria-label="Secciones de inicio"
-            data-node-id="4487:112598"
-          />
+          <div className="absolute left-1/2 top-0 hidden -translate-x-1/2 lg:block">
+            <HorizontalTabMenu
+              items={navigationItems.map((item) => item.label)}
+              activeIndex={activeNavigationIndex}
+              interactive
+              presentation="publicNavigation"
+              style="Underlined"
+              filled="off"
+              onChange={(index) => onNavigate?.(navigationItems[index].id)}
+              aria-label="Secciones de inicio"
+              data-node-id="4487:112598"
+            />
+          </div>
 
           <div
-            className="absolute right-0 top-[3px] flex items-center gap-[8px]"
+            className="absolute right-0 top-[3px] hidden items-center gap-[8px] lg:flex"
             data-node-id="4487:112599"
           >
             <Button
@@ -99,7 +153,46 @@ function PublicSiteHeader({
               Contáctanos
             </Button>
           </div>
+
+          <button
+            ref={menuToggleRef}
+            type="button"
+            className="public-site-menu-toggle absolute -top-[4px] right-0 flex size-[52px] items-center justify-center rounded-[var(--radius-3)] border-0 bg-transparent p-[16px] text-[var(--public-navigation-color)] outline-none transition-colors duration-150 hover:text-[var(--public-navigation-hover-color)] focus-visible:ring-2 focus-visible:ring-current motion-reduce:transition-none lg:hidden"
+            aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls={MOBILE_MENU_ID}
+            onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+            data-node-id={isMobileMenuOpen ? "5156:130000" : "5074:27974"}
+          >
+            {isMobileMenuOpen ? (
+              <Add
+                className="size-[20px] rotate-45"
+                color="currentColor"
+                size={20}
+                variant="Linear"
+                aria-hidden="true"
+              />
+            ) : (
+              <HambergerMenu
+                className="size-[20px]"
+                color="currentColor"
+                size={20}
+                variant="Linear"
+                aria-hidden="true"
+              />
+            )}
+          </button>
         </div>
+
+        <PublicSiteMobileMenu
+          id={MOBILE_MENU_ID}
+          isOpen={isMobileMenuOpen}
+          activeNavigationId={activeNavigationId}
+          navigationItems={navigationItems}
+          contactDisabled={!onContact}
+          onNavigate={handleMobileNavigate}
+          onContact={handleMobileContact}
+        />
       </nav>
     </header>
   );

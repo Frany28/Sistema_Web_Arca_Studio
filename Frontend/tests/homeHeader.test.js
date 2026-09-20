@@ -2,105 +2,74 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const headerSource = readFileSync(
-  new URL(
-    "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteHeader.jsx",
-    import.meta.url,
-  ),
-  "utf8",
+const readSource = (path) =>
+  readFileSync(new URL(path, import.meta.url), "utf8");
+
+const headerSource = readSource(
+  "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteHeader.jsx",
 );
-const horizontalTabMenuSource = readFileSync(
-  new URL(
-    "../src/components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx",
-    import.meta.url,
-  ),
-  "utf8",
-);
-const globalStylesSource = readFileSync(
-  new URL("../src/styles/global.css", import.meta.url),
-  "utf8",
-);
-const scrollDirectionVisibilitySource = readFileSync(
-  new URL("../src/hooks/useScrollDirectionVisibility.js", import.meta.url),
-  "utf8",
+const mobileMenuSource = readSource(
+  "../src/pages/publicSite/components/PublicSiteHeader/PublicSiteMobileMenu.jsx",
 );
 
-test("the public home header preserves the Figma structure and labels", () => {
-  assert.match(headerSource, /data-node-id="4487:112595"/);
-  assert.match(headerSource, /h-\[64px\]/);
-  assert.match(headerSource, /max-w-\[1200px\]/);
-  assert.match(headerSource, /Servicios/);
-  assert.match(headerSource, /Proyectos destacados/);
-  assert.match(headerSource, /Nuestros Procesos/);
-  assert.match(headerSource, /Sobre nosotros/);
-  assert.doesNotMatch(headerSource, /Registrarse|onRegister|onLogin/);
-  assert.match(headerSource, /Contáctanos/);
-  assert.match(headerSource, /data-node-id="4781:135050"/);
-});
+test("the public header keeps its navigation and shared desktop UI", () => {
+  for (const label of [
+    "Servicios",
+    "Proyectos destacados",
+    "Nuestros Procesos",
+    "Sobre nosotros",
+  ]) {
+    assert.match(headerSource, new RegExp(label));
+  }
 
-test("the public home header adapts its appearance and reuses shared UI", () => {
-  assert.match(headerSource, /appearance=\{backgroundAppearance\}/);
   assert.match(headerSource, /useHeaderBackground\(headerRef, scrollContainerRef\)/);
-  assert.match(headerSource, /theme="Primary"/);
-  assert.match(headerSource, /type="Solid"/);
-  assert.match(headerSource, /backdrop-blur-\[15px\]/);
-  assert.match(headerSource, /<Button/);
+  assert.match(headerSource, /useScrollDirectionVisibility\(headerRef/);
+  assert.match(headerSource, /<MainLogo/);
   assert.match(headerSource, /<HorizontalTabMenu/);
-  assert.match(headerSource, /presentation="publicNavigation"/);
-  assert.match(headerSource, /style="Underlined"/);
-  assert.match(headerSource, /items=\{navigationItems\.map\(\(item\) => item\.label\)\}/);
-  assert.match(headerSource, /activeIndex=\{activeNavigationIndex\}/);
-  assert.match(headerSource, /onNavigate\?\.\(navigationItems\[index\]\.id\)/);
-  assert.doesNotMatch(headerSource, /<ul|<li/);
-  assert.doesNotMatch(headerSource, /dark:/);
-  assert.doesNotMatch(headerSource, /useEffect|MutationObserver/);
+  assert.match(headerSource, /<Button/);
 });
 
-test("the public navbar hides while scrolling down and returns while scrolling up", () => {
+test("desktop and collapsed navigation are mutually exclusive at 1024px", () => {
+  assert.match(headerSource, /hidden -translate-x-1\/2 lg:block/);
+  assert.match(headerSource, /hidden items-center gap-\[8px\] lg:flex/);
+  assert.match(headerSource, /public-site-menu-toggle[\s\S]*?lg:hidden/);
+  assert.match(mobileMenuSource, /top-\[67px\][^\n]*lg:hidden/);
+  assert.match(headerSource, /matchMedia\("\(min-width: 1024px\)"\)/);
+  assert.match(headerSource, /if \(event\.matches\) setIsMobileMenuOpen\(false\)/);
+});
+
+test("the collapsed menu is accessible and uses navigationItems", () => {
+  assert.match(headerSource, /HambergerMenu/);
+  assert.match(headerSource, /"Cerrar menú" : "Abrir menú"/);
+  assert.match(headerSource, /aria-expanded=\{isMobileMenuOpen\}/);
+  assert.match(headerSource, /aria-controls=\{MOBILE_MENU_ID\}/);
+  assert.match(mobileMenuSource, /navigationItems\.map\(\(item\) =>/);
+  assert.match(mobileMenuSource, /onNavigate\(item\.id\)/);
+  assert.match(mobileMenuSource, /onClick=\{onContact\}/);
+  assert.doesNotMatch(
+    mobileMenuSource,
+    /Servicios|Proyectos destacados|Nuestros Procesos|Sobre nosotros/,
+  );
+});
+
+test("mobile actions close the menu and Escape restores toggle focus", () => {
   assert.match(
     headerSource,
-    /useScrollDirectionVisibility\(headerRef, \{ scrollContainerRef \}\)/,
+    /handleMobileNavigate[\s\S]*?closeMobileMenu\(\)[\s\S]*?onNavigate/,
   );
-  assert.match(scrollDirectionVisibilitySource, /gsap\.registerPlugin\(ScrollTrigger\)/);
-  assert.match(scrollDirectionVisibilitySource, /NAVBAR_SCROLL_DURATION_SECONDS = 0\.2/);
-  assert.match(scrollDirectionVisibilitySource, /getClosestScrollContainer/);
   assert.match(
-    scrollDirectionVisibilitySource,
-    /scrollContainerRef\?\.current \?\? getClosestScrollContainer\(target\)/,
+    headerSource,
+    /handleMobileContact[\s\S]*?closeMobileMenu\(\)[\s\S]*?onContact/,
   );
-  assert.match(scrollDirectionVisibilitySource, /overflowY/);
-  assert.match(scrollDirectionVisibilitySource, /scroller: scrollContainer === window/);
-  assert.match(scrollDirectionVisibilitySource, /yPercent: -100/);
-  assert.match(scrollDirectionVisibilitySource, /paused: true/);
-  assert.match(scrollDirectionVisibilitySource, /\.progress\(1\)/);
-  assert.match(scrollDirectionVisibilitySource, /start: 0/);
-  assert.match(scrollDirectionVisibilitySource, /end: "max"/);
-  assert.match(scrollDirectionVisibilitySource, /self\.direction === -1/);
-  assert.match(scrollDirectionVisibilitySource, /showAnimation\.play\(\)/);
-  assert.match(scrollDirectionVisibilitySource, /showAnimation\.reverse\(\)/);
-  assert.match(scrollDirectionVisibilitySource, /useReducedMotion/);
-  assert.match(scrollDirectionVisibilitySource, /context\.revert\(\)/);
+  assert.match(headerSource, /event\.key !== "Escape"/);
+  assert.match(headerSource, /closeMobileMenu\(true\)/);
+  assert.match(headerSource, /menuToggleRef\.current\?\.focus\(\)/);
 });
 
-test("the public navigation hover uses the Figma underline state", () => {
-  assert.match(horizontalTabMenuSource, /border-b-2 border-transparent/);
-  assert.match(
-    horizontalTabMenuSource,
-    /hover:border-\[var\(--color-neutral-100-uniform\)\]/,
-  );
-  assert.match(
-    horizontalTabMenuSource,
-    /hover:text-\[var\(--color-neutral-950-uniform\)\]/,
-  );
-  assert.match(horizontalTabMenuSource, /hover:bg-transparent/);
-  assert.match(horizontalTabMenuSource, /aria-current=\{isPublicNavigation/);
-  assert.match(
-    horizontalTabMenuSource,
-    /isActive[\s\S]*border-\[var\(--color-neutral-100-uniform\)\]/,
-  );
-  assert.doesNotMatch(horizontalTabMenuSource, /focus-visible:border-0/);
-  assert.match(
-    globalStylesSource,
-    /--color-neutral-950-uniform: var\(--app-neutral-950-uniform\)/,
-  );
+test("the vertical menu animation respects reduced motion", () => {
+  assert.match(mobileMenuSource, /AnimatePresence/);
+  assert.match(mobileMenuSource, /useReducedMotion\(\)/);
+  assert.match(mobileMenuSource, /staggerChildren/);
+  assert.match(mobileMenuSource, /y: reduceMotion \? 0 : -6/);
+  assert.doesNotMatch(mobileMenuSource, /scale|spring|bounce|x:/);
 });

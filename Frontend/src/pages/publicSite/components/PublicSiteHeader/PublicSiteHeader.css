@@ -9,7 +9,8 @@
 }
 
 .public-site-header [role="tab"],
-.public-site-header [aria-label="Ir al inicio"] {
+.public-site-header [aria-label="Ir al inicio"],
+.public-site-header .public-site-menu-toggle {
   color: var(--public-navigation-color);
 }
 
@@ -26,7 +27,15 @@
 }
 
 .public-site-header [role="tab"]:focus-visible,
-.public-site-header [aria-label="Ir al inicio"]:focus-visible {
+.public-site-header [aria-label="Ir al inicio"]:focus-visible,
+.public-site-header .public-site-menu-toggle:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
+}
+
+.public-site-header .public-site-mobile-contact {
+  height: 49px;
+  padding: 16px;
+  border: 0;
+  border-radius: var(--radius-3);
 }
