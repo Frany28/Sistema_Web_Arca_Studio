@@ -158,19 +158,10 @@ function PublicSiteHeader({
             showRightIcon={false}
             iconLeft={
               isMobileMenuOpen ? (
-                <svg
-                  className="size-[20px]"
-                  viewBox="0 0 20 20"
-                  fill="none"
+                <span
+                  className="public-site-menu-toggle__close-icon size-[20px]"
                   aria-hidden="true"
-                >
-                  <path
-                    d="M4.167 4.167 15.833 15.833M15.833 4.167 4.167 15.833"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                />
               ) : (
                 <HambergerMenu
                   className="size-[20px]"

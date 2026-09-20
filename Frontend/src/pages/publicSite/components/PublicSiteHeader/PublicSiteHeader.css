@@ -91,10 +91,27 @@
 
 .public-site-header .public-site-navigation-menu--horizontal .public-site-navigation__item:hover,
 .public-site-header .public-site-navigation-menu--horizontal .public-site-navigation__item:focus-visible,
-.public-site-header .public-site-navigation-menu--horizontal .public-site-navigation__item[aria-current="page"],
-.public-site-header .public-site-navigation-menu--vertical .public-site-navigation__item[aria-current="page"] {
+.public-site-header .public-site-navigation-menu--horizontal .public-site-navigation__item[aria-current="page"] {
   color: var(--public-navigation-color);
   border-color: var(--public-navigation-color);
+}
+
+.public-site-header .public-site-navigation-menu--vertical .public-site-navigation__item::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 2px;
+  content: "";
+  background-color: transparent;
+}
+
+.public-site-header .public-site-navigation-menu--vertical .public-site-navigation__item[aria-current="page"] {
+  color: var(--public-navigation-color);
+}
+
+.public-site-header .public-site-navigation-menu--vertical .public-site-navigation__item[aria-current="page"]::before {
+  background-color: var(--public-navigation-color);
 }
 
 /* El seleccionado conserva su color base incluso cuando el puntero sigue encima. */
@@ -115,6 +132,14 @@
 
 .public-site-header .public-site-menu-toggle {
   border-radius: var(--radius-3);
+}
+
+.public-site-header .public-site-menu-toggle__close-icon {
+  display: block;
+  flex: none;
+  background-color: currentColor;
+  mask: url("../../../../assets/icons/x-mark.svg") center / 20px 20px no-repeat;
+  -webkit-mask: url("../../../../assets/icons/x-mark.svg") center / 20px 20px no-repeat;
 }
 
 .public-site-header .public-site-menu-toggle:focus-visible {

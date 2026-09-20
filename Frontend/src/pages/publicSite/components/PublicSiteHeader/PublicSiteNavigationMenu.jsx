@@ -45,7 +45,7 @@ function PublicSiteNavigationMenu({
       className={clsx(
         "public-site-navigation-menu inline-flex max-w-full",
         isVertical
-          ? "public-site-navigation-menu--vertical w-fit flex-col items-stretch overflow-visible"
+          ? "public-site-navigation-menu--vertical w-fit flex-col items-stretch gap-[16px] overflow-visible"
           : "public-site-navigation-menu--horizontal h-[52px] items-center gap-[8px] overflow-x-auto",
         className,
       )}
@@ -66,7 +66,7 @@ function PublicSiteNavigationMenu({
             className={clsx(
               "public-site-navigation__item inline-flex shrink-0 items-center justify-center whitespace-nowrap bg-transparent text-heading-8 outline-none transition-colors duration-150 motion-reduce:transition-none",
               isVertical
-                ? "h-[64px] w-full border-l-2 border-transparent px-[4px] py-0"
+                ? "relative h-[52px] w-full px-[4px] py-[8px]"
                 : "h-[52px] border-b-2 border-transparent px-[4px] pb-[14px] pt-[8px]",
             )}
             aria-current={isActive ? "page" : undefined}
