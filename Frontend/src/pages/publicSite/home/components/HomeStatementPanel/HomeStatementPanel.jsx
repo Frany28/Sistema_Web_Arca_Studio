@@ -11,7 +11,7 @@ import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js"
 import { getHomeStatementVisualState } from "../../utils/homeScrollNavigation.js";
 
 const STATEMENT_MASK_ID = "home-statement-video-mask";
-const STATEMENT_FOCUS_LETTER = "a";
+const STATEMENT_FOCUS_LETTER = "c";
 const STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO = 0.2;
 
 function HomeStatementPanel({
@@ -37,12 +37,7 @@ function HomeStatementPanel({
     visualProgress,
     (value) => getHomeStatementVisualState(value).maskScale,
   );
-  const maskTranslateX = useTransform(() => {
-    const { progress: currentProgress } = getHomeStatementVisualState(
-      visualProgress.get(),
-    );
-    return -focusOffsetX.get() * (1 - currentProgress);
-  });
+  const maskTranslateX = useTransform(() => -focusOffsetX.get());
   const focusLetterIndex = phrase
     .toLocaleLowerCase("es")
     .indexOf(STATEMENT_FOCUS_LETTER);
