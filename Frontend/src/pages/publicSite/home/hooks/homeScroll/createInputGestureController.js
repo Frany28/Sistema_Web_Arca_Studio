@@ -320,6 +320,20 @@ function createInputGestureController({
         return;
       }
 
+      if (
+        direction === HOME_SCROLL_DIRECTIONS.UP &&
+        currentProgress >= 1 &&
+        window.matchMedia?.("(max-width: 1023px)").matches
+      ) {
+        runtime.wheelTransitionLock = true;
+        statement.startAutoReverse(() => {
+          coordination.panel.moveByDirection(HOME_SCROLL_DIRECTIONS.UP);
+        });
+        runtime.statementEnteringUp = false;
+        debugWheel(event, normalizedDelta, progressDelta, direction, "STATEMENT_AUTO_REVERSE");
+        return;
+      }
+
       runtime.wheelTransitionLock = true;
 
       statement.animateTo(
@@ -535,6 +549,19 @@ function createInputGestureController({
         coordination.content.navigateSection("services");
         return;
       }
+      if (
+        touchGesture.startProgress >= 1 &&
+        verticalDistance < -TOUCH_SWIPE_THRESHOLD_PX &&
+        window.matchMedia?.("(max-width: 1023px)").matches
+      ) {
+        touchGesture.consumed = true;
+        runtime.wheelTransitionLock = true;
+        statement.startAutoReverse(() => {
+          coordination.panel.moveByDirection(HOME_SCROLL_DIRECTIONS.UP);
+        });
+        runtime.statementEnteringUp = false;
+        return;
+      }
 
       statement.commitProgress(advanceHomeStatementProgress(
         touchGesture.startProgress,
@@ -613,6 +640,18 @@ function createInputGestureController({
       }
       if (currentProgress >= 1 && direction === HOME_SCROLL_DIRECTIONS.DOWN) {
         coordination.content.navigateSection("services");
+        return;
+      }
+      if (
+        direction === HOME_SCROLL_DIRECTIONS.UP &&
+        currentProgress >= 1 &&
+        window.matchMedia?.("(max-width: 1023px)").matches
+      ) {
+        runtime.wheelTransitionLock = true;
+        statement.startAutoReverse(() => {
+          coordination.panel.moveByDirection(HOME_SCROLL_DIRECTIONS.UP);
+        });
+        runtime.statementEnteringUp = false;
         return;
       }
       statement.animateTo(

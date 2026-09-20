@@ -77,13 +77,20 @@ function createHomeStatementController({
     });
   };
 
-  const animateTo = (targetProgress, onComplete) => {
+  const animateTo = (
+    targetProgress,
+    onComplete,
+    {
+      duration = STATEMENT_KEYBOARD_DURATION_SECONDS,
+      ease = "power2.inOut",
+    } = {},
+  ) => {
     stopAnimation();
     if (reduceMotion) {
-  commitProgress(targetProgress);
-  onComplete?.();
-  return;
-  }
+      commitProgress(targetProgress);
+      onComplete?.();
+      return;
+    }
 
     const animatedProgress = { value: progress.get() };
     commitNavigationState({
@@ -93,22 +100,22 @@ function createHomeStatementController({
     });
     progressTween = gsap.to(animatedProgress, {
       value: targetProgress,
-      duration: STATEMENT_KEYBOARD_DURATION_SECONDS,
-      ease: "power2.inOut",
+      duration,
+      ease,
       overwrite: true,
       onUpdate: () => progress.set(animatedProgress.value),
       onComplete: () => {
-      progressTween = undefined;
-      commitProgress(targetProgress);
-      onComplete?.();
-    },
+        progressTween = undefined;
+        commitProgress(targetProgress);
+        onComplete?.();
+      },
     });
   };
 
-  const startAutoReveal = (onComplete) => {
+  const animateAutomatically = (targetProgress, onComplete) => {
     stopAnimation();
     if (reduceMotion) {
-      commitProgress(1);
+      commitProgress(targetProgress);
       onComplete?.();
       return true;
     }
@@ -121,7 +128,7 @@ function createHomeStatementController({
       entryDirection: null,
     });
     progressTween = gsap.to(animatedProgress, {
-      value: 1,
+      value: targetProgress,
       duration: STATEMENT_AUTO_REVEAL_DURATION_SECONDS,
       ease: "sine.inOut",
       overwrite: true,
@@ -129,12 +136,18 @@ function createHomeStatementController({
       onComplete: () => {
         progressTween = undefined;
         autoRevealing = false;
-        commitProgress(1);
+        commitProgress(targetProgress);
         onComplete?.();
       },
     });
     return true;
   };
+
+  const startAutoReveal = (onComplete) =>
+    animateAutomatically(1, onComplete);
+
+  const startAutoReverse = (onComplete) =>
+    animateAutomatically(0, onComplete);
 
   const synchronizeWithNavigation = (nextState, currentState) => {
     stopAnimation();
@@ -182,6 +195,7 @@ function createHomeStatementController({
       wheelScrubbing = true;
     },
     stopAnimation,
+    startAutoReverse,
     startAutoReveal,
     synchronizeWithNavigation,
   };

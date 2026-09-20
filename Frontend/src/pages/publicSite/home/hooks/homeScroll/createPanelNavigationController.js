@@ -77,7 +77,14 @@ function createPanelNavigationController({
     const isStatementEntry =
       panelChanged &&
       nextState.panelIndex === STATEMENT_PANEL_INDEX &&
+      (nextState.entryDirection === HOME_SCROLL_DIRECTIONS.DOWN ||
+        runtime.statementEnteringUp);
+    const isStatementEntryDown =
+      nextState.panelIndex === STATEMENT_PANEL_INDEX &&
       nextState.entryDirection === HOME_SCROLL_DIRECTIONS.DOWN;
+    const isStatementEntryUp =
+      nextState.panelIndex === STATEMENT_PANEL_INDEX &&
+      runtime.statementEnteringUp;
 
     statement.synchronizeWithNavigation(nextState, currentState);
     if (
@@ -92,14 +99,17 @@ function createPanelNavigationController({
     if (panelChanged) {
       runtime.wheelTransitionLock = true;
     }
-    if (!panelChanged && !needsAlignment) return true;
+    if (!panelChanged && !needsAlignment) {
+      runtime.statementEnteringUp = false;
+      return true;
+    }
 
     runtime.isProgrammaticScroll = true;
     runtime.ignoreNextScrollEnd = runtime.supportsScrollEnd;
     const completeAlignment = () => {
       runtime.isProgrammaticScroll = false;
       if (
-        isStatementEntry &&
+        isStatementEntryDown &&
         window.matchMedia?.("(max-width: 1023px)").matches
       ) {
         runtime.wheelTransitionLock = true;
@@ -111,6 +121,7 @@ function createPanelNavigationController({
         coordination.content?.synchronizeTitleVisibility();
         return;
       }
+      runtime.statementEnteringUp = false;
       releaseTransitionLock();
       coordination.content?.synchronizeTitleVisibility();
     };
@@ -126,7 +137,9 @@ function createPanelNavigationController({
       duration: isStatementEntry
         ? STATEMENT_ENTRY_DURATION_SECONDS
         : SCROLL_STEP_DURATION_SECONDS,
-      ease: isStatementEntry ? "power3.inOut" : SECTION_NAVIGATION_EASE,
+      ease: isStatementEntry || isStatementEntryUp
+        ? "power3.inOut"
+        : SECTION_NAVIGATION_EASE,
       overwrite: true,
       onComplete: () => {
         runtime.activeTween = undefined;

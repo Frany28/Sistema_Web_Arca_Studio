@@ -75,7 +75,7 @@ function createContentScrollController({
       setContentMode(false);
       selectSection(null);
 
-      runtime.statementEnteringUp = false;
+    runtime.statementEnteringUp = true;
 
       coordination.panel.alignToPanel(createHomeScrollState({
         panelIndex: STATEMENT_PANEL_INDEX,
