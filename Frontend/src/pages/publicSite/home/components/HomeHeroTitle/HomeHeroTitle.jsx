@@ -41,7 +41,7 @@ function HomeHeroTitle({
           aria-hidden={!visible}
         >
           <h1
-            className="text-heading-3 absolute left-1/2 top-[89.5px] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 whitespace-nowrap text-center leading-[58px] text-[var(--color-neutral-100-uniform)]"
+            className="absolute left-1/2 top-[89.5px] m-0 w-[min(1104px,calc(100%-32px))] -translate-x-1/2 whitespace-nowrap text-center font-[var(--font-sans)] text-[clamp(40px,8vw,96px)] font-bold leading-[clamp(48px,6.33vw,76px)] tracking-[clamp(-2px,-0.139vw,-1px)] text-[var(--color-neutral-100-uniform)]"
             data-node-id="4451:132681"
           >
             {title}
