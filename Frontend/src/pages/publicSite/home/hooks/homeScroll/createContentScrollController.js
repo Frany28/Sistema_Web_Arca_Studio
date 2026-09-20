@@ -149,12 +149,13 @@ function createContentScrollController({
       sectionId === "home" ? 0 : STATEMENT_PANEL_INDEX,
     ));
     runtime.statementEnteringUp = false;
-    statement.commitProgress(0);
 
     coordination.panel.startScrollTransition({
       scrollTop: target.offsetTop,
       replace: true,
       onComplete: () => {
+        statement.commitProgress(0);
+
         if (sectionId === "home") {
           setContentMode(false);
           selectSection(null);

@@ -19,7 +19,6 @@ const WHEEL_NEW_IMPULSE_RATIO = 1.8;
 const STATEMENT_MIN_TRAVEL_PX = 650;
 const STATEMENT_MAX_TRAVEL_PX = 900;
 const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.85;
-const STATEMENT_INITIAL_MASK_SCALE = 180;
 const STATEMENT_WHEEL_DELTA_LIMIT_PX = 48;
 const FEATURED_EXPANSION_MIN_TRAVEL_PX = 420;
 const FEATURED_EXPANSION_VIEWPORT_RATIO = 1;
@@ -106,26 +105,11 @@ function advanceFeaturedExpansionProgress(
 }
 
 function getHomeStatementVisualState(progress) {
-  const normalizedProgress =
-    clampHomeStatementProgress(progress);
-
-  const initialScale =
-    STATEMENT_INITIAL_MASK_SCALE;
-
-  const maskScale =
-    Math.exp(
-      Math.log(initialScale) *
-        (1 - normalizedProgress),
-    );
+  const normalizedProgress = clampHomeStatementProgress(progress);
 
   return {
-    progress:
-      normalizedProgress,
-
-    maskScale:
-      normalizedProgress >= 1
-        ? 1
-        : maskScale,
+    progress: normalizedProgress,
+    viewportRadiusRatio: 1 - normalizedProgress,
   };
 }
 

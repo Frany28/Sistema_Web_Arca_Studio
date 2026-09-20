@@ -178,7 +178,7 @@ test("wheel deltas normalize pixel, line and page units", () => {
 test("trackpad bursts use a reduced scale without changing discrete mouse wheel input", () => {
   assert.equal(
     getWheelGestureDeltaScale({ deltaY: 4, deltaMode: 0 }),
-    0.75,
+    0.45,
   );
   assert.equal(
     getWheelGestureDeltaScale({ deltaY: 100, deltaMode: 0 }),
@@ -608,16 +608,16 @@ test("statement progress follows scroll deltas and reverses from any point", () 
     1000,
   );
 
-  assert.equal(downProgress, 1 / 3);
-  assert.equal(reversedProgress, 1 / 6);
+  assert.equal(downProgress, 2 / 17);
+  assert.equal(reversedProgress, 1 / 17);
   assert.equal(advanceHomeStatementProgress(0.9, 100, 1000), 1);
   assert.equal(advanceHomeStatementProgress(0.1, -100, 1000), 0);
 });
 
 test("statement travel distance stays fast and responsive", () => {
-  assert.equal(getHomeStatementTravelDistance(400), 200);
-  assert.equal(getHomeStatementTravelDistance(900), 270);
-  assert.equal(getHomeStatementTravelDistance(1400), 320);
+  assert.equal(getHomeStatementTravelDistance(400), 650);
+  assert.equal(getHomeStatementTravelDistance(900), 765);
+  assert.equal(getHomeStatementTravelDistance(1400), 900);
 });
 
 test("reduced motion keeps statement endpoints without intermediate zoom", () => {
@@ -625,17 +625,21 @@ test("reduced motion keeps statement endpoints without intermediate zoom", () =>
   assert.equal(advanceHomeStatementProgress(0.6, -1, 900, true), 0);
 });
 
-test("statement visual state zooms out through the solid black surround", () => {
+test("statement visual state closes a camera viewport around the fixed phrase", () => {
   assert.deepEqual(getHomeStatementVisualState(0), {
     progress: 0,
-    maskScale: 1000,
+    viewportRadiusRatio: 1,
   });
   assert.deepEqual(getHomeStatementVisualState(1), {
     progress: 1,
-    maskScale: 1,
+    viewportRadiusRatio: 0,
   });
-  assert.equal(getHomeStatementVisualState(0.5).maskScale, 500.5);
-  assert.ok(getHomeStatementVisualState(0.05).maskScale > 992);
+  assert.deepEqual(getHomeStatementVisualState(0.5), {
+    progress: 0.5,
+    viewportRadiusRatio: 0.5,
+  });
+  assert.equal(getHomeStatementVisualState(-1).viewportRadiusRatio, 1);
+  assert.equal(getHomeStatementVisualState(2).viewportRadiusRatio, 0);
 });
 
 test("featured image expansion follows wheel distance and reverses exactly", () => {

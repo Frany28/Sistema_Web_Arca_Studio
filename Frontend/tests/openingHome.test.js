@@ -348,7 +348,10 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementControllerSource, /queueDelta/);
   assert.match(statementControllerSource, /window\.requestAnimationFrame/);
   assert.match(statementControllerSource, /advanceHomeStatementProgress/);
-  assert.match(statementControllerSource, /STATEMENT_KEYBOARD_DURATION_SECONDS = 0\.35/);
+  assert.match(
+    statementControllerSource,
+    /STATEMENT_KEYBOARD_DURATION_SECONDS\s*=\s*1\.45/,
+  );
   assert.match(contentScrollControllerSource, /createScrollbarHomeScrollState\(panelIndex\)/);
   assert.doesNotMatch(scrollSubsystemSource, /pendingStatementEntryDelta/);
 
@@ -372,25 +375,30 @@ test("the final home panel scrubs a responsive video statement", () => {
   assert.match(statementPanelSource, /<source src=\{webmSource\}/);
   assert.match(statementPanelSource, /<source src=\{mp4Source\}/);
   assert.match(statementPanelSource, /<mask/);
-  assert.match(statementPanelSource, /<Motion\.text/);
+  assert.match(statementPanelSource, /<text/);
   assert.match(statementPanelSource, /effectStarted \? "visible" : "invisible"/);
   assert.match(
     homeSectionsSource,
     /navigationState\.phase !== HOME_SCROLL_PHASES\.IMAGE/,
   );
   assert.match(statementPanelSource, /STATEMENT_FOCUS_LETTER = "c"/);
-  assert.match(statementPanelSource, /STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO = 0\.2/);
-  assert.match(statementPanelSource, /focusGlyph\.getBBox\(\)/);
-  assert.match(statementPanelSource, /focusOffsetX\.set/);
-  assert.match(statementPanelSource, /<Motion\.g style=\{\{ x: maskTranslateX \}\}>/);
+  assert.match(statementPanelSource, /STATEMENT_FOCUS_X_RATIO = 0\.68/);
+  assert.match(statementPanelSource, /\(focusGlyph \?\? maskText\)\.getBBox\(\)/);
+  assert.match(statementPanelSource, /<circle ref=\{cameraViewportRef\}/);
+  assert.match(statementPanelSource, /initialRadius: Math\.hypot/);
+  assert.match(statementPanelSource, /viewportRadiusRatio/);
+  assert.doesNotMatch(statementPanelSource, /transform|maskScale/);
   assert.match(statementPanelSource, /opacity-20 mix-blend-multiply/);
   assert.doesNotMatch(statementPanelSource, /overlayOpacity/);
-  assert.match(statementPanelSource, /useSpring\(progress/);
-  assert.match(statementPanelSource, /stiffness: 180/);
-  assert.match(statementPanelSource, /reduceMotion \? progress : smoothedProgress/);
+  assert.match(statementPanelSource, /ResizeObserver\(measureGeometry\)/);
+  assert.match(statementPanelSource, /progress\.on\("change", renderCameraViewport\)/);
   assert.match(statementPanelSource, /text-\[clamp\(24px,3\.2vw,46px\)\]/);
   assert.match(statementPanelSource, /aria-hidden=\{!active\}/);
   assert.match(statementPanelSource, /aria-hidden=\{!statementVisible\}/);
+  assert.match(
+    contentScrollControllerSource,
+    /onComplete: \(\) => \{\s*statement\.commitProgress\(0\)/,
+  );
 });
 
 test("services navigation scrolls within Home and preserves its responsive heading", () => {
