@@ -1,18 +1,36 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  motion as Motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-} from "motion/react";
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { connectStatementPlayback } from "../../utils/statementVideoPlayback.js";
+import { useReducedMotion } from "motion/react";
 
-import { getHomeStatementVisualState } from "../../utils/homeScrollNavigation.js";
+import {
+  connectStatementPlayback,
+} from "../../utils/statementVideoPlayback.js";
 
-const STATEMENT_MASK_ID = "home-statement-video-mask";
+import {
+  getHomeStatementVisualState,
+} from "../../utils/homeScrollNavigation.js";
+
+const STATEMENT_MASK_ID =
+  "home-statement-video-mask";
+
 const STATEMENT_FOCUS_LETTER = "c";
-const STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO = 0.2;
+
+/*
+ * IMPORTANTE:
+ *
+ * El centro geométrico de una C no coincide con
+ * su centro óptico.
+ *
+ * Queremos que la cámara esté dentro de la
+ * abertura de la C.
+ */
+const STATEMENT_FOCUS_X_RATIO = 0.68;
+const STATEMENT_FOCUS_Y_RATIO = 0.5;
 
 function HomeStatementPanel({
   active = false,
@@ -26,66 +44,230 @@ function HomeStatementPanel({
   webmSource,
 }) {
   const reduceMotion = useReducedMotion();
+
   const videoPlaying = !reduceMotion;
-  const focusGlyphRef = useRef(null);
-  const maskTextRef = useRef(null);
+
   const videoRef = useRef(null);
-  const [videoFailed, setVideoFailed] = useState(false);
-  const focusOffsetX = useMotionValue(0);
-  const visualProgress = progress;
-  const maskScale = useTransform(
-    visualProgress,
-    (value) => getHomeStatementVisualState(value).maskScale,
-  );
-  const maskTranslateX = useTransform(() => -focusOffsetX.get());
+
+  const svgRef = useRef(null);
+  const transformGroupRef = useRef(null);
+  const focusGlyphRef = useRef(null);
+
+  const geometryRef = useRef({
+    ready: false,
+
+    focusX: 0,
+    focusY: 0,
+
+    viewportCenterX: 0,
+    viewportCenterY: 0,
+  });
+
+  const [videoFailed, setVideoFailed] =
+    useState(false);
+
   const focusLetterIndex = phrase
     .toLocaleLowerCase("es")
     .indexOf(STATEMENT_FOCUS_LETTER);
 
+  const applyTransform = (value) => {
+    const group =
+      transformGroupRef.current;
+
+    const geometry =
+      geometryRef.current;
+
+    if (
+      !group ||
+      !geometry.ready
+    ) {
+      return;
+    }
+
+    const {
+      maskScale,
+    } =
+      getHomeStatementVisualState(
+        value,
+      );
+
+    const {
+      focusX,
+      focusY,
+      viewportCenterX,
+      viewportCenterY,
+    } = geometry;
+
+    /*
+     * Transformación exacta alrededor del
+     * punto óptico de la C.
+     *
+     * El punto:
+     *
+     *     focusX / focusY
+     *
+     * siempre termina exactamente en:
+     *
+     *     viewportCenterX / viewportCenterY
+     *
+     * independientemente del scale.
+     */
+    const translateX =
+      viewportCenterX -
+      focusX * maskScale;
+
+    const translateY =
+      viewportCenterY -
+      focusY * maskScale;
+
+    group.setAttribute(
+      "transform",
+      `matrix(${maskScale} 0 0 ${maskScale} ${translateX} ${translateY})`,
+    );
+  };
+
   useLayoutEffect(() => {
-    const focusGlyph = focusGlyphRef.current;
-    const maskText = maskTextRef.current;
-    const maskSvg = maskText?.ownerSVGElement;
-    if (!focusGlyph || !maskText || !maskSvg) return undefined;
+    const svg =
+      svgRef.current;
+
+    const focusGlyph =
+      focusGlyphRef.current;
+
+    if (
+      !svg ||
+      !focusGlyph
+    ) {
+      return undefined;
+    }
 
     let cancelled = false;
-    const updateFocusGeometry = () => {
-      if (cancelled) return;
 
-      const focusBounds = focusGlyph.getBBox();
-      const textBounds = maskText.getBBox();
-      if (!textBounds.width || !textBounds.height || !maskSvg.clientWidth) return;
+    const measure = () => {
+      if (cancelled) {
+        return;
+      }
 
+      const glyphBounds =
+        focusGlyph.getBBox();
+
+      const width =
+        svg.clientWidth;
+
+      const height =
+        svg.clientHeight;
+
+      if (
+        !glyphBounds.width ||
+        !glyphBounds.height ||
+        !width ||
+        !height
+      ) {
+        return;
+      }
+
+      /*
+       * No usamos el centro del bbox.
+       *
+       * Movemos el foco hacia la abertura
+       * interna de la C.
+       */
       const focusX =
-        focusBounds.x +
-        focusBounds.width * STATEMENT_FOCUS_GLYPH_HORIZONTAL_RATIO;
-      const focusY = focusBounds.y + focusBounds.height / 2;
-      const originX = ((focusX - textBounds.x) / textBounds.width) * 100;
-      const originY = ((focusY - textBounds.y) / textBounds.height) * 100;
+        glyphBounds.x +
+        glyphBounds.width *
+          STATEMENT_FOCUS_X_RATIO;
 
-      maskText.style.transformOrigin = `${originX}% ${originY}%`;
-      focusOffsetX.set(focusX - maskSvg.clientWidth / 2);
+      const focusY =
+        glyphBounds.y +
+        glyphBounds.height *
+          STATEMENT_FOCUS_Y_RATIO;
+
+      geometryRef.current = {
+        ready: true,
+
+        focusX,
+        focusY,
+
+        viewportCenterX:
+          width / 2,
+
+        viewportCenterY:
+          height / 2,
+      };
+
+      applyTransform(
+        progress.get(),
+      );
     };
 
-    updateFocusGeometry();
-    document.fonts?.ready.then(updateFocusGeometry).catch(() => undefined);
-    window.addEventListener("resize", updateFocusGeometry);
+    measure();
+
+    document.fonts?.ready
+      .then(measure)
+      .catch(() => undefined);
+
+    const resizeObserver =
+      new ResizeObserver(
+        measure,
+      );
+
+    resizeObserver.observe(svg);
 
     return () => {
       cancelled = true;
-      window.removeEventListener("resize", updateFocusGeometry);
+
+      resizeObserver.disconnect();
     };
-  }, [focusOffsetX, phrase]);
+  }, [
+    phrase,
+    progress,
+  ]);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return undefined;
-    return connectStatementPlayback(video, { active, enabled: mediaEnabled, playing: videoPlaying });
-  }, [active, mediaEnabled, videoPlaying]);
+    applyTransform(
+      progress.get(),
+    );
+
+    const unsubscribe =
+      progress.on(
+        "change",
+        applyTransform,
+      );
+
+    return unsubscribe;
+  }, [progress]);
+
+  useEffect(() => {
+    const video =
+      videoRef.current;
+
+    if (!video) {
+      return undefined;
+    }
+
+    return connectStatementPlayback(
+      video,
+      {
+        active,
+        enabled: mediaEnabled,
+        playing: videoPlaying,
+      },
+    );
+  }, [
+    active,
+    mediaEnabled,
+    videoPlaying,
+  ]);
 
   return (
     <section
-      className="relative h-dvh w-full shrink-0 overflow-hidden bg-[var(--color-neutral-950-uniform)]"
+      className="
+        relative
+        h-dvh
+        w-full
+        shrink-0
+        overflow-hidden
+        bg-[var(--color-neutral-950-uniform)]
+      "
       aria-hidden={!active}
       data-home-panel
       data-home-statement-panel
@@ -94,77 +276,165 @@ function HomeStatementPanel({
       <img
         src={poster}
         alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="
+          absolute
+          inset-0
+          h-full
+          w-full
+          object-cover
+          object-center
+        "
         aria-hidden="true"
       />
+
       <video
         ref={videoRef}
-        className={`absolute inset-0 h-full w-full object-cover object-center ${
-          videoFailed ? "hidden" : "block"
-        }`}
-        autoPlay={mediaEnabled && videoPlaying}
+        className={`
+          absolute
+          inset-0
+          h-full
+          w-full
+          object-cover
+          object-center
+
+          ${
+            videoFailed
+              ? "hidden"
+              : "block"
+          }
+        `}
+        autoPlay={
+          mediaEnabled &&
+          videoPlaying
+        }
         muted
         loop
         playsInline
         poster={poster}
-        preload={mediaEnabled ? "auto" : "none"}
-        onError={() => setVideoFailed(true)}
+        preload={
+          mediaEnabled
+            ? "auto"
+            : "none"
+        }
+        onError={() =>
+          setVideoFailed(true)
+        }
         aria-hidden="true"
       >
-        <source src={mp4Source} type="video/mp4" />
-        <source src={webmSource} type="video/webm" />
+        <source
+          src={mp4Source}
+          type="video/mp4"
+        />
+
+        <source
+          src={webmSource}
+          type="video/webm"
+        />
       </video>
 
       <div
-        className="pointer-events-none absolute inset-0 bg-[var(--color-neutral-950-uniform)] opacity-20 mix-blend-multiply"
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          bg-[var(--color-neutral-950-uniform)]
+          opacity-20
+          mix-blend-multiply
+        "
         aria-hidden="true"
       />
 
       <svg
-        className={`pointer-events-none absolute inset-0 h-full w-full ${
-          effectStarted ? "visible" : "invisible"
-        }`}
+        ref={svgRef}
+        viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`}
+        preserveAspectRatio="none"
+        className={`
+          pointer-events-none
+          absolute
+          inset-0
+          h-full
+          w-full
+
+          ${
+            effectStarted
+              ? "visible"
+              : "invisible"
+          }
+        `}
         aria-hidden="true"
         focusable="false"
       >
         <defs>
           <mask
             id={STATEMENT_MASK_ID}
+            maskUnits="userSpaceOnUse"
             x="0"
             y="0"
             width="100%"
             height="100%"
-            maskUnits="userSpaceOnUse"
-            className="[mask-type:luminance]"
           >
-            <rect width="100%" height="100%" fill="white" />
-            <Motion.g style={{ x: maskTranslateX }}>
-              <Motion.text
-                ref={maskTextRef}
+            <rect
+              x="0"
+              y="0"
+              width="100%"
+              height="100%"
+              fill="white"
+            />
+
+            <g
+              ref={
+                transformGroupRef
+              }
+            >
+              <text
                 x="50%"
                 y="50%"
                 dy="0.35em"
                 textAnchor="middle"
                 fill="black"
-                className="origin-center [transform-box:fill-box] font-[var(--font-sans)] text-[clamp(24px,3.2vw,46px)] font-bold tracking-[-1px]"
-                style={{ scale: maskScale }}
+                className="
+                  font-[var(--font-sans)]
+                  text-[clamp(24px,3.2vw,46px)]
+                  font-bold
+                  tracking-[-1px]
+                "
               >
-                {focusLetterIndex < 0 ? (
+                {focusLetterIndex <
+                0 ? (
                   phrase
                 ) : (
                   <>
-                    {phrase.slice(0, focusLetterIndex)}
-                    <tspan ref={focusGlyphRef}>
-                      {phrase[focusLetterIndex]}
+                    {phrase.slice(
+                      0,
+                      focusLetterIndex,
+                    )}
+
+                    <tspan
+                      ref={
+                        focusGlyphRef
+                      }
+                    >
+                      {
+                        phrase[
+                          focusLetterIndex
+                        ]
+                      }
                     </tspan>
-                    {phrase.slice(focusLetterIndex + 1)}
+
+                    {phrase.slice(
+                      focusLetterIndex +
+                        1,
+                    )}
                   </>
                 )}
-              </Motion.text>
-            </Motion.g>
+              </text>
+            </g>
           </mask>
         </defs>
+
         <rect
+          x="0"
+          y="0"
           width="100%"
           height="100%"
           fill="var(--color-neutral-950-uniform)"
@@ -172,7 +442,12 @@ function HomeStatementPanel({
         />
       </svg>
 
-      <h2 className="sr-only" aria-hidden={!statementVisible}>
+      <h2
+        className="sr-only"
+        aria-hidden={
+          !statementVisible
+        }
+      >
         {phrase}
       </h2>
     </section>
