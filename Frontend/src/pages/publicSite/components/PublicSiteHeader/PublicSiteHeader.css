@@ -1,3 +1,8 @@
+.public-site-header {
+  --public-navigation-color: var(--color-neutral-100-uniform);
+  --public-navigation-hover-color: var(--color-text-200);
+}
+
 .public-site-header::before {
   position: absolute;
   z-index: 0;
@@ -97,9 +102,14 @@
   color: var(--public-navigation-hover-color);
 }
 
+.public-site-header .public-site-menu-toggle:hover {
+  color: var(--public-navigation-hover-color);
+}
+
 .public-site-header .public-site-navigation__item:focus-visible,
 .public-site-header [aria-label="Ir al inicio"]:focus-visible,
 .public-site-header .public-site-menu-toggle:focus-visible {
+  color: var(--public-navigation-color);
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }

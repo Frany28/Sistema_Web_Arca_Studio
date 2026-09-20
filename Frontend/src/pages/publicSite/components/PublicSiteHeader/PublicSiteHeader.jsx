@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { Add, HambergerMenu } from "iconsax-react";
+import { HambergerMenu } from "iconsax-react";
 import useHeaderBackground from "./useHeaderBackground.js";
 import PublicSiteMobileMenu from "./PublicSiteMobileMenu.jsx";
 import PublicSiteNavigationMenu from "./PublicSiteNavigationMenu.jsx";
@@ -151,7 +151,7 @@ function PublicSiteHeader({
           <button
             ref={menuToggleRef}
             type="button"
-            className="public-site-menu-toggle absolute -top-[4px] right-0 flex size-[52px] items-center justify-center rounded-[var(--radius-3)] border-0 bg-transparent p-[16px] text-[var(--public-navigation-color)] outline-none transition-colors duration-150 hover:text-[var(--public-navigation-hover-color)] focus-visible:ring-2 focus-visible:ring-current motion-reduce:transition-none md:hidden"
+            className="public-site-menu-toggle absolute -top-[4px] right-0 flex size-[52px] items-center justify-center rounded-[var(--radius-3)] border-0 bg-transparent p-[16px] outline-none transition-colors duration-150 motion-reduce:transition-none md:hidden"
             aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={isMobileMenuOpen}
             aria-controls={MOBILE_MENU_ID}
@@ -159,13 +159,19 @@ function PublicSiteHeader({
             data-node-id={isMobileMenuOpen ? "5156:130000" : "5074:27974"}
           >
             {isMobileMenuOpen ? (
-              <Add
-                className="size-[20px] rotate-45"
-                color="currentColor"
-                size={20}
-                variant="Linear"
+              <svg
+                className="size-[20px]"
+                viewBox="0 0 20 20"
+                fill="none"
                 aria-hidden="true"
-              />
+              >
+                <path
+                  d="M4.167 4.167 15.833 15.833M15.833 4.167 4.167 15.833"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
             ) : (
               <HambergerMenu
                 className="size-[20px]"
