@@ -16,9 +16,9 @@ const WHEEL_DISCRETE_IMPULSE_MIN_PX = 50;
 const TRACKPAD_WHEEL_DELTA_SCALE = 0.45;
 const WHEEL_NEW_IMPULSE_MAGNITUDE_PX = 10;
 const WHEEL_NEW_IMPULSE_RATIO = 1.8;
-const STATEMENT_MIN_TRAVEL_PX = 200;
-const STATEMENT_MAX_TRAVEL_PX = 320;
-const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.3;
+const STATEMENT_MIN_TRAVEL_PX = 650;
+const STATEMENT_MAX_TRAVEL_PX = 900;
+const STATEMENT_TRAVEL_VIEWPORT_RATIO = 0.85;
 const STATEMENT_INITIAL_MASK_SCALE = 1000;
 const STATEMENT_WHEEL_DELTA_LIMIT_PX = 48;
 const FEATURED_EXPANSION_MIN_TRAVEL_PX = 420;
@@ -106,20 +106,21 @@ function advanceFeaturedExpansionProgress(
 }
 
 function getHomeStatementVisualState(progress) {
-  const normalizedProgress = clampHomeStatementProgress(progress);
-  const easedProgress =
-    (1 - Math.cos(normalizedProgress * Math.PI)) / 2;
-  const perceptualProgress = Math.pow(easedProgress, 0.72);
+  const normalizedProgress =
+    clampHomeStatementProgress(progress);
 
   return {
     progress: normalizedProgress,
-    maskScale: normalizedProgress <= 0
-      ? STATEMENT_INITIAL_MASK_SCALE
-      : normalizedProgress >= 1
-        ? 1
-        : Math.exp(
-          Math.log(STATEMENT_INITIAL_MASK_SCALE) * (1 - perceptualProgress),
-        ),
+
+    maskScale:
+      normalizedProgress <= 0
+        ? STATEMENT_INITIAL_MASK_SCALE
+        : normalizedProgress >= 1
+          ? 1
+          : Math.exp(
+              Math.log(STATEMENT_INITIAL_MASK_SCALE) *
+                (1 - normalizedProgress),
+            ),
   };
 }
 
