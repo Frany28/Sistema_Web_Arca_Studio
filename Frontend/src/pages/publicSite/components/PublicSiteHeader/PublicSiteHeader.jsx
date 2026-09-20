@@ -148,40 +148,47 @@ function PublicSiteHeader({
             </Button>
           </div>
 
-          <button
+          <Button
             ref={menuToggleRef}
-            type="button"
-            className="public-site-menu-toggle absolute -top-[4px] right-0 flex size-[52px] items-center justify-center rounded-[var(--radius-3)] border-0 bg-transparent p-[16px] outline-none transition-colors duration-150 motion-reduce:transition-none md:hidden"
+            theme="Primary"
+            type="Ghost"
+            size="L"
+            showText={false}
+            showLeftIcon
+            showRightIcon={false}
+            iconLeft={
+              isMobileMenuOpen ? (
+                <svg
+                  className="size-[20px]"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4.167 4.167 15.833 15.833M15.833 4.167 4.167 15.833"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <HambergerMenu
+                  className="size-[20px]"
+                  color="currentColor"
+                  size={20}
+                  variant="Linear"
+                  aria-hidden="true"
+                />
+              )
+            }
+            className="public-site-menu-toggle absolute -top-[4px] right-0 md:hidden"
             aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={isMobileMenuOpen}
             aria-controls={MOBILE_MENU_ID}
+            tooltip={isMobileMenuOpen ? false : "Abrir menú"}
             onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
             data-node-id={isMobileMenuOpen ? "5156:130000" : "5074:27974"}
-          >
-            {isMobileMenuOpen ? (
-              <svg
-                className="size-[20px]"
-                viewBox="0 0 20 20"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4.167 4.167 15.833 15.833M15.833 4.167 4.167 15.833"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : (
-              <HambergerMenu
-                className="size-[20px]"
-                color="currentColor"
-                size={20}
-                variant="Linear"
-                aria-hidden="true"
-              />
-            )}
-          </button>
+          />
         </div>
 
         <PublicSiteMobileMenu

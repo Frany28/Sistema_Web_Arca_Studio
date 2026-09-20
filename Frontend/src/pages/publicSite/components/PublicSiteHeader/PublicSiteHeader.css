@@ -107,11 +107,18 @@
 }
 
 .public-site-header .public-site-navigation__item:focus-visible,
-.public-site-header [aria-label="Ir al inicio"]:focus-visible,
-.public-site-header .public-site-menu-toggle:focus-visible {
+.public-site-header [aria-label="Ir al inicio"]:focus-visible {
   color: var(--public-navigation-color);
   outline: 2px solid currentColor;
   outline-offset: 2px;
+}
+
+.public-site-header .public-site-menu-toggle {
+  border-radius: var(--radius-3);
+}
+
+.public-site-header .public-site-menu-toggle:focus-visible {
+  color: var(--public-navigation-color);
 }
 
 .public-site-header .public-site-mobile-contact {
