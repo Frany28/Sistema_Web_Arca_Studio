@@ -11,7 +11,7 @@ const STATEMENT_KEYBOARD_DURATION_SECONDS = 2;
 const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 3.6;
 
 // Suavizado exclusivo del zoom-out controlado por wheel/trackpad.
-const STATEMENT_WHEEL_SMOOTHING_MS = 180;
+const STATEMENT_WHEEL_SMOOTHING_MS = 200;
 const STATEMENT_WHEEL_EPSILON = 0.0005;
 
 function createHomeStatementController({
