@@ -1,7 +1,7 @@
 import { AnimatePresence, motion as Motion, useReducedMotion } from "motion/react";
 
 import Button from "../../../../components/ui/Button/Button.jsx";
-import HorizontalTabMenu from "../../../../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
+import PublicSiteNavigationMenu from "./PublicSiteNavigationMenu.jsx";
 
 const MENU_EASE = [0.22, 1, 0.36, 1];
 
@@ -71,9 +71,6 @@ function PublicSiteMobileMenu({
 }) {
   const reduceMotion = useReducedMotion();
   const motionContext = { reduceMotion: Boolean(reduceMotion) };
-  const activeNavigationIndex = navigationItems.findIndex(
-    (item) => item.id === activeNavigationId,
-  );
 
   return (
     <AnimatePresence initial={false}>
@@ -100,16 +97,11 @@ function PublicSiteMobileMenu({
               custom={motionContext}
             >
               <Motion.div variants={itemVariants} custom={motionContext}>
-                <HorizontalTabMenu
-                  items={navigationItems.map((item) => item.label)}
-                  activeIndex={activeNavigationIndex}
-                  interactive
+                <PublicSiteNavigationMenu
+                  navigationItems={navigationItems}
+                  activeNavigationId={activeNavigationId}
                   orientation="vertical"
-                  presentation="publicNavigation"
-                  style="Underlined"
-                  filled="off"
-                  onChange={(index) => onNavigate(navigationItems[index].id)}
-                  aria-label="Secciones de inicio"
+                  onNavigate={onNavigate}
                 />
               </Motion.div>
 

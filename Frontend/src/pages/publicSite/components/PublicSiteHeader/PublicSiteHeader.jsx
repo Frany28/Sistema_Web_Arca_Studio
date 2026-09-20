@@ -3,11 +3,11 @@ import clsx from "clsx";
 import { Add, HambergerMenu } from "iconsax-react";
 import useHeaderBackground from "./useHeaderBackground.js";
 import PublicSiteMobileMenu from "./PublicSiteMobileMenu.jsx";
+import PublicSiteNavigationMenu from "./PublicSiteNavigationMenu.jsx";
 import "./PublicSiteHeader.css";
 
 import MainLogo from "../../../../assets/logos/MainLogo.jsx";
 import Button from "../../../../components/ui/Button/Button.jsx";
-import HorizontalTabMenu from "../../../../components/ui/HorizontalTabMenu/HorizontalTabMenu.jsx";
 import useScrollDirectionVisibility, {
   NAVBAR_SCROLL_DURATION_SECONDS,
 } from "../../../../hooks/useScrollDirectionVisibility.js";
@@ -33,9 +33,6 @@ function PublicSiteHeader({
   const menuToggleRef = useRef(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const backgroundAppearance = useHeaderBackground(headerRef, scrollContainerRef);
-  const activeNavigationIndex = navigationItems.findIndex(
-    (item) => item.id === activeNavigationId,
-  );
 
   useScrollDirectionVisibility(headerRef, { scrollContainerRef });
 
@@ -122,15 +119,11 @@ function PublicSiteHeader({
           </button>
 
           <div className="public-site-desktop-navigation hidden min-w-0 flex-1 justify-center md:flex lg:absolute lg:left-1/2 lg:top-0 lg:block lg:flex-none lg:-translate-x-1/2">
-            <HorizontalTabMenu
-              items={navigationItems.map((item) => item.label)}
-              activeIndex={activeNavigationIndex}
-              interactive
-              presentation="publicNavigation"
-              style="Underlined"
-              filled="off"
-              onChange={(index) => onNavigate?.(navigationItems[index].id)}
-              aria-label="Secciones de inicio"
+            <PublicSiteNavigationMenu
+              navigationItems={navigationItems}
+              activeNavigationId={activeNavigationId}
+              orientation="horizontal"
+              onNavigate={onNavigate}
               data-node-id="4487:112598"
             />
           </div>

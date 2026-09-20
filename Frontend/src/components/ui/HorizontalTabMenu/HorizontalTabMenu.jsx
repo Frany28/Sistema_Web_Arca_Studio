@@ -139,19 +139,14 @@ function HorizontalTabMenu({
         isVertical
           ? "flex-col items-center overflow-visible"
           : "items-center overflow-x-auto",
-        isPublicNavigation &&
-          (isVertical ? "w-fit gap-0" : "h-[52px] gap-[8px]"),
+        isPublicNavigation && !isVertical && "h-[52px] gap-[8px]",
         resolvedVariant.style === "Brand" &&
           !isVertical &&
           !isPublicNavigation &&
           "gap-[8px] pb-[2px]",
-        resolvedVariant.style === "Brand" &&
-          isVertical &&
-          !isPublicNavigation &&
-          "w-full gap-[20px]",
+        resolvedVariant.style === "Brand" && isVertical && "w-full gap-[20px]",
         resolvedVariant.style === "Brand" &&
           resolvedVariant.filled === "on" &&
-          (!isPublicNavigation || !isVertical) &&
           (isVertical ? "w-full" : "flex w-full"),
         resolvedVariant.style === "Underlined" &&
           !isPublicNavigation &&
@@ -170,7 +165,6 @@ function HorizontalTabMenu({
         ].wrapper
       }
       role="tablist"
-      aria-orientation={isVertical ? "vertical" : "horizontal"}
       {...props}
     >
       {normalizedItems.map((item, index) => {
@@ -194,21 +188,11 @@ function HorizontalTabMenu({
             className={clsx(
               "inline-flex items-center justify-center text-heading-8 whitespace-nowrap transition-colors duration-150",
               isPublicNavigation &&
-                !isVertical &&
                 "h-[52px] shrink-0 bg-transparent px-[4px] pb-[14px] pt-[8px] text-[var(--color-neutral-100-uniform)] hover:text-[var(--color-neutral-950-uniform)] focus-visible:border-[var(--color-neutral-100-uniform)] focus-visible:ring-white/60",
               isPublicNavigation &&
-                !isVertical &&
                 (isActive
                   ? "border-b-2 border-[var(--color-neutral-100-uniform)]"
                   : "border-b-2 border-transparent hover:border-[var(--color-neutral-100-uniform)] hover:bg-transparent"),
-              isPublicNavigation &&
-                isVertical &&
-                "h-[64px] w-full shrink-0 border-l-2 bg-transparent px-[4px] py-0",
-              isPublicNavigation &&
-                isVertical &&
-                (isActive
-                  ? "!border-[var(--public-navigation-color)] !text-[var(--public-navigation-color)]"
-                  : "!border-transparent !text-[var(--public-navigation-hover-color)] hover:!border-transparent hover:!bg-transparent hover:!text-[var(--public-navigation-color)]"),
               resolvedVariant.style === "Brand" &&
                 !isPublicNavigation &&
                 "h-[36px] rounded-[var(--radius-2)] px-[12px] py-[8px]",
