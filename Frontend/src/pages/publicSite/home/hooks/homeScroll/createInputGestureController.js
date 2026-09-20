@@ -1,6 +1,7 @@
 import {
   HOME_SCROLL_DIRECTIONS,
   advanceFeaturedExpansionProgress,
+  limitHomeStatementWheelDelta,
   advanceHomeStatementProgress,
   advanceWheelGesture,
   getKeyboardDirection,
@@ -265,11 +266,60 @@ function createInputGestureController({
         );
         return;
       }
+      const currentState = navigationStateRef.current;
 
-    statement.stopAnimation();
-    const currentState = navigationStateRef.current;
-    const isStatementReady =
-      currentState.panelIndex === STATEMENT_PANEL_INDEX && !runtime.activeTween;
+      const isStatementReady =
+        currentState.panelIndex === STATEMENT_PANEL_INDEX &&
+        !runtime.activeTween;
+
+      const currentStatementProgress =
+        statement.getProgress();
+
+      const isAutomaticStatementMode =
+        window.matchMedia?.(
+          "(max-width: 1023px)",
+        ).matches ?? false;
+
+      const canScrubStatementWithDesktopWheel =
+        isStatementReady &&
+        !isAutomaticStatementMode &&
+        (
+          (
+            currentStatementProgress > 0 &&
+            currentStatementProgress < 1
+          ) ||
+          (
+            currentStatementProgress <= 0 &&
+            progressDelta.y > 0
+          ) ||
+          (
+            currentStatementProgress >= 1 &&
+            progressDelta.y < 0
+          )
+        );
+
+      if (canScrubStatementWithDesktopWheel) {
+        statement.startWheelScrubbing();
+
+        statement.queueDelta(
+          limitHomeStatementWheelDelta(
+            progressDelta.y,
+          ),
+        );
+
+        debugWheel(
+          event,
+          normalizedDelta,
+          progressDelta,
+          Math.sign(progressDelta.y),
+          "STATEMENT_DESKTOP_SCRUB",
+        );
+
+        return;
+      }
+
+      statement.stopAnimation();
+
     if (isStatementReady && statement.getProgress() >= 1) {
       runtime.statementEnteringUp = false;
     }
