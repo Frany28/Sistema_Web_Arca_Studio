@@ -382,12 +382,13 @@ test("the final home panel scrubs a responsive video statement", () => {
     /navigationState\.phase !== HOME_SCROLL_PHASES\.IMAGE/,
   );
   assert.match(statementPanelSource, /STATEMENT_FOCUS_LETTER = "c"/);
-  assert.match(statementPanelSource, /STATEMENT_FOCUS_X_RATIO = 0\.68/);
+  assert.match(statementPanelSource, /STATEMENT_FOCUS_X_RATIO = 0\.14/);
   assert.match(statementPanelSource, /\(focusGlyph \?\? maskText\)\.getBBox\(\)/);
-  assert.match(statementPanelSource, /<circle ref=\{cameraViewportRef\}/);
-  assert.match(statementPanelSource, /initialRadius: Math\.hypot/);
-  assert.match(statementPanelSource, /viewportRadiusRatio/);
-  assert.doesNotMatch(statementPanelSource, /transform|maskScale/);
+  assert.match(statementPanelSource, /<text\s+ref=\{cameraGlyphRef\}/);
+  assert.match(statementPanelSource, /cameraGlyph\.setAttribute/);
+  assert.match(statementPanelSource, /initialScale: Math\.max/);
+  assert.match(statementPanelSource, /cameraScale/);
+  assert.doesNotMatch(statementPanelSource, /<circle|transformGroupRef|maskScale/);
   assert.match(statementPanelSource, /opacity-20 mix-blend-multiply/);
   assert.doesNotMatch(statementPanelSource, /overlayOpacity/);
   assert.match(statementPanelSource, /ResizeObserver\(measureGeometry\)/);

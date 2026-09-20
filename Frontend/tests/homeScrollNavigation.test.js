@@ -625,21 +625,20 @@ test("reduced motion keeps statement endpoints without intermediate zoom", () =>
   assert.equal(advanceHomeStatementProgress(0.6, -1, 900, true), 0);
 });
 
-test("statement visual state closes a camera viewport around the fixed phrase", () => {
-  assert.deepEqual(getHomeStatementVisualState(0), {
+test("statement visual state zooms an isolated camera glyph around the fixed phrase", () => {
+  assert.deepEqual(getHomeStatementVisualState(0, 400), {
     progress: 0,
-    viewportRadiusRatio: 1,
+    cameraScale: 400,
   });
-  assert.deepEqual(getHomeStatementVisualState(1), {
+  assert.deepEqual(getHomeStatementVisualState(1, 400), {
     progress: 1,
-    viewportRadiusRatio: 0,
+    cameraScale: 1,
   });
-  assert.deepEqual(getHomeStatementVisualState(0.5), {
-    progress: 0.5,
-    viewportRadiusRatio: 0.5,
-  });
-  assert.equal(getHomeStatementVisualState(-1).viewportRadiusRatio, 1);
-  assert.equal(getHomeStatementVisualState(2).viewportRadiusRatio, 0);
+  const midpoint = getHomeStatementVisualState(0.5, 400);
+  assert.equal(midpoint.progress, 0.5);
+  assert.ok(Math.abs(midpoint.cameraScale - 20) < Number.EPSILON * 20);
+  assert.equal(getHomeStatementVisualState(-1, 400).cameraScale, 400);
+  assert.equal(getHomeStatementVisualState(2, 400).cameraScale, 1);
 });
 
 test("featured image expansion follows wheel distance and reverses exactly", () => {

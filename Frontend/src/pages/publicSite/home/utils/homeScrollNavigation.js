@@ -104,12 +104,19 @@ function advanceFeaturedExpansionProgress(
   );
 }
 
-function getHomeStatementVisualState(progress) {
+function getHomeStatementVisualState(progress, initialCameraScale = 1) {
   const normalizedProgress = clampHomeStatementProgress(progress);
+  const safeInitialScale = Number.isFinite(initialCameraScale)
+    ? Math.max(initialCameraScale, 1)
+    : 1;
 
   return {
     progress: normalizedProgress,
-    viewportRadiusRatio: 1 - normalizedProgress,
+    cameraScale: normalizedProgress <= 0
+      ? safeInitialScale
+      : normalizedProgress >= 1
+        ? 1
+        : Math.exp(Math.log(safeInitialScale) * (1 - normalizedProgress)),
   };
 }
 

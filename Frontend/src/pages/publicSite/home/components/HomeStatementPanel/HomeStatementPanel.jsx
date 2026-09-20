@@ -13,9 +13,11 @@ import { getHomeStatementVisualState } from "../../utils/homeScrollNavigation.js
 const STATEMENT_MASK_ID = "home-statement-video-mask";
 const STATEMENT_FOCUS_LETTER = "c";
 
-// El foco se sitúa dentro de la abertura óptica de la C, no en su centro geométrico.
-const STATEMENT_FOCUS_X_RATIO = 0.68;
+// El foco se sitúa dentro del trazo izquierdo de la C para comenzar dentro del glifo.
+const STATEMENT_FOCUS_X_RATIO = 0.14;
 const STATEMENT_FOCUS_Y_RATIO = 0.5;
+const STATEMENT_FOCUS_SAFE_X_RATIO = 0.07;
+const STATEMENT_FOCUS_SAFE_Y_RATIO = 0.18;
 
 function HomeStatementPanel({
   active = false,
@@ -34,29 +36,38 @@ function HomeStatementPanel({
   const svgRef = useRef(null);
   const maskTextRef = useRef(null);
   const focusGlyphRef = useRef(null);
-  const cameraViewportRef = useRef(null);
+  const cameraGlyphRef = useRef(null);
   const geometryRef = useRef({
     ready: false,
     focusX: 0,
     focusY: 0,
-    initialRadius: 0,
+    cameraFocusX: 0,
+    cameraFocusY: 0,
+    initialScale: 1,
   });
   const [videoFailed, setVideoFailed] = useState(false);
 
   const focusLetterIndex = phrase
     .toLocaleLowerCase("es")
     .indexOf(STATEMENT_FOCUS_LETTER);
+  const cameraLetter = phrase[focusLetterIndex >= 0 ? focusLetterIndex : 0];
 
   const renderCameraViewport = useCallback((value) => {
-    const cameraViewport = cameraViewportRef.current;
+    const cameraGlyph = cameraGlyphRef.current;
     const geometry = geometryRef.current;
 
-    if (!cameraViewport || !geometry.ready) return;
+    if (!cameraGlyph || !geometry.ready) return;
 
-    const { viewportRadiusRatio } = getHomeStatementVisualState(value);
-    cameraViewport.setAttribute(
-      "r",
-      String(geometry.initialRadius * viewportRadiusRatio),
+    const { cameraScale } = getHomeStatementVisualState(
+      value,
+      geometry.initialScale,
+    );
+    const translateX = geometry.focusX - geometry.cameraFocusX * cameraScale;
+    const translateY = geometry.focusY - geometry.cameraFocusY * cameraScale;
+
+    cameraGlyph.setAttribute(
+      "transform",
+      `matrix(${cameraScale} 0 0 ${cameraScale} ${translateX} ${translateY})`,
     );
   }, []);
 
@@ -64,9 +75,9 @@ function HomeStatementPanel({
     const svg = svgRef.current;
     const maskText = maskTextRef.current;
     const focusGlyph = focusGlyphRef.current;
-    const cameraViewport = cameraViewportRef.current;
+    const cameraGlyph = cameraGlyphRef.current;
 
-    if (!svg || !maskText || !cameraViewport) return undefined;
+    if (!svg || !maskText || !cameraGlyph) return undefined;
 
     let cancelled = false;
 
@@ -74,10 +85,18 @@ function HomeStatementPanel({
       if (cancelled) return;
 
       const focusBounds = (focusGlyph ?? maskText).getBBox();
+      const cameraBounds = cameraGlyph.getBBox();
       const width = svg.clientWidth;
       const height = svg.clientHeight;
 
-      if (!focusBounds.width || !focusBounds.height || !width || !height) return;
+      if (
+        !focusBounds.width ||
+        !focusBounds.height ||
+        !cameraBounds.width ||
+        !cameraBounds.height ||
+        !width ||
+        !height
+      ) return;
 
       const focusX = focusGlyph
         ? focusBounds.x + focusBounds.width * STATEMENT_FOCUS_X_RATIO
@@ -85,21 +104,28 @@ function HomeStatementPanel({
       const focusY = focusGlyph
         ? focusBounds.y + focusBounds.height * STATEMENT_FOCUS_Y_RATIO
         : focusBounds.y + focusBounds.height / 2;
-      const farthestHorizontalEdge = Math.max(focusX, width - focusX);
-      const farthestVerticalEdge = Math.max(focusY, height - focusY);
+      const cameraFocusX =
+        cameraBounds.x + cameraBounds.width * STATEMENT_FOCUS_X_RATIO;
+      const cameraFocusY =
+        cameraBounds.y + cameraBounds.height * STATEMENT_FOCUS_Y_RATIO;
+      const horizontalTravel = Math.max(focusX, width - focusX);
+      const verticalTravel = Math.max(focusY, height - focusY);
+      const horizontalSafety = cameraBounds.width * STATEMENT_FOCUS_SAFE_X_RATIO;
+      const verticalSafety = cameraBounds.height * STATEMENT_FOCUS_SAFE_Y_RATIO;
 
       geometryRef.current = {
         ready: true,
         focusX,
         focusY,
-        initialRadius: Math.hypot(
-          farthestHorizontalEdge,
-          farthestVerticalEdge,
-        ) + 1,
+        cameraFocusX,
+        cameraFocusY,
+        initialScale: Math.max(
+          horizontalTravel / horizontalSafety,
+          verticalTravel / verticalSafety,
+          1,
+        ) * 1.05,
       };
 
-      cameraViewport.setAttribute("cx", String(focusX));
-      cameraViewport.setAttribute("cy", String(focusY));
       renderCameraViewport(progress.get());
     };
 
@@ -207,7 +233,15 @@ function HomeStatementPanel({
                 </>
               )}
             </text>
-            <circle ref={cameraViewportRef} cx="0" cy="0" r="0" fill="black" />
+            <text
+              ref={cameraGlyphRef}
+              x="0"
+              y="0"
+              fill="black"
+              className="font-[var(--font-sans)] text-[clamp(24px,3.2vw,46px)] font-bold tracking-[-1px]"
+            >
+              {cameraLetter}
+            </text>
           </mask>
         </defs>
 
