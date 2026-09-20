@@ -271,6 +271,30 @@ function createInputGestureController({
     const currentState = navigationStateRef.current;
     const isStatementReady =
       currentState.panelIndex === STATEMENT_PANEL_INDEX && !runtime.activeTween;
+    const currentProgress = statement.getProgress();
+    const isAutomaticStatementMode =
+      window.matchMedia?.("(max-width: 1023px)").matches;
+    const canScrubStatementWithDesktopWheel =
+      isStatementReady &&
+      !isAutomaticStatementMode &&
+      (
+        (currentProgress > 0 && currentProgress < 1) ||
+        (currentProgress <= 0 && progressDelta.y > 0) ||
+        (currentProgress >= 1 && progressDelta.y < 0)
+      );
+
+    if (canScrubStatementWithDesktopWheel) {
+      statement.startWheelScrubbing();
+      statement.queueDelta(progressDelta.y);
+      debugWheel(
+        event,
+        normalizedDelta,
+        progressDelta,
+        Math.sign(normalizedDelta.y),
+        "STATEMENT_DESKTOP_SCRUB",
+      );
+      return;
+    }
     if (isStatementReady && statement.getProgress() >= 1) {
       runtime.statementEnteringUp = false;
     }
