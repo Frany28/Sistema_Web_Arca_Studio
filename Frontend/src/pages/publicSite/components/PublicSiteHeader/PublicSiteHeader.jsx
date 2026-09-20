@@ -98,17 +98,17 @@ function PublicSiteHeader({
       data-mobile-menu-open={isMobileMenuOpen}
     >
       <nav
-        className="relative z-10 h-full w-full max-w-[1200px] px-[16px] pt-[12px] md:px-[48px]"
+        className="public-site-header__nav relative z-10 h-full w-full max-w-[1200px] px-[16px] pt-[12px] lg:px-[48px]"
         aria-label="Navegación principal"
         data-node-id="4487:112596"
       >
         <div
-          className="relative h-[52px] w-full"
+          className="public-site-header__layout relative h-[52px] w-full"
           data-node-id="4487:112597"
         >
           <button
             type="button"
-            className="absolute left-0 top-[6px] flex h-[32px] w-[152px] cursor-pointer items-center justify-start border-0 bg-transparent p-0 md:top-[3.5px]"
+            className="absolute left-0 top-[6px] flex h-[32px] w-[152px] cursor-pointer items-center justify-start border-0 bg-transparent p-0 md:relative md:left-auto md:top-[3.5px] md:shrink-0 lg:absolute lg:left-0"
             aria-label="Ir al inicio"
             onClick={() => onNavigate?.("home")}
             data-node-id="4487:112602"
@@ -121,7 +121,7 @@ function PublicSiteHeader({
             />
           </button>
 
-          <div className="absolute left-1/2 top-0 hidden -translate-x-1/2 lg:block">
+          <div className="public-site-desktop-navigation hidden min-w-0 flex-1 justify-center md:flex lg:absolute lg:left-1/2 lg:top-0 lg:block lg:flex-none lg:-translate-x-1/2">
             <HorizontalTabMenu
               items={navigationItems.map((item) => item.label)}
               activeIndex={activeNavigationIndex}
@@ -136,7 +136,7 @@ function PublicSiteHeader({
           </div>
 
           <div
-            className="absolute right-0 top-[3px] hidden items-center gap-[8px] md:flex"
+            className="absolute right-0 top-[3px] hidden items-center gap-[8px] md:relative md:right-auto md:flex md:shrink-0 lg:absolute lg:right-0"
             data-node-id="4487:112599"
           >
             <Button
