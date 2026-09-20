@@ -116,12 +116,8 @@ function HomeStatementPanel({
         onError={() => setVideoFailed(true)}
         aria-hidden="true"
       >
-        {mediaEnabled ? (
-          <>
-            <source src={mp4Source} type="video/mp4" />
-            <source src={webmSource} type="video/webm" />
-          </>
-        ) : null}
+        <source src={mp4Source} type="video/mp4" />
+        <source src={webmSource} type="video/webm" />
       </video>
 
       <div

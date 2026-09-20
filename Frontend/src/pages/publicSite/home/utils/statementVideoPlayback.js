@@ -5,11 +5,16 @@ function connectStatementPlayback(video, { active, enabled, playing, documentTar
     video.muted = true;
     video.play()?.catch(() => undefined);
   };
-  video.addEventListener("canplay", synchronize);
+  const mediaEvents = ["canplay", "loadeddata", "loadedmetadata"];
+  mediaEvents.forEach((eventName) => {
+    video.addEventListener(eventName, synchronize);
+  });
   documentTarget.addEventListener("visibilitychange", synchronize);
   synchronize();
   return () => {
-    video.removeEventListener("canplay", synchronize);
+    mediaEvents.forEach((eventName) => {
+      video.removeEventListener(eventName, synchronize);
+    });
     documentTarget.removeEventListener("visibilitychange", synchronize);
   };
 }

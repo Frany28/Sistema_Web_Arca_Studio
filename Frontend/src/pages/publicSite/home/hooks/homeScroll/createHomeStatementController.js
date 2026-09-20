@@ -8,7 +8,7 @@ import {
 } from "../../utils/homeScrollNavigation.js";
 
 const STATEMENT_KEYBOARD_DURATION_SECONDS = 0.8;
-const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 4.8;
+const STATEMENT_AUTO_REVEAL_DURATION_SECONDS = 3.6;
 
 function createHomeStatementController({
   commitNavigationState,
